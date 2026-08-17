@@ -1,0 +1,122 @@
+@import '../../styles/mixins.scss';
+
+.hec {
+  @include card;
+  overflow: hidden;
+
+  &__cover {
+    position: relative;
+    height: 280rpx;
+  }
+
+  &__cover-img {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__cover-info {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: var(--spacing-md);
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.92));
+  }
+
+  &__city {
+    display: block;
+    font-size: var(--font-size-h2);
+    font-weight: bold;
+    color: #ffffff; // 深色图片蒙层上固定白字
+  }
+
+  &__city-iata {
+    color: #ffffff;
+  }
+
+  &__layover {
+    display: block;
+    font-size: var(--font-size-small);
+    color: #9ed0ff;
+  }
+
+  &__meta {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1rpx solid var(--color-bg-border);
+  }
+
+  &__meta-row {
+    display: flex;
+    gap: var(--spacing-xs);
+    padding: 4rpx 0;
+  }
+
+  &__meta-text {
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+    flex: 1;
+  }
+
+  &__tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  &__tab {
+    padding: 8rpx 24rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    border: 2rpx solid var(--color-bg-border);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+
+    &.is-active {
+      border-color: var(--color-accent-cyan);
+      color: var(--color-accent-cyan);
+      background: rgba(10, 132, 255, 0.1);
+    }
+  }
+
+  &__activity {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  &__activity-icon {
+    font-size: var(--font-size-h2);
+  }
+
+  &__activity-body {
+    flex: 1;
+  }
+
+  &__activity-head {
+    @include flex-between;
+  }
+
+  &__activity-title {
+    font-size: var(--font-size-body);
+    font-weight: bold;
+  }
+
+  &__activity-source {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+
+  &__activity-desc {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__budget {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-panel);
+    font-size: var(--font-size-small);
+    color: var(--color-warning);
+  }
+}

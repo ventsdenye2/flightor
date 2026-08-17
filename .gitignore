@@ -1,0 +1,10 @@
+dist/
+node_modules/
+.DS_Store
+*.log
+.swc/
+
+# 密钥（勿提交）
+openrouter.txt
+duffel.txt
+serpapi.txt

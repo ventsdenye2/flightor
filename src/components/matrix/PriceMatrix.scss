@@ -1,0 +1,133 @@
+// PriceMatrix — 机场×日期热力表（浅色主题）
+@import '../../styles/mixins.scss';
+
+.pmx {
+  @include card;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+
+  &__head {
+    @include flex-between;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__title {
+    font-size: var(--font-size-body);
+    font-weight: bold;
+  }
+
+  &__sub {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__row {
+    display: flex;
+    gap: 8rpx;
+    margin-bottom: 8rpx;
+
+    &--header {
+      margin-bottom: var(--spacing-xs);
+    }
+  }
+
+  &__corner,
+  &__row-head {
+    width: 96rpx;
+    flex-shrink: 0;
+    @include flex-center;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+  }
+
+  &__col-head {
+    flex: 1;
+    text-align: center;
+  }
+
+  &__col-iata {
+    display: block;
+    font-size: var(--font-size-small);
+    font-weight: bold;
+    color: var(--color-accent-cyan);
+  }
+
+  &__col-city {
+    display: block;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+    @include ellipsis;
+  }
+
+  &__cell {
+    flex: 1;
+    position: relative;
+    @include flex-center;
+    padding: 14rpx 0;
+    border-radius: var(--radius-sm);
+    border: 2rpx solid transparent;
+
+    // 价格档位底色
+    &.is-low {
+      background: rgba(48, 209, 88, 0.12);
+      .pmx__price { color: #3ddba4; }
+    }
+
+    &.is-mid {
+      background: rgba(255, 159, 10, 0.12);
+      .pmx__price { color: #ffb861; }
+    }
+
+    &.is-high {
+      background: rgba(255, 69, 58, 0.1);
+      .pmx__price { color: #ff7a7a; }
+    }
+
+    // 全局最低价格子
+    &.is-min {
+      border-color: var(--color-success);
+    }
+
+    // 点选聚焦态
+    &.is-picked {
+      border-color: var(--color-accent-cyan);
+      background: rgba(10, 132, 255, 0.12);
+      .pmx__price { color: var(--color-accent-cyan); }
+    }
+  }
+
+  &__price {
+    font-family: Menlo, 'Courier New', monospace;
+    font-size: var(--font-size-caption);
+    font-weight: bold;
+  }
+
+  &__min-mark {
+    position: absolute;
+    top: -2rpx;
+    right: 6rpx;
+    font-size: 18rpx;
+    color: var(--color-success);
+  }
+
+  &__picked-bar {
+    @include flex-between;
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    background: rgba(10, 132, 255, 0.08);
+  }
+
+  &__picked-text {
+    font-size: var(--font-size-small);
+    color: var(--color-accent-cyan);
+  }
+
+  &__clear {
+    padding: 4rpx 20rpx;
+    border-radius: var(--radius-full);
+    border: 2rpx solid var(--color-accent-cyan);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+  }
+}

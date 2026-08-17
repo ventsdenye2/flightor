@@ -1,0 +1,158 @@
+@import '../../styles/mixins.scss';
+
+.search-page {
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-2xl);
+
+  &__summary {
+    @include flex-between;
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__route-text {
+    font-size: var(--font-size-h2);
+    font-weight: bold;
+  }
+
+  &__route-date {
+    display: block;
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__map-toggle {
+    padding: 10rpx 28rpx;
+    border-radius: var(--radius-full);
+    border: 2rpx solid var(--color-accent-cyan);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-small);
+  }
+
+  &__map {
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__tab {
+    flex: 1;
+    @include flex-center;
+    padding: var(--spacing-sm) 0;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-panel);
+    border: 2rpx solid var(--color-bg-border);
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+
+    &.is-active {
+      border-color: var(--color-accent-cyan);
+      color: var(--color-accent-cyan);
+      background: rgba(10, 132, 255, 0.08);
+    }
+  }
+
+  // 排序切换（胶囊小按钮）
+  &__sorts {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__sort {
+    padding: 8rpx 28rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    border: 2rpx solid var(--color-bg-border);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+
+    &.is-active {
+      border-color: var(--color-accent-cyan);
+      color: var(--color-accent-cyan);
+      background: rgba(10, 132, 255, 0.08);
+    }
+  }
+
+  &__loading {
+    @include flex-center;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-2xl) 0;
+    color: var(--color-text-placeholder);
+  }
+
+  // 骨架屏（透明度呼吸，无光晕）
+  &__skeleton {
+    @include card;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    animation: sk-pulse 1.4s ease-in-out infinite;
+  }
+
+  &__sk-line {
+    height: 28rpx;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-panel);
+    margin-bottom: var(--spacing-sm);
+
+    &--w40 { width: 40%; }
+    &--w70 { width: 70%; margin-bottom: 0; }
+    &--grow { flex: 1; height: 20rpx; margin: 0 var(--spacing-sm); }
+  }
+
+  &__sk-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__sk-block {
+    width: 140rpx;
+    height: 64rpx;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-panel);
+  }
+
+  &__loading-plane {
+    font-size: 80rpx;
+    color: var(--color-accent-cyan);
+    animation: plane-fly 1.6s ease-in-out infinite;
+  }
+
+  &__empty {
+    @include flex-center;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-2xl) 0;
+    color: var(--color-text-secondary);
+  }
+
+  &__empty-icon {
+    font-size: 96rpx;
+  }
+
+  &__empty-tip {
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__disclaimer {
+    text-align: center;
+    padding: var(--spacing-md) 0;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+}
+
+@keyframes plane-fly {
+  0%, 100% { transform: translateX(-20rpx) translateY(6rpx); }
+  50% { transform: translateX(20rpx) translateY(-6rpx); }
+}
+
+@keyframes sk-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}

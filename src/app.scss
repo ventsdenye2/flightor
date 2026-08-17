@@ -1,0 +1,43 @@
+@import './styles/variables.scss';
+
+page {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  min-height: 100%;
+}
+
+// 等宽效果方案：letter-spacing 模拟 + 系统等宽字体回退（颜色随上下文，避免满屏蓝字）
+.font-code {
+  font-family: Menlo, 'Courier New', monospace;
+  letter-spacing: 2rpx;
+}
+
+.font-body {
+  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+}
+
+// 通用点击反馈
+.tap-dim {
+  opacity: 0.72;
+}
+
+// 价差 Badge 脉冲动画（透明度呼吸，无光晕）
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.72; }
+}
+
+// 信号灯呼吸动画
+@keyframes signal-breath {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.9); }
+}
+
+// 跑道标线扫过动画（输入框聚焦）
+@keyframes runway-sweep {
+  from { width: 0; }
+  to { width: 100%; }
+}

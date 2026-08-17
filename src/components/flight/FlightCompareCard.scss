@@ -1,0 +1,339 @@
+// FlightCompareCard — 飞常准式布局 + 登机牌质感
+@import '../../styles/mixins.scss';
+
+.fcc {
+  @include card;
+  position: relative;
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+
+  // 顶部航司色条（登机牌质感）
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6rpx;
+    background: linear-gradient(90deg, var(--color-accent-cyan), rgba(10, 132, 255, 0.05) 70%);
+  }
+
+  &__segment {
+    padding: var(--spacing-sm) 0;
+  }
+
+  // 组合徽章行
+  &__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    padding-top: var(--spacing-xs);
+  }
+
+  &__badge {
+    padding: 4rpx 16rpx;
+    border-radius: var(--radius-full);
+    background: rgba(10, 132, 255, 0.1);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+  }
+
+  &__seg-head {
+    @include flex-between;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__seg-flight {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+  }
+
+  &__flight-no {
+    font-size: var(--font-size-body);
+    font-weight: bold;
+  }
+
+  &__airline {
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__seg-date {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+
+  // 准点率标签（飞常准式绿/橙/红）
+  &__punctuality {
+    padding: 2rpx 16rpx;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-caption);
+
+    &.is-good {
+      color: var(--color-success);
+      background: rgba(48, 209, 88, 0.12);
+    }
+
+    &.is-mid {
+      color: var(--color-warning);
+      background: rgba(255, 159, 10, 0.12);
+    }
+
+    &.is-low {
+      color: var(--color-danger);
+      background: rgba(255, 69, 58, 0.12);
+    }
+  }
+
+  // 飞常准式：两端大时间 + 中间进度线
+  &__timeline {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  &__endpoint {
+    width: 190rpx;
+    flex-shrink: 0;
+
+    &--right {
+      text-align: right;
+    }
+  }
+
+  &__time {
+    display: block;
+    font-size: 52rpx;
+    font-weight: bold;
+    line-height: 1.2;
+    color: var(--color-text-primary);
+  }
+
+  &__cross-day {
+    font-size: var(--font-size-caption);
+    color: var(--color-accent-orange);
+    font-weight: normal;
+  }
+
+  &__iata {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-small);
+    color: var(--color-accent-cyan);
+    font-weight: bold;
+  }
+
+  &__city {
+    display: block;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+    @include ellipsis;
+  }
+
+  // 飞行进度线：时长在上、机型在下、飞机悬于线上
+  &__track {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8rpx var(--spacing-sm) 0;
+  }
+
+  &__duration {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+  }
+
+  &__track-line {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 6rpx 0;
+  }
+
+  &__track-dot {
+    width: 10rpx;
+    height: 10rpx;
+    border-radius: var(--radius-full);
+    border: 2rpx solid var(--color-accent-cyan);
+    background: var(--color-bg-card);
+    flex-shrink: 0;
+
+    &--end {
+      background: var(--color-accent-cyan);
+    }
+  }
+
+  &__track-dash {
+    flex: 1;
+    height: 2rpx;
+    background: repeating-linear-gradient(90deg, var(--color-accent-cyan-dim) 0 10rpx, transparent 10rpx 18rpx);
+  }
+
+  &__track-plane {
+    margin: 0 6rpx;
+    font-size: var(--font-size-body);
+    color: var(--color-accent-cyan);
+  }
+
+  &__aircraft {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+
+  // 中转停留分隔条
+  &__layover {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+  }
+
+  &__layover-line {
+    flex: 1;
+    border-top: 2rpx dashed rgba(255, 159, 10, 0.4);
+  }
+
+  &__layover-text {
+    padding: 2rpx 20rpx;
+    border-radius: var(--radius-full);
+    background: rgba(255, 159, 10, 0.12);
+    color: var(--color-accent-orange);
+    font-size: var(--font-size-caption);
+  }
+
+  // 穿孔撕裂线
+  &__perforation {
+    display: flex;
+    align-items: center;
+    margin: var(--spacing-sm) calc(-1 * var(--spacing-md));
+    height: 32rpx;
+  }
+
+  &__hole {
+    width: 32rpx;
+    height: 32rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-primary);
+    flex-shrink: 0;
+
+    &--left {
+      margin-left: -16rpx;
+    }
+
+    &--right {
+      margin-right: -16rpx;
+    }
+  }
+
+  &__dashed {
+    flex: 1;
+    border-top: 2rpx dashed var(--color-bg-border);
+  }
+
+  // 价格行
+  &__price-row {
+    @include flex-between;
+    padding: var(--spacing-xs) 0 var(--spacing-sm);
+  }
+
+  &__price-main {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+  }
+
+  &__price {
+    font-size: var(--font-size-h1);
+    font-weight: bold;
+    color: var(--color-accent-orange);
+  }
+
+  &__total-duration {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__savings {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4rpx;
+  }
+
+  &__savings-amount {
+    color: var(--color-success);
+    font-weight: bold;
+    font-size: var(--font-size-body);
+  }
+
+  &__savings-badge {
+    padding: 2rpx 12rpx;
+    border-radius: var(--radius-full);
+    background: rgba(48, 209, 88, 0.16);
+    color: var(--color-success);
+    font-size: var(--font-size-caption);
+    animation: badge-pulse 2.4s infinite;
+  }
+
+  &__detail-toggle {
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-small);
+  }
+
+  &__footer {
+    @include flex-between;
+    margin: 0 calc(-1 * var(--spacing-md)) calc(-1 * var(--spacing-md));
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-panel);
+    border-top: 1rpx solid var(--color-bg-border);
+    font-size: var(--font-size-small);
+  }
+
+  &__transfer-type {
+    color: var(--color-text-secondary);
+  }
+
+  &__hub-info {
+    color: var(--color-text-placeholder);
+  }
+
+  &__baggage-warn {
+    color: var(--color-accent-orange);
+  }
+
+  // 条形码装饰（登机牌质感）
+  &__barcode {
+    width: 120rpx;
+    height: 28rpx;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(235, 235, 245, 0.3) 0 4rpx,
+      transparent 4rpx 8rpx,
+      rgba(235, 235, 245, 0.3) 8rpx 16rpx,
+      transparent 16rpx 20rpx
+    );
+    border-radius: 2rpx;
+  }
+
+  &__expand {
+    margin: var(--spacing-md) calc(-1 * var(--spacing-md)) calc(-1 * var(--spacing-md));
+    padding: var(--spacing-md);
+    background: rgba(10, 132, 255, 0.05);
+    border-top: 1rpx solid var(--color-bg-border);
+  }
+
+  &__expand-title {
+    display: block;
+    font-size: var(--font-size-small);
+    color: var(--color-accent-cyan);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  &__expand-desc {
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+}

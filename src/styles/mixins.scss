@@ -1,0 +1,35 @@
+// src/styles/mixins.scss — 常用 mixin
+
+// 单行省略
+@mixin ellipsis {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+// 卡片基础样式
+@mixin card {
+  background: var(--color-bg-card);
+  border: 1rpx solid var(--color-bg-border);
+  border-radius: var(--radius-lg);
+}
+
+// 水平居中 flex
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 行内两端对齐
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// 等宽代码字体（航班号/价格）
+@mixin font-code {
+  font-family: Menlo, 'Courier New', monospace;
+  letter-spacing: 2rpx;
+}

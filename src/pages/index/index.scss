@@ -1,0 +1,116 @@
+@import '../../styles/mixins.scss';
+
+.index-page {
+  padding-bottom: var(--spacing-2xl);
+  // 顶部品牌蓝晕染（航旅底色，向下淡出）
+  background: linear-gradient(180deg, rgba(10, 132, 255, 0.22) 0rpx, rgba(10, 132, 255, 0.06) 240rpx, rgba(10, 132, 255, 0) 420rpx);
+
+  &__section {
+    padding: 0 var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+  }
+
+  &__section-header {
+    @include flex-between;
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__section-title {
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+  }
+
+  &__section-sub {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+
+  &__hot-scroll {
+    width: 100%;
+    white-space: nowrap;
+  }
+
+  &__hot-list {
+    display: inline-flex;
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+  }
+
+  &__hot-card {
+    @include card;
+    position: relative;
+    width: 280rpx;
+    padding: var(--spacing-md);
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  }
+
+  &__hot-route {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+  }
+
+  // TOGO 徽章：命中想去清单的目的地
+  &__hot-togo {
+    padding: 2rpx 12rpx;
+    border-radius: var(--radius-full);
+    background: rgba(10, 132, 255, 0.16);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+    font-weight: normal;
+  }
+
+  &__hot-arrow {
+    color: var(--color-accent-cyan);
+  }
+
+  &__hot-via {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__hot-price {
+    display: block;
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-h2);
+    color: var(--color-text-primary);
+    font-weight: bold;
+  }
+
+  &__hot-save {
+    position: absolute;
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    padding: 4rpx 14rpx;
+    border-radius: var(--radius-full);
+    background: rgba(48, 209, 88, 0.16);
+    color: var(--color-success);
+    font-size: var(--font-size-caption);
+    animation: badge-pulse 2.4s infinite;
+  }
+
+  &__history-item {
+    @include flex-between;
+    padding: var(--spacing-md);
+    border-bottom: 1rpx solid var(--color-bg-border);
+    font-size: var(--font-size-body);
+  }
+
+  &__history-date {
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__footer {
+    margin-top: var(--spacing-2xl);
+    text-align: center;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+}

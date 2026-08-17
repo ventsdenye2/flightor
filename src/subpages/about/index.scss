@@ -1,0 +1,44 @@
+@import '../../styles/mixins.scss';
+
+.about-page {
+  padding: var(--spacing-lg);
+
+  &__logo {
+    text-align: center;
+    padding: var(--spacing-xl) 0;
+  }
+
+  &__version {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__section {
+    @include card;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__section-title {
+    display: block;
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+    color: var(--color-accent-cyan);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  &__section-content {
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+    line-height: 1.8;
+  }
+
+  &__footer {
+    text-align: center;
+    padding: var(--spacing-lg) 0;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+}

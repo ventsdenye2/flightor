@@ -1,0 +1,81 @@
+@import '../../styles/mixins.scss';
+
+.price-alert {
+  padding: var(--spacing-lg);
+
+  &__title {
+    display: block;
+    font-size: var(--font-size-h1);
+    font-weight: bold;
+  }
+
+  &__desc {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__form {
+    margin-top: var(--spacing-lg);
+  }
+
+  &__field {
+    @include card;
+    @include flex-between;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+
+    &--column {
+      display: block;
+    }
+  }
+
+  &__label {
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__value {
+    font-size: var(--font-size-h2);
+    font-weight: bold;
+  }
+
+  &__target-row {
+    @include flex-between;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  &__target {
+    font-size: var(--font-size-h2);
+    font-weight: bold;
+    color: var(--color-success);
+  }
+
+  &__hint {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+
+  &__cta {
+    @include flex-center;
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+    border-radius: var(--radius-md);
+    background: var(--color-accent-cyan);
+    color: #ffffff;
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+  }
+
+  &__note {
+    display: block;
+    margin-top: var(--spacing-md);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+    text-align: center;
+    line-height: 1.7;
+  }
+}

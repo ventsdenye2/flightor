@@ -1,0 +1,215 @@
+@import '../../styles/mixins.scss';
+
+.bpi {
+  @include card;
+  padding: var(--spacing-md);
+
+  &__header {
+    @include flex-between;
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__title {
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+  }
+
+  &__passenger {
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__flight {
+    position: relative;
+    padding: var(--spacing-md);
+    border: 1rpx solid var(--color-bg-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-panel);
+    overflow: hidden;
+
+    // 顶部航司色条（登机牌质感）
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6rpx;
+      background: linear-gradient(90deg, var(--color-accent-cyan), rgba(10, 132, 255, 0.05) 70%);
+    }
+  }
+
+  &__flight-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+  }
+
+  &__flight-no {
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+  }
+
+  &__flight-airline {
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__flight-route {
+    display: flex;
+    align-items: center;
+    margin: var(--spacing-sm) 0;
+  }
+
+  &__flight-point {
+    &--right {
+      text-align: right;
+    }
+  }
+
+  &__flight-iata {
+    display: block;
+    font-size: var(--font-size-h2);
+    font-weight: bold;
+  }
+
+  &__flight-time {
+    display: block;
+    font-size: var(--font-size-body);
+  }
+
+  &__flight-date {
+    display: block;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__flight-track {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    margin: 0 var(--spacing-md);
+  }
+
+  &__flight-line {
+    flex: 1;
+    height: 2rpx;
+    background: repeating-linear-gradient(90deg, var(--color-accent-cyan-dim) 0 12rpx, transparent 12rpx 20rpx);
+  }
+
+  &__flight-plane {
+    margin: 0 8rpx;
+    color: var(--color-accent-cyan);
+  }
+
+  &__flight-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  // 条形码装饰（靠右）
+  &__barcode {
+    margin-left: auto;
+    width: 110rpx;
+    height: 28rpx;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(235, 235, 245, 0.3) 0 4rpx,
+      transparent 4rpx 8rpx,
+      rgba(235, 235, 245, 0.3) 8rpx 16rpx,
+      transparent 16rpx 20rpx
+    );
+    border-radius: 2rpx;
+  }
+
+  &__meta-chip {
+    padding: 4rpx 16rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-card);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+  }
+
+  &__layover {
+    position: relative;
+    padding: var(--spacing-md) 0 var(--spacing-md) var(--spacing-lg);
+  }
+
+  &__layover-line {
+    position: absolute;
+    left: 12rpx;
+    top: 0;
+    bottom: 0;
+    border-left: 2rpx dashed var(--color-accent-orange);
+  }
+
+  &__layover-title {
+    display: block;
+    font-size: var(--font-size-body);
+    color: var(--color-accent-orange);
+    font-weight: bold;
+  }
+
+  &__layover-visa {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__layover-tip {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-small);
+    color: var(--color-accent-cyan);
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+
+  &__btn {
+    @include flex-center;
+    flex: 1;
+    padding: var(--spacing-sm) 0;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-body);
+    font-weight: bold;
+
+    &--share {
+      background: var(--color-accent-cyan) !important;
+      color: #ffffff !important;
+      border: none !important;
+      font-size: var(--font-size-body) !important;
+      line-height: 2.2 !important;
+      margin: 0;
+    }
+
+    &--export {
+      background: var(--color-bg-panel);
+      color: var(--color-accent-cyan);
+      border: 2rpx solid var(--color-accent-cyan);
+    }
+  }
+
+  &__share-hint {
+    display: block;
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+    text-align: center;
+  }
+
+  // 离屏导出画布：移出可视区但保留渲染
+  &__canvas {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 620px;
+    height: 1200px;
+  }
+}

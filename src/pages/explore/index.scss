@@ -1,0 +1,259 @@
+@import '../../styles/mixins.scss';
+
+.explore-page {
+  padding: var(--spacing-md) 0 var(--spacing-2xl);
+
+  &__header {
+    padding: 0 var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__title {
+    display: block;
+    font-size: var(--font-size-h1);
+    font-weight: bold;
+  }
+
+  &__map {
+    margin: 0 var(--spacing-lg);
+  }
+
+  // 签证/主题筛选胶囊
+  &__filters,
+  &__themes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg) 0;
+  }
+
+  &__filter {
+    padding: 8rpx 28rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    border: 2rpx solid var(--color-bg-border);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+
+    &.is-active {
+      border-color: var(--color-accent-cyan);
+      color: var(--color-accent-cyan);
+      background: rgba(10, 132, 255, 0.1);
+    }
+  }
+
+  &__section-title {
+    padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-md);
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+  }
+
+  &__swiper {
+    height: 540rpx;
+    padding-left: var(--spacing-lg);
+  }
+
+  &__card {
+    @include card;
+    position: relative;
+    margin-right: var(--spacing-md);
+    overflow: hidden;
+    height: 520rpx;
+  }
+
+  &__card-img {
+    width: 100%;
+    height: 280rpx;
+  }
+
+  // 封面右上角签证徽章
+  &__visa-badge {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: calc(var(--spacing-md) + var(--spacing-sm));
+    padding: 4rpx 18rpx;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+    color: #ffffff;
+
+    &.is-free {
+      background: rgba(48, 209, 88, 0.85);
+    }
+
+    &.is-conditional {
+      background: rgba(255, 159, 10, 0.9);
+    }
+
+    &.is-required {
+      background: rgba(255, 69, 58, 0.85);
+    }
+  }
+
+  &__card-body {
+    padding: var(--spacing-md);
+  }
+
+  &__card-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+  }
+
+  &__card-city {
+    font-size: var(--font-size-h2);
+    font-weight: bold;
+  }
+
+  &__card-iata {
+    font-size: var(--font-size-body);
+  }
+
+  &__card-count {
+    margin-left: auto;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__card-visa {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+    @include ellipsis;
+  }
+
+  &__card-tags {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+  }
+
+  &__card-tag {
+    padding: 4rpx 18rpx;
+    border-radius: var(--radius-full);
+    background: rgba(10, 132, 255, 0.1);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+  }
+
+  &__dots {
+    @include flex-center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-md);
+  }
+
+  &__dot {
+    width: 12rpx;
+    height: 12rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-border);
+
+    &.is-active {
+      width: 32rpx;
+      background: var(--color-accent-cyan);
+    }
+  }
+
+  // 主题精选活动列表
+  &__acts {
+    padding: var(--spacing-md) var(--spacing-lg) 0;
+  }
+
+  &__act {
+    @include card;
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__act-icon {
+    font-size: var(--font-size-h2);
+  }
+
+  &__act-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__act-head {
+    @include flex-between;
+  }
+
+  &__act-title {
+    font-size: var(--font-size-body);
+    font-weight: bold;
+  }
+
+  &__act-city {
+    padding: 2rpx 16rpx;
+    border-radius: var(--radius-full);
+    background: rgba(10, 132, 255, 0.1);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+  }
+
+  &__act-desc {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+    @include ellipsis;
+  }
+
+  // 热门低价航线
+  &__deals {
+    padding: 0 var(--spacing-lg);
+  }
+
+  &__deal {
+    @include card;
+    @include flex-between;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__deal-route {
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+  }
+
+  &__deal-via {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__deal-side {
+    text-align: right;
+  }
+
+  &__deal-price {
+    display: block;
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+    color: var(--color-accent-orange);
+    font-family: Menlo, 'Courier New', monospace;
+  }
+
+  &__deal-save {
+    font-size: var(--font-size-caption);
+    color: var(--color-success);
+  }
+}
+
+// 低价航线行：路线 + TOGO 徽章
+.explore-page__deal-route-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.explore-page__deal-togo {
+  padding: 2rpx 12rpx;
+  border-radius: var(--radius-full);
+  background: rgba(10, 132, 255, 0.16);
+  color: var(--color-accent-cyan);
+  font-size: var(--font-size-caption);
+}

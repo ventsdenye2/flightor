@@ -1,0 +1,109 @@
+{
+  "iata": "SIN",
+  "model": "deepseek/deepseek-chat",
+  "generatedAt": "2026-08-01T21:29:06.464Z",
+  "layoverOptions": [
+    {
+      "duration": "8h",
+      "budget": {
+        "currency": "SGD",
+        "min": 0,
+        "max": 30
+      },
+      "activities": [
+        {
+          "icon": "🌿",
+          "title": {
+            "zh": "雨漩涡奇观",
+            "en": "Rain Vortex"
+          },
+          "description": {
+            "zh": "航站楼内的40米瀑布与森林步道，免费参观",
+            "en": "40m indoor waterfall with forest trails, free access"
+          },
+          "source": "official"
+        },
+        {
+          "icon": "🍜",
+          "title": {
+            "zh": "天天海南鸡饭",
+            "en": "Tian Tian Hainanese Chicken"
+          },
+          "description": {
+            "zh": "牛车水知名摊位，人均6-8新元",
+            "en": "Famous Maxwell stall, SGD6-8 per person"
+          },
+          "source": "backpackers"
+        }
+      ]
+    },
+    {
+      "duration": "12h",
+      "budget": {
+        "currency": "SGD",
+        "min": 0,
+        "max": 50
+      },
+      "activities": [
+        {
+          "icon": "🏝",
+          "title": {
+            "zh": "西乐索海滩",
+            "en": "Siloso Beach"
+          },
+          "description": {
+            "zh": "圣淘沙岛免费公共海滩，可步行抵达",
+            "en": "Free public beach on Sentosa via boardwalk"
+          },
+          "source": "official"
+        },
+        {
+          "icon": "🌃",
+          "title": {
+            "zh": "金沙灯光秀",
+            "en": "Marina Bay Light Show"
+          },
+          "description": {
+            "zh": "每晚20:00/21:00滨海湾免费灯光表演",
+            "en": "Free light shows at 8PM & 9PM daily"
+          },
+          "source": "official"
+        }
+      ]
+    },
+    {
+      "duration": "24h",
+      "budget": {
+        "currency": "SGD",
+        "min": 30,
+        "max": 100
+      },
+      "activities": [
+        {
+          "icon": "🏛",
+          "title": {
+            "zh": "滨海湾花园",
+            "en": "Gardens by the Bay"
+          },
+          "description": {
+            "zh": "擎天树丛免费，冷室联票约28新元",
+            "en": "Free Supertrees, paid conservatories ~SGD28"
+          },
+          "source": "backpackers"
+        },
+        {
+          "icon": "🍜",
+          "title": {
+            "zh": "老巴刹沙嗲",
+            "en": "Lau Pa Sat Satay"
+          },
+          "description": {
+            "zh": "傍晚7点后沙嗲街配虎牌啤酒",
+            "en": "Satay stalls with Tiger Beer after 7PM"
+          },
+          "source": "reddit"
+        }
+      ]
+    }
+  ]
+}

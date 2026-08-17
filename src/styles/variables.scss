@@ -1,0 +1,49 @@
+// src/styles/variables.scss
+// iOS 原生暗色模式（HIG 系统色板）
+page {
+  // 背景层级（systemBackground / secondary / tertiary）
+  --color-bg-primary: #000000;       // 页面背景
+  --color-bg-card: #1c1c1e;          // 卡片背景（grouped card）
+  --color-bg-panel: #2c2c2e;         // 次级面板 / 填充块
+  --color-bg-border: #3a3a3c;        // 边框 / 分割线（systemGray4）
+  --color-bg-disabled: #48484a;      // 禁用态（systemGray3）
+
+  // 系统强调色
+  --color-accent-cyan: #0a84ff;      // systemBlue — 链接/选中/航线
+  --color-accent-cyan-dim: #0a84ff;  // 蓝色深端（暗色下与主蓝同值）
+  --color-accent-orange: #ff9f0a;    // systemOrange — 警告/价差高亮
+  --color-accent-orange-dim: #ff9f0a;
+
+  --color-success: #30d158;          // systemGreen — 买入信号/节省金额
+  --color-warning: #ff9f0a;          // systemOrange — 注意/条件限制
+  --color-danger: #ff453a;           // systemRed — 观望信号/高风险
+  --color-info: #0a84ff;             // systemBlue — 信息提示
+
+  // 文字层级（label / secondaryLabel / tertiaryLabel）
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(235, 235, 245, 0.6);
+  --color-text-placeholder: rgba(235, 235, 245, 0.3);
+  --color-text-disabled: #636366;    // systemGray2
+
+  // 字号对齐 HIG（1pt = 2rpx：large title 30pt / title2 22 / title3 19 / body 16 / subhead 14 / footnote 12）
+  --font-size-h1: 60rpx;            // 页面大标题
+  --font-size-h2: 44rpx;            // 区块标题
+  --font-size-h3: 38rpx;            // 卡片标题
+  --font-size-body: 32rpx;          // 正文
+  --font-size-small: 28rpx;         // 辅助文字
+  --font-size-caption: 24rpx;       // 注释/来源
+
+  --spacing-xs: 8rpx;
+  --spacing-sm: 16rpx;
+  --spacing-md: 24rpx;
+  --spacing-lg: 32rpx;
+  --spacing-xl: 48rpx;
+  --spacing-2xl: 64rpx;
+
+  // 圆角对齐 iOS 连续圆角（控件 10pt / 卡片 16pt / 大卡 22pt）
+  --radius-sm: 12rpx;
+  --radius-md: 20rpx;
+  --radius-lg: 32rpx;
+  --radius-xl: 44rpx;
+  --radius-full: 9999rpx;
+}

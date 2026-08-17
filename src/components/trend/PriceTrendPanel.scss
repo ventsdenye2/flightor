@@ -1,0 +1,157 @@
+@import '../../styles/mixins.scss';
+
+.ptp {
+  @include card;
+  padding: var(--spacing-md);
+
+  &__signal-row {
+    @include flex-between;
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__signal {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  &__signal-light {
+    width: 28rpx;
+    height: 28rpx;
+    border-radius: var(--radius-full);
+    animation: signal-breath 1.8s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  &__signal-label {
+    display: block;
+    font-size: var(--font-size-body);
+    font-weight: bold;
+    font-family: Menlo, 'Courier New', monospace;
+  }
+
+  &__signal-desc {
+    display: block;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__percentile {
+    text-align: center;
+  }
+
+  &__percentile-num {
+    display: block;
+    font-size: var(--font-size-h1);
+    font-weight: bold;
+  }
+
+  &__percentile-label {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__stats {
+    display: flex;
+    margin-bottom: var(--spacing-md);
+    border: 1rpx solid var(--color-bg-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  &__stat {
+    flex: 1;
+    padding: var(--spacing-sm) 0;
+    text-align: center;
+    background: var(--color-bg-panel);
+
+    & + & {
+      border-left: 1rpx solid var(--color-bg-border);
+    }
+  }
+
+  &__stat-label {
+    display: block;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__stat-value {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-small);
+    font-weight: bold;
+
+    &--low { color: var(--color-success); }
+    &--high { color: var(--color-danger); }
+  }
+
+  &__chart-wrap {
+    position: relative;
+  }
+
+  &__canvas {
+    width: 100%;
+    height: 400rpx;
+  }
+
+  &__tooltip {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    padding: 6rpx 16rpx;
+    border-radius: var(--radius-sm);
+    background: rgba(10, 132, 255, 0.92);
+    color: #ffffff;
+    font-size: var(--font-size-caption);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  &__window {
+    margin: var(--spacing-sm) 0;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    background: rgba(48, 209, 88, 0.1);
+    color: var(--color-success);
+    font-size: var(--font-size-small);
+  }
+
+  &__season-scroll {
+    width: 100%;
+    margin-top: var(--spacing-sm);
+  }
+
+  &__season {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: var(--spacing-sm);
+    padding: 0 var(--spacing-xs);
+  }
+
+  &__season-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6rpx;
+    width: 64rpx;
+  }
+
+  &__season-bar {
+    width: 32rpx;
+    border-radius: 6rpx 6rpx 0 0;
+    opacity: 0.85;
+  }
+
+  &__season-label {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__season-hint {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+}

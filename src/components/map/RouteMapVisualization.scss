@@ -1,0 +1,35 @@
+.route-map {
+  width: 100%;
+
+  &__legend {
+    display: flex;
+    gap: 32rpx;
+    padding: 16rpx 8rpx 0;
+  }
+
+  &__legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    font-size: 22rpx;
+    color: var(--color-text-placeholder);
+  }
+
+  &__dot {
+    width: 16rpx;
+    height: 16rpx;
+    border-radius: 9999rpx;
+
+    &--od {
+      background: #0a84ff;
+    }
+
+    &--hub {
+      background: #ff9f0a;
+    }
+
+    &--plain {
+      background: #8e8e93;
+    }
+  }
+}

@@ -1,0 +1,185 @@
+@import '../../styles/mixins.scss';
+
+.profile-page {
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-2xl);
+
+  &__user {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  &__avatar {
+    @include flex-center;
+    width: 108rpx;
+    height: 108rpx;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, rgba(10, 132, 255, 0.25), rgba(10, 132, 255, 0.05));
+    border: 2rpx solid var(--color-accent-cyan);
+    font-size: 52rpx;
+    color: var(--color-accent-cyan);
+  }
+
+  &__name {
+    display: block;
+    font-size: var(--font-size-h2);
+    font-weight: bold;
+  }
+
+  &__stats {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__tab {
+    flex: 1;
+    @include flex-center;
+    padding: var(--spacing-sm) 0;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-panel);
+    border: 2rpx solid var(--color-bg-border);
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+
+    &.is-active {
+      border-color: var(--color-accent-cyan);
+      color: var(--color-accent-cyan);
+      background: rgba(10, 132, 255, 0.08);
+    }
+  }
+
+  &__list {
+    min-height: 300rpx;
+  }
+
+  &__empty {
+    @include flex-center;
+    padding: var(--spacing-2xl) 0;
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-small);
+  }
+
+  &__item {
+    @include flex-between;
+    @include card;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__item-route {
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+  }
+
+  &__item-sub {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__item-side {
+    text-align: right;
+  }
+
+  &__item-price {
+    display: block;
+    font-size: var(--font-size-body);
+    font-weight: bold;
+    color: var(--color-accent-cyan);
+  }
+
+  &__item-remove {
+    font-size: var(--font-size-small);
+    color: var(--color-danger);
+  }
+
+  // 收藏价涨跌标签
+  &__trend {
+    display: block;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+
+    &.is-down {
+      color: var(--color-success);
+      font-weight: bold;
+    }
+
+    &.is-up {
+      color: var(--color-danger);
+    }
+  }
+
+  &__item-go {
+    font-size: var(--font-size-small);
+    color: var(--color-accent-cyan);
+  }
+
+  &__clear {
+    text-align: center;
+    padding: var(--spacing-md);
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-small);
+  }
+
+  &__menu {
+    @include card;
+    margin-top: var(--spacing-lg);
+    overflow: hidden;
+  }
+
+  &__menu-item {
+    @include flex-between;
+    padding: var(--spacing-md);
+    border-bottom: 1rpx solid var(--color-bg-border);
+    font-size: var(--font-size-body);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__menu-arrow {
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-h3);
+  }
+
+  &__menu-value {
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-small);
+  }
+
+  &__version {
+    margin-top: var(--spacing-xl);
+    text-align: center;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+}
+
+// TOGO 添加按钮（虚线框）
+.profile-page__add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-md) 0;
+  border: 2rpx dashed var(--color-bg-border);
+  border-radius: var(--radius-md);
+  color: var(--color-accent-cyan);
+  font-size: var(--font-size-body);
+}
+
+// 四个 tab 时字号收紧
+.profile-page__tab {
+  font-size: var(--font-size-small);
+}

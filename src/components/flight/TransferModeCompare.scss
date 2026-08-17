@@ -1,0 +1,93 @@
+@import '../../styles/mixins.scss';
+
+.tmc {
+  @include card;
+  padding: var(--spacing-md);
+
+  &__tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__tab {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-panel);
+    border: 2rpx solid var(--color-bg-border);
+    text-align: center;
+
+    &.is-active {
+      border-color: var(--color-accent-cyan);
+      background: rgba(10, 132, 255, 0.08);
+
+      .tmc__tab-title {
+        color: var(--color-accent-cyan);
+      }
+    }
+  }
+
+  &__tab-title {
+    display: block;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__tab-price {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+    font-family: Menlo, 'Courier New', monospace;
+  }
+
+  &__dim {
+    display: flex;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1rpx solid var(--color-bg-border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__dim-label {
+    width: 200rpx;
+    flex-shrink: 0;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__dim-values {
+    flex: 1;
+  }
+
+  &__dim-value {
+    display: block;
+    font-size: var(--font-size-body);
+
+    &.is-winner {
+      color: var(--color-accent-cyan);
+      font-weight: bold;
+    }
+  }
+
+  &__dim-other {
+    display: block;
+    margin-top: 2rpx;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+
+  &__cta {
+    @include flex-center;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    border-radius: var(--radius-md);
+    background: var(--color-accent-cyan);
+    color: #ffffff;
+    font-weight: bold;
+    font-size: var(--font-size-body);
+  }
+}

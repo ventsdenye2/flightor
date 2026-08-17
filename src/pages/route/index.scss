@@ -1,0 +1,106 @@
+@import '../../styles/mixins.scss';
+
+.route-page {
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-2xl);
+
+  &--empty {
+    @include flex-center;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding-top: 200rpx;
+    color: var(--color-text-secondary);
+  }
+
+  &__empty-icon {
+    font-size: 96rpx;
+  }
+
+  &__empty-btn {
+    padding: var(--spacing-sm) var(--spacing-xl);
+    border-radius: var(--radius-full);
+    background: var(--color-accent-cyan);
+    color: #ffffff;
+    font-weight: bold;
+  }
+
+  &__overview {
+    @include flex-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-md);
+    border: 2rpx solid var(--color-bg-border);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, rgba(10, 132, 255, 0.08), var(--color-bg-card) 55%);
+    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+  }
+
+  &__price {
+    display: block;
+    font-size: 64rpx;
+    font-weight: bold;
+    color: var(--color-accent-orange);
+  }
+
+  &__saving {
+    display: block;
+    margin-top: 4rpx;
+    color: var(--color-success);
+    font-size: var(--font-size-body);
+    font-weight: bold;
+  }
+
+  &__duration {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-small);
+    color: var(--color-text-placeholder);
+  }
+
+  &__fav {
+    padding: 10rpx 28rpx;
+    border-radius: var(--radius-full);
+    border: 2rpx solid var(--color-bg-border);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-small);
+
+    &.is-active {
+      border-color: var(--color-warning);
+      color: var(--color-warning);
+    }
+  }
+
+  &__section {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  &__section-title {
+    display: block;
+    font-size: var(--font-size-h3);
+    font-weight: bold;
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__hub-more {
+    text-align: center;
+    padding: var(--spacing-md);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-small);
+  }
+
+  &__alert-btn {
+    @include flex-center;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    border-radius: var(--radius-md);
+    border: 2rpx solid var(--color-accent-cyan);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-body);
+    font-weight: bold;
+  }
+
+  &__disclaimer {
+    text-align: center;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+}

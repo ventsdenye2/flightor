@@ -1,0 +1,594 @@
+// src/i18n/index.ts — 中英双语切换（词典 + 语言状态 + 工具函数）
+import { makeAutoObservable } from 'mobx'
+import { getStorage, setStorage } from '../utils/storage'
+import { formatDuration, formatDurationCN } from '../utils/format'
+
+export type Locale = 'zh' | 'en'
+
+class LocaleStore {
+  locale: Locale = getStorage<Locale>('locale', 'zh')
+
+  constructor() {
+    makeAutoObservable(this)
+  }
+
+  setLocale(locale: Locale) {
+    this.locale = locale
+    setStorage('locale', locale)
+  }
+
+  toggle() {
+    this.setLocale(this.locale === 'zh' ? 'en' : 'zh')
+  }
+}
+
+export const localeStore = new LocaleStore()
+
+/** 时长格式化：中文「13小时30分」/ 英文「13h 30min」 */
+export function fd(minutes: number): string {
+  return localeStore.locale === 'zh' ? formatDurationCN(minutes) : formatDuration(minutes)
+}
+
+/** 月份短名（季节热力图） */
+export function monthLabel(i: number): string {
+  if (localeStore.locale === 'zh') return `${i + 1}月`
+  return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i]
+}
+
+type Dict = Record<string, string>
+
+const zh: Dict = {
+  // 通用
+  'common.priceRef': '价格仅供参考，以实际购买为准',
+  'common.saveAmt': '省{amt}',
+  'common.dropPct': '直降{pct}%',
+  'common.detail': '详情',
+
+  // 搜索面板
+  'search.depart': '出发',
+  'search.arrive': '到达',
+  'search.departDate': '出发日',
+  'search.returnDate': '返程日',
+  'search.oneway': '单程',
+  'search.roundtrip': '往返',
+  'search.budget': '预算范围',
+  'search.min': '最低',
+  'search.max': '最高',
+  'search.transfer': '中转',
+  'search.any': '不限',
+  'search.directOnly': '仅直飞',
+  'search.allowTransfer': '允许中转',
+  'search.interests': '兴趣',
+  'search.cta': '🔍 搜索最优航线',
+  'search.searching': '正在计算最优航线…',
+  'search.sameCity': '出发地与目的地不能相同',
+  'search.circle': '出发圈',
+  'search.destCircle': '到达圈',
+  'search.onlySelf': '仅本场',
+  'search.include': '同圈比价：{list}',
+  'search.earliest': '最早出发',
+  'search.latest': '最晚出发',
+  'search.stay': '游玩天数',
+  'search.stayDays': '{min} - {max} 天',
+  'search.stayMin': '最短',
+  'search.stayMax': '最长',
+  'interest.food': '🍜 美食',
+  'interest.culture': '🏛 文化',
+  'interest.nature': '🌿 自然',
+  'interest.shopping': '🛍 购物',
+  'interest.nightlife': '🌙 夜生活',
+
+  // 首页
+  'index.flash': '⚡ 今日低价',
+  'index.via': '经 {hub} 中转',
+  'index.savePct': '省{pct}%',
+  'index.recent': '🕐 最近搜索',
+  'index.footer': '价格与签证信息仅供参考',
+  'share.app': '✈️ 国际航线比价',
+  'share.timeline': '国际航线比价',
+  'share.route': '✈️ {o}→{d} 省{amt}',
+  'share.hub': '🌃 {city}中转停留全攻略',
+  'share.explore': '🌏 全球中转枢纽玩法地图',
+
+  // 机场搜索弹层
+  'as.placeholder': '搜索机场 / 城市 / 三字码',
+  'as.empty': '未找到匹配的机场',
+
+  // 搜索结果页
+  'sp.all': '全部方案',
+  'sp.self': '🔀 自行中转',
+  'sp.official': '🔗 联程/直飞',
+  'sp.list': '📋 列表',
+  'sp.map': '🗺 地图',
+  'sp.loading': '正在计算最优航线组合…',
+  'sp.empty': '暂无符合条件的航线',
+  'sp.emptyTip': '尝试扩大日期范围或提高预算上限',
+  'sp.best': '⭐ 最优组合',
+  'sp.altOrigin': '邻近机场 {iata} 出发',
+  'sp.altDest': '邻近落地 {iata}',
+  'sp.altDate': '错峰 {date} 出发',
+  'sp.sortPrice': '价格优先',
+  'sp.sortDuration': '时长优先',
+
+  // 价差矩阵
+  'mx.title': '📊 价差矩阵',
+  'mx.sub': '机场×日期，点格子聚焦该组合',
+  'mx.picked': '当前聚焦：{o} · {d} 出发',
+  'mx.clear': '恢复全部',
+
+  // 航班卡
+  'fcc.punctuality': '准点率 {pct}%',
+  'fcc.total': '全程 {dur}',
+  'fcc.layoverAt': '{city} 停留 {dur}',
+  'fcc.stayShort': '{iata}停留{dur}',
+  'fcc.baggage': '⚠️ 行李自取',
+  'fcc.self': '🔀 自行中转',
+  'fcc.airline': '🔗 航司联程',
+  'fcc.direct': '✈️ 直飞',
+  'fcc.playTitle': '🌃 可选停留玩法',
+  'fcc.playDesc': '{city}停留{dur} · {visa}，点击卡片查看详细玩法与风险说明',
+
+  // 风险弹窗
+  'risk.title': '⚠️ 自行中转风险告知',
+  'risk.transferAt': '{hub} 中转',
+  'risk.visa.free': '✅ 过境免签',
+  'risk.visa.conditional': '⚠️ 条件免签',
+  'risk.visa.required': '🛂 需办理签证',
+  'risk.i1.title': '两张独立客票，误机自担',
+  'risk.i1.desc': '前段延误导致后段误机时，后段航司无免费改签义务',
+  'risk.i2.title': '行李需自取重挂',
+  'risk.i2.desc': '中转站需提取行李、重新值机托运，请预留充足时间',
+  'risk.i3.title': '{city}入境要求',
+  'risk.i4.title': '停留{dur}',
+  'risk.i4.desc': '建议出关游玩前确认回程值机截止时间，至少提前3小时返回机场',
+  'risk.disclaimer': '免责声明',
+  'risk.disclaimerText':
+    '自行中转为两张独立客票，前段延误导致后段误机时，后段航司无改签/退票义务，相关损失需自行承担。本小程序仅提供航线信息聚合与参考，不承担因航班变动、签证政策变化、行李中转等产生的任何损失。价格仅供参考，以实际购买为准。',
+  'risk.check': '我已了解自行中转风险，愿意自行承担',
+  'risk.cancel': '返回列表',
+  'risk.confirm': '确认继续',
+
+  // 中转模式对比
+  'tmc.self': '🔀 自行中转',
+  'tmc.airline': '🔗 航司联程',
+  'tmc.price': '💰 总价',
+  'tmc.baggage': '🧳 行李政策',
+  'tmc.missRisk': '⛓️ 误机风险',
+  'tmc.visa': '🛂 签证要求',
+  'tmc.play': '🌃 停留玩法',
+  'tmc.mct': '⏱ 最短衔接',
+  'tmc.duration': '🕐 总时长',
+  'tmc.protection': '🛡 保障等级',
+  'tmc.flex': '🔄 灵活性',
+  'tmc.low': '低',
+  'tmc.mid': '中',
+  'tmc.high': '高',
+  'tmc.needVisa': '需要',
+  'tmc.noVisaSelf': '无需（不出关另计）',
+  'tmc.noVisa': '无需',
+  'tmc.playYes': '✓ 可出关游玩',
+  'tmc.playNo': '✗ 衔接时间短',
+  'tmc.no': '✗',
+  'tmc.yes': '✓',
+  'tmc.winner': ' ←优胜',
+  'tmc.vs': '对比：{v}',
+  'tmc.pickSelf': '选择自行中转 · {p}',
+  'tmc.pickAirline': '选择航司联程 · {p}',
+  'tmc.baggageSelf': '需自取重挂，分段限额',
+  'tmc.baggageAirline': '行李直挂到目的地',
+  'tmc.protSelf': '无衔接保障',
+  'tmc.protAirline': '航司全程保障改签',
+  'tmc.flexSelf': '可自由拆分行程/停留游玩',
+  'tmc.flexAirline': '整票规则，改期费用高',
+
+  // 路线详情
+  'route.expired': '方案数据已过期',
+  'route.research': '重新搜索',
+  'route.fav': '☆ 收藏',
+  'route.faved': '★ 已收藏',
+  'route.favOn': '已收藏',
+  'route.favOff': '已取消收藏',
+  'route.vsDirect': '比直飞省 {amt}（直降{pct}%）',
+  'route.total': '全程 {dur} · {airline}',
+  'route.compare': '⚖️ 中转模式对比',
+  'route.play': '🌃 {city} 停留玩法',
+  'route.guide': '查看 {city} 完整攻略 →',
+  'route.trend': '📈 价格趋势 · {o}→{d}',
+  'route.alert': '🔔 设置降价提醒',
+  'route.disclaimer': '价格仅供参考，以实际购买为准 · 自行中转风险需自行承担',
+  'route.bookTitle': '预订提示',
+  'route.bookContent': '联程票请前往航司官网或您常用的购票平台搜索该航班号预订。本小程序不参与交易。',
+  'route.gotIt': '知道了',
+  'route.selfPicked': '已选自行中转方案',
+  'route.playTip': '停留超8小时，可出关体验中转玩法',
+
+  // 行程单
+  'bpi.title': '🎫 行程单',
+  'bpi.passenger': '旅客',
+  'bpi.terminal': '航站楼 {t}',
+  'bpi.gate': '登机口 {g}',
+  'bpi.share': '📤 分享行程',
+  'bpi.export': '🖼 导出图片',
+  'bpi.shareHint': '分享标题：{title}',
+  'bpi.layover': '🔀 {iata} 中转停留 {dur}',
+  'bpi.rendering': '生成行程图…',
+  'bpi.saved': '已保存到相册',
+  'bpi.auth': '请在设置中授权相册权限',
+  'bpi.failed': '导出失败，请重试',
+  'bpi.brandLine': '行程单',
+  'bpi.watermark': '价格仅供参考',
+
+  // 价格趋势
+  'ptp.buy': '建议买入',
+  'ptp.wait': '建议观望',
+  'ptp.neutral': '中性区间',
+  'ptp.buyDesc': '当前价格处于30日低位区间',
+  'ptp.waitDesc': '当前价格处于30日高位区间',
+  'ptp.neutralDesc': '价格处于均值附近，可设置降价提醒',
+  'ptp.percentile': '价格分位',
+  'ptp.current': '当前',
+  'ptp.avg': '30日均价',
+  'ptp.low': '30日最低',
+  'ptp.high': '30日最高',
+  'ptp.lowest': '最低 {p}',
+  'ptp.window': '🎯 最优预订窗口：出发前 {a}-{b} 天',
+  'ptp.seasonHint': '绿=淡季低价 · 橙=平季 · 红=旺季高价',
+
+  // Hub 体验卡
+  'hec.stay': '实际停留 {dur}',
+  'hec.plan': '{h}小时玩法',
+  'hec.budget': '💵 预算参考：{cur} {min} - {max}',
+  'src.xiaohongshu': '📕 小红书',
+  'src.reddit': '👽 Reddit',
+  'src.backpackers': '🎒 背包客',
+  'src.official': '🏢 官方',
+
+  // 探索页
+  'ex.title': '🌏 中转枢纽',
+  'ex.collection': '🧭 停留玩法',
+  'ex.plan': '{h}小时玩法',
+  'ex.visaAll': '全部',
+  'ex.themes': '🎯 主题精选',
+  'ex.deals': '🔥 热门低价',
+  'ex.activities': '{n} 个玩法',
+  'ex.visa.free': '免签/落地签',
+  'ex.visa.conditional': '条件免签',
+  'ex.visa.required': '需签证',
+
+  // 我的
+  'pf.name': '飞友',
+  'pf.tabTogo': '📍 想去',
+  'pf.emptyTogo': '还没有想去的目的地，添加后低价优先推送',
+  'pf.addTogo': '＋ 添加想去的目的地',
+  'togo.badge': '想去',
+  'togo.search': '搜航线',
+  'pf.stats': '收藏 {f} · 历史 {h} · 提醒 {a}',
+  'pf.tabFav': '★ 收藏',
+  'pf.tabHistory': '🕐 历史',
+  'pf.tabAlerts': '🔔 提醒',
+  'pf.emptyFav': '暂无收藏，去搜索页发现好航线吧',
+  'pf.emptyHistory': '暂无搜索历史',
+  'pf.emptyAlerts': '暂无降价提醒，在路线详情页可订阅',
+  'pf.remove': '移除',
+  'pf.down': '降{amt}',
+  'pf.up': '涨{amt}',
+  'pf.flat': '持平',
+  'pf.savedAt': '收藏价 {p}',
+  'pf.again': '再次搜索 →',
+  'pf.clear': '清空历史',
+  'pf.target': '目标价 {p}',
+  'pf.cancel': '取消',
+  'pf.newAlert': '🔔 新建降价提醒',
+  'pf.about': 'ℹ️ 关于 & 免责声明',
+  'pf.lang': '🌐 语言',
+  'pf.version': 'v1.0 · 价格仅供参考，以实际购买为准',
+
+  // Hub 详情
+  'hd.none': '暂无该枢纽的攻略数据',
+  'hd.searchVia': '🔍 搜索经 {city} 中转的航线',
+  'hd.note': '签证与过境政策可能随时调整，出行前请以官方最新公告为准。',
+
+  // 降价提醒
+  'pa.title': '🔔 降价盯梢',
+  'pa.desc': '价格低于目标价时，通过微信订阅消息通知你',
+  'pa.target': '目标价',
+  'pa.hint': '参考当前价 {p}，建议设为 85% 以下',
+  'pa.cta': '订阅降价提醒',
+  'pa.created': '提醒已创建',
+  'pa.note': '提醒由云端定时任务检查价格触发；正式上线需在微信公众平台配置订阅消息模板。',
+
+  // 网络
+  'net.rate': '请求过于频繁，请60秒后再试',
+  'net.error': '网络异常，数据可能非最新',
+
+  // 导航/tabBar
+  'nav.search': '搜索结果',
+  'nav.route': '路线详情',
+  'nav.hubDetail': '枢纽城市详情',
+  'nav.priceAlert': '降价提醒',
+  'nav.about': '关于',
+  'nav.index': '航线比价',
+  'tab.search': '搜索',
+  'tab.explore': '探索',
+  'tab.profile': '我的',
+
+  // 地图图例
+  'map.od': '出发/到达',
+  'map.hub': '中转枢纽',
+  'map.airport': '其他机场'
+}
+
+const en: Dict = {
+  'common.priceRef': 'Prices are for reference only',
+  'common.saveAmt': 'Save {amt}',
+  'common.dropPct': '{pct}% off',
+  'common.detail': 'Details',
+
+  'search.depart': 'From',
+  'search.arrive': 'To',
+  'search.departDate': 'Depart',
+  'search.returnDate': 'Return',
+  'search.oneway': 'One-way',
+  'search.roundtrip': 'Round-trip',
+  'search.budget': 'Budget',
+  'search.min': 'Min',
+  'search.max': 'Max',
+  'search.transfer': 'Stops',
+  'search.any': 'Any',
+  'search.directOnly': 'Non-stop',
+  'search.allowTransfer': 'With stops',
+  'search.interests': 'Interests',
+  'search.cta': '🔍 Find Best Routes',
+  'search.searching': 'Calculating best routes…',
+  'search.sameCity': 'Origin and destination must differ',
+  'search.circle': 'Departure area',
+  'search.destCircle': 'Arrival area',
+  'search.onlySelf': 'This airport',
+  'search.include': 'Also compares: {list}',
+  'search.earliest': 'Earliest',
+  'search.latest': 'Latest',
+  'search.stay': 'Trip length',
+  'search.stayDays': '{min} - {max} days',
+  'search.stayMin': 'Min',
+  'search.stayMax': 'Max',
+  'interest.food': '🍜 Food',
+  'interest.culture': '🏛 Culture',
+  'interest.nature': '🌿 Nature',
+  'interest.shopping': '🛍 Shopping',
+  'interest.nightlife': '🌙 Nightlife',
+
+  'index.flash': "⚡ Today's Deals",
+  'index.via': 'via {hub}',
+  'index.savePct': 'Save {pct}%',
+  'index.recent': '🕐 Recent Searches',
+  'index.footer': 'Prices and visa info for reference only',
+  'share.app': '✈️ Route deals',
+  'share.timeline': 'Route deals',
+  'share.route': '✈️ {o}→{d} save {amt}',
+  'share.hub': '🌃 {city} layover guide',
+  'share.explore': '🌏 Global hub experience map',
+
+  // Airport selector
+  'as.placeholder': 'Search airport / city / IATA',
+  'as.empty': 'No matching airports',
+
+  'sp.all': 'All',
+  'sp.self': '🔀 Self-transfer',
+  'sp.official': '🔗 Airline/Non-stop',
+  'sp.list': '📋 List',
+  'sp.map': '🗺 Map',
+  'sp.loading': 'Calculating best combos…',
+  'sp.empty': 'No matching routes',
+  'sp.emptyTip': 'Try wider dates or a higher budget',
+  'sp.best': '⭐ Best combo',
+  'sp.altOrigin': 'From nearby {iata}',
+  'sp.altDest': 'Arrive {iata}',
+  'sp.altDate': 'Flex date {date}',
+  'sp.sortPrice': 'Cheapest',
+  'sp.sortDuration': 'Fastest',
+
+  'mx.title': '📊 Price Matrix',
+  'mx.sub': 'Airport × date, tap a cell to focus',
+  'mx.picked': 'Focused: {o} · {d}',
+  'mx.clear': 'Show all',
+
+  'fcc.punctuality': 'On-time {pct}%',
+  'fcc.total': 'Total {dur}',
+  'fcc.layoverAt': '{dur} layover in {city}',
+  'fcc.stayShort': '{dur} at {iata}',
+  'fcc.baggage': '⚠️ Recheck bags',
+  'fcc.self': '🔀 Self-transfer',
+  'fcc.airline': '🔗 Airline connection',
+  'fcc.direct': '✈️ Non-stop',
+  'fcc.playTitle': '🌃 Layover experiences',
+  'fcc.playDesc': '{dur} in {city} · {visa}. Tap for details and risk notes',
+
+  'risk.title': '⚠️ Self-transfer Risk Notice',
+  'risk.transferAt': 'Transfer at {hub}',
+  'risk.visa.free': '✅ Visa-free transit',
+  'risk.visa.conditional': '⚠️ Conditional visa-free',
+  'risk.visa.required': '🛂 Visa required',
+  'risk.i1.title': 'Two separate tickets',
+  'risk.i1.desc': 'If a delay causes a missed connection, the next airline owes no free rebooking',
+  'risk.i2.title': 'Bags must be rechecked',
+  'risk.i2.desc': 'Collect and recheck baggage at the hub; allow ample time',
+  'risk.i3.title': '{city} entry requirements',
+  'risk.i4.title': '{dur} layover',
+  'risk.i4.desc': 'Confirm check-in deadlines before leaving the airport; return at least 3 hours early',
+  'risk.disclaimer': 'Disclaimer',
+  'risk.disclaimerText':
+    'Self-transfer itineraries consist of separate tickets. If a delay causes a missed connection, the onward carrier owes no rebooking or refund; losses are borne by the traveler. This mini program aggregates route information for reference only and accepts no liability for schedule changes, visa policy changes or baggage transfer. Prices are for reference only.',
+  'risk.check': 'I understand and accept the risks',
+  'risk.cancel': 'Back',
+  'risk.confirm': 'Continue',
+
+  'tmc.self': '🔀 Self-transfer',
+  'tmc.airline': '🔗 Airline',
+  'tmc.price': '💰 Price',
+  'tmc.baggage': '🧳 Baggage',
+  'tmc.missRisk': '⛓️ Misconnection risk',
+  'tmc.visa': '🛂 Visa',
+  'tmc.play': '🌃 Layover fun',
+  'tmc.mct': '⏱ Min connection',
+  'tmc.duration': '🕐 Duration',
+  'tmc.protection': '🛡 Protection',
+  'tmc.flex': '🔄 Flexibility',
+  'tmc.low': 'Low',
+  'tmc.mid': 'Medium',
+  'tmc.high': 'High',
+  'tmc.needVisa': 'Required',
+  'tmc.noVisaSelf': 'Not needed if airside',
+  'tmc.noVisa': 'Not needed',
+  'tmc.playYes': '✓ Explore the city',
+  'tmc.playNo': '✗ Short connection',
+  'tmc.no': '✗',
+  'tmc.yes': '✓',
+  'tmc.winner': ' ←Winner',
+  'tmc.vs': 'vs: {v}',
+  'tmc.pickSelf': 'Choose self-transfer · {p}',
+  'tmc.pickAirline': 'Choose airline · {p}',
+  'tmc.baggageSelf': 'Recheck required, per-segment limits',
+  'tmc.baggageAirline': 'Checked through to destination',
+  'tmc.protSelf': 'No connection protection',
+  'tmc.protAirline': 'Airline-protected rebooking',
+  'tmc.flexSelf': 'Split freely, enjoy layovers',
+  'tmc.flexAirline': 'One ticket, costly changes',
+
+  'route.expired': 'This itinerary has expired',
+  'route.research': 'Search again',
+  'route.fav': '☆ Save',
+  'route.faved': '★ Saved',
+  'route.favOn': 'Saved',
+  'route.favOff': 'Removed',
+  'route.vsDirect': '{amt} cheaper than non-stop ({pct}% off)',
+  'route.total': 'Total {dur} · {airline}',
+  'route.compare': '⚖️ Transfer Mode Comparison',
+  'route.play': '🌃 Layover in {city}',
+  'route.guide': 'Full {city} guide →',
+  'route.trend': '📈 Price Trend · {o}→{d}',
+  'route.alert': '🔔 Set Price Alert',
+  'route.disclaimer': 'Prices for reference only · Self-transfer at your own risk',
+  'route.bookTitle': 'Booking tip',
+  'route.bookContent': 'Search this flight number on the airline site or your booking platform. This mini program is not involved in transactions.',
+  'route.gotIt': 'Got it',
+  'route.selfPicked': 'Self-transfer plan selected',
+  'route.playTip': '8h+ layover: time to explore the city',
+
+  'bpi.title': '🎫 Itinerary',
+  'bpi.passenger': 'Passenger',
+  'bpi.terminal': 'Terminal {t}',
+  'bpi.gate': 'Gate {g}',
+  'bpi.share': '📤 Share',
+  'bpi.export': '🖼 Save Image',
+  'bpi.shareHint': 'Share title: {title}',
+  'bpi.layover': '🔀 {dur} layover at {iata}',
+  'bpi.rendering': 'Rendering…',
+  'bpi.saved': 'Saved to album',
+  'bpi.auth': 'Please allow album access in Settings',
+  'bpi.failed': 'Export failed, try again',
+  'bpi.brandLine': 'Itinerary',
+  'bpi.watermark': 'Prices for reference',
+
+  'ptp.buy': 'Buy now',
+  'ptp.wait': 'Wait',
+  'ptp.neutral': 'Neutral',
+  'ptp.buyDesc': 'Price is in the 30-day low range',
+  'ptp.waitDesc': 'Price is in the 30-day high range',
+  'ptp.neutralDesc': 'Near average; consider a price alert',
+  'ptp.percentile': 'Percentile',
+  'ptp.current': 'Now',
+  'ptp.avg': '30d Avg',
+  'ptp.low': '30d Low',
+  'ptp.high': '30d High',
+  'ptp.lowest': 'Low {p}',
+  'ptp.window': '🎯 Best booking window: {a}-{b} days before departure',
+  'ptp.seasonHint': 'Green=low season · Orange=mid · Red=peak',
+
+  'hec.stay': 'Actual layover {dur}',
+  'hec.plan': '{h}h plan',
+  'hec.budget': '💵 Budget: {cur} {min} - {max}',
+  'src.xiaohongshu': '📕 RED',
+  'src.reddit': '👽 Reddit',
+  'src.backpackers': '🎒 Backpackers',
+  'src.official': '🏢 Official',
+
+  'ex.title': '🌏 Transit Hubs',
+  'ex.collection': '🧭 Layovers',
+  'ex.plan': '{h}h plan',
+  'ex.visaAll': 'All',
+  'ex.themes': '🎯 By Interest',
+  'ex.deals': '🔥 Hot Deals',
+  'ex.activities': '{n} activities',
+  'ex.visa.free': 'Visa-free',
+  'ex.visa.conditional': 'Conditional',
+  'ex.visa.required': 'Visa required',
+
+  'pf.name': 'Traveler',
+  'pf.tabTogo': '📍 To-go',
+  'pf.emptyTogo': 'No to-go destinations yet — deals for them get priority',
+  'pf.addTogo': '＋ Add a destination',
+  'togo.badge': 'To-go',
+  'togo.search': 'Search',
+  'pf.stats': 'Saved {f} · History {h} · Alerts {a}',
+  'pf.tabFav': '★ Saved',
+  'pf.tabHistory': '🕐 History',
+  'pf.tabAlerts': '🔔 Alerts',
+  'pf.emptyFav': 'Nothing saved yet — go find great routes',
+  'pf.emptyHistory': 'No search history',
+  'pf.emptyAlerts': 'No price alerts; subscribe on a route page',
+  'pf.remove': 'Remove',
+  'pf.down': 'Down {amt}',
+  'pf.up': 'Up {amt}',
+  'pf.flat': 'Flat',
+  'pf.savedAt': 'Saved at {p}',
+  'pf.again': 'Search again →',
+  'pf.clear': 'Clear history',
+  'pf.target': 'Target {p}',
+  'pf.cancel': 'Cancel',
+  'pf.newAlert': '🔔 New Price Alert',
+  'pf.about': 'ℹ️ About & Disclaimer',
+  'pf.lang': '🌐 Language',
+  'pf.version': 'v1.0 · Prices for reference only',
+
+  'hd.none': 'No guide for this hub yet',
+  'hd.searchVia': '🔍 Search routes via {city}',
+  'hd.note': 'Visa and transit policies may change; check official sources before travel.',
+
+  'pa.title': '🔔 Price Watch',
+  'pa.desc': 'Get a WeChat notification when the price drops below your target',
+  'pa.target': 'Target price',
+  'pa.hint': 'Current price {p}; setting below 85% is recommended',
+  'pa.cta': 'Subscribe',
+  'pa.created': 'Alert created',
+  'pa.note': 'Alerts are triggered by a scheduled cloud task; a subscribe-message template must be configured before launch.',
+
+  'net.rate': 'Too many requests, retry in 60s',
+  'net.error': 'Network error, data may be stale',
+
+  'nav.search': 'Results',
+  'nav.route': 'Route Details',
+  'nav.hubDetail': 'Hub City',
+  'nav.priceAlert': 'Price Alert',
+  'nav.about': 'About',
+  'nav.index': 'Flights',
+  'tab.search': 'Search',
+  'tab.explore': 'Explore',
+  'tab.profile': 'Me',
+
+  'map.od': 'Origin/Dest',
+  'map.hub': 'Hubs',
+  'map.airport': 'Airports'
+}
+
+const DICTS: Record<Locale, Dict> = { zh, en }
+
+/** 取词：t('fcc.total', { dur: '13小时30分' }) */
+export function t(key: string, params?: Record<string, string | number>): string {
+  let text = DICTS[localeStore.locale][key] ?? DICTS.zh[key] ?? key
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v))
+    }
+  }
+  return text
+}

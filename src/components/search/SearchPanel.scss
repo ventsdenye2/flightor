@@ -1,0 +1,258 @@
+// SearchPanel 样式 — iOS inset grouped 表单
+@import '../../styles/mixins.scss';
+
+.search-panel {
+  padding: var(--spacing-md) var(--spacing-lg);
+
+  // 分组卡（inset grouped list）
+  &__group {
+    position: relative;
+    background: var(--color-bg-card);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__group--pad {
+    padding: var(--spacing-md);
+  }
+
+  // 对称 OD（机票式）：左右大三字码 + 中间航线
+  &__od {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
+  &__od-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    &--right {
+      align-items: flex-end;
+      text-align: right;
+    }
+  }
+
+  &__od-iata {
+    font-size: 64rpx;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--color-text-primary);
+  }
+
+  &__od-city {
+    margin-top: 6rpx;
+    font-size: var(--font-size-body);
+    color: var(--color-text-primary);
+  }
+
+  &__od-airport {
+    margin-top: 2rpx;
+    max-width: 100%;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+    @include ellipsis;
+  }
+
+  // 中间航线：虚线 + 飞机，点击换向
+  &__od-mid {
+    flex-shrink: 0;
+    width: 168rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10rpx;
+  }
+
+  &__od-track {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  &__od-line {
+    flex: 1;
+    height: 2rpx;
+    background: repeating-linear-gradient(90deg, var(--color-bg-disabled) 0 10rpx, transparent 10rpx 18rpx);
+  }
+
+  &__od-plane {
+    margin: 0 10rpx;
+    font-size: 32rpx;
+    color: var(--color-accent-cyan);
+  }
+
+  &__od-swap {
+    @include flex-center;
+    padding: 2rpx 20rpx;
+    border-radius: var(--radius-full);
+    background: rgba(10, 132, 255, 0.16);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-small);
+  }
+
+  // 行 label（日期列沿用）
+  &__row-label {
+    width: 96rpx;
+    flex-shrink: 0;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  // 行分割线（与内容对齐缩进）
+  &__divider {
+    height: 1rpx;
+    margin-left: var(--spacing-md);
+    background: var(--color-bg-border);
+  }
+
+  // 出发窗口：双列日期
+  &__dates {
+    display: flex;
+    align-items: stretch;
+  }
+
+  &__date-col {
+    flex: 1;
+  }
+
+  &__date-field {
+    padding: var(--spacing-md);
+  }
+
+  &__date-value {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  &__vline {
+    width: 1rpx;
+    margin: var(--spacing-md) 0;
+    background: var(--color-bg-border);
+  }
+
+  // 卡内区块
+  &__block {
+    margin-top: var(--spacing-md);
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  &__block-label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__block-header {
+    @include flex-between;
+    margin-bottom: var(--spacing-xs);
+
+    .search-panel__block-label {
+      margin-bottom: 0;
+    }
+  }
+
+  &__block-value {
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  // segmented control（iOS 风格）
+  &__seg {
+    display: flex;
+    gap: 4rpx;
+    padding: 4rpx;
+    background: var(--color-bg-panel);
+    border-radius: var(--radius-sm);
+  }
+
+  &__seg-item {
+    flex: 1;
+    text-align: center;
+    padding: 14rpx 0;
+    border-radius: 10rpx;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+
+    &.is-active {
+      background: rgba(10, 132, 255, 0.18);
+      color: var(--color-accent-cyan);
+      font-weight: 600;
+    }
+  }
+
+  // 同圈比价提示
+  &__hint {
+    display: block;
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  // 滑杆行
+  &__slider-row {
+    display: flex;
+    align-items: center;
+  }
+
+  &__slider-label {
+    width: 80rpx;
+    flex-shrink: 0;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__slider {
+    flex: 1;
+    margin: 12rpx 0;
+  }
+
+  // 兴趣多选 pill
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  &__chip {
+    padding: 12rpx 30rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-small);
+
+    &.is-active {
+      background: rgba(10, 132, 255, 0.16);
+      color: var(--color-accent-cyan);
+      font-weight: 600;
+    }
+  }
+
+  // CTA
+  &__cta {
+    @include flex-center;
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-cyan);
+    color: #ffffff;
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+
+    &.is-loading {
+      background: var(--color-bg-disabled);
+      color: var(--color-text-disabled);
+    }
+  }
+}
