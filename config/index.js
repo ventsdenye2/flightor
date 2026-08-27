@@ -1,4 +1,16 @@
 // FlightOR Taro 编译配置
+const fs = require('fs')
+const path = require('path')
+
+// 构建时从密钥文件（已 gitignore）注入；缺失时为空串，前端自动回退 mock/云函数
+function loadKeyFile(filename) {
+  try {
+    return fs.readFileSync(path.join(__dirname, '..', filename), 'utf-8').trim()
+  } catch (e) {
+    return ''
+  }
+}
+
 const config = {
   projectName: 'FlightOR',
   date: '2026-7-23',
@@ -12,7 +24,10 @@ const config = {
   sourceRoot: 'src',
   outputRoot: 'dist',
   plugins: ['@tarojs/plugin-platform-weapp', '@tarojs/plugin-framework-react'],
-  defineConstants: {},
+  defineConstants: {
+    OPENROUTER_KEY: JSON.stringify(loadKeyFile('openrouter.txt')),
+    SERPAPI_KEY: JSON.stringify(loadKeyFile('serpapi.txt'))
+  },
   copy: {
     patterns: [{ from: 'src/assets/', to: 'dist/assets/' }],
     options: {}

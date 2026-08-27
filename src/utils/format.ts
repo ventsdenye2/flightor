@@ -58,3 +58,16 @@ export function daysFromNow(n: number): string {
   d.setDate(d.getDate() + n)
   return toDateString(d)
 }
+
+const WEEK_ZH = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const WEEK_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTH_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** ISO 日期 → 「10月11日 周日」 / 「Oct 11, Sun」 */
+export function humanDate(iso: string, locale: 'zh' | 'en'): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return locale === 'zh'
+    ? `${d.getMonth() + 1}月${d.getDate()}日 ${WEEK_ZH[d.getDay()]}`
+    : `${MONTH_EN[d.getMonth()]} ${d.getDate()}, ${WEEK_EN[d.getDay()]}`
+}

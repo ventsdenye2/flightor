@@ -117,18 +117,12 @@
     font-weight: normal;
   }
 
-  &__iata {
-    display: block;
-    margin-top: 4rpx;
-    font-size: var(--font-size-small);
-    color: var(--color-accent-cyan);
-    font-weight: bold;
-  }
-
   &__city {
     display: block;
-    font-size: var(--font-size-caption);
-    color: var(--color-text-placeholder);
+    margin-top: 4rpx;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-text-primary);
     @include ellipsis;
   }
 
@@ -336,4 +330,12 @@
     font-size: var(--font-size-small);
     color: var(--color-text-secondary);
   }
+}
+
+// 往返价说明（避免只画去程被误读为单程价）
+.fcc__roundtrip {
+  display: block;
+  margin-top: 4rpx;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-placeholder);
 }

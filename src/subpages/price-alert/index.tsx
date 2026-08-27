@@ -4,6 +4,7 @@ import { View, Text, Slider } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import AirportSelector from '../../components/search/AirportSelector'
+import LoginSheet from '../../components/common/LoginSheet'
 import { userStore } from '../../stores/userStore'
 import { t, localeStore } from '../../i18n'
 import { formatPrice } from '../../utils/format'
@@ -16,6 +17,7 @@ function PriceAlertPage() {
   const currentPrice = Number(router.params?.current ?? 5000)
   const [targetPrice, setTargetPrice] = useState(Math.round(currentPrice * 0.85))
   const [selectorFor, setSelectorFor] = useState<'origin' | 'destination' | ''>('')
+  const [showLogin, setShowLogin] = useState(false)
   const locale = localeStore.locale
 
   useEffect(() => {
@@ -23,6 +25,11 @@ function PriceAlertPage() {
   }, [locale])
 
   const handleSubscribe = async () => {
+    // 盯价推送需绑定用户身份（openid），未登录先引导登录
+    if (!userStore.isLoggedIn) {
+      setShowLogin(true)
+      return
+    }
     // 订阅消息授权（模板 ID 上线前在公众平台申请后替换）
     try {
       // @ts-ignore requestSubscribeMessage 需真机验证
@@ -84,6 +91,9 @@ function PriceAlertPage() {
         onSelect={iata => (selectorFor === 'origin' ? setOrigin(iata) : setDestination(iata))}
         onClose={() => setSelectorFor('')}
       />
+
+      {/* 登录弹层：登录成功后自动继续创建盯价 */}
+      <LoginSheet visible={showLogin} onClose={() => setShowLogin(false)} onSuccess={handleSubscribe} />
     </View>
   )
 }

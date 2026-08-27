@@ -14,6 +14,8 @@ interface FlightCompareCardProps {
   savingsPercent: number
   /** 已本地化的徽章（最优组合/邻近机场/错峰日期） */
   badges?: string[]
+  /** 往返价说明（如「往返总价 · 含回程 · 玩 7-14 天」），避免只画去程让用户误读价格 */
+  roundtripNote?: string
   isExpanded?: boolean
   onToggleExpand?: () => void
   onSelect?: (flight: FlightOption) => void
@@ -49,7 +51,6 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
       <View className='fcc__timeline'>
         <View className='fcc__endpoint'>
           <Text className='font-code fcc__time'>{formatTime(seg.departTime)}</Text>
-          <Text className='font-code fcc__iata'>{seg.origin}</Text>
           <Text className='fcc__city'>{cityOf(seg.origin, locale)}</Text>
         </View>
 
@@ -70,7 +71,6 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
             {formatTime(seg.arriveTime)}
             <Text className='fcc__cross-day'>{crossDayMark(seg.departTime, seg.arriveTime)}</Text>
           </Text>
-          <Text className='font-code fcc__iata'>{seg.destination}</Text>
           <Text className='fcc__city'>{cityOf(seg.destination, locale)}</Text>
         </View>
       </View>
@@ -79,7 +79,7 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
 })
 
 function FlightCompareCard(props: FlightCompareCardProps) {
-  const { flight, savingsAmount, savingsPercent, badges, isExpanded, onToggleExpand, onSelect } = props
+  const { flight, savingsAmount, savingsPercent, badges, roundtripNote, isExpanded, onToggleExpand, onSelect } = props
   const locale = localeStore.locale
 
   return (
@@ -120,6 +120,7 @@ function FlightCompareCard(props: FlightCompareCardProps) {
         <View className='fcc__price-main'>
           <Text className='font-code fcc__price'>{formatPrice(flight.totalPrice)}</Text>
           <Text className='fcc__total-duration'>{t('fcc.total', { dur: fd(flight.totalDuration) })}</Text>
+          {roundtripNote && <Text className='fcc__roundtrip'>{roundtripNote}</Text>}
         </View>
         {savingsAmount > 0 ? (
           <View className='fcc__savings'>
@@ -146,7 +147,7 @@ function FlightCompareCard(props: FlightCompareCardProps) {
           {flight.hub && (
             <Text className='fcc__hub-info'>
               {' · '}
-              {t('fcc.stayShort', { iata: flight.hub.iata, dur: fd(flight.hub.layoverMinutes) })}
+              {t('fcc.stayShort', { city: cityOf(flight.hub.iata, locale), dur: fd(flight.hub.layoverMinutes) })}
             </Text>
           )}
         </View>

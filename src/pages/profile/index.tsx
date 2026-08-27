@@ -1,14 +1,15 @@
-// pages/profile — 我的（收藏/历史/订阅/语言/设置）
+// pages/profile — 我的（登录/收藏/历史/订阅/语言/设置）
 import { useEffect, useState } from 'react'
-import { View, Text } from '@tarojs/components'
+import { View, Text, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { userStore } from '../../stores/userStore'
 import { searchStore } from '../../stores/searchStore'
 import { flightStore } from '../../stores/flightStore'
 import { currentPriceOf } from '../../services/flightService'
-import { findAirport, airportCity } from '../../mocks/airports'
+import { findAirport, airportCity, cityOf } from '../../mocks/airports'
 import AirportSelector from '../../components/search/AirportSelector'
+import LoginSheet from '../../components/common/LoginSheet'
 import { t, localeStore } from '../../i18n'
 import { formatPrice } from '../../utils/format'
 import './index.scss'
@@ -25,7 +26,9 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 function ProfilePage() {
   const [tab, setTab] = useState<TabKey>('togo')
   const [showTogoSelector, setShowTogoSelector] = useState(false)
+  const [showLogin, setShowLogin] = useState(false)
   const locale = localeStore.locale
+  const profile = userStore.profile
 
   // 导航标题跟随语言
   useEffect(() => {
@@ -43,25 +46,51 @@ function ProfilePage() {
   // 语言切换：同步 tabBar 文案
   const toggleLanguage = () => {
     localeStore.toggle()
-    const tabs = ['tab.search', 'tab.explore', 'tab.profile']
+    const tabs = ['tab.search', 'tab.explore', 'tab.plan', 'tab.profile']
     tabs.forEach((key, index) => {
       Taro.setTabBarItem({ index, text: t(key) })
     })
   }
 
+  const handleLogout = () => {
+    Taro.showModal({
+      title: t('login.logoutTitle'),
+      content: t('login.logoutConfirm'),
+      success: res => {
+        if (res.confirm) {
+          userStore.logout()
+          Taro.showToast({ title: t('login.logoutDone'), icon: 'none' })
+        }
+      }
+    })
+  }
+
   return (
     <View className='profile-page'>
-      {/* 用户卡 */}
-      <View className='profile-page__user'>
-        <View className='profile-page__avatar'>
-          <Text>✈</Text>
-        </View>
+      {/* 用户卡：未登录时作为登录入口 */}
+      <View
+        className='profile-page__user'
+        hoverClass={profile ? 'none' : 'tap-dim'}
+        onClick={() => !profile && setShowLogin(true)}
+      >
+        {profile?.avatarUrl ? (
+          <Image className='profile-page__avatar profile-page__avatar--img' src={profile.avatarUrl} mode='aspectFill' />
+        ) : (
+          <View className='profile-page__avatar'>
+            <Text>✈</Text>
+          </View>
+        )}
         <View>
-          <Text className='profile-page__name'>{t('pf.name')}</Text>
+          <Text className='profile-page__name'>
+            {profile ? profile.nickname || t('pf.name') : t('login.entry')}
+          </Text>
           <Text className='profile-page__stats'>
-            {t('pf.stats', { f: userStore.favorites.length, h: userStore.history.length, a: userStore.alerts.length })}
+            {profile
+              ? t('pf.stats', { f: userStore.favorites.length, h: userStore.history.length, a: userStore.alerts.length })
+              : t('login.entryDesc')}
           </Text>
         </View>
+        {!profile && <Text className='profile-page__login-arrow'>›</Text>}
       </View>
 
       {/* Tab */}
@@ -140,8 +169,8 @@ function ProfilePage() {
                   }}
                 >
                   <View className='profile-page__item-main'>
-                    <Text className='font-code profile-page__item-route'>
-                      {fav.flight.segments[0]?.origin} → {fav.flight.segments[fav.flight.segments.length - 1]?.destination}
+                    <Text className='profile-page__item-route'>
+                      {cityOf(fav.flight.segments[0]?.origin ?? '', locale)} → {cityOf(fav.flight.segments[fav.flight.segments.length - 1]?.destination ?? '', locale)}
                     </Text>
                     <Text className='profile-page__item-sub'>
                       {fav.flight.airline} · {t('pf.savedAt', { p: formatPrice(fav.flight.totalPrice) })}
@@ -190,8 +219,8 @@ function ProfilePage() {
                   onClick={() => rerunSearch(h.params.origin, h.params.destination)}
                 >
                   <View className='profile-page__item-main'>
-                    <Text className='font-code profile-page__item-route'>
-                      {h.params.origin} → {h.params.destination}
+                    <Text className='profile-page__item-route'>
+                      {cityOf(h.params.origin, locale)} → {cityOf(h.params.destination, locale)}
                     </Text>
                     <Text className='profile-page__item-sub'>{h.params.departDate}</Text>
                   </View>
@@ -215,7 +244,7 @@ function ProfilePage() {
             userStore.alerts.map(a => (
               <View key={a.id} className='profile-page__item'>
                 <View className='profile-page__item-main'>
-                  <Text className='font-code profile-page__item-route'>{a.origin} → {a.destination}</Text>
+                  <Text className='profile-page__item-route'>{cityOf(a.origin, locale)} → {cityOf(a.destination, locale)}</Text>
                   <Text className='profile-page__item-sub'>{t('pf.target', { p: formatPrice(a.targetPrice) })}</Text>
                 </View>
                 <Text className='profile-page__item-remove' onClick={() => userStore.removeAlert(a.id)}>
@@ -251,6 +280,11 @@ function ProfilePage() {
           <Text>{t('pf.about')}</Text>
           <Text className='profile-page__menu-arrow'>›</Text>
         </View>
+        {profile && (
+          <View className='profile-page__menu-item' hoverClass='tap-dim' onClick={handleLogout}>
+            <Text className='profile-page__menu-danger'>{t('login.logout')}</Text>
+          </View>
+        )}
       </View>
 
       <View className='profile-page__version'>
@@ -264,6 +298,9 @@ function ProfilePage() {
         onSelect={iata => userStore.addTogo(iata)}
         onClose={() => setShowTogoSelector(false)}
       />
+
+      {/* 登录弹层 */}
+      <LoginSheet visible={showLogin} onClose={() => setShowLogin(false)} />
     </View>
   )
 }

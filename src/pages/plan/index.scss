@@ -1,0 +1,586 @@
+// subpages/trip-plan 样式 — 时间轴行程
+@import '../../styles/mixins.scss';
+
+.trip-plan {
+  padding: var(--spacing-lg);
+
+  &--center {
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    color: var(--color-text-secondary);
+  }
+
+  &__loading-icon,
+  &__error-icon {
+    font-size: 72rpx;
+  }
+
+  &__loading-text,
+  &__error-text {
+    font-size: var(--font-size-body);
+    color: var(--color-text-secondary);
+  }
+
+  &__retry {
+    padding: var(--spacing-sm) var(--spacing-2xl);
+    border-radius: var(--radius-full);
+    background: var(--color-accent-cyan);
+    color: #ffffff;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+  }
+
+  // 概述
+  &__summary {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: rgba(10, 132, 255, 0.12);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__summary-text {
+    font-size: var(--font-size-body);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+  }
+
+  // 逐日卡
+  &__day {
+    background: var(--color-bg-card);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__day-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__day-badge {
+    padding: 2rpx 16rpx;
+    border-radius: var(--radius-full);
+    background: rgba(10, 132, 255, 0.18);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+  }
+
+  &__day-title {
+    flex: 1;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  &__day-date {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  // 时间轴条目
+  &__item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) 0;
+  }
+
+  &__item-time {
+    width: 92rpx;
+    flex-shrink: 0;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__item-icon {
+    flex-shrink: 0;
+    font-size: var(--font-size-small);
+  }
+
+  &__item-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  &__item-title {
+    font-size: var(--font-size-small);
+    color: var(--color-text-primary);
+  }
+
+  &__item-note {
+    margin-top: 4rpx;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  // 预算 / 提醒
+  &__section-title {
+    display: block;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__budget,
+  &__reminders {
+    background: var(--color-bg-card);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__budget-row {
+    @include flex-between;
+    padding: 10rpx 0;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+
+    &--total {
+      border-top: 1rpx solid var(--color-bg-border);
+      margin-top: var(--spacing-xs);
+      padding-top: var(--spacing-sm);
+      color: var(--color-text-primary);
+      font-weight: 600;
+    }
+  }
+
+  &__reminder {
+    display: block;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+  }
+
+  &__disclaimer {
+    text-align: center;
+    padding: var(--spacing-md) 0 var(--spacing-2xl);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-disabled);
+  }
+}
+
+// 需求对话形态：撑满视口
+.trip-plan--chat {
+  padding: 0;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+// ===== 需求对话（talk with agent）=====
+.agent-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &__body {
+    flex: 1;
+    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+    box-sizing: border-box;
+  }
+
+  // 消息气泡
+  &__msg {
+    max-width: 80%;
+    width: fit-content;
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-body);
+    line-height: 1.5;
+    word-break: break-word;
+
+    &--assistant {
+      background: var(--color-bg-card);
+      color: var(--color-text-primary);
+      border-radius: 4rpx var(--radius-md) var(--radius-md) var(--radius-md);
+    }
+
+    &--user {
+      margin-left: auto;
+      background: var(--color-accent-cyan);
+      color: #ffffff;
+      border-radius: var(--radius-md) 4rpx var(--radius-md) var(--radius-md);
+    }
+
+    &--thinking {
+      color: var(--color-text-placeholder);
+    }
+  }
+
+  // 示例问法 chips
+  &__suggests {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin: var(--spacing-md) 0;
+  }
+
+  &__suggest {
+    width: fit-content;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 2rpx solid var(--color-bg-border);
+    border-radius: var(--radius-full);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-small);
+  }
+
+  // 需求拆解完成参数卡
+  &__card {
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: rgba(10, 132, 255, 0.12);
+    border: 2rpx solid rgba(10, 132, 255, 0.3);
+  }
+
+  &__card-title {
+    display: block;
+    font-size: var(--font-size-caption);
+    color: var(--color-accent-cyan);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__card-route {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
+    font-size: 40rpx;
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  &__card-arrow {
+    color: var(--color-accent-cyan);
+  }
+
+  &__card-cities {
+    font-size: var(--font-size-small);
+    font-weight: normal;
+    color: var(--color-text-secondary);
+    margin-left: var(--spacing-xs);
+
+    // 摘要卡主文字（去字母化后城市名即路线主体）
+    &--big {
+      margin-left: 0;
+      font-size: 40rpx;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+  }
+
+  &__card-rows {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs) var(--spacing-md);
+    margin-top: var(--spacing-sm);
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__card-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) 0;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-cyan);
+    color: #ffffff;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+  }
+
+  // ===== 备选攻略卡 =====
+  &__plans {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+  }
+
+  &__plan {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-card);
+    border: 2rpx solid var(--color-bg-border);
+  }
+
+  &__plan-head {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__plan-label {
+    flex-shrink: 0;
+    padding: 4rpx 16rpx;
+    border-radius: var(--radius-full);
+    background: rgba(10, 132, 255, 0.12);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+  }
+
+  &__plan-route {
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+    @include ellipsis;
+  }
+
+  &__plan-body {
+    @include flex-between;
+    align-items: flex-end;
+  }
+
+  &__plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-h3);
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  &__plan-saving {
+    padding: 2rpx 10rpx;
+    border-radius: var(--radius-sm);
+    background: rgba(48, 209, 88, 0.15);
+    color: var(--color-success);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+  }
+
+  &__plan-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2rpx;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+    max-width: 60%;
+    text-align: right;
+  }
+
+  &__plan-pick {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm) 0;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-cyan);
+    color: #ffffff;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+
+    &.is-disabled {
+      opacity: 0.4;
+    }
+  }
+
+  &__plan-all {
+    align-self: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-small);
+  }
+
+  // ===== 多城路线卡 =====
+  &__plan--route {
+    .agent-chat__plan-head {
+      flex-wrap: wrap;
+      align-items: center;
+    }
+  }
+
+  // 推荐标签差异化配色：省钱绿 / 城市多蓝（默认）/ 夜航紫
+  &__plan-label--cheapest {
+    background: rgba(48, 209, 88, 0.15);
+    color: var(--color-success);
+  }
+
+  &__plan-label--mostNights {
+    background: rgba(191, 90, 242, 0.15);
+    color: #bf5af2;
+  }
+
+  &__plan-price-cap {
+    font-size: var(--font-size-caption);
+    font-weight: normal;
+    color: var(--color-text-secondary);
+    margin-right: 2rpx;
+  }
+
+  &__plan-nights {
+    padding: 2rpx 12rpx;
+    border-radius: var(--radius-full);
+    background: rgba(48, 209, 88, 0.12);
+    color: var(--color-success);
+  }
+
+  &__route-toggle {
+    padding: 2rpx 12rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+  }
+
+  // 航段明细：默认折叠（max-height 动画），is-open 展开
+  &__rlegs {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.25s ease, margin-top 0.3s ease, padding-top 0.3s ease;
+
+    &.is-open {
+      max-height: 3000rpx;
+      opacity: 1;
+      margin-top: var(--spacing-sm);
+      padding-top: var(--spacing-sm);
+      border-top: 2rpx solid var(--color-bg-border);
+    }
+  }
+
+  &__rleg {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 10rpx 0;
+  }
+
+  // 段序号圆点
+  &__rleg-no {
+    flex-shrink: 0;
+    width: 36rpx;
+    height: 36rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+  }
+
+  &__rleg-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rpx;
+    min-width: 0;
+  }
+
+  &__rleg-od {
+    font-size: var(--font-size-small);
+    color: var(--color-text-primary);
+    @include ellipsis;
+  }
+
+  &__rleg-sub {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+  }
+
+  &__rleg-side {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4rpx;
+  }
+
+  &__rleg-tag {
+    padding: 2rpx 10rpx;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-caption);
+
+    &--real {
+      background: rgba(48, 209, 88, 0.15);
+      color: var(--color-success);
+    }
+
+    &--est {
+      background: rgba(142, 142, 147, 0.15);
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__rleg-price {
+    font-size: var(--font-size-small);
+    color: var(--color-text-primary);
+  }
+
+  // 确认提示：引用条样式
+  &__plan-note {
+    display: block;
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-left: 4rpx solid var(--color-accent-cyan);
+    border-radius: var(--radius-sm);
+    background: rgba(10, 132, 255, 0.08);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+  }
+
+  // 输入栏
+  &__footer {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg) calc(var(--spacing-sm) + env(safe-area-inset-bottom));
+    background: var(--color-bg-card);
+  }
+
+  &__reset {
+    width: 68rpx;
+    height: 68rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-h3);
+    flex-shrink: 0;
+  }
+
+  &__input {
+    flex: 1;
+    height: 68rpx;
+    padding: 0 var(--spacing-md);
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-body);
+  }
+
+  &__placeholder {
+    color: var(--color-text-placeholder);
+  }
+
+  &__send {
+    flex-shrink: 0;
+    padding: 14rpx 32rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-cyan);
+    color: #ffffff;
+    font-size: var(--font-size-body);
+    font-weight: 600;
+
+    &.is-disabled {
+      opacity: 0.4;
+    }
+  }
+}

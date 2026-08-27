@@ -4,8 +4,9 @@ import { View, Text, Swiper, SwiperItem, Image } from '@tarojs/components'
 import Taro, { useShareAppMessage } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { getAllHubs } from '../../mocks/hubs'
-import { AIRPORTS } from '../../mocks/airports'
+import { AIRPORTS, cityOf } from '../../mocks/airports'
 import { HOT_ROUTES, sortByTogo } from '../../mocks/deals'
+import DemoBadge from '../../components/common/DemoBadge'
 import WorldMap, { MapAirportPoint } from '../../components/map/WorldMap'
 import { searchStore } from '../../stores/searchStore'
 import { flightStore } from '../../stores/flightStore'
@@ -106,6 +107,7 @@ function ExplorePage() {
 
   return (
     <View className='explore-page'>
+      <DemoBadge />
       <View className='explore-page__header'>
         <Text className='explore-page__title'>{t('ex.title')}</Text>
       </View>
@@ -228,7 +230,7 @@ function ExplorePage() {
           <View key={`${r.from}-${r.to}`} className='explore-page__deal' hoverClass='tap-dim' onClick={() => handleDeal(r)}>
             <View className='explore-page__deal-main'>
               <View className='explore-page__deal-route-row'>
-                <Text className='font-code explore-page__deal-route'>{r.from} → {r.to}</Text>
+                <Text className='explore-page__deal-route'>{cityOf(r.from, locale)} → {cityOf(r.to, locale)}</Text>
                 {userStore.isTogo(r.to) && (
                   <View className='explore-page__deal-togo'>
                     <Text>{t('togo.badge')}</Text>

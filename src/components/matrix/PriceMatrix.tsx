@@ -38,7 +38,6 @@ function PriceMatrix({ matrix, picked, onPick }: PriceMatrixProps) {
         <View className='pmx__corner' />
         {origins.map(o => (
           <View key={o} className='pmx__col-head'>
-            <Text className='font-code pmx__col-iata'>{o}</Text>
             <Text className='pmx__col-city'>{cityOf(o, locale)}</Text>
           </View>
         ))}
@@ -73,7 +72,7 @@ function PriceMatrix({ matrix, picked, onPick }: PriceMatrixProps) {
       {picked && (
         <View className='pmx__picked-bar'>
           <Text className='pmx__picked-text'>
-            {t('mx.picked', { o: picked.origin, d: picked.date.slice(5) })}
+            {t('mx.picked', { o: cityOf(picked.origin, locale), d: picked.date.slice(5) })}
           </Text>
           <View className='pmx__clear' hoverClass='tap-dim' onClick={() => onPick(picked.origin, picked.date)}>
             <Text>{t('mx.clear')}</Text>

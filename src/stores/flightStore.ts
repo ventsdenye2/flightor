@@ -130,17 +130,17 @@ export class FlightStore {
     return [...this.result.selfTransfer, ...this.result.airlineTransfer, ...this.result.direct]
   }
 
+  /** 当前视图基础列表（未套预算/偏好筛选） */
+  private get viewList(): FlightOption[] {
+    if (!this.result) return []
+    if (this.viewMode === 'self') return [...this.result.selfTransfer]
+    if (this.viewMode === 'official') return [...this.result.airlineTransfer, ...this.result.direct]
+    return this.allOptions
+  }
+
   /** 当前视图下展示的方案（按预算/中转偏好筛选，按价格或时长排序） */
   get visibleOptions(): FlightOption[] {
-    if (!this.result) return []
-    let list: FlightOption[]
-    if (this.viewMode === 'self') {
-      list = [...this.result.selfTransfer]
-    } else if (this.viewMode === 'official') {
-      list = [...this.result.airlineTransfer, ...this.result.direct]
-    } else {
-      list = this.allOptions
-    }
+    let list = this.viewList
     // 搜索条件筛选：预算区间 + 中转偏好
     const p = this.lastParams
     if (p) {
@@ -155,6 +155,18 @@ export class FlightStore {
     return list.sort((a, b) =>
       this.sortBy === 'duration' ? a.totalDuration - b.totalDuration : a.totalPrice - b.totalPrice
     )
+  }
+
+  /** 被预算/偏好筛掉的方案数（空态提示用） */
+  get filteredOutCount(): number {
+    return this.viewList.length - this.visibleOptions.length
+  }
+
+  /** 放宽筛选：预算全区间 + 中转不限（仅影响当前结果视图） */
+  relaxFilters() {
+    if (!this.lastParams) return
+    this.lastParams.budgetRange = [500, 20000]
+    this.lastParams.transferPref = 'any'
   }
 
   savingsOf(flight: FlightOption): { amount: number; percent: number } {

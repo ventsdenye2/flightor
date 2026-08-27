@@ -3,14 +3,16 @@ import { useEffect } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useShareAppMessage, useShareTimeline } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
+import DemoBadge from '../../components/common/DemoBadge'
 import SearchPanel from '../../components/search/SearchPanel'
 import { searchStore } from '../../stores/searchStore'
 import { flightStore } from '../../stores/flightStore'
 import { userStore } from '../../stores/userStore'
 import { HOT_ROUTES, sortByTogo } from '../../mocks/deals'
+import { cityOf } from '../../mocks/airports'
 import { t, localeStore } from '../../i18n'
 import type { SearchParams } from '../../types/flight'
-import { daysFromNow } from '../../utils/format'
+import { daysFromNow, humanDate } from '../../utils/format'
 import './index.scss'
 
 function IndexPage() {
@@ -46,6 +48,7 @@ function IndexPage() {
 
   return (
     <View className='index-page'>
+      <DemoBadge />
       <SearchPanel onSearch={handleSearch} isLoading={flightStore.isLoading} />
 
       {/* 价格闪报 */}
@@ -64,9 +67,9 @@ function IndexPage() {
                 onClick={() => handleHotRoute(r)}
               >
                 <View className='index-page__hot-route'>
-                  <Text className='font-code'>{r.from}</Text>
+                  <Text>{cityOf(r.from, localeStore.locale)}</Text>
                   <Text className='index-page__hot-arrow'>→</Text>
-                  <Text className='font-code'>{r.to}</Text>
+                  <Text>{cityOf(r.to, localeStore.locale)}</Text>
                   {userStore.isTogo(r.to) && (
                     <View className='index-page__hot-togo'>
                       <Text>{t('togo.badge')}</Text>
@@ -102,8 +105,8 @@ function IndexPage() {
                   handleSearch(searchStore.params)
                 }}
               >
-                <Text className='font-code'>{h.params.origin} → {h.params.destination}</Text>
-                <Text className='index-page__history-date'>{h.params.departDate}</Text>
+                <Text>{cityOf(h.params.origin, localeStore.locale)} → {cityOf(h.params.destination, localeStore.locale)}</Text>
+                <Text className='index-page__history-date'>{humanDate(h.params.departDate, localeStore.locale)}</Text>
               </View>
             ))}
           </View>

@@ -4,6 +4,7 @@ export default defineAppConfig({
     'pages/search/index',
     'pages/route/index',
     'pages/explore/index',
+    'pages/plan/index',
     'pages/profile/index'
   ],
   subPackages: [
@@ -24,6 +25,7 @@ export default defineAppConfig({
     list: [
       { pagePath: 'pages/index/index', text: '搜索', iconPath: 'assets/tab-search.png', selectedIconPath: 'assets/tab-search-active.png' },
       { pagePath: 'pages/explore/index', text: '探索', iconPath: 'assets/tab-explore.png', selectedIconPath: 'assets/tab-explore-active.png' },
+      { pagePath: 'pages/plan/index', text: '规划', iconPath: 'assets/tab-plan.png', selectedIconPath: 'assets/tab-plan-active.png' },
       { pagePath: 'pages/profile/index', text: '我的', iconPath: 'assets/tab-profile.png', selectedIconPath: 'assets/tab-profile-active.png' }
     ]
   },

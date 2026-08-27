@@ -2,7 +2,16 @@
 import { makeAutoObservable } from 'mobx'
 import type { SearchParams, Interest } from '../types/flight'
 import { nearbyAirports } from '../mocks/airports'
-import { daysFromNow } from '../utils/format'
+import { daysFromNow, toDateString } from '../utils/format'
+
+// 邻近机场候选池半径（公里）；圈内机场默认全选，用户可逐个取消
+const CIRCLE_POOL_KM = 300
+
+function extrasOf(iata: string): string[] {
+  return nearbyAirports(iata, CIRCLE_POOL_KM)
+    .slice(1)
+    .map(a => a.iata)
+}
 
 export class SearchStore {
   origin = 'SZX'
@@ -14,10 +23,10 @@ export class SearchStore {
   /** 往返：游玩天数区间 */
   stayMin = 7
   stayMax = 14
-  /** 出发圈半径（公里，0=仅本场） */
-  circleRadiusKm = 200
-  /** 到达圈半径（公里，0=仅本场） */
-  destCircleRadiusKm = 200
+  /** 出发圈：除主机场外勾选的邻近机场 */
+  originExtras: string[] = extrasOf('SZX')
+  /** 到达圈：除主落地机场外勾选的邻近机场 */
+  destExtras: string[] = extrasOf('LHR')
   budgetMin = 2000
   budgetMax = 10000
   transferPref: 'any' | 'direct' | 'transfer' = 'any'
@@ -28,22 +37,31 @@ export class SearchStore {
   }
 
   setOrigin(iata: string) {
+    if (iata === this.origin) return
     this.origin = iata
+    this.originExtras = extrasOf(iata)
   }
 
   setDestination(iata: string) {
+    if (iata === this.destination) return
     this.destination = iata
+    this.destExtras = extrasOf(iata)
   }
 
   swapOD() {
     const t = this.origin
     this.origin = this.destination
     this.destination = t
+    const e = this.originExtras
+    this.originExtras = this.destExtras
+    this.destExtras = e
   }
 
   setDepartDate(date: string) {
-    this.departDate = date
-    if (this.departDateEnd < date) this.departDateEnd = date
+    // 不允许选择今天之前的日期（Picker 已限制，此处为跨天会话等场景兜底）
+    const today = toDateString(new Date())
+    this.departDate = date < today ? today : date
+    if (this.departDateEnd < this.departDate) this.departDateEnd = this.departDate
   }
 
   setDepartDateEnd(date: string) {
@@ -59,12 +77,16 @@ export class SearchStore {
     this.stayMax = Math.max(this.stayMin, max)
   }
 
-  setCircleRadius(km: number) {
-    this.circleRadiusKm = km
+  toggleOriginExtra(iata: string) {
+    this.originExtras = this.originExtras.includes(iata)
+      ? this.originExtras.filter(x => x !== iata)
+      : [...this.originExtras, iata]
   }
 
-  setDestCircleRadius(km: number) {
-    this.destCircleRadiusKm = km
+  toggleDestExtra(iata: string) {
+    this.destExtras = this.destExtras.includes(iata)
+      ? this.destExtras.filter(x => x !== iata)
+      : [...this.destExtras, iata]
   }
 
   setBudget(min: number, max: number) {
@@ -84,14 +106,14 @@ export class SearchStore {
     }
   }
 
-  /** 出发圈候选机场（含主机场，按距离升序，最多 3 个） */
+  /** 出发圈候选机场（主机场 + 勾选的邻近机场） */
   get originCandidates(): string[] {
-    return nearbyAirports(this.origin, this.circleRadiusKm).map(a => a.iata)
+    return [this.origin, ...this.originExtras]
   }
 
-  /** 到达圈候选机场（含主机场） */
+  /** 到达圈候选机场（主机场 + 勾选的邻近机场） */
   get destinationCandidates(): string[] {
-    return nearbyAirports(this.destination, this.destCircleRadiusKm).map(a => a.iata)
+    return [this.destination, ...this.destExtras]
   }
 
   get params(): SearchParams {

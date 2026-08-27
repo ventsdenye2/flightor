@@ -4,9 +4,10 @@ import { View, Text, Picker, Slider } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { searchStore } from '../../stores/searchStore'
-import { findAirport, airportName, airportCity, nearbyAirports } from '../../mocks/airports'
+import { findAirport, airportName, airportCity, nearbyAirports, distanceKm, Airport } from '../../mocks/airports'
 import AirportSelector from './AirportSelector'
 import { t, localeStore } from '../../i18n'
+import { humanDate, toDateString, daysFromNow } from '../../utils/format'
 import type { SearchParams, Interest } from '../../types/flight'
 import './SearchPanel.scss'
 
@@ -23,8 +24,8 @@ const TRANSFER_PREFS: Array<{ key: 'any' | 'direct' | 'transfer'; label: string 
   { key: 'transfer', label: 'search.allowTransfer' }
 ]
 
-// 出发圈半径选项（公里，0=仅本场）
-const CIRCLE_RADIUS_OPTIONS = [0, 100, 200, 300]
+// 邻近机场候选池半径（与 searchStore 一致）
+const CIRCLE_POOL_KM = 300
 
 function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
   // 机场搜索弹层：当前正在选择的字段
@@ -34,9 +35,12 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
   const originAirport = findAirport(searchStore.origin)
   const destAirport = findAirport(searchStore.destination)
 
-  // 出发圈/到达圈内的邻近机场（不含主机场）
-  const circleMates = nearbyAirports(searchStore.origin, searchStore.circleRadiusKm).slice(1)
-  const destCircleMates = nearbyAirports(searchStore.destination, searchStore.destCircleRadiusKm).slice(1)
+  // 圈内邻近机场候选池（不含主机场），无候选时整块隐藏
+  const originMates = nearbyAirports(searchStore.origin, CIRCLE_POOL_KM).slice(1)
+  const destMates = nearbyAirports(searchStore.destination, CIRCLE_POOL_KM).slice(1)
+
+  const mateLabel = (main: Airport | undefined, a: Airport) =>
+    `${airportCity(a, locale)} · ${main ? Math.round(distanceKm(main, a)) : '?'}km`
 
   const handleSelect = (iata: string) => {
     if (selectorFor === 'origin') searchStore.setOrigin(iata)
@@ -58,7 +62,6 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
       <View className='search-panel__group'>
         <View className='search-panel__od'>
           <View className='search-panel__od-side' hoverClass='tap-dim' onClick={() => setSelectorFor('origin')}>
-            <Text className='font-code search-panel__od-iata'>{searchStore.origin}</Text>
             <Text className='search-panel__od-city'>{originAirport ? airportCity(originAirport, locale) : ''}</Text>
             <Text className='search-panel__od-airport'>{originAirport ? airportName(originAirport, locale) : ''}</Text>
           </View>
@@ -77,7 +80,6 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
             hoverClass='tap-dim'
             onClick={() => setSelectorFor('destination')}
           >
-            <Text className='font-code search-panel__od-iata'>{searchStore.destination}</Text>
             <Text className='search-panel__od-city'>{destAirport ? airportCity(destAirport, locale) : ''}</Text>
             <Text className='search-panel__od-airport'>{destAirport ? airportName(destAirport, locale) : ''}</Text>
           </View>
@@ -88,11 +90,13 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
             className='search-panel__date-col'
             mode='date'
             value={searchStore.departDate}
+            start={toDateString(new Date())}
+            end={daysFromNow(330)}
             onChange={e => searchStore.setDepartDate(e.detail.value)}
           >
             <View className='search-panel__date-field'>
               <Text className='search-panel__row-label'>{t('search.earliest')}</Text>
-              <Text className='font-code search-panel__date-value'>{searchStore.departDate}</Text>
+              <Text className='search-panel__date-value'>{humanDate(searchStore.departDate, locale)}</Text>
             </View>
           </Picker>
           <View className='search-panel__vline' />
@@ -101,57 +105,62 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
             mode='date'
             value={searchStore.departDateEnd}
             start={searchStore.departDate}
+            end={daysFromNow(330)}
             onChange={e => searchStore.setDepartDateEnd(e.detail.value)}
           >
             <View className='search-panel__date-field'>
               <Text className='search-panel__row-label'>{t('search.latest')}</Text>
-              <Text className='font-code search-panel__date-value'>{searchStore.departDateEnd}</Text>
+              <Text className='search-panel__date-value'>{humanDate(searchStore.departDateEnd, locale)}</Text>
             </View>
           </Picker>
         </View>
       </View>
 
-      {/* 比价圈：出发圈 / 到达圈 */}
-      <View className='search-panel__group search-panel__group--pad'>
-        <View className='search-panel__block'>
-          <Text className='search-panel__block-label'>{t('search.circle')}</Text>
-          <View className='search-panel__seg'>
-            {CIRCLE_RADIUS_OPTIONS.map(km => (
-              <View
-                key={km}
-                className={`search-panel__seg-item ${searchStore.circleRadiusKm === km ? 'is-active' : ''}`}
-                onClick={() => searchStore.setCircleRadius(km)}
-              >
-                <Text>{km === 0 ? t('search.onlySelf') : `±${km}km`}</Text>
+      {/* 比价圈：圈内机场逐个勾选（本场锁定）；无邻近机场时整卡隐藏 */}
+      {(originMates.length > 0 || destMates.length > 0) && (
+        <View className='search-panel__group search-panel__group--pad'>
+          {originMates.length > 0 && (
+            <View className='search-panel__block'>
+              <Text className='search-panel__block-label'>{t('search.circle')}</Text>
+              <View className='search-panel__chips'>
+                <View className='search-panel__chip is-locked'>
+                  <Text>{originAirport ? airportCity(originAirport, locale) : searchStore.origin} · {t('search.homeAirport')}</Text>
+                </View>
+                {originMates.map(a => (
+                  <View
+                    key={a.iata}
+                    className={`search-panel__chip ${searchStore.originExtras.includes(a.iata) ? 'is-active' : ''}`}
+                    hoverClass='tap-dim'
+                    onClick={() => searchStore.toggleOriginExtra(a.iata)}
+                  >
+                    <Text>{mateLabel(originAirport, a)}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
-          {circleMates.length > 0 && (
-            <Text className='search-panel__hint'>
-              {t('search.include', { list: circleMates.map(a => `${a.iata} ${airportCity(a, locale)}`).join(' · ') })}
-            </Text>
+            </View>
+          )}
+          {destMates.length > 0 && (
+            <View className='search-panel__block'>
+              <Text className='search-panel__block-label'>{t('search.destCircle')}</Text>
+              <View className='search-panel__chips'>
+                <View className='search-panel__chip is-locked'>
+                  <Text>{destAirport ? airportCity(destAirport, locale) : searchStore.destination} · {t('search.homeAirport')}</Text>
+                </View>
+                {destMates.map(a => (
+                  <View
+                    key={a.iata}
+                    className={`search-panel__chip ${searchStore.destExtras.includes(a.iata) ? 'is-active' : ''}`}
+                    hoverClass='tap-dim'
+                    onClick={() => searchStore.toggleDestExtra(a.iata)}
+                  >
+                    <Text>{mateLabel(destAirport, a)}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
           )}
         </View>
-        <View className='search-panel__block'>
-          <Text className='search-panel__block-label'>{t('search.destCircle')}</Text>
-          <View className='search-panel__seg'>
-            {CIRCLE_RADIUS_OPTIONS.map(km => (
-              <View
-                key={km}
-                className={`search-panel__seg-item ${searchStore.destCircleRadiusKm === km ? 'is-active' : ''}`}
-                onClick={() => searchStore.setDestCircleRadius(km)}
-              >
-                <Text>{km === 0 ? t('search.onlySelf') : `±${km}km`}</Text>
-              </View>
-            ))}
-          </View>
-          {destCircleMates.length > 0 && (
-            <Text className='search-panel__hint'>
-              {t('search.include', { list: destCircleMates.map(a => `${a.iata} ${airportCity(a, locale)}`).join(' · ') })}
-            </Text>
-          )}
-        </View>
-      </View>
+      )}
 
       {/* 行程类型 + 天数/预算 */}
       <View className='search-panel__group search-panel__group--pad'>

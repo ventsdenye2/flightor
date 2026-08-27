@@ -1,8 +1,8 @@
 {
   "miniprogramRoot": "dist/",
   "projectname": "FlightOR",
-  "description": "FlightOR — 长程套利路由专家",
-  "appid": "wxa1ff1a3c59a49fb9",
+  "description": "国际航线比价与中转停留规划",
+  "appid": "wxdf9ff3c30a1d9549",
   "setting": {
     "urlCheck": false,
     "es6": false,
@@ -29,10 +29,12 @@
     }
   },
   "compileType": "miniprogram",
+  "cloudfunctionRoot": "cloud/",
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [],
     "include": []
   },
-  "editorSetting": {}
+  "editorSetting": {},
+  "libVersion": "3.17.0"
 }

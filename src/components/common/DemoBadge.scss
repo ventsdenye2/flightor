@@ -1,0 +1,13 @@
+// DemoBadge — 演示数据角标
+.demo-badge {
+  position: fixed;
+  top: 10rpx;
+  right: 16rpx;
+  z-index: 900;
+  padding: 4rpx 16rpx;
+  border-radius: var(--radius-full);
+  background: rgba(255, 159, 10, 0.18);
+  color: var(--color-warning);
+  font-size: var(--font-size-caption);
+  pointer-events: none;
+}

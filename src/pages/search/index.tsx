@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useShareAppMessage } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
+import DemoBadge from '../../components/common/DemoBadge'
 import FlightCompareCard from '../../components/flight/FlightCompareCard'
 import RiskWarningModal from '../../components/flight/RiskWarningModal'
 import RouteMapVisualization from '../../components/map/RouteMapVisualization'
@@ -49,11 +50,20 @@ function SearchPage() {
   const [showMap, setShowMap] = useState(false)
   const [expandedId, setExpandedId] = useState('')
   const [riskFlight, setRiskFlight] = useState<FlightOption | null>(null)
+  const [loadStep, setLoadStep] = useState(0)
   const locale = localeStore.locale
 
   useEffect(() => {
     Taro.setNavigationBarTitle({ title: t('nav.search') })
   }, [locale])
+
+  // 搜索等待感知：轮播当前正在做什么
+  useEffect(() => {
+    if (!flightStore.isLoading) return
+    setLoadStep(0)
+    const timer = setInterval(() => setLoadStep(i => (i + 1) % 3), 1400)
+    return () => clearInterval(timer)
+  }, [flightStore.isLoading])
 
   useShareAppMessage(() => {
     const p = flightStore.lastParams
@@ -106,14 +116,15 @@ function SearchPage() {
 
   return (
     <View className='search-page'>
+      <DemoBadge />
       {/* 路线摘要栏 */}
       <View className='search-page__summary'>
         <View className='search-page__route'>
-          <Text className='font-code search-page__route-text'>
-            {params?.origin ?? '—'}
+          <Text className='search-page__route-text'>
+            {params ? cityOf(params.origin, locale) : '—'}
             {params && params.originCandidates.length > 1 ? `+${params.originCandidates.length - 1}` : ''}
             {' → '}
-            {params?.destination ?? '—'}
+            {params ? cityOf(params.destination, locale) : '—'}
             {params && params.destinationCandidates.length > 1 ? `+${params.destinationCandidates.length - 1}` : ''}
           </Text>
           <Text className='search-page__route-date'>
@@ -185,6 +196,13 @@ function SearchPage() {
       {/* 结果列表 */}
       {flightStore.isLoading ? (
         <View className='search-page__skeletons'>
+          <Text className='search-page__loading-msg'>
+            {loadStep === 0
+              ? t('sp.load1', { n: params?.originCandidates.length ?? 1 })
+              : loadStep === 1
+                ? t('sp.load2')
+                : t('sp.load3')}
+          </Text>
           {[0, 1, 2].map(i => (
             <View key={i} className='search-page__skeleton'>
               <View className='search-page__sk-line search-page__sk-line--w40' />
@@ -201,7 +219,18 @@ function SearchPage() {
         <View className='search-page__empty'>
           <Text className='search-page__empty-icon'>🛫</Text>
           <Text>{t('sp.empty')}</Text>
-          <Text className='search-page__empty-tip'>{t('sp.emptyTip')}</Text>
+          {flightStore.filteredOutCount > 0 ? (
+            <>
+              <Text className='search-page__empty-tip'>
+                {t('sp.filtered', { n: flightStore.filteredOutCount })}
+              </Text>
+              <View className='search-page__relax' hoverClass='tap-dim' onClick={() => flightStore.relaxFilters()}>
+                <Text>{t('sp.relax')}</Text>
+              </View>
+            </>
+          ) : (
+            <Text className='search-page__empty-tip'>{t('sp.emptyTip')}</Text>
+          )}
         </View>
       ) : (
         <View className='search-page__list'>
@@ -215,10 +244,10 @@ function SearchPage() {
             const firstSeg = f.segments[0]
             const lastSeg = f.segments[f.segments.length - 1]
             if (params && firstSeg.origin !== params.origin) {
-              badges.push(t('sp.altOrigin', { iata: firstSeg.origin }))
+              badges.push(t('sp.altOrigin', { city: cityOf(firstSeg.origin, locale) }))
             }
             if (params && lastSeg.destination !== params.destination) {
-              badges.push(t('sp.altDest', { iata: lastSeg.destination }))
+              badges.push(t('sp.altDest', { city: cityOf(lastSeg.destination, locale) }))
             }
             if (params && firstSeg.departTime.slice(0, 10) !== params.departDate) {
               badges.push(t('sp.altDate', { date: firstSeg.departTime.slice(5, 10) }))
@@ -230,6 +259,11 @@ function SearchPage() {
                 savingsAmount={saving.amount}
                 savingsPercent={saving.percent}
                 badges={badges}
+                roundtripNote={
+                  params?.tripType === 'roundtrip' && params.stayRange
+                    ? t('fcc.roundtrip', { min: params.stayRange[0], max: params.stayRange[1] })
+                    : undefined
+                }
                 isExpanded={expandedId === f.id}
                 onToggleExpand={() => setExpandedId(prev => (prev === f.id ? '' : f.id))}
                 onSelect={handleSelect}

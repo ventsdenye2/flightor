@@ -1,7 +1,8 @@
-// src/stores/userStore.ts — 收藏/历史/设置（持久化到本地缓存）
-import { makeAutoObservable } from 'mobx'
+// src/stores/userStore.ts — 登录态/收藏/历史/设置（持久化到本地缓存）
+import { makeAutoObservable, runInAction } from 'mobx'
 import type { FlightOption, SearchParams } from '../types/flight'
 import { getStorage, setStorage } from '../utils/storage'
+import { wxLogin, UserProfile } from '../services/authService'
 
 export interface FavoriteItem {
   id: string
@@ -28,9 +29,52 @@ export class UserStore {
   alerts: PriceAlert[] = getStorage<PriceAlert[]>('alerts', [])
   // TOGO 清单：想去的目的地（IATA），低价信息流优先展示
   togo: string[] = getStorage<string[]>('togo', [])
+  // 登录态：null 未登录；登录后跨会话持久化
+  profile: UserProfile | null = getStorage<UserProfile | null>('profile', null)
+  isLoggingIn = false
 
   constructor() {
     makeAutoObservable(this)
+  }
+
+  get isLoggedIn(): boolean {
+    return this.profile !== null
+  }
+
+  /** 登录（可携带头像昵称）；失败抛出由调用方提示 */
+  async login(info?: { nickname?: string; avatarUrl?: string }) {
+    if (this.isLoggingIn) return
+    this.isLoggingIn = true
+    try {
+      const profile = await wxLogin(info)
+      runInAction(() => {
+        this.profile = profile
+        setStorage('profile', profile)
+      })
+    } finally {
+      runInAction(() => {
+        this.isLoggingIn = false
+      })
+    }
+  }
+
+  /** 更新头像/昵称（登录后完善资料） */
+  async updateProfile(info: { nickname?: string; avatarUrl?: string }) {
+    if (!this.profile) return
+    const next = {
+      ...this.profile,
+      nickname: info.nickname ?? this.profile.nickname,
+      avatarUrl: info.avatarUrl ?? this.profile.avatarUrl
+    }
+    this.profile = next
+    setStorage('profile', next)
+    // 静默同步到服务端（Mock 模式内部直接返回）
+    wxLogin(next).catch(() => {})
+  }
+
+  logout() {
+    this.profile = null
+    setStorage('profile', null)
   }
 
   isTogo(iata: string): boolean {

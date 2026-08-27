@@ -1,5 +1,5 @@
 // scripts/gen-icons.js — 生成 tabBar PNG 图标（纯 Node，无外部依赖）
-// 输出：src/assets/tab-{search,explore,profile}[-active].png (81x81 RGBA)
+// 输出：src/assets/tab-{search,explore,plan,profile}[-active].png (81x81 RGBA)
 const zlib = require('zlib')
 const fs = require('fs')
 const path = require('path')
@@ -121,16 +121,27 @@ function drawProfile(rgb) {
   return px
 }
 
+// 行程规划：起点圆 + 斜向航线 + 终点圆（地图路线意象）
+function drawPlan(rgb) {
+  const px = makeCanvas()
+  paint(px, rgb, discDist(23, 58, 9))
+  paint(px, rgb, segDist(30, 51, 51, 30, 6))
+  paint(px, rgb, ringDist(58, 23, 9, 6))
+  return px
+}
+
 // ---------- 输出 ----------
 const outDir = path.join(__dirname, '..', 'src', 'assets')
 fs.mkdirSync(outDir, { recursive: true })
 
-const NORMAL = hexToRGB('#7c8798')
-const ACTIVE = hexToRGB('#4d9fff')
+// iOS 色板：未选中 systemGray / 选中 systemBlue
+const NORMAL = hexToRGB('#8e8e93')
+const ACTIVE = hexToRGB('#0a84ff')
 
 const icons = {
   'tab-search': drawSearch,
   'tab-explore': drawExplore,
+  'tab-plan': drawPlan,
   'tab-profile': drawProfile
 }
 
@@ -148,5 +159,5 @@ function drawDot(rgb) {
   return px
 }
 fs.writeFileSync(path.join(outDir, 'marker-cyan.png'), encodePNG(drawDot(ACTIVE), SIZE, SIZE))
-fs.writeFileSync(path.join(outDir, 'marker-orange.png'), encodePNG(drawDot(hexToRGB('#ff6b35')), SIZE, SIZE))
+fs.writeFileSync(path.join(outDir, 'marker-orange.png'), encodePNG(drawDot(hexToRGB('#ff9f0a')), SIZE, SIZE))
 console.log('generated marker-cyan.png / marker-orange.png')

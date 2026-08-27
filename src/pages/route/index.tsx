@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useRouter, useShareAppMessage } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
+import DemoBadge from '../../components/common/DemoBadge'
 import BoardingPassItinerary from '../../components/itinerary/BoardingPassItinerary'
 import TransferModeCompare from '../../components/flight/TransferModeCompare'
 import HubExperienceCard from '../../components/hub/HubExperienceCard'
@@ -142,6 +143,7 @@ function RoutePage() {
 
   return (
     <View className='route-page'>
+      <DemoBadge />
       {/* 价格总览 */}
       <View className='route-page__overview'>
         <View>
@@ -236,6 +238,14 @@ function RoutePage() {
           </View>
         </View>
       )}
+
+      <View
+        className='route-page__ai'
+        hoverClass='tap-dim'
+        onClick={() => Taro.switchTab({ url: '/pages/plan/index' })}
+      >
+        <Text>{t('route.aiPlan')}</Text>
+      </View>
 
       <View className='route-page__disclaimer'>
         <Text>{t('route.disclaimer')}</Text>

@@ -1,0 +1,149 @@
+// LoginSheet — 登录弹层（iOS 底部抽屉，暗色）
+.login-sheet {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+
+  &__mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  &__panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #1c1c1e;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: var(--spacing-md) var(--spacing-lg) calc(var(--spacing-xl) + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xs) 0 var(--spacing-sm);
+  }
+
+  &__title {
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  &__close {
+    width: 56rpx;
+    height: 56rpx;
+    line-height: 56rpx;
+    text-align: center;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-small);
+  }
+
+  &__desc {
+    display: block;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  // 头像按钮：去除原生 button 样式
+  &__avatar-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 0;
+    margin: 0 auto var(--spacing-lg);
+    background: transparent;
+    border: none;
+    line-height: normal;
+    width: auto;
+
+    &::after {
+      border: none;
+    }
+  }
+
+  &__avatar {
+    width: 140rpx;
+    height: 140rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+
+    &--empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 56rpx;
+      color: var(--color-accent-cyan);
+    }
+  }
+
+  &__avatar-tip {
+    font-size: var(--font-size-caption);
+    color: var(--color-accent-cyan);
+  }
+
+  &__field {
+    display: flex;
+    align-items: center;
+    height: 100rpx;
+    padding: 0 var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-panel);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  &__label {
+    width: 120rpx;
+    flex-shrink: 0;
+    font-size: var(--font-size-small);
+    color: var(--color-text-secondary);
+  }
+
+  &__input {
+    flex: 1;
+    font-size: var(--font-size-body);
+    color: var(--color-text-primary);
+  }
+
+  &__placeholder {
+    color: var(--color-text-placeholder);
+  }
+
+  &__confirm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md) 0;
+    border-radius: var(--radius-full);
+    background: var(--color-accent-cyan);
+    color: #ffffff;
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+
+    &.is-loading {
+      opacity: 0.6;
+    }
+  }
+
+  &__privacy {
+    display: block;
+    text-align: center;
+    margin-top: var(--spacing-md);
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+}

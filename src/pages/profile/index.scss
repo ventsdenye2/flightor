@@ -183,3 +183,20 @@
 .profile-page__tab {
   font-size: var(--font-size-small);
 }
+
+// 登录态用户卡增强
+.profile-page__avatar--img {
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: var(--radius-full);
+}
+
+.profile-page__login-arrow {
+  margin-left: auto;
+  font-size: 44rpx;
+  color: var(--color-text-placeholder);
+}
+
+.profile-page__menu-danger {
+  color: var(--color-danger);
+}

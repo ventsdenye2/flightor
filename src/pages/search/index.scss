@@ -156,3 +156,23 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.55; }
 }
+
+// 搜索等待轮播文案
+.search-page__loading-msg {
+  display: block;
+  text-align: center;
+  padding: var(--spacing-sm) 0;
+  font-size: var(--font-size-small);
+  color: var(--color-accent-cyan);
+}
+
+// 空态：放宽筛选按钮
+.search-page__relax {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-2xl);
+  border-radius: var(--radius-full);
+  background: var(--color-accent-cyan);
+  color: #ffffff;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}

@@ -104,3 +104,17 @@
     color: var(--color-text-disabled);
   }
 }
+
+// AI 行程规划入口
+.route-page__ai {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--spacing-md) var(--spacing-lg) 0;
+  padding: var(--spacing-md) 0;
+  border-radius: var(--radius-full);
+  background: rgba(10, 132, 255, 0.16);
+  color: var(--color-accent-cyan);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+}
