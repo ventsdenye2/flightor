@@ -266,6 +266,7 @@ module.exports = {
   TOPOLOGY_VERSION,
   SEED_EDGES,
   createConnectivityIndex,
+  addEdge: defaultIndex.addEdge,
   routeStatus: defaultIndex.routeStatus,
   canFly: defaultIndex.canFly,
   outgoing: defaultIndex.outgoing,

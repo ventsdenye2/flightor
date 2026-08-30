@@ -8,6 +8,15 @@ node_modules/
 openrouter.txt
 duffel.txt
 serpapi.txt
+oag*.txt
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
 
 # 构建产物
 sourcemap.zip
+backend/dist/
+backend/coverage/

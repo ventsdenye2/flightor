@@ -9,12 +9,72 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const PROVIDER = process.env.SEARCH_PROVIDER || 'serpapi'
 const { search } = require(PROVIDER === 'duffel' ? './duffel' : './serpapi')
 const connectivity = require('./connectivity')
+const oag = require('./oag')
+const OAG_CACHE_TTL = 6 * 60 * 60 * 1000
+const oagConnectivityCache = new Map()
+
+function readOagCache(key) {
+  const hit = oagConnectivityCache.get(key)
+  if (!hit) return null
+  if (Date.now() - hit.at > OAG_CACHE_TTL) {
+    oagConnectivityCache.delete(key)
+    return null
+  }
+  return hit.data
+}
+
+function writeOagCache(key, data) {
+  if (oagConnectivityCache.size >= 200) {
+    const oldestKey = oagConnectivityCache.keys().next().value
+    oagConnectivityCache.delete(oldestKey)
+  }
+  oagConnectivityCache.set(key, { at: Date.now(), data })
+}
 
 exports.main = async event => {
   // 无需消耗报价配额的预检：返回直飞状态与最多两次中转的简单路径。
   if (event.action === 'connectivity') {
     const { origin, destination, date, max_transfers: maxTransfers } = event
     if (!origin || !destination) return { statusCode: 400, body: { message: 'missing origin/destination' } }
+    let oagMetadata = null
+    if (event.live === true) {
+      if (!date) return { statusCode: 400, body: { message: 'date is required for live OAG connectivity' } }
+      const schedulesKey = process.env.OAG_SCHEDULES_KEY
+      const connectionsKey = process.env.OAG_CONNECTIONS_KEY || process.env.OAG_FLIGHT_INFO_KEY
+      if (!schedulesKey && !connectionsKey) {
+        return { statusCode: 500, body: { message: 'missing OAG_SCHEDULES_KEY/OAG_FLIGHT_INFO_KEY' } }
+      }
+      try {
+        const cacheKey = `${String(origin).toUpperCase()}|${String(destination).toUpperCase()}|${date}`
+        const cached = readOagCache(cacheKey)
+        const [scheduleResult, connectionResult] = cached || await Promise.all([
+          schedulesKey ? oag.schedules(
+            schedulesKey,
+            { origin, destination, dateFrom: date, dateTo: date },
+            { path: process.env.OAG_SCHEDULES_PATH || undefined }
+          ) : Promise.resolve({ edges: [] }),
+          connectionsKey ? oag.connections(
+            connectionsKey,
+            { origin, destination, dateFrom: date, dateTo: date },
+            { path: process.env.OAG_CONNECTIONS_PATH || undefined }
+          ) : Promise.resolve({ connections: [] })
+        ])
+        if (!cached) writeOagCache(cacheKey, [scheduleResult, connectionResult])
+        const oagEdges = [
+          ...scheduleResult.edges,
+          ...connectionResult.connections.flatMap(connection => connection.edges)
+        ]
+        oagEdges.forEach(connectivity.addEdge)
+        oagMetadata = {
+          schedules: scheduleResult.edges.length,
+          connections: connectionResult.connections.length,
+          edgesObserved: oagEdges.length,
+          cacheHit: Boolean(cached)
+        }
+      } catch (err) {
+        return { statusCode: 502, body: { message: err.message } }
+      }
+    }
     const paths = connectivity.findPaths(origin, destination, date, { maxTransfers })
     return {
       origin,
@@ -25,7 +85,48 @@ exports.main = async event => {
       truncated: paths.length > 50,
       topologyVersion: connectivity.TOPOLOGY_VERSION,
       topologyEdges: connectivity.edgeCount(),
-      topologyAirports: connectivity.airportCount()
+      topologyAirports: connectivity.airportCount(),
+      oag: oagMetadata
+    }
+  }
+
+  if (event.action === 'airport_metadata') {
+    const token = process.env.OAG_MASTER_DATA_KEY
+    if (!token) return { statusCode: 500, body: { message: 'missing OAG_MASTER_DATA_KEY' } }
+    try {
+      return await oag.locations(
+        token,
+        {
+          airportCode: event.airport_code,
+          countryCode: event.country_code,
+          cityCode: event.city_code,
+          limit: event.limit
+        },
+        { path: process.env.OAG_LOCATIONS_PATH || undefined }
+      )
+    } catch (err) {
+      return { statusCode: 502, body: { message: err.message } }
+    }
+  }
+
+  if (event.action === 'flight_info') {
+    const token = process.env.OAG_FLIGHT_INFO_KEY
+    if (!token) return { statusCode: 500, body: { message: 'missing OAG_FLIGHT_INFO_KEY' } }
+    try {
+      return await oag.flightInfo(
+        token,
+        {
+          origin: event.origin,
+          destination: event.destination,
+          date: event.date,
+          carrierCode: event.carrier_code,
+          flightNumber: event.flight_number,
+          limit: event.limit
+        },
+        { path: process.env.OAG_FLIGHT_INFO_PATH || undefined }
+      )
+    } catch (err) {
+      return { statusCode: 502, body: { message: err.message } }
     }
   }
 

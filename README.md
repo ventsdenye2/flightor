@@ -1,6 +1,6 @@
 # FlightOR
 
-国际航线比价与多城路线规划微信小程序。Taro + React + MobX + 微信云函数。
+国际航线比价与多城路线规划微信小程序。前端使用 Taro + React + MobX；`backend/` 为独立自部署后端，原微信云函数保留为迁移期代码。
 
 ## 快速开始
 
@@ -30,9 +30,12 @@ npm run dev:weapp
 ```
 src/            小程序前端（pages 主包 / subpages 分包 / components / services / stores）
 cloud/          微信云函数（routePlanner 多城规划 / searchProxy 搜索代理 / chatAgent / tripAgent / login ...）
+backend/        Fastify API / Worker / PostgreSQL 迁移 / Provider 适配器
 scripts/        测试与工具脚本
 docs/           设计文档（multi-city-plan.md 多城方案、deploy.md 部署清单）
 ```
+
+后端启动和接口说明见 [`backend/README.md`](backend/README.md)，完整设计见 [`docs/backend-architecture.md`](docs/backend-architecture.md)。
 
 ## 测试
 
