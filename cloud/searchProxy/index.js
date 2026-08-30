@@ -8,8 +8,27 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const PROVIDER = process.env.SEARCH_PROVIDER || 'serpapi'
 const { search } = require(PROVIDER === 'duffel' ? './duffel' : './serpapi')
+const connectivity = require('./connectivity')
 
 exports.main = async event => {
+  // 无需消耗报价配额的预检：返回直飞状态与最多两次中转的简单路径。
+  if (event.action === 'connectivity') {
+    const { origin, destination, date, max_transfers: maxTransfers } = event
+    if (!origin || !destination) return { statusCode: 400, body: { message: 'missing origin/destination' } }
+    const paths = connectivity.findPaths(origin, destination, date, { maxTransfers })
+    return {
+      origin,
+      destination,
+      date: date || null,
+      direct: connectivity.routeStatus(origin, destination, date),
+      paths: paths.slice(0, 50).map(airports => ({ airports, transfers: airports.length - 2 })),
+      truncated: paths.length > 50,
+      topologyVersion: connectivity.TOPOLOGY_VERSION,
+      topologyEdges: connectivity.edgeCount(),
+      topologyAirports: connectivity.airportCount()
+    }
+  }
+
   const token = PROVIDER === 'duffel' ? process.env.DUFFEL_TOKEN : process.env.SERPAPI_KEY
   if (!token) return { statusCode: 500, body: { message: `missing token for ${PROVIDER}` } }
 

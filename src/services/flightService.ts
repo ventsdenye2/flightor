@@ -15,6 +15,15 @@ const serpapi = require('../../cloud/searchProxy/serpapi') as {
   search: (apiKey: string, params: Record<string, unknown>, opts?: { fetchJson?: (url: string) => Promise<unknown>; quotaCap?: number; storage?: { get: () => Record<string, unknown>; set: (obj: Record<string, unknown>) => void } }) => Promise<SearchResponse>
 }
 
+// 与云端共用同一份可达性规则；Mock 不再凭空假设任意两机场之间有直飞。
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const connectivity = require('../../cloud/searchProxy/connectivity') as {
+  TOPOLOGY_VERSION: string
+  canFly: (origin: string, destination: string, date?: string) => boolean
+  validateItinerary: (segments: FlightSegment[], opts?: Record<string, unknown>) => { valid: boolean; reasons: string[] }
+  edgeCount: () => number
+}
+
 /** 是否具备 SerpApi 直连条件（key 已构建时注入） */
 export function hasSerpKey(): boolean {
   return typeof SERPAPI_KEY === 'string' && SERPAPI_KEY.length > 0
@@ -158,21 +167,23 @@ function comboSearch(origin: string, destination: string, departDate: string, se
   const basePrice = Math.round((600 + routeKm * 0.62) * (0.85 + rand() * 0.5))
   const comboId = `${origin}-${destination}-${departDate}`
 
-  // 直飞方案
+  // 直飞方案：只有拓扑确认指定日期可达时才生成
   const direct: FlightOption[] = []
   const directCarriers = [FSC[0], FSC[5], FSC[2]]
-  for (let i = 0; i < 2; i++) {
-    const c = directCarriers[i % directCarriers.length]
-    const dep = isoAt(departDate, 9 + i * 7, (i * 25) % 60)
-    const seg = makeSegment(c, 100 + Math.round(rand() * 800), origin, destination, dep)
-    direct.push({
-      id: `direct-${comboId}-${i}`,
-      segments: [seg],
-      totalPrice: Math.round(basePrice * (1 + rand() * 0.25)),
-      totalDuration: seg.duration,
-      airline: c.name,
-      transferType: 'direct'
-    })
+  if (connectivity.canFly(origin, destination, departDate)) {
+    for (let i = 0; i < 2; i++) {
+      const c = directCarriers[i % directCarriers.length]
+      const dep = isoAt(departDate, 9 + i * 7, (i * 25) % 60)
+      const seg = makeSegment(c, 100 + Math.round(rand() * 800), origin, destination, dep)
+      direct.push({
+        id: `direct-${comboId}-${i}`,
+        segments: [seg],
+        totalPrice: Math.round(basePrice * (1 + rand() * 0.25)),
+        totalDuration: seg.duration,
+        airline: c.name,
+        transferType: 'direct'
+      })
+    }
   }
 
   // 自行中转：枚举全部枢纽（不再随机抽样，保证最低价枢纽不被漏算），
@@ -181,6 +192,7 @@ function comboSearch(origin: string, destination: string, departDate: string, se
   HUBS.forEach((hub, i) => {
     // 枢纽与起讫点重合时无中转意义，跳过
     if (hub.iata === origin || hub.iata === destination) return
+    if (!connectivity.canFly(origin, hub.iata, departDate)) return
     const lcc = LCC[i % LCC.length]
     const fsc = HUB_CARRIER[hub.iata]
     const layover = 480 + Math.round(rand() * 480) // 8-16h 停留
@@ -195,6 +207,7 @@ function comboSearch(origin: string, destination: string, departDate: string, se
     const dep1 = isoAt(departDate, 20 + (i % 4), (i * 20) % 60)
     const seg1 = makeSegment(first, 101 + i * 10, origin, hub.iata, dep1)
     const dep2 = addMinutes(seg1.arriveTime, layover)
+    if (!connectivity.canFly(hub.iata, destination, dep2.slice(0, 10))) return
     const seg2 = makeSegment(second, 300 + i * 21, hub.iata, destination, dep2)
     const hubInfo: HubInfo = {
       iata: hub.iata,
@@ -204,7 +217,7 @@ function comboSearch(origin: string, destination: string, departDate: string, se
       visaNote: hub.visaNote,
       baggageRecheck: true
     }
-    selfTransfer.push({
+    const option: FlightOption = {
       id: `self-${hub.iata}-${comboId}`,
       segments: [seg1, seg2],
       totalPrice: price,
@@ -212,20 +225,25 @@ function comboSearch(origin: string, destination: string, departDate: string, se
       airline: `${first.name} + ${second.name}`,
       transferType: 'self',
       hub: hubInfo
-    })
+    }
+    if (connectivity.validateItinerary(option.segments, { transferType: 'self', requireKnown: true }).valid) {
+      selfTransfer.push(option)
+    }
   })
 
   // 航司联程：同样枚举全部枢纽
   const airlineTransfer: FlightOption[] = []
   HUBS.forEach((hub, i) => {
     if (hub.iata === origin || hub.iata === destination) return
+    if (!connectivity.canFly(origin, hub.iata, departDate)) return
     const fsc = HUB_CARRIER[hub.iata]
     const dep1 = isoAt(departDate, 8 + (i % 5) * 3, (i * 35) % 60)
     const seg1 = makeSegment(fsc, 830 + i * 3, origin, hub.iata, dep1)
     const layover = 90 + Math.round(rand() * 150) // 1.5-4h 衔接
     const dep2 = addMinutes(seg1.arriveTime, layover)
+    if (!connectivity.canFly(hub.iata, destination, dep2.slice(0, 10))) return
     const seg2 = makeSegment(fsc, 320 + i * 7, hub.iata, destination, dep2)
-    airlineTransfer.push({
+    const option: FlightOption = {
       id: `airline-${hub.iata}-${comboId}`,
       segments: [seg1, seg2],
       totalPrice: Math.round(basePrice * (0.75 + rand() * 0.15)),
@@ -240,7 +258,10 @@ function comboSearch(origin: string, destination: string, departDate: string, se
         visaNote: hub.visaNote,
         baggageRecheck: false
       }
-    })
+    }
+    if (connectivity.validateItinerary(option.segments, { transferType: 'airline', requireKnown: true }).valid) {
+      airlineTransfer.push(option)
+    }
   })
 
   const result: ComboResult = { direct, selfTransfer, airlineTransfer }
@@ -347,7 +368,9 @@ function mockSearch(params: SearchParams): SearchResponse {
     metadata: {
       searchId: `mock-${Date.now()}`,
       cacheTime: new Date().toISOString(),
-      priceDisclaimer: '价格仅供参考，以实际购买为准'
+      priceDisclaimer: '价格仅供参考，以实际购买为准',
+      connectivityVersion: connectivity.TOPOLOGY_VERSION,
+      connectivityEdges: connectivity.edgeCount()
     }
   }
 }

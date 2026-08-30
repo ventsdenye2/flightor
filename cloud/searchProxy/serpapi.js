@@ -6,6 +6,7 @@
 // HTTP 层可注入（opts.fetchJson）：云函数默认 node fetch，小程序端传 Taro.request 实现
 // 持久层可注入（opts.storage）：小程序端传 Taro 本地缓存，跨会话保留报价快照
 const SERPAPI_BASE = 'https://serpapi.com/search.json'
+const connectivity = require('./connectivity')
 
 const MAX_DATES = 4 // 采样日期数 = 每次搜索的配额消耗
 const CONCURRENCY = 3 // 实测单次抓取约 10s，并发 3 控制总耗时 <15s
@@ -246,8 +247,18 @@ async function search(apiKey, params, opts = {}) {
 
 /** 汇总：去重、按价排序、分桶截断、附 metadata */
 function buildResponse(options, scanned, fetched, fullyCached) {
+  // 供应商返回证明航段在该日期实际存在；先做结构/衔接约束，再写入已观测拓扑。
+  const feasible = options.filter(option =>
+    connectivity.validateItinerary(option.segments, {
+      transferType: option.transferType,
+      maxTransfers: 2,
+      requireKnown: false
+    }).valid
+  )
+  feasible.forEach(option => connectivity.observeSegments(option.segments))
+  const topologyFiltered = options.length - feasible.length
   const seen = new Set()
-  const unique = options.filter(o => {
+  const unique = feasible.filter(o => {
     const key = `${o.segments.map(s => s.flightNo + s.departTime).join('-')}|${o.totalPrice}`
     if (seen.has(key)) return false
     seen.add(key)
@@ -266,7 +277,10 @@ function buildResponse(options, scanned, fetched, fullyCached) {
       scanned,
       fetched,
       cacheHit: fullyCached,
-      quotaUsedToday: quotaUsed
+      quotaUsedToday: quotaUsed,
+      connectivityVersion: connectivity.TOPOLOGY_VERSION,
+      connectivityEdges: connectivity.edgeCount(),
+      topologyFiltered
     }
   }
 }
@@ -274,4 +288,4 @@ function buildResponse(options, scanned, fetched, fullyCached) {
 // 持久层是否已加载（进程/会话内只读一次）
 let storageLoaded = false
 
-module.exports = { search, flightSearch, sampleDates }
+module.exports = { search, flightSearch, sampleDates, mapItinerary, buildResponse }

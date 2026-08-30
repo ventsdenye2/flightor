@@ -20,6 +20,9 @@ export interface SearchResponse {
     searchId: string
     cacheTime: string
     priceDisclaimer: string
+    connectivityVersion?: string
+    connectivityEdges?: number
+    topologyFiltered?: number
   }
 }
 
