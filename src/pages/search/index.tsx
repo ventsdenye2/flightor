@@ -10,11 +10,13 @@ import RouteMapVisualization from '../../components/map/RouteMapVisualization'
 import PriceMatrix from '../../components/matrix/PriceMatrix'
 import { flightStore } from '../../stores/flightStore'
 import { findAirport, airportCity, cityOf } from '../../mocks/airports'
+import { countryName } from '../../mocks/countries'
 import { getHubVisaNote } from '../../mocks/hubs'
 import { t, fd, localeStore } from '../../i18n'
 import { formatPrice } from '../../utils/format'
 import type { FlightOption } from '../../types/flight'
 import type { HubPoint, RiskItem } from '../../types/common'
+import { countryPreferenceMatch } from '../../utils/flightRecommendation'
 import './index.scss'
 
 const MODE_TABS = [
@@ -171,14 +173,14 @@ function SearchPage() {
 
       {/* 排序切换 */}
       <View className='search-page__sorts'>
-        {(['price', 'duration'] as const).map(sort => (
+        {(['recommended', 'price', 'duration'] as const).map(sort => (
           <View
             key={sort}
             className={`search-page__sort ${flightStore.sortBy === sort ? 'is-active' : ''}`}
             hoverClass='tap-dim'
             onClick={() => flightStore.setSortBy(sort)}
           >
-            <Text>{sort === 'price' ? t('sp.sortPrice') : t('sp.sortDuration')}</Text>
+            <Text>{sort === 'recommended' ? t('sp.sortRecommended') : sort === 'price' ? t('sp.sortPrice') : t('sp.sortDuration')}</Text>
           </View>
         ))}
       </View>
@@ -236,10 +238,10 @@ function SearchPage() {
         <View className='search-page__list'>
           {flightStore.visibleOptions.map((f, idx) => {
             const saving = flightStore.savingsOf(f)
-            // 组合徽章：最优组合（仅价格排序）/ 邻近机场出发 / 错峰日期
+            // 组合徽章：综合推荐/价格最优 + 邻近机场出发 + 错峰日期
             const badges: string[] = []
-            if (idx === 0 && flightStore.sortBy === 'price' && flightStore.visibleOptions.length > 1) {
-              badges.push(t('sp.best'))
+            if (idx === 0 && flightStore.visibleOptions.length > 1) {
+              badges.push(flightStore.sortBy === 'recommended' ? t('sp.recommended') : flightStore.sortBy === 'price' ? t('sp.best') : t('sp.fastest'))
             }
             const firstSeg = f.segments[0]
             const lastSeg = f.segments[f.segments.length - 1]
@@ -252,6 +254,10 @@ function SearchPage() {
             if (params && firstSeg.departTime.slice(0, 10) !== params.departDate) {
               badges.push(t('sp.altDate', { date: firstSeg.departTime.slice(5, 10) }))
             }
+            const countryMatch = params ? countryPreferenceMatch(f, params.transitCountryPreferences) : null
+            const recommendationReason = countryMatch?.preference === 'preferred'
+              ? t('fcc.preferredCountryReason', { country: countryName(countryMatch.country, locale) })
+              : undefined
             return (
               <FlightCompareCard
                 key={f.id}
@@ -259,6 +265,7 @@ function SearchPage() {
                 savingsAmount={saving.amount}
                 savingsPercent={saving.percent}
                 badges={badges}
+                recommendationReason={recommendationReason}
                 roundtripNote={
                   params?.tripType === 'roundtrip' && params.stayRange
                     ? t('fcc.roundtrip', { min: params.stayRange[0], max: params.stayRange[1] })

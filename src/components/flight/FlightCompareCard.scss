@@ -40,6 +40,17 @@
     font-size: var(--font-size-caption);
   }
 
+  &__recommendation-reason {
+    margin: var(--spacing-xs) 0;
+    padding: 10rpx 18rpx;
+    border-left: 4rpx solid var(--color-success);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: rgba(48, 209, 88, 0.08);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+
+  }
+
   &__seg-head {
     @include flex-between;
     margin-bottom: var(--spacing-sm);

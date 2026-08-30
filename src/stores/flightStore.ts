@@ -4,6 +4,7 @@ import type { FlightOption, SearchParams } from '../types/flight'
 import type { SearchResponse } from '../types/api'
 import { searchFlights, buildPriceMatrix, PriceMatrixData } from '../services/flightService'
 import { USE_MOCK } from '../utils/request'
+import { isExcludedByCountry, sortByRecommendation } from '../utils/flightRecommendation'
 
 export class FlightStore {
   isLoading = false
@@ -12,8 +13,8 @@ export class FlightStore {
   lastParams: SearchParams | null = null
   /** 结果页视图模式：全部 / 仅自行中转 / 仅联程直飞 */
   viewMode: 'all' | 'self' | 'official' = 'all'
-  /** 排序：价格优先 / 时长优先 */
-  sortBy: 'price' | 'duration' = 'price'
+  /** 排序：综合推荐 / 价格优先 / 时长优先 */
+  sortBy: 'recommended' | 'price' | 'duration' = 'recommended'
   /** 价差矩阵（机场×日期） */
   matrix: PriceMatrixData | null = null
   /** 矩阵点选的聚焦组合（null=全部组合） */
@@ -105,7 +106,7 @@ export class FlightStore {
     this.viewMode = mode
   }
 
-  setSortBy(sort: 'price' | 'duration') {
+  setSortBy(sort: 'recommended' | 'price' | 'duration') {
     this.sortBy = sort
   }
 
@@ -144,6 +145,7 @@ export class FlightStore {
     // 搜索条件筛选：预算区间 + 中转偏好
     const p = this.lastParams
     if (p) {
+      const countryPreferences = p.transitCountryPreferences ?? { preferred: [], excluded: [] }
       const [min, max] = p.budgetRange
       list = list.filter(f => f.totalPrice >= min && f.totalPrice <= max)
       if (p.transferPref === 'direct') {
@@ -151,10 +153,12 @@ export class FlightStore {
       } else if (p.transferPref === 'transfer') {
         list = list.filter(f => f.transferType !== 'direct')
       }
+      list = list.filter(f => !isExcludedByCountry(f, countryPreferences))
     }
-    return list.sort((a, b) =>
-      this.sortBy === 'duration' ? a.totalDuration - b.totalDuration : a.totalPrice - b.totalPrice
-    )
+    if (this.sortBy === 'recommended') {
+      return sortByRecommendation(list, p?.transitCountryPreferences)
+    }
+    return list.sort((a, b) => this.sortBy === 'duration' ? a.totalDuration - b.totalDuration : a.totalPrice - b.totalPrice)
   }
 
   /** 被预算/偏好筛掉的方案数（空态提示用） */

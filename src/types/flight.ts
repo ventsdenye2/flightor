@@ -1,6 +1,14 @@
 // src/types/flight.ts — 航班领域模型
 import type { Interest, TransferType, VisaStatus } from './common'
 
+export type TransitCountryPreference = 'preferred' | 'excluded'
+
+/** 中转国家偏好：preferred 参与综合排序，excluded 为硬过滤条件 */
+export interface TransitCountryPreferences {
+  preferred: string[]
+  excluded: string[]
+}
+
 /** 搜索参数（SearchPanel 收集） */
 export interface SearchParams {
   origin: string        // 主机场 IATA e.g. "SZX"
@@ -14,6 +22,7 @@ export interface SearchParams {
   tripType: 'oneway' | 'roundtrip'
   budgetRange: [number, number] // [min, max] 人民币
   transferPref: 'any' | 'direct' | 'transfer'
+  transitCountryPreferences: TransitCountryPreferences
   interests: Interest[]  // 影响中转玩法推荐
 }
 

@@ -5,7 +5,9 @@ import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { searchStore } from '../../stores/searchStore'
 import { findAirport, airportName, airportCity, nearbyAirports, distanceKm, Airport } from '../../mocks/airports'
+import { countryName, findCountry } from '../../mocks/countries'
 import AirportSelector from './AirportSelector'
+import CountryPreferenceSelector from './CountryPreferenceSelector'
 import { t, localeStore } from '../../i18n'
 import { humanDate, toDateString, daysFromNow } from '../../utils/format'
 import type { SearchParams, Interest } from '../../types/flight'
@@ -30,6 +32,7 @@ const CIRCLE_POOL_KM = 300
 function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
   // 机场搜索弹层：当前正在选择的字段
   const [selectorFor, setSelectorFor] = useState<'origin' | 'destination' | ''>('')
+  const [showCountryPreferences, setShowCountryPreferences] = useState(false)
   const locale = localeStore.locale
 
   const originAirport = findAirport(searchStore.origin)
@@ -55,6 +58,11 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
     }
     onSearch(searchStore.params)
   }
+
+  const countryPreferenceChips = [
+    ...searchStore.transitCountryPreferences.preferred.map(code => ({ code, preference: 'preferred' as const })),
+    ...searchStore.transitCountryPreferences.excluded.map(code => ({ code, preference: 'excluded' as const }))
+  ]
 
   return (
     <View className='search-panel'>
@@ -275,6 +283,37 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
             ))}
           </View>
         </View>
+        {searchStore.transferPref !== 'direct' && (
+          <View className='search-panel__block'>
+            <View className='search-panel__block-header'>
+              <View>
+                <Text className='search-panel__block-label'>{t('countryPref.searchTitle')}</Text>
+                <Text className='search-panel__block-hint'>{t('countryPref.searchHint')}</Text>
+              </View>
+              <View className='search-panel__country-manage' hoverClass='tap-dim' onClick={() => setShowCountryPreferences(true)}>
+                <Text>{countryPreferenceChips.length > 0 ? t('countryPref.manage') : t('countryPref.add')}</Text>
+              </View>
+            </View>
+            {countryPreferenceChips.length > 0 ? (
+              <View className='search-panel__chips'>
+                {countryPreferenceChips.map(item => {
+                  const country = findCountry(item.code)
+                  if (!country) return null
+                  return (
+                    <View key={item.code} className={`search-panel__country-chip is-${item.preference}`}>
+                      <Text>
+                        {item.preference === 'preferred' ? '↑ ' : '× '}
+                        {countryName(country, locale)}
+                      </Text>
+                    </View>
+                  )
+                })}
+              </View>
+            ) : (
+              <Text className='search-panel__country-empty'>{t('countryPref.empty')}</Text>
+            )}
+          </View>
+        )}
         <View className='search-panel__block'>
           <Text className='search-panel__block-label'>{t('search.interests')}</Text>
           <View className='search-panel__chips'>
@@ -308,6 +347,12 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
         selected={selectorFor === 'origin' ? searchStore.origin : searchStore.destination}
         onSelect={handleSelect}
         onClose={() => setSelectorFor('')}
+      />
+      <CountryPreferenceSelector
+        visible={showCountryPreferences}
+        preferences={searchStore.transitCountryPreferences}
+        onChange={(countryCode, preference) => searchStore.setTransitCountryPreference(countryCode, preference)}
+        onClose={() => setShowCountryPreferences(false)}
       />
     </View>
   )

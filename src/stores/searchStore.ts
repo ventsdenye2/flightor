@@ -1,6 +1,6 @@
 // src/stores/searchStore.ts — 搜索条件状态
 import { makeAutoObservable } from 'mobx'
-import type { SearchParams, Interest } from '../types/flight'
+import type { SearchParams, Interest, TransitCountryPreference, TransitCountryPreferences } from '../types/flight'
 import { nearbyAirports } from '../mocks/airports'
 import { daysFromNow, toDateString } from '../utils/format'
 
@@ -30,6 +30,10 @@ export class SearchStore {
   budgetMin = 2000
   budgetMax = 10000
   transferPref: 'any' | 'direct' | 'transfer' = 'any'
+  transitCountryPreferences: TransitCountryPreferences = {
+    preferred: [],
+    excluded: []
+  }
   interests: Interest[] = ['food', 'culture']
 
   constructor() {
@@ -98,6 +102,16 @@ export class SearchStore {
     this.transferPref = pref
   }
 
+  setTransitCountryPreference(countryCode: string, preference: TransitCountryPreference | 'neutral') {
+    const code = countryCode.toUpperCase()
+    const next: TransitCountryPreferences = {
+      preferred: this.transitCountryPreferences.preferred.filter(item => item !== code),
+      excluded: this.transitCountryPreferences.excluded.filter(item => item !== code)
+    }
+    if (preference !== 'neutral') next[preference === 'preferred' ? 'preferred' : 'excluded'].push(code)
+    this.transitCountryPreferences = next
+  }
+
   toggleInterest(interest: Interest) {
     if (this.interests.includes(interest)) {
       this.interests = this.interests.filter(i => i !== interest)
@@ -128,6 +142,10 @@ export class SearchStore {
       tripType: this.tripType,
       budgetRange: [this.budgetMin, this.budgetMax],
       transferPref: this.transferPref,
+      transitCountryPreferences: {
+        preferred: [...this.transitCountryPreferences.preferred],
+        excluded: [...this.transitCountryPreferences.excluded]
+      },
       interests: [...this.interests]
     }
   }

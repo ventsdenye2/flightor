@@ -6,6 +6,7 @@ import type { VisaStatus } from '../types/common'
 import { findAirport, distanceKm } from '../mocks/airports'
 import { USE_MOCK, request } from '../utils/request'
 import { toDateString } from '../utils/format'
+import { sortByRecommendation } from '../utils/flightRecommendation'
 import Taro from '@tarojs/taro'
 
 // 复用云函数 serpapi 适配器（搜索/映射/缓存/配额守卫单一来源），HTTP 层注入 Taro.request
@@ -341,8 +342,8 @@ function mockSearch(params: SearchParams): SearchResponse {
 
   return {
     direct: allDirect.sort(byPrice).slice(0, 3),
-    selfTransfer: [...bestPerHub.values()].sort(byPrice).slice(0, 4),
-    airlineTransfer: allAirline.sort(byPrice).slice(0, 3),
+    selfTransfer: sortByRecommendation([...bestPerHub.values()], params.transitCountryPreferences).slice(0, 4),
+    airlineTransfer: sortByRecommendation(allAirline, params.transitCountryPreferences).slice(0, 3),
     metadata: {
       searchId: `mock-${Date.now()}`,
       cacheTime: new Date().toISOString(),
@@ -426,6 +427,7 @@ export async function searchFlights(params: SearchParams): Promise<SearchRespons
       depart_date: params.departDate,
       depart_date_end: params.departDateEnd,
       stay_range: params.stayRange,
+      transit_country_preferences: params.transitCountryPreferences,
       currency: 'CNY'
     },
     showLoading: true,

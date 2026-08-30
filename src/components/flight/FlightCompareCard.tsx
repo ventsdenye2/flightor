@@ -3,6 +3,7 @@ import { View, Text } from '@tarojs/components'
 import { observer } from 'mobx-react-lite'
 import type { FlightOption, FlightSegment } from '../../types/flight'
 import { cityOf } from '../../mocks/airports'
+import { countryName, countryOfAirport } from '../../mocks/countries'
 import { getHubVisaNote } from '../../mocks/hubs'
 import { t, fd, localeStore } from '../../i18n'
 import { formatTime, formatPrice, crossDayMark, formatMonthDay } from '../../utils/format'
@@ -14,6 +15,8 @@ interface FlightCompareCardProps {
   savingsPercent: number
   /** 已本地化的徽章（最优组合/邻近机场/错峰日期） */
   badges?: string[]
+  /** 综合推荐中命中国家偏好的可解释原因 */
+  recommendationReason?: string
   /** 往返价说明（如「往返总价 · 含回程 · 玩 7-14 天」），避免只画去程让用户误读价格 */
   roundtripNote?: string
   isExpanded?: boolean
@@ -79,8 +82,12 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
 })
 
 function FlightCompareCard(props: FlightCompareCardProps) {
-  const { flight, savingsAmount, savingsPercent, badges, roundtripNote, isExpanded, onToggleExpand, onSelect } = props
+  const { flight, savingsAmount, savingsPercent, badges, recommendationReason, roundtripNote, isExpanded, onToggleExpand, onSelect } = props
   const locale = localeStore.locale
+  const hubCountry = flight.hub ? countryOfAirport(flight.hub.iata) : undefined
+  const hubLabel = flight.hub
+    ? `${cityOf(flight.hub.iata, locale)}${hubCountry ? ` · ${countryName(hubCountry, locale)}` : ''}`
+    : ''
 
   return (
     <View className='fcc' hoverClass='tap-dim' onClick={() => onSelect?.(flight)}>
@@ -99,7 +106,7 @@ function FlightCompareCard(props: FlightCompareCardProps) {
             <View className='fcc__layover'>
               <View className='fcc__layover-line' />
               <Text className='fcc__layover-text'>
-                {t('fcc.layoverAt', { city: cityOf(flight.hub.iata, locale), dur: fd(flight.hub.layoverMinutes) })}
+                {t('fcc.layoverAt', { city: hubLabel, dur: fd(flight.hub.layoverMinutes) })}
               </Text>
               <View className='fcc__layover-line' />
             </View>
@@ -107,6 +114,12 @@ function FlightCompareCard(props: FlightCompareCardProps) {
           <SegmentRow seg={seg} />
         </View>
       ))}
+
+      {recommendationReason && (
+        <View className='fcc__recommendation-reason'>
+          <Text>{recommendationReason}</Text>
+        </View>
+      )}
 
       {/* 穿孔撕裂线 */}
       <View className='fcc__perforation'>
@@ -147,7 +160,7 @@ function FlightCompareCard(props: FlightCompareCardProps) {
           {flight.hub && (
             <Text className='fcc__hub-info'>
               {' · '}
-              {t('fcc.stayShort', { city: cityOf(flight.hub.iata, locale), dur: fd(flight.hub.layoverMinutes) })}
+              {t('fcc.stayShort', { city: hubLabel, dur: fd(flight.hub.layoverMinutes) })}
             </Text>
           )}
         </View>

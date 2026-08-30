@@ -1,0 +1,207 @@
+.country-pref-selector {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+
+  &__mask {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.55);
+  }
+
+  &__sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 78vh;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: var(--spacing-md) var(--spacing-lg) 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: var(--color-bg-card);
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-xs) 0 var(--spacing-md);
+  }
+
+  &__title,
+  &__subtitle {
+    display: block;
+  }
+
+  &__title {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-h3);
+    font-weight: 600;
+  }
+
+  &__subtitle {
+    margin-top: 6rpx;
+    color: var(--color-text-placeholder);
+    font-size: var(--font-size-caption);
+  }
+
+  &__close {
+    width: 56rpx;
+    height: 56rpx;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+  }
+
+  &__search {
+    display: flex;
+    align-items: center;
+    height: 76rpx;
+    margin-bottom: var(--spacing-md);
+    padding: 0 var(--spacing-md);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-panel);
+  }
+
+  &__search-icon {
+    margin-right: var(--spacing-sm);
+    color: var(--color-text-placeholder);
+    font-size: var(--font-size-h3);
+  }
+
+  &__input {
+    flex: 1;
+    height: 76rpx;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-body);
+  }
+
+  &__placeholder {
+    color: var(--color-text-placeholder);
+  }
+
+  &__clear {
+    padding: var(--spacing-xs) 0 var(--spacing-xs) var(--spacing-md);
+    color: var(--color-text-placeholder);
+    font-size: var(--font-size-small);
+  }
+
+  &__selected {
+    margin-bottom: var(--spacing-md);
+  }
+
+  &__selected-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  &__selected-chip {
+    padding: 8rpx 18rpx;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+
+    &.is-preferred {
+      background: rgba(48, 209, 88, 0.12);
+      color: var(--color-success);
+    }
+
+    &.is-excluded {
+      background: rgba(255, 69, 58, 0.12);
+      color: var(--color-danger);
+    }
+  }
+
+  &__section-title {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-placeholder);
+    font-size: var(--font-size-caption);
+  }
+
+  &__list {
+    flex: 1;
+    height: 0;
+  }
+
+  &__row {
+    padding: var(--spacing-md) 0;
+    border-bottom: 1rpx solid var(--color-bg-border);
+  }
+
+  &__country {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__country-name {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-body);
+    font-weight: 600;
+  }
+
+  &__airports {
+    color: var(--color-text-placeholder);
+    font-size: var(--font-size-caption);
+  }
+
+  &__options {
+    display: flex;
+    gap: var(--spacing-xs);
+  }
+
+  &__option {
+    flex: 1;
+    padding: 10rpx 0;
+    text-align: center;
+    border: 2rpx solid var(--color-bg-border);
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+
+    &.is-active.is-neutral {
+      border-color: var(--color-text-placeholder);
+      background: var(--color-bg-panel);
+      color: var(--color-text-primary);
+    }
+
+    &.is-active.is-preferred {
+      border-color: var(--color-success);
+      background: rgba(48, 209, 88, 0.12);
+      color: var(--color-success);
+    }
+
+    &.is-active.is-excluded {
+      border-color: var(--color-danger);
+      background: rgba(255, 69, 58, 0.12);
+      color: var(--color-danger);
+    }
+  }
+
+  &__pad {
+    height: env(safe-area-inset-bottom);
+    padding-bottom: var(--spacing-lg);
+  }
+
+  &__empty {
+    padding: var(--spacing-2xl) 0;
+    text-align: center;
+    color: var(--color-text-placeholder);
+    font-size: var(--font-size-small);
+  }
+}

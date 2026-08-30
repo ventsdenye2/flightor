@@ -162,6 +162,44 @@
     color: var(--color-text-primary);
   }
 
+  &__block-hint {
+    display: block;
+    margin-top: 4rpx;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__country-manage {
+    flex-shrink: 0;
+    padding: 8rpx 22rpx;
+    border: 2rpx solid var(--color-accent-cyan);
+    border-radius: var(--radius-full);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+  }
+
+  &__country-empty {
+    display: block;
+    color: var(--color-text-disabled);
+    font-size: var(--font-size-caption);
+  }
+
+  &__country-chip {
+    padding: 10rpx 24rpx;
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-caption);
+
+    &.is-preferred {
+      background: rgba(48, 209, 88, 0.12);
+      color: var(--color-success);
+    }
+
+    &.is-excluded {
+      background: rgba(255, 69, 58, 0.12);
+      color: var(--color-danger);
+    }
+  }
+
   // segmented control（iOS 风格）
   &__seg {
     display: flex;
