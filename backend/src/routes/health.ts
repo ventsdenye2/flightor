@@ -23,6 +23,9 @@ export async function registerHealthRoutes(app: FastifyInstance, context: AppCon
   })
 
   app.get('/health/providers', async () => ({
+    scope: 'configuration_only',
+    verified: false,
+    note: 'A configured key does not prove that the provider subscription is active',
     oag: {
       schedules: Boolean(context.env.OAG_SCHEDULES_KEY),
       connections: Boolean(context.env.OAG_CONNECTIONS_KEY || context.env.OAG_FLIGHT_INFO_KEY),

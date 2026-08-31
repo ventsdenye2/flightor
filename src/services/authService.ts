@@ -10,10 +10,13 @@ export interface UserProfile {
 }
 
 interface LoginResponse {
-  uid: string
-  openid: string
-  nickname: string
-  avatarUrl: string
+  accessToken: string
+  refreshToken: string
+  user: {
+    id: string
+    nickname: string
+    avatarUrl: string
+  }
 }
 
 /** 微信登录：换取用户档案（含服务端建档） */
@@ -35,7 +38,7 @@ export async function wxLogin(profile?: { nickname?: string; avatarUrl?: string 
 
   const { code } = await Taro.login()
   const res = await request<LoginResponse>({
-    url: '/auth/login',
+    url: '/v1/auth/wechat',
     method: 'POST',
     data: {
       code,
@@ -46,7 +49,9 @@ export async function wxLogin(profile?: { nickname?: string; avatarUrl?: string 
     retry: 0,
     timeout: 15000
   })
-  return { uid: res.uid, nickname: res.nickname, avatarUrl: res.avatarUrl }
+  Taro.setStorageSync('access_token', res.accessToken)
+  Taro.setStorageSync('refresh_token', res.refreshToken)
+  return { uid: res.user.id, nickname: res.user.nickname, avatarUrl: res.user.avatarUrl }
 }
 
 /** 头像临时文件转持久路径（chooseAvatar 返回的 tmp 路径会过期） */

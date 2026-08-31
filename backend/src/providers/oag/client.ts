@@ -5,7 +5,7 @@ import { fetchJson, withQuery } from '../../lib/http.js'
 export type OagProduct = 'schedules' | 'connections' | 'locations' | 'flightInfo'
 
 export interface OagPage<T = unknown> {
-  data?: T[]
+  data?: T[] | T
   paging?: Record<string, unknown>
   [key: string]: unknown
 }
@@ -59,12 +59,15 @@ export class OagClient {
   }
 
   connections(params: { origin: string; destination: string; dateFrom: string; dateTo?: string; limit?: number }) {
+    const date = params.dateTo && params.dateTo !== params.dateFrom
+      ? `${params.dateFrom}/${params.dateTo}`
+      : params.dateFrom
     return this.request('connections', {
       DepartureAirport: params.origin.toUpperCase(),
       ArrivalAirport: params.destination.toUpperCase(),
-      DepartureDate: params.dateFrom,
-      ToDate: params.dateTo ?? params.dateFrom,
-      Service: 'Passenger',
+      DepartureDate: date,
+      Service: 'p',
+      version: 'v1',
       Limit: Math.min(1000, Math.max(1, params.limit ?? 100))
     })
   }
@@ -75,6 +78,7 @@ export class OagClient {
       CountryCode: params.countryCode?.toUpperCase(),
       CityCode: params.cityCode?.toUpperCase(),
       CodeType: 'IATA',
+      version: 'v1',
       Limit: Math.min(1000, Math.max(1, params.limit ?? 100))
     })
   }

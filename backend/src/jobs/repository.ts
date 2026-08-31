@@ -1,6 +1,25 @@
 import { sql } from 'kysely'
 import type { Kysely } from 'kysely'
-import type { Database, Job } from '../db/types.js'
+import type { Database, Job, JsonValue } from '../db/types.js'
+
+export async function enqueueJob(
+  db: Kysely<Database>,
+  type: string,
+  payload: JsonValue,
+  options: { runAt?: Date; maxAttempts?: number } = {}
+): Promise<string> {
+  const result = await db.insertInto('jobs').values({
+    type,
+    payload,
+    run_at: options.runAt ?? new Date(),
+    max_attempts: options.maxAttempts ?? 5,
+    locked_by: null,
+    locked_at: null,
+    last_error: null,
+    completed_at: null
+  }).returning('id').executeTakeFirstOrThrow()
+  return result.id
+}
 
 export async function claimNextJob(db: Kysely<Database>, workerId: string): Promise<Job | undefined> {
   const result = await sql<Job>`

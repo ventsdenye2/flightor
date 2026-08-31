@@ -1,5 +1,5 @@
 // src/services/flightService.ts — 航班数据服务
-// USE_MOCK=true 时本地生成确定性 Mock 数据；接入云函数后走 request()
+// USE_MOCK=true 时本地生成确定性 Mock 数据；真实模式统一走自建后端。
 import type { SearchParams, FlightOption, FlightSegment, HubInfo } from '../types/flight'
 import type { SearchResponse, PriceTrendResponse } from '../types/api'
 import type { VisaStatus } from '../types/common'
@@ -7,13 +7,6 @@ import { findAirport, distanceKm } from '../mocks/airports'
 import { USE_MOCK, request } from '../utils/request'
 import { toDateString } from '../utils/format'
 import { sortByRecommendation } from '../utils/flightRecommendation'
-import Taro from '@tarojs/taro'
-
-// 复用云函数 serpapi 适配器（搜索/映射/缓存/配额守卫单一来源），HTTP 层注入 Taro.request
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const serpapi = require('../../cloud/searchProxy/serpapi') as {
-  search: (apiKey: string, params: Record<string, unknown>, opts?: { fetchJson?: (url: string) => Promise<unknown>; quotaCap?: number; storage?: { get: () => Record<string, unknown>; set: (obj: Record<string, unknown>) => void } }) => Promise<SearchResponse>
-}
 
 // 与云端共用同一份可达性规则；Mock 不再凭空假设任意两机场之间有直飞。
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -24,27 +17,9 @@ const connectivity = require('../../cloud/searchProxy/connectivity') as {
   edgeCount: () => number
 }
 
-/** 是否具备 SerpApi 直连条件（key 已构建时注入） */
+/** 兼容现有 UI：非 Mock 即表示由后端提供真实报价。 */
 export function hasSerpKey(): boolean {
-  return typeof SERPAPI_KEY === 'string' && SERPAPI_KEY.length > 0
-}
-
-/** Taro 版 fetchJson：单次 Google Flights 抓取实测约 10s，超时放宽 30s */
-async function taroFetchJson(url: string): Promise<unknown> {
-  const res = await Taro.request({ url, method: 'GET', timeout: 30000 })
-  if (res.statusCode !== 200) throw new Error(`serpapi ${res.statusCode}`)
-  return res.data
-}
-
-/** 日期粒度报价缓存的持久层：跨会话保留，窗口平移/重复搜索不再耗配额 */
-const SERP_CACHE_KEY = 'serp_date_cache'
-const serpStorage = {
-  get(): Record<string, unknown> {
-    return (Taro.getStorageSync(SERP_CACHE_KEY) as Record<string, unknown>) || {}
-  },
-  set(obj: Record<string, unknown>): void {
-    Taro.setStorageSync(SERP_CACHE_KEY, obj)
-  }
+  return !USE_MOCK
 }
 
 // ---------- 确定性伪随机（同一路线结果稳定，便于分享/收藏回放） ----------
@@ -414,33 +389,16 @@ function mockPriceTrend(origin: string, destination: string): PriceTrendResponse
 
 // ---------- 对外服务 ----------
 export async function searchFlights(params: SearchParams): Promise<SearchResponse> {
-  // ① key 已注入：SerpApi 直连——真实 Google Flights 报价（与 USE_MOCK 无关）
-  if (hasSerpKey()) {
-    return serpapi.search(
-      SERPAPI_KEY,
-      {
-        origin: params.origin,
-        destination: params.destination,
-        originCandidates: params.originCandidates,
-        destCandidates: params.destinationCandidates,
-        dateFrom: params.departDate,
-        dateTo: params.departDateEnd,
-        stayRange: params.stayRange
-      },
-      { fetchJson: taroFetchJson, quotaCap: 100, storage: serpStorage }
-    )
-  }
-
-  // ② 无 key 且 mock：本地仿真数据
+  // 本地仿真数据只由显式构建开关启用。
   if (USE_MOCK) {
     // 模拟网络延迟，保留 loading 体验
     await new Promise(r => setTimeout(r, 600))
     return mockSearch(params)
   }
 
-  // ③ 生产通道：云函数
+  // 生产通道：自建后端持有 SerpApi 密钥并缓存结果。
   return request<SearchResponse>({
-    url: '/search/combined',
+    url: '/v1/flight-searches',
     method: 'POST',
     data: {
       origin: params.origin,

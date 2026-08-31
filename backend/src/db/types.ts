@@ -102,6 +102,59 @@ export interface RouteEdgesTable {
   created_at: Timestamp
 }
 
+export interface ScheduleServicesTable {
+  id: Generated<string>
+  topology_version_id: string
+  provider: string
+  provider_key: string
+  marketing_carrier_code: string | null
+  operating_carrier_code: string | null
+  flight_number: string | null
+  origin_airport_id: string
+  destination_airport_id: string
+  valid_from: string | null
+  valid_to: string | null
+  operating_days_mask: Generated<number>
+  departure_local: string | null
+  arrival_local: string | null
+  arrival_day_offset: Generated<number>
+  service_type: Generated<string>
+  created_at: Timestamp
+  updated_at: Timestamp
+}
+
+export interface ConnectionOptionsTable {
+  id: Generated<string>
+  topology_version_id: string
+  provider: string
+  provider_key: string
+  origin_airport_id: string
+  destination_airport_id: string
+  hub_airport_id: string
+  connection_minutes: number
+  mct_status: string | null
+  is_self_connection: Generated<boolean>
+  valid_from: string | null
+  valid_to: string | null
+  operating_days_mask: Generated<number>
+  created_at: Timestamp
+}
+
+export interface SyncRunsTable {
+  id: Generated<string>
+  public_id: string
+  provider: string
+  dataset: string
+  status: string
+  cursor_json: JsonColumn | null
+  rows_seen: Generated<string>
+  rows_written: Generated<string>
+  error_summary: string | null
+  started_at: NullableTimestamp
+  finished_at: NullableTimestamp
+  created_at: Timestamp
+}
+
 export interface FlightSearchesTable {
   id: Generated<string>
   public_id: string
@@ -184,11 +237,14 @@ export interface Database {
   user_sessions: UserSessionsTable
   transit_country_preferences: TransitCountryPreferencesTable
   topology_versions: TopologyVersionsTable
+  schedule_services: ScheduleServicesTable
   route_edges: RouteEdgesTable
+  connection_options: ConnectionOptionsTable
   flight_searches: FlightSearchesTable
   flight_offers: FlightOffersTable
   flight_segments: FlightSegmentsTable
   recommendations: RecommendationsTable
+  sync_runs: SyncRunsTable
   jobs: JobsTable
 }
 

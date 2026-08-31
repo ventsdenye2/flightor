@@ -1,16 +1,4 @@
 // FlightOR Taro 编译配置
-const fs = require('fs')
-const path = require('path')
-
-// 构建时从密钥文件（已 gitignore）注入；缺失时为空串，前端自动回退 mock/云函数
-function loadKeyFile(filename) {
-  try {
-    return fs.readFileSync(path.join(__dirname, '..', filename), 'utf-8').trim()
-  } catch (e) {
-    return ''
-  }
-}
-
 const config = {
   projectName: 'FlightOR',
   date: '2026-7-23',
@@ -25,8 +13,11 @@ const config = {
   outputRoot: 'dist',
   plugins: ['@tarojs/plugin-platform-weapp', '@tarojs/plugin-framework-react'],
   defineConstants: {
-    OPENROUTER_KEY: JSON.stringify(loadKeyFile('openrouter.txt')),
-    SERPAPI_KEY: JSON.stringify(loadKeyFile('serpapi.txt'))
+    // 第三方密钥只允许存在于自建后端。空常量仅兼容旧的本地降级代码。
+    OPENROUTER_KEY: JSON.stringify(''),
+    SERPAPI_KEY: JSON.stringify(''),
+    FLIGHTOR_API_BASE_URL: JSON.stringify(process.env.FLIGHTOR_API_BASE_URL || 'http://127.0.0.1:3000'),
+    FLIGHTOR_USE_MOCK: JSON.stringify(process.env.FLIGHTOR_USE_MOCK !== 'false')
   },
   copy: {
     patterns: [{ from: 'src/assets/', to: 'dist/assets/' }],

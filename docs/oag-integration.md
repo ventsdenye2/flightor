@@ -4,9 +4,9 @@ OAG is used server-side for route topology, connections/MCT data, airport master
 
 ## Security
 
-Never place an OAG or fare-provider key in `src/`, a committed file, or the mini-program build. Configure keys only in the WeChat cloud function environment. Keys pasted into chat, tickets, logs, or screenshots should be rotated before production.
+Never place an OAG or fare-provider key in `src/`, a committed file, or the mini-program build. Configure keys only in `backend/.env` for local development and a Secret Manager for production. Keys pasted into chat, tickets, logs, or screenshots should be rotated before production.
 
-## `searchProxy` environment variables
+## Backend environment variables
 
 Required for OAG:
 
@@ -22,7 +22,7 @@ Optional:
 |---|---|
 | `OAG_CONNECTIONS_KEY` | Separate Connections key; falls back to `OAG_FLIGHT_INFO_KEY` |
 | `OAG_SCHEDULES_PATH` | Override the default `/flights` path if the subscription contract differs |
-| `OAG_CONNECTIONS_PATH` | Override the default `/connections` path |
+| `OAG_CONNECTIONS_PATH` | Override the default `/flight-connections` path |
 | `OAG_LOCATIONS_PATH` | Override the default `/locations` path |
 | `OAG_FLIGHT_INFO_PATH` | Override the default `/flight-instances/` path |
 
@@ -35,45 +35,40 @@ Existing fare and AI variables remain:
 | `SEARCH_PROVIDER` | `serpapi` or `duffel` |
 | `OPENROUTER_API_KEY` | Natural-language parsing and itinerary generation |
 
-## Cloud function actions
+Master Data Locations and Flight Info Connections currently require `version=v1`. The backend adapter supplies this automatically. Connections uses `Service=p` and accepts a maximum seven-day date range.
+
+## Backend sync jobs
 
 ### Live connectivity refresh
 
-```json
-{
-  "action": "connectivity",
-  "origin": "SZX",
-  "destination": "LHR",
-  "date": "2026-09-15",
-  "max_transfers": 2,
-  "live": true
-}
+Use the protected backend endpoint to enqueue a route sync:
+
+```http
+POST /v1/admin/sync/oag/route
+X-Admin-Token: <ADMIN_API_TOKEN>
+Content-Type: application/json
+
+{"origin":"SZX","destination":"LHR","dateFrom":"2026-09-15","includeConnections":true,"limit":100}
 ```
 
-This calls Schedules and Connections, adds observed OAG edges to the in-process topology, then returns direct status and simple paths. Identical OD/date lookups are cached for six hours within a warm cloud-function instance.
+The Worker normalizes the provider response, writes a new topology version, rebuilds route edges and activates the version only after the transaction succeeds. Existing active data remains readable throughout the sync.
 
 ### Airport master data
 
-```json
-{
-  "action": "airport_metadata",
-  "airport_code": "LHR"
-}
+```http
+POST /v1/admin/sync/oag/location
+X-Admin-Token: <ADMIN_API_TOKEN>
+Content-Type: application/json
+
+{"airportCode":"LHR"}
 ```
 
-Country and city queries are also supported through `country_code` and `city_code`.
+The first backend version deliberately syncs one airport per job so failed records can be retried independently. Country-wide pagination can be added after the Master Data subscription is validated.
 
-### Flight instance/status
+### Flight instance/status (provider client)
 
-```json
-{
-  "action": "flight_info",
-  "carrier_code": "SQ",
-  "flight_number": "322",
-  "date": "2026-09-15"
-}
-```
+The server-side OAG provider includes a Flight Info v2 client. A public status endpoint is intentionally not exposed yet; it should be added together with caching and per-user quota controls.
 
 ## Trial quota guidance
 
-Use `live: true` only for explicit refreshes during the OAG trial. Normal fare search does not automatically consume OAG calls. Production should persist Schedules and Master Data in a database and refresh them on a scheduled job rather than querying the full topology per user request.
+Only enqueue explicit, bounded sync jobs during the OAG trial. Normal fare search does not automatically consume OAG calls. Production should schedule bounded refreshes and persist Schedules and Master Data rather than querying the full topology per user request.

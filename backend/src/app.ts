@@ -6,7 +6,9 @@ import Fastify from 'fastify'
 import { ZodError } from 'zod'
 import type { AppContext } from './app/context.js'
 import { isAppError } from './lib/errors.js'
+import { registerAdminSyncRoutes } from './routes/admin-sync.js'
 import { registerAuthRoutes } from './routes/auth.js'
+import { registerFlightSearchRoutes } from './routes/flight-searches.js'
 import { registerHealthRoutes } from './routes/health.js'
 import { registerPreferenceRoutes } from './routes/preferences.js'
 import { registerReferenceDataRoutes } from './routes/reference-data.js'
@@ -73,7 +75,9 @@ export async function buildApp(context: AppContext) {
   })
 
   await registerHealthRoutes(app, context)
+  await registerAdminSyncRoutes(app, context)
   await registerAuthRoutes(app, context)
+  await registerFlightSearchRoutes(app, context)
   await registerReferenceDataRoutes(app, context)
   await registerPreferenceRoutes(app, context)
   await registerTopologyRoutes(app, context)

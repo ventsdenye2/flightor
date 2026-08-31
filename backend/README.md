@@ -8,7 +8,10 @@ FlightOR 的独立自部署后端。当前骨架包含：
 - 微信登录、Access Token、Refresh Token 轮换；
 - 国家、机场、中转国家偏好接口；
 - 带数据版本的三态可达性查询；
+- OAG 路线同步、响应归一化、拓扑边重建与原子版本切换；
+- 国家偏好、安全衔接和长中转软排序；
 - OAG、SerpApi、OpenRouter 服务端 Provider；
+- SerpApi 实时报价搜索、标准化和 Redis 短缓存；
 - PostgreSQL `FOR UPDATE SKIP LOCKED` 持久 Worker；
 - Docker Compose 本地部署。
 
@@ -28,6 +31,7 @@ copy .env.example .env
 - `DATABASE_URL`
 - `REDIS_URL`
 - `JWT_SECRET`（至少 32 个字符，每个环境使用独立随机值）
+- `ADMIN_API_TOKEN`（启用管理同步接口时设置，通过 `X-Admin-Token` 传入）
 
 第三方 Provider：
 
@@ -80,14 +84,19 @@ npm run dev:worker
 |---|---|---|
 | GET | `/health/live` | API 进程存活 |
 | GET | `/health/ready` | PostgreSQL / Redis 就绪 |
-| GET | `/health/providers` | 仅返回 Provider 是否配置，不返回密钥 |
+| GET | `/health/providers` | 仅返回 Provider 是否配置（明确标记 `verified=false`），不探测也不返回密钥 |
 | POST | `/v1/auth/wechat` | 微信 code 登录 |
 | POST | `/v1/auth/refresh` | Refresh Token 轮换 |
+| POST | `/v1/flight-searches` | SerpApi 实时报价同步搜索（MVP 快速路径） |
 | GET | `/v1/countries` | 热门国家与国家搜索 |
 | GET | `/v1/airports` | IATA/ICAO/中英文机场城市搜索 |
 | GET | `/v1/users/me/transit-country-preferences` | 当前用户中转国家偏好 |
 | PUT | `/v1/users/me/transit-country-preferences` | 整体替换 preferred / excluded |
 | POST | `/v1/reachability/query` | 最多两次中转、无闭环、日期级三态可达性 |
+| POST | `/v1/admin/sync/oag/location` | 将单个 OAG 机场同步任务写入队列 |
+| POST | `/v1/admin/sync/oag/route` | 将指定 OD/日期的 OAG 同步任务写入队列 |
+| GET | `/v1/admin/jobs/:id` | 轮询管理任务状态 |
+| GET | `/v1/admin/sync-runs/:id` | 查询同步执行状态 |
 
 偏好接口需要：
 
@@ -97,7 +106,21 @@ Authorization: Bearer <access-token>
 
 偏好只有 `preferred` 与 `excluded`，没有记录即“不限”。同一个国家不能同时出现在两个数组。
 
-## 4. 数据库迁移
+搜索接口支持最多 3 个出发机场、3 个到达机场和 31 天出发窗口；长窗口均匀采样最多 4 天，以控制第三方配额。响应按前端现有 `direct / selfTransfer / airlineTransfer` 契约返回，其中 SerpApi 暂不识别自行拼票，因此 `selfTransfer` 当前为空数组。
+
+## 4. 小程序真实模式
+
+小程序默认保留 Mock 演示。连接本机 API 时，在项目根目录运行：
+
+```powershell
+$env:FLIGHTOR_USE_MOCK='false'
+$env:FLIGHTOR_API_BASE_URL='http://127.0.0.1:3000'
+npm run dev:weapp
+```
+
+第三方 Provider key 仅从 `backend/.env` 读取。不要恢复根目录 `openrouter.txt` / `serpapi.txt` 的编译期注入方式。
+
+## 5. 数据库迁移
 
 ```bash
 npm run migrate
@@ -108,7 +131,7 @@ npm run migrate:down
 
 同步采取“新版本构建完成后激活”的方式；生产搜索不能读取正在构建的半成品拓扑。
 
-## 5. Worker
+## 6. Worker
 
 Worker 从 `jobs` 表原子领取任务：
 
@@ -122,10 +145,20 @@ for update skip locked
 
 - `noop`：队列链路测试；
 - `oag_locations_probe`：显式触发 OAG Master Data 小流量探测。
+- `oag_sync_location`：归一化并写入国家—城市—机场层级；
+- `oag_sync_route`：读取指定 OD/日期范围，建立新拓扑版本，完整后原子激活。
 
-不会自动调用第三方 Provider，避免启动服务就消耗试用额度。正式 Master Data / Schedules / Connections 同步处理器将在下一阶段接入。
+服务启动不会自动调用第三方 Provider，避免无意消耗试用额度。只有管理接口明确入队后才会同步。
 
-## 6. 验证
+路线同步允许供应商部分成功：例如 Schedules 临时不可用但 Connections 返回了已验证连接时，仍会用连接中的两个航段构建部分拓扑，并在同步结果中记录 Provider 警告。`coverage_complete=false` 时，没有找到路径仍返回 `unknown`，不会误报为不可达。
+
+`POST /v1/reachability/query` 可传：
+
+- `preferredCountries` / `excludedCountries`；登录用户的已保存偏好会自动合并；
+- `minConnectionMinutes`，最小为 60 分钟；自行中转仍采用至少 240 分钟的保守下限；
+- `preferredConnectionMinutes`，默认 720 分钟。超过该时长只降低排序并标记 `long_connection`，不会过滤；6 小时以上会标记 `stopoverPlayable`。
+
+## 7. 验证
 
 ```bash
 npm run check
@@ -143,7 +176,7 @@ npm run migrate
 
 然后确认 `/health/ready` 返回 PostgreSQL 与 Redis 均为 `ok`。
 
-## 7. 安全说明
+## 8. 安全说明
 
 - 不要将 `.env`、Provider 原始响应或微信 OpenID 提交到 Git；
 - 不要把 OAG/SerpApi/OpenRouter key 注入小程序；

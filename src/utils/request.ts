@@ -3,15 +3,15 @@
 import Taro from '@tarojs/taro'
 import { t } from '../i18n'
 
-/** 云函数代理地址（上线前需配置 request 合法域名） */
-export const BASE_URL = 'https://your-cloud-function.com/api'
+/** 自建 API 地址；真机运行时应配置为已备案 HTTPS 域名。 */
+export const BASE_URL = FLIGHTOR_API_BASE_URL.replace(/\/$/, '')
 
-/** 开发阶段使用本地 Mock（true 时不发真实请求） */
-export const USE_MOCK = true
+/** 显式构建开关；FLIGHTOR_USE_MOCK=false 时走自建后端。 */
+export const USE_MOCK = FLIGHTOR_USE_MOCK
 
 interface RequestOptions<D> {
   url: string
-  method?: 'GET' | 'POST'
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   data?: D
   showLoading?: boolean
   loadingText?: string
@@ -30,12 +30,16 @@ export async function request<T, D = Record<string, unknown>>(options: RequestOp
   let lastError: unknown
   for (let attempt = 0; attempt <= retry; attempt++) {
     try {
+      const accessToken = Taro.getStorageSync('access_token') as string
       const res = await Taro.request<T>({
         url: BASE_URL + url,
         method,
         data: data as any,
         timeout,
-        header: { 'content-type': 'application/json' }
+        header: {
+          'content-type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+        }
       })
       if (showLoading) Taro.hideLoading()
 
