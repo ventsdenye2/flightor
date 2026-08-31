@@ -143,7 +143,7 @@ Invoke-RestMethod http://localhost:3000/health/ready
 Invoke-RestMethod http://localhost:3000/health/providers
 ```
 
-上次检查时 Docker Desktop 没有运行，因此代码、Provider 和构建验证已完成，但 PostgreSQL/Redis 容器端到端验证仍需在 Docker 启动后执行。
+2026-08-31 已完成容器端到端验证：PostgreSQL、Redis 均为 healthy，4 个迁移已执行，Redis `PING` 返回 `PONG`，API `/health/ready` 返回 200，Worker 已消费 OAG 路线同步任务并激活拓扑版本。
 
 ## 6. 小程序启动方式
 
@@ -204,10 +204,12 @@ npm run dev:weapp
 | OAG Connections `/flight-connections` | 成功 | 已返回并成功归一化连接数据 |
 | OAG Flight Info `/flight-instances/` | 成功 | 已返回并成功归一化直飞数据，可作为 Schedules 降级 |
 | SerpApi Google Flights | 成功 | 已返回真实报价并通过后端映射 |
-| OpenRouter `/chat/completions` | HTTP 403 | 当前模型提示 `This model is not available in your region.`，需更换区域可用模型或路由设置 |
+| OpenRouter `/chat/completions` | 成功 | 已切换为 `openrouter/free` 免费路由；模型由 OpenRouter 从当前免费池动态选择，不保证固定厂商 |
 | 微信登录 | 未验证 | `WX_SECRET` 为空，补齐后才能完成正式登录联调 |
 
 `/health/providers` 只检查 key 是否存在，不进行付费/配额相关真实调用。不要用该接口判断订阅是否 active。
+
+2026-08-31 查询 OpenRouter 实时模型列表时，没有可用的 `deepseek/...:free` 型号；历史 DeepSeek 免费 ID 均返回 404，并明确提示只能使用付费版本。OpenRouter 网站设置无法重新开启已经下线的免费型号。若必须固定使用 DeepSeek，需要选择付费 DeepSeek 模型并确保账号余额可用；若优先零费用，继续使用 `openrouter/free`。
 
 ## 9. 核心业务与技术约束
 
@@ -244,6 +246,9 @@ npm run dev:weapp
 - 后端 `npm run build`；
 - 小程序 `npm run build:weapp`；
 - 非 Mock 小程序构建；
+- Docker Compose PostgreSQL/Redis/API/Worker 端到端启动；
+- 4 个数据库迁移、Redis PING、API ready、Worker 任务消费和拓扑版本激活；
+- `openrouter/free` 从 API 容器内真实调用成功；
 - `git diff --check`；
 - 构建产物密钥扫描：未发现当前第三方密钥。
 
@@ -267,11 +272,10 @@ Vitest/esbuild 在受限沙箱中可能因 `spawn EPERM` 失败；这属于进�
 
 ### P0：完成真实端到端联调
 
-1. 启动 Docker Desktop，执行迁移并验证 API、Worker、PostgreSQL、Redis；
-2. 调用 `/v1/flight-searches` 完成小程序真实报价搜索；
-3. 补 `WX_SECRET`，验证微信登录和 Token 轮换；
-4. 推动 OAG 激活 Schedules、Master Data；在此之前保留 Flight Info + Connections 降级；
-5. 为 OpenRouter 选择当前区域可用模型并重新验证。
+1. 在微信开发者工具中调用 `/v1/flight-searches`，完成小程序真实报价 UI 联调；
+2. 补 `WX_SECRET`，验证微信登录和 Token 轮换；
+3. 推动 OAG 激活 Schedules、Master Data；在此之前保留 Flight Info + Connections 降级；
+4. 生产前评估 `openrouter/free` 的免费配额、动态模型输出稳定性和数据策略。
 
 ### P1：继续解除云函数/本地 Mock 依赖
 

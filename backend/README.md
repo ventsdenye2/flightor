@@ -41,6 +41,7 @@ copy .env.example .env
 - `OAG_MASTER_DATA_KEY`
 - `SERPAPI_KEY`
 - `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL`（MVP 默认 `openrouter/free`；免费池动态选择模型）
 - `WX_APPID` / `WX_SECRET`
 
 路径变量采用当前适配器默认值；如果 OAG 订阅合同中的 endpoint 不同，只改环境变量，不改领域代码。
