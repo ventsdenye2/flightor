@@ -11,6 +11,7 @@ FlightOR 的独立自部署后端。当前骨架包含：
 - OAG 路线同步、响应归一化、拓扑边重建与原子版本切换；
 - 国家偏好、安全衔接和长中转软排序；
 - OAG、SerpApi、OpenRouter 服务端 Provider；
+- 自建 `/v1/agent/chat` 多轮需求解析，OpenRouter 失败时可信规则降级；
 - SerpApi 实时报价搜索、标准化和 Redis 短缓存；
 - PostgreSQL `FOR UPDATE SKIP LOCKED` 持久 Worker；
 - Docker Compose 本地部署。
@@ -88,6 +89,7 @@ npm run dev:worker
 | GET | `/health/providers` | 仅返回 Provider 是否配置（明确标记 `verified=false`），不探测也不返回密钥 |
 | POST | `/v1/auth/wechat` | 微信 code 登录 |
 | POST | `/v1/auth/refresh` | Refresh Token 轮换 |
+| POST | `/v1/agent/chat` | 多轮提取行程槽位；OpenRouter 不可用时自动规则降级 |
 | POST | `/v1/flight-searches` | SerpApi 实时报价同步搜索（MVP 快速路径） |
 | GET | `/v1/countries` | 热门国家与国家搜索 |
 | GET | `/v1/airports` | IATA/ICAO/中英文机场城市搜索 |
@@ -108,6 +110,15 @@ Authorization: Bearer <access-token>
 偏好只有 `preferred` 与 `excluded`，没有记录即“不限”。同一个国家不能同时出现在两个数组。
 
 搜索接口支持最多 3 个出发机场、3 个到达机场和 31 天出发窗口；长窗口均匀采样最多 4 天，以控制第三方配额。响应按前端现有 `direct / selfTransfer / airlineTransfer` 契约返回，其中 SerpApi 暂不识别自行拼票，因此 `selfTransfer` 当前为空数组。
+
+Agent 接口无需登录即可用于 MVP。客户端传最近的对话和已确认槽位，后端从 PostgreSQL 读取有效机场白名单并调用 OpenRouter；模型只能负责理解和提取需求，不能作为航班、价格、签证或衔接安全的事实来源。预算、兴趣、行程天数、中转偏好等可选字段必须能从用户原文中按规则找到明确证据，模型单独返回的虚构默认值会被丢弃。响应中的 `source` 为 `llm` 或 `rules`，`warnings` 包含 `llm_fallback` 时表示本轮已自动使用规则解析，用户仍可继续对话。
+
+```json
+{
+  "messages": [{ "role": "user", "content": "2026年9月15日从新加坡去伦敦，玩7天，预算8000" }],
+  "slots": {}
+}
+```
 
 ## 4. 小程序真实模式
 

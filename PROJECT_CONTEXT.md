@@ -1,6 +1,6 @@
 # FlightOR 项目上下文与开发交接
 
-> 最后更新：2026-08-31
+> 最后更新：2026-09-01
 > 用途：为后续迭代快速恢复上下文。每次完成会影响架构、启动方式、接口、外部依赖或 MVP 范围的开发后，应同步更新本文。
 
 ## 1. 当前目标与产品原则
@@ -9,10 +9,10 @@ FlightOR 是国际航线比价与多城路线规划微信小程序，前端使�
 
 当前目标不是执行旧的十几天瀑布式计划，而是敏捷跑通可演示 MVP：
 
-1. 用户能在小程序中提交机场和日期条件；
-2. 请求进入 FlightOR 自建后端；
-3. 后端安全调用第三方 Provider，返回真实报价；
-4. OAG 数据可支撑直飞/中转可达性与安全衔接判断；
+1. 用户用自然语言描述出发地、目的地、日期、预算和偏好；
+2. 自建后端 Agent 多轮补齐检索参数；
+3. 参数齐全后通过 SerpApi 返回真实报价和备选方案；
+4. OAG Schedules / Master Data 尚在申请，不阻塞本轮 Agent MVP；
 5. 外部服务不可用时返回明确状态或可信降级，不伪造实时结果。
 
 长期架构以自建 API、Worker、PostgreSQL、Redis 为核心。微信云函数仅是迁移期代码或可选回退，不应成为核心业务的强依赖。
@@ -30,6 +30,7 @@ src/                 微信小程序前端
   utils/             请求、存储、格式化等工具
 
 backend/             可独立部署的 Fastify 后端
+  src/agent/         多轮槽位提取、白名单校验和规则降级
   src/routes/        HTTP API
   src/providers/     OAG、SerpApi、OpenRouter 适配器
   src/topology/      OAG 同步、拓扑版本构建
@@ -58,7 +59,7 @@ compose.yaml         PostgreSQL、Redis、API、Worker 编排
       -> Redis：限流和报价短缓存
       -> SerpApi：Google Flights 真实报价
       -> OAG：Flight Info、Connections、Schedules、Master Data
-      -> OpenRouter：后续 AI Gateway
+      -> OpenRouter：自然语言需求理解（失败时本地规则降级）
 
 FlightOR Worker
   -> PostgreSQL jobs 队列
@@ -66,7 +67,7 @@ FlightOR Worker
   -> 新拓扑版本构建并原子激活
 ```
 
-报价搜索已经走自建后端。小程序包不再注入 SerpApi、OpenRouter 或 OAG 密钥。
+Agent 对话和报价搜索已经走自建后端。小程序包不再注入 SerpApi、OpenRouter 或 OAG 密钥。
 
 ## 4. 已实现的 MVP 后端能力
 
@@ -79,6 +80,10 @@ FlightOR Worker
 - 带版本的航线拓扑、最多两次中转、无闭环、三态可达性；
 - 中转国家排除/偏好、安全衔接时间和长中转软排序；
 - SerpApi 实时报价搜索、标准化和 Redis 10 分钟缓存；
+- `/v1/agent/chat` 多轮需求槽位提取，服务端机场白名单与 OpenRouter 调用；
+- OpenRouter 不可用、超时或返回非结构化内容时自动规则降级，核心演示不因免费模型波动中断；
+- 小程序 Agent 页参数齐全后可调用真实航班搜索并生成最省钱/最舒适/长中转备选卡；
+- Agent 对预算、兴趣、天数、行程类型和中转偏好采用文本证据校验，防止免费模型填入用户未表达的默认值；
 - OAG Schedules 不可用时，以 Flight Info Trial 作为直飞数据降级；
 - 管理任务入队与 Job 状态轮询。
 
@@ -91,6 +96,7 @@ FlightOR Worker
 | GET | `/health/providers` | 仅检查是否配置，固定标记 `verified=false` |
 | POST | `/v1/auth/wechat` | 微信登录 |
 | POST | `/v1/auth/refresh` | 刷新会话 |
+| POST | `/v1/agent/chat` | 多轮理解行程需求，返回槽位与待补信息 |
 | POST | `/v1/flight-searches` | MVP 同步真实报价搜索 |
 | GET | `/v1/countries` | 国家列表/搜索 |
 | GET | `/v1/airports` | 机场列表/搜索 |
@@ -164,7 +170,7 @@ npm run dev:weapp
 
 真机不能使用手机自身的 `127.0.0.1` 访问电脑。真机调试时应改为手机可访问的局域网地址；上线时必须使用已备案 HTTPS 域名，并在微信公众平台配置 request 合法域名。
 
-注意：环境变量是构建时常量。修改 API 地址或 Mock 开关后必须重新构建。2026-08-31 最后一次生成的 `dist/` 是连接 `http://127.0.0.1:3000` 的非 Mock 产物；再次执行无环境变量的构建会恢复为 Mock。
+注意：环境变量是构建时常量。修改 API 地址或 Mock 开关后必须重新构建。运行无环境变量的构建会恢复为 Mock。2026-09-01 最后一次生成的 `dist/` 为连接 `http://127.0.0.1:3000` 的非 Mock 产物。
 
 ## 7. 环境变量
 
@@ -195,7 +201,7 @@ npm run dev:weapp
 
 ## 8. 外部 API 实测状态
 
-以下为 2026-08-31 使用当前本地配置进行的真实小请求结果；状态可能变化，联调前应重新探测：
+以下为 2026-09-01 前后的本地配置实测；状态可能变化，联调前应重新探测：
 
 | Provider/API | 状态 | 结论 |
 |---|---|---|
@@ -223,6 +229,8 @@ npm run dev:weapp
 - 长中转不是硬过滤，应保留并标记 `long_connection` / `stopoverPlayable`；
 - OAG 时刻不等于可售价格；真实价格以报价 Provider 为准；
 - 大模型不能作为航班存在、价格、签证或安全衔接的事实来源。
+- Agent 只接受服务端数据库中的有效机场代码；前端不得提供可覆盖白名单的机场表。
+- `source=rules` 是 OpenRouter 降级结果，不代表已调用模型；真实报价仍只来自报价 Provider。
 
 ### 工程约束
 
@@ -238,15 +246,17 @@ npm run dev:weapp
 
 ## 10. 当前验证基线
 
-2026-08-31 已通过：
+截至 2026-09-01 已通过：
 
 - 根项目全量测试：111 项断言通过；
-- 后端 Vitest：14/14 通过；
+- 后端 Vitest：18/18 通过（含 4 项 Agent 解析与降级测试）；
 - 根项目 `npx tsc --noEmit`；
 - 后端 `npm run check`；
 - 后端 `npm run build`；
 - 小程序 `npm run build:weapp`；
 - 非 Mock 小程序构建；
+- 临时宿主机 API `:3001` 的真实 Agent 单轮与多轮调用：`source=llm`、槽位完整，虚构可选字段已被过滤；
+- 同一临时 API 的 `SIN → LHR / 2026-09-15` 实时报价：直飞 8、航司联程 10、自行拼票 0；
 - Docker Compose PostgreSQL/Redis/API/Worker 端到端启动；
 - 4 个数据库迁移、Redis PING、API ready、Worker 任务消费和拓扑版本激活；
 - `openrouter/free` 从 API 容器内真实调用成功；
@@ -271,20 +281,22 @@ Vitest/esbuild 在受限沙箱中可能因 `spawn EPERM` 失败；这属于进�
 
 按可演示 MVP 的阻塞程度处理，不采用固定十几天计划：
 
-### P0：完成真实端到端联调
+### P0：完成 Agent MVP 的开发者工具联调
 
-1. 在微信开发者工具中调用 `/v1/flight-searches`，完成小程序真实报价 UI 联调；
-2. 补 `WX_SECRET`，验证微信登录和 Token 轮换；
-3. 推动 OAG 激活 Schedules、Master Data；在此之前保留 Flight Info + Connections 降级；
-4. 生产前评估 `openrouter/free` 的免费配额、动态模型输出稳定性和数据策略。
+1. 重建 Docker API 后验证 `/v1/agent/chat` 单轮与多轮请求；
+2. 在微信开发者工具中完成“自然语言 → 参数卡 → 生成方案 → 真实报价卡”联调；
+3. 生产前评估 `openrouter/free` 的免费配额、动态模型输出稳定性和数据策略；
+4. 补 `WX_SECRET`，验证微信登录和 Token 轮换（不阻塞游客态 Agent MVP）。
+
+2026-09-01 最后一次 Docker API 重建时，Docker Desktop 命名管道持续无响应；PostgreSQL/Redis 的宿主机端口仍正常，因此使用临时 `:3001` API 完成了代码、数据库、Redis、OpenRouter 和 SerpApi 的真实链路验证。继续开发前先重启 Docker Desktop，再执行 `docker compose up -d --build api` 将新 Agent 版本装入正式 `:3000` 容器。
 
 ### P1：继续解除云函数/本地 Mock 依赖
 
-1. 将多城 `routePlanner` 迁到后端 `/v1/route-plans`；
-2. 将聊天与需求解析迁到后端 AI Gateway；
-3. 让国家、机场选择器从 `/v1/countries`、`/v1/airports` 取数；
-4. 将用户中转偏好接入后端并跨设备同步；
-5. 把收藏、行程、价格提醒从本地 MobX 存储迁到后端。
+1. 将多城 `routePlanner` 迁到后端 `/v1/route-plans`；当前带“多城/几个城市/串起来”等关键词的对话仍进入旧规划链路；
+2. 让国家、机场选择器从 `/v1/countries`、`/v1/airports` 取数；
+3. 将用户中转偏好接入后端并跨设备同步；
+4. 把收藏、行程、价格提醒从本地 MobX 存储迁到后端；
+5. 增加 Agent 会话持久化、工具调用编排、可观测性和提示词版本管理。
 
 ### P2：完善搜索产品能力
 

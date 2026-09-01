@@ -1,17 +1,9 @@
 // src/services/chatService.ts — 需求对话服务
-// 优先级：OpenRouter 直连（key 已注入）> 云函数（USE_MOCK=false）> 本地规则解析（兼容无 key 演示）
+// 真实模式统一走自建后端；Mock 模式保留本地规则，便于无网络演示。
 import { request, USE_MOCK } from '../utils/request'
 import { AIRPORTS } from '../mocks/airports'
 import { daysFromNow, toDateString } from '../utils/format'
-import { hasLlmKey, chatCompletion, extractJson } from './llm'
 import type { Interest } from '../types/flight'
-
-// 复用云函数纯逻辑（prompt 与槽位白名单校验单一来源，避免双端不一致）
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const chatAgent = require('../../cloud/chatAgent/agent') as {
-  buildSystemPrompt: (airports: Array<{ iata: string; city: string; enCity: string }>, today: string) => string
-  sanitizeSlots: (raw: unknown, airports: Array<{ iata: string; city: string; enCity: string }>, today: string) => ChatSlots
-}
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -37,6 +29,8 @@ export interface ChatTurnResult {
   slots: ChatSlots
   ready: boolean
   missing: string[]
+  source?: 'llm' | 'rules'
+  warnings?: string[]
 }
 
 // ---------- Mock：本地规则解析 ----------
@@ -187,41 +181,8 @@ function mockReply(slots: ChatSlots, ready: boolean, missing: string[]): { zh: s
 
 const READY_KEYS: Array<keyof ChatSlots> = ['origin', 'destination', 'depart_date_from']
 
-const AIRPORT_TABLE = AIRPORTS.map(a => ({ iata: a.iata, city: a.city, enCity: a.enCity }))
-
-/** OpenRouter 直连：小程序端完成云函数 chatTurn 同构的单轮推进 */
-async function directTurn(messages: ChatMessage[], slots: ChatSlots): Promise<ChatTurnResult> {
-  const today = toDateString(new Date())
-  const content = await chatCompletion(
-    [
-      { role: 'system', content: chatAgent.buildSystemPrompt(AIRPORT_TABLE, today) },
-      { role: 'system', content: `当前已确认槽位：${JSON.stringify(slots)}` },
-      ...messages.slice(-12).map(m => ({ role: m.role, content: m.content.slice(0, 500) }))
-    ],
-    { temperature: 0.3, maxTokens: 800 }
-  )
-
-  const parsed = extractJson<{ reply?: { zh?: string; en?: string }; slots?: unknown }>(content)
-  const newSlots = chatAgent.sanitizeSlots(parsed.slots, AIRPORT_TABLE, today)
-  const merged = { ...slots, ...newSlots }
-  const missing = READY_KEYS.filter(k => !merged[k])
-  const ready = missing.length === 0
-
-  const reply =
-    parsed.reply && typeof parsed.reply.zh === 'string' && typeof parsed.reply.en === 'string'
-      ? { zh: parsed.reply.zh.slice(0, 200), en: parsed.reply.en.slice(0, 400) }
-      : { zh: '收到，请再补充一下出行信息', en: 'Got it, please share more trip details' }
-
-  return { reply, slots: merged, ready, missing }
-}
-
 export async function talkToAgent(messages: ChatMessage[], slots: ChatSlots): Promise<ChatTurnResult> {
-  // ① key 已注入：真实 LLM 直连（与 USE_MOCK 无关，航班数据可以继续 mock）
-  if (hasLlmKey()) {
-    return directTurn(messages, slots)
-  }
-
-  // ② 无 key 且 mock：本地规则解析兼容演示
+  // Mock：本地规则解析兼容离线演示。
   if (USE_MOCK) {
     await new Promise(r => setTimeout(r, 500))
     const lastUser = [...messages].reverse().find(m => m.role === 'user')
@@ -231,14 +192,13 @@ export async function talkToAgent(messages: ChatMessage[], slots: ChatSlots): Pr
     return { reply: mockReply(merged, ready, missing), slots: merged, ready, missing }
   }
 
-  // ③ 生产通道：云函数
+  // 真实模式：对话、OpenRouter 密钥和机场白名单均由自建后端管理。
   return request<ChatTurnResult>({
-    url: '/agent/chat',
+    url: '/v1/agent/chat',
     method: 'POST',
     data: {
       messages: messages.slice(-12),
-      slots,
-      airports: AIRPORT_TABLE
+      slots
     },
     retry: 0,
     timeout: 60000
