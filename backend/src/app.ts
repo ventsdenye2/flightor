@@ -67,6 +67,20 @@ export async function buildApp(context: AppContext) {
         requestId: request.id
       })
     }
+    const httpError = error as { statusCode?: unknown; code?: unknown; message?: unknown }
+    if (
+      typeof httpError.statusCode === 'number'
+      && httpError.statusCode >= 400
+      && httpError.statusCode < 500
+    ) {
+      return reply.code(httpError.statusCode).send({
+        error: {
+          code: typeof httpError.code === 'string' ? httpError.code : 'INVALID_REQUEST',
+          message: typeof httpError.message === 'string' ? httpError.message : 'Invalid request'
+        },
+        requestId: request.id
+      })
+    }
     request.log.error({ err: error }, 'Unhandled request error')
     return reply.code(500).send({
       error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' },

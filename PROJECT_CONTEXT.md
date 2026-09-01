@@ -230,6 +230,7 @@ npm run dev:weapp
 - API 与 Worker 共用领域代码，但以不同进程运行；
 - 所有 Provider 通过服务端适配器调用；
 - 新接口使用 `/v1`、Zod 输入校验和统一错误格式；
+- Fastify 请求解析类 4xx 错误必须保留为客户端错误，不能包装成 `INTERNAL_ERROR`；
 - 日志不得记录密钥、Authorization、微信 code、refresh token、OpenID 或完整敏感响应；
 - 数据同步构建新拓扑版本，完成后原子激活；失败时继续使用旧版本；
 - 报价缓存只能短期使用，并保留“价格以实际购买为准”的提示；
