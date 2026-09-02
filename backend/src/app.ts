@@ -14,6 +14,7 @@ import { registerHealthRoutes } from './routes/health.js'
 import { registerPreferenceRoutes } from './routes/preferences.js'
 import { registerReferenceDataRoutes } from './routes/reference-data.js'
 import { registerTopologyRoutes } from './routes/topology.js'
+import { registerTripPlanRoutes } from './routes/trip-plans.js'
 
 export async function buildApp(context: AppContext) {
   const app = Fastify({
@@ -97,5 +98,6 @@ export async function buildApp(context: AppContext) {
   await registerReferenceDataRoutes(app, context)
   await registerPreferenceRoutes(app, context)
   await registerTopologyRoutes(app, context)
+  await registerTripPlanRoutes(app, context)
   return app
 }

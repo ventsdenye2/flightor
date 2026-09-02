@@ -1,7 +1,7 @@
 // pages/plan — AI 行程规划（tabBar 主页面）
 // 双形态：未选航班 → 需求对话（talk with agent 拆解需求 → 核心检索系统）；
-//        已选航班 → 生成行程时间轴（tripAgent）
-import { useEffect, useState } from 'react'
+//        已选航班 → 生成行程时间轴（自建后端）
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text, Input, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
@@ -298,6 +298,8 @@ const AgentChat = observer(() => {
 function PlanPage() {
   const [plan, setPlan] = useState<TripPlan | null>(null)
   const [error, setError] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const requestId = useRef(0)
   const locale = localeStore.locale
   const pick = (v: BiText) => (locale === 'zh' ? v.zh : v.en)
 
@@ -308,16 +310,32 @@ function PlanPage() {
     Taro.setNavigationBarTitle({ title: t('nav.tripPlan') })
   }, [locale])
 
-  const load = () => {
+  const load = useCallback(() => {
     if (!flight || !params) return
+    const currentRequestId = ++requestId.current
     setError(false)
     setPlan(null)
+    setIsLoading(true)
     planTrip(flight, params)
-      .then(setPlan)
-      .catch(() => setError(true))
-  }
+      .then(nextPlan => {
+        // Ignore a slower response from a previous selection or retry.
+        if (currentRequestId === requestId.current) setPlan(nextPlan)
+      })
+      .catch(() => {
+        if (currentRequestId === requestId.current) setError(true)
+      })
+      .finally(() => {
+        if (currentRequestId === requestId.current) setIsLoading(false)
+      })
+  }, [flight, params])
 
-  useEffect(load, [flight?.id])
+  useEffect(() => {
+    load()
+    return () => {
+      // Invalidate in-flight work when the selected flight changes or the page unmounts.
+      requestId.current += 1
+    }
+  }, [load])
 
   // 未选航班：需求对话
   if (!flight || !params) {
@@ -341,7 +359,7 @@ function PlanPage() {
     )
   }
 
-  if (!plan) {
+  if (isLoading || !plan) {
     return (
       <View className='trip-plan trip-plan--center'>
         <Text className='trip-plan__loading-icon'>✨</Text>

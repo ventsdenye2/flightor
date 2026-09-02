@@ -40,7 +40,7 @@ const INTEREST_KEYWORDS: Array<{ re: RegExp; key: Interest }> = [
   { re: /文化|博物馆|古迹|历史|culture|museum/i, key: 'culture' },
   { re: /自然|风景|海边|山|nature|beach/i, key: 'nature' },
   { re: /购物|买|shopping/i, key: 'shopping' },
-  { re: /夜生活|酒吧|nightlife|bar/i, key: 'nightlife' }
+  { re: /夜生活|酒吧|nightlife|bar\b/i, key: 'nightlife' }
 ]
 
 /** 在文本中按城市名/IATA 找机场，返回出现位置排序的候选 */
@@ -91,15 +91,14 @@ function mockParse(text: string, prev: ChatSlots): ChatSlots {
     if (n >= 1 && n <= 60) {
       slots.stay_min = Math.max(1, n - 1)
       slots.stay_max = n + 1
-      slots.trip_type = 'roundtrip'
     }
   }
   if (/一周|一个星期/.test(text)) {
     slots.stay_min = 6
     slots.stay_max = 8
-    slots.trip_type = 'roundtrip'
   }
   if (/单程/.test(text)) slots.trip_type = 'oneway'
+  if (/往返|来回|round[ -]?trip/i.test(text)) slots.trip_type = 'roundtrip'
 
   // 预算：「预算N」「N元/块」「Nk/千/万」
   const budgetWan = text.match(/(\d+(?:\.\d+)?)\s*万/)

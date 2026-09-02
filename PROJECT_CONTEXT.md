@@ -1,6 +1,6 @@
 # FlightOR 项目上下文与开发交接
 
-> 最后更新：2026-09-01
+> 最后更新：2026-09-02
 > 用途：为后续迭代快速恢复上下文。每次完成会影响架构、启动方式、接口、外部依赖或 MVP 范围的开发后，应同步更新本文。
 
 ## 1. 当前目标与产品原则
@@ -69,6 +69,8 @@ FlightOR Worker
 
 Agent 对话和报价搜索已经走自建后端。小程序包不再注入 SerpApi、OpenRouter 或 OAG 密钥。
 
+单目的地选中航班后的行程规划已迁移到自建后端 `POST /v1/trip-plans`。非 Mock 小程序只由 `src/services/tripService` 发送结构化事实素材，不暴露 OpenRouter key，也不依赖旧的 `cloud/tripAgent` 云函数。
+
 ## 4. 已实现的 MVP 后端能力
 
 - Fastify API、统一错误格式、请求 ID、CORS、Redis 限流和日志脱敏；
@@ -81,9 +83,13 @@ Agent 对话和报价搜索已经走自建后端。小程序包不再注入 Serp
 - 中转国家排除/偏好、安全衔接时间和长中转软排序；
 - SerpApi 实时报价搜索、标准化和 Redis 10 分钟缓存；
 - `/v1/agent/chat` 多轮需求槽位提取，服务端机场白名单与 OpenRouter 调用；
+- `/v1/trip-plans` 接收选中航班与路线事实，服务端生成行程时间轴，支持 `source=llm|rules` 及非阻塞 `warnings`；
 - OpenRouter 不可用、超时或返回非结构化内容时自动规则降级，核心演示不因免费模型波动中断；
 - 小程序 Agent 页参数齐全后可调用真实航班搜索并生成最省钱/最舒适/长中转备选卡；
 - Agent 对预算、兴趣、天数、行程类型和中转偏好采用文本证据校验，防止免费模型填入用户未表达的默认值；
+- 新增 `005_seed_mvp_airports` 迁移，将 `src/mocks/airports.ts` 的 MVP 机场、城市、国家、常用中英文别名写入 PostgreSQL；
+- Agent 路由从 `airport_aliases` 读取别名，解析优先级为“明确 IATA > 具体机场名/别名 > 城市默认机场”；
+- 同城多机场（如 PEK/PKX、NRT/HND、LHR/LGW）不会同时填入 origin 和 destination；
 - OAG Schedules 不可用时，以 Flight Info Trial 作为直飞数据降级；
 - 管理任务入队与 Job 状态轮询。
 
@@ -149,7 +155,7 @@ Invoke-RestMethod http://localhost:3000/health/ready
 Invoke-RestMethod http://localhost:3000/health/providers
 ```
 
-2026-08-31 已完成容器端到端验证：PostgreSQL、Redis 均为 healthy，4 个迁移已执行，Redis `PING` 返回 `PONG`，API `/health/ready` 返回 200，Worker 已消费 OAG 路线同步任务并激活拓扑版本。
+2026-09-02 root 真实审核：Docker Compose 重建成功；API、Worker 正常运行，PostgreSQL、Redis 均为 healthy；数据库 migrate exit 0；`/health/ready` 返回 `ready`，其中 `postgres=ok`、`redis=ok`；`/health/providers` 显示 OpenRouter、SerpApi 已配置，微信登录未配置（`false`）。`GET /v1/airports?query=东京` 返回 HND/NRT。非法 trip-plan 航段拓扑请求返回 HTTP 400 `INVALID_REQUEST`。
 
 ## 6. 小程序启动方式
 
@@ -201,7 +207,7 @@ npm run dev:weapp
 
 ## 8. 外部 API 实测状态
 
-以下为 2026-09-01 前后的本地配置实测；状态可能变化，联调前应重新探测：
+以下为 2026-09-02 root 真实审核的本地配置与容器实测；状态可能变化，联调前应重新探测：
 
 | Provider/API | 状态 | 结论 |
 |---|---|---|
@@ -210,8 +216,11 @@ npm run dev:weapp
 | OAG Connections `/flight-connections` | 成功 | 已返回并成功归一化连接数据 |
 | OAG Flight Info `/flight-instances/` | 成功 | 已返回并成功归一化直飞数据，可作为 Schedules 降级 |
 | SerpApi Google Flights | 成功 | 已返回真实报价并通过后端映射 |
-| OpenRouter `/chat/completions` | 成功 | 已切换为 `openrouter/free` 免费路由；模型由 OpenRouter 从当前免费池动态选择，不保证固定厂商 |
-| 微信登录 | 未验证 | `WX_SECRET` 为空，补齐后才能完成正式登录联调 |
+| OpenRouter `/chat/completions` | 配置已验证 | 正式 `:3000` 仍使用 `backend/.env` 当前的 `openrouter/free`；`:3001` 另以临时环境变量验证了具体免费模型 |
+| OpenRouter Dots 免费模型 | `:3001` 调用成功 | 临时 override 为 `OPENROUTER_MODEL=dots-studio/dots-3-note-preview:free`；官方 `expiration_date=2026-09-30`，仅作当前 MVP 候选，不可长期依赖，后续应查官方免费列表并切换 |
+| 自建行程 `/v1/trip-plans` | `:3001` `source=llm`，`warnings` 为空，约 6.1 秒 | 临时 override 未修改任何 `.env`；预算项为 `2300 + 800 + 450 = 3550` |
+| Agent `/v1/agent/chat` | `:3001` 三例真实请求均 `source=llm`，约 2–3 秒 | 东京默认解析为 NRT；东京羽田解析为 HND；只说日本时不猜目的地 |
+| 微信登录 | 配置状态 `false` | `WX_SECRET` 为空，补齐后才能完成正式登录联调 |
 
 `/health/providers` 只检查 key 是否存在，不进行付费/配额相关真实调用。不要用该接口判断订阅是否 active。
 
@@ -246,22 +255,16 @@ npm run dev:weapp
 
 ## 10. 当前验证基线
 
-截至 2026-09-01 已通过：
+截至 2026-09-02，root 真实审核与代码验证结果：
 
-- 根项目全量测试：111 项断言通过；
-- 后端 Vitest：18/18 通过（含 4 项 Agent 解析与降级测试）；
-- 根项目 `npx tsc --noEmit`；
-- 后端 `npm run check`；
-- 后端 `npm run build`；
-- 小程序 `npm run build:weapp`；
-- 非 Mock 小程序构建；
-- 临时宿主机 API `:3001` 的真实 Agent 单轮与多轮调用：`source=llm`、槽位完整，虚构可选字段已被过滤；
-- 同一临时 API 的 `SIN → LHR / 2026-09-15` 实时报价：直飞 8、航司联程 10、自行拼票 0；
-- Docker Compose PostgreSQL/Redis/API/Worker 端到端启动；
-- 4 个数据库迁移、Redis PING、API ready、Worker 任务消费和拓扑版本激活；
-- `openrouter/free` 从 API 容器内真实调用成功；
-- `git diff --check`；
-- 构建产物密钥扫描：未发现当前第三方密钥。
+- Docker Compose 重建成功；API、Worker 正常运行，PostgreSQL、Redis 均为 healthy；
+- 数据库 migrate exit 0；`/health/ready` 返回 `ready`，`postgres=ok`、`redis=ok`；`/health/providers` 显示 OpenRouter=true、SerpApi=true、微信登录=false；
+- `GET /v1/airports?query=东京` 返回 HND/NRT；非法 trip-plan 航段拓扑请求返回 HTTP 400 `INVALID_REQUEST`；
+- 使用未修改 `.env` 的临时环境变量 override（`OPENROUTER_MODEL=dots-studio/dots-3-note-preview:free`）在 `:3001` 验证 `/v1/trip-plans`：`source=llm`、`warnings` 为空、约 6.1 秒，预算为 `2300 + 800 + 450 = 3550`；
+- `:3001` Agent 三例真实请求均为 `source=llm`、约 2–3 秒：东京默认 NRT、东京羽田 HND、只说日本不猜目的地；
+- 后端测试 46/46、根项目测试 111/111；前后端 TypeScript 检查与构建、小程序 `weapp` 构建、`git diff --check`、`docker compose config --quiet` 均通过。
+
+模型环境边界：正式 `:3000` 仍使用 `backend/.env` 当前的 `OPENROUTER_MODEL=openrouter/free`。如需采用具体模型，用户需修改 `OPENROUTER_MODEL` 后 recreate API；本次 `:3001` 的 Dots override 未修改 `.env`。Dots 官方 `expiration_date=2026-09-30`，只是当前 MVP 候选，不可长期依赖；后续应查询官方免费模型列表并切换。
 
 提交或交付前至少运行：
 
@@ -283,12 +286,12 @@ Vitest/esbuild 在受限沙箱中可能因 `spawn EPERM` 失败；这属于进�
 
 ### P0：完成 Agent MVP 的开发者工具联调
 
-1. 重建 Docker API 后验证 `/v1/agent/chat` 单轮与多轮请求；
-2. 在微信开发者工具中完成“自然语言 → 参数卡 → 生成方案 → 真实报价卡”联调；
-3. 生产前评估 `openrouter/free` 的免费配额、动态模型输出稳定性和数据策略；
+1. 在微信开发者工具中完成“自然语言 → 参数卡 → 生成方案 → 真实报价卡”联调；
+2. 若正式采用具体模型，修改 `backend/.env` 的 `OPENROUTER_MODEL` 后 recreate API；`:3000` 当前仍是 `openrouter/free`；
+3. 生产前评估 `openrouter/free` 的免费配额、动态模型输出稳定性和数据策略，并在 Dots 于 2026-09-30 到期前查询官方免费列表完成切换评估；
 4. 补 `WX_SECRET`，验证微信登录和 Token 轮换（不阻塞游客态 Agent MVP）。
 
-2026-09-01 最后一次 Docker API 重建时，Docker Desktop 命名管道持续无响应；PostgreSQL/Redis 的宿主机端口仍正常，因此使用临时 `:3001` API 完成了代码、数据库、Redis、OpenRouter 和 SerpApi 的真实链路验证。继续开发前先重启 Docker Desktop，再执行 `docker compose up -d --build api` 将新 Agent 版本装入正式 `:3000` 容器。
+OAG Master Data 开通后，应通过现有 `oag_sync_location` 任务从 OAG 覆盖/更新本地种子数据；本地 `005_seed_mvp_airports` 作为 MVP 离线基线保留，OAG 数据进入后以 OAG 为权威并保留服务端白名单校验。
 
 ### P1：继续解除云函数/本地 Mock 依赖
 

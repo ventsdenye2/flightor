@@ -47,6 +47,14 @@ export interface AirportsTable {
   updated_at: Timestamp
 }
 
+export interface AirportAliasesTable {
+  id: Generated<string>
+  airport_id: string
+  locale: string
+  alias: string
+  alias_normalized: string
+}
+
 export interface UsersTable {
   id: Generated<string>
   public_id: string
@@ -233,6 +241,7 @@ export interface Database {
   countries: CountriesTable
   cities: CitiesTable
   airports: AirportsTable
+  airport_aliases: AirportAliasesTable
   users: UsersTable
   user_sessions: UserSessionsTable
   transit_country_preferences: TransitCountryPreferencesTable

@@ -31,6 +31,7 @@ export async function registerAgentRoutes(app: FastifyInstance, context: AppCont
     const rows = await context.db.selectFrom('airports')
       .leftJoin('cities', 'cities.id', 'airports.city_id')
       .select([
+        'airports.id as id',
         'airports.iata_code as iata',
         'airports.name_zh as nameZh',
         'airports.name_en as nameEn',
@@ -42,13 +43,28 @@ export async function registerAgentRoutes(app: FastifyInstance, context: AppCont
       .orderBy('airports.iata_code')
       .execute()
 
+    const airportIds = rows.flatMap(row => row.id ? [row.id] : [])
+    const aliasRows = airportIds.length > 0
+      ? await context.db.selectFrom('airport_aliases')
+          .select(['airport_id', 'alias'])
+          .where('airport_id', 'in', airportIds)
+          .execute()
+      : []
+    const aliasesByAirport = new Map<string, string[]>()
+    for (const aliasRow of aliasRows) {
+      const list = aliasesByAirport.get(aliasRow.airport_id) ?? []
+      list.push(aliasRow.alias)
+      aliasesByAirport.set(aliasRow.airport_id, list)
+    }
+
     const airports: AgentAirport[] = rows.flatMap(row => row.iata
       ? [{
           iata: row.iata.trim().toUpperCase(),
           nameZh: row.nameZh,
           nameEn: row.nameEn,
           ...(row.cityZh ? { cityZh: row.cityZh } : {}),
-          ...(row.cityEn ? { cityEn: row.cityEn } : {})
+          ...(row.cityEn ? { cityEn: row.cityEn } : {}),
+          ...(row.id && aliasesByAirport.get(row.id)?.length ? { aliases: aliasesByAirport.get(row.id)! } : {})
         }]
       : [])
     if (airports.length === 0) {

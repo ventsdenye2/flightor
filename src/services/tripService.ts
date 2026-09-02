@@ -1,7 +1,6 @@
 // src/services/tripService.ts — AI 行程规划服务
-// 真实模式走 cloud/tripAgent（OpenRouter）；Mock 模式本地规则生成，离线可用
+// 真实模式走自建后端；Mock 模式本地规则生成，离线可用
 import { request, USE_MOCK } from '../utils/request'
-import { hasLlmKey, chatCompletion, extractJson } from './llm'
 import { getHubExperience, getHubVisaNote } from '../mocks/hubs'
 import { cityOf } from '../mocks/airports'
 import type { FlightOption, SearchParams, Interest } from '../types/flight'
@@ -32,6 +31,10 @@ export interface TripPlan {
   days: TripPlanDay[]
   budgetCny: { flights: number; stay: number; activities: number; total: number }
   reminders: BiText[]
+  /** 后端行程来源；Mock 结果保持兼容，不设置该字段。 */
+  source?: 'llm' | 'rules'
+  /** 后端降级或其他非阻塞提示。 */
+  warnings?: string[]
 }
 
 // ---------- Mock：本地规则生成 ----------
@@ -156,14 +159,7 @@ function mockTripPlan(flight: FlightOption, params: SearchParams): TripPlan {
 
 // ---------- 对外服务 ----------
 
-// 复用云函数纯逻辑（prompt 与 Schema 白名单校验单一来源）
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const tripAgent = require('../../cloud/tripAgent/agent') as {
-  buildPrompt: (input: unknown) => string
-  validate: (plan: unknown) => TripPlan | null
-}
-
-/** 事实素材组装（直连与云函数两条通道共用同一形状） */
+/** 事实素材组装，作为自建后端行程规划接口的请求体。 */
 function factsOf(flight: FlightOption, params: SearchParams) {
   const guide = flight.hub ? getHubExperience(flight.hub.iata, 'zh') : undefined
   return {
@@ -192,37 +188,15 @@ function factsOf(flight: FlightOption, params: SearchParams) {
 }
 
 export async function planTrip(flight: FlightOption, params: SearchParams): Promise<TripPlan> {
-  // ① key 已注入：OpenRouter 直连生成（事实素材同构云函数，模型只编排不生成事实）
-  if (hasLlmKey()) {
-    const facts = factsOf(flight, params)
-    const content = await chatCompletion(
-      [
-        {
-          role: 'user',
-          content: tripAgent.buildPrompt({
-            route: facts.route,
-            flight: facts.flight,
-            hubGuide: facts.hub_guide,
-            preferences: {}
-          })
-        }
-      ],
-      { temperature: 0.4, maxTokens: 4000 }
-    )
-    const plan = tripAgent.validate(extractJson(content))
-    if (!plan) throw new Error('plan validation failed')
-    return plan
-  }
-
-  // ② 无 key 且 mock：本地规则生成
+  // Mock 模式只使用本地确定性规则，便于离线演示。
   if (USE_MOCK) {
     await new Promise(r => setTimeout(r, 800))
     return mockTripPlan(flight, params)
   }
 
-  // ③ 生产通道：云函数（事实素材整体传入）
+  // 非 Mock 模式统一通过自建后端生成行程；客户端不持有模型密钥。
   return request<TripPlan>({
-    url: '/trip/plan',
+    url: '/v1/trip-plans',
     method: 'POST',
     data: factsOf(flight, params),
     timeout: 60000, // LLM 生成较慢，放宽超时
