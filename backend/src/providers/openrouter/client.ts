@@ -7,7 +7,7 @@ export interface ChatMessage {
   content: string
 }
 
-export type ChatReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high'
+export type ChatReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
 
 export interface ChatReasoning {
   effort?: ChatReasoningEffort
@@ -19,8 +19,42 @@ export interface ChatOptions {
   maxTokens?: number
   /** Sampling temperature forwarded to the provider. */
   temperature?: number
-  /** OpenRouter reasoning controls, forwarded only when supplied. */
+  /** OpenRouter reasoning controls, forwarded when supported by the model. */
   reasoning?: ChatReasoning
+}
+
+const DEEPSEEK_CHAT_MODEL = 'deepseek/deepseek-chat'
+const DEEPSEEK_V4_PRO_MODEL = 'deepseek/deepseek-v4-pro-0813'
+
+function normalizedModel(model: string): string {
+  return model.trim().toLowerCase()
+}
+
+function isDeepSeekChatModel(model: string): boolean {
+  const normalized = normalizedModel(model)
+  return normalized === DEEPSEEK_CHAT_MODEL || normalized.startsWith(`${DEEPSEEK_CHAT_MODEL}:`)
+}
+
+function isDeepSeekV4ProModel(model: string): boolean {
+  const normalized = normalizedModel(model)
+  return normalized === DEEPSEEK_V4_PRO_MODEL || normalized.startsWith(`${DEEPSEEK_V4_PRO_MODEL}:`)
+}
+
+function supportsReasoning(model: string, reasoning: ChatReasoning): boolean {
+  if (isDeepSeekChatModel(model)) return false
+  if (isDeepSeekV4ProModel(model)) {
+    // V4 Pro accepts the explicit high-effort modes.  The business callers
+    // intentionally send effort=none to disable thinking; omit that (and any
+    // other unsupported effort) instead of turning it into a provider 400.
+    return reasoning.effort === 'high' || reasoning.effort === 'xhigh'
+  }
+  return true
+}
+
+function reasoningBody(model: string, reasoning: ChatReasoning | undefined): { reasoning: ChatReasoning } | Record<string, never> {
+  return reasoning !== undefined && supportsReasoning(model, reasoning)
+    ? { reasoning }
+    : {}
 }
 
 export class OpenRouterClient {
@@ -39,7 +73,9 @@ export class OpenRouterClient {
       messages,
       ...(options?.maxTokens !== undefined ? { max_tokens: options.maxTokens } : {}),
       ...(options?.temperature !== undefined ? { temperature: options.temperature } : {}),
-      ...(options?.reasoning !== undefined ? { reasoning: options.reasoning } : {})
+      // DeepSeek model capabilities are normalized in this shared adapter so
+      // callers can keep sending their model-agnostic reasoning preference.
+      ...reasoningBody(model, options?.reasoning)
     }
     return fetchJson<Record<string, unknown>>(
       `${this.config.OPENROUTER_BASE_URL.replace(/\/$/, '')}/chat/completions`,

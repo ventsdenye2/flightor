@@ -33,7 +33,7 @@ const envSchema = z.object({
   SERPAPI_BASE_URL: optionalUrl.default('https://serpapi.com/search.json'),
   OPENROUTER_API_KEY: z.string().default(''),
   OPENROUTER_BASE_URL: optionalUrl.default('https://openrouter.ai/api/v1'),
-  OPENROUTER_MODEL: z.string().default('openrouter/free')
+  OPENROUTER_MODEL: z.string().default('deepseek/deepseek-v4-pro-0813')
 })
 
 export type AppEnv = z.infer<typeof envSchema>

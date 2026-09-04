@@ -182,8 +182,220 @@
   flex-direction: column;
   height: 100%;
 
-  &__body {
+  &__topbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg) 0;
+  }
+
+  &__topbar-title {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__topbar-kicker {
+    color: var(--color-text-placeholder);
+    font-size: 20rpx;
+    letter-spacing: 3rpx;
+    line-height: 1.2;
+  }
+
+  &__topbar-label {
+    margin-top: 4rpx;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+  }
+
+  &__history-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    flex-shrink: 0;
+    padding: 10rpx 16rpx;
+    border: 2rpx solid var(--color-bg-border);
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+
+    &.is-open {
+      border-color: rgba(10, 132, 255, 0.6);
+      color: var(--color-accent-cyan);
+    }
+  }
+
+  &__history-count {
+    min-width: 28rpx;
+    padding: 2rpx 6rpx;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-panel);
+    color: var(--color-text-secondary);
+    font-size: 20rpx;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  &__history-panel {
+    flex: 0 0 auto;
+    margin: var(--spacing-sm) var(--spacing-lg) 0;
+    overflow: hidden;
+    border: 2rpx solid var(--color-bg-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-card);
+  }
+
+  &__history-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-bottom: 2rpx solid var(--color-bg-border);
+  }
+
+  &__history-heading {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__history-local {
+    margin-top: 4rpx;
+    color: var(--color-text-placeholder);
+    font-size: 20rpx;
+  }
+
+  &__history-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48rpx;
+    height: 48rpx;
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    font-size: 38rpx;
+    line-height: 1;
+  }
+
+  &__history-list {
+    max-height: 42vh;
+    box-sizing: border-box;
+  }
+
+  &__history-empty {
+    display: block;
+    padding: var(--spacing-lg) var(--spacing-md);
+    color: var(--color-text-placeholder);
+    font-size: var(--font-size-caption);
+    text-align: center;
+  }
+
+  &__history-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    border-bottom: 2rpx solid rgba(58, 58, 60, 0.62);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &.is-current {
+      background: rgba(10, 132, 255, 0.08);
+    }
+  }
+
+  &__history-item-main {
+    display: flex;
     flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__history-item-title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    min-width: 0;
+  }
+
+  &__history-item-title {
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__history-current {
+    flex-shrink: 0;
+    padding: 2rpx 8rpx;
+    border-radius: var(--radius-full);
+    background: rgba(48, 209, 88, 0.14);
+    color: var(--color-success);
+    font-size: 20rpx;
+  }
+
+  &__history-item-summary {
+    display: block;
+    margin-top: 4rpx;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__history-item-time {
+    margin-top: 4rpx;
+    color: var(--color-text-placeholder);
+    font-size: 20rpx;
+  }
+
+  &__history-delete {
+    flex-shrink: 0;
+    padding: 8rpx 0 8rpx 12rpx;
+    color: var(--color-danger);
+    font-size: 22rpx;
+  }
+
+  &__history-new {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-top: 2rpx solid var(--color-bg-border);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+  }
+
+  // The understanding panel is intentionally outside the scroll viewport.
+  &__understanding {
+    flex: 0 0 auto;
+    margin: var(--spacing-sm) var(--spacing-lg) 0;
+    padding: var(--spacing-md);
+    border: 2rpx solid var(--color-bg-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-panel);
+    overflow: hidden;
+
+    &.is-collapsed {
+      .agent-chat__understanding-head {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  &__body {
+    flex: 1 1 auto;
+    min-height: 0;
     padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
     box-sizing: border-box;
   }
@@ -231,6 +443,396 @@
     border-radius: var(--radius-full);
     color: var(--color-accent-cyan);
     font-size: var(--font-size-small);
+
+    &.is-disabled {
+      opacity: 0.4;
+    }
+  }
+
+  &__understanding-head {
+    @include flex-between;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__understanding-heading {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__understanding-summary {
+    display: block;
+    margin-top: 4rpx;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__understanding-arrow {
+    flex-shrink: 0;
+    width: 34rpx;
+    color: var(--color-accent-cyan);
+    font-size: 34rpx;
+    line-height: 1;
+    text-align: center;
+  }
+
+  &__understanding-content {
+    padding-top: var(--spacing-xs);
+  }
+
+  &__section-title {
+    display: block;
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  &__new-trip {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: var(--spacing-sm);
+    flex-shrink: 0;
+    padding: 6rpx 16rpx;
+    border-radius: var(--radius-full);
+    background: rgba(10, 132, 255, 0.16);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+  }
+
+  &__understanding-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm) var(--spacing-md);
+  }
+
+  &__understanding-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2rpx;
+    flex: 1 1 40%;
+    width: auto;
+    min-width: 0;
+
+    &--wide {
+      flex-basis: 100%;
+      width: 100%;
+    }
+  }
+
+  &__understanding-label {
+    font-size: var(--font-size-caption);
+    color: var(--color-text-placeholder);
+  }
+
+  &__understanding-value {
+    font-size: var(--font-size-small);
+    color: var(--color-text-primary);
+    word-break: break-word;
+  }
+
+  &__understanding-mode {
+    display: inline-flex;
+    align-items: center;
+    padding: 4rpx 12rpx;
+    border-radius: var(--radius-full);
+    background: rgba(48, 209, 88, 0.14);
+    color: var(--color-success);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+  }
+
+  &__turn-attachments {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__card--error {
+    color: var(--color-danger, #ff453a);
+  }
+
+  // 攻略附件：跟随产生它的 assistant turn，默认只显示摘要
+  &__guide {
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-md);
+    border: 2rpx solid rgba(48, 209, 88, 0.28);
+    border-radius: var(--radius-md);
+    background: linear-gradient(145deg, rgba(48, 209, 88, 0.08), var(--color-bg-card));
+  }
+
+  &__guide-head {
+    @include flex-between;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  &__guide-heading {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__guide-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  &__guide-source-badge,
+  &__guide-item-source {
+    display: inline-flex;
+    width: fit-content;
+    padding: 2rpx 10rpx;
+    border-radius: var(--radius-full);
+    background: rgba(10, 132, 255, 0.14);
+    color: var(--color-accent-cyan);
+    font-size: 20rpx;
+  }
+
+  &__guide-days-count {
+    margin-top: 4rpx;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+  }
+
+  &__guide-toggle {
+    flex-shrink: 0;
+    color: var(--color-success);
+    font-size: var(--font-size-small);
+  }
+
+  &__guide-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 6rpx;
+    margin-top: var(--spacing-sm);
+  }
+
+  &__guide-summary-zh,
+  &__guide-summary-en {
+    display: block;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-small);
+    line-height: 1.5;
+  }
+
+  &__guide-summary-en {
+    color: var(--color-text-secondary);
+  }
+
+  &__guide-days {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 2rpx solid var(--color-bg-border);
+  }
+
+  &__guide-day {
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    background: rgba(28, 28, 30, 0.58);
+  }
+
+  &__guide-day-head,
+  &__guide-item-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+  }
+
+  &__guide-day-label {
+    flex-shrink: 0;
+    color: var(--color-success);
+    font-size: var(--font-size-small);
+    font-weight: 700;
+  }
+
+  &__guide-day-city {
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__guide-item {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 2rpx solid rgba(58, 58, 60, 0.62);
+  }
+
+  &__guide-item-title {
+    flex: 1;
+    min-width: 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+  }
+
+  &__guide-item-description {
+    display: block;
+    margin-top: 4rpx;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+    line-height: 1.5;
+  }
+
+  &__guide-sources {
+    display: flex;
+    flex-direction: column;
+    gap: 6rpx;
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-sm);
+    border-top: 2rpx solid var(--color-bg-border);
+  }
+
+  &__guide-sources-title {
+    color: var(--color-text-placeholder);
+    font-size: var(--font-size-caption);
+  }
+
+  &__guide-source {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    min-width: 0;
+  }
+
+  &__guide-source-copy {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__guide-source-title {
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__guide-source-domain {
+    color: var(--color-text-placeholder);
+    font-size: 20rpx;
+  }
+
+  &__guide-copy {
+    flex-shrink: 0;
+    padding: 6rpx 12rpx;
+    border: 2rpx solid rgba(10, 132, 255, 0.45);
+    border-radius: var(--radius-full);
+    color: var(--color-accent-cyan);
+    font-size: 20rpx;
+  }
+
+  // 目录推荐卡：点击只发送“加入必去城市”的自然语言动作
+  &__recommendations,
+  &__actions {
+    margin: var(--spacing-md) 0;
+  }
+
+  &__recommendation-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+  }
+
+  &__recommendation {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-card);
+    border: 2rpx solid var(--color-bg-border);
+  }
+
+  &__recommendation-head {
+    @include flex-between;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+  }
+
+  &__recommendation-city {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+    min-width: 0;
+  }
+
+  &__recommendation-name {
+    font-size: var(--font-size-body);
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  &__recommendation-iata {
+    font-size: var(--font-size-caption);
+    color: var(--color-accent-cyan);
+  }
+
+  &__recommendation-days {
+    flex-shrink: 0;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+  }
+
+  &__recommendation-reason {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-small);
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
+
+  &__recommendation-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: var(--spacing-sm);
+    padding: 8rpx 18rpx;
+    border: 2rpx solid rgba(10, 132, 255, 0.45);
+    border-radius: var(--radius-full);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+    font-weight: 600;
+
+    &.is-disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+  }
+
+  &__action-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+  }
+
+  &__action {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 2rpx solid var(--color-bg-border);
+    border-radius: var(--radius-full);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-small);
+
+    &.is-disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
   }
 
   // 需求拆解完成参数卡
@@ -385,6 +987,7 @@
 
     &.is-disabled {
       opacity: 0.4;
+      pointer-events: none;
     }
   }
 
@@ -536,6 +1139,7 @@
 
   // 输入栏
   &__footer {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -544,15 +1148,18 @@
   }
 
   &__reset {
-    width: 68rpx;
+    width: auto;
+    min-width: 68rpx;
     height: 68rpx;
+    padding: 0 var(--spacing-sm);
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-full);
     background: var(--color-bg-panel);
     color: var(--color-text-secondary);
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-caption);
+    white-space: nowrap;
     flex-shrink: 0;
   }
 

@@ -9,12 +9,15 @@ import { isAppError } from './lib/errors.js'
 import { registerAgentRoutes } from './routes/agent.js'
 import { registerAdminSyncRoutes } from './routes/admin-sync.js'
 import { registerAuthRoutes } from './routes/auth.js'
+import { registerAgentConverseRoutes } from './routes/agent-converse.js'
 import { registerFlightSearchRoutes } from './routes/flight-searches.js'
 import { registerHealthRoutes } from './routes/health.js'
 import { registerPreferenceRoutes } from './routes/preferences.js'
 import { registerReferenceDataRoutes } from './routes/reference-data.js'
+import { registerRoutePlanRoutes } from './routes/route-plans.js'
 import { registerTopologyRoutes } from './routes/topology.js'
 import { registerTripPlanRoutes } from './routes/trip-plans.js'
+import { registerTravelGuideRoutes } from './routes/travel-guides.js'
 
 export async function buildApp(context: AppContext) {
   const app = Fastify({
@@ -94,10 +97,13 @@ export async function buildApp(context: AppContext) {
   await registerAdminSyncRoutes(app, context)
   await registerAuthRoutes(app, context)
   await registerAgentRoutes(app, context)
+  await registerAgentConverseRoutes(app, context)
   await registerFlightSearchRoutes(app, context)
+  await registerRoutePlanRoutes(app, context)
   await registerReferenceDataRoutes(app, context)
   await registerPreferenceRoutes(app, context)
   await registerTopologyRoutes(app, context)
   await registerTripPlanRoutes(app, context)
+  await registerTravelGuideRoutes(app, context)
   return app
 }
