@@ -18,6 +18,8 @@ import { registerRoutePlanRoutes } from './routes/route-plans.js'
 import { registerTopologyRoutes } from './routes/topology.js'
 import { registerTripPlanRoutes } from './routes/trip-plans.js'
 import { registerTravelGuideRoutes } from './routes/travel-guides.js'
+import { registerCloudStateRoutes } from './routes/cloud-state.js'
+import { registerCloudAgentRoutes } from './routes/agent-cloud.js'
 
 export async function buildApp(context: AppContext) {
   const app = Fastify({
@@ -98,6 +100,8 @@ export async function buildApp(context: AppContext) {
   await registerAuthRoutes(app, context)
   await registerAgentRoutes(app, context)
   await registerAgentConverseRoutes(app, context)
+  await registerCloudAgentRoutes(app, context)
+  await registerCloudStateRoutes(app, context)
   await registerFlightSearchRoutes(app, context)
   await registerRoutePlanRoutes(app, context)
   await registerReferenceDataRoutes(app, context)

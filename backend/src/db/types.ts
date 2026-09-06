@@ -67,6 +67,79 @@ export interface UsersTable {
   last_login_at: Timestamp
 }
 
+export interface UserIdentitiesTable {
+  id: Generated<string>
+  user_id: string
+  provider: string
+  provider_subject: string
+  created_at: Timestamp
+  last_seen_at: Timestamp
+}
+
+export interface TripsTable {
+  id: Generated<string>
+  public_id: string
+  user_id: string
+  title: string
+  status: 'planning' | 'generated' | 'archived'
+  current_context_version: Generated<number>
+  created_at: Timestamp
+  updated_at: Timestamp
+}
+
+export interface TripContextVersionsTable {
+  id: Generated<string>
+  trip_id: string
+  version: number
+  context_json: JsonColumn
+  created_at: Timestamp
+}
+
+export interface ConversationsTable {
+  id: Generated<string>
+  public_id: string
+  user_id: string
+  trip_id: string
+  title: string
+  status: 'active' | 'archived'
+  created_at: Timestamp
+  updated_at: Timestamp
+}
+
+export interface ConversationMessagesTable {
+  id: Generated<string>
+  public_id: string
+  conversation_id: string
+  role: 'system' | 'user' | 'assistant' | 'tool'
+  content: string
+  metadata_json: JsonColumn
+  created_at: Timestamp
+}
+
+export interface ArtifactsTable {
+  id: Generated<string>
+  public_id: string
+  user_id: string
+  trip_id: string
+  conversation_id: string | null
+  type: string
+  schema_version: number
+  payload_json: JsonColumn
+  verification_json: JsonColumn | null
+  created_at: Timestamp
+  updated_at: Timestamp
+}
+
+export interface UserMemoriesTable {
+  user_id: string
+  enabled: Generated<boolean>
+  markdown: Generated<string>
+  version: Generated<number>
+  parse_version: Generated<number>
+  created_at: Timestamp
+  updated_at: Timestamp
+}
+
 export interface UserSessionsTable {
   id: Generated<string>
   user_id: string
@@ -243,7 +316,14 @@ export interface Database {
   airports: AirportsTable
   airport_aliases: AirportAliasesTable
   users: UsersTable
+  user_identities: UserIdentitiesTable
   user_sessions: UserSessionsTable
+  trips: TripsTable
+  trip_context_versions: TripContextVersionsTable
+  conversations: ConversationsTable
+  conversation_messages: ConversationMessagesTable
+  artifacts: ArtifactsTable
+  user_memories: UserMemoriesTable
   transit_country_preferences: TransitCountryPreferencesTable
   topology_versions: TopologyVersionsTable
   schedule_services: ScheduleServicesTable

@@ -6,6 +6,8 @@ import { InMemoryTripContextRepository } from '../../trips/repository.js'
 import { emptyTripContext } from '../../trips/types.js'
 import { createCoreToolRegistry } from './core.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
+import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
+import { InMemoryUserMemoryRepository } from '../../memory/repository.js'
 
 const location = { id: 'airport-pvg', type: 'airport' as const, name: 'Shanghai Pudong', countryCode: 'CN', cityCode: 'SHA', iata: 'PVG' }
 const destination = { id: 'airport-nrt', type: 'airport' as const, name: 'Narita International', countryCode: 'JP', cityCode: 'TYO', iata: 'NRT' }
@@ -17,9 +19,12 @@ const fareResult = {
 }
 
 function context(): ToolExecutionContext {
+  const trips = new Set(['trip-1'])
   return {
     requestId: 'req-1', conversationId: 'conv-1', tripId: 'trip-1', generationId: 'gen-1',
     trips: new InMemoryTripContextRepository([emptyTripContext('trip-1')]),
+    artifacts: new InMemoryArtifactRepository('user-1', trips),
+    memory: new InMemoryUserMemoryRepository(),
     aviation: new MockAviationProvider({ resolveLocation: { matches: [location], verification: { status: 'verified', checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock-aviation' }] } } }),
     fares: new MockFareProvider({ search: fareResult }),
     resolvedLocationKeys: new Set([locationRefKey(location), locationRefKey(destination)])
@@ -41,9 +46,31 @@ describe('core agent tools', () => {
     const body = JSON.parse(result.content)
     expect(result.ok).toBe(true)
     expect(result.artifactIds).toHaveLength(1)
-    expect(body.data.type).toBe('flight_search')
-    expect(body.data.provider).toBe('mock-fares')
+    expect(body.data.artifact.type).toBe('flight_search')
+    expect(body.data.summary.provider).toBe('mock-fares')
     expect(result.provider).toBe('fare_provider')
+  })
+
+  it('reads and updates enabled User Memory with optimistic concurrency', async () => {
+    const ctx = context()
+    const registry = createCoreToolRegistry()
+    const initial = await registry.execute(call('m-1', 'get_user_memory', {}), ctx, new AbortController().signal)
+    expect(JSON.parse(initial.content).data).toMatchObject({ enabled: true, markdown: '', version: 0 })
+    const updated = await registry.execute(call('m-2', 'update_user_memory', { markdown: '- Prefers aisle seats', expectedVersion: 0 }), ctx, new AbortController().signal)
+    expect(JSON.parse(updated.content).data).toMatchObject({ version: 1, markdown: '- Prefers aisle seats' })
+    const stale = await registry.execute(call('m-3', 'update_user_memory', { markdown: 'stale', expectedVersion: 0 }), ctx, new AbortController().signal)
+    expect(stale.errorCode).toBe('TOOL_FAILURE')
+  })
+
+  it('does not expose or automatically write disabled User Memory', async () => {
+    const ctx = context()
+    await ctx.memory.setEnabled(false, 0)
+    const registry = createCoreToolRegistry()
+    const read = await registry.execute(call('m-4', 'get_user_memory', {}), ctx, new AbortController().signal)
+    expect(JSON.parse(read.content).data).toEqual({ enabled: false, version: 1 })
+    const write = await registry.execute(call('m-5', 'update_user_memory', { markdown: 'blocked', expectedVersion: 1 }), ctx, new AbortController().signal)
+    expect(write).toMatchObject({ ok: false, errorCode: 'TOOL_FAILURE' })
+    expect(write.content).toContain('User Memory is disabled')
   })
 
   it('rejects syntactically valid but unresolved airport facts', async () => {

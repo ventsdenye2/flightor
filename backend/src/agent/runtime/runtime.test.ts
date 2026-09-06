@@ -9,8 +9,10 @@ import { AgentRuntime } from './runtime.js'
 import type { AgentModelClient } from './model.js'
 import type { ProviderCallOptions, ResolveLocationInput } from '../../aviation/providers/provider.js'
 import { z } from 'zod'
+import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
+import { InMemoryUserMemoryRepository } from '../../memory/repository.js'
 
-const ctx: ToolExecutionContext = { requestId: 'r', conversationId: 'c', tripId: 't', generationId: 'g', trips: new InMemoryTripContextRepository([emptyTripContext('t')]), aviation: new MockAviationProvider(), fares: new MockFareProvider() }
+const ctx: ToolExecutionContext = { requestId: 'r', conversationId: 'c', tripId: 't', generationId: 'g', trips: new InMemoryTripContextRepository([emptyTripContext('t')]), artifacts: new InMemoryArtifactRepository('u', new Set(['t'])), memory: new InMemoryUserMemoryRepository(), aviation: new MockAviationProvider(), fares: new MockFareProvider() }
 const call = (id: string, name: string, args = {}) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
 const tool = (name: string, execute: AgentTool['execute'], extra: Partial<AgentTool> = {}): AgentTool => ({ name, description: name, inputSchema: z.object({}).strict(), outputSchema: z.object({ ok: z.boolean() }), costClass: 'free', costUnits: 1, sideEffect: 'none', parallelSafe: true, timeoutMs: 30, execute, ...extra })
 

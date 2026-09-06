@@ -627,6 +627,110 @@ This keeps execution deterministic and testable.
 
 ---
 
+## 8.4 Planner Agent and delegated Research Agent
+
+FlightOR exposes one user-facing Agent, not several peer Agents.
+
+```text
+User
+  │
+  ▼
+Planner Agent
+  │
+  ├──────────────┐
+  ▼              ▼
+Research Agent   Structured Tools
+  │              │
+  ▼              ├─ Location
+ResearchArtifact ├─ Flight
+                 ├─ Memory
+                 └─ Trip Context
+        \          /
+         \        /
+          ▼      ▼
+       FlightOR Engine
+       ├─ Connection
+       ├─ Path Search
+       └─ Optimizer
+```
+
+### Planner Agent
+
+The Planner Agent is the only Agent that talks directly to the user. It:
+
+- understands user intent and manages the conversation;
+- reads and updates Trip Context;
+- reads enabled User Memory and updates it only for clear long-term
+  preferences;
+- decides when open-world research is needed;
+- delegates a minimal brief to the Research Agent;
+- calls structured location, flight, Memory and Trip Context tools;
+- requests deterministic route-engine work;
+- combines Artifact references; and
+- explains recommendations to the user.
+
+The Planner Agent has only the access it needs to the active user's
+Conversation, Trip Context, enabled Memory and Artifacts. Access is always
+enforced by server-side ownership checks; model-supplied user or resource IDs
+are never authority.
+
+### Research Agent
+
+The Research Agent is a restricted sub-Agent scheduled by the Planner Agent.
+It handles open-world travel research such as current events, exhibitions,
+festivals, seasonal conditions, current destination and stopover activities,
+dynamic opening information, and time-window-specific opportunities.
+
+It receives only the minimum context required for the research task and does
+not inherit the complete Conversation. Its sole product output is a verified
+`ResearchArtifact`.
+
+```ts
+interface ResearchBrief {
+  destinations: LocationRef[]
+  travelWindow?: {
+    from?: string
+    to?: string
+  }
+  interests: string[]
+  questions: string[]
+  researchTypes: Array<
+    | 'event'
+    | 'seasonal'
+    | 'activity'
+    | 'stopover'
+    | 'practical'
+  >
+  maxResults?: number
+}
+```
+
+The Research Agent must not:
+
+- modify User Memory or Trip Context;
+- decide the final route or run route optimization;
+- own long-term user state;
+- turn research findings into required destinations or required events; or
+- perform structured aviation/fare queries.
+
+`resolve_location`, `search_flights`, and `search_flexible_flights` remain
+Planner-owned structured tools. Route generation remains deterministic:
+
+```text
+Planner Agent
+      ↓
+FlightOR deterministic engine
+      ↓
+Connection Engine
+Route Planner
+Route Optimizer
+```
+
+The Planner decides how, or whether, a `ResearchArtifact` should influence the
+active trip.
+
+---
+
 # 9. Agent-facing Tool Set v1
 
 The repository must maintain a root-level `TOOLS.md`.

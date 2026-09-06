@@ -1,7 +1,8 @@
-import { createHash } from 'node:crypto'
 import { z } from 'zod'
+import { v7 as uuidv7 } from 'uuid'
 import { locationRefKey, locationRefSchema, locationResolutionSchema, type LocationRef } from '../../aviation/types.js'
 import { fareSearchInputSchema, fareSearchResultSchema, flightSearchArtifactSchema } from '../../fares/types.js'
+import { USER_MEMORY_MAX_BYTES } from '../../memory/repository.js'
 import { tripContextPatchSchema, tripContextSchema } from '../../trips/types.js'
 import { ToolRegistry, type AgentTool } from '../runtime/registry.js'
 
@@ -42,9 +43,30 @@ const searchFlightsInputSchema = z.object({
   }
 })
 
-function artifactId(value: unknown): string {
-  return `artifact_fs_${createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 24)}`
-}
+const searchFlightsOutputSchema = z.object({
+  artifact: z.object({ id: z.string().uuid(), type: z.literal('flight_search'), schemaVersion: z.literal(1) }).strict(),
+  summary: z.object({
+    origin: z.string().regex(/^[A-Z]{3}$/),
+    destination: z.string().regex(/^[A-Z]{3}$/),
+    departureDate: z.iso.date(),
+    offerCount: z.number().int().nonnegative(),
+    lowestFare: z.object({ amount: z.number().nonnegative(), currency: z.string().regex(/^[A-Z]{3}$/) }).strict().optional(),
+    checkedAt: z.iso.datetime(),
+    provider: z.string().min(1),
+    verificationStatus: z.string().min(1)
+  }).strict()
+}).strict()
+
+const getUserMemoryOutputSchema = z.object({
+  enabled: z.boolean(),
+  markdown: z.string().optional(),
+  version: z.number().int().nonnegative()
+}).strict()
+
+const updateUserMemoryInputSchema = z.object({
+  markdown: z.string().max(USER_MEMORY_MAX_BYTES),
+  expectedVersion: z.number().int().nonnegative()
+}).strict()
 
 function sameFareQuery(
   left: z.infer<typeof fareSearchInputSchema>,
@@ -173,15 +195,15 @@ const resolveLocationTool: AgentTool<
 
 const searchFlightsTool: AgentTool<
   z.infer<typeof searchFlightsInputSchema>,
-  z.infer<typeof flightSearchArtifactSchema>
+  z.infer<typeof searchFlightsOutputSchema>
 > = {
   name: 'search_flights',
   description: 'Search current fare options for one canonical airport leg. Prices and flight facts must come from this tool, never model memory.',
   inputSchema: searchFlightsInputSchema,
-  outputSchema: flightSearchArtifactSchema,
+  outputSchema: searchFlightsOutputSchema,
   costClass: 'paid',
   costUnits: 4,
-  sideEffect: 'none',
+  sideEffect: 'state',
   // Fare search depends on location facts established by earlier tool results.
   // Keeping it ordered prevents same-batch resolve/search ledger races.
   parallelSafe: false,
@@ -208,11 +230,64 @@ const searchFlightsTool: AgentTool<
         throw new Error('Fare provider returned an offer for a different route')
       }
     }
-    return {
+    const id = uuidv7()
+    const artifact = flightSearchArtifactSchema.parse({
       ...result,
-      id: artifactId({ query: result.query, checkedAt: result.checkedAt, provider: result.provider }),
+      id,
       type: 'flight_search' as const
+    })
+    const stored = await context.artifacts.create({
+      id,
+      tripId: context.tripId,
+      conversationId: context.conversationId,
+      type: 'flight_search',
+      schemaVersion: 1,
+      payload: artifact,
+      verification: artifact.verification
+    })
+    const lowest = [...artifact.offers].sort((left, right) => left.totalAmount - right.totalAmount)[0]
+    return {
+      artifact: { id: stored.id, type: 'flight_search', schemaVersion: 1 },
+      summary: {
+        origin: artifact.query.origin,
+        destination: artifact.query.destination,
+        departureDate: artifact.query.departureDate,
+        offerCount: artifact.offers.length,
+        ...(lowest ? { lowestFare: { amount: lowest.totalAmount, currency: lowest.currency } } : {}),
+        checkedAt: artifact.checkedAt,
+        provider: artifact.provider,
+        verificationStatus: artifact.verification.status
+      }
     }
+  }
+}
+
+const getUserMemoryTool: AgentTool<Record<string, never>, z.infer<typeof getUserMemoryOutputSchema>> = {
+  name: 'get_user_memory',
+  description: 'Read the authenticated user’s long-term Memory only when Memory is enabled. This is separate from current-trip context.',
+  inputSchema: emptyObjectSchema,
+  outputSchema: getUserMemoryOutputSchema,
+  costClass: 'free', costUnits: 0, sideEffect: 'none', parallelSafe: true, timeoutMs: 2_000,
+  async execute(_input, context) {
+    const memory = await context.memory.getForAgent()
+    return memory
+      ? { enabled: true, markdown: memory.markdown, version: memory.version }
+      : { enabled: false, version: (await context.memory.get()).version }
+  }
+}
+
+const updateUserMemoryTool: AgentTool<z.infer<typeof updateUserMemoryInputSchema>, z.infer<typeof getUserMemoryOutputSchema>> = {
+  name: 'update_user_memory',
+  description: 'Replace enabled User Memory after the Planner has identified an explicit long-term preference. Never use for trip-local facts.',
+  inputSchema: updateUserMemoryInputSchema,
+  outputSchema: getUserMemoryOutputSchema,
+  costClass: 'free', costUnits: 0, sideEffect: 'state', parallelSafe: false, timeoutMs: 2_000,
+  async execute(input, context, signal) {
+    if (signal.aborted || context.isGenerationCurrent?.() === false) throw new Error('User Memory update was cancelled')
+    const current = await context.memory.get()
+    if (!current.enabled) throw Object.assign(new Error('User Memory is disabled'), { code: 'USER_MEMORY_DISABLED' })
+    const memory = await context.memory.updateMarkdown(input.markdown, input.expectedVersion)
+    return { enabled: memory.enabled, markdown: memory.markdown, version: memory.version }
   }
 }
 
@@ -222,12 +297,17 @@ export function createCoreToolRegistry(): ToolRegistry {
     .register(updateTripContextTool)
     .register(resolveLocationTool)
     .register(searchFlightsTool)
+    .register(getUserMemoryTool)
+    .register(updateUserMemoryTool)
 }
 
 export {
   getTripContextOutputSchema,
   resolveLocationInputSchema,
   searchFlightsInputSchema,
+  searchFlightsOutputSchema,
+  getUserMemoryOutputSchema,
+  updateUserMemoryInputSchema,
   updateTripContextInputSchema,
   updateTripContextOutputSchema
 }

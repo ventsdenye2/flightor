@@ -16,7 +16,7 @@ tool boundary.
 
 ### `get_trip_context`
 
-- Status: **Implemented** (Phase 1 in-memory repository seam; cloud persistence is Phase 2)
+- Status: **Implemented** (Phase 2 PostgreSQL immutable snapshots + in-memory test seam)
 - Purpose: Read the current trip's `TripContext` without loading User Memory,
   Conversation history, or Artifacts into the same state object.
 - Input: `{}`. The active trip identity comes from the authenticated runtime
@@ -32,7 +32,7 @@ tool boundary.
 
 ### `update_trip_context`
 
-- Status: **Implemented** (Phase 1 in-memory repository seam; cloud persistence is Phase 2)
+- Status: **Implemented** (Phase 2 PostgreSQL optimistic concurrency + in-memory test seam)
 - Purpose: Apply explicit, trip-local user constraints and preferences.
 - Input: `{ patch: TripContextPatch, expectedVersion?: number }`; unknown fields
   and invalid ranges are rejected. The model cannot select another trip ID.
@@ -67,13 +67,14 @@ tool boundary.
 
 ### `search_flights`
 
-- Status: **Implemented** (normalized SerpApi and Mock providers; artifact persistence remains Phase 2)
+- Status: **Implemented** (normalized SerpApi/Mock providers + Phase 2 cloud Artifact Repository)
 - Purpose: Search real fare options for one requested leg and return the same
   `FlightSearchArtifact` contract used by manual Flight Explorer flows.
 - Input: `{ origin, destination, departureDate, returnDate?, currency?,
   travelClass? }` using canonical location/airport references.
-- Output: A compact `FlightSearchArtifact` with a stable ID, normalized offers,
-  query parameters, `checkedAt`, provider provenance, and verification state.
+- Output: `{ artifact: { id, type, schemaVersion }, summary }` for the Planner.
+  The repository stores the complete normalized `FlightSearchArtifact`, including
+  offers, query parameters, `checkedAt`, provider provenance, and verification.
 - Side effects: Creates an Artifact/search record when persistence is enabled;
   it does not book or purchase anything.
 - Cost class: `paid`.
@@ -88,8 +89,8 @@ tool boundary.
 
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
-| `get_user_memory` | Planned | Active user → enabled flag, Markdown, version | None | free | Cloud Memory repository | No model cache; disabled memory is not returned or injected; authorization failures are explicit |
-| `update_user_memory` | Planned | Markdown patch/replacement + expected version → new Markdown/version | Writes User Memory only | free | Clear long-term user preference; no provider | Optimistic concurrency; ambiguous trip-local text must not write |
+| `get_user_memory` | Implemented | Active authenticated user → enabled flag, Markdown when enabled, version | None | free | User-scoped cloud Memory repository | No model cache; disabled memory is not returned or injected; authorization failures are explicit |
+| `update_user_memory` | Implemented | Markdown replacement + expected version → new Markdown/version | Writes enabled User Memory only | free | Clear long-term user preference; no provider | 8 KiB UTF-8 limit and optimistic concurrency; disabled/stale writes fail closed |
 | `delete_user_memory` | Planned | Explicit confirmation scope → reset/deleted version | Destructive user-directed Memory reset | free | Authenticated user instruction | Invalidates derived profile; version/auth conflicts fail closed |
 
 ## Geography and destination tools

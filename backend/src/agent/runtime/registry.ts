@@ -2,6 +2,8 @@ import { z, type ZodType } from 'zod'
 import type { AviationProvider } from '../../aviation/providers/provider.js'
 import type { FareProvider } from '../../fares/providers/provider.js'
 import type { TripContextRepository } from '../../trips/repository.js'
+import type { ArtifactRepository } from '../../artifacts/repository.js'
+import type { UserMemoryRepository } from '../../memory/repository.js'
 import type { ChatToolDefinition, FunctionToolCall } from './model.js'
 
 export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
@@ -13,6 +15,8 @@ export interface ToolExecutionContext {
   tripId: string
   generationId: string
   trips: TripContextRepository
+  artifacts: ArtifactRepository
+  memory: UserMemoryRepository
   aviation: AviationProvider
   fares: FareProvider
   /** Runtime-owned ledger; model arguments can never add entries directly. */
@@ -58,12 +62,11 @@ export interface ToolExecutionOutcome {
 }
 
 function asSafeMessage(value: unknown): string {
-  if (
-    value !== null
-    && typeof value === 'object'
-    && 'code' in value
-    && value.code === 'TRIP_CONTEXT_VERSION_CONFLICT'
-  ) return 'Trip context version conflict'
+  if (value !== null && typeof value === 'object' && 'code' in value) {
+    if (value.code === 'TRIP_CONTEXT_VERSION_CONFLICT') return 'Trip context version conflict'
+    if (value.code === 'USER_MEMORY_VERSION_CONFLICT') return 'User Memory version conflict'
+    if (value.code === 'USER_MEMORY_DISABLED') return 'User Memory is disabled'
+  }
   return 'Tool execution failed'
 }
 

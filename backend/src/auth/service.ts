@@ -1,10 +1,10 @@
 import type { FastifyRequest } from 'fastify'
-import { v7 as uuidv7 } from 'uuid'
 import type { AppContext } from '../app/context.js'
 import { AppError } from '../lib/errors.js'
 import { randomToken, sha256 } from '../lib/crypto.js'
 import { issueAccessToken, verifyAccessToken, type AccessIdentity } from './tokens.js'
 import { codeToWechatOpenId } from './wechat.js'
+import { PostgresUserIdentityRepository } from '../identity/postgres.js'
 
 export interface TokenPair {
   accessToken: string
@@ -42,25 +42,17 @@ export async function loginWithWechat(
   input: { code: string; nickname: string; avatarUrl: string }
 ): Promise<TokenPair> {
   const openid = await codeToWechatOpenId(input.code, context.env)
-  const now = new Date()
-  const user = await context.db
-    .insertInto('users')
-    .values({
-      public_id: uuidv7(),
-      wechat_openid: openid,
-      nickname: input.nickname,
-      avatar_url: input.avatarUrl,
-      last_login_at: now
-    })
-    .onConflict(oc => oc.column('wechat_openid').doUpdateSet(eb => ({
-      nickname: input.nickname || eb.ref('users.nickname'),
-      avatar_url: input.avatarUrl || eb.ref('users.avatar_url'),
-      last_login_at: now,
-      updated_at: now
-    })))
-    .returning(['id', 'public_id', 'nickname', 'avatar_url'])
-    .executeTakeFirstOrThrow()
-  return createSession(context, user)
+  const user = await new PostgresUserIdentityRepository(context.db).resolveWechat({
+    providerSubject: openid,
+    nickname: input.nickname,
+    avatarUrl: input.avatarUrl
+  })
+  return createSession(context, {
+    id: user.userId,
+    public_id: user.publicId,
+    nickname: user.nickname,
+    avatar_url: user.avatarUrl
+  })
 }
 
 export async function rotateRefreshToken(context: AppContext, refreshToken: string): Promise<TokenPair> {
