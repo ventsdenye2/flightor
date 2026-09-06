@@ -20,6 +20,8 @@ const envSchema = z.object({
   ADMIN_API_TOKEN: z.string().default(''),
   WX_APPID: z.string().default(''),
   WX_SECRET: z.string().default(''),
+  AERODATABOX_API_KEY: z.string().default(''),
+  AERODATABOX_BASE_URL: optionalUrl.default('https://aerodatabox.p.rapidapi.com'),
   OAG_FLIGHT_INFO_KEY: z.string().default(''),
   OAG_CONNECTIONS_KEY: z.string().default(''),
   OAG_SCHEDULES_KEY: z.string().default(''),

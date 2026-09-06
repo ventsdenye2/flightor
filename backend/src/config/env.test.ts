@@ -12,6 +12,7 @@ describe('parseEnv', () => {
   it('applies safe defaults without requiring provider credentials', () => {
     const env = parseEnv(validEnv)
     expect(env.PORT).toBe(3000)
+    expect(env.AERODATABOX_API_KEY).toBe('')
     expect(env.OAG_SCHEDULES_KEY).toBe('')
     expect(env.SERPAPI_KEY).toBe('')
     expect(env.OPENROUTER_MODEL).toBe('deepseek/deepseek-v4-pro-0813')

@@ -102,7 +102,7 @@ function guideQuery(input: SerpTravelGuideSearch): string {
 export class SerpApiClient {
   constructor(private readonly config: AppEnv) {}
 
-  async searchFlights(input: SerpFlightSearch): Promise<Record<string, unknown>> {
+  async searchFlights(input: SerpFlightSearch, signal?: AbortSignal): Promise<Record<string, unknown>> {
     if (!this.config.SERPAPI_KEY) {
       throw new AppError('PROVIDER_NOT_CONFIGURED', 'SerpApi is not configured', 503)
     }
@@ -118,7 +118,11 @@ export class SerpApiClient {
       hl: 'zh-cn',
       api_key: this.config.SERPAPI_KEY
     })
-    return fetchJson<Record<string, unknown>>(url, { method: 'GET' }, { provider: 'serpapi', timeoutMs: 30_000 })
+    return fetchJson<Record<string, unknown>>(url, { method: 'GET' }, {
+      provider: 'serpapi',
+      timeoutMs: 30_000,
+      ...(signal ? { signal } : {})
+    })
   }
 
   /** Search public travel-guide snippets through SerpApi's Google engine. */

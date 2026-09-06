@@ -3,6 +3,7 @@ import { AppError } from './errors.js'
 export interface FetchJsonOptions {
   timeoutMs?: number
   provider: string
+  signal?: AbortSignal
 }
 
 export async function fetchJson<T>(
@@ -12,7 +13,17 @@ export async function fetchJson<T>(
 ): Promise<T> {
   const timeoutMs = options.timeoutMs ?? 10_000
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  let timedOut = false
+  const timer = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, timeoutMs)
+  const callerSignal = options.signal ?? init.signal ?? undefined
+  const abortFromCaller = () => controller.abort(callerSignal?.reason)
+  if (callerSignal) {
+    if (callerSignal.aborted) abortFromCaller()
+    else callerSignal.addEventListener('abort', abortFromCaller, { once: true })
+  }
   try {
     const response = await fetch(url, { ...init, signal: controller.signal })
     const payload = await response.json().catch(() => ({})) as T & { error?: unknown; message?: unknown }
@@ -27,15 +38,16 @@ export async function fetchJson<T>(
     return payload
   } catch (error) {
     if (error instanceof AppError) throw error
-    const timedOut = error instanceof Error && error.name === 'AbortError'
+    const cancelled = callerSignal?.aborted === true && !timedOut
     throw new AppError(
-      timedOut ? 'PROVIDER_TIMEOUT' : 'PROVIDER_UNAVAILABLE',
-      `${options.provider} request ${timedOut ? 'timed out' : 'failed'}`,
+      timedOut ? 'PROVIDER_TIMEOUT' : cancelled ? 'PROVIDER_CANCELLED' : 'PROVIDER_UNAVAILABLE',
+      `${options.provider} request ${timedOut ? 'timed out' : cancelled ? 'was cancelled' : 'failed'}`,
       502,
       { provider: options.provider }
     )
   } finally {
     clearTimeout(timer)
+    callerSignal?.removeEventListener('abort', abortFromCaller)
   }
 }
 

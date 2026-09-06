@@ -122,6 +122,38 @@ describe('OpenRouterClient', () => {
     })
   })
 
+  it('forwards tool definitions and tool choice unchanged', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ choices: [] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const env = parseEnv({ NODE_ENV: 'test', DATABASE_URL: 'postgresql://user:pass@localhost:5432/flightor', REDIS_URL: 'redis://localhost:6379', JWT_SECRET: 'test-secret-that-is-longer-than-thirty-two-characters', OPENROUTER_API_KEY: 'key' })
+    const client = new OpenRouterClient(env)
+    const tools = [{ type: 'function' as const, function: { name: 'search_flights', description: 'Search flights', parameters: { type: 'object', properties: {} } } }]
+    await client.chat([{ role: 'user', content: 'find flights' }], undefined, { tools, toolChoice: 'required' })
+    expect(JSON.parse(String(fetchMock.mock.calls[0]![1]?.body))).toMatchObject({ tools, tool_choice: 'required' })
+  })
+
+  it('parses assistant tool calls and tool result messages', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { role: 'assistant', content: null, tool_calls: [{ id: 'call-1', type: 'function', function: { name: 'search_flights', arguments: '{"from":"PEK"}' } }] }, finish_reason: 'tool_calls' }] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const env = parseEnv({ NODE_ENV: 'test', DATABASE_URL: 'postgresql://user:pass@localhost:5432/flightor', REDIS_URL: 'redis://localhost:6379', JWT_SECRET: 'test-secret-that-is-longer-than-thirty-two-characters', OPENROUTER_API_KEY: 'key' })
+    const client = new OpenRouterClient(env)
+    const messages = [{ role: 'assistant' as const, content: null, tool_calls: [{ id: 'call-1', type: 'function' as const, function: { name: 'search_flights', arguments: '{}' } }] }, { role: 'tool' as const, tool_call_id: 'call-1', name: 'search_flights', content: '{"results":[]}' }]
+    const completion = await client.complete(messages)
+    expect(completion.message.tool_calls?.[0]?.function.name).toBe('search_flights')
+    expect(completion.finishReason).toBe('tool_calls')
+    expect(JSON.parse(String(fetchMock.mock.calls[0]![1]?.body)).messages).toEqual(messages)
+  })
+
+  it.each([
+    [{ choices: [{ message: { role: 'assistant', content: null, tool_calls: [{ id: 'x', type: 'function', function: { name: 'f', arguments: 1 } }] } }] }],
+    [{ choices: [{ message: { role: 'assistant', content: 3 } }] }]
+  ])('rejects malformed completions and tool calls', async payload => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(payload), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const env = parseEnv({ NODE_ENV: 'test', DATABASE_URL: 'postgresql://user:pass@localhost:5432/flightor', REDIS_URL: 'redis://localhost:6379', JWT_SECRET: 'test-secret-that-is-longer-than-thirty-two-characters', OPENROUTER_API_KEY: 'key' })
+    await expect(new OpenRouterClient(env).complete([{ role: 'user', content: 'x' }])).rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE', statusCode: 502 })
+  })
+
   it('fails fast without a key without contacting OpenRouter or exposing secret values', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
