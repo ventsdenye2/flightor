@@ -14,11 +14,11 @@ export async function registerHealthRoutes(app: FastifyInstance, context: AppCon
       checks.postgres = 'failed'
     }
     try {
-      checks.redis = await context.redis.ping() === 'PONG' ? 'ok' : 'failed'
+      checks.redis = context.redis ? (await context.redis.ping() === 'PONG' ? 'ok' : 'failed') : 'disabled_local'
     } catch {
       checks.redis = 'failed'
     }
-    const ready = Object.values(checks).every(value => value === 'ok')
+    const ready = Object.values(checks).every(value => value === 'ok' || value === 'disabled_local')
     return reply.code(ready ? 200 : 503).send({ status: ready ? 'ready' : 'not_ready', checks })
   })
 
@@ -33,6 +33,7 @@ export async function registerHealthRoutes(app: FastifyInstance, context: AppCon
       flightInfo: Boolean(context.env.OAG_FLIGHT_INFO_KEY)
     },
     serpapi: Boolean(context.env.SERPAPI_KEY),
+    aerodatabox: Boolean(context.env.AERODATABOX_API_KEY),
     openrouter: Boolean(context.env.OPENROUTER_API_KEY),
     wechat: Boolean(context.env.WX_APPID && context.env.WX_SECRET)
   }))

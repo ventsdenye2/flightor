@@ -28,6 +28,7 @@ export interface RouteGenerationDependencies {
   connectionSearch: ConnectionSearchService
   flightRoutePlanner: FlightRoutePlanner
   routeOptimizer: RouteOptimizer
+  onFailure?: (error: unknown, runId: string) => void
 }
 
 export interface StartRouteGenerationInput extends RouteGenerationRequest {
@@ -218,7 +219,7 @@ function verificationOf(value: { verification: VerificationRecord }): Verificati
 function connectionArtifactPayload(result: ConnectionSearchResult, selection: ReturnType<typeof routeSelection>) {
   return routeSetPayloadSchema.parse({
     schemaVersion: 1, kind: 'connection_edges',
-    serviceVersion: result.serviceVersion, algorithmVersion: result.serviceVersion, sourceArtifactIds: [], verification: verificationOf(result),
+    serviceVersion: result.serviceVersion, algorithmVersion: result.serviceVersion, sourceArtifactIds: [...new Set(result.edges.flatMap(edge => edge.fareArtifactId ? [edge.fareArtifactId] : []))].slice(0, 50), verification: verificationOf(result),
     warnings: dedupeWarnings([...selection.warnings, ...result.warnings]),
     truncated: result.truncated, exhausted: result.exhausted,
     query: { origin: selection.origin, destination: selection.destination, window: selection.window },
@@ -306,7 +307,7 @@ export async function executeRouteGenerationRun(
       acceptsSelfTransfer: selection.acceptsSelfTransfer,
       acceptsLongStopover: selection.acceptsLongStopover,
       maxCandidates: 100
-    }, { checkpoint: () => assertRunActive(dependencies, runId) })
+    }, { tripId: claimed.tripId, ...(claimed.conversationId ? { conversationId: claimed.conversationId } : {}), checkpoint: () => assertRunActive(dependencies, runId) })
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
     if (connectionResult.edges.length === 0) {
       return await markFailure(dependencies, runId, new AppError('NO_ROUTE_PATHS', failureMessage('NO_ROUTE_PATHS'), 422), [
@@ -381,6 +382,7 @@ export async function executeRouteGenerationRun(
     })
   } catch (error) {
     if (error instanceof Error && error.message === 'ROUTE_GENERATION_CANCELLED') return dependencies.runs.get(runId)
+    dependencies.onFailure?.(error, runId)
     return markFailure(dependencies, runId, error)
   }
 }

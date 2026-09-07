@@ -17,6 +17,14 @@ const input = (edges: ConnectionEdge[], constraints: FlightRoutePlanInput['const
 })
 
 describe('DeterministicFlightRoutePlanner golden world', () => {
+  it('treats an exact departure date as a start window and permits an overnight arrival', async () => {
+    const query = input([edge('PEK', 'CDG', 'overnight', { arrivalDate: '2026-09-11', durationMinutes: 600 })])
+    query.window.to = query.window.from
+    const result = await new DeterministicFlightRoutePlanner().plan(query)
+    expect(result.paths).toHaveLength(1)
+    query.edges[0]!.departureDate = '2026-09-11'
+    expect((await new DeterministicFlightRoutePlanner().plan(query)).paths).toHaveLength(0)
+  })
   it('keeps stable adjacency order and reports a real maxPaths truncation', async () => {
     const result = await new DeterministicFlightRoutePlanner().plan(input([
       edge('PEK', 'CDG', 'direct'), edge('PEK', 'NRT', 'via-nrt-a'), edge('NRT', 'CDG', 'via-nrt-b'),

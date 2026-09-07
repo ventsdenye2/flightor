@@ -23,7 +23,7 @@ export class CompositeAviationProvider implements AviationProvider {
     const limit = Math.max(1, Math.min(input.limit ?? 20, 20))
     const seen = new Set<string>()
     const matches = [...local.matches, ...remote.matches].filter(value => {
-      const key = locationRefKey(value)
+      const key = value.type === 'airport' && value.iata ? `airport:${value.iata}` : locationRefKey(value)
       if (seen.has(key)) return false
       seen.add(key)
       return true

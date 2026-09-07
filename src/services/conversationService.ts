@@ -671,7 +671,7 @@ export async function converse(input: ConversationRequest): Promise<Conversation
     method: 'POST',
     data: body as unknown as Record<string, unknown>,
     retry: 0,
-    timeout: 60_000
+    timeout: 180_000
   })
 }
 

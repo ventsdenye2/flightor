@@ -9,13 +9,17 @@ const validEnv = {
 }
 
 describe('parseEnv', () => {
+  it('allows explicitly disabling the cache only outside production', () => {
+    expect(parseEnv({ ...validEnv, REDIS_ENABLED: 'false' }).REDIS_ENABLED).toBe(false)
+    expect(() => parseEnv({ ...validEnv, NODE_ENV: 'production', REDIS_ENABLED: 'false' })).toThrow('Redis cannot be disabled')
+  })
   it('applies safe defaults without requiring provider credentials', () => {
     const env = parseEnv(validEnv)
     expect(env.PORT).toBe(3000)
     expect(env.AERODATABOX_API_KEY).toBe('')
     expect(env.OAG_SCHEDULES_KEY).toBe('')
     expect(env.SERPAPI_KEY).toBe('')
-    expect(env.OPENROUTER_MODEL).toBe('deepseek/deepseek-v4-pro-0813')
+    expect(env.OPENROUTER_MODEL).toBe('deepseek/deepseek-v4-flash-0731')
     expect(env.PLANNER_MODEL).toBe(env.OPENROUTER_MODEL)
     expect(env.RESEARCH_MODEL).toBe(env.OPENROUTER_MODEL)
   })

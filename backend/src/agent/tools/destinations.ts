@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { v7 as uuidv7 } from 'uuid'
-import { locationRefKey, type LocationRef } from '../../aviation/types.js'
+import { locationRefKey, locationRefSchema, type LocationRef } from '../../aviation/types.js'
 import {
   destinationCandidateSchema,
   destinationDiscoveryInputSchema,
@@ -32,6 +32,7 @@ const routeArtifactReferenceSchema = z.object({
 }).strict()
 
 const topCandidateSchema = z.object({
+  location: locationRefSchema,
   iata: z.string().regex(/^[A-Z]{3}$/).optional(),
   locationId: z.string().min(1).max(128),
   cityZh: z.string().min(1).max(160),
@@ -42,6 +43,7 @@ const topCandidateSchema = z.object({
 }).strict()
 
 const topCitySchema = z.object({
+  location: locationRefSchema,
   iata: z.string().regex(/^[A-Z]{3}$/).optional(),
   locationId: z.string().min(1).max(128),
   stayDays: z.number().int().min(1).max(60),
@@ -150,6 +152,7 @@ function discoveryInput(
 
 function topCandidates(candidates: readonly DestinationCandidate[]) {
   return candidates.slice(0, 5).map(candidate => ({
+    location: candidate.location,
     ...(candidate.location.iata ? { iata: candidate.location.iata } : {}),
     locationId: candidate.location.id,
     cityZh: candidate.cityZh,
@@ -298,6 +301,7 @@ function routeSummary(result: z.infer<typeof tripRoutePlanResultSchema>) {
     cityCount: result.cities.length,
     dayCount: result.days.length,
     topCities: result.cities.slice(0, 5).map(city => ({
+      location: city.location,
       ...(city.location.iata ? { iata: city.location.iata } : {}),
       locationId: city.location.id,
       stayDays: city.stayDays,

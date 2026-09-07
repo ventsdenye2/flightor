@@ -59,6 +59,16 @@ describe('research Agent tools', () => {
     })
   })
 
+  it('covers all travel days when the trip only specifies an outbound date', async () => {
+    const delegate = new MockResearchAgent([finding])
+    const research = vi.fn(delegate.research.bind(delegate))
+    const executionContext = context({ research }) as any
+    executionContext.trips = new InMemoryTripContextRepository([{ ...emptyTripContext('t'), travelDays: 5,
+      departureWindow: { from: '2026-10-30', to: '2026-10-30', precision: 'exact' } }])
+    await researchDestinationTool.execute({ destination, questions: ['What is open?'], researchTypes: ['practical'], maxResults: 5 }, executionContext, new AbortController().signal)
+    expect(research.mock.calls[0]?.[0].travelWindow).toEqual({ from: '2026-10-30', to: '2026-11-03' })
+  })
+
   it('rejects mismatched output, untrusted destinations, and stale generations', async () => {
     const mismatch = {
       research: vi.fn(async () => ({

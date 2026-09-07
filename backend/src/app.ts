@@ -51,7 +51,7 @@ export async function buildApp(context: AppContext) {
   await app.register(rateLimit, {
     max: 120,
     timeWindow: '1 minute',
-    redis: context.redis,
+    ...(context.redis ? { redis: context.redis } : {}),
     keyGenerator: request => request.headers.authorization
       ? `auth:${request.headers.authorization.slice(-24)}`
       : `ip:${request.ip}`

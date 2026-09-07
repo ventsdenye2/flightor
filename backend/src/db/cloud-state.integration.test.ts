@@ -61,6 +61,11 @@ suite('Phase 2 PostgreSQL integration', () => {
     })
     expect(await artifactsA.get(artifact.id)).toMatchObject({ schemaVersion: 1, type: 'flight_search' })
     await expect(artifactsB.get(artifact.id)).resolves.toBeUndefined()
+    const arrayArtifact = await artifactsA.create({ tripId: trip.id, type: 'flight_search', schemaVersion: 2,
+      payload: { results: [] }, verification: [{ status: 'partially_verified' }, { status: 'verified' }] })
+    expect((await artifactsA.get(arrayArtifact.id))?.verification).toEqual([{ status: 'partially_verified' }, { status: 'verified' }])
+    expect((await artifactsA.listForTrip(trip.id)).map(item => item.id)).toEqual([arrayArtifact.id, artifact.id])
+    expect(await artifactsB.listForTrip(trip.id)).toEqual([])
 
     const memoryA = new PostgresUserMemoryRepository(db, userA)
     const memoryB = new PostgresUserMemoryRepository(db, userB)

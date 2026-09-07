@@ -17,7 +17,7 @@ const config = {
     OPENROUTER_KEY: JSON.stringify(''),
     SERPAPI_KEY: JSON.stringify(''),
     FLIGHTOR_API_BASE_URL: JSON.stringify(process.env.FLIGHTOR_API_BASE_URL || 'http://127.0.0.1:3000'),
-    FLIGHTOR_USE_MOCK: JSON.stringify(process.env.FLIGHTOR_USE_MOCK !== 'false')
+    FLIGHTOR_USE_MOCK: JSON.stringify(process.env.FLIGHTOR_USE_MOCK === 'true')
   },
   copy: {
     patterns: [{ from: 'src/assets/', to: 'dist/assets/' }],

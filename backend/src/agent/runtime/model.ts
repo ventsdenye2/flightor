@@ -29,6 +29,7 @@ export type ChatToolChoice = 'auto' | 'none' | 'required' | {
 export type ChatReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'
 
 export interface ChatReasoning {
+  enabled?: boolean
   effort?: ChatReasoningEffort
   exclude?: boolean
 }

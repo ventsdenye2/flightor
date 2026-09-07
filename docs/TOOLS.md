@@ -219,4 +219,6 @@ keeps interrupted jobs retryable without exhausting attempts before the run is
 stale enough to reclaim.
 
 ## Phase 7–9 consumers
+
+Planner now exposes `get_trip_artifacts` (at most 20 current-trip references) and `read_artifact` (bounded, explicitly truncated JSON excerpts) to answer about persisted routes, research and guides across turns. Reads remain user- and trip-scoped. Saved prices are not fresh confirmation. Destination summaries include the exact canonical location for safe tool handoff; Research still requires a location resolved within the active turn. Neither read tool triggers final route generation.
 Route, research, guide and destination Artifacts now have client renderers. Cloud workspace restoration retains Artifact references and generation runs. Discovery runs constrained research through a dedicated Worker job and requires human publication; it adds no autonomous publish tool to the Planner registry. See [ADR 0008](./adr/0008-route-discovery-and-cloud-workspaces.md).

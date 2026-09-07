@@ -68,6 +68,16 @@ suite('Phase 5 PostgreSQL route-generation concurrency', () => {
     })
   }
 
+  it('persists nonempty JSON warnings without PostgreSQL array coercion', async () => {
+    const trip = await createTrip()
+    const repository = new PostgresRouteGenerationRunRepository(db, userId)
+    const { run } = await createRun(trip, 'json-warnings')
+    await repository.claim(run.id)
+    const warnings = ['No active topology snapshot is available', '报价需重新确认，含 "quoted" text']
+    expect(await repository.update(run.id, { progressStage: 'persisting_artifacts', warnings })).toMatchObject({ warnings })
+    expect(await repository.update(run.id, { status: 'failed', warnings, errorCode: 'NO_ROUTE_PATHS', errorMessage: 'No routes' })).toMatchObject({ status: 'failed', warnings })
+  })
+
   it('serializes run acceptance with a committing TripContext edit', async () => {
     const trip = await createTrip()
     const client = await pool.connect()
@@ -89,7 +99,7 @@ suite('Phase 5 PostgreSQL route-generation concurrency', () => {
 
       await client.query('commit')
       await expect(pending).rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
-      const count = await db.selectFrom('route_generation_runs').select(({ fn }) => fn.countAll<number>().as('count')).executeTakeFirstOrThrow()
+      const count = await db.selectFrom('route_generation_runs').where('idempotency_key', '=', 'atomic-version').select(({ fn }) => fn.countAll<number>().as('count')).executeTakeFirstOrThrow()
       expect(Number(count.count)).toBe(0)
     } finally {
       try { await client.query('rollback') } catch { /* transaction already completed */ }

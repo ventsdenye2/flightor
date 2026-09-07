@@ -64,3 +64,5 @@ new normative architecture or requirement documents in the repository root.
 
 - [Phase 7–9 operation and acceptance](./PHASE789_ACCEPTANCE.md)
 - [ADR 0008](./adr/0008-route-discovery-and-cloud-workspaces.md) — route detail, reviewed discovery and cloud workspaces.
+
+- [今晚微信 Agent 演示状态](./DEMO_STATUS.md) — 完整对话与行程生成链路的实时验收记录。

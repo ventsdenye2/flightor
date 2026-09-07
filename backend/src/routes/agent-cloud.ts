@@ -124,7 +124,10 @@ function defaultFactory(context: AppContext): CloudAgentServiceFactory {
     const artifacts = new PostgresArtifactRepository(context.db, userId)
     const memory = new PostgresUserMemoryRepository(context.db, userId)
     const runtime = new AgentRuntime(context.providers.openrouter, createPlannerToolRegistry(), {
-      model: context.env.PLANNER_MODEL
+      model: context.env.PLANNER_MODEL,
+      turnTimeoutMs: 150_000,
+      maxToolSteps: 10,
+      modelOptions: { maxTokens: 4096, reasoning: { enabled: false, exclude: true } }
     })
     const topology = new PostgresTopologyRepository(context.db)
     const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))

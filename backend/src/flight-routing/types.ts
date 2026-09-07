@@ -202,6 +202,8 @@ export type RouteOptimizationResult = z.infer<typeof routeOptimizationResultSche
 
 export type RouteServiceContext = {
   signal?: AbortSignal
+  tripId?: string
+  conversationId?: string
   /** Persistent cancellation/ownership checkpoint used before expensive provider boundaries. */
   checkpoint?: () => Promise<void>
 }

@@ -163,8 +163,9 @@ export class DeterministicFlightRoutePlanner {
     const edgeStack: ConnectionEdge[] = []
 
     const canUseEdge = (edge: ConnectionEdge): boolean => {
-      if (edge.departureDate < normalized.window.from || edge.departureDate > normalized.window.to) return false
-      if (edge.arrivalDate !== undefined && (edge.arrivalDate < normalized.window.from || edge.arrivalDate > normalized.window.to)) return false
+      // This is the departure window, not an arrival deadline. Overnight
+      // arrivals and onward connections may occur after its last date.
+      if (edgeStack.length === 0 && (edge.departureDate < normalized.window.from || edge.departureDate > normalized.window.to)) return false
       if (excluded.some(location => sameLocation(location, edge.from) || sameLocation(location, edge.to))) return false
       if (edgeHardReason(edge, constraints) !== undefined) return false
       if (edgeStack.length >= constraints.maxTransfers + 1) return false

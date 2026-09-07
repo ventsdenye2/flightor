@@ -11,6 +11,7 @@ import { searchDestinationsTool, recommendDestinationsTool, planTripRouteTool } 
 import { confirmFlightPriceTool, confirmRoutePriceTool } from './fare-confirmation.js'
 import { researchDestinationTool, webResearchTool } from './research.js'
 import { buildTravelGuideTool } from './travel-guide.js'
+import { getTripArtifactsTool, readArtifactTool } from './artifact-reading.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
@@ -271,6 +272,8 @@ const updateUserMemoryTool: AgentTool<z.infer<typeof updateUserMemoryInputSchema
 
 export function createCoreToolRegistry(): ToolRegistry {
   return new ToolRegistry()
+    .register(getTripArtifactsTool)
+    .register(readArtifactTool)
     .register(getTripContextTool)
     .register(updateTripContextTool)
     .register(resolveLocationTool)
@@ -298,6 +301,8 @@ export function createCoreToolRegistry(): ToolRegistry {
  */
 export function createPlannerToolRegistry(): ToolRegistry {
   return new ToolRegistry()
+    .register(getTripArtifactsTool)
+    .register(readArtifactTool)
     .register(getTripContextTool)
     .register(updateTripContextTool)
     .register(resolveLocationTool)

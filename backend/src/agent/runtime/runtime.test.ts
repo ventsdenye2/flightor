@@ -19,8 +19,37 @@ const call = (id: string, name: string, args = {}) => ({ id, type: 'function' as
 const tool = (name: string, execute: AgentTool['execute'], extra: Partial<AgentTool> = {}): AgentTool => ({ name, description: name, inputSchema: z.object({}).strict(), outputSchema: z.object({ ok: z.boolean() }), costClass: 'free', costUnits: 1, sideEffect: 'none', parallelSafe: true, timeoutMs: 30, execute, ...extra })
 
 describe('AgentRuntime and ToolRegistry', () => {
+  it('reads persisted artifacts only from the current trip and bounds large excerpts', async () => {
+    const artifacts = new InMemoryArtifactRepository('u', new Set(['t', 'other']))
+    const current = await artifacts.create({ tripId: 't', type: 'route_set', schemaVersion: 1, payload: { kind: 'generated_route_set', text: 'x'.repeat(25000) } })
+    const other = await artifacts.create({ tripId: 'other', type: 'research', schemaVersion: 1, payload: { secret: 'other-trip-data' } })
+    const registry = createCoreToolRegistry()
+    const signal = new AbortController().signal
+    const scoped = { ...ctx, artifacts }
+    const listed = await registry.execute(call('list', 'get_trip_artifacts'), scoped, signal)
+    expect(listed.ok).toBe(true)
+    expect(listed.content).toContain(current.id)
+    expect(listed.content).not.toContain(other.id)
+    const read = await registry.execute(call('read', 'read_artifact', { artifactId: current.id }), scoped, signal)
+    expect(read.ok).toBe(true)
+    expect(read.content).toContain('"truncated":true')
+    const denied = await registry.execute(call('deny', 'read_artifact', { artifactId: other.id }), scoped, signal)
+    expect(denied.ok).toBe(false)
+    expect(denied.content).not.toContain('other-trip-data')
+  })
+  it('does not execute truncated tool calls or report truncated output as completed', async () => {
+    const execute = vi.fn(async () => ({ ok: true }))
+    const registry = new ToolRegistry().register(tool('write', execute))
+    for (const tool_calls of [undefined, [call('x', 'write')]]) {
+      const model: AgentModelClient = { complete: vi.fn(async () => ({ finishReason: 'length', message: { role: 'assistant' as const, content: 'Saved', ...(tool_calls ? { tool_calls } : {}) } })) }
+      const result = await new AgentRuntime(model, registry).run({ messages: [{ role: 'user', content: 'save' }], context: ctx })
+      expect(result).toMatchObject({ stopReason: 'model_failure', fallback: true, toolCalls: 0 })
+    }
+    expect(execute).not.toHaveBeenCalled()
+  })
   it('publishes the complete Phase 4B Core Tool vocabulary', () => {
     expect(createCoreToolRegistry().definitions().map(definition => definition.function.name)).toEqual([
+      'get_trip_artifacts', 'read_artifact',
       'get_trip_context', 'update_trip_context', 'resolve_location', 'search_flights',
       'search_flexible_flights', 'confirm_flight_price', 'search_connection_flights',
       'plan_flight_route', 'optimize_route', 'confirm_route_price', 'search_destinations',

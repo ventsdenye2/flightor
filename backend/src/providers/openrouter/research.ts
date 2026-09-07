@@ -98,7 +98,7 @@ export class OpenRouterResearchSynthesisModel implements ResearchSynthesisModel 
       { role: 'system', content: prompt.system },
       { role: 'user', content: prompt.user }
     ]
-    const completionOptions: ChatOptions = { maxTokens: MAX_MODEL_TOKENS, temperature: 0, ...(options?.signal ? { signal: options.signal } : {}) }
+    const completionOptions: ChatOptions = { maxTokens: MAX_MODEL_TOKENS, temperature: 0, reasoning: { enabled: false, exclude: true }, ...(options?.signal ? { signal: options.signal } : {}) }
     const completion = await this.client.complete(messages, this.model, completionOptions)
     if (options?.signal?.aborted) throw new AppError('PROVIDER_CANCELLED', 'Research synthesis was cancelled', 502, { provider: 'openrouter' })
     const content = contentFromCompletion(completion)

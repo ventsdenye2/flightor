@@ -167,7 +167,7 @@ export class PostgresRouteGenerationRunRepository implements RouteGenerationRunR
         result_artifact_id: null,
         error_code: null,
         error_message: null,
-        warnings_json: [] as unknown as JsonValue,
+        warnings_json: JSON.stringify([]),
         started_at: null,
         finished_at: null,
         created_at: new Date(),
@@ -265,7 +265,8 @@ export class PostgresRouteGenerationRunRepository implements RouteGenerationRunR
       if (resultArtifactId !== undefined) values.result_artifact_id = resultArtifactId
       if (mutation.errorCode !== undefined) values.error_code = mutation.errorCode
       if (mutation.errorMessage !== undefined) values.error_message = mutation.errorMessage
-      if (mutation.warnings !== undefined) values.warnings_json = mutation.warnings as unknown as JsonValue
+      // node-postgres serializes JS arrays as PostgreSQL arrays, not JSON.
+      if (mutation.warnings !== undefined) values.warnings_json = JSON.stringify(mutation.warnings)
       if (mutation.startedAt !== undefined) values.started_at = mutation.startedAt
       if (mutation.finishedAt !== undefined) values.finished_at = mutation.finishedAt
       let updateQuery = trx.updateTable('route_generation_runs').set(values as never)

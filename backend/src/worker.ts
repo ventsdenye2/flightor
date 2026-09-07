@@ -8,18 +8,18 @@ import { claimNextJob, completeJob, failJob, heartbeatJob, recoverStaleJobs } fr
 import { createProviders } from './providers/index.js'
 
 const workerId = `${hostname()}:${process.pid}`
-const redis = new Redis(env.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 2 })
+const redis = env.REDIS_ENABLED ? new Redis(env.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 2 }) : undefined
 const context = { db, redis, env, providers: createProviders(env) }
 let stopping = false
 const STALE_RECOVERY_INTERVAL_MS = 60_000
 const JOB_HEARTBEAT_INTERVAL_MS = 30_000
 
-redis.on('error', (error: Error) => {
+redis?.on('error', (error: Error) => {
   console.error(JSON.stringify({ event: 'redis_error', message: error instanceof Error ? error.message : 'unknown error' }))
 })
 
 async function run(): Promise<void> {
-  await redis.connect()
+  await redis?.connect()
   let recovered = await recoverStaleJobs(db)
   let lastRecoveryAt = Date.now()
   const discovery = new PostgresDiscoveryRepository(db)
@@ -69,7 +69,7 @@ async function shutdown(signal: string): Promise<void> {
   if (stopping) return
   stopping = true
   console.log(JSON.stringify({ event: 'worker_stopping', signal, workerId }))
-  if (redis.status !== 'end') await redis.quit()
+  if (redis && redis.status !== 'end') await redis.quit()
   await db.destroy()
 }
 

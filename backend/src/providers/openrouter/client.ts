@@ -32,23 +32,28 @@ function isDeepSeekChatModel(model: string): boolean {
   return normalized === DEEPSEEK_CHAT_MODEL || normalized.startsWith(`${DEEPSEEK_CHAT_MODEL}:`)
 }
 
-function isDeepSeekV4ProModel(model: string): boolean {
+function isDeepSeekV4Model(model: string): boolean {
   const normalized = normalizedModel(model)
   return normalized === DEEPSEEK_V4_PRO_MODEL || normalized.startsWith(`${DEEPSEEK_V4_PRO_MODEL}:`)
+    || normalized === 'deepseek/deepseek-v4-flash' || normalized.startsWith('deepseek/deepseek-v4-flash-')
 }
 
 function supportsReasoning(model: string, reasoning: ChatReasoning): boolean {
   if (isDeepSeekChatModel(model)) return false
-  if (isDeepSeekV4ProModel(model)) {
-    // V4 Pro accepts the explicit high-effort modes.  The business callers
-    // intentionally send effort=none to disable thinking; omit that (and any
-    // other unsupported effort) instead of turning it into a provider 400.
+  if (isDeepSeekV4Model(model)) {
+    if (reasoning.enabled === false) return true
+    // Keep the previously validated explicit efforts. Disabled reasoning is
+    // normalized separately so effort=none never becomes a provider 400.
     return reasoning.effort === 'high' || reasoning.effort === 'xhigh'
   }
   return true
 }
 
 function reasoningBody(model: string, reasoning: ChatReasoning | undefined): { reasoning: ChatReasoning } | Record<string, never> {
+  // V4 rejects effort=none but supports the gateway's explicit disabled flag.
+  if (isDeepSeekV4Model(model) && reasoning?.effort === 'none') {
+    return { reasoning: { enabled: false, ...(reasoning.exclude === undefined ? {} : { exclude: reasoning.exclude }) } }
+  }
   return reasoning !== undefined && supportsReasoning(model, reasoning)
     ? { reasoning }
     : {}

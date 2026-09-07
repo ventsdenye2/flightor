@@ -15,7 +15,7 @@ export interface FlightSearchDomainContext {
   fares: FareProvider
   artifacts: ArtifactRepository
   tripId: string
-  conversationId: string
+  conversationId?: string
   signal?: AbortSignal
   isCurrent?: () => boolean
 }
@@ -96,7 +96,7 @@ export async function executeFlightSearch(
   const record = await context.artifacts.create({
     id,
     tripId: context.tripId,
-    conversationId: context.conversationId,
+    ...(context.conversationId ? { conversationId: context.conversationId } : {}),
     type: 'flight_search',
     schemaVersion: 1,
     payload,
@@ -158,7 +158,7 @@ export async function executeFlexibleFlightSearch(
   const record = await context.artifacts.create({
     id,
     tripId: context.tripId,
-    conversationId: context.conversationId,
+    ...(context.conversationId ? { conversationId: context.conversationId } : {}),
     type: 'flight_search',
     schemaVersion: 2,
     payload,

@@ -138,7 +138,7 @@ export const researchDestinationTool: AgentTool<
   z.infer<typeof researchToolOutputSchema>
 > = {
   name: 'research_destination',
-  description: 'Research current activities, events, seasonal or practical questions for one trusted destination. The active Trip supplies its travel window and interests.',
+  description: 'Research current activities, events, seasonal or practical questions for one trusted destination. First resolve_location in this turn and copy its exact location, or copy a search_destinations candidate location returned in this turn. Never reconstruct IDs from city names. The active Trip supplies its travel window and interests.',
   inputSchema: researchDestinationInputSchema,
   outputSchema: researchToolOutputSchema,
   costClass: 'paid',
@@ -151,7 +151,11 @@ export const researchDestinationTool: AgentTool<
     const trip = await context.trips.get(context.tripId)
     if (!trip) throw new Error('Trip context was not found')
     const from = trip.departureWindow?.from
-    const to = trip.returnWindow?.to ?? trip.departureWindow?.to
+    const lastDeparture = trip.departureWindow?.to ?? from
+    const inferredEnd = lastDeparture && trip.travelDays
+      ? new Date(Date.parse(`${lastDeparture}T00:00:00Z`) + (trip.travelDays - 1) * 86_400_000).toISOString().slice(0, 10)
+      : lastDeparture
+    const to = trip.returnWindow?.to ?? inferredEnd
     const brief = researchBriefSchema.parse({
       destinations: [input.destination],
       ...((from || to) ? { travelWindow: { ...(from ? { from } : {}), ...(to ? { to } : {}) } } : {}),

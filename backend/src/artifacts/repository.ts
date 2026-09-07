@@ -38,6 +38,7 @@ export interface CreateArtifactInput {
 export interface ArtifactRepository {
   create(input: CreateArtifactInput): Promise<ArtifactRecord>
   get(artifactId: string): Promise<ArtifactRecord | undefined>
+  listForTrip?(tripId: string, limit?: number): Promise<ArtifactRecord[]>
 }
 
 interface OwnedArtifact extends ArtifactRecord { ownerId: string }
@@ -77,5 +78,12 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
     if (!record || record.ownerId !== this.ownerId) return undefined
     const { ownerId: _ownerId, ...publicRecord } = record
     return structuredClone(publicRecord)
+  }
+
+  async listForTrip(tripId: string, limit = 10): Promise<ArtifactRecord[]> {
+    if (!this.ownedTripIds.has(tripId)) return []
+    return [...this.records.values()].filter(record => record.ownerId === this.ownerId && record.tripId === tripId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)).slice(0, Math.min(20, Math.max(1, limit)))
+      .map(({ ownerId: _owner, ...record }) => structuredClone(record))
   }
 }

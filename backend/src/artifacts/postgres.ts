@@ -85,8 +85,8 @@ export class PostgresArtifactRepository implements ArtifactRepository {
           conversation_id: conversationId,
           type: input.type,
           schema_version: input.schemaVersion,
-          payload_json: input.payload as JsonValue,
-          verification_json: input.verification === undefined ? null : input.verification as JsonValue
+          payload_json: JSON.stringify(input.payload),
+          verification_json: input.verification === undefined ? null : JSON.stringify(input.verification)
         })
         .returning([
           'public_id as id', 'trip_id', 'conversation_id', 'type', 'schema_version',
@@ -118,5 +118,17 @@ export class PostgresArtifactRepository implements ArtifactRepository {
       .where('artifacts.user_id', '=', this.userId)
       .executeTakeFirst()
     return row ? toArtifact(row) : undefined
+  }
+
+  async listForTrip(tripId: string, limit = 10): Promise<ArtifactRecord[]> {
+    const rows = await this.db.selectFrom('artifacts')
+      .innerJoin('trips', 'trips.id', 'artifacts.trip_id')
+      .leftJoin('conversations', 'conversations.id', 'artifacts.conversation_id')
+      .select(['artifacts.public_id as id', 'artifacts.trip_id', 'trips.public_id as trip_public_id',
+        'artifacts.conversation_id', 'conversations.public_id as conversation_public_id', 'artifacts.type', 'artifacts.schema_version',
+        'artifacts.payload_json', 'artifacts.verification_json', 'artifacts.created_at', 'artifacts.updated_at'])
+      .where('artifacts.user_id', '=', this.userId).where('trips.user_id', '=', this.userId).where('trips.public_id', '=', tripId)
+      .orderBy('artifacts.created_at', 'desc').orderBy('artifacts.public_id', 'desc').limit(Math.min(20, Math.max(1, limit))).execute()
+    return rows.map(toArtifact)
   }
 }

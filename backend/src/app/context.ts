@@ -6,7 +6,7 @@ import type { Providers } from '../providers/index.js'
 
 export interface AppContext {
   db: Kysely<Database>
-  redis: Redis
+  redis: Redis | undefined
   env: AppEnv
   providers: Providers
 }

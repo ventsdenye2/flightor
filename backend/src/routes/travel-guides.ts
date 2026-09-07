@@ -39,7 +39,7 @@ export async function registerTravelGuideRoutes(app: FastifyInstance, context: A
       interests: input.interests
     }, {
       ...(context.env.SERPAPI_KEY ? { research: context.providers.serpapi } : {}),
-      redis: context.redis,
+      ...(context.redis ? { redis: context.redis } : {}),
       ...(context.env.OPENROUTER_API_KEY ? { llm: context.providers.openrouter } : {})
     })
     return reply.header('Cache-Control', 'no-store').send({ travelGuide: guide })

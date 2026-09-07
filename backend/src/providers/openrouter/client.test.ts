@@ -5,7 +5,7 @@ import { OpenRouterClient } from './client.js'
 afterEach(() => vi.unstubAllGlobals())
 
 describe('OpenRouterClient', () => {
-  it('uses the V4 Pro default and omits unsupported none reasoning', async () => {
+  it('uses the V4 Flash default and translates none to explicit disabled reasoning', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ choices: [] }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -29,10 +29,11 @@ describe('OpenRouterClient', () => {
 
     const body = JSON.parse(String(fetchMock.mock.calls[0]![1]?.body)) as Record<string, unknown>
     expect(body).toEqual({
-      model: 'deepseek/deepseek-v4-pro-0813',
+      model: 'deepseek/deepseek-v4-flash-0731',
       messages,
       max_tokens: 1_700,
-      temperature: 0
+      temperature: 0,
+      reasoning: { enabled: false, exclude: true }
     })
   })
 

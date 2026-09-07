@@ -14,6 +14,7 @@ const envSchema = z.object({
   DATABASE_POOL_MIN: z.coerce.number().int().min(0).default(0),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
   REDIS_URL: z.string().min(1),
+  REDIS_ENABLED: z.enum(['true', 'false']).default('true').transform(value => value === 'true'),
   JWT_SECRET: z.string().min(32),
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().min(300).max(86400).default(3600),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
@@ -35,7 +36,7 @@ const envSchema = z.object({
   SERPAPI_BASE_URL: optionalUrl.default('https://serpapi.com/search.json'),
   OPENROUTER_API_KEY: z.string().default(''),
   OPENROUTER_BASE_URL: optionalUrl.default('https://openrouter.ai/api/v1'),
-  OPENROUTER_MODEL: z.string().trim().min(1).default('deepseek/deepseek-v4-pro-0813'),
+  OPENROUTER_MODEL: z.string().trim().min(1).default('deepseek/deepseek-v4-flash-0731'),
   PLANNER_MODEL: z.string().trim().default(''),
   RESEARCH_MODEL: z.string().trim().default('')
 })
@@ -48,6 +49,7 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     const names = result.error.issues.map(issue => issue.path.join('.')).join(', ')
     throw new Error(`Invalid backend environment variables: ${names}`)
   }
+  if (result.data.NODE_ENV === 'production' && !result.data.REDIS_ENABLED) throw new Error('Redis cannot be disabled in production')
   return {
     ...result.data,
     PLANNER_MODEL: result.data.PLANNER_MODEL || result.data.OPENROUTER_MODEL,

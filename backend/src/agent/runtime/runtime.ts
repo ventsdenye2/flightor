@@ -143,6 +143,8 @@ export class AgentRuntime {
 
       if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
       if (stale(input)) return fallback('stale_generation')
+      // Truncated text or tool arguments must never be accepted as a completed turn.
+      if (completion.finishReason === 'length' || completion.finishReason === 'content_filter') return fallback('model_failure')
       messages.push(completion.message)
       const calls = toolCalls(completion.message)
       if (calls.length === 0) {

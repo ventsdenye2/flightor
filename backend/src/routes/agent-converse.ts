@@ -19,7 +19,7 @@ export async function registerAgentConverseRoutes(app: FastifyInstance, context:
     const result = await converse(input, client, {
       travelGuide: {
         ...(context.env.SERPAPI_KEY ? { research: context.providers.serpapi } : {}),
-        redis: context.redis,
+        ...(context.redis ? { redis: context.redis } : {}),
         ...(client ? { llm: client } : {})
       }
     })

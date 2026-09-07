@@ -5,6 +5,8 @@
 
 ## 1. 当前目标与产品原则
 
+今晚演示实时状态见 [DEMO_STATUS.md](./DEMO_STATUS.md)。2026-09-07 本轮真实 API→PostgreSQL Worker→SerpApi 报价路线→云端恢复→对话读取已通过；逐日攻略重跑中，微信 AppSecret/登录与端内交互尚待验收。启动用 `backend/.env.demo` 和 `demo:api` / `demo:worker`，开发环境显式 `REDIS_ENABLED=false` 可保留真实 PostgreSQL 队列运行，生产不可关闭。小程序默认真实模式；仅 `FLIGHTOR_USE_MOCK=true` 启用离线 Mock。详见 ADR 0009。
+
 FlightOR 是国际航线比价与多城路线规划微信小程序，前端使用 Taro + React + MobX。
 
 当前目标不是执行旧的十几天瀑布式计划，而是敏捷跑通可演示 MVP：
@@ -307,7 +309,7 @@ npm run dev:weapp
 
 第三方密钥必须只存在于 `backend/.env`、部署平台 Secret Manager 或服务器环境变量中。禁止恢复根目录 `openrouter.txt` / `serpapi.txt` 的编译期注入方式。
 
-后端通过 OpenRouter 正式默认使用精确模型 `deepseek/deepseek-v4-pro-0813`，最终以部署环境的 `OPENROUTER_MODEL` 配置为准；可替换为当前可用的其他模型。该付费模型需要有效 `OPENROUTER_API_KEY`、OpenRouter 账户余额和可用配额；如需替换，只通过部署环境或 `backend/.env` 的 `OPENROUTER_MODEL` 配置，不要在业务模块中硬编码模型 ID。共享 `OpenRouterClient` 会按目标模型能力处理 reasoning：业务当前传 `none` 时 V4 Pro 安全省略，未来显式 `high`/`xhigh` 才转发；DeepSeek Chat 继续省略 reasoning，其他模型保持既有行为，不会因切换默认模型自动开启高推理。没有 key、余额不足、Provider 失败或模型输出不合规时，新 Planner 返回明确 provider/unavailable 状态与 bounded warning，不把旧 rule-first converse 当作静默 fallback；自动化测试不发起真实付费调用。此前 DeepSeek V3 与 V4 Flash 的直连结果仅作历史样本，不代表当前默认模型。
+后端通过 OpenRouter 正式默认使用精确模型 `deepseek/deepseek-v4-flash-0731`（2026-09-07 用户指定），最终以部署环境的 `OPENROUTER_MODEL` 配置为准；可替换为当前可用的其他模型。该付费模型需要有效 `OPENROUTER_API_KEY`、OpenRouter 账户余额和可用配额；如需替换，只通过部署环境或 `backend/.env` 的 `OPENROUTER_MODEL` 配置，不要在业务模块中硬编码模型 ID。共享 `OpenRouterClient` 会按目标模型能力处理 reasoning：业务传 `none` 时 V4 系列转换为 `enabled:false`，Planner/Research 也显式关闭推理；此前省略参数会继承模型默认推理；DeepSeek Chat 继续省略 reasoning，其他模型保持既有行为，不会因切换默认模型自动开启高推理。没有 key、余额不足、Provider 失败或模型输出不合规时，新 Planner 返回明确 provider/unavailable 状态与 bounded warning，不把旧 rule-first converse 当作静默 fallback；自动化测试不发起真实付费调用。此前 DeepSeek V3 与 V4 Flash 的直连结果仅作历史样本，不代表当前默认模型。
 
 统一对话的预算解析支持 `一万五`、`一万五千`、`两万三`、`1万5`、`1万5千`、`1.5万`、`八千`和纯数字等明确格式；`一万零五百`按 10500 保留精度，不完整/歧义表达不覆盖。当前确定性预算对同轮 LLM 粗解析具有优先级，后续明确改预算可覆盖客户端旧 state。
 
@@ -322,7 +324,7 @@ npm run dev:weapp
 | OAG Connections `/flight-connections` | 成功 | 已返回并成功归一化连接数据 |
 | OAG Flight Info `/flight-instances/` | 成功 | 已返回并成功归一化直飞数据，可作为 Schedules 降级 |
 | SerpApi Google Flights | 成功 | 已返回真实报价并通过后端映射 |
-| OpenRouter `/chat/completions`（当前默认） | `deepseek/deepseek-v4-pro-0813`；2026-09-04 付费直连 `success=true`、`responseModel` 同为该 ID、content 为“V4 Pro 配置验证成功。” | 使用 `.env` 默认值且未传 model override；业务 `reasoning=none` 被适配器省略；prompt/completion/total tokens 为 97/60/157，cost `$0.00036564`；证明当前 key、余额、模型 ID 和默认适配路径可用，不代表 Docker HTTP/UI |
+| OpenRouter `/chat/completions`（历史 Pro 验证） | `deepseek/deepseek-v4-pro-0813`；2026-09-04 付费直连 `success=true`、`responseModel` 同为该 ID、content 为“V4 Pro 配置验证成功。” | 使用 `.env` 默认值且未传 model override；业务 `reasoning=none` 被适配器省略；prompt/completion/total tokens 为 97/60/157，cost `$0.00036564`；证明当前 key、余额、模型 ID 和默认适配路径可用，不代表 Docker HTTP/UI |
 | OpenRouter `/chat/completions`（模型切换前历史直连） | `deepseek/deepseek-chat` 最小“仅回复 OK”请求返回 `success=true, content=OK` | 只证明当时旧模型与验证环境可用；未输出或记录 key |
 | OpenRouter `/chat/completions`（旧联调） | 旧容器历史实测为 Dots 模型 | 仅作历史记录，不代表当前配置；模型 ID、配额和生命周期必须保持可替换 |
 | OpenRouter Dots 免费模型（旧联调） | 旧容器历史实测调用成功 | 历史实测模型为 `dots-studio/dots-3-note-preview:free`；仅作可替换联调配置，不应长期硬编码依赖 |
@@ -378,7 +380,7 @@ npm run dev:weapp
 - 历史旧容器曾使用 Dots 模型（`dots-studio/dots-3-note-preview:free`）验证 `/v1/trip-plans`、旧 `/v1/agent/chat` 与 `/v1/route-plans/confirm`，记录见上表，不代表当前统一会话链路，也不作为当前模型配置声明；
 - 独立复核：后端最终测试为 20 个 test files / 121 tests；根项目 `npm test` 为 140/140（含预算纯函数 12/12、会话缓存 17/17）；`npx tsc --noEmit`、后端 `check`、后端 build、小程序 `weapp` build、`git diff --check` 均通过；本轮未做微信开发者工具截图/交互 QA，需用户下一步验证实际小程序渲染。
 
-模型环境边界：正式默认 `OPENROUTER_MODEL=deepseek/deepseek-v4-pro-0813`，最终部署以运行环境覆盖为准；该付费模型的计费、余额、配额、生命周期和可用性以 OpenRouter 当前目录及账户为准，不在文档中写死价格。此前 DeepSeek V3 与 V4 Flash 的直连结果仅作历史样本，连同旧容器 Dots 样本均不代表当前默认模型。没有 key 或调用失败时，新 Planner 和 route-generation run 返回明确 unavailable/error 与 bounded warning；历史 `route-plans`/`trip-plans` 兼容路径可以保留各自的确定性行为，但它们不是新 Planner 的 authority，任何 fallback 都不得编造 Provider 事实。业务不会因默认模型切换自动启用高推理。
+模型环境边界：正式默认 `OPENROUTER_MODEL=deepseek/deepseek-v4-flash-0731`，最终部署以运行环境覆盖为准；该付费模型的计费、余额、配额、生命周期和可用性以 OpenRouter 当前目录及账户为准，不在文档中写死价格。此前 DeepSeek V3 与 V4 Flash 的直连结果仅作历史样本，连同旧容器 Dots 样本均不代表当前默认模型。没有 key 或调用失败时，新 Planner 和 route-generation run 返回明确 unavailable/error 与 bounded warning；历史 `route-plans`/`trip-plans` 兼容路径可以保留各自的确定性行为，但它们不是新 Planner 的 authority，任何 fallback 都不得编造 Provider 事实。业务不会因默认模型切换自动启用高推理。
 
 提交或交付前至少运行：
 
