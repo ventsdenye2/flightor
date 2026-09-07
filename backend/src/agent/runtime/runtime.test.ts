@@ -47,6 +47,22 @@ describe('AgentRuntime and ToolRegistry', () => {
     }
     expect(execute).not.toHaveBeenCalled()
   })
+
+  it('repairs a premature promise once and never completes a missing required write', async () => {
+    const registry = new ToolRegistry().register(tool('write', async () => ({ ok: true })))
+    const promise = { message: { role: 'assistant' as const, content: 'I will save it.' } }
+    const complete = vi.fn().mockResolvedValueOnce(promise)
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('w', 'write')] } })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Saved.' } })
+    const result = await new AgentRuntime({ complete }, registry).run({ messages: [{ role: 'user', content: 'save' }], context: ctx, requiredSuccessfulTool: 'write' })
+    expect(result.stopReason).toBe('completed')
+    expect(result.toolCalls).toBe(1)
+    expect(complete.mock.calls[1]?.[2]).toMatchObject({ toolChoice: 'required' })
+    const stuck = vi.fn().mockResolvedValue(promise)
+    const failed = await new AgentRuntime({ complete: stuck }, registry).run({ messages: [{ role: 'user', content: 'save' }], context: ctx, requiredSuccessfulTool: 'write' })
+    expect(failed.stopReason).toBe('model_failure')
+    expect(stuck).toHaveBeenCalledTimes(2)
+  })
   it('publishes the complete Phase 4B Core Tool vocabulary', () => {
     expect(createCoreToolRegistry().definitions().map(definition => definition.function.name)).toEqual([
       'get_trip_artifacts', 'read_artifact',

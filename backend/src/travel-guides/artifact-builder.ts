@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { LocationRef, VerificationRecord } from '../aviation/types.js'
+import { locationsOverlap } from '../locations/identity.js'
+import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
 import type { ReadableResearchArtifact, ResearchArtifact } from '../research-agent/types.js'
 import {
   travelGuideArtifactPayloadSchema,
@@ -10,16 +12,10 @@ import {
   type TravelGuideBuilderContext
 } from './artifact.js'
 
-const BUILDER_VERSION = 'travel-guide-v1'
-
-function locationCode(value: LocationRef): string {
-  return value.cityCode ?? value.iata ?? value.id
-}
+const BUILDER_VERSION = 'travel-guide-v2'
 
 function sameLocation(left: LocationRef, right: LocationRef): boolean {
-  return locationCode(left) === locationCode(right)
-    || (left.iata !== undefined && left.iata === right.iata)
-    || (left.cityCode !== undefined && left.cityCode === right.cityCode)
+  return locationsOverlap(left, right, CURATED_LOCATION_IDENTITY_POLICY)
 }
 
 function legacyVerification(
@@ -115,11 +111,14 @@ export class DeterministicTravelGuideBuilder implements TravelGuideBuilder {
     const omitted = findings.filter(item => item.verification.status === 'unverified' || item.verification.status === 'stale').length
     const eligible = findings.filter(item => item.verification.status === 'verified' || item.verification.status === 'partially_verified')
     const consumed = new Set<string>()
-    const days = normalized.route.days.map(day => {
-      const matches = eligible.filter(finding =>
+    const days = normalized.route.days.map((day, dayIndex) => {
+      const available = eligible.filter(finding =>
         !consumed.has(`${finding.artifactId}:${finding.id}`)
         && finding.destinations.some(destination => sameLocation(destination, day.city)))
-        .slice(0, 6)
+      // Spread evidence across the city's remaining days instead of consuming
+      // the first six findings on day one and leaving the rest of the trip empty.
+      const remainingCityDays = normalized.route.days.slice(dayIndex).filter(next => sameLocation(next.city, day.city)).length
+      const matches = available.slice(0, Math.min(6, Math.ceil(available.length / remainingCityDays)))
       for (const finding of matches) consumed.add(`${finding.artifactId}:${finding.id}`)
       return {
         day: day.day,

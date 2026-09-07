@@ -45,14 +45,21 @@ function researchTypeLabel(value: ResearchSearchInput['researchTypes'][number]):
 function buildQuery(input: ResearchSearchInput): string {
   const parts = [
     input.destination.name,
-    ...input.researchTypes.map(researchTypeLabel),
-    ...input.interests,
-    ...input.questions
+    ...input.questions,
+    ...input.researchTypes.map(researchTypeLabel)
   ]
-  if (input.travelWindow?.from) parts.push(`from ${input.travelWindow.from}`)
-  if (input.travelWindow?.to) parts.push(`to ${input.travelWindow.to}`)
+  // Evergreen activity pages rarely mention the exact trip dates. Keep the
+  // full window in the synthesis brief; only date-sensitive searches need it.
+  if (input.researchTypes.some(type => type === 'event' || type === 'seasonal')) {
+    if (input.travelWindow?.from) parts.push(input.travelWindow.from.slice(0, 7))
+    if (input.travelWindow?.to && input.travelWindow.to.slice(0, 7) !== input.travelWindow?.from?.slice(0, 7)) parts.push(input.travelWindow.to.slice(0, 7))
+  }
   const query = parts.map(sanitizeQueryPart).filter(Boolean).join(' ')
-  return query.slice(0, MAX_QUERY_LENGTH)
+  // Exact, server-owned public-tourism domains. No model/user string can add
+  // a search operator. Scope stays within the authority-classified source set.
+  const tokyo = input.destination.countryCode === 'JP' && [input.destination.cityCode, input.destination.iata].some(code => code === 'TYO' || code === 'NRT' || code === 'HND')
+  const officialScope = tokyo ? ' (site:gotokyo.org OR site:japan.travel)' : ''
+  return query.slice(0, MAX_QUERY_LENGTH - officialScope.length) + officialScope
 }
 
 function toCandidate(result: SerpOrganicResult): ResearchSourceCandidate | undefined {
@@ -128,7 +135,7 @@ export class SerpApiResearchSearchProvider implements ResearchSearchProvider {
     return researchSearchResultSchema.parse({
       candidates,
       checkedAt: new Date().toISOString(),
-      warnings: []
+      warnings: validated.destination.countryCode === 'JP' && [validated.destination.cityCode, validated.destination.iata].some(code => code === 'TYO' || code === 'NRT' || code === 'HND') ? ['research_uses_curated_public_tourism_sources'] : []
     })
   }
 }

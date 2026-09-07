@@ -6,6 +6,9 @@
  * the relevant provider before a booking decision is made.
  */
 
+import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
+import { representativeAirportCode } from '../locations/identity.js'
+
 export type DestinationRegion = 'japan' | 'schengen' | 'visa_free'
 
 export type DestinationInterest = 'culture' | 'food' | 'nature' | 'shopping' | 'nightlife'
@@ -24,8 +27,6 @@ export interface DestinationProfile {
   costTier: DestinationCostTier
   lat: number
   lon: number
-  /** Canonical airport/city code for same-city aliases such as HND. */
-  canonicalIata?: string
 }
 
 export interface DestinationRecommendation {
@@ -77,8 +78,7 @@ export const DESTINATION_PROFILES: readonly DestinationProfile[] = [
     minStayDays: 3,
     costTier: 3,
     lat: 35.5494,
-    lon: 139.7798,
-    canonicalIata: 'NRT'
+    lon: 139.7798
   },
   {
     iata: 'KIX',
@@ -401,8 +401,8 @@ export const DESTINATION_PROFILES: readonly DestinationProfile[] = [
 const profileOrder = new Map<string, number>(DESTINATION_PROFILES.map((profile, index) => [profile.iata, index]))
 const CATALOG_REGIONS: readonly DestinationRegion[] = ['japan', 'schengen', 'visa_free']
 
-function canonicalIata(profile: DestinationProfile): string {
-  return profile.canonicalIata ?? profile.iata
+function canonicalProfileCode(profile: DestinationProfile): string {
+  return representativeAirportCode(profile.iata, CURATED_LOCATION_IDENTITY_POLICY)
 }
 
 function normalizedIata(value: string): string {
@@ -411,7 +411,7 @@ function normalizedIata(value: string): string {
 
 function profileForIata(value: string): DestinationProfile | undefined {
   const iata = normalizedIata(value)
-  return DESTINATION_PROFILES.find(profile => profile.iata === iata || canonicalIata(profile) === iata)
+  return DESTINATION_PROFILES.find(profile => profile.iata === iata || canonicalProfileCode(profile) === iata)
 }
 
 function uniqueRegions(values: readonly DestinationRegion[]): DestinationRegion[] {
@@ -460,7 +460,7 @@ export function resolveDestinationMentions(text: string): DestinationProfile[] {
 
   const byCity = new Map<string, (typeof candidates)[number]>()
   for (const candidate of candidates) {
-    const key = canonicalIata(candidate.profile)
+    const key = canonicalProfileCode(candidate.profile)
     const previous = byCity.get(key)
     if (!previous
       || candidate.specificity > previous.specificity
@@ -534,8 +534,8 @@ function preferenceCompare(
   requiredKeys: ReadonlySet<string>,
   includeCost: boolean
 ): number {
-  const leftRequired = requiredKeys.has(canonicalIata(left)) ? 1 : 0
-  const rightRequired = requiredKeys.has(canonicalIata(right)) ? 1 : 0
+  const leftRequired = requiredKeys.has(canonicalProfileCode(left)) ? 1 : 0
+  const rightRequired = requiredKeys.has(canonicalProfileCode(right)) ? 1 : 0
   if (leftRequired !== rightRequired) return rightRequired - leftRequired
   const leftScore = interestScore(left, interests)
   const rightScore = interestScore(right, interests)
@@ -558,7 +558,7 @@ export function recommendDestinations(input: DestinationRecommendationInput = {}
   const excluded = new Set<string>()
   for (const value of input.excludedIatas ?? []) {
     const profile = profileForIata(value)
-    if (profile) excluded.add(canonicalIata(profile))
+    if (profile) excluded.add(canonicalProfileCode(profile))
   }
 
   const explicitRegions = uniqueRegions(input.regions ?? [])
@@ -566,7 +566,7 @@ export function recommendDestinations(input: DestinationRecommendationInput = {}
   const requiredRegionSeen = new Set<DestinationRegion>()
   for (const value of input.requiredIatas ?? []) {
     const profile = profileForIata(value)
-    if (!profile || excluded.has(canonicalIata(profile)) || requiredRegionSeen.has(profile.region)) continue
+    if (!profile || excluded.has(canonicalProfileCode(profile)) || requiredRegionSeen.has(profile.region)) continue
     requiredRegionSeen.add(profile.region)
     requiredRegionOrder.push(profile.region)
   }
@@ -581,7 +581,7 @@ export function recommendDestinations(input: DestinationRecommendationInput = {}
     // mix every region into one itinerary.  Use the first available directory
     // city after interest ranking as one stable preferred region.
     const preferred = DESTINATION_PROFILES
-      .filter(profile => !excluded.has(canonicalIata(profile)))
+      .filter(profile => !excluded.has(canonicalProfileCode(profile)))
       .reduce<DestinationProfile | undefined>((best, profile) => {
         if (!best || preferenceCompare(profile, best, interests, new Set(), false) < 0) return profile
         return best
@@ -595,17 +595,17 @@ export function recommendDestinations(input: DestinationRecommendationInput = {}
   for (const value of input.requiredIatas ?? []) {
     const profile = profileForIata(value)
     if (!profile || !regionSet.has(profile.region)) continue
-    const key = canonicalIata(profile)
+    const key = canonicalProfileCode(profile)
     if (excluded.has(key) || requiredKeys.has(key)) continue
     required.push(profile)
     requiredKeys.add(key)
   }
 
-  const available = DESTINATION_PROFILES.filter(profile => regionSet.has(profile.region) && !excluded.has(canonicalIata(profile)))
+  const available = DESTINATION_PROFILES.filter(profile => regionSet.has(profile.region) && !excluded.has(canonicalProfileCode(profile)))
   const byCity = new Map<string, DestinationProfile>()
-  for (const profile of required) byCity.set(canonicalIata(profile), profile)
+  for (const profile of required) byCity.set(canonicalProfileCode(profile), profile)
   for (const profile of available) {
-    const key = canonicalIata(profile)
+    const key = canonicalProfileCode(profile)
     if (!byCity.has(key)) byCity.set(key, profile)
   }
 
@@ -626,11 +626,11 @@ export function recommendDestinations(input: DestinationRecommendationInput = {}
     }
   }
   const protectedKeys = new Set<string>([
-    ...required.map(profile => canonicalIata(profile)),
-    ...coverage.map(profile => canonicalIata(profile))
+    ...required.map(profile => canonicalProfileCode(profile)),
+    ...coverage.map(profile => canonicalProfileCode(profile))
   ])
-  const protectedProfiles = ranked.filter(profile => protectedKeys.has(canonicalIata(profile)))
-  const fill = ranked.filter(profile => !protectedKeys.has(canonicalIata(profile)))
+  const protectedProfiles = ranked.filter(profile => protectedKeys.has(canonicalProfileCode(profile)))
+  const fill = ranked.filter(profile => !protectedKeys.has(canonicalProfileCode(profile)))
   const limit = Math.max(requestedLimit, required.length, protectedProfiles.length)
   return [...protectedProfiles, ...fill.slice(0, Math.max(0, limit - protectedProfiles.length))]
     .map(profile => recommendationFor(profile, interests))
@@ -644,6 +644,7 @@ export function getDestinationProfile(iata: string): DestinationProfile | undefi
 
 /** Return the city-level canonical key used for alias de-duplication. */
 export function getCanonicalDestinationIata(iata: string): string | undefined {
-  const profile = getDestinationProfile(iata)
-  return profile ? canonicalIata(profile) : undefined
+  const normalized = normalizedIata(iata)
+  const profile = getDestinationProfile(representativeAirportCode(normalized, CURATED_LOCATION_IDENTITY_POLICY))
+  return profile ? canonicalProfileCode(profile) : undefined
 }

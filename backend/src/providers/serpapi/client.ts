@@ -253,7 +253,7 @@ export class SerpApiClient {
     })
     const response = await fetchJson<unknown>(url, { method: 'GET' }, {
       provider: 'serpapi',
-      timeoutMs: 20_000,
+      timeoutMs: 30_000,
       ...(signal ? { signal } : {})
     })
     throwIfAborted(signal)

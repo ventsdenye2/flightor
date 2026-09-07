@@ -26,9 +26,12 @@ function synthesisPrompt(input: ResearchSynthesisInput): { system: string; user:
     system: [
       'You are a constrained travel research summarizer.',
       'Use only the supplied brief and indexed source snippets.',
-      'Return ONLY a JSON array of objects with category, destinationIndex, title, summary, and sourceIndexes.',
+      'Return ONLY a JSON object with a findings array of objects with category, destinationIndex, title, summary, and sourceIndexes.',
+      `Return at most ${input.brief.maxResults ?? 10} distinct findings. Keep each summary under 300 characters. Do not use Markdown fences or introductory text.`,
       'sourceIndexes must be integer indexes into the supplied source list; never output URLs, citations, or new sources.',
       'Do not assert facts that are absent from the snippets.',
+      'Do not recommend dated exhibitions or events outside the travel window. Historical snippets may support a permanent venue description only; never carry their old event, opening-hour or price claims into the requested trip.',
+      'Cover the requested themes when evidence supports them. Prefer distinct places or dining experiences over generic directory pages. Merge references corroborating the same finding; never attach unrelated sources merely to increase the citation count.',
       'Select only findings relevant to the requested destination, interests, questions and travel window. Return [] when none qualify; never relabel unrelated search results to satisfy the brief.'
     ].join(' '),
     user: JSON.stringify({ brief: input.brief, sources: indexedSources })
@@ -74,7 +77,8 @@ function contentFromCompletion(value: unknown): string {
 
 function parseJsonContent(content: string): unknown {
   try {
-    return JSON.parse(content) as unknown
+    const fenced = /^```(?:json)?\s*\n([\s\S]*?)\n```\s*$/i.exec(content)
+    return JSON.parse(fenced?.[1] ?? content) as unknown
   } catch {
     throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'OpenRouter research response was not valid JSON', 502)
   }
@@ -98,10 +102,21 @@ export class OpenRouterResearchSynthesisModel implements ResearchSynthesisModel 
       { role: 'system', content: prompt.system },
       { role: 'user', content: prompt.user }
     ]
-    const completionOptions: ChatOptions = { maxTokens: MAX_MODEL_TOKENS, temperature: 0, reasoning: { enabled: false, exclude: true }, ...(options?.signal ? { signal: options.signal } : {}) }
+    const responseFormat: ChatOptions['responseFormat'] = { type: 'json_schema', json_schema: { name: 'research_findings', strict: true, schema: {
+      type: 'object', additionalProperties: false, required: ['findings'], properties: { findings: { type: 'array', items: {
+        type: 'object', additionalProperties: false, required: ['category', 'destinationIndex', 'title', 'summary', 'sourceIndexes'],
+        properties: { category: { type: 'string', enum: brief.researchTypes }, destinationIndex: { type: 'integer' },
+          title: { type: 'string' }, summary: { type: 'string' }, sourceIndexes: { type: 'array', items: { type: 'integer' } } }
+      } } }
+    } } }
+    const completionOptions: ChatOptions = { responseFormat, maxTokens: MAX_MODEL_TOKENS, timeoutMs: 60_000, temperature: 0, reasoning: { enabled: false, exclude: true }, ...(options?.signal ? { signal: options.signal } : {}) }
     const completion = await this.client.complete(messages, this.model, completionOptions)
     if (options?.signal?.aborted) throw new AppError('PROVIDER_CANCELLED', 'Research synthesis was cancelled', 502, { provider: 'openrouter' })
     const content = contentFromCompletion(completion)
-    return parseDrafts(parseJsonContent(content), brief, sources.length)
+    if (completion.finishReason === 'length' || completion.finishReason === 'content_filter') throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'Research completion was incomplete', 502)
+    const parsed = parseJsonContent(content)
+    const drafts = typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) && Object.keys(parsed).join(',') === 'findings'
+      ? (parsed as { findings: unknown }).findings : parsed
+    return parseDrafts(drafts, brief, sources.length)
   }
 }

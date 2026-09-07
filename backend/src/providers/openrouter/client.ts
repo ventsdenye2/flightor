@@ -73,6 +73,7 @@ export class OpenRouterClient {
     const body = {
       model,
       messages,
+      ...(options?.responseFormat ? { response_format: options.responseFormat, provider: { require_parameters: true } } : {}),
       ...(options?.maxTokens !== undefined ? { max_tokens: options.maxTokens } : {}),
       ...(options?.temperature !== undefined ? { temperature: options.temperature } : {}),
       ...(options?.tools !== undefined ? { tools: options.tools } : {}),
@@ -92,7 +93,7 @@ export class OpenRouterClient {
         },
         body: JSON.stringify(body)
       },
-      { provider: 'openrouter', timeoutMs: 35_000, ...(options?.signal ? { signal: options.signal } : {}) }
+      { provider: 'openrouter', timeoutMs: Math.min(90_000, Math.max(1_000, options?.timeoutMs ?? 35_000)), ...(options?.signal ? { signal: options.signal } : {}) }
     )
   }
 

@@ -1,6 +1,7 @@
 import type { AgentModelClient, ChatMessage, ChatOptions, FunctionToolCall } from './model.js'
 import type { ToolExecutionContext, ToolExecutionOutcome } from './registry.js'
 import { ToolRegistry } from './registry.js'
+import { AppError } from '../../lib/errors.js'
 
 export interface AgentTrace {
   requestId: string
@@ -28,9 +29,11 @@ export interface AgentRuntimeOptions {
   modelOptions?: Omit<ChatOptions, 'tools' | 'toolChoice' | 'signal'>
   fallbackReply?: string
   trace?: (trace: AgentTrace) => void
+  modelTrace?: (trace: { requestId: string; step: number; durationMs: number; finishReason?: string; errorCode?: string }) => void
 }
 
 export interface AgentRunInput {
+  requiredSuccessfulTool?: string
   messages: ChatMessage[]
   context: ToolExecutionContext
   signal?: AbortSignal
@@ -107,9 +110,11 @@ export class AgentRuntime {
     let costUnits = 0
     let toolSteps = 0
     let executedToolCalls = 0
+    let completionRepairs = 0
     const executionContext: ToolExecutionContext = {
       ...input.context,
       resolvedLocationKeys: new Set<string>(),
+      resolvedLocations: new Map(),
       isGenerationCurrent: () => !stale(input)
     }
 
@@ -130,14 +135,19 @@ export class AgentRuntime {
       if (stale(input)) return fallback('stale_generation')
 
       let completion
+      const modelStarted = Date.now()
       try {
         completion = await this.modelClient.complete(messages, this.options.model, {
           ...this.modelOptions,
           tools: this.registry.definitions(),
-          toolChoice: 'auto',
+          toolChoice: completionRepairs > 0 && !traces.some(trace => trace.toolName === input.requiredSuccessfulTool && trace.toolResultStatus === 'success') ? 'required' : 'auto',
           signal: controller.signal
         })
-      } catch {
+        this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
+          ...(completion.finishReason ? { finishReason: completion.finishReason } : {}) })
+      } catch (error) {
+        this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
+          errorCode: error instanceof AppError ? error.code : 'MODEL_FAILURE' })
         return fallback(controller.signal.aborted ? (turnTimedOut ? 'turn_timeout' : 'cancelled') : 'model_failure')
       }
 
@@ -148,6 +158,12 @@ export class AgentRuntime {
       messages.push(completion.message)
       const calls = toolCalls(completion.message)
       if (calls.length === 0) {
+        if (input.requiredSuccessfulTool && !traces.some(trace => trace.toolName === input.requiredSuccessfulTool && trace.toolResultStatus === 'success')) {
+          if (completionRepairs >= 1) return fallback('model_failure')
+          completionRepairs += 1
+          messages.push({ role: 'system', content: `The requested action has not been completed. Execute the prerequisite tools and ${input.requiredSuccessfulTool} before replying. A plan or promise is not a saved result. Use the existing tool budget; never invent facts.` })
+          continue
+        }
         const reply = completion.message.content?.trim()
         return reply
           ? { reply, messages, toolSteps, toolCalls: executedToolCalls, costUnits, fallback: false, stopReason: 'completed', traces }

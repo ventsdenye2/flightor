@@ -6,6 +6,8 @@ import {
   type DestinationProfile,
   type DestinationRegion
 } from './catalog.js'
+import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
+import { cityGroupingCode, representativeAirportCode } from '../locations/identity.js'
 import {
   destinationCandidateSchema,
   destinationDiscoveryInputSchema,
@@ -46,19 +48,24 @@ function normalizedIata(value: string): string {
   return value.trim().toUpperCase()
 }
 
-function profileCanonicalIata(profile: DestinationProfile): string {
-  return profile.canonicalIata ?? profile.iata
+function profileCanonicalCode(profile: DestinationProfile, catalog: readonly DestinationProfile[]): string {
+  const representative = representativeAirportCode(profile.iata, CURATED_LOCATION_IDENTITY_POLICY)
+  return catalog.some(candidate => normalizedIata(candidate.iata) === representative)
+    ? representative
+    : normalizedIata(profile.iata)
 }
 
-function canonicalIata(value: string, catalog: readonly DestinationProfile[] = DESTINATION_PROFILES): string | undefined {
+function canonicalCatalogCode(value: string, catalog: readonly DestinationProfile[] = DESTINATION_PROFILES): string | undefined {
   const normalized = normalizedIata(value)
-  const profile = catalog.find(candidate => candidate.iata === normalized || candidate.canonicalIata === normalized)
-  return profile ? profileCanonicalIata(profile) : undefined
+  const profile = catalog.find(candidate => normalizedIata(candidate.iata) === normalized)
+    ?? catalog.find(candidate => profileCanonicalCode(candidate, catalog) === normalized)
+  return profile ? profileCanonicalCode(profile, catalog) : undefined
 }
 
 function profileForIata(value: string, catalog: readonly DestinationProfile[] = DESTINATION_PROFILES): DestinationProfile | undefined {
   const normalized = normalizedIata(value)
-  return catalog.find(profile => profile.iata === normalized || profileCanonicalIata(profile) === normalized)
+  return catalog.find(profile => normalizedIata(profile.iata) === normalized)
+    ?? catalog.find(profile => profileCanonicalCode(profile, catalog) === normalized)
 }
 
 function locationFor(profile: DestinationProfile): LocationRef {
@@ -71,7 +78,10 @@ function locationFor(profile: DestinationProfile): LocationRef {
     name: profile.cityEn,
     countryCode: profile.countryCode,
     iata: profile.iata,
-    cityCode: profileCanonicalIata(profile),
+    // City grouping is not the same thing as the representative airport used
+    // for catalog de-duplication. Persist the actual city group so downstream
+    // consumers never need to infer TYO/OSA from an airport alias.
+    cityCode: cityGroupingCode(profile.iata, CURATED_LOCATION_IDENTITY_POLICY),
     latitude: profile.lat,
     longitude: profile.lon
   })
@@ -109,8 +119,8 @@ function directRouteCode(route: AirportRoute): string | undefined {
 }
 
 function routeMatchesProfile(routeCode: string, profile: DestinationProfile, catalog: readonly DestinationProfile[]): boolean {
-  const routeCanonical = canonicalIata(routeCode, catalog) ?? routeCode
-  return routeCode === normalizedIata(profile.iata) || routeCanonical === profileCanonicalIata(profile)
+  const routeCanonical = canonicalCatalogCode(routeCode, catalog) ?? routeCode
+  return routeCode === normalizedIata(profile.iata) || routeCanonical === profileCanonicalCode(profile, catalog)
 }
 
 function interestMatches(profile: DestinationProfile, interests: readonly DestinationInterest[]): DestinationInterest[] {
@@ -129,7 +139,7 @@ function requestedProfileMap(values: readonly string[], catalog: readonly Destin
   for (const raw of values) {
     const profile = profileForIata(raw, catalog)
     if (!profile) continue
-    const key = profileCanonicalIata(profile)
+    const key = profileCanonicalCode(profile, catalog)
     if (!result.has(key)) result.set(key, profile)
   }
   return result
@@ -185,7 +195,7 @@ function reasonsFor(
 }
 
 function unknownInputWarnings(input: DestinationDiscoveryInput, catalog: readonly DestinationProfile[]): string[] {
-  const known = new Set(catalog.flatMap(profile => [profile.iata, profileCanonicalIata(profile)]))
+  const known = new Set(catalog.flatMap(profile => [normalizedIata(profile.iata), profileCanonicalCode(profile, catalog)]))
   const values = [
     ...input.requiredIatas.map(value => ['required', value] as const),
     ...input.preferredIatas.map(value => ['preferred', value] as const),
@@ -203,7 +213,7 @@ function selectedProfiles(
   const excluded = new Set<string>()
   for (const raw of input.excludedIatas) {
     const profile = profileForIata(raw, catalog)
-    if (profile) excluded.add(profileCanonicalIata(profile))
+    if (profile) excluded.add(profileCanonicalCode(profile, catalog))
   }
 
   const requiredMap = requestedProfileMap(input.requiredIatas, catalog)
@@ -215,7 +225,7 @@ function selectedProfiles(
   // Explicit required intent is retained even when a region/interest filter
   // would otherwise omit it.  Exclusion/avoid is always stronger.
   for (const profile of requiredMap.values()) {
-    const key = profileCanonicalIata(profile)
+    const key = profileCanonicalCode(profile, catalog)
     if (excluded.has(key)) {
       warnings.push(`required_destination_excluded:${key}`)
       continue
@@ -224,7 +234,7 @@ function selectedProfiles(
   }
 
   for (const profile of catalog) {
-    const key = profileCanonicalIata(profile)
+    const key = profileCanonicalCode(profile, catalog)
     if (excluded.has(key)) continue
     if (regionSet.size > 0 && !regionSet.has(profile.region)) continue
     const existing = candidateByCity.get(key)
@@ -234,7 +244,7 @@ function selectedProfiles(
     // the reviewed directory and never emit duplicate same-city aliases.
     const preferred = preferredMap.get(key)
     if (preferred !== undefined) candidateByCity.set(key, preferred)
-    else if (!profile.canonicalIata) candidateByCity.set(key, profile)
+    else if (profile.iata === key) candidateByCity.set(key, profile)
   }
 
   // If a required city was not part of an explicit region filter, it remains
@@ -280,7 +290,7 @@ async function directCodesFor(
       const code = directRouteCode(route)
       if (!code) continue
       const profile = catalog.find(candidate => routeMatchesProfile(code, candidate, catalog))
-      if (profile) directCodes.add(profileCanonicalIata(profile))
+      if (profile) directCodes.add(profileCanonicalCode(profile, catalog))
     }
     if (directCodes.size === 0) warnings.push(`${ACCESSIBILITY_WARNING}:no_matching_route`)
     return { directCodes, warnings }

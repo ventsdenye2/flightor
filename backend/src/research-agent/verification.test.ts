@@ -27,6 +27,8 @@ describe('deterministic research verification', () => {
   it('uses conservative host authority and stable registrable roots', () => {
     expect(classifyResearchSourceAuthority('https://www.city.gov.jp/events')).toBe('government_tourism')
     expect(classifyResearchSourceAuthority('https://official.example.com/events')).toBe('unknown')
+    expect(classifyResearchSourceAuthority('https://www.gotokyo.org/en/')).toBe('government_tourism')
+    expect(classifyResearchSourceAuthority('https://gotokyo.org.example.com/en/')).toBe('unknown')
     expect(registrableResearchHostname('https://a.example.co.uk/a')).toBe('example.co.uk')
     expect(registrableResearchHostname('https://b.example.co.uk/b')).toBe('example.co.uk')
   })

@@ -10,6 +10,7 @@ import type { DestinationDiscoveryService } from '../../destinations/types.js'
 import type { TripRoutePlanner } from '../../trip-planning/types.js'
 import type { TravelGuideBuilder } from '../../travel-guides/artifact.js'
 import type { ChatToolDefinition, FunctionToolCall } from './model.js'
+import type { LocationRef } from '../../aviation/types.js'
 
 export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
 export type ToolSideEffect = 'none' | 'state'
@@ -34,6 +35,7 @@ export interface ToolExecutionContext {
   travelGuideBuilder?: TravelGuideBuilder
   /** Runtime-owned ledger; model arguments can never add entries directly. */
   resolvedLocationKeys?: Set<string>
+  resolvedLocations?: Map<string, LocationRef>
   isGenerationCurrent?: () => boolean
 }
 
@@ -79,6 +81,7 @@ function asSafeMessage(value: unknown): string {
     if (value.code === 'TRIP_CONTEXT_VERSION_CONFLICT') return 'Trip context version conflict'
     if (value.code === 'USER_MEMORY_VERSION_CONFLICT') return 'User Memory version conflict'
     if (value.code === 'USER_MEMORY_DISABLED') return 'User Memory is disabled'
+    if (value.code === 'LOCATION_NOT_RESOLVED') return 'Location prerequisite failed. Call resolve_location in THIS turn before retrying. For flight tools resolve BOTH origin and destination with types=["airport"] and copy both exact returned objects; resolving only one is insufficient. For research pass the exact returned location id. Persisted trip data alone does not satisfy this guard.'
   }
   return 'Tool execution failed'
 }

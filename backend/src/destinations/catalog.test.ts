@@ -8,7 +8,7 @@ import {
 describe('destination catalog', () => {
   it('contains Japan airports and existing Europe/visa-free candidates', () => {
     expect(DESTINATION_PROFILES.some(profile => profile.iata === 'NRT' && profile.region === 'japan')).toBe(true)
-    expect(DESTINATION_PROFILES.some(profile => profile.iata === 'HND' && profile.canonicalIata === 'NRT')).toBe(true)
+    expect(DESTINATION_PROFILES.some(profile => profile.iata === 'HND')).toBe(true)
     expect(DESTINATION_PROFILES.some(profile => profile.iata === 'KIX' && profile.region === 'japan')).toBe(true)
     expect(DESTINATION_PROFILES.some(profile => profile.iata === 'CDG' && profile.region === 'schengen')).toBe(true)
     expect(DESTINATION_PROFILES.some(profile => profile.iata === 'BKK' && profile.region === 'visa_free')).toBe(true)

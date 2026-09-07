@@ -26,6 +26,26 @@ status: the tool is implemented and tested, but is intentionally absent from
 the public conversation Planner registry and may run only inside the explicit
 route-generation composition.
 
+## Agentic goal controls — architecture migration
+
+The current tool registry remains available while the Agentic completion
+protocol is implemented. These controls are **Planned** and must not be treated
+as production capabilities until their PostgreSQL repository, runtime wiring,
+domain verifiers and contract tests are complete:
+
+| Tool | Status | Input / output | Authority and behavior |
+| --- | --- | --- | --- |
+| `declare_goal` | Planned | Typed goal kind plus bounded user-intent parameters → durable goal/run reference | The Planner interprets an explicit user request; owner, Trip, Conversation, current message, context version and idempotency binding come from the server. It does not prescribe a tool sequence. |
+| `get_active_goal` | Planned | No model-supplied owner/Trip → current durable goal, run status and compact working set | Allows cross-turn/process resume without reconstructing execution state from conversation prose. |
+| `finish_goal` | Planned | Optional server-resolved result selector → `pending|satisfied|partial|failed` plus missing capabilities and verified Artifact refs | A kind-specific domain verifier reads persisted owner/run/version/lineage state. Model text, tool names and call counts are not completion evidence. |
+| `cancel_goal` | Planned | Current goal plus explicit user cancellation → cancelled status | Cancellation is persistent and cannot be converted into success by a late tool result. |
+
+The Planner remains free to choose, skip, repeat and reorder the existing
+domain tools. The goal protocol validates the result; it is not an end-to-end
+workflow. During the current functional milestone, configured fare and
+research calls are not blocked by a product cost budget, although normal
+timeouts, cancellation, rate limits and duplicate-call guards still apply.
+
 ## Phase 1 vertical slice
 
 ### `get_trip_context`
@@ -221,4 +241,6 @@ stale enough to reclaim.
 ## Phase 7–9 consumers
 
 Planner now exposes `get_trip_artifacts` (at most 20 current-trip references) and `read_artifact` (bounded, explicitly truncated JSON excerpts) to answer about persisted routes, research and guides across turns. Reads remain user- and trip-scoped. Saved prices are not fresh confirmation. Destination summaries include the exact canonical location for safe tool handoff; Research still requires a location resolved within the active turn. Neither read tool triggers final route generation.
+
+`research_destination.destination` accepts the exact resolved location ID string; the server retrieves the complete canonical object from its per-turn ledger. Full-object callers remain compatible, but their descriptive fields never override a ledger record. Unknown IDs fail with a recoverable resolution prerequisite. This avoids making model-copied coordinates part of the authority check while preserving the same-turn provider requirement.
 Route, research, guide and destination Artifacts now have client renderers. Cloud workspace restoration retains Artifact references and generation runs. Discovery runs constrained research through a dedicated Worker job and requires human publication; it adds no autonomous publish tool to the Planner registry. See [ADR 0008](./adr/0008-route-discovery-and-cloud-workspaces.md).

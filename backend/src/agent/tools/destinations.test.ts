@@ -114,7 +114,9 @@ describe('destination Agent tools', () => {
     const wrong = await context.artifacts.create({
       tripId: 'trip-1', type: 'route_set', schemaVersion: 1, payload: {}, verification: {}
     })
-    await expect(planTripRouteTool.execute(planTripRouteInputSchema.parse({ candidateArtifactId: wrong.id }), context, new AbortController().signal)).rejects.toThrow('supported destination set')
+    await expect(planTripRouteTool.execute(
+      planTripRouteInputSchema.parse({ candidateArtifactId: wrong.id }), context, new AbortController().signal
+    )).rejects.toMatchObject({ code: 'ARTIFACT_TYPE_MISMATCH' })
   })
 
   it('does not persist when the generation is cancelled before the service call', async () => {

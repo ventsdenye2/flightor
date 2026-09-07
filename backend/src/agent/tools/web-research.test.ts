@@ -5,6 +5,7 @@ import { InMemoryTripContextRepository } from '../../trips/repository.js'
 import { emptyTripContext } from '../../trips/types.js'
 import { MockResearchAgent } from '../../research-agent/mock.js'
 import { researchDestinationTool, webResearchTool } from './research.js'
+import { recordResolvedLocations } from './resolved-locations.js'
 
 const destination = { id: 'city-tyo', type: 'city' as const, name: 'Tokyo', countryCode: 'JP', cityCode: 'TYO' }
 const brief = {
@@ -33,6 +34,19 @@ function context(research: { research: MockResearchAgent['research'] }) {
 }
 
 describe('research Agent tools', () => {
+  it('uses provider facts for a resolved ID and rejects unknown identities before search', async () => {
+    const delegate = new MockResearchAgent([finding])
+    const research = vi.fn(delegate.research.bind(delegate))
+    const executionContext = context({ research }) as any
+    recordResolvedLocations(executionContext, [destination])
+    const input = { destination: destination.id, questions: ['Tokyo museums'], researchTypes: ['activity' as const], maxResults: 5 }
+    await researchDestinationTool.execute(input, executionContext, new AbortController().signal)
+    expect(research.mock.calls[0]?.[0].destinations).toEqual([destination])
+    await researchDestinationTool.execute({ ...input, destination: { ...destination, name: 'Changed by model', countryCode: 'US' } }, executionContext, new AbortController().signal)
+    expect(research.mock.calls[1]?.[0].destinations).toEqual([destination])
+    await expect(researchDestinationTool.execute({ ...input, destination: 'unknown-id' }, executionContext, new AbortController().signal)).rejects.toMatchObject({ code: 'LOCATION_NOT_RESOLVED' })
+    expect(research).toHaveBeenCalledTimes(2)
+  })
   it('persists a v2 artifact and returns only a compact result', async () => {
     const delegate = new MockResearchAgent([finding])
     const research = vi.fn(delegate.research.bind(delegate))

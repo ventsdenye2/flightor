@@ -16,6 +16,13 @@ describe('withQuery', () => {
 })
 
 describe('fetchJson cancellation', () => {
+  it('preserves timeout classification while the response body is still loading', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => ({
+      ok: true,
+      json: () => new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new Error('body aborted')), { once: true }))
+    })))
+    await expect(fetchJson('https://example.com', {}, { provider: 'example', timeoutMs: 10 })).rejects.toMatchObject({ code: 'PROVIDER_TIMEOUT' })
+  })
   it('classifies caller aborts as cancelled and removes the caller listener after rejection', async () => {
     const caller = new AbortController()
     let requestSignal: AbortSignal | undefined

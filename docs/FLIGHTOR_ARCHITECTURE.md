@@ -640,6 +640,49 @@ A high-level tool such as `search_connection_flights` may internally call domain
 
 This keeps execution deterministic and testable.
 
+### Agentic orchestration and completion
+
+The Planner Agent is the orchestration layer. FlightOR must not replace its
+planning loop with a fixed end-to-end application workflow for an ordinary
+conversation request. The Agent may choose, skip, repeat and reorder composable
+tools as the request and intermediate results require, and it may re-plan after
+a partial result or recoverable failure.
+
+Domain tools may encapsulate one cohesive capability, but a tool must not call
+another Agent-facing tool or a nested Agent runtime. Shared domain services own
+facts, validation and persistence; the Agent owns the changing plan.
+
+For requests that require a durable result, use a typed goal and a generic
+server-verified completion operation. The completion verifier reads
+owner-scoped persisted Artifacts, lineage, the active run and Trip Context
+version and returns `pending`, `satisfied`, `partial` or `failed`. Model text,
+tool names, prompt phrases and call counts are never completion evidence.
+Ordinary conversation without a durable goal may still finish directly with a
+text response.
+
+Goals persist across turns and process restarts. A goal records its accepted
+Trip Context version, authorization source, current status and result Artifact
+references so the Agent can resume or re-plan after a timeout without deriving
+business state from old prose. Partial Artifacts remain saved and auditable;
+they can inform another plan but cannot satisfy a complete goal.
+
+The runtime maintains an owner/trip/run-scoped working set for Artifacts and
+canonical location resolutions. A tool may use a validated latest-compatible
+result from that working set or an explicit compatible reference when the Agent
+needs to choose between alternatives. In both cases, the server establishes
+authority and lineage; the model does not establish facts by copying an object
+or an Artifact ID.
+
+For the current functional milestone, configured fare and research tools may be
+used autonomously when relevant to an accepted goal. Cost optimization is not a
+completion gate, although validation, timeout, cancellation, rate-limit and
+duplicate-call protections still apply.
+
+Final route generation still requires explicit authorization. Either the
+Generate Route product action or an unambiguous conversational instruction is
+valid authorization; discussion, readiness and Agent inference are not. The
+durable goal records the authorization source.
+
 ---
 
 ## 8.4 Planner Agent and delegated Research Agent

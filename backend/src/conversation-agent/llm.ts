@@ -3,7 +3,7 @@ import type {
   ChatOptions,
   OpenRouterClient
 } from '../providers/openrouter/client.js'
-import { DESTINATION_PROFILES, type DestinationRecommendation } from '../destinations/catalog.js'
+import { DESTINATION_PROFILES, getCanonicalDestinationIata, type DestinationRecommendation } from '../destinations/catalog.js'
 import type { RoutePick } from '../route-plans/engine.js'
 import type { TripState, ConversationMessage } from './schema.js'
 import type { BilingualText } from './types.js'
@@ -335,7 +335,7 @@ function replyAllowedIatas(input: ReplySynthesisInput): Set<string> {
 
 function canonicalForReply(value: string): string {
   const profile = DESTINATION_PROFILES.find(item => item.iata === value)
-  return profile?.canonicalIata ?? value
+  return profile ? getCanonicalDestinationIata(profile.iata) ?? value : value
 }
 
 function containsUnverifiedCatalogCity(text: string, allowedIatas: Set<string>): boolean {

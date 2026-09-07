@@ -35,6 +35,8 @@ export interface ChatReasoning {
 }
 
 export interface ChatOptions {
+  responseFormat?: { type: 'json_schema'; json_schema: { name: string; strict: boolean; schema: Record<string, unknown> } }
+  timeoutMs?: number
   maxTokens?: number
   temperature?: number
   reasoning?: ChatReasoning

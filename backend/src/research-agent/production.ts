@@ -129,7 +129,7 @@ function normalizeSource(value: unknown, destinationIndex: number): NormalizedSo
   return checked.success ? { ...checked.data, destinationIndex } : undefined
 }
 
-function queryInputs(brief: ResearchBrief, destinationIndex: number, preferences: readonly string[]): ResearchSearchInput {
+function queryInputs(brief: ResearchBrief, destinationIndex: number, preferences: readonly string[], questionIndex = 0): ResearchSearchInput {
   const destination = brief.destinations[destinationIndex]
   if (!destination) throw new AppError('INVALID_RESEARCH_BRIEF', 'Research destination is missing', 400)
   const interests = [...brief.interests, ...preferences].slice(0, 32)
@@ -137,7 +137,7 @@ function queryInputs(brief: ResearchBrief, destinationIndex: number, preferences
     destination,
     ...(brief.travelWindow ? { travelWindow: brief.travelWindow } : {}),
     interests,
-    questions: brief.questions.slice(0, 8),
+    questions: [brief.questions[questionIndex]!],
     researchTypes: brief.researchTypes,
     maxResults: Math.min(20, Math.max(10, brief.maxResults ?? DEFAULT_MAX_RESULTS))
   })
@@ -184,7 +184,9 @@ function buildFallbackFindings(
     const destination = brief.destinations[source.destinationIndex]
     if (!destination) continue
     const category: ResearchDraftFinding['category'] = brief.researchTypes[0] ?? 'activity'
-    const categoryVerification = verifyResearchFinding(category, [source], { checkedAt })
+    // Raw snippets have not been checked for relevance or travel-window fit.
+    // Source authority alone must not promote an old event into an itinerary.
+    const categoryVerification = { ...verifyResearchFinding(category, [source], { checkedAt }), status: 'unverified' as const, confidence: 0.1 }
     const finding = {
       id: findingId(category, destination, source.title, [source]),
       category,
@@ -193,7 +195,7 @@ function buildFallbackFindings(
       summary: source.snippet,
       sources: [sourceForFinding(source)],
       verification: categoryVerification,
-      warnings: warningForVerification(category, categoryVerification.status)
+      warnings: [...warningForVerification(category, categoryVerification.status), 'raw_source_requires_synthesis']
     }
     const parsed = researchFindingSchema.safeParse(finding)
     if (parsed.success) findings.push(parsed.data)
@@ -274,17 +276,34 @@ export class ProductionResearchAgent implements ResearchAgent {
     const sources: NormalizedSource[] = []
     const seenUrls = new Set<string>()
     const preferences = context.preferenceSummary ?? []
-    const callCount = Math.min(this.searchCallLimit, brief.destinations.length)
-    if (callCount < brief.destinations.length) {
-      warnings.push(`research_destinations_skipped:${brief.destinations.length - callCount}`)
+    // Cover destinations first, then a second distinct question if budget allows.
+    // Combining museums, food and exact dates into one query proved too narrow.
+    const searches: Array<{ destinationIndex: number; questionIndex: number }> = []
+    for (let questionIndex = 0; questionIndex < Math.min(2, brief.questions.length); questionIndex += 1) {
+      for (let destinationIndex = 0; destinationIndex < brief.destinations.length && searches.length < this.searchCallLimit; destinationIndex += 1) {
+        searches.push({ destinationIndex, questionIndex })
+      }
     }
+    const covered = new Set(searches.map(search => search.destinationIndex)).size
+    const callCount = searches.length
+    if (covered < brief.destinations.length) warnings.push(`research_destinations_skipped:${brief.destinations.length - covered}`)
+    if (callCount < brief.destinations.length * brief.questions.length) warnings.push('research_questions_partially_sampled')
 
-    for (let destinationIndex = 0; destinationIndex < callCount; destinationIndex += 1) {
+    // At most two read-only provider requests in flight; consume their output in
+    // planned order so source indexing remains deterministic for synthesis.
+    for (let offset = 0; offset < searches.length; offset += 2) {
       abortIfNeeded(context.signal)
-      const searchInput = queryInputs(brief, destinationIndex, preferences)
+      const batch = searches.slice(offset, offset + 2)
+      const outcomes = await Promise.allSettled(batch.map(search => this.searchProvider.search(
+        queryInputs(brief, search.destinationIndex, preferences, search.questionIndex),
+        { ...(context.signal ? { signal: context.signal } : {}) }
+      )))
+      for (let index = 0; index < batch.length; index += 1) {
+      const { destinationIndex } = batch[index]!
       try {
-        const rawResult = await this.searchProvider.search(searchInput, { ...(context.signal ? { signal: context.signal } : {}) })
-        const result = researchSearchResultSchema.parse(rawResult)
+        const outcome = outcomes[index]!
+        if (outcome.status === 'rejected') throw outcome.reason
+        const result = researchSearchResultSchema.parse(outcome.value)
         abortIfNeeded(context.signal)
         const candidates = Array.isArray(result.candidates) ? result.candidates : []
         for (const candidate of candidates) {
@@ -300,6 +319,7 @@ export class ProductionResearchAgent implements ResearchAgent {
       } catch (error) {
         if (context.signal?.aborted) throw context.signal.reason ?? error
         warnings.push(boundedWarning(`research_provider_failed:${this.searchProvider.name}:destination_${destinationIndex}`))
+      }
       }
     }
 

@@ -1,5 +1,6 @@
 import { type LocationRef, type VerificationRecord } from '../aviation/types.js'
-import { getCanonicalDestinationIata } from '../destinations/catalog.js'
+import { cityGroupingIdentity } from '../locations/identity.js'
+import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
 import {
   destinationCandidateSchema,
   type DestinationCandidate as TypedDestinationCandidate
@@ -26,14 +27,8 @@ const CATALOG_VERIFICATION_RANK = {
 
 type Candidate = TypedDestinationCandidate
 
-function normalizedCode(value: string): string {
-  return value.trim().toUpperCase()
-}
-
 function locationIdentity(value: LocationRef): string {
-  const code = value.iata ?? value.cityCode
-  if (code) return getCanonicalDestinationIata(normalizedCode(code)) ?? normalizedCode(code)
-  return value.id
+  return cityGroupingIdentity(value, CURATED_LOCATION_IDENTITY_POLICY)
 }
 
 function sameLocation(left: LocationRef, right: LocationRef): boolean {

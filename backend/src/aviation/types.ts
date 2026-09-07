@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { locationsOverlap } from '../locations/identity.js'
+import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
 
 export const verificationRecordSchema = z.object({
   status: z.enum(['verified', 'partially_verified', 'stale', 'unverified']),
@@ -33,13 +35,7 @@ export type LocationRef = z.infer<typeof locationRefSchema>
  * while keeping airport-to-airport graph identity exact.
  */
 export function locationRefsOverlap(left: LocationRef, right: LocationRef): boolean {
-  if (left.id === right.id) return true
-  if (left.type === 'airport' && right.type === 'airport') {
-    return left.iata !== undefined && right.iata !== undefined && left.iata === right.iata
-  }
-  const leftCityCode = left.type === 'city' ? (left.cityCode ?? left.iata) : left.cityCode
-  const rightCityCode = right.type === 'city' ? (right.cityCode ?? right.iata) : right.cityCode
-  return leftCityCode !== undefined && rightCityCode !== undefined && leftCityCode === rightCityCode
+  return locationsOverlap(left, right, CURATED_LOCATION_IDENTITY_POLICY)
 }
 
 export function locationRefKey(value: LocationRef): string {

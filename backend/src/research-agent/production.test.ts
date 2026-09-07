@@ -21,6 +21,16 @@ function result(url: string, title = 'Result'): ResearchSearchResult {
 }
 
 describe('ProductionResearchAgent', () => {
+  it('separates topic questions while preserving a bounded deterministic evidence pool', async () => {
+    const provider: ResearchSearchProvider = { name: 'mock', search: vi.fn(async input => result(`https://example.com/${input.questions[0]}`)) }
+    const agent = new ProductionResearchAgent({ searchProvider: provider, maxSearchCalls: 2 })
+    const artifact = await agent.research({ ...brief, questions: ['museums', 'food', 'parks'] }, { requestId: 'r' })
+    expect(provider.search).toHaveBeenCalledTimes(2)
+    expect((provider.search as any).mock.calls.map((call: any[]) => call[0].questions)).toEqual([['museums'], ['food']])
+    expect(artifact.queryCount).toBe(2)
+    expect(artifact.warnings).toContain('research_questions_partially_sampled')
+    expect(artifact.findings.map(finding => finding.sources[0]?.url)).toEqual(['https://example.com/museums', 'https://example.com/food'])
+  })
   it('collects an evidence pool for one result and respects an explicit empty synthesis', async () => {
     const provider: ResearchSearchProvider = { name: 'mock', search: vi.fn(async () => result('https://example.com/unrelated')) }
     const agent = new ProductionResearchAgent({ searchProvider: provider, synthesisModel: { synthesize: async () => [] } })
@@ -37,6 +47,15 @@ describe('ProductionResearchAgent', () => {
     expect(artifact.schemaVersion).toBe(2)
     expect(artifact.queryCount).toBe(1)
     expect(artifact.findings[0]).toMatchObject({ title: 'Result', summary: 'Exact provider snippet' })
+  })
+
+  it('does not promote an official raw snippet into an eligible itinerary finding', async () => {
+    const response = result('https://www.gotokyo.org/old-exhibition', '2024 exhibition')
+    response.candidates[0]!.authority = 'government_tourism'
+    const agent = new ProductionResearchAgent({ searchProvider: { name: 'mock', search: async () => response } })
+    const artifact = await agent.research(brief, { requestId: 'r' })
+    expect(artifact.findings[0]?.verification.status).toBe('unverified')
+    expect(artifact.findings[0]?.warnings).toContain('raw_source_requires_synthesis')
   })
 
   it('continues after partial provider failures and never invents all-failure findings', async () => {

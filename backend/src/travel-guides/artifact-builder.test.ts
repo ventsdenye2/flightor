@@ -54,6 +54,26 @@ function research(): ResearchArtifact {
 }
 
 describe('DeterministicTravelGuideBuilder', () => {
+  it('matches Tokyo city research to Narita routes without including Osaka', async () => {
+    const tripRoute = route()
+    const narita: LocationRef = { ...tokyo, id: 'catalog:NRT', type: 'airport', iata: 'NRT', cityCode: 'NRT' }
+    tripRoute.cities[0]!.location = narita
+    tripRoute.days = tripRoute.days.map(day => ({ ...day, city: narita }))
+    const source = research()
+    source.findings.push({ ...source.findings[0]!, id: 'osaka', destinations: [{ ...tokyo, id: 'city:OSA', cityCode: 'OSA', name: 'Osaka' }] })
+    const result = await new DeterministicTravelGuideBuilder().build({ routeArtifactId: 'route-1', route: tripRoute, researchArtifacts: [source] })
+    expect(result.days.flatMap(day => day.items.map(item => item.sourceFindingId))).toEqual(['finding-1'])
+  })
+  it('distributes eligible findings across all city days without duplication', async () => {
+    const source = research()
+    source.findings = Array.from({ length: 6 }, (_, index) => ({ ...source.findings[0]!, id: `finding-${index}` }))
+    const tripRoute = route()
+    tripRoute.cities[0]!.stayDays = 5
+    tripRoute.days = Array.from({ length: 5 }, (_, index) => ({ day: index + 1, city: tokyo, activityRefs: [] }))
+    const result = await new DeterministicTravelGuideBuilder().build({ routeArtifactId: 'route-1', route: tripRoute, researchArtifacts: [source] })
+    expect(result.days.map(day => day.items.length)).toEqual([2, 1, 1, 1, 1])
+    expect(new Set(result.days.flatMap(day => day.items.map(item => item.sourceFindingId))).size).toBe(6)
+  })
   it('composes only eligible source-backed findings and keeps artifact references', async () => {
     const result = await new DeterministicTravelGuideBuilder().build({
       routeArtifactId: 'route-1', route: route(), researchArtifacts: [research()]

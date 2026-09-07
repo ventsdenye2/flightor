@@ -53,7 +53,7 @@ function normalizeOrigin(value: string): CityMeta | undefined {
 }
 
 function canonicalForProfile(profile: DestinationProfile): string {
-  return profile.canonicalIata ?? profile.iata
+  return getCanonicalDestinationIata(profile.iata) ?? profile.iata
 }
 
 function profileToCity(profile: DestinationProfile): CityMeta {
@@ -206,7 +206,7 @@ function orderRegions(regions: readonly DestinationRegion[], origin: CityMeta): 
   const firstAnchor = new Map<DestinationRegion, number>()
   for (const region of regions) {
     const anchor = DESTINATION_PROFILES
-      .filter(profile => profile.region === region && !profile.canonicalIata)
+      .filter(profile => profile.region === region && canonicalForProfile(profile) === profile.iata)
       .map(profile => haversineKm(origin, profile))
       .sort((left, right) => left - right)[0]
     firstAnchor.set(region, anchor ?? Number.MAX_SAFE_INTEGER)

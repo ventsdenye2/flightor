@@ -29,7 +29,7 @@ Check `GET /health`. Log in, queue research for a canonical airport, inspect the
 
 ## Validation and limits
 
-Tonight's live-demo follow-up is tracked continuously in [DEMO_STATUS.md](./DEMO_STATUS.md). The real API/Worker now produces priced one-way routes using owner-scoped fare Artifacts even without a topology snapshot, restores the successful run from PostgreSQL, and answers saved-flight follow-up questions. The current gate is 68 backend suites / 325 tests, all database tests included, plus root tests and a real-mode WeChat build. Day-by-day guide and WeChat login/runtime acceptance remain separately tracked there. Older gates below are historical evidence.
+Tonight's live-demo follow-up is tracked continuously in [DEMO_STATUS.md](./DEMO_STATUS.md). The real API/Worker now produces priced one-way routes using owner-scoped fare Artifacts even without a topology snapshot, restores the successful run from PostgreSQL, and answers saved-flight follow-up questions. The current gate is 68 backend suites / 336 tests, all database tests included, plus root tests and a real-mode WeChat build. Day-by-day guide and WeChat login/runtime acceptance remain separately tracked there. Older gates below are historical evidence.
 
 Automated regression suites cover ownership, role isolation, optimistic conflicts, expiry, idempotency, saved-route provenance, cloud restoration and worker claims. Database suites use isolated schemas in a dedicated test database; set `TEST_DATABASE_URL` before `npm --prefix backend test`. Client checks run with `npm test`; build with `npm run build:weapp` and `npm run admin:build`.
 

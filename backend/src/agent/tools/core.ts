@@ -12,6 +12,8 @@ import { confirmFlightPriceTool, confirmRoutePriceTool } from './fare-confirmati
 import { researchDestinationTool, webResearchTool } from './research.js'
 import { buildTravelGuideTool } from './travel-guide.js'
 import { getTripArtifactsTool, readArtifactTool } from './artifact-reading.js'
+import { recordResolvedLocations } from './resolved-locations.js'
+import { AppError } from '../../lib/errors.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
@@ -98,7 +100,7 @@ function patchLocations(value: z.infer<typeof tripContextPatchSchema>): Location
 }
 
 function rememberLocations(context: { resolvedLocationKeys?: Set<string> }, values: readonly LocationRef[]): void {
-  for (const value of values) context.resolvedLocationKeys?.add(locationRefKey(value))
+  recordResolvedLocations(context, values)
 }
 
 function assertTrustedLocations(
@@ -111,7 +113,7 @@ function assertTrustedLocations(
     ...existing.map(locationRefKey)
   ])
   for (const value of values) {
-    if (!allowed.has(locationRefKey(value))) throw new Error('Location reference was not resolved by an authoritative provider')
+    if (!allowed.has(locationRefKey(value))) throw new AppError('LOCATION_NOT_RESOLVED', 'Location reference was not resolved by an authoritative provider')
   }
 }
 
@@ -195,7 +197,7 @@ const searchFlightsTool: AgentTool<
   z.infer<typeof searchFlightsOutputSchema>
 > = {
   name: 'search_flights',
-  description: 'Search current fare options for one canonical airport leg. Prices and flight facts must come from this tool, never model memory.',
+  description: 'Search current fare options for one canonical airport leg. First resolve BOTH origin and destination with types=["airport"] in THIS turn and copy both exact returned objects. Persisted trip locations do not satisfy this prerequisite. Prices and flight facts must come from this tool, never model memory.',
   inputSchema: searchFlightsInputSchema,
   outputSchema: searchFlightsOutputSchema,
   costClass: 'paid',

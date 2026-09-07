@@ -63,6 +63,9 @@ function looksPublicTourismHostname(hostname: string): boolean {
   return /(^|\.)(visit|tourism|japan\.travel|spain\.info|france\.fr)$/.test(hostname)
     || hostname.endsWith('.tourism')
     || hostname === 'japan.travel'
+    // Tokyo Metropolitan Government identifies this exact host as its tourism
+    // portal: https://www.english.metro.tokyo.lg.jp/w/029-101-004128
+    || hostname === 'gotokyo.org'
     || hostname.endsWith('.visit')
 }
 

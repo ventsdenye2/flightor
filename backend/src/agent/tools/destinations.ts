@@ -1,23 +1,21 @@
 import { z } from 'zod'
-import { v7 as uuidv7 } from 'uuid'
-import { locationRefKey, locationRefSchema, type LocationRef } from '../../aviation/types.js'
+import { locationRefSchema } from '../../aviation/types.js'
 import {
   destinationCandidateSchema,
-  destinationDiscoveryInputSchema,
   destinationDiscoveryResultSchema,
   destinationInterestSchema,
   destinationRegionSchema,
-  destinationSetPayloadSchema,
-  type DestinationCandidate,
-  type DestinationDiscoveryInput
+  type DestinationCandidate
 } from '../../destinations/types.js'
 import { resolveDestinationMentions } from '../../destinations/catalog.js'
+import { destinationInputForTrip, destinationInterests } from '../../destinations/trip-input.js'
 import {
-  tripRoutePlanPayloadSchema,
   tripRoutePlanResultSchema
 } from '../../trip-planning/types.js'
-import type { ArtifactRecord } from '../../artifacts/repository.js'
+import { discoverTripDestinations, planTripDays } from '../../trip-planning/workspace.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
+import { recordResolvedLocations } from './resolved-locations.js'
+import { workspaceScope } from './workspace-scope.js'
 
 const artifactReferenceSchema = z.object({
   id: z.string().uuid(),
@@ -100,54 +98,8 @@ function uniqueStrings(values: readonly string[]): string[] {
   return [...new Set(values.filter(value => value.length > 0))]
 }
 
-function locationCode(location: LocationRef): string | undefined {
-  const code = location.iata ?? location.cityCode
-  return code?.trim().toUpperCase()
-}
-
-function codesFromLocations(values: readonly LocationRef[]): string[] {
-  return uniqueStrings(values.map(locationCode).filter((value): value is string => value !== undefined))
-}
-
-function visitLocations(context: Awaited<ReturnType<ToolExecutionContext['trips']['get']>>): LocationRef[] {
-  if (!context) return []
-  return context.locationRoleOverrides.filter(item => item.role === 'visit').map(item => item.location)
-}
-
-function avoidLocations(context: Awaited<ReturnType<ToolExecutionContext['trips']['get']>>): LocationRef[] {
-  if (!context) return []
-  return context.locationRoleOverrides.filter(item => item.role === 'avoid').map(item => item.location)
-}
-
-function interestsFromTrip(values: readonly string[]): Array<z.infer<typeof destinationInterestSchema>> {
-  return uniqueStrings(values)
-    .map(value => destinationInterestSchema.safeParse(value))
-    .filter((result): result is { success: true; data: z.infer<typeof destinationInterestSchema> } => result.success)
-    .map(result => result.data)
-}
-
 function assertCurrent(context: ToolExecutionContext, signal: AbortSignal): void {
   if (signal.aborted || context.isGenerationCurrent?.() === false) throw new Error('Destination operation was cancelled')
-}
-
-function discoveryInput(
-  context: Awaited<ReturnType<ToolExecutionContext['trips']['get']>>,
-  filter: { regions?: readonly z.infer<typeof destinationRegionSchema>[]; interests?: readonly z.infer<typeof destinationInterestSchema>[]; limit: number },
-  preferredFromMemory: readonly string[] = []
-): DestinationDiscoveryInput {
-  if (!context) throw new Error('Active trip context was not found')
-  return destinationDiscoveryInputSchema.parse({
-    regions: [...(filter.regions ?? [])],
-    interests: [...(filter.interests ?? [])],
-    requiredIatas: codesFromLocations([...context.destinationIntent.required, ...visitLocations(context)]),
-    preferredIatas: uniqueStrings([
-      ...codesFromLocations(context.destinationIntent.preferred),
-      ...preferredFromMemory
-    ]),
-    excludedIatas: codesFromLocations([...context.destinationIntent.excluded, ...avoidLocations(context)]),
-    ...(context.origin ? { origin: context.origin } : {}),
-    limit: filter.limit
-  })
 }
 
 function topCandidates(candidates: readonly DestinationCandidate[]) {
@@ -164,7 +116,7 @@ function topCandidates(candidates: readonly DestinationCandidate[]) {
 }
 
 function addCandidateLocations(context: ToolExecutionContext, candidates: readonly DestinationCandidate[]): void {
-  for (const candidate of candidates) context.resolvedLocationKeys?.add(locationRefKey(candidate.location))
+  recordResolvedLocations(context, candidates.map(candidate => candidate.location))
 }
 
 function destinationSummary(result: z.infer<typeof destinationDiscoveryResultSchema>) {
@@ -178,38 +130,6 @@ function destinationSummary(result: z.infer<typeof destinationDiscoveryResultSch
 function assertDiscoveryAvailable(context: ToolExecutionContext): NonNullable<ToolExecutionContext['destinationDiscovery']> {
   if (!context.destinationDiscovery) throw new Error('Destination discovery service is unavailable')
   return context.destinationDiscovery
-}
-
-async function persistDestinationSet(
-  context: ToolExecutionContext,
-  kind: 'destination_candidates' | 'destination_recommendations',
-  query: DestinationDiscoveryInput,
-  result: z.infer<typeof destinationDiscoveryResultSchema>,
-  signal: AbortSignal
-): Promise<{ id: string; summary: ReturnType<typeof destinationSummary> }> {
-  assertCurrent(context, signal)
-  const id = uuidv7()
-  const payload = destinationSetPayloadSchema.parse({
-    kind,
-    schemaVersion: 1,
-    serviceVersion: result.serviceVersion,
-    query,
-    candidates: result.candidates,
-    verification: result.verification,
-    warnings: result.warnings
-  })
-  assertCurrent(context, signal)
-  const stored = await context.artifacts.create({
-    id,
-    tripId: context.tripId,
-    conversationId: context.conversationId,
-    type: 'destination_set',
-    schemaVersion: 1,
-    payload,
-    verification: result.verification
-  })
-  addCandidateLocations(context, result.candidates)
-  return { id: stored.id, summary: destinationSummary(result) }
 }
 
 export const searchDestinationsTool: AgentTool<
@@ -231,15 +151,16 @@ export const searchDestinationsTool: AgentTool<
     const trip = await context.trips.get(context.tripId)
     if (!trip) throw new Error('Active trip context was not found')
     assertCurrent(context, signal)
-    const serviceInput = discoveryInput(trip, input)
+    const serviceInput = destinationInputForTrip(trip, input)
     const service = assertDiscoveryAvailable(context)
-    const result = destinationDiscoveryResultSchema.parse(await service.discover(serviceInput, { signal }))
-    assertCurrent(context, signal)
-    const stored = await persistDestinationSet(context, 'destination_candidates', serviceInput, result, signal)
+    const { record, payload } = await discoverTripDestinations(
+      serviceInput, service, workspaceScope(context, signal), 'destination_candidates'
+    )
+    addCandidateLocations(context, payload.candidates)
     return {
-      artifact: { id: stored.id, type: 'destination_set', schemaVersion: 1 },
-      summary: stored.summary,
-      warnings: result.warnings
+      artifact: { id: record.id, type: 'destination_set', schemaVersion: 1 },
+      summary: destinationSummary(payload),
+      warnings: payload.warnings
     }
   }
 }
@@ -267,33 +188,22 @@ export const recommendDestinationsTool: AgentTool<
     const memoryPreferred = memory
       ? resolveDestinationMentions(memory.markdown).map(profile => profile.iata)
       : []
-    const serviceInput = discoveryInput(trip, {
+    const serviceInput = destinationInputForTrip(trip, {
       regions: [],
-      interests: interestsFromTrip(trip.interests),
+      interests: destinationInterests(trip.interests),
       limit: input.limit
     }, memoryPreferred)
-    assertCurrent(context, signal)
     const service = assertDiscoveryAvailable(context)
-    const result = destinationDiscoveryResultSchema.parse(await service.discover(serviceInput, { signal }))
-    assertCurrent(context, signal)
-    const stored = await persistDestinationSet(context, 'destination_recommendations', serviceInput, result, signal)
+    const { record, payload } = await discoverTripDestinations(
+      serviceInput, service, workspaceScope(context, signal), 'destination_recommendations'
+    )
+    addCandidateLocations(context, payload.candidates)
     return {
-      artifact: { id: stored.id, type: 'destination_set', schemaVersion: 1 },
-      summary: stored.summary,
-      warnings: result.warnings
+      artifact: { id: record.id, type: 'destination_set', schemaVersion: 1 },
+      summary: destinationSummary(payload),
+      warnings: payload.warnings
     }
   }
-}
-
-async function loadDestinationSet(context: ToolExecutionContext, artifactId: string): Promise<{ record: ArtifactRecord; payload: z.infer<typeof destinationSetPayloadSchema> }> {
-  const record = await context.artifacts.get(artifactId)
-  if (!record || record.tripId !== context.tripId) throw new Error('Source destination artifact was not found')
-  if (record.type !== 'destination_set' || record.schemaVersion !== 1) throw new Error('Source artifact is not a supported destination set')
-  const payload = destinationSetPayloadSchema.parse(record.payload)
-  if (payload.kind !== 'destination_candidates' && payload.kind !== 'destination_recommendations') {
-    throw new Error('Source destination artifact has an invalid kind')
-  }
-  return { record, payload }
 }
 
 function routeSummary(result: z.infer<typeof tripRoutePlanResultSchema>) {
@@ -331,39 +241,17 @@ export const planTripRouteTool: AgentTool<
     assertCurrent(context, signal)
     const trip = await context.trips.get(context.tripId)
     if (!trip) throw new Error('Active trip context was not found')
-    const source = await loadDestinationSet(context, input.candidateArtifactId)
-    assertCurrent(context, signal)
     const planner = context.tripRoutePlanner
     if (!planner) throw new Error('Trip route planner is unavailable')
-    const routeInput = {
-      candidates: source.payload.candidates,
-      tripContext: trip,
+    const { record, payload } = await planTripDays({
+      candidateArtifactId: input.candidateArtifactId,
+      trip,
       maxCities: input.maxCities
-    }
-    const result = tripRoutePlanResultSchema.parse(await planner.plan(routeInput, { signal }))
-    assertCurrent(context, signal)
-    const id = uuidv7()
-    const payload = tripRoutePlanPayloadSchema.parse({
-      ...result,
-      kind: 'trip_route_plan',
-      schemaVersion: 1,
-      sourceArtifactIds: [source.record.id],
-      tripContextVersion: trip.version
-    })
-    assertCurrent(context, signal)
-    const stored = await context.artifacts.create({
-      id,
-      tripId: context.tripId,
-      conversationId: context.conversationId,
-      type: 'route',
-      schemaVersion: 1,
-      payload,
-      verification: result.verification
-    })
+    }, planner, workspaceScope(context, signal))
     return {
-      artifact: { id: stored.id, type: 'route', schemaVersion: 1 },
-      summary: routeSummary(result),
-      warnings: result.warnings
+      artifact: { id: record.id, type: 'route', schemaVersion: 1 },
+      summary: routeSummary(payload),
+      warnings: payload.warnings
     }
   }
 }

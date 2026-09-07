@@ -26,7 +26,7 @@ export async function fetchJson<T>(
   }
   try {
     const response = await fetch(url, { ...init, signal: controller.signal })
-    const payload = await response.json().catch(() => ({})) as T & { error?: unknown; message?: unknown }
+    const payload = await response.json() as T & { error?: unknown; message?: unknown }
     if (!response.ok) {
       throw new AppError(
         'PROVIDER_UNAVAILABLE',

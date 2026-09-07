@@ -4,6 +4,18 @@ import { SerpApiResearchSearchProvider, buildSerpApiResearchQuery } from './serp
 const destination = { id: 'city-tyo', type: 'city' as const, name: 'Tokyo', countryCode: 'JP' }
 
 describe('SerpApiResearchSearchProvider', () => {
+  it('uses only server-owned official domains for a canonical Tokyo location', () => {
+    const query = buildSerpApiResearchQuery({ destination: { ...destination, cityCode: 'TYO' }, interests: [], questions: ['Tokyo food site:evil.example'], researchTypes: ['activity'], maxResults: 10 })
+    expect(query).toContain('(site:gotokyo.org OR site:japan.travel)')
+    expect(query).not.toContain('site:evil.example')
+    expect(query.length).toBeLessThanOrEqual(480)
+  })
+  it('keeps evergreen activity retrieval independent of exact trip dates', () => {
+    const input = { destination, interests: ['food'], questions: ['Tokyo art museums official tourism'], researchTypes: ['activity' as const], maxResults: 8,
+      travelWindow: { from: '2026-10-10', to: '2026-10-14' } }
+    expect(buildSerpApiResearchQuery(input)).not.toContain('2026')
+    expect(buildSerpApiResearchQuery({ ...input, researchTypes: ['event'] })).toContain('2026 10')
+  })
   it('builds a bounded plain-text query and classifies only safe authority hosts', async () => {
     const searchOrganic = vi.fn(async (_input: unknown, _signal?: AbortSignal) => [
       { title: 'Official event', snippet: 'A date in a snippet', url: 'https://www.city.gov.jp/events/1', domain: 'www.city.gov.jp', publishedAt: '2026-09-01T00:00:00.000Z' },

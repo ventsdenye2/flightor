@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
 import { CloudPlannerService } from '../agent/cloud/service.js'
@@ -116,7 +116,7 @@ export function presentationHint(type: ArtifactType): z.infer<typeof artifactPre
   return 'travel_guide'
 }
 
-function defaultFactory(context: AppContext): CloudAgentServiceFactory {
+function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAgentServiceFactory {
   return userId => {
     if (!context.env.OPENROUTER_API_KEY) throw new AppError('PROVIDER_NOT_CONFIGURED', 'OpenRouter is not configured', 503)
     const trips = new PostgresTripRepository(context.db, userId)
@@ -127,7 +127,9 @@ function defaultFactory(context: AppContext): CloudAgentServiceFactory {
       model: context.env.PLANNER_MODEL,
       turnTimeoutMs: 150_000,
       maxToolSteps: 10,
-      modelOptions: { maxTokens: 4096, reasoning: { enabled: false, exclude: true } }
+      modelOptions: { maxTokens: 4096, timeoutMs: 60_000, reasoning: { enabled: false, exclude: true } },
+      modelTrace: trace => logger.info({ modelTrace: trace, model: context.env.PLANNER_MODEL }, 'Planner model completed'),
+      trace: trace => logger.info({ toolTrace: trace }, 'Planner tool completed')
     })
     const topology = new PostgresTopologyRepository(context.db)
     const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))
@@ -154,7 +156,7 @@ function defaultFactory(context: AppContext): CloudAgentServiceFactory {
 export async function registerCloudAgentRoutes(
   app: FastifyInstance,
   context: AppContext,
-  serviceForUser: CloudAgentServiceFactory = defaultFactory(context)
+  serviceForUser: CloudAgentServiceFactory = defaultFactory(context, app.log)
 ): Promise<void> {
   app.post('/v1/agent/converse', {
     config: { rateLimit: { max: 10, timeWindow: '1 minute' } }

@@ -25,6 +25,7 @@ describe('CatalogDestinationDiscoveryService', () => {
 
     expect(first).toEqual(second)
     expect(first.candidates[0]?.location.iata).toBe('KIX')
+    expect(first.candidates[0]?.location.cityCode).toBe('OSA')
     expect(first.candidates.find(candidate => candidate.location.iata === 'BKK')?.reasons[0]).toContain('preferred')
     expect(first.candidates.every(candidate => candidate.verification.status === 'partially_verified')).toBe(true)
     expect(first.verification.status).toBe('partially_verified')
@@ -71,5 +72,13 @@ describe('CatalogDestinationDiscoveryService', () => {
     expect(result.candidates.map(candidate => candidate.location.iata)).not.toContain('NRT')
     expect(result.candidates.map(candidate => candidate.location.iata)).not.toContain('HND')
     expect(result.candidates.map(candidate => candidate.location.iata)).toContain('KIX')
+  })
+
+  it('persists city grouping separately from the representative airport', async () => {
+    const result = await new CatalogDestinationDiscoveryService().discover(input({
+      regions: ['japan'], requiredIatas: ['NRT'], preferredIatas: [], excludedIatas: [], limit: 2
+    }))
+    const tokyo = result.candidates.find(candidate => candidate.location.iata === 'NRT')
+    expect(tokyo?.location.cityCode).toBe('TYO')
   })
 })
