@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, Input, ScrollView } from '@tarojs/components'
 import { observer } from 'mobx-react-lite'
-import { TRANSFER_COUNTRIES, countryName, findCountry, searchCountries, type Country } from '../../mocks/countries'
+import { referenceDataStore, type CountryReference } from '../../stores/referenceDataStore'
 import type { TransitCountryPreference, TransitCountryPreferences } from '../../types/flight'
 import { localeStore, t } from '../../i18n'
 import './CountryPreferenceSelector.scss'
@@ -25,22 +25,18 @@ function preferenceOf(code: string, preferences: TransitCountryPreferences): Tra
   return 'neutral'
 }
 
-function airportSummary(country: Country): string {
-  const codes = country.airports.map(airport => airport.iata)
-  const visible = codes.slice(0, 4).join(' · ')
-  return codes.length > 4 ? `${visible} +${codes.length - 4}` : visible
-}
-
 function CountryPreferenceSelector({ visible, preferences, onChange, onClose }: CountryPreferenceSelectorProps) {
   const [query, setQuery] = useState('')
   const locale = localeStore.locale
+  useEffect(() => { void referenceDataStore.ensureLoaded() }, [])
   if (!visible) return null
 
   const isSearching = query.trim().length > 0
-  const countries = isSearching ? searchCountries(query) : TRANSFER_COUNTRIES
+  const countries = referenceDataStore.searchCountries(query)
   const selectedCountries = [...preferences.preferred, ...preferences.excluded]
-    .map(code => findCountry(code))
-    .filter((country): country is Country => Boolean(country))
+    .map(code => referenceDataStore.country(code))
+    .filter((country): country is CountryReference => Boolean(country))
+  const countryName = (country: CountryReference) => locale === 'zh' ? country.nameZh : country.nameEn
   const handleClose = () => {
     setQuery('')
     onClose()
@@ -85,7 +81,7 @@ function CountryPreferenceSelector({ visible, preferences, onChange, onClose }: 
                 const preference = preferenceOf(country.code, preferences)
                 return (
                   <View key={country.code} className={`country-pref-selector__selected-chip is-${preference}`}>
-                    <Text>{preference === 'preferred' ? '↑ ' : '× '}{countryName(country, locale)}</Text>
+                    <Text>{preference === 'preferred' ? '↑ ' : '× '}{countryName(country)}</Text>
                   </View>
                 )
               })}
@@ -103,9 +99,9 @@ function CountryPreferenceSelector({ visible, preferences, onChange, onClose }: 
             return (
               <View key={country.code} className='country-pref-selector__row'>
                 <View className='country-pref-selector__country'>
-                  <Text className='country-pref-selector__country-name'>{countryName(country, locale)}</Text>
+                  <Text className='country-pref-selector__country-name'>{countryName(country)}</Text>
                   <Text className='country-pref-selector__airports'>
-                    {airportSummary(country)}
+                    {country.code}{country.region ? ` · ${country.region}` : ''}
                   </Text>
                 </View>
                 <View className='country-pref-selector__options'>

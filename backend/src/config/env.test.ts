@@ -16,11 +16,20 @@ describe('parseEnv', () => {
     expect(env.OAG_SCHEDULES_KEY).toBe('')
     expect(env.SERPAPI_KEY).toBe('')
     expect(env.OPENROUTER_MODEL).toBe('deepseek/deepseek-v4-pro-0813')
+    expect(env.PLANNER_MODEL).toBe(env.OPENROUTER_MODEL)
+    expect(env.RESEARCH_MODEL).toBe(env.OPENROUTER_MODEL)
   })
 
   it('keeps an explicitly configured model override', () => {
-    const env = parseEnv({ ...validEnv, OPENROUTER_MODEL: 'provider/custom-model' })
+    const env = parseEnv({
+      ...validEnv,
+      OPENROUTER_MODEL: 'provider/custom-model',
+      PLANNER_MODEL: 'provider/planner-model',
+      RESEARCH_MODEL: 'provider/research-model'
+    })
     expect(env.OPENROUTER_MODEL).toBe('provider/custom-model')
+    expect(env.PLANNER_MODEL).toBe('provider/planner-model')
+    expect(env.RESEARCH_MODEL).toBe('provider/research-model')
   })
 
   it('reports invalid variable names without including secret values', () => {

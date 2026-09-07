@@ -5,8 +5,10 @@ import {
   connectionSearchInputSchema,
   connectionSearchResultSchema,
   flightRoutePlanResultSchema,
+  routeConstraintsSchema,
   routeNodeSchema,
   routeOptimizationResultSchema,
+  routeWeightsSchema,
   routeSetPayloadSchema,
   type CompleteFlightPath,
   type RouteSetPayload
@@ -100,28 +102,16 @@ export const planFlightRouteOutputSchema = z.object({
   warnings: z.array(z.string().max(200)).max(50)
 }).strict()
 
-const routeWeightsSchema = z.object({
-  airfareSaving: z.number().finite().min(0).max(10).optional(),
-  preferredCityMatch: z.number().finite().min(0).max(10).optional(),
-  interestMatch: z.number().finite().min(0).max(10).optional(),
-  eventMatch: z.number().finite().min(0).max(10).optional(),
-  seasonMatch: z.number().finite().min(0).max(10).optional(),
-  stopoverPlayability: z.number().finite().min(0).max(10).optional(),
-  additionalCityValue: z.number().finite().min(0).max(10).optional(),
-  routeNovelty: z.number().finite().min(0).max(10).optional(),
-  selfTransferRisk: z.number().finite().min(0).max(10).optional(),
-  complexity: z.number().finite().min(0).max(10).optional()
-}).strict().default({})
-
 export const optimizeRouteInputSchema = z.object({
   pathArtifactId: z.string().uuid(),
-  weights: routeWeightsSchema,
+  weights: routeWeightsSchema.default({}),
   maxRepresentatives: z.number().int().min(1).max(50).default(10)
 }).strict()
 
 const representativeSummarySchema = z.object({
   path: pathSummarySchema,
-  totalScore: z.number().finite()
+  totalScore: z.number().finite(),
+  badges: z.array(z.enum(['cheapest', 'balanced', 'most_fun', 'best_match'])).max(4)
 }).strict()
 
 export const optimizeRouteOutputSchema = z.object({
@@ -149,6 +139,20 @@ function assertTrustedLocations(context: ToolExecutionContext, values: readonly 
 
 function locationCode(location: LocationRef): string {
   return location.iata ?? location.cityCode ?? location.id
+}
+
+function sameLocation(left: LocationRef, right: LocationRef): boolean {
+  return locationCode(left) === locationCode(right)
+}
+
+function uniqueLocations(values: readonly LocationRef[]): LocationRef[] {
+  const seen = new Set<string>()
+  return values.filter(value => {
+    const key = locationRefKey(value)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function pathSummary(path: CompleteFlightPath) {
@@ -189,14 +193,25 @@ export const searchConnectionFlightsTool: AgentTool<
   timeoutMs: 45_000, provider: 'connection_service',
   async execute(input, context, signal) {
     assertTrustedLocations(context, [input.origin, input.destination, ...input.preferredLocations, ...input.excludedLocations])
-    const serviceInput = connectionSearchInputSchema.parse(input)
+    const trip = await context.trips.get(context.tripId)
+    if (!trip) throw new Error('Trip context was not found')
+    const avoided = trip.locationRoleOverrides.filter(item => item.role === 'avoid').map(item => item.location)
+    const serviceInput = connectionSearchInputSchema.parse({
+      ...input,
+      preferredLocations: uniqueLocations(trip.destinationIntent.preferred),
+      excludedLocations: uniqueLocations([...trip.destinationIntent.excluded, ...avoided]),
+      acceptsSelfTransfer: trip.transferPreferences.acceptsSelfTransfer ?? false,
+      acceptsLongStopover: trip.transferPreferences.acceptsLongStopover ?? false
+    })
     const result = connectionSearchResultSchema.parse(await context.connectionSearch.search(serviceInput, { signal }))
     assertCurrent(context, signal)
     const id = uuidv7()
     const payload = routeSetPayloadSchema.parse({
       kind: 'connection_edges', schemaVersion: 1,
       serviceVersion: result.serviceVersion, algorithmVersion: result.serviceVersion,
-      sourceArtifactIds: [], edges: result.edges, verification: result.verification,
+      sourceArtifactIds: [],
+      query: { origin: serviceInput.origin, destination: serviceInput.destination, window: serviceInput.window },
+      edges: result.edges, verification: result.verification,
       warnings: result.warnings, truncated: result.truncated, exhausted: result.exhausted
     })
     const stored = await context.artifacts.create({
@@ -234,10 +249,31 @@ export const planFlightRouteTool: AgentTool<
   timeoutMs: 15_000, provider: 'flight_route_planner',
   async execute(input, context, signal) {
     assertTrustedLocations(context, input.nodes.map(node => node.location))
+    const trip = await context.trips.get(context.tripId)
+    if (!trip) throw new Error('Trip context was not found')
     const source = await loadRouteSet(context, input.candidateArtifactId, 'connection_edges')
     if (source.payload.kind !== 'connection_edges') throw new Error('Source route artifact has an invalid kind')
+    const originNode = input.nodes.find(node => node.role === 'origin') ?? input.nodes[0]!
+    const destinationNode = [...input.nodes].reverse().find(node => node.role === 'destination') ?? input.nodes[input.nodes.length - 1]!
+    if (!sameLocation(originNode.location, source.payload.query.origin)
+      || !sameLocation(destinationNode.location, source.payload.query.destination)
+      || input.window.from !== source.payload.query.window.from
+      || input.window.to !== source.payload.query.window.to) {
+      throw new Error('Route plan request does not match the source connection query')
+    }
+    const visitOverrides = trip.locationRoleOverrides.filter(item => item.role === 'visit').map(item => item.location)
+    const avoidOverrides = trip.locationRoleOverrides.filter(item => item.role === 'avoid').map(item => item.location)
+    const constraints = routeConstraintsSchema.parse({
+      requiredLocations: uniqueLocations([...trip.destinationIntent.required, ...visitOverrides]),
+      excludedLocations: uniqueLocations([...trip.destinationIntent.excluded, ...avoidOverrides]),
+      allowSelfTransfer: trip.transferPreferences.acceptsSelfTransfer ?? false,
+      allowAirportChange: trip.transferPreferences.acceptsAirportChange ?? false,
+      allowLongStopover: trip.transferPreferences.acceptsLongStopover ?? false,
+      ...(trip.travelDays ? { maxTravelDays: trip.travelDays } : {})
+    })
     const result = flightRoutePlanResultSchema.parse(await context.flightRoutePlanner.plan({
-      nodes: input.nodes, edges: source.payload.edges, window: input.window, maxPaths: input.maxPaths
+      nodes: input.nodes, edges: source.payload.edges, window: input.window,
+      constraints, maxPaths: input.maxPaths
     }, { signal }))
     assertCurrent(context, signal)
     const id = uuidv7()
@@ -275,13 +311,18 @@ export const optimizeRouteTool: AgentTool<
   costClass: 'cheap', costUnits: 1, sideEffect: 'state', parallelSafe: false,
   timeoutMs: 15_000, provider: 'route_optimizer',
   async execute(input, context, signal) {
+    const trip = await context.trips.get(context.tripId)
+    if (!trip) throw new Error('Trip context was not found')
     const source = await loadRouteSet(context, input.pathArtifactId, 'flight_paths')
     if (source.payload.kind !== 'flight_paths') throw new Error('Source route artifact has an invalid kind')
     const weights = Object.fromEntries(
       Object.entries(input.weights).filter((entry): entry is [string, number] => entry[1] !== undefined)
     )
     const result = routeOptimizationResultSchema.parse(await context.routeOptimizer.optimize({
-      paths: source.payload.paths, weights, maxRepresentatives: input.maxRepresentatives
+      paths: source.payload.paths, weights,
+      preferredLocations: uniqueLocations(trip.destinationIntent.preferred),
+      interestLocations: [],
+      maxRepresentatives: input.maxRepresentatives
     }, { signal }))
     assertCurrent(context, signal)
     const id = uuidv7()
@@ -305,7 +346,7 @@ export const optimizeRouteTool: AgentTool<
         representativeCount: result.representatives.length,
         rejectedCandidateCount: result.rejectedCandidateCount,
         representatives: result.representatives.slice(0, 5).map(item => ({
-          path: pathSummary(item.path), totalScore: item.score.total
+          path: pathSummary(item.path), totalScore: item.score.total, badges: item.badges
         })),
         verificationStatus: result.verification.status,
         truncated: result.truncated, exhausted: result.exhausted

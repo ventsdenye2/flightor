@@ -35,7 +35,9 @@ const envSchema = z.object({
   SERPAPI_BASE_URL: optionalUrl.default('https://serpapi.com/search.json'),
   OPENROUTER_API_KEY: z.string().default(''),
   OPENROUTER_BASE_URL: optionalUrl.default('https://openrouter.ai/api/v1'),
-  OPENROUTER_MODEL: z.string().default('deepseek/deepseek-v4-pro-0813')
+  OPENROUTER_MODEL: z.string().trim().min(1).default('deepseek/deepseek-v4-pro-0813'),
+  PLANNER_MODEL: z.string().trim().default(''),
+  RESEARCH_MODEL: z.string().trim().default('')
 })
 
 export type AppEnv = z.infer<typeof envSchema>
@@ -46,7 +48,11 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     const names = result.error.issues.map(issue => issue.path.join('.')).join(', ')
     throw new Error(`Invalid backend environment variables: ${names}`)
   }
-  return result.data
+  return {
+    ...result.data,
+    PLANNER_MODEL: result.data.PLANNER_MODEL || result.data.OPENROUTER_MODEL,
+    RESEARCH_MODEL: result.data.RESEARCH_MODEL || result.data.OPENROUTER_MODEL
+  }
 }
 
 export const env = parseEnv()

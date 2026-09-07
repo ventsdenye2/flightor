@@ -1,0 +1,56 @@
+@import '../../styles/mixins.scss';
+
+.trips-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 40rpx 28rpx 120rpx;
+  background: var(--color-bg-primary);
+
+  &__header { margin-bottom: 40rpx; }
+  &__eyebrow {
+    display: block;
+    margin-bottom: 10rpx;
+    color: var(--color-accent-cyan);
+    font-size: 22rpx;
+    font-weight: 700;
+    letter-spacing: 3rpx;
+  }
+  &__title { display: block; font-size: var(--font-size-h1); font-weight: 750; }
+  &__subtitle { display: block; margin-top: 12rpx; color: var(--color-text-secondary); font-size: var(--font-size-small); line-height: 1.55; }
+
+  &__card,
+  &__empty {
+    padding: 32rpx;
+    border: 2rpx solid rgba(132, 159, 188, 0.22);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(145deg, rgba(22, 34, 47, 0.98), rgba(11, 18, 27, 0.98));
+  }
+  &__card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20rpx; }
+  &__status { display: block; margin-bottom: 10rpx; color: var(--color-accent-teal, #45c6cb); font-size: var(--font-size-caption); }
+  &__card-title { display: block; font-size: var(--font-size-h3); font-weight: 700; }
+  &__chevron { color: var(--color-text-secondary); font-size: 48rpx; line-height: 1; }
+  &__meta { display: block; margin-top: 30rpx; color: var(--color-text-placeholder); font-size: 22rpx; font-family: monospace; }
+  &__summary { display: block; margin-top: 10rpx; color: var(--color-text-secondary); font-size: var(--font-size-small); }
+  &__action,
+  &__primary {
+    display: flex;
+    min-height: 88rpx;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30rpx;
+    border-radius: var(--radius-md);
+    background: var(--color-accent-cyan);
+    color: #fff;
+    font-size: var(--font-size-body);
+    font-weight: 700;
+  }
+  &__empty { display: flex; align-items: center; flex-direction: column; padding-top: 48rpx; text-align: center; }
+  &__empty-mark { display: flex; width: 92rpx; height: 92rpx; align-items: center; justify-content: center; border-radius: 28rpx; background: rgba(10, 132, 255, 0.16); color: var(--color-accent-cyan); font-size: 52rpx; }
+  &__empty-title { margin-top: 24rpx; font-size: var(--font-size-h3); font-weight: 700; }
+  &__empty-copy { margin-top: 12rpx; color: var(--color-text-secondary); font-size: var(--font-size-small); }
+  &__primary { align-self: stretch; width: 100%; }
+  &__scope { display: block; margin: 28rpx 12rpx 0; color: var(--color-text-placeholder); font-size: 22rpx; line-height: 1.5; }
+}
+.trips-page__filters { display: flex; flex-wrap: wrap; gap: 12rpx; margin-bottom: 28rpx; view { padding: 14rpx 20rpx; border: 1rpx solid var(--color-bg-border); border-radius: 16rpx; font-size: 24rpx; } .is-active { color: var(--color-accent-teal); border-color: var(--color-accent-teal); } }
+.trips-page__actions { display: flex; flex-wrap: wrap; gap: 24rpx; margin-top: 24rpx; color: var(--color-accent-teal); font-size: 26rpx; view { padding: 12rpx 0; } }
+.trips-page__error { color: var(--color-warning); padding: 20rpx; line-height: 1.6; }

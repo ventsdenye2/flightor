@@ -9,6 +9,10 @@ export const BASE_URL = FLIGHTOR_API_BASE_URL.replace(/\/$/, '')
 /** 显式构建开关；FLIGHTOR_USE_MOCK=false 时走自建后端。 */
 export const USE_MOCK = FLIGHTOR_USE_MOCK
 
+export class ApiRequestError extends Error {
+  constructor(readonly status: number, readonly code: string, message: string) { super(message); this.name = 'ApiRequestError' }
+}
+
 interface RequestOptions<D> {
   url: string
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -16,12 +20,14 @@ interface RequestOptions<D> {
   showLoading?: boolean
   loadingText?: string
   retry?: number
+  /** Additional request headers (for example an idempotency key). */
+  header?: Record<string, string>
   /** 单次请求超时毫秒，默认 10000（实时报价矩阵搜索需放宽） */
   timeout?: number
 }
 
 export async function request<T, D = Record<string, unknown>>(options: RequestOptions<D>): Promise<T> {
-  const { url, method = 'GET', data, showLoading = false, loadingText = '加载中…', retry = 2, timeout = 10000 } = options
+  const { url, method = 'GET', data, showLoading = false, loadingText = '加载中…', retry = 2, timeout = 10000, header: extraHeaders } = options
 
   if (showLoading) {
     Taro.showLoading({ title: loadingText, mask: true })
@@ -38,6 +44,7 @@ export async function request<T, D = Record<string, unknown>>(options: RequestOp
         timeout,
         header: {
           'content-type': 'application/json',
+          ...extraHeaders,
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
         }
       })
@@ -50,10 +57,14 @@ export async function request<T, D = Record<string, unknown>>(options: RequestOp
       if (res.statusCode >= 200 && res.statusCode < 300) {
         return res.data
       }
-      throw new Error(`HTTP ${res.statusCode}`)
+      const body = res.data as { error?: { code?: unknown; message?: unknown } } | undefined
+      const code = typeof body?.error?.code === 'string' ? body.error.code.slice(0, 100) : `HTTP_${res.statusCode}`
+      const message = typeof body?.error?.message === 'string' ? body.error.message.slice(0, 500) : `HTTP ${res.statusCode}`
+      throw new ApiRequestError(res.statusCode, code, message)
     } catch (err) {
       lastError = err
       if ((err as Error).message === 'RATE_LIMITED') break
+      if (err instanceof ApiRequestError && err.status < 500) break
       // 超时/网络错误自动重试
       if (attempt < retry) continue
     }

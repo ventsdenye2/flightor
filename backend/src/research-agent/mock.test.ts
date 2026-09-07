@@ -22,7 +22,8 @@ describe('MockResearchAgent contract', () => {
     expect(researchArtifactSchema.parse(result)).toEqual(result)
     expect(result.findings).toHaveLength(1)
     expect(result.type).toBe('research')
-    expect(result.schemaVersion).toBe(1)
+    expect(result.schemaVersion).toBe(2)
+    expect(result.queryCount).toBe(0)
   })
 
   it('rejects malformed briefs before producing state and honors cancellation', async () => {

@@ -45,6 +45,12 @@ export interface SuggestedAction {
   id: string
   label: BilingualText
   message: string
+  /** The server action kind, when this action came from the cloud Planner. */
+  kind?: 'message' | 'route_generation'
+  /** The server-provided action target. Route generation is not callable yet. */
+  href?: string
+  disabled?: boolean
+  unavailableReason?: string
 }
 
 /** The source-labelled itinerary guide returned by the self-hosted backend. */
@@ -88,23 +94,90 @@ export interface TravelGuide {
   warnings: string[]
 }
 
-export interface ConversationResponse {
-  phase: 'discover' | 'clarify' | 'plan'
-  reply: BilingualText
-  state: TripState
-  recommendations: DestinationRecommendation[]
-  routes: RoutePick[]
-  missing: string[]
-  suggestedActions: SuggestedAction[]
-  source: 'llm' | 'rules'
-  warnings: string[]
-  travelGuide?: TravelGuide
+/** Canonical location reference returned by the authenticated cloud API. */
+export interface CloudLocationRef {
+  id: string
+  type: 'city' | 'airport'
+  name: string
+  countryCode: string
+  iata?: string
+  cityCode?: string
+  latitude?: number
+  longitude?: number
+  timezone?: string
 }
 
-export interface ConversationRequestOptions {
-  state?: TripState
-  today?: string
-  newTrip?: boolean
+export interface CloudDateWindow {
+  from?: string
+  to?: string
+  precision: 'exact' | 'approximate'
+}
+
+export interface CloudBudget {
+  amount: number
+  currency: string
+  scope: 'airfare' | 'transport' | 'trip'
+}
+
+export interface CloudDestinationIntent {
+  mode: 'explicit' | 'open' | 'mixed'
+  required: CloudLocationRef[]
+  preferred: CloudLocationRef[]
+  excluded: CloudLocationRef[]
+}
+
+export interface CloudTripContextSummary {
+  version: number
+  origin?: CloudLocationRef
+  departureWindow?: CloudDateWindow
+  returnWindow?: CloudDateWindow
+  travelDays?: number
+  budget?: CloudBudget
+  destinations: CloudDestinationIntent
+  interests: string[]
+  readyForRouteGeneration: boolean
+}
+
+/** Exact action shape from POST /v1/agent/converse. */
+export interface CloudSuggestedAction {
+  id: 'continue_planning' | 'generate_route'
+  label: string
+  kind: 'message' | 'route_generation'
+  href?: string
+}
+
+export interface CloudArtifactRef {
+  id: string
+  type: string
+  schemaVersion: number
+  presentationHint: 'flight_cards' | 'research_cards' | 'activity_cards' | 'destination_cards' | 'route_preview' | 'itinerary_outline' | 'travel_guide'
+}
+
+/** Exact response shape from the authenticated cloud Planner. */
+export type ConversationPhase = 'discover' | 'clarify' | 'plan'
+
+export interface ConversationResponse {
+  conversationId: string
+  tripId: string
+  reply: string
+  tripContextSummary: CloudTripContextSummary
+  artifactRefs: CloudArtifactRef[]
+  suggestedActions: CloudSuggestedAction[]
+  memoryChanged?: boolean
+  warnings: string[]
+  stopReason: string
+}
+
+/** Exact request shape from the mini-program to POST /v1/agent/converse. */
+export interface ConversationRequest {
+  tripId: string
+  conversationId: string
+  message: string
+}
+
+export interface CloudSessionBootstrap {
+  tripId: string
+  conversationId: string
 }
 
 export const emptyTripState = (): TripState => ({
@@ -475,48 +548,128 @@ function mockActions(state: TripState, missing: string[], recommendationCount: n
   return actions.slice(0, 3)
 }
 
-async function mockConverse(messages: ConversationMessage[], options: ConversationRequestOptions): Promise<ConversationResponse> {
-  const today = options.today ?? todayIso()
-  const latest = [...messages].reverse().find(message => message.role === 'user')
-  let state = options.newTrip ? emptyTripState() : options.state ? { ...options.state } : emptyTripState()
-  const turns = options.newTrip || !options.state
-    ? messages.filter(message => message.role === 'user')
-    : latest ? [latest] : []
-  for (const message of turns) state = parseMockTurn(state, message.content, today)
-  const missing = mockMissing(state)
-  const recommendations = state.destination_mode === 'recommend' ? mockRecommendations(state) : []
-  const routes = missing.length === 0 ? routeFor(state, recommendations) : []
-  const phase: ConversationResponse['phase'] = missing.length === 0 ? 'plan' : recommendations.length > 0 ? 'discover' : 'clarify'
+function mockLocation(iata: string): CloudLocationRef {
+  const item = MOCK_DESTINATIONS.find(destination => destination.iata === iata)
+  const origin = ORIGIN_ALIASES.find(candidate => candidate.iata === iata)
+  const name = item?.cityEn ?? origin?.iata ?? iata
+  const countryCode = item?.region === 'japan' ? 'JP' : item?.region === 'schengen' ? 'FR' : 'CN'
   return {
-    phase,
-    reply: mockReply(state, missing, recommendations.length, routes.length, today),
-    state,
-    recommendations,
-    routes,
-    missing,
-    suggestedActions: mockActions(state, missing, recommendations.length, routes.length, today),
-    source: 'rules',
-    warnings: []
+    id: `airport:${iata}`,
+    type: 'airport',
+    name,
+    countryCode,
+    iata,
+    cityCode: iata
   }
 }
 
-/** 每条规划消息都走这个入口；正式模式不会调用旧 agent/chat 或 route-plans。 */
-export async function converse(messages: ConversationMessage[], options: ConversationRequestOptions = {}): Promise<ConversationResponse> {
-  const boundedMessages = messages.slice(-24)
-  if (USE_MOCK) return mockConverse(boundedMessages, options)
-  const body: {
-    messages: ConversationMessage[]
-    state?: TripState
-    today?: string
-    newTrip?: boolean
-  } = { messages: boundedMessages }
-  if (options.newTrip) body.newTrip = true
-  else if (options.state) body.state = options.state
-  if (options.today) body.today = options.today
+function mockTripContextSummary(state: TripState): CloudTripContextSummary {
+  const toLocations = (items: string[]) => items.map(mockLocation)
+  const destinationMode: CloudDestinationIntent['mode'] = state.destination_mode === 'recommend' ? 'open' : 'explicit'
+  return {
+    version: 0,
+    ...(state.origin ? { origin: mockLocation(state.origin) } : {}),
+    ...(state.window_from ? {
+      departureWindow: {
+        from: state.window_from,
+        ...(state.window_to ? { to: state.window_to } : {}),
+        precision: state.window_from === state.window_to ? 'exact' : 'approximate'
+      } as CloudDateWindow
+    } : {}),
+    ...(state.travel_days ? { travelDays: state.travel_days } : {}),
+    ...(state.budget_max ? { budget: { amount: state.budget_max, currency: 'CNY', scope: 'trip' } } : {}),
+    destinations: {
+      mode: destinationMode,
+      required: toLocations(state.required_iatas),
+      preferred: [],
+      excluded: toLocations(state.excluded_iatas)
+    },
+    interests: [...state.interests],
+    // Mock mode has no route-generation worker, so field completeness must not
+    // be presented as an actionable capability.
+    readyForRouteGeneration: false
+  }
+}
+
+const MOCK_CONVERSATION_STATES = new Map<string, TripState>()
+
+async function mockConverse(input: ConversationRequest): Promise<ConversationResponse> {
+  await new Promise(resolve => setTimeout(resolve, 20))
+  const previous = MOCK_CONVERSATION_STATES.get(input.conversationId) ?? emptyTripState()
+  const state = parseMockTurn(previous, input.message, todayIso())
+  MOCK_CONVERSATION_STATES.set(input.conversationId, state)
+  const missing = mockMissing(state)
+  const recommendations = state.destination_mode === 'recommend' ? mockRecommendations(state) : []
+  const routes = missing.length === 0 ? routeFor(state, recommendations) : []
+  const legacyReply = mockReply(state, missing, recommendations.length, routes.length, todayIso())
+  const suggestedActions: CloudSuggestedAction[] = missing.length > 0
+    ? [{ id: 'continue_planning', label: 'Continue planning', kind: 'message' }]
+    : []
+  return {
+    conversationId: input.conversationId,
+    tripId: input.tripId,
+    reply: legacyReply.zh,
+    tripContextSummary: mockTripContextSummary(state),
+    // The real endpoint owns all structured artifacts. Mock mode deliberately
+    // does not manufacture legacy recommendation/route objects for the client.
+    artifactRefs: [],
+    suggestedActions,
+    warnings: missing.length > 0 ? [] : ['route_generation_unavailable'],
+    stopReason: missing.length > 0 ? 'needs_user_input' : 'completed'
+  }
+}
+
+function randomUuid(): string {
+  const hex = () => Math.floor(Math.random() * 0x1_0000).toString(16).padStart(4, '0')
+  return `${hex()}${hex()}-${hex()}-4${hex().slice(1)}-${(8 + Math.floor(Math.random() * 4)).toString(16)}${hex().slice(1)}-${hex()}${hex()}${hex()}`
+}
+
+interface TripCreateResponse { trip: { id: string } }
+interface ConversationCreateResponse { conversation: { id: string; tripId?: string; trip_id?: string } }
+
+/** Create the owner-scoped cloud resources used by a new planning session. */
+export async function bootstrapCloudSession(): Promise<CloudSessionBootstrap> {
+  if (USE_MOCK) {
+    return { tripId: randomUuid(), conversationId: randomUuid() }
+  }
+  const trip = await request<TripCreateResponse>({
+    url: '/v1/trips',
+    method: 'POST',
+    data: {},
+    retry: 0,
+    timeout: 15_000
+  })
+  const tripId = trip.trip?.id
+  if (!tripId) throw new Error('INVALID_TRIP_BOOTSTRAP_RESPONSE')
+  const conversation = await request<ConversationCreateResponse>({
+    url: '/v1/conversations',
+    method: 'POST',
+    data: { trip_id: tripId },
+    retry: 0,
+    timeout: 15_000
+  })
+  const conversationId = conversation.conversation?.id
+  if (!conversationId) throw new Error('INVALID_CONVERSATION_BOOTSTRAP_RESPONSE')
+  return { tripId, conversationId }
+}
+
+/**
+ * Send exactly one new message to the authenticated Planner. In particular,
+ * local history, legacy state, and previous messages never enter this body.
+ */
+export async function converse(input: ConversationRequest): Promise<ConversationResponse> {
+  const message = input.message.trim()
+  if (!input.tripId || !input.conversationId || !message) throw new Error('INVALID_CONVERSATION_REQUEST')
+  const body: ConversationRequest = {
+    tripId: input.tripId,
+    conversationId: input.conversationId,
+    message
+  }
+  if (USE_MOCK) return mockConverse(body)
   return request<ConversationResponse>({
     url: '/v1/agent/converse',
     method: 'POST',
-    data: body,
+    data: body as unknown as Record<string, unknown>,
     retry: 0,
     timeout: 60_000
   })

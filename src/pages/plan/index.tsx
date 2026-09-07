@@ -1,12 +1,9 @@
-// pages/plan — AI 行程规划（tabBar 主页面）
-// 双形态：未选航班 → 需求对话（talk with agent 拆解需求 → 核心检索系统）；
-//        已选航班 → 生成行程时间轴（自建后端）
-import { useCallback, useEffect, useRef, useState } from 'react'
+// pages/plan — default Trip Workspace tab
+import { useEffect, useState } from 'react'
 import { View, Text, Input, ScrollView } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import DemoBadge from '../../components/common/DemoBadge'
-import { flightStore } from '../../stores/flightStore'
 import {
   chatStore,
   formatConversationWarning,
@@ -19,43 +16,24 @@ import type {
   SuggestedAction,
   TravelGuide,
   TravelGuideSource,
-  TravelGuideSourceKind,
-  TripState
+  TravelGuideSourceKind
 } from '../../services/conversationService'
-import { planTrip, TripPlan, TripItemType, BiText } from '../../services/tripService'
 import { cityByIata, type RoutePick } from '../../services/routeService'
-import { cityOf } from '../../mocks/airports'
+import { isRouteGenerationTerminal } from '../../services/routeGenerationService'
 import { t, localeStore } from '../../i18n'
-import { formatPrice, formatMonthDay, humanDate } from '../../utils/format'
+import { formatPrice, formatMonthDay } from '../../utils/format'
+import TripContextChips from '../../components/plan/TripContextChipsView'
+import type { TripContextChipViewModel } from '../../components/plan/tripContextChips'
+import { ArtifactTimelineItem } from '../../components/artifacts'
+import type { ArtifactEnvelope } from '../../services/artifactService'
+import { artifactService } from '../../services/artifactService'
+import { userStore } from '../../stores/userStore'
 import './index.scss'
-
-const TYPE_ICON: Record<TripItemType, string> = {
-  flight: '✈️',
-  transit: '🚉',
-  activity: '📍',
-  meal: '🍜',
-  rest: '🏨',
-  tip: '💡'
-}
 
 const ROUTE_LABEL_KEY: Record<string, string> = {
   cheapest: 'chat.routeCheapest',
   mostCities: 'chat.routeMostCities',
   mostNights: 'chat.routeMostNights'
-}
-
-const REGION_LABEL_KEY: Record<string, string> = {
-  japan: 'chat.regionJapan',
-  schengen: 'chat.regionEurope',
-  visa_free: 'chat.regionVisaFree'
-}
-
-const INTEREST_LABEL_KEY: Record<string, string> = {
-  culture: 'interest.culture',
-  food: 'interest.food',
-  nature: 'interest.nature',
-  shopping: 'interest.shopping',
-  nightlife: 'interest.nightlife'
 }
 
 const GUIDE_SOURCE_LABEL_KEY: Record<TravelGuideSourceKind, string> = {
@@ -79,115 +57,6 @@ function isSafeGuideWebUrl(value: string): boolean {
   } catch {
     return false
   }
-}
-
-function understandingDate(from: string | null, to: string | null, locale: 'zh' | 'en'): string {
-  if (!from && !to) return t('chat.understandingUnset')
-  if (from && to && from !== to) return `${humanDate(from, locale)} – ${humanDate(to, locale)}`
-  return humanDate(from ?? to ?? '', locale)
-}
-
-function understandingIatas(iatas: string[], locale: 'zh' | 'en'): string {
-  return iatas
-    .map(iata => `${cityOf(iata, locale)} (${iata})`)
-    .join(locale === 'zh' ? '、' : ', ')
-}
-
-function understandingSummary(state: TripState, locale: 'zh' | 'en'): string {
-  const parts: string[] = []
-  if (state.origin) parts.push(`${cityOf(state.origin, locale)} (${state.origin})`)
-  if (state.window_from || state.window_to) parts.push(understandingDate(state.window_from, state.window_to, locale))
-  if (state.travel_days != null) parts.push(`${state.travel_days}${t('chat.days')}`)
-  if (state.budget_max != null) parts.push(`≤${formatPrice(state.budget_max)}`)
-  if (state.regions.length > 0) {
-    parts.push(state.regions.map(region => t(REGION_LABEL_KEY[region] ?? 'chat.understandingUnset')).join(locale === 'zh' ? '、' : ', '))
-  }
-  if (state.destination_mode === 'recommend') parts.push(t('chat.modeRecommend'))
-  return parts.join(' · ') || t('chat.understandingUnset')
-}
-
-interface UnderstandingPanelProps {
-  state: TripState
-  locale: 'zh' | 'en'
-  expanded: boolean
-  onToggle: () => void
-  onReset: () => void
-}
-
-function UnderstandingPanel({ state, locale, expanded, onToggle, onReset }: UnderstandingPanelProps) {
-  return (
-    <View className={`agent-chat__understanding ${expanded ? 'is-expanded' : 'is-collapsed'}`}>
-      <View className='agent-chat__understanding-head' hoverClass='tap-dim' onClick={onToggle}>
-        <View className='agent-chat__understanding-heading'>
-          <Text className='agent-chat__section-title'>{t('chat.understandingTitle')}</Text>
-          {!expanded && <Text className='agent-chat__understanding-summary'>{understandingSummary(state, locale)}</Text>}
-        </View>
-        <Text className='agent-chat__understanding-arrow'>{expanded ? '⌃' : '⌄'}</Text>
-      </View>
-      {expanded && (
-        <View className='agent-chat__understanding-content'>
-          <View className='agent-chat__understanding-grid'>
-            <View className='agent-chat__understanding-item'>
-              <Text className='agent-chat__understanding-label'>{t('chat.understandingOrigin')}</Text>
-              <Text className='agent-chat__understanding-value'>
-                {state.origin ? `${cityOf(state.origin, locale)} (${state.origin})` : t('chat.understandingUnset')}
-              </Text>
-            </View>
-            <View className='agent-chat__understanding-item'>
-              <Text className='agent-chat__understanding-label'>{t('chat.understandingDate')}</Text>
-              <Text className='agent-chat__understanding-value'>{understandingDate(state.window_from, state.window_to, locale)}</Text>
-            </View>
-            <View className='agent-chat__understanding-item'>
-              <Text className='agent-chat__understanding-label'>{t('chat.understandingDays')}</Text>
-              <Text className='agent-chat__understanding-value'>
-                {state.travel_days != null ? `${state.travel_days}${t('chat.days')}` : t('chat.understandingUnset')}
-              </Text>
-            </View>
-            <View className='agent-chat__understanding-item'>
-              <Text className='agent-chat__understanding-label'>{t('chat.understandingBudget')}</Text>
-              <Text className='agent-chat__understanding-value'>
-                {state.budget_max != null ? `≤${formatPrice(state.budget_max)}` : t('chat.understandingUnset')}
-              </Text>
-            </View>
-            <View className='agent-chat__understanding-item agent-chat__understanding-item--wide'>
-              <Text className='agent-chat__understanding-label'>{t('chat.understandingRegions')}</Text>
-              <Text className='agent-chat__understanding-value'>
-                {state.regions.length > 0
-                  ? state.regions.map(region => t(REGION_LABEL_KEY[region] ?? 'chat.understandingUnset')).join(locale === 'zh' ? '、' : ', ')
-                  : t('chat.understandingUnset')}
-              </Text>
-            </View>
-            <View className='agent-chat__understanding-item agent-chat__understanding-item--wide'>
-              <Text className='agent-chat__understanding-label'>{t('chat.understandingInterests')}</Text>
-              <Text className='agent-chat__understanding-value'>
-                {state.interests.length > 0
-                  ? state.interests.map(interest => t(INTEREST_LABEL_KEY[interest] ?? 'chat.understandingUnset')).join(locale === 'zh' ? '、' : ', ')
-                  : t('chat.understandingUnset')}
-              </Text>
-            </View>
-            {state.required_iatas.length > 0 && (
-              <View className='agent-chat__understanding-item agent-chat__understanding-item--wide'>
-                <Text className='agent-chat__understanding-label'>{t('chat.understandingMustVisit')}</Text>
-                <Text className='agent-chat__understanding-value'>{understandingIatas(state.required_iatas, locale)}</Text>
-              </View>
-            )}
-            {state.excluded_iatas.length > 0 && (
-              <View className='agent-chat__understanding-item agent-chat__understanding-item--wide'>
-                <Text className='agent-chat__understanding-label'>{t('chat.understandingExcluded')}</Text>
-                <Text className='agent-chat__understanding-value'>{understandingIatas(state.excluded_iatas, locale)}</Text>
-              </View>
-            )}
-            {state.destination_mode === 'recommend' && (
-              <Text className='agent-chat__understanding-mode'>{t('chat.modeRecommend')}</Text>
-            )}
-          </View>
-          <View className='agent-chat__new-trip' hoverClass='tap-dim' onClick={onReset}>
-            <Text>↺ {t('chat.newTrip')}</Text>
-          </View>
-        </View>
-      )}
-    </View>
-  )
 }
 
 const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -396,8 +265,9 @@ function TurnAttachments({
   onConfirm
 }: TurnAttachmentsProps) {
   const canAct = interactive && !confirming
+  const inlineActions = turn.suggestedActions.filter(action => action.kind !== 'route_generation')
   const hasAttachments = turn.recommendations.length > 0
-    || turn.suggestedActions.length > 0
+    || inlineActions.length > 0
     || turn.routes.length > 0
     || turn.warnings.length > 0
     || Boolean(turn.travelGuide)
@@ -441,11 +311,11 @@ function TurnAttachments({
         </View>
       )}
 
-      {turn.suggestedActions.length > 0 && (
+      {inlineActions.length > 0 && (
         <View className='agent-chat__actions'>
           <Text className='agent-chat__section-title'>{t('chat.actionsTitle')}</Text>
           <View className='agent-chat__action-list'>
-            {turn.suggestedActions.slice(0, 3).map(action => (
+            {inlineActions.slice(0, 3).map(action => (
               <View
                 key={action.id}
                 className={`agent-chat__action ${canAct ? '' : 'is-disabled'}`}
@@ -554,9 +424,12 @@ function TurnAttachments({
 
 interface ConversationTurnViewProps extends TurnAttachmentsProps {
   pending: boolean
+  ownerId?: string
+  sessionId: string
+  onArtifactAction: (artifact: ArtifactEnvelope) => void
 }
 
-function ConversationTurnView({ turn, pending, ...attachmentProps }: ConversationTurnViewProps) {
+function ConversationTurnView({ turn, pending, ownerId, sessionId, onArtifactAction, ...attachmentProps }: ConversationTurnViewProps) {
   return (
     <View className='agent-chat__turn'>
       <View className='agent-chat__msg agent-chat__msg--user'>
@@ -572,6 +445,15 @@ function ConversationTurnView({ turn, pending, ...attachmentProps }: Conversatio
         </View>
       ) : null}
       <TurnAttachments turn={turn} {...attachmentProps} />
+      {turn.artifactRefs?.map(ref => (
+        <ArtifactTimelineItem
+          key={ref.id}
+          artifactRef={ref}
+          ownerId={ownerId}
+          sessionId={sessionId}
+          onAction={onArtifactAction}
+        />
+      ))}
       {turn.error && (
         <View className='agent-chat__card agent-chat__card--error'>
           <Text>{turn.error}</Text>
@@ -586,39 +468,31 @@ const AgentChat = observer(() => {
   const [input, setInput] = useState('')
   const [routeExpanded, setRouteExpanded] = useState<Record<string, boolean>>({})
   const [guideExpanded, setGuideExpanded] = useState<Record<string, boolean>>({})
-  const [understandingExpanded, setUnderstandingExpanded] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
   const locale = localeStore.locale
-  const state = chatStore.state
-  const busy = chatStore.isThinking || chatStore.multiLoading || chatStore.multiConfirming
-  const hasUnderstanding = Boolean(
-    state.origin
-    || state.window_from
-    || state.window_to
-    || state.travel_days != null
-    || state.budget_max != null
-    || state.regions.length > 0
-    || state.interests.length > 0
-    || state.required_iatas.length > 0
-    || state.excluded_iatas.length > 0
-    || state.destination_mode === 'recommend'
-  )
+  const ownerId = userStore.profile?.uid
+  const busy = chatStore.isThinking || chatStore.multiLoading || chatStore.multiConfirming || chatStore.routeGenerationLoading
+  const routeAction = chatStore.suggestedActions.find(action => action.kind === 'route_generation')
+  const timelineArtifactIds = new Set(chatStore.timeline.flatMap(turn => turn.artifactRefs?.map(ref => ref.id) ?? []))
+  const workspaceArtifactRefs = chatStore.artifactRefs.filter(ref => !timelineArtifactIds.has(ref.id))
 
   useEffect(() => {
-    if (chatStore.timeline.length === 0 && !hasUnderstanding) {
-      setUnderstandingExpanded(false)
+    if (chatStore.timeline.length === 0 && !chatStore.tripContextSummary) {
       setRouteExpanded({})
       setGuideExpanded({})
       setInput('')
     }
-  }, [chatStore.timeline.length, hasUnderstanding])
+  }, [chatStore.timeline.length, chatStore.tripContextSummary])
 
   useEffect(() => {
-    setUnderstandingExpanded(false)
     setRouteExpanded({})
     setGuideExpanded({})
     setInput('')
   }, [chatStore.currentSessionId])
+
+  useEffect(() => {
+    artifactService.setSession(ownerId, chatStore.currentSessionId)
+  }, [ownerId, chatStore.currentSessionId])
 
   const handleSend = () => {
     if (!input.trim() || busy) return
@@ -655,7 +529,6 @@ const AgentChat = observer(() => {
     setInput('')
     setRouteExpanded({})
     setGuideExpanded({})
-    setUnderstandingExpanded(false)
     setHistoryOpen(false)
   }
 
@@ -664,7 +537,6 @@ const AgentChat = observer(() => {
     setInput('')
     setRouteExpanded({})
     setGuideExpanded({})
-    setUnderstandingExpanded(false)
     setHistoryOpen(false)
   }
 
@@ -680,15 +552,35 @@ const AgentChat = observer(() => {
     setInput('')
     setRouteExpanded({})
     setGuideExpanded({})
-    setUnderstandingExpanded(false)
+  }
+
+  const handleRemoveContextChip = (chip: TripContextChipViewModel) => {
+    if (busy) return
+    const message = locale === 'zh'
+      ? `从本次行程上下文中移除「${chip.label}」`
+      : `Remove "${chip.label}" from this trip context`
+    void chatStore.send(message, locale)
+  }
+
+  const handleArtifactAction = (artifact: ArtifactEnvelope) => {
+    const encodedId = encodeURIComponent(artifact.id)
+    if (artifact.type === 'flight_search') {
+      void Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodedId}` })
+      return
+    }
+    if (['route_set', 'route', 'research', 'travel_guide', 'activity', 'destination_set'].includes(artifact.type)) {
+      void Taro.navigateTo({ url: `/pages/route/index?artifactId=${encodedId}` })
+    }
   }
 
   return (
     <View className='agent-chat'>
       <View className='agent-chat__topbar'>
         <View className='agent-chat__topbar-title'>
-          <Text className='agent-chat__topbar-kicker'>FLIGHTOR / AGENT</Text>
-          <Text className='agent-chat__topbar-label'>{t('nav.tripPlan')}</Text>
+          <Text className='agent-chat__topbar-kicker'>FLIGHTOR</Text>
+          <Text className='agent-chat__topbar-label'>
+            {chatStore.currentSession?.title || (locale === 'zh' ? '新的旅行计划' : 'New trip plan')}
+          </Text>
         </View>
         <View
           className={`agent-chat__history-trigger ${historyOpen ? 'is-open' : ''}`}
@@ -710,13 +602,40 @@ const AgentChat = observer(() => {
           onClose={() => setHistoryOpen(false)}
         />
       )}
-      {hasUnderstanding && (
-        <UnderstandingPanel
-          state={state}
+      {chatStore.routeGeneration && (
+        <View className='agent-chat__card agent-chat__route-generation'>
+          <Text>
+            {locale === 'zh' ? '路线生成' : 'Route generation'} · {chatStore.routeGeneration.status} · {chatStore.routeGeneration.progress.percent}%
+            {chatStore.routeGeneration.stale ? ` · ${locale === 'zh' ? '结果已过期' : 'stale result'}` : ''}
+          </Text>
+          {!isRouteGenerationTerminal(chatStore.routeGeneration.status) && !chatStore.routeGenerationLoading && (
+            <View
+              className='agent-chat__action'
+              hoverClass='tap-dim'
+              onClick={() => void chatStore.resumeRouteGeneration(locale)}
+            >
+              <Text>{locale === 'zh' ? '继续生成' : 'Resume generation'}</Text>
+            </View>
+          )}
+          {!isRouteGenerationTerminal(chatStore.routeGeneration.status) && (
+            <View className='agent-chat__action' hoverClass='tap-dim' onClick={() => void chatStore.cancelRouteGeneration(locale)}>
+              <Text>{locale === 'zh' ? '取消生成' : 'Cancel generation'}</Text>
+            </View>
+          )}
+          {chatStore.routeGeneration.resultArtifactId && (
+            <Text>{locale === 'zh' ? `结果 Artifact：${chatStore.routeGeneration.resultArtifactId}` : `Result artifact: ${chatStore.routeGeneration.resultArtifactId}`}</Text>
+          )}
+          {chatStore.routeGeneration.error && <Text>{chatStore.routeGeneration.error.message}</Text>}
+          {chatStore.routeGenerationError && <Text>{chatStore.routeGenerationError}</Text>}
+          {chatStore.routeGeneration.warnings.map((warning, index) => <Text key={`route-generation-warning-${index}`}>{warning}</Text>)}
+        </View>
+      )}
+      {chatStore.tripContextSummary && (
+        <TripContextChips
+          summary={chatStore.tripContextSummary}
           locale={locale}
-          expanded={understandingExpanded}
-          onToggle={() => setUnderstandingExpanded(value => !value)}
-          onReset={handleReset}
+          onRemove={handleRemoveContextChip}
+          onEdit={() => setInput(locale === 'zh' ? '我想修改本次行程：' : 'I want to update this trip: ')}
         />
       )}
       <ScrollView className='agent-chat__body' scrollY scrollIntoView='chat-bottom'>
@@ -724,7 +643,10 @@ const AgentChat = observer(() => {
         <View className='agent-chat__msg agent-chat__msg--assistant'>
           <Text>{t('chat.hello')}</Text>
         </View>
-        {chatStore.timeline.length === 0 && (
+        {chatStore.messages.slice(0, chatStore.messages.findIndex(m => m.role === 'user') < 0 ? chatStore.messages.length : chatStore.messages.findIndex(m => m.role === 'user')).filter(m => m.role === 'assistant').map((message, i) => (
+          <View key={`introduction-${i}`} className='agent-chat__msg agent-chat__msg--assistant'><Text>{message.content}</Text></View>
+        ))}
+        {chatStore.timeline.length === 0 && !chatStore.tripContextSummary && (
           <View className='agent-chat__suggests'>
             {[t('chat.eg1'), t('chat.eg2'), t('chat.eg3')].map(eg => (
               <View
@@ -745,6 +667,9 @@ const AgentChat = observer(() => {
             turn={turn}
             locale={locale}
             pending={index === turns.length - 1 && (chatStore.isThinking || chatStore.multiLoading)}
+            ownerId={ownerId}
+            sessionId={chatStore.currentSessionId}
+            onArtifactAction={handleArtifactAction}
             interactive={isConversationTurnInteractive(turns, turn.id, busy)}
             confirming={chatStore.multiConfirming}
             routeExpanded={routeExpanded}
@@ -754,13 +679,61 @@ const AgentChat = observer(() => {
             onCopyGuideSource={handleCopyGuideSource}
             onRecommendation={handleRecommendation}
             onSuggestedAction={action => {
-              if (!busy) void chatStore.send(action.message, locale)
+              if (!busy) void chatStore.activateSuggestedAction(action, locale)
             }}
             onConfirm={kind => {
               if (!busy) void chatStore.confirmMulti(kind, locale)
             }}
           />
         ))}
+
+        {workspaceArtifactRefs.length > 0 && (
+          <View className='agent-chat__workspace-artifacts'>
+            <Text className='agent-chat__section-title'>{locale === 'zh' ? '工作区结果' : 'Workspace results'}</Text>
+            {workspaceArtifactRefs.map(ref => (
+              <ArtifactTimelineItem
+                key={ref.id}
+                artifactRef={ref}
+                ownerId={ownerId}
+                sessionId={chatStore.currentSessionId}
+                onAction={handleArtifactAction}
+              />
+            ))}
+          </View>
+        )}
+
+        <View className='agent-chat__workspace-actions'>
+          <View
+            className={`agent-chat__quick-action ${busy ? 'is-disabled' : ''}`}
+            hoverClass='tap-dim'
+            onClick={() => {
+              if (!busy) void Taro.navigateTo({ url: '/pages/index/index' })
+            }}
+          >
+            <View className='agent-chat__quick-action-mark'><Text>FLIGHT</Text></View>
+            <View className='agent-chat__quick-action-copy'>
+              <Text className='agent-chat__quick-action-title'>{locale === 'zh' ? '查航班' : 'Search flights'}</Text>
+              <Text className='agent-chat__quick-action-subtitle'>{locale === 'zh' ? '打开航班探索，结果保存为 Artifact' : 'Open Flight Explorer and save results as an Artifact'}</Text>
+            </View>
+            <Text className='agent-chat__quick-action-chevron'>›</Text>
+          </View>
+
+          {routeAction ? (
+            <View
+              className={`agent-chat__generate ${busy ? 'is-disabled' : ''}`}
+              hoverClass='tap-dim'
+              onClick={() => {
+                if (!busy) void chatStore.activateSuggestedAction(routeAction, locale)
+              }}
+            >
+              <Text>{locale === 'zh' ? '生成路线' : 'Generate route'}</Text>
+            </View>
+          ) : chatStore.tripContextSummary && !chatStore.tripContextSummary.readyForRouteGeneration ? (
+            <View className='agent-chat__generate agent-chat__generate--disabled'>
+              <Text>{locale === 'zh' ? '补充出发地、日期与明确目的地后可生成路线' : 'Add origin, dates, and a final destination to generate a route'}</Text>
+            </View>
+          ) : null}
+        </View>
 
         <View id='chat-bottom' />
       </ScrollView>
@@ -795,141 +768,16 @@ const AgentChat = observer(() => {
 })
 
 function PlanPage() {
-  const [plan, setPlan] = useState<TripPlan | null>(null)
-  const [error, setError] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const requestId = useRef(0)
   const locale = localeStore.locale
-  const pick = (v: BiText) => (locale === 'zh' ? v.zh : v.en)
-
-  const flight = flightStore.selected
-  const params = flightStore.lastParams
 
   useEffect(() => {
     Taro.setNavigationBarTitle({ title: t('nav.tripPlan') })
   }, [locale])
 
-  const load = useCallback(() => {
-    if (!flight || !params) return
-    const currentRequestId = ++requestId.current
-    setError(false)
-    setPlan(null)
-    setIsLoading(true)
-    planTrip(flight, params)
-      .then(nextPlan => {
-        // Ignore a slower response from a previous selection or retry.
-        if (currentRequestId === requestId.current) setPlan(nextPlan)
-      })
-      .catch(() => {
-        if (currentRequestId === requestId.current) setError(true)
-      })
-      .finally(() => {
-        if (currentRequestId === requestId.current) setIsLoading(false)
-      })
-  }, [flight, params])
-
-  useEffect(() => {
-    load()
-    return () => {
-      // Invalidate in-flight work when the selected flight changes or the page unmounts.
-      requestId.current += 1
-    }
-  }, [load])
-
-  // 未选航班：需求对话
-  if (!flight || !params) {
-    return (
-      <View className='trip-plan trip-plan--chat'>
-        <DemoBadge />
-        <AgentChat />
-      </View>
-    )
-  }
-
-  if (error) {
-    return (
-      <View className='trip-plan trip-plan--center'>
-        <Text className='trip-plan__error-icon'>🛰</Text>
-        <Text className='trip-plan__error-text'>{t('tp.error')}</Text>
-        <View className='trip-plan__retry' hoverClass='tap-dim' onClick={load}>
-          <Text>{t('tp.retry')}</Text>
-        </View>
-      </View>
-    )
-  }
-
-  if (isLoading || !plan) {
-    return (
-      <View className='trip-plan trip-plan--center'>
-        <Text className='trip-plan__loading-icon'>✨</Text>
-        <Text className='trip-plan__loading-text'>{t('tp.loading')}</Text>
-      </View>
-    )
-  }
-
   return (
-    <View className='trip-plan'>
+    <View className='trip-plan trip-plan--chat'>
       <DemoBadge />
-      {/* 概述 */}
-      <View className='trip-plan__summary'>
-        <Text className='trip-plan__summary-text'>{pick(plan.summary)}</Text>
-      </View>
-
-      {/* 逐日时间轴 */}
-      {plan.days.map(day => (
-        <View key={day.day} className='trip-plan__day'>
-          <View className='trip-plan__day-header'>
-            <Text className='trip-plan__day-badge'>{t('tp.day', { n: day.day })}</Text>
-            <Text className='trip-plan__day-title'>{pick(day.title)}</Text>
-            <Text className='trip-plan__day-date'>{day.date}</Text>
-          </View>
-          {day.items.map((item, idx) => (
-            <View key={`${day.day}-${idx}`} className='trip-plan__item'>
-              <Text className='font-code trip-plan__item-time'>{item.time}</Text>
-              <Text className='trip-plan__item-icon'>{TYPE_ICON[item.type]}</Text>
-              <View className='trip-plan__item-main'>
-                <Text className='trip-plan__item-title'>{pick(item.title)}</Text>
-                {pick(item.note) && <Text className='trip-plan__item-note'>{pick(item.note)}</Text>}
-              </View>
-            </View>
-          ))}
-        </View>
-      ))}
-
-      {/* 预算 */}
-      <View className='trip-plan__budget'>
-        <Text className='trip-plan__section-title'>{t('tp.budget')}</Text>
-        <View className='trip-plan__budget-row'>
-          <Text>{t('tp.bFlights')}</Text>
-          <Text className='font-code'>{formatPrice(plan.budgetCny.flights)}</Text>
-        </View>
-        <View className='trip-plan__budget-row'>
-          <Text>{t('tp.bStay')}</Text>
-          <Text className='font-code'>{formatPrice(plan.budgetCny.stay)}</Text>
-        </View>
-        <View className='trip-plan__budget-row'>
-          <Text>{t('tp.bActivities')}</Text>
-          <Text className='font-code'>{formatPrice(plan.budgetCny.activities)}</Text>
-        </View>
-        <View className='trip-plan__budget-row trip-plan__budget-row--total'>
-          <Text>{t('tp.bTotal')}</Text>
-          <Text className='font-code'>{formatPrice(plan.budgetCny.total)}</Text>
-        </View>
-      </View>
-
-      {/* 提醒 */}
-      {plan.reminders.length > 0 && (
-        <View className='trip-plan__reminders'>
-          <Text className='trip-plan__section-title'>{t('tp.reminders')}</Text>
-          {plan.reminders.map((r, i) => (
-            <Text key={i} className='trip-plan__reminder'>· {pick(r)}</Text>
-          ))}
-        </View>
-      )}
-
-      <View className='trip-plan__disclaimer'>
-        <Text>{t('tp.disclaimer')}</Text>
-      </View>
+      <AgentChat />
     </View>
   )
 }

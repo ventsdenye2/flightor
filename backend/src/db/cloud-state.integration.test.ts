@@ -14,12 +14,16 @@ const databaseUrl = process.env.TEST_DATABASE_URL
 const suite = databaseUrl ? describe : describe.skip
 
 suite('Phase 2 PostgreSQL integration', () => {
+  const schema = `phase2_${process.pid}_${Date.now()}`
+  let adminPool: pg.Pool
   let db: Kysely<Database>
   let userA = ''
   let userB = ''
 
   beforeAll(async () => {
-    db = new Kysely<Database>({ dialect: new PostgresDialect({ pool: new pg.Pool({ connectionString: databaseUrl }) }) })
+    adminPool = new pg.Pool({ connectionString: databaseUrl })
+    await adminPool.query(`create schema "${schema}"`)
+    db = new Kysely<Database>({ dialect: new PostgresDialect({ pool: new pg.Pool({ connectionString: databaseUrl, options: `-c search_path=${schema}` }) }) })
     await createInitialSchema(db)
     await createCloudStateSchema(db)
     const identities = new PostgresUserIdentityRepository(db)
@@ -31,7 +35,7 @@ suite('Phase 2 PostgreSQL integration', () => {
     userB = second.userId
   }, 30_000)
 
-  afterAll(async () => { await db?.destroy() })
+  afterAll(async () => { await db?.destroy(); await adminPool?.query(`drop schema if exists "${schema}" cascade`); await adminPool?.end() })
 
   it('enforces trip snapshots, conversations, artifacts, memory, and cross-user ownership', async () => {
     const tripsA = new PostgresTripRepository(db, userA)

@@ -220,7 +220,16 @@ The button is enabled only when the system has:
 
 Everything else may be unknown.
 
-The Agent may generate reasonable candidate routes from incomplete requirements and should explicitly communicate assumptions when relevant.
+For the Phase 5 generation slice, the deterministic engine also requires one
+final visit destination resolved to a canonical airport. It does not yet
+compose multiple visit destinations, a return window/round trip, or required
+ground legs. Those inputs must produce an explicit unsupported-input result;
+they must not be silently truncated or presented as a complete itinerary.
+
+The conversation Agent may discuss candidate route concepts from incomplete
+requirements and should explicitly communicate assumptions when relevant. It
+does not execute final connection/path/optimization work; the explicit run
+validates the Phase 5 supported shape before doing so.
 
 ---
 
@@ -493,6 +502,12 @@ interface TripContext {
   }>
 
   mustIncludeEvents: ActivityRef[]
+
+  requiredGroundLegs: Array<{
+    from: LocationRef
+    to: LocationRef
+    mode: 'rail' | 'bus' | 'ferry' | 'ground'
+  }>
 
   notes: string[]
 
@@ -810,7 +825,7 @@ Search real flight/fare options for one requested leg.
 
 Search date-flexible options inside a date window.
 
-### `search_connection_flights`
+### `search_connection_flights` (generation-only)
 
 FlightOR connection discovery tool.
 
@@ -829,7 +844,7 @@ This is a FlightOR domain tool, not a wrapper around one provider API.
 
 Refresh/verify one selected flight option.
 
-### `confirm_route_price`
+### `confirm_route_price` (generation-only)
 
 Refresh/verify the fare-critical legs of a selected route.
 
@@ -849,7 +864,7 @@ Create a travel-experience structure:
 
 Does not own global flight optimization.
 
-### `plan_flight_route`
+### `plan_flight_route` (generation-only)
 
 Generate complete flight path candidates across trip cities.
 
@@ -859,7 +874,7 @@ Conceptually:
 Edge candidates → complete paths
 ```
 
-### `optimize_route`
+### `optimize_route` (generation-only)
 
 Rank/filter complete route candidates.
 
@@ -870,6 +885,51 @@ Complete paths → Pareto frontier → representative routes
 ```
 
 Does not discover flights itself.
+
+### Conversation Planner boundary
+
+The public conversation runtime uses a restricted Planner registry. It may
+read/update Trip Context and enabled Memory, resolve locations, search fares,
+discover destinations, plan a trip outline, research, and build a travel
+guide. It must not expose the final route-engine tools
+`search_connection_flights`, `plan_flight_route`, `optimize_route`, or
+`confirm_route_price` to the model. The complete Core Tool registry remains
+available to deterministic engine composition and contract tests, but a model
+response or tool call cannot start final route generation.
+
+Final generation is an authenticated explicit action, not a conversational
+side effect. The run resource is:
+
+```text
+POST   /v1/trips/:tripId/route-generation-runs
+GET    /v1/route-generation-runs/:runId
+DELETE /v1/route-generation-runs/:runId
+```
+
+Creation requires an `Idempotency-Key` and accepts only
+`{ conversationId?, expectedTripVersion? }`. The server derives the owner from
+the access token, validates the optional Conversation belongs to the same Trip,
+freezes the accepted Trip Context/version, and enqueues only the opaque run ID.
+The same key and request replay the existing run; changing the request under a
+key is a conflict. Reads and cancellation are owner-scoped. Cancellation is
+cooperative and persistent, while terminal runs are immutable. Status is
+`queued`, `running`, then exactly one of `succeeded`, `failed`, or `cancelled`.
+
+The worker invokes deterministic domain services directly:
+
+```text
+frozen Trip Context
+  → connection search
+  → bounded complete-path planning
+  → hard validation and Pareto optimization
+  → immutable route_set Artifacts
+```
+
+The run reports its frozen context version, bounded progress/warnings and
+compact Artifact references. A successful result remains auditable and is
+marked stale when the current Trip has since changed; it is never silently
+applied as the current route. Missing credentials or partial fare coverage
+remain explicit unavailable/warning states, never invented prices.
 
 ---
 
@@ -1877,57 +1937,97 @@ The admin app may start under `apps/admin/` immediately because it is new.
 
 ---
 
-# 24. API Direction
+# 24. Public API and explicit route generation
 
-Keep the public Agent entry conceptually unified.
+FlightOR has one public Planner conversation API. The old client-owned
+rule-first converse protocol and the temporary `agent-v2` seam are not current
+product APIs.
 
-Recommended:
+## 24.1 Planner conversation
 
 ```text
 POST /v1/agent/converse
+Authorization: Bearer <access token>
 ```
 
-Response should evolve away from:
-
-```text
-reply + TripState + fixed route fields
-```
-
-toward:
+The strict request is:
 
 ```ts
 {
-  conversationId,
-  tripId,
-
-  reply,
-
-  tripContextSummary,
-
-  artifactRefs: [
-    {
-      id,
-      type,
-      presentationHint
-    }
-  ],
-
-  suggestedActions,
-
-  memoryChanged?,
-
-  warnings
+  tripId: string,
+  conversationId: string,
+  message: string
 }
 ```
 
-Large artifacts should be fetched by ID.
+The server derives `userId` from the access token and rejects any Trip or
+Conversation that is not owned by that user or bound to that Trip. The response
+is intentionally compact:
 
-Examples:
+```ts
+{
+  conversationId: string,
+  tripId: string,
+  reply: string,
+  tripContextSummary: TripContextSummary,
+  artifactRefs: Array<{
+    id: string,
+    type: ArtifactType,
+    schemaVersion: number,
+    presentationHint: string
+  }>,
+  suggestedActions: SuggestedAction[],
+  memoryChanged?: boolean,
+  warnings: string[],
+  stopReason: string
+}
+```
+
+Large Artifacts are fetched by owner-scoped ID. `suggestedActions` is metadata
+only: a `generate_route` suggestion never starts a worker. The conversation
+Planner registry excludes final connection search, complete-path planning,
+optimization, and route-price confirmation; those tools are available only to
+the deterministic generation composition.
+
+## 24.2 Route-generation run
+
+The user explicitly starts final generation through an authenticated run
+resource:
+
+```text
+POST   /v1/trips/:tripId/route-generation-runs
+GET    /v1/route-generation-runs/:runId
+DELETE /v1/route-generation-runs/:runId
+```
+
+Creation requires the `Idempotency-Key` header. Its strict body is
+`{ conversationId?, expectedTripVersion? }`. The server validates ownership and
+same-Trip Conversation binding, snapshots the accepted Trip Context and version,
+stores a canonical request binding, and enqueues only the opaque public run ID.
+The same key and request replay the existing run; a different request under the
+same key is a conflict. Reads and cancellation are owner-scoped. Cancellation
+is cooperative and persistent; terminal runs are immutable.
+
+Run status is `queued → running → succeeded|failed|cancelled`. Status responses
+include bounded progress, warnings, sanitized errors, the frozen context version,
+and compact result Artifact references. A successful result indicates when it is
+stale relative to the current Trip; stale results remain auditable and are never
+silently applied as current state.
+
+Phase 5 supports exactly one final visit destination resolved to a canonical
+airport, one canonical origin airport, and a bounded departure window. Return
+windows, multiple visit destinations, round-trip composition, and required
+ground legs return explicit unsupported-input errors. The run must not silently
+truncate, reorder, or fabricate a complete itinerary. Missing credentials and
+partial fare coverage are explicit unavailable/warning states; no fare is
+invented.
+
+Examples of owner-scoped state/artifact endpoints:
 
 ```text
 GET /v1/artifacts/:id
 GET /v1/trips/:id
-GET /v1/trips/:id/routes
+GET /v1/conversations/:id
 GET /v1/memory
 PUT /v1/memory
 ```
@@ -2044,6 +2144,14 @@ Examples:
 - route generation still works;
 - omit current-event enrichment.
 
+### Planner or route-generation credentials unavailable
+
+- return an explicit provider/unavailable state and bounded warning;
+- keep the run/turn failure auditable;
+- never silently switch the public Planner back to the removed rule-first
+  conversation protocol;
+- never fabricate a fare, route edge, or verification fact.
+
 ### OAG unavailable
 
 - no impact on core product.
@@ -2066,6 +2174,24 @@ provider
 provider_cost_class
 artifact_ids
 warnings
+```
+
+Every route-generation run should additionally trace safe identifiers and
+state, without private payloads:
+
+```text
+run_id
+trip_id
+user_id reference
+context_version
+job_id reference
+phase/progress
+status
+provider
+artifact_ids
+warnings
+cancellation_requested
+stale_result
 ```
 
 Do not log:
@@ -2218,28 +2344,41 @@ Golden cases must validate:
 
 # 31. Migration From Current Agent
 
-Remove gradually:
+The public cutover is now defined as one authenticated Planner API:
 
 ```text
-rule extraction as semantic authority
-LLM delta grounded by regex evidence
-hardcoded region-first planning assumptions
+POST /v1/agent/converse
 ```
+
+The old client-owned rule-first converse route is unregistered from the Fastify
+application. `agent-v2` is removed rather than retained as a second product
+API. The former implementation and local history may remain temporarily as
+migration/test assets, but they are not a current authority and must not be
+silently used as a fallback for the new API.
+
+The mini-program migration is a separate in-progress boundary. It must create
+or resume an authenticated owner-scoped Trip and Conversation, send only the
+new camelCase request, render compact Artifact references, and invoke the
+explicit route-generation run when the user presses Generate Route. It must not
+replay legacy `TripState`, recommendations, route cards, or prices into the new
+API as authoritative state. Logout must clear access credentials and
+owner-bound session IDs.
 
 Retain/reuse where useful:
 
 - Fastify app infrastructure;
 - provider adapters that remain useful;
-- existing deterministic route engine concepts;
+- deterministic route engine concepts;
 - SerpApi integration;
-- route confirmation ideas;
 - race/cancellation protections;
-- conversation session concepts;
 - useful Flight Search UI components;
 - risk warnings;
 - route visualization components.
 
-Do not delete legacy code before the replacement has tests and a working path.
+Do not delete migration assets until the new backend contract, route-generation
+run tests, mini-program session transport, and scenario regressions pass. This
+is a compatibility safeguard, not permission to expose a second public Agent
+API.
 
 ---
 
@@ -2288,6 +2427,10 @@ Implement:
 
 ## Phase 3 — Core Tools
 
+Implementation status (2026-09-07): the initial list completed in Phase 3/4;
+the second list completed in Phase 4B. New Research writes use schema version 2,
+while the v1 reader remains only for migration compatibility. See ADR 0005.
+
 Implement first:
 
 ```text
@@ -2320,6 +2463,12 @@ build_travel_guide
 
 ## Phase 4 — Connection / Route Engine
 
+Implementation status (2026-09-07): completed and production-composed. The
+engine uses normalized PostgreSQL topology, bounded preferred-first/general
+expansion, deterministic complete-path search, and Pareto representatives. See
+ADR 0004. Missing live provider credentials skip live smoke tests but do not
+substitute mock facts in production.
+
 Implement:
 
 - preferred-city-first search;
@@ -2334,26 +2483,56 @@ Implement:
 
 ---
 
-## Phase 5 — Agent API Migration
+## Phase 5 — Agent API and Explicit Route Generation
 
-Replace old rule-first `conversation-agent` behavior while keeping the public route stable where possible.
+The accepted public contract is the authenticated `POST /v1/agent/converse`.
+The response is compact and Artifact-oriented; user identity is never accepted
+from the body. The conversation Planner registry excludes final connection/path/
+optimizer/route-confirmation tools.
 
-Use compatibility adapters temporarily if the old frontend still expects old response fields.
+Final generation is an explicit authenticated run with idempotency, owner
+authorization, frozen Trip Context, cooperative cancellation, progress, stale
+result reporting, and terminal immutability:
+
+```text
+POST   /v1/trips/:tripId/route-generation-runs
+GET    /v1/route-generation-runs/:runId
+DELETE /v1/route-generation-runs/:runId
+```
+
+The current engine slice supports one final visit destination with canonical
+airport origin/destination and a bounded departure window. Return windows,
+multiple visit destinations, round trips, and required ground legs fail
+explicitly as unsupported. Missing credentials remain visible unavailable /
+warning states. The backend contract, worker, mini-program session migration,
+resumable polling/cancellation, and Phase 5 regression gate are complete.
+Route-run acceptance is serialized with Trip Context writes;
+soft `preferred` destinations never become the final visit without an explicit
+required/visit selection. Worker heartbeats and periodic stale-job recovery keep
+long-running or interrupted runs reclaimable without creating duplicate jobs.
+Calendar windows are bounded, weekly schedules are materialized sequentially
+per path, and city-level preference/exclusion semantics apply to constituent
+airports without collapsing distinct airports into one graph node.
 
 ---
 
 ## Phase 6 — Plan / Flight UI
 
-Refactor Plan into Trip Workspace.
-
-Integrate:
+Accepted implementation:
 
 - Artifact cards;
 - flight quick search;
 - Generate Route action;
 - Flight Explorer subpage.
 
-Do not duplicate search logic.
+Plan is now the default Trip Workspace and the primary tabs are Plan, Explore,
+Trips, and Profile. Search is a subpage. Manual and Planner flight searches use
+the same fare-domain Artifact creation service; full payloads load by
+owner-scoped Artifact ID. The manual UI submits one exact airport pair and exact
+outbound/optional return date, while unsupported candidate-airport UI is
+withheld. Search creation requires an owner-scoped idempotency key, and client
+responses are invalidated across owner/session changes. Do not duplicate search
+logic.
 
 ---
 
@@ -2417,18 +2596,22 @@ The architecture migration is considered complete when:
 6. User Memory is cloud-backed Markdown and editable.
 7. New conversations inherit Memory when enabled.
 8. Current trip overrides Memory.
-9. User explicitly triggers route generation.
-10. Connection Engine prioritizes preferred cities but still searches alternatives.
-11. Self-transfer and long stopovers are supported.
-12. Route Optimizer returns distinct representative routes.
-13. Route details have map + timeline + activity + flight visualization.
-14. Existing flight-search capability survives as Flight Explorer and Agent tool.
-15. Explore content is generated by discovery → AI draft → human review → publish.
-16. Admin web app can review/edit/publish templates.
-17. Important external facts have internal verification/provenance.
-18. Visa/entry is never represented as guaranteed legal advice.
-19. Core user data is cloud-hosted and future web-client compatible.
-20. `docs/TOOLS.md` and this architecture document remain updated as code evolves.
+9. The only public Planner conversation API is authenticated `POST /v1/agent/converse`.
+10. The conversation registry cannot invoke final connection/path/optimizer/route-confirmation tools.
+11. User explicitly triggers route generation through an idempotent, owner-scoped run.
+12. Route runs freeze Trip Context, support cooperative cancellation, and keep terminal results immutable.
+13. The current run contract rejects unsupported return windows, multi-visit composition, and required ground legs explicitly.
+14. Connection Engine prioritizes preferred cities but still searches alternatives.
+15. Self-transfer and long stopovers are supported.
+16. Route Optimizer returns distinct representative routes.
+17. Route details have map + timeline + activity + flight visualization.
+18. Existing flight-search capability survives as Flight Explorer and Agent tool.
+19. Explore content is generated by discovery → AI draft → human review → publish.
+20. Admin web app can review/edit/publish templates.
+21. Important external facts have internal verification/provenance.
+22. Visa/entry is never represented as guaranteed legal advice.
+23. Core user data is cloud-hosted and future web-client compatible.
+24. `docs/TOOLS.md` and this architecture document remain updated as code evolves.
 
 ---
 
@@ -2483,3 +2666,6 @@ They should simply be able to say:
 > “十月从北京出发，我有一周，预算别太高，喜欢动漫和吃东西，路上如果能顺便玩一个我喜欢的城市更好。”
 
 FlightOR should be able to understand that request, research current opportunities, discuss options, and—when the user presses **Generate Route**—produce multiple high-quality, visual, explainable route choices.
+
+## Implementation checkpoint — 2026-09-07, Phase 7–9
+Route Artifact workspaces, cloud Trips/Memory, reviewed Discovery, public Explore adoption and the apps/admin console are implemented. See ADR 0008 and [operation/acceptance](./PHASE789_ACCEPTANCE.md) for concrete scope and unverified deployment/device/provider boundaries. Single-destination outbound generation remains the accepted v1 implementation limit.

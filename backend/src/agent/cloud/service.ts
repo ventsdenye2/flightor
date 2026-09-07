@@ -7,6 +7,11 @@ import type { UserMemoryRepository } from '../../memory/repository.js'
 import type { TripRepository } from '../../trips/repository.js'
 import type { ResearchAgent } from '../../research-agent/types.js'
 import type { ConnectionSearchService, FlightRoutePlanner, RouteOptimizer } from '../../flight-routing/types.js'
+import type { DestinationDiscoveryService } from '../../destinations/types.js'
+import type { TripRoutePlanner } from '../../trip-planning/types.js'
+import type { TravelGuideBuilder } from '../../travel-guides/artifact.js'
+import type { ArtifactType } from '../../artifacts/repository.js'
+import type { TripContext } from '../../trips/types.js'
 import type { ChatMessage } from '../runtime/model.js'
 import { AgentRuntime } from '../runtime/runtime.js'
 
@@ -25,6 +30,9 @@ export interface CloudPlannerDependencies extends CloudPlannerRepositories {
   connectionSearch: ConnectionSearchService
   flightRoutePlanner: FlightRoutePlanner
   routeOptimizer: RouteOptimizer
+  destinationDiscovery?: DestinationDiscoveryService
+  tripRoutePlanner?: TripRoutePlanner
+  travelGuideBuilder?: TravelGuideBuilder
 }
 
 export interface CloudPlannerTurnInput {
@@ -39,12 +47,15 @@ export interface CloudPlannerTurnInput {
 export interface CloudPlannerTurnResult {
   reply: string
   tripVersion: number
-  artifactRefs: string[]
+  tripContext: TripContext
+  artifactRefs: Array<{ id: string; type: ArtifactType; schemaVersion: number }>
+  memoryChanged: boolean
+  warnings: string[]
   stopReason: string
 }
 
 const PLANNER_SYSTEM_PROMPT = `You are FlightOR Planner Agent, the only user-facing Agent.
-Use tools for location and flight facts; never invent them. Keep current-trip state in Trip Context and only put explicit long-term preferences in User Memory. Route planning remains a deterministic FlightOR engine responsibility. Research output is advisory and never automatically becomes a required destination or event.`
+Use tools for location and flight facts; never invent them. Keep current-trip state in Trip Context and only put explicit long-term preferences in User Memory. Route planning remains a deterministic FlightOR engine responsibility. Research output is advisory and never automatically becomes a required destination or event. Never trigger final route generation from conversation; tell the user when the explicit Generate Route action is ready.`
 
 function historyMessage(role: string, content: string): ChatMessage | undefined {
   if (role === 'system' || role === 'user') return { role, content }
@@ -64,7 +75,8 @@ export class CloudPlannerService {
     }
 
     const prior = await this.dependencies.conversations.listMessages(input.conversationId, 100)
-    const memory = await this.dependencies.memory.getForAgent()
+    const memoryRecordBefore = await this.dependencies.memory.get()
+    const memory = memoryRecordBefore.enabled ? memoryRecordBefore : undefined
     const systemContent = memory?.markdown
       ? `${PLANNER_SYSTEM_PROMPT}\n\nEnabled User Memory (Markdown, user-owned):\n${memory.markdown}`
       : PLANNER_SYSTEM_PROMPT
@@ -99,11 +111,21 @@ export class CloudPlannerService {
         research: this.dependencies.research,
         connectionSearch: this.dependencies.connectionSearch,
         flightRoutePlanner: this.dependencies.flightRoutePlanner,
-        routeOptimizer: this.dependencies.routeOptimizer
+        routeOptimizer: this.dependencies.routeOptimizer,
+        ...(this.dependencies.destinationDiscovery ? { destinationDiscovery: this.dependencies.destinationDiscovery } : {}),
+        ...(this.dependencies.tripRoutePlanner ? { tripRoutePlanner: this.dependencies.tripRoutePlanner } : {}),
+        ...(this.dependencies.travelGuideBuilder ? { travelGuideBuilder: this.dependencies.travelGuideBuilder } : {})
       },
       ...(input.signal ? { signal: input.signal } : {})
     })
-    const artifactRefs = [...new Set(result.traces.flatMap(trace => trace.artifactIds))]
+    const artifactIds = [...new Set(result.traces.flatMap(trace => trace.artifactIds))]
+    const artifactRefs = (await Promise.all(artifactIds.map(id => this.dependencies.artifacts.get(id))))
+      .filter((artifact): artifact is NonNullable<typeof artifact> => artifact !== undefined)
+      .map(artifact => ({ id: artifact.id, type: artifact.type, schemaVersion: artifact.schemaVersion }))
+    const warnings = [...new Set([
+      ...result.traces.flatMap(trace => trace.warnings),
+      ...(result.fallback ? [`agent_${result.stopReason}`] : [])
+    ])].slice(0, 40)
     await this.dependencies.conversations.appendMessage({
       conversationId: input.conversationId,
       role: 'assistant',
@@ -111,7 +133,7 @@ export class CloudPlannerService {
       metadata: {
         request_id: input.requestId,
         generation_id: input.generationId,
-        artifact_refs: artifactRefs,
+        artifact_refs: artifactRefs.map(artifact => artifact.id),
         stop_reason: result.stopReason,
         tool_traces: result.traces.map(trace => ({
           step: trace.agentStep,
@@ -123,6 +145,15 @@ export class CloudPlannerService {
     })
     const current = await this.dependencies.trips.get(input.tripId)
     if (!current) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
-    return { reply: result.reply, tripVersion: current.version, artifactRefs, stopReason: result.stopReason }
+    const memoryRecordAfter = await this.dependencies.memory.get()
+    return {
+      reply: result.reply,
+      tripVersion: current.version,
+      tripContext: current,
+      artifactRefs,
+      memoryChanged: memoryRecordAfter.version !== memoryRecordBefore.version,
+      warnings,
+      stopReason: result.stopReason
+    }
   }
 }

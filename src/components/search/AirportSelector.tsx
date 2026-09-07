@@ -1,9 +1,9 @@
 // src/components/search/AirportSelector.tsx — 机场搜索选择弹层
 // 替代原 Picker：支持 IATA / 中英文城市名 / 机场名实时搜索
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, Input, ScrollView } from '@tarojs/components'
 import { observer } from 'mobx-react-lite'
-import { AIRPORTS, Airport, airportName, airportCity } from '../../mocks/airports'
+import { referenceDataStore, type AirportReference } from '../../stores/referenceDataStore'
 import { t, localeStore } from '../../i18n'
 import './AirportSelector.scss'
 
@@ -16,16 +16,17 @@ interface AirportSelectorProps {
 }
 
 /** 关键词匹配：IATA 代码 / 中文名 / 英文名 / 国家，均不区分大小写 */
-function matchAirport(a: Airport, query: string): boolean {
+function matchAirport(a: AirportReference, query: string): boolean {
   const q = query.trim().toLowerCase()
   if (!q) return true
   return (
     a.iata.toLowerCase().includes(q) ||
-    a.name.includes(query) ||
-    a.city.includes(query) ||
-    a.country.includes(query) ||
-    a.enName.toLowerCase().includes(q) ||
-    a.enCity.toLowerCase().includes(q)
+    a.nameZh.includes(query) ||
+    a.cityNameZh.includes(query) ||
+    a.countryNameZh.includes(query) ||
+    a.nameEn.toLowerCase().includes(q) ||
+    a.cityNameEn.toLowerCase().includes(q) ||
+    a.countryNameEn.toLowerCase().includes(q)
   )
 }
 
@@ -33,9 +34,11 @@ function AirportSelector({ visible, title, selected, onSelect, onClose }: Airpor
   const [query, setQuery] = useState('')
   const locale = localeStore.locale
 
+  useEffect(() => { void referenceDataStore.ensureLoaded() }, [])
+
   if (!visible) return null
 
-  const results = AIRPORTS.filter(a => matchAirport(a, query))
+  const results = referenceDataStore.airports.filter(a => matchAirport(a, query))
 
   const handlePick = (iata: string) => {
     onSelect(iata)
@@ -86,8 +89,8 @@ function AirportSelector({ visible, title, selected, onSelect, onClose }: Airpor
             >
               <Text className='font-code airport-selector__iata'>{a.iata}</Text>
               <View className='airport-selector__names'>
-                <Text className='airport-selector__city'>{airportCity(a, locale)}</Text>
-                <Text className='airport-selector__airport'>{airportName(a, locale)}</Text>
+                <Text className='airport-selector__city'>{locale === 'zh' ? a.cityNameZh : a.cityNameEn}</Text>
+                <Text className='airport-selector__airport'>{locale === 'zh' ? a.nameZh : a.nameEn}</Text>
               </View>
               {a.iata === selected && <Text className='airport-selector__check'>✓</Text>}
             </View>

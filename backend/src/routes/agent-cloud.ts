@@ -3,28 +3,118 @@ import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
 import { CloudPlannerService } from '../agent/cloud/service.js'
 import { AgentRuntime } from '../agent/runtime/runtime.js'
-import { createCoreToolRegistry } from '../agent/tools/core.js'
+import { createPlannerToolRegistry } from '../agent/tools/core.js'
 import type { AppContext } from '../app/context.js'
 import { authenticateRequest } from '../auth/service.js'
 import { AppError } from '../lib/errors.js'
 import { PostgresArtifactRepository } from '../artifacts/postgres.js'
+import { PostgresLocationResolver } from '../aviation/location-resolver.js'
+import { CompositeAviationProvider } from '../aviation/providers/composite.js'
 import { PostgresConversationRepository } from '../conversations/postgres.js'
 import { PostgresUserMemoryRepository } from '../memory/postgres.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
 import { UnavailableResearchAgent } from '../research-agent/unavailable.js'
 import {
-  UnavailableConnectionSearchService,
-  UnavailableFlightRoutePlanner,
-  UnavailableRouteOptimizer
-} from '../flight-routing/unavailable.js'
+  DeterministicFlightRoutePlanner,
+  ParetoRouteOptimizer,
+  ProductionConnectionSearchService
+} from '../flight-routing/services.js'
+import { PostgresTopologyRepository } from '../topology/postgres.js'
+import { CatalogDestinationDiscoveryService } from '../destinations/discovery.js'
+import { DeterministicTripRoutePlanner } from '../trip-planning/planner.js'
+import { DeterministicTravelGuideBuilder } from '../travel-guides/artifact-builder.js'
+import { ProductionResearchAgent } from '../research-agent/production.js'
+import { OpenRouterResearchSynthesisModel } from '../providers/openrouter/research.js'
+import { ARTIFACT_TYPES, type ArtifactType } from '../artifacts/repository.js'
+import { locationRefSchema } from '../aviation/types.js'
+import type { TripContext } from '../trips/types.js'
+import { evaluateRouteGenerationEligibility } from '../route-generation/service.js'
 
 export const cloudAgentRequestSchema = z.object({
-  trip_id: z.string().uuid(),
-  conversation_id: z.string().uuid(),
+  tripId: z.string().uuid(),
+  conversationId: z.string().uuid(),
   message: z.string().trim().min(1).max(2_000)
 }).strict()
 
+const artifactPresentationHintSchema = z.enum([
+  'flight_cards', 'research_cards', 'activity_cards', 'destination_cards',
+  'route_preview', 'itinerary_outline', 'travel_guide'
+])
+
+const tripContextSummarySchema = z.object({
+  version: z.number().int().nonnegative(),
+  origin: locationRefSchema.optional(),
+  departureWindow: z.object({
+    from: z.iso.date().optional(), to: z.iso.date().optional(), precision: z.enum(['exact', 'approximate'])
+  }).strict().optional(),
+  returnWindow: z.object({
+    from: z.iso.date().optional(), to: z.iso.date().optional(), precision: z.enum(['exact', 'approximate'])
+  }).strict().optional(),
+  travelDays: z.number().int().min(1).max(60).optional(),
+  budget: z.object({ amount: z.number().nonnegative(), currency: z.string().regex(/^[A-Z]{3}$/), scope: z.enum(['airfare', 'transport', 'trip']) }).strict().optional(),
+  destinations: z.object({
+    mode: z.enum(['explicit', 'open', 'mixed']),
+    required: z.array(locationRefSchema).max(24),
+    preferred: z.array(locationRefSchema).max(24),
+    excluded: z.array(locationRefSchema).max(24)
+  }).strict(),
+  interests: z.array(z.string().min(1).max(80)).max(32),
+  readyForRouteGeneration: z.boolean()
+}).strict()
+
+const suggestedActionSchema = z.object({
+  id: z.enum(['continue_planning', 'generate_route']),
+  label: z.string().min(1).max(80),
+  kind: z.enum(['message', 'route_generation']),
+  href: z.string().min(1).max(240).optional()
+}).strict()
+
+export const cloudAgentResponseSchema = z.object({
+  conversationId: z.string().uuid(),
+  tripId: z.string().uuid(),
+  reply: z.string().min(1),
+  tripContextSummary: tripContextSummarySchema,
+  artifactRefs: z.array(z.object({
+    id: z.string().uuid(),
+    type: z.enum(ARTIFACT_TYPES),
+    schemaVersion: z.number().int().positive(),
+    presentationHint: artifactPresentationHintSchema
+  }).strict()).max(100),
+  suggestedActions: z.array(suggestedActionSchema).max(5),
+  memoryChanged: z.boolean().optional(),
+  warnings: z.array(z.string().min(1).max(240)).max(40),
+  stopReason: z.string().min(1).max(80)
+}).strict()
+
 export type CloudAgentServiceFactory = (trustedUserId: string) => CloudPlannerService
+
+function routeGenerationReady(context: TripContext): boolean {
+  return evaluateRouteGenerationEligibility(context).eligible
+}
+
+export function summarizeTrip(context: TripContext) {
+  return {
+    version: context.version,
+    ...(context.origin ? { origin: context.origin } : {}),
+    ...(context.departureWindow ? { departureWindow: context.departureWindow } : {}),
+    ...(context.returnWindow ? { returnWindow: context.returnWindow } : {}),
+    ...(context.travelDays ? { travelDays: context.travelDays } : {}),
+    ...(context.budget ? { budget: context.budget } : {}),
+    destinations: context.destinationIntent,
+    interests: context.interests,
+    readyForRouteGeneration: routeGenerationReady(context)
+  }
+}
+
+export function presentationHint(type: ArtifactType): z.infer<typeof artifactPresentationHintSchema> {
+  if (type === 'flight_search') return 'flight_cards'
+  if (type === 'research') return 'research_cards'
+  if (type === 'activity') return 'activity_cards'
+  if (type === 'destination_set') return 'destination_cards'
+  if (type === 'route_set') return 'route_preview'
+  if (type === 'route') return 'itinerary_outline'
+  return 'travel_guide'
+}
 
 function defaultFactory(context: AppContext): CloudAgentServiceFactory {
   return userId => {
@@ -33,15 +123,27 @@ function defaultFactory(context: AppContext): CloudAgentServiceFactory {
     const conversations = new PostgresConversationRepository(context.db, userId)
     const artifacts = new PostgresArtifactRepository(context.db, userId)
     const memory = new PostgresUserMemoryRepository(context.db, userId)
-    const runtime = new AgentRuntime(context.providers.openrouter, createCoreToolRegistry())
+    const runtime = new AgentRuntime(context.providers.openrouter, createPlannerToolRegistry(), {
+      model: context.env.PLANNER_MODEL
+    })
+    const topology = new PostgresTopologyRepository(context.db)
+    const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))
     return new CloudPlannerService({
       trips, conversations, artifacts, memory, runtime,
-      aviation: context.providers.aviation,
+      aviation,
       fares: context.providers.fares,
-      research: new UnavailableResearchAgent(),
-      connectionSearch: new UnavailableConnectionSearchService(),
-      flightRoutePlanner: new UnavailableFlightRoutePlanner(),
-      routeOptimizer: new UnavailableRouteOptimizer()
+      research: context.env.SERPAPI_KEY
+        ? new ProductionResearchAgent(
+          context.providers.researchSearch,
+          new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL)
+        )
+        : new UnavailableResearchAgent(),
+      connectionSearch: new ProductionConnectionSearchService(topology, context.providers.fares),
+      flightRoutePlanner: new DeterministicFlightRoutePlanner(),
+      routeOptimizer: new ParetoRouteOptimizer(),
+      destinationDiscovery: new CatalogDestinationDiscoveryService({ aviation }),
+      tripRoutePlanner: new DeterministicTripRoutePlanner(),
+      travelGuideBuilder: new DeterministicTravelGuideBuilder()
     })
   }
 }
@@ -51,7 +153,7 @@ export async function registerCloudAgentRoutes(
   context: AppContext,
   serviceForUser: CloudAgentServiceFactory = defaultFactory(context)
 ): Promise<void> {
-  app.post('/v1/agent-v2/converse', {
+  app.post('/v1/agent/converse', {
     config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
   }, async (request, reply) => {
     const identity = await authenticateRequest(request, context)
@@ -59,16 +161,31 @@ export async function registerCloudAgentRoutes(
     const service = serviceForUser(identity.userId)
     const result = await service.runTurn({
       requestId: request.id,
-      tripId: input.trip_id,
-      conversationId: input.conversation_id,
+      tripId: input.tripId,
+      conversationId: input.conversationId,
       message: input.message,
       generationId: uuidv7()
     })
-    return reply.header('Cache-Control', 'no-store').send({
+    const ready = routeGenerationReady(result.tripContext)
+    const response = cloudAgentResponseSchema.parse({
+      conversationId: input.conversationId,
+      tripId: input.tripId,
       reply: result.reply,
-      trip_version: result.tripVersion,
-      artifact_refs: result.artifactRefs,
-      stop_reason: result.stopReason
+      tripContextSummary: summarizeTrip(result.tripContext),
+      artifactRefs: result.artifactRefs.map(artifact => ({
+        ...artifact,
+        presentationHint: presentationHint(artifact.type)
+      })),
+      suggestedActions: ready
+        ? [{
+          id: 'generate_route', label: 'Generate route', kind: 'route_generation',
+          href: `/v1/trips/${input.tripId}/route-generation-runs`
+        }]
+        : [{ id: 'continue_planning', label: 'Continue planning', kind: 'message' }],
+      ...(result.memoryChanged ? { memoryChanged: true } : {}),
+      warnings: result.warnings,
+      stopReason: result.stopReason
     })
+    return reply.header('Cache-Control', 'no-store').send(response)
   })
 }

@@ -1,0 +1,9 @@
+.artifact-guide {
+  &__days { margin-top: 18rpx; }
+  &__day { padding: 18rpx 0; border-top: 1rpx solid var(--color-bg-border); }
+  &__day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16rpx; }
+  &__day-label { color: #45c6cb; font-size: 21rpx; letter-spacing: 2rpx; }
+  &__city { color: var(--color-text-primary, #fff); font-size: 27rpx; font-weight: 600; }
+  &__item, &__more { display: block; margin-top: 10rpx; color: var(--color-text-secondary, rgba(235, 235, 245, .68)); font-size: 24rpx; line-height: 1.45; }
+  &__item::before { content: '• '; color: #45c6cb; }
+}

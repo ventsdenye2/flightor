@@ -1,0 +1,10 @@
+.artifact-research {
+  &__summary { display: block; margin-top: 18rpx; padding-left: 18rpx; border-left: 4rpx solid #8d9cff; color: var(--color-text-secondary, rgba(235, 235, 245, .68)); font-size: 25rpx; line-height: 1.5; }
+  &__findings { margin-top: 20rpx; }
+  &__finding { padding: 20rpx 0; border-top: 1rpx solid var(--color-bg-border); }
+  &__finding-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16rpx; }
+  &__title { flex: 1; color: var(--color-text-primary, #fff); font-size: 27rpx; font-weight: 600; }
+  &__count { flex-shrink: 0; color: #8d9cff; font-size: 21rpx; }
+  &__locations, &__body, &__more { display: block; margin-top: 8rpx; color: var(--color-text-secondary, rgba(235, 235, 245, .68)); font-size: 23rpx; line-height: 1.45; }
+  &__locations { color: #b6bfff; }
+}

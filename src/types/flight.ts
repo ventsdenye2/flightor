@@ -12,13 +12,18 @@ export interface TransitCountryPreferences {
 /** 搜索参数（SearchPanel 收集） */
 export interface SearchParams {
   origin: string        // 主机场 IATA e.g. "SZX"
-  originCandidates: string[] // 出发圈候选机场（含主机场，邻近机场一起比价）
+  /** Legacy presentation compatibility; production manual search submits only origin. */
+  originCandidates: string[]
   destination: string   // 主落地机场 IATA e.g. "LHR"
-  destinationCandidates: string[] // 到达圈候选机场（含主机场）
+  /** Legacy presentation compatibility; production manual search submits only destination. */
+  destinationCandidates: string[]
   departDate: string    // 最早出发日 ISO 8601
-  departDateEnd: string // 最晚出发日（与 departDate 构成出发窗口）
-  returnDate?: string   // 往返时填写（保留字段，改用 stayRange 时可空）
-  stayRange?: [number, number] // 往返：游玩天数区间 [min, max]
+  /** Legacy compatibility field for offline/window artifacts; omitted by manual production search. */
+  departDateEnd?: string
+  /** Exact optional return date for a round-trip search. */
+  returnDate?: string
+  /** Mock/legacy-only shape retained for old offline itinerary code; never emitted by SearchStore. */
+  stayRange?: [number, number]
   tripType: 'oneway' | 'roundtrip'
   budgetRange: [number, number] // [min, max] 人民币
   transferPref: 'any' | 'direct' | 'transfer'
@@ -43,8 +48,8 @@ export interface HubInfo {
   iata: string
   city: string
   layoverMinutes: number
-  visaStatus: VisaStatus
-  visaNote: string
+  visaStatus?: VisaStatus
+  visaNote?: string
   baggageRecheck: boolean   // 行李是否需自取重挂
 }
 

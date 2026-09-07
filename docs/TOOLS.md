@@ -5,12 +5,26 @@ This file is the source-of-truth inventory for Agent-facing tools. It follows
 tests exist. Provider-specific payloads must be normalized before crossing a
 tool boundary.
 
+The public conversation API is the authenticated `POST /v1/agent/converse`.
+Its Planner registry is intentionally smaller than the complete deterministic
+Core Tool registry: conversation may gather facts, update Trip/Memory, search
+fares, research, and build an outline, but it cannot start final route
+generation. Final connection search, complete-path planning, Pareto
+optimization, and route-price confirmation run only behind the explicit
+owner-scoped route-generation run API described below. `agent-v2` is a removed
+migration seam, not a current public API.
+
 ## Status legend
 
 - **Implemented**: registered in the new runtime and covered by contract tests.
 - **Partial**: a reusable domain/provider foundation exists, but the Agent tool
   contract is not complete.
 - **Planned**: no production Agent tool contract exists yet.
+
+`generation-only` is an additional boundary label, not a weaker implementation
+status: the tool is implemented and tested, but is intentionally absent from
+the public conversation Planner registry and may run only inside the explicit
+route-generation composition.
 
 ## Phase 1 vertical slice
 
@@ -49,7 +63,7 @@ tool boundary.
 
 ### `resolve_location`
 
-- Status: **Implemented** (Mock/OAG contract path tested; primary AeroDataBox endpoint mapping remains partial)
+- Status: **Implemented** (AeroDataBox airport search/lookup/FIDS/status adapter + Mock/OAG-compatible seams)
 - Purpose: Resolve a natural-language place into FlightOR-owned city/airport
   references before those references are used as facts.
 - Input: `{ query: string, types?: ('city' | 'airport')[], limit?: number }`.
@@ -67,7 +81,7 @@ tool boundary.
 
 ### `search_flights`
 
-- Status: **Implemented** (normalized SerpApi/Mock providers + Phase 2 cloud Artifact Repository)
+- Status: **Implemented** (normalized SerpApi/Mock providers + owner-scoped Artifact Repository + Phase 6 shared manual/Agent service)
 - Purpose: Search real fare options for one requested leg and return the same
   `FlightSearchArtifact` contract used by manual Flight Explorer flows.
 - Input: `{ origin, destination, departureDate, returnDate?, currency?,
@@ -84,6 +98,12 @@ tool boundary.
   output retains original `checkedAt` and freshness metadata.
 - Failure behavior: No-offer is a valid empty artifact. Provider failure or
   timeout yields a structured error/unconfirmed state; prices are never guessed.
+- Product path: Agent tool execution and authenticated `POST /v1/flight-searches`
+  both call `backend/src/fares/search-service.ts`; the manual response returns a
+  compact ref/summary and Flight Explorer loads the full Artifact by ID. The
+  manual action requires an owner-scoped `Idempotency-Key`; the current bounded
+  24-hour in-process store is safe for the single-process deployment and must be
+  replaced by PostgreSQL/Redis before multi-instance rollout.
 
 ## Context and Memory tools
 
@@ -97,33 +117,33 @@ tool boundary.
 
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
-| `search_destinations` | Planned | Region/interests/accessibility filters → candidate set artifact | Creates artifact | cheap | Curated data + aviation accessibility | Versioned candidate cache; partial sources are marked |
-| `recommend_destinations` | Planned | Active trip + optional enabled Memory → scored destination set | Creates artifact | cheap | FlightOR scoring over verified data | Cache by inputs/data versions; never silently promotes a suggestion to required |
+| `search_destinations` | Implemented (Phase 4B) | Bounded region/interests filters + active Trip constraints → `destination_set` v1 artifact | Creates artifact | cheap | Curated catalog + optional normalized aviation accessibility | Catalog coverage and provider failure are explicit; accessibility is only `direct` or `unknown` |
+| `recommend_destinations` | Implemented (Phase 4B) | Active Trip + optional enabled Memory → scored `destination_set` v1 artifact | Creates artifact | cheap | Deterministic FlightOR scoring over catalog facts | Trip exclusions override Memory; suggestions never become required destinations |
 
 ## Flight and fare tools
 
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
 | `search_flexible_flights` | Implemented (Phase 3) | Canonical leg + ≤31-day window → `flight_search` v2 artifact + compact sampled-date summary | Creates artifact | paid | `FareProvider` (SerpApi/Mock) | Provider discloses sampled/success/failed dates; partial success is preserved and total failure is explicit |
-| `search_connection_flights` | Implemented contract (Phase 3; production service unavailable until Phase 4) | Trusted canonical leg/window + bounded preferences → `route_set:connection_edges` artifact | Creates artifact | expensive | `ConnectionSearchService`; deterministic Mock in tests | Production fails explicitly without the Phase 4 engine; no legacy/OAG payload or invented fare leaks through |
-| `confirm_flight_price` | Planned | Existing offer/artifact ref → refreshed offer | Updates verification/freshness | paid | `FareProvider.refreshFlight` | Bypasses ordinary fare cache; stale/unavailable is explicit |
-| `confirm_route_price` | Planned | Route artifact ref → refreshed fare-critical legs | Updates route verification | expensive | FlightOR service + `FareProvider` | Bounded refresh set; partial confirmation is preserved |
+| `search_connection_flights` | Implemented (Phase 4 production; generation-only) | Trusted canonical leg/window + cloud Trip transfer/location policy → `route_set:connection_edges` artifact | Creates artifact | expensive | PostgreSQL `TopologyRepository` + bounded `ConnectionSearchService` + optional fare enrichment | Preferred-first then general topology; partial coverage remains unknown; cost bounds and deterministic ordering are tested; excluded from the conversation Planner registry |
+| `confirm_flight_price` | Implemented (Phase 4B) | Owner-scoped artifact/offer binding → immutable refreshed `flight_search` v1 snapshot | Creates successor artifact | paid | `FareProvider.refreshFlight` | Query, endpoints and offer ID are revalidated; source artifact is never mutated |
+| `confirm_route_price` | Implemented (Phase 4B; generation-only) | Owner-scoped route/path ref → refreshed fare-critical legs + successor `route_set` | Creates fare snapshots and successor route artifact | expensive | FlightOR confirmation service + `FareProvider` | Maximum 12 legs and process-wide concurrency 2; weak bindings/partial failures cannot claim a current total; excluded from the conversation Planner registry |
 
 ## Route planning tools
 
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
-| `plan_trip_route` | Planned | Trip constraints + verified candidates → visit/day structure | Creates artifact | cheap | FlightOR trip-planning service | Deterministic inputs/version key; does not optimize global flights |
-| `plan_flight_route` | Implemented contract (Phase 3; production planner unavailable until Phase 4) | Trusted candidate-edge artifact + canonical nodes/window → `route_set:flight_paths` artifact | Creates artifact | cheap | `FlightRoutePlanner`; no provider calls | Owner/trip/kind/schema checks precede deterministic service handoff; bounded exhaustion is explicit |
-| `optimize_route` | Implemented contract (Phase 3; production optimizer unavailable until Phase 4) | Trusted complete-path artifact + bounded normalized weights → `route_set:optimized_routes` artifact | Creates artifact | cheap | `RouteOptimizer`; no discovery/provider calls | Returns Pareto/rejection counts and compact representatives; wrong/malformed source artifacts fail closed |
+| `plan_trip_route` | Implemented (Phase 4B) | Owner-scoped destination set + active Trip constraints → `route:trip_route_plan` v1 | Creates artifact | cheap | Deterministic FlightOR trip-structure planner | Required/excluded/role/day constraints fail closed; ground transport and activities are never invented |
+| `plan_flight_route` | Implemented (Phase 4 production; generation-only) | Trusted candidate-edge artifact + canonical nodes/window + cloud Trip constraints → `route_set:flight_paths` artifact | Creates artifact | cheap | Deterministic bounded `FlightRoutePlanner`; no provider calls | Hard constraints precede scoring; stable path order, cycle prevention, conservative unknowns, truncation/exhaustion are explicit; excluded from the conversation Planner registry |
+| `optimize_route` | Implemented (Phase 4 production; generation-only) | Trusted complete-path artifact + controlled bounded weights + cloud Trip preferences → `route_set:optimized_routes` artifact | Creates artifact | cheap | Deterministic Pareto `RouteOptimizer`; no discovery/provider calls | Full score breakdown, penalties, merged badges, trade-offs, algorithm version, and malformed-source rejection are persisted; excluded from the conversation Planner registry |
 
 ## Research tools
 
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
-| `web_research` | Implemented contract (Phase 3; production research unavailable) | Strict minimal `ResearchBrief` → `research` v1 artifact + compact confidence counts | Creates artifact | paid | Restricted `ResearchAgent`; deterministic Mock in tests | Agent receives only request ID/signal; production unavailability is bounded and does not fall back to unrestricted legacy search |
-| `research_destination` | Planned | Destination/time/interests → structured research artifact | Creates artifact | paid | Source-priority research service | Expiry by fact type; unsupported claims remain unverified |
-| `build_travel_guide` | Planned | Route + verified research refs → day-level guide artifact | Creates artifact | cheap | FlightOR composition over verified artifacts | Versioned by inputs; missing current-event facts are omitted |
+| `web_research` | Implemented (Phase 4B compatibility vocabulary) | Strict minimal `ResearchBrief` → `research` v2 artifact + compact status counts | Creates artifact | paid | Restricted production `ResearchAgent`; SerpApi research adapter; optional OpenRouter synthesis | Bounded snippets only; provider/model failure degrades conservatively; missing SerpApi key is explicit unavailable |
+| `research_destination` | Implemented (Phase 4B) | Trusted destination + active Trip window/interests/questions → `research` v2 artifact | Creates artifact | paid | Same restricted Research pipeline | Every finding has standard verification/TTL; event snippet evidence is never fully verified |
+| `build_travel_guide` | Implemented (Phase 4B) | Owner-scoped trip-route + research refs → `travel_guide` v1 artifact | Creates artifact | cheap | Deterministic FlightOR composition | Performs no search; stale/unverified findings are omitted and missing days remain empty |
 
 ## Runtime-wide execution policy
 
@@ -135,3 +155,68 @@ tool boundary.
 - Agent-facing tools call domain services/providers directly and never recurse
   through the Agent tool registry.
 - Tool errors returned to the model are bounded, deterministic, and secret-free.
+
+## Public Planner registry boundary (Phase 5)
+
+`createPlannerToolRegistry()` is the vocabulary exposed by the public
+conversation runtime. It includes:
+
+```text
+get_trip_context
+update_trip_context
+resolve_location
+search_flights
+search_flexible_flights
+confirm_flight_price
+search_destinations
+recommend_destinations
+plan_trip_route
+research_destination
+web_research
+build_travel_guide
+get_user_memory
+update_user_memory
+```
+
+It deliberately excludes `search_connection_flights`, `plan_flight_route`,
+`optimize_route`, and `confirm_route_price`. Those tools remain implemented in
+the complete Core Tool registry for deterministic engine composition and tests,
+but a model response or tool call cannot use them to start a final route.
+
+The explicit action is an authenticated, owner-scoped run resource:
+
+```text
+POST   /v1/trips/:tripId/route-generation-runs
+GET    /v1/route-generation-runs/:runId
+DELETE /v1/route-generation-runs/:runId
+```
+
+Creation requires `Idempotency-Key` and accepts only the strict body
+`{ conversationId?, expectedTripVersion? }`. The server snapshots the owned
+Trip Context, validates an optional same-Trip Conversation, stores a canonical
+request binding, and enqueues only the opaque run ID. Replaying the same key
+returns the existing run; changing the request under an existing key is a
+conflict. Reads and cancellation are owner-scoped. Cancellation is cooperative
+and persistent, and terminal runs are immutable.
+
+Run status is `queued → running → succeeded|failed|cancelled`, with bounded
+progress, warnings, sanitized errors, and compact result Artifact references.
+The worker uses the frozen context version, so later Trip edits do not mutate a
+running run. Successful results report their frozen version and whether they
+are stale relative to the current Trip.
+
+The Phase 5 generation slice accepts exactly one final visit destination with a
+canonical airport, an origin airport, and a bounded departure window. Return
+windows, multiple visit destinations, round-trip composition, and required
+ground legs are explicit unsupported-input errors; they are never silently
+truncated or represented as a complete route. Missing provider credentials or
+partial fare coverage produce explicit unavailable/warning states and never
+invent fare facts. `destinationIntent.preferred` remains a soft exploration and
+ranking input; it cannot by itself authorize final route generation. Run
+acceptance locks the Trip aggregate against concurrent context edits, persistent
+cancellation is checked at provider boundaries, and worker heartbeat/recovery
+keeps interrupted jobs retryable without exhausting attempts before the run is
+stale enough to reclaim.
+
+## Phase 7–9 consumers
+Route, research, guide and destination Artifacts now have client renderers. Cloud workspace restoration retains Artifact references and generation runs. Discovery runs constrained research through a dedicated Worker job and requires human publication; it adds no autonomous publish tool to the Planner registry. See [ADR 0008](./adr/0008-route-discovery-and-cloud-workspaces.md).

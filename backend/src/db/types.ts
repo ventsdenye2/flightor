@@ -81,7 +81,9 @@ export interface TripsTable {
   public_id: string
   user_id: string
   title: string
-  status: 'planning' | 'generated' | 'archived'
+  status: 'planning' | 'generated' | 'saved' | 'archived'
+  workspace_version: Generated<number>
+  saved_route_json: JsonColumn | null
   current_context_version: Generated<number>
   created_at: Timestamp
   updated_at: Timestamp
@@ -310,7 +312,56 @@ export interface JobsTable {
   completed_at: NullableTimestamp
 }
 
+export interface RouteGenerationRunsTable {
+  id: Generated<string>
+  public_id: string
+  user_id: string
+  trip_id: string
+  conversation_id: string | null
+  idempotency_key: string
+  request_hash: string
+  context_json: JsonColumn
+  context_version: number
+  status: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+  progress_stage: string
+  progress_percent: number
+  result_artifact_id: string | null
+  error_code: string | null
+  error_message: string | null
+  warnings_json: JsonColumn
+  started_at: NullableTimestamp
+  finished_at: NullableTimestamp
+  created_at: Timestamp
+  updated_at: Timestamp
+}
+
 export interface Database {
+  admin_users: {
+    id: string; email: string; password_hash: string; role: 'viewer' | 'reviewer' | 'admin'
+    active: Generated<boolean>; token_version: Generated<number>; created_at: Timestamp
+  }
+  discovery_runs: {
+    public_id: string; status: 'queued' | 'running' | 'succeeded' | 'failed'; input_json: JsonColumn
+    candidate_count: Generated<number>; error_code: string | null; attempt: Generated<number>
+    created_at: Timestamp; updated_at: Timestamp
+  }
+  discovery_candidates: {
+    public_id: string; fingerprint: string; status: 'candidate' | 'draft' | 'review' | 'published' | 'stale' | 'expired' | 'archived'
+    category: string; current_version: Generated<number>; published_version: number | null; source_run_id: string | null
+    valid_from: Timestamp; expires_at: Timestamp; verified_until: NullableTimestamp
+    created_at: Timestamp; updated_at: Timestamp
+  }
+  trip_template_versions: {
+    candidate_id: string; version: number; payload_json: JsonColumn; action: string; actor_id: string | null; created_at: Timestamp
+  }
+  discovery_sources: {
+    public_id: string; name: string; input_json: JsonColumn; interval_hours: number; enabled: Generated<boolean>
+    next_run_at: Timestamp; last_run_id: string | null; created_at: Timestamp
+  }
+  explore_seeds: {
+    user_id: string; idempotency_key: string; candidate_id: string; template_version: number
+    trip_id: string; conversation_id: string; created_at: Timestamp
+  }
   countries: CountriesTable
   cities: CitiesTable
   airports: AirportsTable
@@ -335,6 +386,7 @@ export interface Database {
   recommendations: RecommendationsTable
   sync_runs: SyncRunsTable
   jobs: JobsTable
+  route_generation_runs: RouteGenerationRunsTable
 }
 
 export type Country = Selectable<CountriesTable>
@@ -351,3 +403,5 @@ export type NewSearch = Insertable<FlightSearchesTable>
 export type SearchUpdate = Updateable<FlightSearchesTable>
 export type Job = Selectable<JobsTable>
 export type NewJob = Insertable<JobsTable>
+export type RouteGenerationRun = Selectable<RouteGenerationRunsTable>
+export type NewRouteGenerationRun = Insertable<RouteGenerationRunsTable>

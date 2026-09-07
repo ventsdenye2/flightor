@@ -68,15 +68,19 @@ describe('authenticated cloud Agent route', () => {
     await registerCloudAgentRoutes(app, { env } as unknown as AppContext, userId => { owners.push(userId); return service })
     const token = await issueAccessToken({ userId: 'internal-7', publicId: 'public-7' }, env)
     const response = await app.inject({
-      method: 'POST', url: '/v1/agent-v2/converse', headers: { authorization: `Bearer ${token}` },
-      payload: { trip_id: trip.id, conversation_id: conversation.id, message: '上海到东京' }
+      method: 'POST', url: '/v1/agent/converse', headers: { authorization: `Bearer ${token}` },
+      payload: { tripId: trip.id, conversationId: conversation.id, message: '上海到东京' }
     })
 
     expect(response.statusCode).toBe(200)
     expect(owners).toEqual(['internal-7'])
-    expect(response.json()).toMatchObject({ reply: '完成。', trip_version: 1, stop_reason: 'completed' })
-    expect(response.json().artifact_refs).toHaveLength(1)
-    expect(await artifacts.get(response.json().artifact_refs[0])).toMatchObject({ type: 'flight_search', schemaVersion: 1 })
+    expect(response.json()).toMatchObject({
+      reply: '完成。', tripId: trip.id, conversationId: conversation.id, stopReason: 'completed',
+      tripContextSummary: { version: 1, readyForRouteGeneration: false }
+    })
+    expect(response.json().artifactRefs).toHaveLength(1)
+    expect(response.json().artifactRefs[0]).toMatchObject({ type: 'flight_search', schemaVersion: 1, presentationHint: 'flight_cards' })
+    expect(await artifacts.get(response.json().artifactRefs[0].id)).toMatchObject({ type: 'flight_search', schemaVersion: 1 })
     expect((await conversations.listMessages(conversation.id)).map(message => message.role)).toEqual(['user', 'assistant'])
     await app.close()
   })

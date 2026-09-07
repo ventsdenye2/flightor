@@ -1,13 +1,16 @@
 import { z } from 'zod'
-import { v7 as uuidv7 } from 'uuid'
 import { locationRefKey, locationRefSchema, locationResolutionSchema, type LocationRef } from '../../aviation/types.js'
-import { fareSearchInputSchema, fareSearchResultSchema, flightSearchArtifactSchema } from '../../fares/types.js'
+import { fareSearchInputSchema } from '../../fares/types.js'
+import { executeFlightSearch } from '../../fares/search-service.js'
 import { USER_MEMORY_MAX_BYTES } from '../../memory/repository.js'
 import { tripContextPatchSchema, tripContextSchema } from '../../trips/types.js'
 import { ToolRegistry, type AgentTool } from '../runtime/registry.js'
 import { searchFlexibleFlightsTool } from './flexible-flights.js'
 import { optimizeRouteTool, planFlightRouteTool, searchConnectionFlightsTool } from './flight-routing.js'
-import { webResearchTool } from './web-research.js'
+import { searchDestinationsTool, recommendDestinationsTool, planTripRouteTool } from './destinations.js'
+import { confirmFlightPriceTool, confirmRoutePriceTool } from './fare-confirmation.js'
+import { researchDestinationTool, webResearchTool } from './research.js'
+import { buildTravelGuideTool } from './travel-guide.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
@@ -71,25 +74,14 @@ const updateUserMemoryInputSchema = z.object({
   expectedVersion: z.number().int().nonnegative()
 }).strict()
 
-function sameFareQuery(
-  left: z.infer<typeof fareSearchInputSchema>,
-  right: z.infer<typeof fareSearchInputSchema>
-): boolean {
-  return left.origin === right.origin
-    && left.destination === right.destination
-    && left.departureDate === right.departureDate
-    && left.returnDate === right.returnDate
-    && left.currency === right.currency
-    && left.travelClass === right.travelClass
-}
-
 function tripLocations(value: z.infer<typeof tripContextSchema>): LocationRef[] {
   return [
     ...(value.origin ? [value.origin] : []),
     ...value.destinationIntent.required,
     ...value.destinationIntent.preferred,
     ...value.destinationIntent.excluded,
-    ...value.locationRoleOverrides.map(item => item.location)
+    ...value.locationRoleOverrides.map(item => item.location),
+    ...value.requiredGroundLegs.flatMap(leg => [leg.from, leg.to])
   ]
 }
 
@@ -99,7 +91,8 @@ function patchLocations(value: z.infer<typeof tripContextPatchSchema>): Location
     ...(value.destinationIntent?.required ?? []),
     ...(value.destinationIntent?.preferred ?? []),
     ...(value.destinationIntent?.excluded ?? []),
-    ...(value.locationRoleOverrides ?? []).map(item => item.location)
+    ...(value.locationRoleOverrides ?? []).map(item => item.location),
+    ...(value.requiredGroundLegs ?? []).flatMap(leg => [leg.from, leg.to])
   ]
 }
 
@@ -222,31 +215,13 @@ const searchFlightsTool: AgentTool<
       currency: input.currency,
       travelClass: input.travelClass
     })
-    const result = fareSearchResultSchema.parse(await context.fares.searchFlights(query, { signal }))
-    if (!sameFareQuery(result.query, query)) {
-      throw new Error('Fare provider returned a result for a different query')
-    }
-    for (const offer of result.offers) {
-      const first = offer.segments[0]
-      const last = offer.segments[offer.segments.length - 1]
-      if (first?.origin !== query.origin || last?.destination !== query.destination) {
-        throw new Error('Fare provider returned an offer for a different route')
-      }
-    }
-    const id = uuidv7()
-    const artifact = flightSearchArtifactSchema.parse({
-      ...result,
-      id,
-      type: 'flight_search' as const
-    })
-    const stored = await context.artifacts.create({
-      id,
+    const { record: stored, payload: artifact } = await executeFlightSearch(query, {
+      fares: context.fares,
+      artifacts: context.artifacts,
       tripId: context.tripId,
       conversationId: context.conversationId,
-      type: 'flight_search',
-      schemaVersion: 1,
-      payload: artifact,
-      verification: artifact.verification
+      signal,
+      ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
     })
     const lowest = [...artifact.offers].sort((left, right) => left.totalAmount - right.totalAmount)[0]
     return {
@@ -301,10 +276,40 @@ export function createCoreToolRegistry(): ToolRegistry {
     .register(resolveLocationTool)
     .register(searchFlightsTool)
     .register(searchFlexibleFlightsTool)
+    .register(confirmFlightPriceTool)
     .register(searchConnectionFlightsTool)
     .register(planFlightRouteTool)
     .register(optimizeRouteTool)
+    .register(confirmRoutePriceTool)
+    .register(searchDestinationsTool)
+    .register(recommendDestinationsTool)
+    .register(planTripRouteTool)
+    .register(researchDestinationTool)
     .register(webResearchTool)
+    .register(buildTravelGuideTool)
+    .register(getUserMemoryTool)
+    .register(updateUserMemoryTool)
+}
+
+/**
+ * Conversation runtime vocabulary. Final route generation is intentionally
+ * absent: only the explicit authenticated Generate Route action may invoke
+ * connection search, complete-path planning, optimization, or route refresh.
+ */
+export function createPlannerToolRegistry(): ToolRegistry {
+  return new ToolRegistry()
+    .register(getTripContextTool)
+    .register(updateTripContextTool)
+    .register(resolveLocationTool)
+    .register(searchFlightsTool)
+    .register(searchFlexibleFlightsTool)
+    .register(confirmFlightPriceTool)
+    .register(searchDestinationsTool)
+    .register(recommendDestinationsTool)
+    .register(planTripRouteTool)
+    .register(researchDestinationTool)
+    .register(webResearchTool)
+    .register(buildTravelGuideTool)
     .register(getUserMemoryTool)
     .register(updateUserMemoryTool)
 }

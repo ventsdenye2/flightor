@@ -12,7 +12,7 @@ interface RiskWarningModalProps {
   onCancel: () => void
   risks: RiskItem[]
   hub: string
-  visaStatus: VisaStatus
+  visaStatus?: VisaStatus
 }
 
 const VISA_CLS: Record<VisaStatus, string> = {
@@ -42,8 +42,8 @@ function RiskWarningModal({ visible, onConfirm, onCancel, risks, hub, visaStatus
         <View className='risk-modal__header'>
           <Text className='risk-modal__title'>{t('risk.title')}</Text>
           <Text className='risk-modal__subtitle'>
-            {t('risk.transferAt', { hub })} ·{' '}
-            <Text className={`risk-modal__visa ${VISA_CLS[visaStatus]}`}>{t(`risk.visa.${visaStatus}`)}</Text>
+            {t('risk.transferAt', { hub })}
+            {visaStatus && <><Text> · </Text><Text className={`risk-modal__visa ${VISA_CLS[visaStatus]}`}>{t(`risk.visa.${visaStatus}`)}</Text></>}
           </Text>
         </View>
 

@@ -52,8 +52,11 @@ const path = {
 const score = {
   airfareSaving: 1, preferredCityMatch: 0, interestMatch: 0, eventMatch: 0,
   seasonMatch: 0, stopoverPlayability: 0, additionalCityValue: 0,
-  routeNovelty: 0, selfTransferRisk: 0, complexity: 0, total: 1
+  routeNovelty: 0, totalTravelTime: 0, transferCount: 0,
+  selfTransferRisk: 0, airportChangePenalty: 0, backtrackingPenalty: 0,
+  deadTimePenalty: 0, excessiveComplexity: 0, complexity: 0, total: 1
 }
+const explanation = { scoreBreakdown: [], hardConstraintsSatisfied: ['endpoints'], tradeoffs: [], warnings: [] }
 
 function context(): ToolExecutionContext {
   return {
@@ -71,7 +74,7 @@ function context(): ToolExecutionContext {
       warnings: [], truncated: false, exhausted: true
     }),
     routeOptimizer: new MockRouteOptimizer({
-      representatives: [{ path, score }], paretoFrontierCount: 1, rejectedCandidateCount: 0,
+      representatives: [{ path, score, badges: ['cheapest'], explanation }], paretoFrontierCount: 1, rejectedCandidateCount: 0,
       serviceVersion: 'mock-optimizer-v1', algorithmVersion: 'pareto-v1', verification,
       warnings: [], truncated: false, exhausted: true
     }),
@@ -133,6 +136,12 @@ describe('Phase 3 flight-routing tools', () => {
       preferredLocations: [], excludedLocations: [], acceptsSelfTransfer: false,
       acceptsLongStopover: false, maxCandidates: 10
     }, owned, new AbortController().signal)
+    await expect(planFlightRouteTool.execute({
+      candidateArtifactId: source.artifact.id,
+      nodes,
+      window: { from: '2026-10-02', to: '2026-10-03' },
+      maxPaths: 5
+    }, owned, new AbortController().signal)).rejects.toThrow('does not match')
     await expect(optimizeRouteTool.execute({
       pathArtifactId: source.artifact.id, weights: {}, maxRepresentatives: 5
     }, owned, new AbortController().signal)).rejects.toThrow('flight_paths')

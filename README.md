@@ -91,3 +91,5 @@ npm --prefix backend test  # 后端 20 个测试文件 / 121 项
 - 分支：`master` 保持稳定，功能开发开 `feat/xxx` 分支，PR 合入
 - `cloud/routePlanner/` 仅作为遗留兼容/测试资产，本地 Node 可直接测；当前非 Mock 多城运行链路不依赖它
 - 自建后端部署与环境变量：见 `backend/README.md`
+
+审核后台与云行程的启动、测试及验收边界：[Phase 7–9](./docs/PHASE789_ACCEPTANCE.md)。

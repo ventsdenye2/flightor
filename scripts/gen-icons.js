@@ -1,5 +1,5 @@
 // scripts/gen-icons.js — 生成 tabBar PNG 图标（纯 Node，无外部依赖）
-// 输出：src/assets/tab-{search,explore,plan,profile}[-active].png (81x81 RGBA)
+// 输出：src/assets/tab-{search,explore,plan,trips,profile}[-active].png (81x81 RGBA)
 const zlib = require('zlib')
 const fs = require('fs')
 const path = require('path')
@@ -130,6 +130,24 @@ function drawPlan(rgb) {
   return px
 }
 
+// 行程：轻量手提箱轮廓，和现有线性 tab 图标保持同一笔画。
+function drawTrips(rgb) {
+  const px = makeCanvas()
+  paint(px, rgb, (x, y) => {
+    const cx = Math.max(22, Math.min(59, x))
+    const cy = Math.max(29, Math.min(65, y))
+    return Math.hypot(x - cx, y - cy) - 3
+  })
+  paint(px, rgb, (x, y) => {
+    const outer = Math.max(Math.abs(x - 40.5) - 12, Math.abs(y - 23) - 7)
+    const inner = -Math.max(Math.abs(x - 40.5) - 6, Math.abs(y - 24) - 4)
+    return Math.max(outer, inner)
+  })
+  paint(px, rgb, segDist(30, 42, 30, 56, 5))
+  paint(px, rgb, segDist(51, 42, 51, 56, 5))
+  return px
+}
+
 // ---------- 输出 ----------
 const outDir = path.join(__dirname, '..', 'src', 'assets')
 fs.mkdirSync(outDir, { recursive: true })
@@ -142,6 +160,7 @@ const icons = {
   'tab-search': drawSearch,
   'tab-explore': drawExplore,
   'tab-plan': drawPlan,
+  'tab-trips': drawTrips,
   'tab-profile': drawProfile
 }
 

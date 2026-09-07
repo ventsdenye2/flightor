@@ -2,9 +2,21 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import type { FlightOption, SearchParams } from '../types/flight'
 import type { SearchResponse } from '../types/api'
-import { searchFlights, buildPriceMatrix, PriceMatrixData } from '../services/flightService'
+import {
+  searchFlights,
+  buildPriceMatrix,
+  paramsFromFlightSearchArtifact,
+  responseFromFlightSearchArtifact,
+  makeFlightSearchIdempotencyKey,
+  PriceMatrixData
+} from '../services/flightService'
+import { artifactService } from '../services/artifactService'
+import { resolveArtifactRenderer } from '../components/artifacts/registry'
 import { USE_MOCK } from '../utils/request'
 import { isExcludedByCountry, sortByRecommendation } from '../utils/flightRecommendation'
+import { chatStore, registerChatSessionChangeHandler } from './chatStore'
+import { registerUserSessionClearHandler, userStore } from './userStore'
+import { localeStore } from '../i18n'
 
 export class FlightStore {
   isLoading = false
@@ -23,31 +35,131 @@ export class FlightStore {
   private originalParams: SearchParams | null = null
   /** 当前选中方案（进入详情页） */
   selected: FlightOption | null = null
+  private requestGeneration = 0
+  private searchIdempotencyKey = ''
 
   constructor() {
     makeAutoObservable(this)
+    registerUserSessionClearHandler(() => this.clear())
+    registerChatSessionChangeHandler(() => this.clear())
   }
 
-  async search(params: SearchParams) {
+  private ownerId(): string | undefined {
+    return userStore.profile?.uid ?? (USE_MOCK ? 'mock-local' : undefined)
+  }
+
+  private isCurrent(requestId: number, ownerId: string | undefined, sessionId: string): boolean {
+    return requestId === this.requestGeneration
+      && ownerId === this.ownerId()
+      && sessionId === chatStore.currentSessionId
+  }
+
+  private async executeSearch(
+    params: SearchParams,
+    requestId: number,
+    idempotencyKey: string
+  ): Promise<{ response: SearchResponse; ownerId: string | undefined; sessionId: string }> {
+    if (USE_MOCK) {
+      const ownerId = this.ownerId()
+      const sessionId = chatStore.currentSessionId
+      return { response: await searchFlights(params), ownerId, sessionId }
+    }
+    const ownerId = this.ownerId()
+    if (!ownerId) throw new Error('AUTH_REQUIRED')
+    const cloud = await chatStore.prepareCloudSession(localeStore.locale)
+    const sessionId = chatStore.currentSessionId
+    if (!this.isCurrent(requestId, ownerId, sessionId)) throw new Error('STALE_FLIGHT_SEARCH')
+    artifactService.setSession(ownerId, sessionId)
+    const response = await searchFlights(params, {
+      ...cloud,
+      ownerId,
+      sessionId,
+      idempotencyKey
+    })
+    if (!this.isCurrent(requestId, ownerId, sessionId)) throw new Error('STALE_FLIGHT_SEARCH')
+    if (response.metadata.artifactRef) chatStore.addArtifactRef(response.metadata.artifactRef)
+    return { response, ownerId, sessionId }
+  }
+
+  async loadArtifact(artifactId: string) {
+    const requestId = ++this.requestGeneration
+    const ownerId = this.ownerId()
+    const sessionId = chatStore.currentSessionId
     this.isLoading = true
     this.error = ''
+    this.result = null
+    this.selected = null
+    artifactService.setSession(ownerId, sessionId)
+    try {
+      const artifact = await artifactService.fetchArtifact(artifactId, {
+        ownerId,
+        sessionId
+      })
+      if (!this.isCurrent(requestId, ownerId, sessionId)) return
+      const renderer = resolveArtifactRenderer(artifact)
+      if (!renderer.supported || renderer.key !== 'flight_search') throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+      const ref = {
+        id: artifact.id,
+        type: 'flight_search',
+        schemaVersion: artifact.schemaVersion,
+        presentationHint: 'flight_cards'
+      } as const
+      const params = paramsFromFlightSearchArtifact(artifact.payload)
+      const result = responseFromFlightSearchArtifact(artifact.payload, ref, artifact.updatedAt)
+      runInAction(() => {
+        if (!this.isCurrent(requestId, ownerId, sessionId)) return
+        this.result = result
+        this.lastParams = params
+        this.originalParams = params
+        this.matrix = null
+        this.matrixPick = null
+        this.isLoading = false
+      })
+    } catch (error) {
+      if (!this.isCurrent(requestId, ownerId, sessionId)) return
+      runInAction(() => {
+        this.error = (error as Error)?.message || '搜索结果加载失败'
+        this.result = null
+        this.isLoading = false
+      })
+    }
+  }
+
+  async search(params: SearchParams, options: { reuseIdempotencyKey?: boolean } = {}) {
+    const requestId = ++this.requestGeneration
+    const idempotencyKey = options.reuseIdempotencyKey && this.searchIdempotencyKey
+      ? this.searchIdempotencyKey
+      : makeFlightSearchIdempotencyKey()
+    this.searchIdempotencyKey = idempotencyKey
+    this.isLoading = true
+    this.error = ''
+    this.result = null
+    this.selected = null
     this.lastParams = params
     this.originalParams = params
     this.matrixPick = null
     try {
-      const res = await searchFlights(params)
+      const completed = await this.executeSearch(params, requestId, idempotencyKey)
+      if (!this.isCurrent(requestId, completed.ownerId, completed.sessionId)) return
       runInAction(() => {
-        this.result = res
+        this.result = completed.response
         // 矩阵仅在多组合时有意义；真实 API 接入后由云函数返回
         this.matrix = USE_MOCK ? buildPriceMatrix(params) : null
         this.isLoading = false
       })
     } catch (e) {
+      if (requestId !== this.requestGeneration || (e as Error)?.message === 'STALE_FLIGHT_SEARCH') return
       runInAction(() => {
         this.error = (e as Error)?.message || '搜索失败'
+        this.result = null
         this.isLoading = false
       })
     }
+  }
+
+  async retryLastSearch() {
+    if (!this.lastParams || this.isLoading) return
+    await this.search(this.lastParams, { reuseIdempotencyKey: true })
   }
 
   /** 点选矩阵格子：聚焦到单（机场,日期）组合；再次点击同一格恢复全部 */
@@ -57,8 +169,6 @@ export class FlightStore {
     if (this.matrixPick && this.matrixPick.origin === origin && this.matrixPick.date === date) {
       return this.clearMatrixPick()
     }
-    this.matrixPick = { origin, date }
-    this.isLoading = true
     const narrowed: SearchParams = {
       ...base,
       origin,
@@ -66,40 +176,36 @@ export class FlightStore {
       departDate: date,
       departDateEnd: date
     }
-    try {
-      const res = await searchFlights(narrowed)
-      runInAction(() => {
-        this.result = res
-        this.lastParams = narrowed
-        this.isLoading = false
-      })
-    } catch (e) {
-      runInAction(() => {
-        this.error = (e as Error)?.message || '搜索失败'
-        this.isLoading = false
-      })
-    }
+    const original = base
+    await this.search(narrowed)
+    this.originalParams = original
+    if (!this.error) this.matrixPick = { origin, date }
   }
 
   /** 恢复全部组合（重新按原始窗口搜索，矩阵确定性不变） */
   async clearMatrixPick() {
     const base = this.originalParams
     if (!base) return
+    await this.search(base)
+    this.originalParams = base
+    if (!this.error) this.matrixPick = null
+  }
+
+  /** Invalidate late responses and remove every owner-scoped in-memory result. */
+  clear() {
+    this.requestGeneration += 1
+    this.searchIdempotencyKey = ''
+    this.isLoading = false
+    this.error = ''
+    this.result = null
+    this.lastParams = null
+    this.originalParams = null
+    this.matrix = null
     this.matrixPick = null
-    this.isLoading = true
-    try {
-      const res = await searchFlights(base)
-      runInAction(() => {
-        this.result = res
-        this.lastParams = base
-        this.isLoading = false
-      })
-    } catch (e) {
-      runInAction(() => {
-        this.error = (e as Error)?.message || '搜索失败'
-        this.isLoading = false
-      })
-    }
+    this.selected = null
+    this.viewMode = 'all'
+    this.sortBy = 'recommended'
+    artifactService.setSession(undefined, undefined)
   }
 
   setViewMode(mode: 'all' | 'self' | 'official') {

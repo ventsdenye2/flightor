@@ -15,6 +15,7 @@ export interface MapAirportPoint {
 }
 
 export interface MapRoute {
+  id?: string
   points: Array<{ latitude: number; longitude: number }>
   color: string
   width?: number
@@ -29,6 +30,7 @@ interface WorldMapProps {
   /** true=整幅世界；false=按重点机场与航线自动取景 */
   fitWorld?: boolean
   onAirportTap?: (iata: string) => void
+  onRouteTap?: (id: string) => void
 }
 
 const COLORS = {
@@ -55,7 +57,7 @@ function project(p: Projection, lng: number, lat: number): [number, number] {
   return [x, y]
 }
 
-export default function WorldMap({ canvasId, heightRpx = 460, airports, routes = [], fitWorld = true, onAirportTap }: WorldMapProps) {
+export default function WorldMap({ canvasId, heightRpx = 460, airports, routes = [], fitWorld = true, onAirportTap, onRouteTap }: WorldMapProps) {
   const projRef = useRef<Projection | null>(null)
   // 记录热点机场屏幕坐标用于点击命中
   const hitRef = useRef<Array<{ iata: string; x: number; y: number }>>([])
@@ -66,8 +68,9 @@ export default function WorldMap({ canvasId, heightRpx = 460, airports, routes =
 
   const signature = JSON.stringify({
     f: fitWorld,
-    a: airports.map(a => `${a.iata}${a.kind}${a.label ?? ''}`),
-    r: routes.map(r => `${r.color}${r.width ?? ''}${r.dotted ? 1 : 0}${r.points.length}`)
+    a: airports,
+    r: routes,
+    h: heightRpx
   })
 
   useEffect(() => {
@@ -232,7 +235,7 @@ export default function WorldMap({ canvasId, heightRpx = 460, airports, routes =
   }
 
   const handleTouchEnd = (e: any) => {
-    if (!onAirportTap) return
+    if (!onAirportTap && !onRouteTap) return
     const touch = e.changedTouches?.[0]
     if (!touch) return
     const x = touch.x ?? 0
@@ -245,7 +248,22 @@ export default function WorldMap({ canvasId, heightRpx = 460, airports, routes =
       const d = Math.hypot(hit.x - x, hit.y - y)
       if (d <= 26 && (!best || d < best.d)) best = { iata: hit.iata, d }
     }
-    if (best) onAirportTap(best.iata)
+    if (best && onAirportTap) { onAirportTap(best.iata); return }
+    const p = projRef.current
+    if (!p || !onRouteTap) return
+    let nearest: { id: string; distance: number } | undefined
+    for (const route of routes) {
+      if (!route.id) continue
+      for (let i = 1; i < route.points.length; i++) {
+        const [ax, ay] = project(p, route.points[i - 1].longitude, route.points[i - 1].latitude)
+        const [bx, by] = project(p, route.points[i].longitude, route.points[i].latitude)
+        const dx = bx - ax, dy = by - ay
+        const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)))
+        const distance = Math.hypot(x - ax - t * dx, y - ay - t * dy)
+        if (distance <= 16 && (!nearest || distance < nearest.distance)) nearest = { id: route.id, distance }
+      }
+    }
+    if (nearest) onRouteTap(nearest.id)
   }
 
   return (

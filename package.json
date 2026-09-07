@@ -13,9 +13,13 @@
     "dev:weapp": "npm run build:weapp -- --watch",
     "gen:icons": "node scripts/gen-icons.js",
     "gen:guides": "node scripts/gen-guides.js",
-    "test": "npm run test:budget && npm run test:chat-history && npm run test:oag && npm run test:connectivity && npm run test:route && npm run test:route-real && npm run test:route-llm && npm run test:route-cloud",
+    "test": "npm run test:budget && npm run test:chat-history && npm run test:phase5-client && npm run test:trip-context-chips && npm run test:artifacts && npm run test:phase6-client && npm run test:phase789-client && npm run test:oag && npm run test:connectivity && npm run test:route && npm run test:route-real && npm run test:route-llm && npm run test:route-cloud",
     "test:budget": "node scripts/test-budget.cjs",
+    "test:trip-context-chips": "node scripts/test-trip-context-chips.js",
     "test:chat-history": "node scripts/test-chat-history.js",
+    "test:phase5-client": "node scripts/test-phase5-client.js",
+    "test:artifacts": "node scripts/test-artifacts.js",
+    "test:phase6-client": "node scripts/test-phase6-client.js",
     "test:oag": "node scripts/test-oag.js",
     "test:connectivity": "node scripts/test-connectivity.js",
     "test:route": "node scripts/test-route.js",
@@ -27,7 +31,10 @@
     "backend:build": "npm --prefix backend run build",
     "backend:migrate": "npm --prefix backend run migrate",
     "backend:up": "docker compose up -d --build",
-    "backend:down": "docker compose down"
+    "backend:down": "docker compose down",
+    "test:phase789-client": "node scripts/test-phase789-client.js",
+    "admin:dev": "npm --prefix apps/admin run dev",
+    "admin:build": "npm --prefix apps/admin run build"
   },
   "overrides": {
     "webpack": "5.78.0"

@@ -5,8 +5,10 @@
 // - 所有数组和文本都有上限，避免本地缓存随对话无限增长；
 // - ChatStore 只把这里产出的快照交给 storage wrapper 持久化。
 import type {
+  CloudArtifactRef,
+  CloudTripContextSummary,
   ConversationMessage,
-  ConversationResponse,
+  ConversationPhase,
   DestinationRecommendation,
   DestinationRegion,
   DestinationInterest,
@@ -20,6 +22,7 @@ import type {
   TravelGuideSourceKind
 } from '../services/conversationService'
 import type { ConfirmedPick, RouteLeg, RoutePick, RouteResult } from '../services/routeService'
+import type { RouteGenerationRunView } from '../services/routeGenerationService'
 
 export const CHAT_HISTORY_VERSION = 1 as const
 export const MAX_CHAT_SESSIONS = 20
@@ -27,6 +30,7 @@ export const MAX_CHAT_MESSAGES = 24
 export const MAX_CHAT_TIMELINE = 12
 export const MAX_CHAT_RECOMMENDATIONS = 3
 export const MAX_CHAT_ACTIONS = 3
+export const MAX_CHAT_ARTIFACT_REFS = 100
 export const MAX_CHAT_ROUTES = 3
 export const MAX_CHAT_ROUTE_LEGS = 8
 export const MAX_CHAT_MESSAGE_CHARS = 1_200
@@ -42,7 +46,7 @@ export const MAX_CHAT_GUIDE_TEXT_CHARS = 96_000
 
 const REGIONS: readonly DestinationRegion[] = ['japan', 'schengen', 'visa_free']
 const INTERESTS: readonly DestinationInterest[] = ['culture', 'food', 'nature', 'shopping', 'nightlife']
-const PHASES: readonly ConversationResponse['phase'][] = ['discover', 'clarify', 'plan']
+const PHASES: readonly ConversationPhase[] = ['discover', 'clarify', 'plan']
 const PRIORITIES: readonly TripState['priorities'][number][] = ['budget', 'comfort', 'few_transfers', 'culture']
 const PACES: readonly TripState['pace'][] = ['relaxed', 'balanced', 'many_cities']
 const ROUTE_KINDS: readonly RoutePick['kind'][] = ['cheapest', 'mostCities', 'mostNights']
@@ -55,6 +59,11 @@ export interface ConversationTurnSnapshot {
   suggestedActions: SuggestedAction[]
   routes: RoutePick[]
   warnings: string[]
+  /** Cloud response metadata; absent on readable legacy v1 turns. */
+  tripContextSummary?: CloudTripContextSummary
+  artifactRefs?: CloudArtifactRef[]
+  stopReason?: string
+  routeGeneration?: RouteGenerationRunView
   travelGuide?: TravelGuide
   error?: string
 }
@@ -68,11 +77,20 @@ export interface ChatSessionRecord {
   messages: ConversationMessage[]
   timeline: ConversationTurnSnapshot[]
   state: TripState
-  phase: ConversationResponse['phase']
+  phase: ConversationPhase
   recommendations: DestinationRecommendation[]
   suggestedActions: SuggestedAction[]
   routes: RoutePick[]
   warnings: string[]
+  /** Owner-scoped cloud material; legacy sessions omit these fields. */
+  ownerId?: string
+  tripId?: string
+  conversationId?: string
+  artifactRefs: CloudArtifactRef[]
+  tripContextSummary?: CloudTripContextSummary
+  stopReason?: string
+  routeGeneration?: RouteGenerationRunView
+  routeGenerationIdempotencyKey?: string
 }
 
 export interface PersistedChatHistory {
@@ -235,7 +253,190 @@ function sanitizeAction(value: unknown): SuggestedAction | null {
   const id = cleanText(value.id, 64)
   const label = cleanBilingual(value.label, 120)
   const message = cleanText(value.message, MAX_CHAT_MESSAGE_CHARS)
-  return id && label && message ? { id, label, message } : null
+  if (!id || !label || !message) return null
+  const kind = value.kind === 'message' || value.kind === 'route_generation' ? value.kind : undefined
+  const href = cleanOptionalText(value.href, 240)
+  const unavailableReason = cleanOptionalText(value.unavailableReason, 240)
+  if (value.disabled !== undefined && typeof value.disabled !== 'boolean') return null
+  return {
+    id,
+    label,
+    message,
+    ...(kind ? { kind } : {}),
+    ...(href ? { href } : {}),
+    ...(value.disabled === true ? { disabled: true } : {}),
+    ...(unavailableReason ? { unavailableReason } : {})
+  }
+}
+
+function sanitizeCloudLocation(value: unknown): CloudTripContextSummary['origin'] | null {
+  if (!isRecord(value)) return null
+  const id = cleanText(value.id, 128)
+  const type = value.type === 'city' || value.type === 'airport' ? value.type : null
+  const name = cleanText(value.name, 160)
+  const countryCode = typeof value.countryCode === 'string' && /^[A-Z]{2}$/.test(value.countryCode)
+    ? value.countryCode
+    : null
+  if (!id || !type || !name || !countryCode) return null
+  const iata = value.iata === undefined ? undefined : cleanIata(value.iata)
+  const cityCode = value.cityCode === undefined ? undefined : cleanIata(value.cityCode)
+  if (value.iata !== undefined && !iata) return null
+  if (value.cityCode !== undefined && !cityCode) return null
+  const latitude = value.latitude === undefined ? undefined : finiteNumber(value.latitude, -90, 90)
+  const longitude = value.longitude === undefined ? undefined : finiteNumber(value.longitude, -180, 180)
+  if (value.latitude !== undefined && latitude === null) return null
+  if (value.longitude !== undefined && longitude === null) return null
+  const timezone = value.timezone === undefined ? undefined : cleanText(value.timezone, 80)
+  if (value.timezone !== undefined && !timezone) return null
+  return {
+    id,
+    type,
+    name,
+    countryCode,
+    ...(iata ? { iata } : {}),
+    ...(cityCode ? { cityCode } : {}),
+    ...(latitude !== undefined && latitude !== null ? { latitude } : {}),
+    ...(longitude !== undefined && longitude !== null ? { longitude } : {}),
+    ...(timezone ? { timezone } : {})
+  }
+}
+
+function sanitizeCloudWindow(value: unknown): CloudTripContextSummary['departureWindow'] | null {
+  if (!isRecord(value) || (value.precision !== 'exact' && value.precision !== 'approximate')) return null
+  const from = value.from === undefined ? undefined : cleanDate(value.from)
+  const to = value.to === undefined ? undefined : cleanDate(value.to)
+  if (value.from !== undefined && !from) return null
+  if (value.to !== undefined && !to) return null
+  if (!from && !to) return null
+  if (from && to && to < from) return null
+  return { ...(from ? { from } : {}), ...(to ? { to } : {}), precision: value.precision }
+}
+
+/** Strictly bound the compact cloud Trip Context snapshot before persistence. */
+export function sanitizeCloudTripContextSummary(value: unknown): CloudTripContextSummary | undefined {
+  if (!isRecord(value) || typeof value.version !== 'number' || !Number.isInteger(value.version) || value.version < 0 || !Array.isArray(value.interests)) return undefined
+  if (typeof value.readyForRouteGeneration !== 'boolean' || !isRecord(value.destinations)) return undefined
+  const destinationMode = value.destinations.mode
+  if (destinationMode !== 'explicit' && destinationMode !== 'open' && destinationMode !== 'mixed') return undefined
+  const required = Array.isArray(value.destinations.required)
+    ? value.destinations.required.slice(0, 24).map(sanitizeCloudLocation).filter((item): item is NonNullable<ReturnType<typeof sanitizeCloudLocation>> => item !== null)
+    : null
+  const preferred = Array.isArray(value.destinations.preferred)
+    ? value.destinations.preferred.slice(0, 24).map(sanitizeCloudLocation).filter((item): item is NonNullable<ReturnType<typeof sanitizeCloudLocation>> => item !== null)
+    : null
+  const excluded = Array.isArray(value.destinations.excluded)
+    ? value.destinations.excluded.slice(0, 24).map(sanitizeCloudLocation).filter((item): item is NonNullable<ReturnType<typeof sanitizeCloudLocation>> => item !== null)
+    : null
+  if (!required || !preferred || !excluded) return undefined
+  const interests = cleanStringList(value.interests, 32, 80)
+  if (!interests) return undefined
+  const origin = value.origin === undefined ? undefined : sanitizeCloudLocation(value.origin)
+  if (value.origin !== undefined && !origin) return undefined
+  const departureWindow = value.departureWindow === undefined ? undefined : sanitizeCloudWindow(value.departureWindow)
+  const returnWindow = value.returnWindow === undefined ? undefined : sanitizeCloudWindow(value.returnWindow)
+  if (value.departureWindow !== undefined && !departureWindow) return undefined
+  if (value.returnWindow !== undefined && !returnWindow) return undefined
+  const travelDays = value.travelDays === undefined ? undefined : integerNumber(value.travelDays, 1, 60)
+  if (value.travelDays !== undefined && travelDays === null) return undefined
+  let budget: CloudTripContextSummary['budget'] | undefined
+  if (value.budget !== undefined) {
+    if (!isRecord(value.budget)
+      || typeof value.budget.currency !== 'string'
+      || !/^[A-Z]{3}$/.test(value.budget.currency)
+      || (value.budget.scope !== 'airfare' && value.budget.scope !== 'transport' && value.budget.scope !== 'trip')) return undefined
+    const amount = finiteNumber(value.budget.amount, 0, 100_000_000)
+    if (amount === null) return undefined
+    budget = { amount, currency: value.budget.currency, scope: value.budget.scope }
+  }
+  return {
+    version: value.version,
+    ...(origin ? { origin } : {}),
+    ...(departureWindow ? { departureWindow } : {}),
+    ...(returnWindow ? { returnWindow } : {}),
+    ...(travelDays !== undefined && travelDays !== null ? { travelDays } : {}),
+    ...(budget ? { budget } : {}),
+    destinations: { mode: destinationMode, required, preferred, excluded },
+    interests,
+    readyForRouteGeneration: value.readyForRouteGeneration
+  }
+}
+
+function sanitizeArtifactRef(value: unknown): CloudArtifactRef | null {
+  if (!isRecord(value)) return null
+  const id = cleanText(value.id, 80)
+  const type = cleanText(value.type, 80)
+  const schemaVersion = integerNumber(value.schemaVersion, 1, 1_000_000)
+  const hints = ['flight_cards', 'research_cards', 'activity_cards', 'destination_cards', 'route_preview', 'itinerary_outline', 'travel_guide'] as const
+  const presentationHint = hints.includes(value.presentationHint as typeof hints[number]) ? value.presentationHint as typeof hints[number] : null
+  if (!id || !type || schemaVersion === null || !presentationHint) return null
+  return { id, type, schemaVersion, presentationHint }
+}
+
+const ROUTE_GENERATION_STATUSES: readonly RouteGenerationRunView['status'][] = ['queued', 'running', 'succeeded', 'failed', 'cancelled']
+const ROUTE_GENERATION_STAGES: readonly RouteGenerationRunView['progress']['stage'][] = [
+  'queued', 'searching_connections', 'planning_paths', 'optimizing_routes',
+  'persisting_artifacts', 'completed', 'failed', 'cancelled'
+]
+
+function cleanIsoTimestamp(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.trim() || !Number.isFinite(Date.parse(value))) return null
+  return value.trim().slice(0, 64)
+}
+
+function sanitizeRouteGenerationRun(value: unknown): RouteGenerationRunView | undefined {
+  if (!isRecord(value)) return undefined
+  const id = cleanText(value.id, 80)
+  const tripId = cleanText(value.tripId, 80)
+  const idempotencyKey = cleanText(value.idempotencyKey, 200)
+  const contextVersion = integerNumber(value.contextVersion, 0, 1_000_000_000)
+  const status = ROUTE_GENERATION_STATUSES.includes(value.status as RouteGenerationRunView['status'])
+    ? value.status as RouteGenerationRunView['status']
+    : null
+  if (!id || !tripId || !idempotencyKey || contextVersion === null || !status || !isRecord(value.progress)) return undefined
+  const stage = ROUTE_GENERATION_STAGES.includes(value.progress.stage as RouteGenerationRunView['progress']['stage'])
+    ? value.progress.stage as RouteGenerationRunView['progress']['stage']
+    : null
+  const percent = integerNumber(value.progress.percent, 0, 100)
+  const createdAt = cleanIsoTimestamp(value.createdAt)
+  const updatedAt = cleanIsoTimestamp(value.updatedAt)
+  const warnings = cleanStringList(value.warnings, 40, MAX_CHAT_WARNING_CHARS)
+  if (!stage || percent === null || !createdAt || !updatedAt || !warnings) return undefined
+  const conversationId = value.conversationId === undefined ? undefined : cleanText(value.conversationId, 80)
+  if (value.conversationId !== undefined && !conversationId) return undefined
+  const staleValue = value.stale
+  if (staleValue !== undefined && typeof staleValue !== 'boolean') return undefined
+  const stale = staleValue as boolean | undefined
+  const resultArtifactId = value.resultArtifactId === undefined ? undefined : cleanText(value.resultArtifactId, 80)
+  if (value.resultArtifactId !== undefined && !resultArtifactId) return undefined
+  let error: RouteGenerationRunView['error']
+  if (value.error !== undefined) {
+    if (!isRecord(value.error)) return undefined
+    const code = typeof value.error.code === 'string' && /^[A-Z][A-Z0-9_]{2,63}$/.test(value.error.code) ? value.error.code : null
+    const message = cleanText(value.error.message, 240)
+    if (!code || !message) return undefined
+    error = { code, message }
+  }
+  const startedAt = value.startedAt === undefined ? undefined : cleanIsoTimestamp(value.startedAt)
+  const finishedAt = value.finishedAt === undefined ? undefined : cleanIsoTimestamp(value.finishedAt)
+  if (value.startedAt !== undefined && !startedAt) return undefined
+  if (value.finishedAt !== undefined && !finishedAt) return undefined
+  return {
+    id,
+    tripId,
+    ...(conversationId ? { conversationId } : {}),
+    idempotencyKey,
+    contextVersion,
+    status,
+    ...(stale !== undefined ? { stale } : {}),
+    progress: { stage, percent },
+    ...(resultArtifactId ? { resultArtifactId } : {}),
+    ...(error ? { error } : {}),
+    warnings,
+    createdAt,
+    updatedAt,
+    ...(startedAt ? { startedAt } : {}),
+    ...(finishedAt ? { finishedAt } : {})
+  }
 }
 
 function sanitizeLeg(value: unknown): RouteLeg | null {
@@ -548,6 +749,16 @@ function sanitizeTurn(value: unknown, fallbackId: string): ConversationTurnSnaps
   const routes = value.routes.slice(0, MAX_CHAT_ROUTES).map(sanitizePick).filter((item): item is RoutePick => item !== null)
   const warnings = sanitizeWarnings(value.warnings)
   if (!warnings) return null
+  const tripContextSummary = value.tripContextSummary === undefined
+    ? undefined
+    : sanitizeCloudTripContextSummary(value.tripContextSummary)
+  if (value.tripContextSummary !== undefined && !tripContextSummary) return null
+  const artifactRefs = value.artifactRefs === undefined
+    ? undefined
+    : Array.isArray(value.artifactRefs)
+      ? value.artifactRefs.slice(0, MAX_CHAT_ARTIFACT_REFS).map(sanitizeArtifactRef).filter((item): item is CloudArtifactRef => item !== null)
+      : null
+  if (artifactRefs === null) return null
   const travelGuide = value.travelGuide === undefined ? undefined : sanitizeTravelGuide(value.travelGuide)
   const id = cleanText(value.id, 80) ?? fallbackId
   const error = cleanOptionalText(value.error, 240)
@@ -559,6 +770,9 @@ function sanitizeTurn(value: unknown, fallbackId: string): ConversationTurnSnaps
     suggestedActions,
     routes,
     warnings,
+    ...(tripContextSummary ? { tripContextSummary } : {}),
+    ...(artifactRefs ? { artifactRefs } : {}),
+    ...(typeof value.stopReason === 'string' && value.stopReason.trim() ? { stopReason: value.stopReason.trim().slice(0, 80) } : {}),
     ...(travelGuide ? { travelGuide } : {}),
     ...(error ? { error } : {})
   }
@@ -600,10 +814,27 @@ export function sanitizeChatSession(value: unknown, now = Date.now()): ChatSessi
   const state = sanitizeTripState(value.state)
   if (!id || !state) return null
 
+  const ownerId = cleanText(value.ownerId, 160)
+  const tripId = cleanText(value.tripId, 80)
+  const conversationId = cleanText(value.conversationId, 80)
+  const artifactRefs = Array.isArray(value.artifactRefs)
+    ? value.artifactRefs.slice(0, MAX_CHAT_ARTIFACT_REFS).map(sanitizeArtifactRef).filter((item): item is CloudArtifactRef => item !== null)
+    : []
+  const tripContextSummary = value.tripContextSummary === undefined
+    ? undefined
+    : sanitizeCloudTripContextSummary(value.tripContextSummary)
+  if (value.tripContextSummary !== undefined && !tripContextSummary) return null
+  const routeGeneration = value.routeGeneration === undefined ? undefined : sanitizeRouteGenerationRun(value.routeGeneration)
+  if (value.routeGeneration !== undefined && !routeGeneration) return null
+  const routeGenerationIdempotencyKey = value.routeGenerationIdempotencyKey === undefined
+    ? undefined
+    : cleanText(value.routeGenerationIdempotencyKey, 200)
+  if (value.routeGenerationIdempotencyKey !== undefined && !routeGenerationIdempotencyKey) return null
+
   const messages = value.messages.slice(-MAX_CHAT_MESSAGES).map(sanitizeMessage).filter((item): item is ConversationMessage => item !== null)
   const timeline = value.timeline.slice(-MAX_CHAT_TIMELINE).map((item, index) => sanitizeTurn(item, `turn-restored-${index}`)).filter((item): item is ConversationTurnSnapshot => item !== null)
   const settled = removePendingTurn(messages, timeline)
-  if (settled.messages.length === 0 && settled.timeline.length === 0) return null
+  if (settled.messages.length === 0 && settled.timeline.length === 0 && !(ownerId && tripId && conversationId)) return null
 
   const recommendations = Array.isArray(value.recommendations)
     ? value.recommendations.slice(0, MAX_CHAT_RECOMMENDATIONS).map(sanitizeRecommendation).filter((item): item is DestinationRecommendation => item !== null)
@@ -617,7 +848,7 @@ export function sanitizeChatSession(value: unknown, now = Date.now()): ChatSessi
   const warnings = sanitizeWarnings(value.warnings) ?? []
   const createdAt = normalizeTimestamp(value.createdAt, now)
   const updatedAt = normalizeTimestamp(value.updatedAt, createdAt)
-  const phase = PHASES.includes(value.phase as ConversationResponse['phase']) ? value.phase as ConversationResponse['phase'] : 'clarify'
+  const phase = PHASES.includes(value.phase as ConversationPhase) ? value.phase as ConversationPhase : 'clarify'
   const persistedTitle = cleanText(value.title, 40)
   return {
     id,
@@ -632,7 +863,15 @@ export function sanitizeChatSession(value: unknown, now = Date.now()): ChatSessi
     recommendations,
     suggestedActions,
     routes,
-    warnings
+    warnings,
+    ...(ownerId ? { ownerId } : {}),
+    ...(tripId ? { tripId } : {}),
+    ...(conversationId ? { conversationId } : {}),
+    artifactRefs,
+    ...(tripContextSummary ? { tripContextSummary } : {}),
+    ...(typeof value.stopReason === 'string' && value.stopReason.trim() ? { stopReason: value.stopReason.trim().slice(0, 80) } : {}),
+    ...(routeGeneration ? { routeGeneration } : {}),
+    ...(routeGenerationIdempotencyKey ? { routeGenerationIdempotencyKey } : {})
   }
 }
 
@@ -663,7 +902,8 @@ export function createEmptyChatSession(id: string, now = Date.now()): ChatSessio
     recommendations: [],
     suggestedActions: [],
     routes: [],
-    warnings: []
+    warnings: [],
+    artifactRefs: []
   }
 }
 
@@ -819,8 +1059,8 @@ export function makeChatHistoryPayload(currentSessionId: string, sourceSessions:
   return payload
 }
 
-export function sessionHasContent(session: Pick<ChatSessionRecord, 'messages' | 'timeline'>): boolean {
-  return session.messages.length > 0 || session.timeline.length > 0
+export function sessionHasContent(session: Pick<ChatSessionRecord, 'messages' | 'timeline'> & Partial<Pick<ChatSessionRecord, 'artifactRefs'>>): boolean {
+  return session.messages.length > 0 || session.timeline.length > 0 || (session.artifactRefs?.length ?? 0) > 0
 }
 
 export function cloneTripState(state: TripState): TripState {

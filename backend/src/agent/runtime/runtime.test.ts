@@ -19,11 +19,13 @@ const call = (id: string, name: string, args = {}) => ({ id, type: 'function' as
 const tool = (name: string, execute: AgentTool['execute'], extra: Partial<AgentTool> = {}): AgentTool => ({ name, description: name, inputSchema: z.object({}).strict(), outputSchema: z.object({ ok: z.boolean() }), costClass: 'free', costUnits: 1, sideEffect: 'none', parallelSafe: true, timeoutMs: 30, execute, ...extra })
 
 describe('AgentRuntime and ToolRegistry', () => {
-  it('publishes the complete Phase 3 Core Tool vocabulary', () => {
+  it('publishes the complete Phase 4B Core Tool vocabulary', () => {
     expect(createCoreToolRegistry().definitions().map(definition => definition.function.name)).toEqual([
       'get_trip_context', 'update_trip_context', 'resolve_location', 'search_flights',
-      'search_flexible_flights', 'search_connection_flights', 'plan_flight_route',
-      'optimize_route', 'web_research', 'get_user_memory', 'update_user_memory'
+      'search_flexible_flights', 'confirm_flight_price', 'search_connection_flights',
+      'plan_flight_route', 'optimize_route', 'confirm_route_price', 'search_destinations',
+      'recommend_destinations', 'plan_trip_route', 'research_destination', 'web_research',
+      'build_travel_guide', 'get_user_memory', 'update_user_memory'
     ])
   })
 

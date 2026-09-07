@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { connectionEdgeSchema, routeSetPayloadSchema, type ConnectionSearchResult, type FlightRoutePlanResult, type RouteOptimizationResult, MockConnectionSearchService, MockFlightRoutePlanner, MockRouteOptimizer, UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from './services.js'
+import { connectionEdgeSchema, connectionSearchInputSchema, routeSetPayloadSchema, type ConnectionSearchResult, type FlightRoutePlanResult, type RouteOptimizationResult, MockConnectionSearchService, MockFlightRoutePlanner, MockRouteOptimizer, UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from './services.js'
 
 const loc = (iata: string) => ({ id: iata, type: 'airport' as const, name: iata, countryCode: 'CN', iata })
 const verification = { status: 'verified' as const, checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock' }] }
@@ -14,9 +14,10 @@ describe('flight-routing Phase 3 contracts', () => {
   })
   it('discriminates route_set payload kinds', () => {
     const common = { schemaVersion: 1 as const, serviceVersion: 'v1', algorithmVersion: 'v1', sourceArtifactIds: [], verification, warnings: [], truncated: false, exhausted: true }
-    expect(routeSetPayloadSchema.parse({ ...common, kind: 'connection_edges', edges: [edge('PEK', 'NRT')] })).toMatchObject({ kind: 'connection_edges' })
+    const query = { origin: loc('PEK'), destination: loc('NRT'), window: { from: '2026-09-10', to: '2026-09-11' } }
+    expect(routeSetPayloadSchema.parse({ ...common, kind: 'connection_edges', query, edges: [edge('PEK', 'NRT')] })).toMatchObject({ kind: 'connection_edges' })
     expect(() => routeSetPayloadSchema.parse({ ...common, kind: 'flight_paths', edges: [] })).toThrow()
-    expect(() => routeSetPayloadSchema.parse({ ...common, kind: 'connection_edges', edges: [], paths: [] })).toThrow()
+    expect(() => routeSetPayloadSchema.parse({ ...common, kind: 'connection_edges', query, edges: [], paths: [] })).toThrow()
   })
   it('mocks validate and delegate configured results', async () => {
     const connection: ConnectionSearchResult = { ...base, edges: [edge('PEK', 'NRT')] }
@@ -26,6 +27,19 @@ describe('flight-routing Phase 3 contracts', () => {
     await expect(new MockFlightRoutePlanner(planner).plan({ nodes: [{ location: loc('PEK'), role: 'origin' }, { location: loc('CDG'), role: 'destination' }], edges: [edge('PEK', 'CDG')], window: { from: '2026-09-10', to: '2026-09-11' }, maxPaths: 2 })).resolves.toEqual(planner)
     await expect(new MockRouteOptimizer(optimizer).optimize({ paths: [{ id: 'p', nodes: [{ location: loc('PEK'), role: 'origin' }, { location: loc('CDG'), role: 'destination' }], edges: [edge('PEK', 'CDG')], transferCount: 0, feasibility: 'feasible', warnings: [] }], weights: {}, maxRepresentatives: 2 })).resolves.toEqual(optimizer)
   })
+  it('requires controlled optimizer dimensions and deterministic explanations', () => {
+    const common = { schemaVersion: 1 as const, serviceVersion: 'v1', algorithmVersion: 'v1', sourceArtifactIds: [], verification, warnings: [], truncated: false, exhausted: true }
+    const path = { id: 'p', nodes: [{ location: loc('PEK'), role: 'origin' as const }, { location: loc('CDG'), role: 'destination' as const }], edges: [edge('PEK', 'CDG')], transferCount: 0, feasibility: 'feasible' as const, warnings: [] }
+    const score = {
+      airfareSaving: 1, preferredCityMatch: 0, interestMatch: 0, eventMatch: 0,
+      seasonMatch: 0, stopoverPlayability: 0, additionalCityValue: 0, routeNovelty: 0,
+      totalTravelTime: 0, transferCount: 0, selfTransferRisk: 0,
+      airportChangePenalty: 0, backtrackingPenalty: 0, deadTimePenalty: 0,
+      excessiveComplexity: 0, complexity: 0, total: 1
+    }
+    const explanation = { scoreBreakdown: [], hardConstraintsSatisfied: ['endpoints'], tradeoffs: [], warnings: [] }
+    expect(routeSetPayloadSchema.parse({ ...common, kind: 'optimized_routes', representatives: [{ path, score, badges: ['cheapest'], explanation }], paretoFrontierCount: 1, rejectedCandidateCount: 0 })).toMatchObject({ kind: 'optimized_routes' })
+  })
   it('fails unavailable capabilities deterministically and without secrets', async () => {
     for (const promise of [new UnavailableConnectionSearchService().search({} as never), new UnavailableFlightRoutePlanner().plan({} as never), new UnavailableRouteOptimizer().optimize({} as never)]) {
       await expect(promise).rejects.toMatchObject({ code: 'ROUTE_CAPABILITY_UNAVAILABLE' })
@@ -33,4 +47,10 @@ describe('flight-routing Phase 3 contracts', () => {
     }
   })
   it('exports zod schemas for downstream contracts', () => expect(z.object({}).strict).toBeTypeOf('function'))
+  it('rejects calendar windows that exceed the bounded search horizon', () => {
+    expect(() => connectionSearchInputSchema.parse({
+      origin: loc('PEK'), destination: loc('CDG'),
+      window: { from: '2026-01-01', to: '2028-01-01' }
+    })).toThrow(/must not exceed 366 days/)
+  })
 })

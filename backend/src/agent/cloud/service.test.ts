@@ -68,11 +68,51 @@ describe('CloudPlannerService vertical slice', () => {
 
     expect(result).toMatchObject({ reply: '已找到一个经过验证的航班选项。', tripVersion: 1, stopReason: 'completed' })
     expect(result.artifactRefs).toHaveLength(1)
-    const artifact = await artifacts.get(result.artifactRefs[0]!)
+    expect(result.artifactRefs[0]).toMatchObject({ type: 'flight_search', schemaVersion: 1 })
+    expect(result.memoryChanged).toBe(false)
+    const artifact = await artifacts.get(result.artifactRefs[0]!.id)
     expect(artifact).toMatchObject({ type: 'flight_search', schemaVersion: 1 })
-    expect(artifact?.payload).toMatchObject({ id: result.artifactRefs[0], query: { origin: 'PVG', destination: 'NRT' } })
+    expect(artifact?.payload).toMatchObject({ id: result.artifactRefs[0]!.id, query: { origin: 'PVG', destination: 'NRT' } })
     const messages = await conversations.listMessages(conversation.id)
     expect(messages.map(message => message.role)).toEqual(['user', 'assistant'])
-    expect(messages[1]?.metadata.artifact_refs).toEqual(result.artifactRefs)
+    expect(messages[1]?.metadata.artifact_refs).toEqual(result.artifactRefs.map(artifact => artifact.id))
+  })
+
+  it('reports an explicit User Memory version change without folding Memory into Trip Context', async () => {
+    const trips = new InMemoryTripRepository()
+    const trip = await trips.create({ title: 'Memory update' })
+    const ownedTrips = new Set([trip.id])
+    const conversations = new InMemoryConversationRepository('user-memory', ownedTrips)
+    const conversation = await conversations.create({ tripId: trip.id })
+    const memory = new InMemoryUserMemoryRepository({ markdown: '# Preferences', version: 0 })
+    const model: AgentModelClient = { complete: vi.fn()
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [
+        call('memory-1', 'update_user_memory', {
+          markdown: '# Preferences\n\n- Prefer aisle seats', expectedVersion: 0
+        })
+      ] } })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: '已保存为长期偏好。' } }) }
+    const service = new CloudPlannerService({
+      trips,
+      conversations,
+      artifacts: new InMemoryArtifactRepository('user-memory', ownedTrips),
+      memory,
+      runtime: new AgentRuntime(model, createCoreToolRegistry()),
+      aviation: new MockAviationProvider(),
+      fares: new MockFareProvider(),
+      research: new UnavailableResearchAgent(),
+      connectionSearch: new UnavailableConnectionSearchService(),
+      flightRoutePlanner: new UnavailableFlightRoutePlanner(),
+      routeOptimizer: new UnavailableRouteOptimizer()
+    })
+
+    const result = await service.runTurn({
+      requestId: 'req-memory', tripId: trip.id, conversationId: conversation.id,
+      generationId: 'gen-memory', message: '以后都给我安排靠过道座位'
+    })
+
+    expect(result.memoryChanged).toBe(true)
+    expect(result.tripContext.version).toBe(0)
+    expect((await memory.get()).markdown).toContain('Prefer aisle seats')
   })
 })

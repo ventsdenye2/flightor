@@ -5,20 +5,24 @@ import { makeAutoObservable, runInAction } from 'mobx'
 import { confirmPicks, type RoutePick } from '../services/routeService'
 import {
   converse,
+  bootstrapCloudSession,
   emptyTripState,
   type ConversationMessage,
   type ConversationResponse,
+  type CloudArtifactRef,
+  type CloudTripContextSummary,
   type DestinationRecommendation,
   type SuggestedAction,
   type TripState
 } from '../services/conversationService'
-import { flightStore } from './flightStore'
 import type { FlightOption, Interest } from '../types/flight'
+import type { CloudWorkspace } from '../services/workspaceService'
 import { t } from '../i18n'
 import {
   cloneTripState,
   cloneTravelGuide,
   loadChatHistory,
+  registerCloudChatHistoryClearHandler,
   saveChatHistory,
   sessionSummary,
   sessionHasContent,
@@ -29,8 +33,31 @@ import {
   type ChatSessionRecord,
   type ConversationTurnSnapshot
 } from './chatHistory'
+import { USE_MOCK } from '../utils/request'
+import { registerUserSessionClearHandler, userStore } from './userStore'
+import {
+  cancelRouteGenerationRun,
+  createRouteGenerationRun,
+  getRouteGenerationRun,
+  isRouteGenerationTerminal,
+  makeRouteGenerationIdempotencyKey,
+  type RouteGenerationRunView
+} from '../services/routeGenerationService'
 
 export type { ChatSessionRecord, ConversationTurnSnapshot } from './chatHistory'
+
+type ChatSessionChangeHandler = (sessionId: string, ownerId?: string) => void
+const chatSessionChangeHandlers = new Set<ChatSessionChangeHandler>()
+
+/** Feature stores use this to drop owner/session-bound views on workspace changes. */
+export function registerChatSessionChangeHandler(handler: ChatSessionChangeHandler): () => void {
+  chatSessionChangeHandlers.add(handler)
+  return () => chatSessionChangeHandlers.delete(handler)
+}
+
+function notifyChatSessionChanged(sessionId: string, ownerId?: string): void {
+  for (const handler of chatSessionChangeHandlers) handler(sessionId, ownerId)
+}
 
 /** 旧需求卡片仍由页面引用，统一 Agent 不再生成它。 */
 export interface PlanCard {
@@ -73,6 +100,7 @@ export function formatConversationWarning(warning: string, locale: 'zh' | 'en'):
   if (warning === 'reply_fallback') return locale === 'zh' ? '回复使用了安全的规则兜底。' : 'The reply used a safe rules fallback.'
   if (warning === 'journey_unavailable') return locale === 'zh' ? '路线服务暂时不可用。' : 'The route service is temporarily unavailable.'
   if (warning === 'recommendations_unavailable') return locale === 'zh' ? '目的地推荐暂时不可用。' : 'Destination recommendations are temporarily unavailable.'
+  if (warning === 'route_generation_unavailable') return locale === 'zh' ? '生成路线功能暂未开放。' : 'Route generation is not available yet.'
   const guideWarningKeys: Record<string, string> = {
     travel_guide_search_unavailable: 'chat.warningGuideSearchUnavailable',
     search_unavailable: 'chat.warningGuideSearchUnavailable',
@@ -137,13 +165,24 @@ export class ChatStore {
   sessions: ChatSessionRecord[] = []
   currentSessionId = ''
 
-  /** Unified backend state. The client sends this state back each turn. */
+  /** Legacy presentation slots retained for the not-yet-migrated Plan view. */
   state: TripState = emptyTripState()
-  phase: ConversationResponse['phase'] = 'clarify'
+  phase: 'discover' | 'clarify' | 'plan' = 'clarify'
   recommendations: DestinationRecommendation[] = []
   suggestedActions: SuggestedAction[] = []
   routes: RoutePick[] = []
   warnings: string[] = []
+
+  /** Authoritative cloud response metadata. Never synthesized from legacy state. */
+  tripContextSummary: CloudTripContextSummary | undefined
+  artifactRefs: CloudArtifactRef[] = []
+  stopReason = ''
+  tripId = ''
+  conversationId = ''
+  routeGeneration: RouteGenerationRunView | undefined
+  routeGenerationIdempotencyKey = ''
+  routeGenerationLoading = false
+  routeGenerationError = ''
 
   isThinking = false
 
@@ -166,10 +205,15 @@ export class ChatStore {
   /** Request generations invalidate late responses after reset or a new turn. */
   private requestGeneration = 0
   private multiConfirmRequestId = 0
-  private nextMessageStartsTrip = true
+  private activeOwnerId = ''
+  private routeGenerationRequestId = 0
 
   constructor() {
     makeAutoObservable(this)
+    registerCloudChatHistoryClearHandler(ownerId => this.clearOwnerMaterial(ownerId))
+    registerUserSessionClearHandler(ownerId => {
+      if (ownerId) this.clearOwnerMaterial(ownerId)
+    })
     this.hydrateHistory()
   }
 
@@ -178,7 +222,8 @@ export class ChatStore {
   }
 
   private hydrateHistory() {
-    const persisted = loadChatHistory()
+    this.activeOwnerId = userStore.profile?.uid ?? ''
+    const persisted = loadChatHistory(this.activeOwnerId || undefined)
     this.sessions = persisted.sessions
     this.currentSessionId = persisted.currentSessionId || newSessionId()
     const current = this.sessions.find(session => session.id === this.currentSessionId)
@@ -187,6 +232,19 @@ export class ChatStore {
     } else {
       this.clearLiveState()
     }
+  }
+
+  private clearOwnerMaterial(ownerId: string) {
+    if (this.activeOwnerId !== ownerId) return
+    this.invalidateInFlight()
+    this.activeOwnerId = ''
+    const persisted = loadChatHistory()
+    this.sessions = persisted.sessions
+    this.currentSessionId = persisted.currentSessionId || newSessionId()
+    const current = this.sessions.find(session => session.id === this.currentSessionId)
+    if (current) this.restoreSession(current)
+    else this.clearLiveState()
+    notifyChatSessionChanged(this.currentSessionId)
   }
 
   private clearLiveState() {
@@ -198,6 +256,15 @@ export class ChatStore {
     this.suggestedActions = []
     this.routes = []
     this.warnings = []
+    this.tripContextSummary = undefined
+    this.artifactRefs = []
+    this.stopReason = ''
+    this.tripId = ''
+    this.conversationId = ''
+    this.routeGeneration = undefined
+    this.routeGenerationIdempotencyKey = ''
+    this.routeGenerationLoading = false
+    this.routeGenerationError = ''
     this.slots = {}
     this.ready = false
     this.isThinking = false
@@ -211,7 +278,6 @@ export class ChatStore {
     this.multiError = ''
     this.multiWarnings = []
     this.multiConfirming = false
-    this.nextMessageStartsTrip = true
   }
 
   private restoreSession(session: ChatSessionRecord) {
@@ -224,6 +290,9 @@ export class ChatStore {
       suggestedActions: [...turn.suggestedActions],
       routes: [...turn.routes],
       warnings: [...turn.warnings],
+      ...(turn.tripContextSummary ? { tripContextSummary: turn.tripContextSummary } : {}),
+      ...(turn.artifactRefs ? { artifactRefs: turn.artifactRefs.map(ref => ({ ...ref })) } : {}),
+      ...(turn.stopReason ? { stopReason: turn.stopReason } : {}),
       ...(turn.travelGuide ? { travelGuide: cloneTravelGuide(turn.travelGuide) } : {})
     }))
     this.state = cloneTripState(session.state)
@@ -232,6 +301,15 @@ export class ChatStore {
     this.suggestedActions = [...session.suggestedActions]
     this.routes = [...session.routes]
     this.warnings = [...session.warnings]
+    this.tripContextSummary = session.tripContextSummary
+    this.artifactRefs = session.artifactRefs.map(ref => ({ ...ref }))
+    this.stopReason = session.stopReason ?? ''
+    this.tripId = session.tripId ?? ''
+    this.conversationId = session.conversationId ?? ''
+    this.routeGeneration = session.routeGeneration ? { ...session.routeGeneration, progress: { ...session.routeGeneration.progress }, warnings: [...session.routeGeneration.warnings], ...(session.routeGeneration.error ? { error: { ...session.routeGeneration.error } } : {}) } : undefined
+    this.routeGenerationIdempotencyKey = session.routeGenerationIdempotencyKey ?? session.routeGeneration?.idempotencyKey ?? ''
+    this.routeGenerationLoading = false
+    this.routeGenerationError = ''
     this.multiPicks = this.routes.length > 0 ? this.routes : null
     this.multiWarnings = [...this.warnings]
     this.slots = compatibilitySlots(this.state, this.routes)
@@ -249,16 +327,18 @@ export class ChatStore {
     this.multiLoading = false
     this.multiConfirming = false
     this.isThinking = false
-    this.nextMessageStartsTrip = this.messages.length === 0 && this.timeline.length === 0
   }
 
   private invalidateInFlight() {
     this.requestGeneration += 1
+    this.routeGenerationRequestId += 1
     this.multiConfirmRequestId += 1
     this.isThinking = false
     this.plansLoading = false
     this.multiLoading = false
     this.multiConfirming = false
+    this.routeGenerationLoading = false
+    this.routeGenerationError = ''
   }
 
   private liveSessionSnapshot(dropPending = false): ChatSessionRecord {
@@ -270,6 +350,9 @@ export class ChatStore {
       suggestedActions: [...turn.suggestedActions],
       routes: [...turn.routes],
       warnings: [...turn.warnings],
+      ...(turn.tripContextSummary ? { tripContextSummary: turn.tripContextSummary } : {}),
+      ...(turn.artifactRefs ? { artifactRefs: turn.artifactRefs.map(ref => ({ ...ref })) } : {}),
+      ...(turn.stopReason ? { stopReason: turn.stopReason } : {}),
       ...(turn.travelGuide ? { travelGuide: cloneTravelGuide(turn.travelGuide) } : {})
     }))
     const messages = this.messages.map(message => ({ ...message }))
@@ -296,7 +379,22 @@ export class ChatStore {
       recommendations: [...this.recommendations].slice(0, 3),
       suggestedActions: [...this.suggestedActions].slice(0, 3),
       routes: [...this.routes].slice(0, MAX_CHAT_ROUTES),
-      warnings: [...this.warnings]
+      warnings: [...this.warnings],
+      ...(this.activeOwnerId ? { ownerId: this.activeOwnerId } : {}),
+      ...(this.tripId ? { tripId: this.tripId } : {}),
+      ...(this.conversationId ? { conversationId: this.conversationId } : {}),
+      artifactRefs: this.artifactRefs.map(ref => ({ ...ref })),
+      ...(this.tripContextSummary ? { tripContextSummary: this.tripContextSummary } : {}),
+      ...(this.stopReason ? { stopReason: this.stopReason } : {}),
+      ...(this.routeGeneration ? {
+        routeGeneration: {
+          ...this.routeGeneration,
+          progress: { ...this.routeGeneration.progress },
+          warnings: [...this.routeGeneration.warnings],
+          ...(this.routeGeneration.error ? { error: { ...this.routeGeneration.error } } : {})
+        }
+      } : {}),
+      ...(this.routeGenerationIdempotencyKey ? { routeGenerationIdempotencyKey: this.routeGenerationIdempotencyKey } : {})
     }
   }
 
@@ -306,28 +404,41 @@ export class ChatStore {
     this.sessions = sessionHasContent(snapshot)
       ? [snapshot, ...rest].sort((left, right) => right.updatedAt - left.updatedAt || left.id.localeCompare(right.id)).slice(0, 20)
       : rest
-    saveChatHistory(this.currentSessionId, this.sessions)
+    saveChatHistory(this.currentSessionId, this.sessions, this.activeOwnerId || undefined)
   }
 
   private syncConversation(result: ConversationResponse, locale: 'zh' | 'en') {
-    this.state = result.state
-    this.phase = result.phase
-    this.recommendations = [...result.recommendations].slice(0, 3)
-    this.suggestedActions = [...result.suggestedActions].slice(0, 3)
-    this.routes = [...result.routes].slice(0, MAX_CHAT_ROUTES)
+    // The cloud response is authoritative. Do not turn its compact summary or
+    // Artifact references into the legacy client-owned route/state objects.
+    this.tripContextSummary = result.tripContextSummary
+    const existingRefs = new Map(this.artifactRefs.map(ref => [ref.id, ref]))
+    for (const ref of result.artifactRefs) existingRefs.set(ref.id, { ...ref })
+    this.artifactRefs = [...existingRefs.values()].slice(-100)
+    this.stopReason = result.stopReason
+    this.suggestedActions = result.suggestedActions.map(action => this.presentSuggestedAction(action, locale)).slice(0, 3)
     this.warnings = [...(result.warnings ?? [])].slice(-12)
-    this.multiPicks = this.routes.length > 0 ? this.routes : null
+    this.multiPicks = null
     this.multiWarnings = this.warnings.map(warning => formatConversationWarning(warning, locale))
-    this.slots = compatibilitySlots(this.state, this.routes)
-    this.ready = result.phase === 'plan'
-      && this.state.destination_mode === 'explicit'
-      && this.state.required_iatas.length === 1
-      && this.routes.length > 0
-      && Boolean(this.slots.origin && this.slots.destination && this.slots.depart_date_from)
-    this.multiActive = this.multiActive || this.routes.length > 0
     this.multiError = ''
     this.plansError = ''
     this.planCards = null
+    this.ready = false
+  }
+
+  private presentSuggestedAction(action: ConversationResponse['suggestedActions'][number], _locale: 'zh' | 'en'): SuggestedAction {
+    const isRouteGeneration = action.id === 'generate_route' || action.kind === 'route_generation'
+    const label = isRouteGeneration
+      ? { zh: '生成路线', en: 'Generate route' }
+      : { zh: action.label, en: action.label }
+    return {
+      id: action.id,
+      label,
+      // The old Plan view expects a message field. A route action is handled by
+      // activateSuggestedAction and must never be routed as a fake chat turn.
+      message: isRouteGeneration ? '' : action.label,
+      kind: action.kind,
+      ...(action.href ? { href: action.href } : {})
+    }
   }
 
   private clearTurnOutput() {
@@ -344,6 +455,85 @@ export class ChatStore {
     this.ready = false
   }
 
+  private activateOwner(ownerId: string) {
+    if (ownerId === this.activeOwnerId) return
+    this.activeOwnerId = ownerId
+    const persisted = loadChatHistory(ownerId || undefined)
+    this.sessions = persisted.sessions
+    this.currentSessionId = persisted.currentSessionId || newSessionId()
+    const current = this.sessions.find(session => session.id === this.currentSessionId)
+    if (current) this.restoreSession(current)
+    else this.clearLiveState()
+  }
+
+  private ownerForRequest(): string | undefined {
+    if (userStore.profile?.uid) return userStore.profile.uid
+    return USE_MOCK ? 'mock-local' : undefined
+  }
+
+  /** Ensure the current local session has an owner-scoped cloud Trip/Conversation. */
+  private async ensureCloudSession(ownerId: string, requestId: number): Promise<void> {
+    this.activateOwner(ownerId)
+    const current = this.currentSession
+    if (current?.ownerId === ownerId && this.tripId && this.conversationId) return
+
+    // A legacy session may remain visible, but it is never promoted to a cloud
+    // conversation and its messages are never replayed.
+    if (current && sessionHasContent(current)) {
+      this.persistCurrentSession(true)
+      this.currentSessionId = newSessionId()
+      this.clearLiveState()
+    }
+    // Capture the session only after legacy migration/new-session setup has
+    // settled. The migration branch intentionally changes currentSessionId.
+    const sessionIdAtBootstrapStart = this.currentSessionId
+    const bootstrap = await bootstrapCloudSession()
+    // A bootstrap can outlive logout, reset, a session switch, or a newer
+    // message. Never let that late response reattach cloud IDs to the now
+    // inactive local session.
+    if (requestId !== this.requestGeneration
+      || this.currentSessionId !== sessionIdAtBootstrapStart
+      || this.activeOwnerId !== ownerId
+      || this.ownerForRequest() !== ownerId) {
+      throw new Error('STALE_CLOUD_SESSION_BOOTSTRAP')
+    }
+    this.activeOwnerId = ownerId
+    this.tripId = bootstrap.tripId
+    this.conversationId = bootstrap.conversationId
+    this.artifactRefs = []
+    this.tripContextSummary = undefined
+    this.stopReason = ''
+  }
+
+  private transportError(error: unknown, locale: 'zh' | 'en'): string {
+    const code = error instanceof Error ? error.message : ''
+    if (code === 'AUTH_REQUIRED') return locale === 'zh' ? '请先登录后再开始规划。' : 'Please sign in before planning.'
+    if (code === 'INVALID_TRIP_BOOTSTRAP_RESPONSE' || code === 'INVALID_CONVERSATION_BOOTSTRAP_RESPONSE') {
+      return locale === 'zh' ? '云端会话初始化失败，请重试。' : 'Cloud session setup failed. Please try again.'
+    }
+    return locale === 'zh' ? '规划服务暂时不可用，请重试。' : 'Planning service is unavailable. Please try again.'
+  }
+
+  /** Prepare the same owner-scoped Trip/Conversation used by chat for a product action. */
+  async prepareCloudSession(locale: 'zh' | 'en'): Promise<{ tripId: string; conversationId: string }> {
+    const ownerId = this.ownerForRequest()
+    if (!ownerId) throw new Error(this.transportError(new Error('AUTH_REQUIRED'), locale))
+    const requestId = ++this.requestGeneration
+    await this.ensureCloudSession(ownerId, requestId)
+    if (requestId !== this.requestGeneration || !this.tripId || !this.conversationId) {
+      throw new Error('STALE_CLOUD_SESSION_BOOTSTRAP')
+    }
+    return { tripId: this.tripId, conversationId: this.conversationId }
+  }
+
+  /** Attach a server-created immutable Artifact ref without copying its payload into history. */
+  addArtifactRef(ref: CloudArtifactRef): void {
+    const refs = new Map(this.artifactRefs.map(value => [value.id, value]))
+    refs.set(ref.id, { ...ref })
+    this.artifactRefs = [...refs.values()].slice(-100)
+    this.persistCurrentSession()
+  }
+
   /** Send every planning turn through the unified converse endpoint. */
   async send(text: string, locale: 'zh' | 'en') {
     const content = text.trim()
@@ -351,11 +541,41 @@ export class ChatStore {
 
     const requestId = ++this.requestGeneration
     this.multiConfirmRequestId += 1
-    const newTrip = this.nextMessageStartsTrip
+    const ownerId = this.ownerForRequest()
+    if (!ownerId) {
+      const error = new Error('AUTH_REQUIRED')
+      this.multiError = this.transportError(error, locale)
+      this.plansError = this.multiError
+      return
+    }
+
+    this.isThinking = true
+    this.multiLoading = true
+    this.plansLoading = false
+    try {
+      await this.ensureCloudSession(ownerId, requestId)
+    } catch (error) {
+      if (requestId === this.requestGeneration) {
+        runInAction(() => {
+          const message = this.transportError(error, locale)
+          this.multiError = message
+          this.plansError = message
+          this.isThinking = false
+          this.multiLoading = false
+        })
+      }
+      return
+    }
+    if (requestId !== this.requestGeneration || !this.tripId || !this.conversationId) {
+      if (requestId === this.requestGeneration) {
+        this.isThinking = false
+        this.multiLoading = false
+      }
+      return
+    }
+
     const userMessage: ConversationMessage = { role: 'user', content }
-    const requestMessages = [...this.messages, userMessage].slice(-24)
-    const requestState = newTrip ? undefined : cloneTripState(this.state)
-    this.messages = requestMessages
+    this.messages = [...this.messages, userMessage].slice(-MAX_CHAT_MESSAGES)
     const turnId = `turn-${requestId}`
     this.timeline = [...this.timeline, {
       id: turnId,
@@ -369,23 +589,19 @@ export class ChatStore {
     this.multiDraft = this.messages.filter(message => message.role === 'user').map(message => message.content).join('\n').slice(-1_000)
     this.clearTurnOutput()
     this.multiActive = true
-    this.isThinking = true
-    this.multiLoading = true
-    this.plansLoading = false
     this.persistCurrentSession()
 
     try {
-      const result = await converse(requestMessages, {
-        state: requestState,
-        newTrip,
-        today: todayIso()
-      })
+      const result = await converse({ tripId: this.tripId, conversationId: this.conversationId, message: content })
+      if (result.tripId !== this.tripId || result.conversationId !== this.conversationId) {
+        throw new Error('CONVERSATION_ID_MISMATCH')
+      }
       if (requestId !== this.requestGeneration) return
       runInAction(() => {
-        const assistant: ConversationMessage = { role: 'assistant', content: locale === 'zh' ? result.reply.zh : result.reply.en }
-        this.messages = appendAssistant(requestMessages, assistant.content)
+        const assistant: ConversationMessage = { role: 'assistant', content: result.reply }
+        const turnArtifactRefs = result.artifactRefs.map(ref => ({ ...ref }))
+        this.messages = appendAssistant(this.messages, assistant.content)
         this.syncConversation(result, locale)
-        const travelGuide = cloneTravelGuide(result.travelGuide)
         this.timeline = this.timeline.map(turn => turn.id === turnId ? {
           ...turn,
           assistant,
@@ -393,28 +609,26 @@ export class ChatStore {
           suggestedActions: [...this.suggestedActions],
           routes: [...this.routes],
           warnings: [...this.warnings],
-          ...(travelGuide ? { travelGuide } : {}),
+          tripContextSummary: this.tripContextSummary,
+          artifactRefs: turnArtifactRefs,
+          stopReason: this.stopReason,
           error: undefined
         } : turn)
-        this.nextMessageStartsTrip = false
       })
       this.persistCurrentSession()
-    } catch {
+    } catch (error) {
       if (requestId !== this.requestGeneration) return
       runInAction(() => {
-        const assistant: ConversationMessage = {
-          role: 'assistant',
-          content: locale === 'zh' ? '刚才走神了，再说一遍？' : 'Sorry, I missed that — could you repeat?'
-        }
-        this.messages = appendAssistant(requestMessages, assistant.content)
+        // Keep failures visible as an error state. Never synthesize an
+        // assistant message that could be mistaken for a cloud reply.
+        const message = this.transportError(error, locale)
         this.timeline = this.timeline.map(turn => turn.id === turnId ? {
           ...turn,
-          assistant,
-          error: locale === 'zh' ? '规划失败，请重试' : 'Planning failed, please retry'
+          assistant: null,
+          error: message
         } : turn)
-        this.multiError = locale === 'zh' ? '规划失败，请重试' : 'Planning failed, please retry'
+        this.multiError = message
         this.plansError = this.multiError
-        this.nextMessageStartsTrip = false
       })
       this.persistCurrentSession()
     } finally {
@@ -428,6 +642,243 @@ export class ChatStore {
     }
   }
 
+  private setRouteGenerationRun(run: RouteGenerationRunView) {
+    this.routeGeneration = {
+      ...run,
+      progress: { ...run.progress },
+      warnings: [...run.warnings],
+      ...(run.error ? { error: { ...run.error } } : {})
+    }
+    this.routeGenerationIdempotencyKey = run.idempotencyKey
+    this.persistCurrentSession()
+  }
+
+  private attachRouteGenerationArtifact(run: RouteGenerationRunView) {
+    if (!run.resultArtifactId) return
+    this.addArtifactRef({
+      id: run.resultArtifactId,
+      type: 'route_set',
+      schemaVersion: 1,
+      presentationHint: 'route_preview'
+    })
+  }
+
+  private routeGenerationMessage(error: unknown, locale: 'zh' | 'en'): string {
+    const code = error instanceof Error ? error.message : ''
+    if (code === 'AUTH_REQUIRED') return locale === 'zh' ? '请先登录后生成路线。' : 'Please sign in before generating a route.'
+    if (code === 'ROUTE_GENERATION_UNAVAILABLE') return locale === 'zh' ? '生成路线服务暂时不可用。' : 'Route generation is unavailable right now.'
+    if (code === 'ROUTE_GENERATION_NOT_READY') return locale === 'zh' ? '当前行程信息还不足以生成路线。' : 'This trip is not ready for route generation.'
+    return locale === 'zh' ? '生成路线失败，请重试。' : 'Route generation failed. Please try again.'
+  }
+
+  private routeGenerationPollErrorIsRetryable(error: unknown): boolean {
+    const code = error instanceof Error ? error.message : ''
+    // Authentication, malformed requests, and a missing/foreign run will not
+    // become valid by polling again. Network failures, timeouts, rate limits,
+    // and other transient server responses get a small bounded retry budget.
+    return !/^(AUTH_REQUIRED|HTTP (400|401|403|404|409))$/.test(code)
+  }
+
+  private async pollRouteGeneration(runId: string, requestId: number, locale: 'zh' | 'en') {
+    // A finite exponential schedule keeps a lost/buggy server from creating an
+    // unbounded background loop. Re-entering the action starts a new bounded
+    // poll, while a network retry can still reuse the same POST key.
+    let delayMs = 500
+    let transientGetFailures = 0
+    for (let attempt = 0; attempt < 18; attempt += 1) {
+      if (requestId !== this.routeGenerationRequestId) return
+      await new Promise(resolve => setTimeout(resolve, delayMs))
+      if (requestId !== this.routeGenerationRequestId) return
+
+      let run: RouteGenerationRunView
+      try {
+        run = await getRouteGenerationRun(runId)
+      } catch (error) {
+        if (requestId !== this.routeGenerationRequestId) return
+        transientGetFailures += 1
+        if (!this.routeGenerationPollErrorIsRetryable(error) || transientGetFailures >= 3) {
+          runInAction(() => {
+            this.routeGenerationLoading = false
+            this.routeGenerationError = this.routeGenerationMessage(error, locale)
+          })
+          this.persistCurrentSession()
+          return
+        }
+        delayMs = Math.min(4_000, delayMs * 2)
+        continue
+      }
+      if (requestId !== this.routeGenerationRequestId) return
+      transientGetFailures = 0
+      runInAction(() => {
+        this.routeGeneration = {
+          ...run,
+          progress: { ...run.progress },
+          warnings: [...run.warnings],
+          ...(run.error ? { error: { ...run.error } } : {})
+        }
+        this.routeGenerationIdempotencyKey = run.idempotencyKey
+        this.routeGenerationError = ''
+      })
+      this.persistCurrentSession()
+      if (isRouteGenerationTerminal(run.status)) {
+        runInAction(() => {
+          this.routeGenerationLoading = false
+          if (run.status === 'failed' || run.status === 'cancelled') {
+            this.routeGenerationError = run.error?.message ?? (run.status === 'cancelled' ? (locale === 'zh' ? '已取消生成路线。' : 'Route generation cancelled.') : this.routeGenerationMessage(new Error('ROUTE_GENERATION_FAILED'), locale))
+          }
+        })
+        this.attachRouteGenerationArtifact(run)
+        this.persistCurrentSession()
+        return
+      }
+      delayMs = Math.min(4_000, delayMs * 2)
+    }
+    if (requestId === this.routeGenerationRequestId) {
+      runInAction(() => {
+        this.routeGenerationLoading = false
+        this.routeGenerationError = locale === 'zh' ? '生成路线轮询超时，请稍后重试。' : 'Route generation polling timed out. Please retry later.'
+      })
+      this.persistCurrentSession()
+    }
+  }
+
+  /** Resume polling an accepted non-terminal run without creating another run. */
+  async resumeRouteGeneration(locale: 'zh' | 'en' = 'zh') {
+    if (this.routeGenerationLoading) return
+    const run = this.routeGeneration
+    if (!run || isRouteGenerationTerminal(run.status)) return
+    const ownerId = this.ownerForRequest()
+    if (!ownerId) {
+      this.routeGenerationError = this.routeGenerationMessage(new Error('AUTH_REQUIRED'), locale)
+      return
+    }
+    if (this.activeOwnerId !== ownerId || this.currentSession?.ownerId !== ownerId
+      || !this.tripId || this.tripId !== run.tripId) {
+      this.routeGenerationError = this.routeGenerationMessage(new Error('ROUTE_GENERATION_NOT_READY'), locale)
+      return
+    }
+    const requestId = ++this.routeGenerationRequestId
+    this.routeGenerationLoading = true
+    this.routeGenerationError = ''
+    this.persistCurrentSession()
+    await this.pollRouteGeneration(run.id, requestId, locale)
+  }
+
+  /** Explicit user action; never sends a conversational generate-route message. */
+  async generateRoute(locale: 'zh' | 'en' = 'zh', options: { reuseIdempotencyKey?: boolean } = {}) {
+    if (this.routeGenerationLoading) return
+    if (this.routeGeneration && !isRouteGenerationTerminal(this.routeGeneration.status)) {
+      await this.resumeRouteGeneration(locale)
+      return
+    }
+    const ownerId = this.ownerForRequest()
+    if (!ownerId) {
+      this.routeGenerationError = this.routeGenerationMessage(new Error('AUTH_REQUIRED'), locale)
+      return
+    }
+    if (this.activeOwnerId !== ownerId || !this.currentSession?.ownerId || this.currentSession.ownerId !== ownerId
+      || !this.tripId || !this.conversationId || !this.tripContextSummary?.readyForRouteGeneration) {
+      this.routeGenerationError = this.routeGenerationMessage(new Error('ROUTE_GENERATION_NOT_READY'), locale)
+      return
+    }
+    const previousTerminal = this.routeGeneration && isRouteGenerationTerminal(this.routeGeneration.status)
+    const idempotencyKey = options.reuseIdempotencyKey || !previousTerminal
+      ? (this.routeGenerationIdempotencyKey || makeRouteGenerationIdempotencyKey())
+      : makeRouteGenerationIdempotencyKey()
+    const requestId = ++this.routeGenerationRequestId
+    this.routeGenerationIdempotencyKey = idempotencyKey
+    this.routeGenerationError = ''
+    this.routeGenerationLoading = true
+    this.persistCurrentSession()
+    try {
+      const created = await createRouteGenerationRun({
+        tripId: this.tripId,
+        conversationId: this.conversationId,
+        expectedTripVersion: this.tripContextSummary.version,
+        idempotencyKey
+      })
+      if (requestId !== this.routeGenerationRequestId) return
+      runInAction(() => {
+        this.routeGeneration = {
+          ...created.run,
+          progress: { ...created.run.progress },
+          warnings: [...created.run.warnings],
+          ...(created.run.error ? { error: { ...created.run.error } } : {})
+        }
+        this.routeGenerationIdempotencyKey = created.run.idempotencyKey || idempotencyKey
+        this.routeGenerationError = ''
+      })
+      this.persistCurrentSession()
+      if (isRouteGenerationTerminal(created.run.status)) {
+        runInAction(() => {
+          this.routeGenerationLoading = false
+          if (created.run.status === 'failed' || created.run.status === 'cancelled') {
+            this.routeGenerationError = created.run.error?.message ?? (created.run.status === 'cancelled'
+              ? (locale === 'zh' ? '已取消生成路线。' : 'Route generation cancelled.')
+              : this.routeGenerationMessage(new Error('ROUTE_GENERATION_FAILED'), locale))
+          }
+        })
+        this.attachRouteGenerationArtifact(created.run)
+        this.persistCurrentSession()
+        return
+      }
+      await this.pollRouteGeneration(created.run.id, requestId, locale)
+    } catch (error) {
+      if (requestId !== this.routeGenerationRequestId) return
+      runInAction(() => {
+        this.routeGenerationLoading = false
+        this.routeGenerationError = this.routeGenerationMessage(error, locale)
+      })
+      this.persistCurrentSession()
+    }
+  }
+
+  /** Cancel the active server run; late poll responses cannot overwrite it. */
+  async cancelRouteGeneration(locale: 'zh' | 'en' = 'zh') {
+    const run = this.routeGeneration
+    if (!run || isRouteGenerationTerminal(run.status)) return
+    const requestId = ++this.routeGenerationRequestId
+    this.routeGenerationLoading = true
+    this.routeGenerationError = ''
+    try {
+      const cancelled = await cancelRouteGenerationRun(run.id)
+      if (requestId !== this.routeGenerationRequestId) return
+      runInAction(() => {
+        this.routeGeneration = {
+          ...cancelled,
+          progress: { ...cancelled.progress },
+          warnings: [...cancelled.warnings],
+          ...(cancelled.error ? { error: { ...cancelled.error } } : {})
+        }
+        this.routeGenerationIdempotencyKey = cancelled.idempotencyKey
+        this.routeGenerationLoading = false
+        this.routeGenerationError = cancelled.status === 'cancelled'
+          ? (cancelled.error?.message ?? (locale === 'zh' ? '已取消生成路线。' : 'Route generation cancelled.'))
+          : cancelled.status === 'failed'
+            ? (cancelled.error?.message ?? this.routeGenerationMessage(new Error('ROUTE_GENERATION_FAILED'), locale))
+            : ''
+      })
+      this.persistCurrentSession()
+    } catch (error) {
+      if (requestId !== this.routeGenerationRequestId) return
+      runInAction(() => {
+        this.routeGenerationLoading = false
+        this.routeGenerationError = this.routeGenerationMessage(error, locale)
+      })
+      this.persistCurrentSession()
+    }
+  }
+
+  /** Route the Plan view's suggested action to the correct transport. */
+  async activateSuggestedAction(action: SuggestedAction, locale: 'zh' | 'en') {
+    if (action.disabled) return
+    if (action.id === 'generate_route' || action.kind === 'route_generation') {
+      await this.generateRoute(locale)
+      return
+    }
+    if (action.message) await this.send(action.message, locale)
+  }
+
   /**
    * Kept for the existing page's CTA. Unified responses already contain the
    * route picks, so convergence is local and never invokes a second planner.
@@ -439,11 +890,6 @@ export class ChatStore {
   /** Compatibility alias for callers that used the old multi-route method. */
   async planMulti(text: string, locale: 'zh' | 'en') {
     await this.send(text, locale)
-  }
-
-  /** Existing flight-card action remains unchanged; it does not plan or quote. */
-  pickPlan(flight: FlightOption) {
-    flightStore.select(flight)
   }
 
   /** Confirm exactly the route card the user clicked, then merge it in place. */
@@ -507,10 +953,48 @@ export class ChatStore {
     this.invalidateInFlight()
     this.currentSessionId = newSessionId()
     this.clearLiveState()
-    saveChatHistory(this.currentSessionId, this.sessions)
+    saveChatHistory(this.currentSessionId, this.sessions, this.activeOwnerId || undefined)
+    notifyChatSessionChanged(this.currentSessionId, this.activeOwnerId || undefined)
   }
 
   /** Switch to a stored session; late responses from the previous one are invalidated. */
+  openCloudWorkspace(workspace: CloudWorkspace, ownerId: string) {
+    if (userStore.profile?.uid !== ownerId || !workspace.conversationId) throw new Error('登录状态已变更，请重新打开行程')
+    this.persistCurrentSession(true)
+    this.invalidateInFlight()
+    this.activateOwner(ownerId)
+    this.clearLiveState()
+    this.currentSessionId = `cloud-${workspace.conversationId}`
+    this.tripId = workspace.trip.id
+    this.conversationId = workspace.conversationId
+    this.tripContextSummary = workspace.tripContextSummary
+    this.routeGeneration = workspace.routeGeneration
+    this.routeGenerationIdempotencyKey = workspace.routeGeneration?.idempotencyKey ?? ''
+    this.artifactRefs = workspace.artifactRefs.slice(-100)
+    this.messages = workspace.messages.map(m => ({ role: m.role, content: m.content })).slice(-MAX_CHAT_MESSAGES)
+    const timeline: ConversationTurnSnapshot[] = []
+    for (const message of workspace.messages) {
+      if (message.role === 'user') {
+        timeline.push({ id: message.id, user: { role: 'user', content: message.content }, assistant: null, recommendations: [], suggestedActions: [], routes: [], warnings: [], artifactRefs: [] })
+      } else {
+        const turn = timeline[timeline.length - 1]
+        if (turn && !turn.assistant) {
+          turn.assistant = { role: 'assistant', content: message.content }
+          turn.artifactRefs = message.artifactRefs
+        }
+      }
+    }
+    this.timeline = timeline.slice(-MAX_CHAT_TIMELINE)
+    this.multiActive = this.timeline.length > 0
+    this.suggestedActions = workspace.tripContextSummary.readyForRouteGeneration
+      ? [this.presentSuggestedAction({ id: 'generate_route', kind: 'route_generation', label: '生成路线' }, 'zh')] : []
+    const snapshot = this.liveSessionSnapshot()
+    snapshot.title = workspace.trip.title || sessionTitle(this.messages)
+    this.sessions = [snapshot, ...this.sessions.filter(s => s.id !== snapshot.id)].slice(0, 20)
+    saveChatHistory(this.currentSessionId, this.sessions, ownerId)
+    notifyChatSessionChanged(this.currentSessionId, ownerId)
+  }
+
   switchSession(sessionId: string) {
     if (sessionId === this.currentSessionId) return
     const target = this.sessions.find(session => session.id === sessionId)
@@ -521,7 +1005,8 @@ export class ChatStore {
     if (!restored) return
     this.currentSessionId = restored.id
     this.restoreSession(restored)
-    saveChatHistory(this.currentSessionId, this.sessions)
+    saveChatHistory(this.currentSessionId, this.sessions, this.activeOwnerId || undefined)
+    notifyChatSessionChanged(this.currentSessionId, this.activeOwnerId || undefined)
   }
 
   /** Delete one stored session. Deleting the current one opens the newest remaining session. */
@@ -540,8 +1025,9 @@ export class ChatStore {
         this.currentSessionId = newSessionId()
         this.clearLiveState()
       }
+      notifyChatSessionChanged(this.currentSessionId, this.activeOwnerId || undefined)
     }
-    saveChatHistory(this.currentSessionId, this.sessions)
+    saveChatHistory(this.currentSessionId, this.sessions, this.activeOwnerId || undefined)
   }
 }
 

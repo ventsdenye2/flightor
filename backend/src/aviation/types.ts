@@ -27,6 +27,21 @@ export const locationRefSchema = z.object({
 
 export type LocationRef = z.infer<typeof locationRefSchema>
 
+/**
+ * Product-level location overlap without collapsing distinct airports in one
+ * city. This lets a city preference/avoidance match its constituent airports
+ * while keeping airport-to-airport graph identity exact.
+ */
+export function locationRefsOverlap(left: LocationRef, right: LocationRef): boolean {
+  if (left.id === right.id) return true
+  if (left.type === 'airport' && right.type === 'airport') {
+    return left.iata !== undefined && right.iata !== undefined && left.iata === right.iata
+  }
+  const leftCityCode = left.type === 'city' ? (left.cityCode ?? left.iata) : left.cityCode
+  const rightCityCode = right.type === 'city' ? (right.cityCode ?? right.iata) : right.cityCode
+  return leftCityCode !== undefined && rightCityCode !== undefined && leftCityCode === rightCityCode
+}
+
 export function locationRefKey(value: LocationRef): string {
   return JSON.stringify({
     id: value.id,

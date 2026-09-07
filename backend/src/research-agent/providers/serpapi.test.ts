@@ -1,0 +1,39 @@
+import { describe, expect, it, vi } from 'vitest'
+import { SerpApiResearchSearchProvider, buildSerpApiResearchQuery } from './serpapi.js'
+
+const destination = { id: 'city-tyo', type: 'city' as const, name: 'Tokyo', countryCode: 'JP' }
+
+describe('SerpApiResearchSearchProvider', () => {
+  it('builds a bounded plain-text query and classifies only safe authority hosts', async () => {
+    const searchOrganic = vi.fn(async (_input: unknown, _signal?: AbortSignal) => [
+      { title: 'Official event', snippet: 'A date in a snippet', url: 'https://www.city.gov.jp/events/1', domain: 'www.city.gov.jp', publishedAt: '2026-09-01T00:00:00.000Z' },
+      { title: 'Blog', snippet: 'A blog result', url: 'https://blog.example.com/event', domain: 'blog.example.com' }
+    ])
+    const provider = new SerpApiResearchSearchProvider({ searchOrganic })
+    const result = await provider.search({
+      destination,
+      interests: ['food'],
+      questions: ['what: is this? OR unsafe'],
+      researchTypes: ['event'],
+      maxResults: 2
+    })
+    expect(searchOrganic).toHaveBeenCalledOnce()
+    const query = (searchOrganic.mock.calls[0] as unknown[])[0] as { query: string }
+    expect(query.query.length).toBeLessThanOrEqual(480)
+    expect(query.query).not.toMatch(/site:|\bOR\b|\bAND\b|\bNOT\b/i)
+    expect(result.candidates[0]?.authority).toBe('government_tourism')
+    expect(result.candidates[1]?.authority).toBe('unknown')
+  })
+
+  it('never trusts title/snippet wording as official event authority', () => {
+    const query = buildSerpApiResearchQuery({
+      destination,
+      interests: [],
+      questions: ['official event site:example.com'],
+      researchTypes: ['event'],
+      maxResults: 1
+    })
+    expect(query).not.toContain('site:')
+    expect(query.length).toBeLessThanOrEqual(480)
+  })
+})

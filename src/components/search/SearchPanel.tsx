@@ -1,11 +1,10 @@
 // src/components/search/SearchPanel.tsx — 首页搜索面板
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { View, Text, Picker, Slider } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { searchStore } from '../../stores/searchStore'
-import { findAirport, airportName, airportCity, nearbyAirports, distanceKm, Airport } from '../../mocks/airports'
-import { countryName, findCountry } from '../../mocks/countries'
+import { referenceDataStore, type AirportReference } from '../../stores/referenceDataStore'
 import AirportSelector from './AirportSelector'
 import CountryPreferenceSelector from './CountryPreferenceSelector'
 import { t, localeStore } from '../../i18n'
@@ -26,24 +25,19 @@ const TRANSFER_PREFS: Array<{ key: 'any' | 'direct' | 'transfer'; label: string 
   { key: 'transfer', label: 'search.allowTransfer' }
 ]
 
-// 邻近机场候选池半径（与 searchStore 一致）
-const CIRCLE_POOL_KM = 300
-
 function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
   // 机场搜索弹层：当前正在选择的字段
   const [selectorFor, setSelectorFor] = useState<'origin' | 'destination' | ''>('')
   const [showCountryPreferences, setShowCountryPreferences] = useState(false)
   const locale = localeStore.locale
 
-  const originAirport = findAirport(searchStore.origin)
-  const destAirport = findAirport(searchStore.destination)
+  useEffect(() => { void referenceDataStore.ensureLoaded() }, [])
 
-  // 圈内邻近机场候选池（不含主机场），无候选时整块隐藏
-  const originMates = nearbyAirports(searchStore.origin, CIRCLE_POOL_KM).slice(1)
-  const destMates = nearbyAirports(searchStore.destination, CIRCLE_POOL_KM).slice(1)
+  const originAirport = referenceDataStore.airport(searchStore.origin)
+  const destAirport = referenceDataStore.airport(searchStore.destination)
 
-  const mateLabel = (main: Airport | undefined, a: Airport) =>
-    `${airportCity(a, locale)} · ${main ? Math.round(distanceKm(main, a)) : '?'}km`
+  const airportCity = (airport: AirportReference) => locale === 'zh' ? airport.cityNameZh : airport.cityNameEn
+  const airportName = (airport: AirportReference) => locale === 'zh' ? airport.nameZh : airport.nameEn
 
   const handleSelect = (iata: string) => {
     if (selectorFor === 'origin') searchStore.setOrigin(iata)
@@ -66,12 +60,12 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
 
   return (
     <View className='search-panel'>
-      {/* 行程卡：对称 OD（机票式布局）+ 出发窗口 */}
+      {/* 行程卡：对称 OD（机票式布局）+ 精确出发/返程日 */}
       <View className='search-panel__group'>
         <View className='search-panel__od'>
           <View className='search-panel__od-side' hoverClass='tap-dim' onClick={() => setSelectorFor('origin')}>
-            <Text className='search-panel__od-city'>{originAirport ? airportCity(originAirport, locale) : ''}</Text>
-            <Text className='search-panel__od-airport'>{originAirport ? airportName(originAirport, locale) : ''}</Text>
+            <Text className='search-panel__od-city'>{originAirport ? airportCity(originAirport) : searchStore.origin}</Text>
+            <Text className='search-panel__od-airport'>{originAirport ? airportName(originAirport) : ''}</Text>
           </View>
           <View className='search-panel__od-mid' hoverClass='tap-dim' onClick={() => searchStore.swapOD()}>
             <View className='search-panel__od-track'>
@@ -88,8 +82,8 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
             hoverClass='tap-dim'
             onClick={() => setSelectorFor('destination')}
           >
-            <Text className='search-panel__od-city'>{destAirport ? airportCity(destAirport, locale) : ''}</Text>
-            <Text className='search-panel__od-airport'>{destAirport ? airportName(destAirport, locale) : ''}</Text>
+            <Text className='search-panel__od-city'>{destAirport ? airportCity(destAirport) : searchStore.destination}</Text>
+            <Text className='search-panel__od-airport'>{destAirport ? airportName(destAirport) : ''}</Text>
           </View>
         </View>
         <View className='search-panel__divider' />
@@ -103,74 +97,34 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
             onChange={e => searchStore.setDepartDate(e.detail.value)}
           >
             <View className='search-panel__date-field'>
-              <Text className='search-panel__row-label'>{t('search.earliest')}</Text>
+              <Text className='search-panel__row-label'>{t('search.depart')}</Text>
               <Text className='search-panel__date-value'>{humanDate(searchStore.departDate, locale)}</Text>
             </View>
           </Picker>
-          <View className='search-panel__vline' />
-          <Picker
-            className='search-panel__date-col'
-            mode='date'
-            value={searchStore.departDateEnd}
-            start={searchStore.departDate}
-            end={daysFromNow(330)}
-            onChange={e => searchStore.setDepartDateEnd(e.detail.value)}
-          >
-            <View className='search-panel__date-field'>
-              <Text className='search-panel__row-label'>{t('search.latest')}</Text>
-              <Text className='search-panel__date-value'>{humanDate(searchStore.departDateEnd, locale)}</Text>
-            </View>
-          </Picker>
+          {searchStore.tripType === 'roundtrip' && (
+            <>
+              <View className='search-panel__vline' />
+              <Picker
+                className='search-panel__date-col'
+                mode='date'
+                value={searchStore.returnDate || searchStore.departDate}
+                start={searchStore.departDate}
+                end={daysFromNow(330)}
+                onChange={e => searchStore.setReturnDate(e.detail.value)}
+              >
+                <View className='search-panel__date-field'>
+                  <Text className='search-panel__row-label'>{t('search.returnDate')}</Text>
+                  <Text className='search-panel__date-value'>
+                    {humanDate(searchStore.returnDate || searchStore.departDate, locale)}
+                  </Text>
+                </View>
+              </Picker>
+            </>
+          )}
         </View>
       </View>
 
-      {/* 比价圈：圈内机场逐个勾选（本场锁定）；无邻近机场时整卡隐藏 */}
-      {(originMates.length > 0 || destMates.length > 0) && (
-        <View className='search-panel__group search-panel__group--pad'>
-          {originMates.length > 0 && (
-            <View className='search-panel__block'>
-              <Text className='search-panel__block-label'>{t('search.circle')}</Text>
-              <View className='search-panel__chips'>
-                <View className='search-panel__chip is-locked'>
-                  <Text>{originAirport ? airportCity(originAirport, locale) : searchStore.origin} · {t('search.homeAirport')}</Text>
-                </View>
-                {originMates.map(a => (
-                  <View
-                    key={a.iata}
-                    className={`search-panel__chip ${searchStore.originExtras.includes(a.iata) ? 'is-active' : ''}`}
-                    hoverClass='tap-dim'
-                    onClick={() => searchStore.toggleOriginExtra(a.iata)}
-                  >
-                    <Text>{mateLabel(originAirport, a)}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-          {destMates.length > 0 && (
-            <View className='search-panel__block'>
-              <Text className='search-panel__block-label'>{t('search.destCircle')}</Text>
-              <View className='search-panel__chips'>
-                <View className='search-panel__chip is-locked'>
-                  <Text>{destAirport ? airportCity(destAirport, locale) : searchStore.destination} · {t('search.homeAirport')}</Text>
-                </View>
-                {destMates.map(a => (
-                  <View
-                    key={a.iata}
-                    className={`search-panel__chip ${searchStore.destExtras.includes(a.iata) ? 'is-active' : ''}`}
-                    hoverClass='tap-dim'
-                    onClick={() => searchStore.toggleDestExtra(a.iata)}
-                  >
-                    <Text>{mateLabel(destAirport, a)}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* 行程类型 + 天数/预算 */}
+      {/* 行程类型 + 预算 */}
       <View className='search-panel__group search-panel__group--pad'>
         <View className='search-panel__seg'>
           {(['oneway', 'roundtrip'] as const).map(type => (
@@ -183,48 +137,6 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
             </View>
           ))}
         </View>
-
-        {/* 往返：游玩天数区间 */}
-        {searchStore.tripType === 'roundtrip' && (
-          <View className='search-panel__block'>
-            <View className='search-panel__block-header'>
-              <Text className='search-panel__block-label'>{t('search.stay')}</Text>
-              <Text className='search-panel__block-value'>
-                {t('search.stayDays', { min: searchStore.stayMin, max: searchStore.stayMax })}
-              </Text>
-            </View>
-            <View className='search-panel__slider-row'>
-              <Text className='search-panel__slider-label'>{t('search.stayMin')}</Text>
-              <Slider
-                className='search-panel__slider'
-                min={2}
-                max={30}
-                step={1}
-                value={searchStore.stayMin}
-                activeColor='#0a84ff'
-                backgroundColor='#3a3a3c'
-                blockSize={20}
-                blockColor='#ffffff'
-                onChanging={e => searchStore.setStay(Math.min(e.detail.value, searchStore.stayMax), searchStore.stayMax)}
-              />
-            </View>
-            <View className='search-panel__slider-row'>
-              <Text className='search-panel__slider-label'>{t('search.stayMax')}</Text>
-              <Slider
-                className='search-panel__slider'
-                min={2}
-                max={30}
-                step={1}
-                value={searchStore.stayMax}
-                activeColor='#0a84ff'
-                backgroundColor='#3a3a3c'
-                blockSize={20}
-                blockColor='#ffffff'
-                onChanging={e => searchStore.setStay(searchStore.stayMin, Math.max(e.detail.value, searchStore.stayMin))}
-              />
-            </View>
-          </View>
-        )}
 
         {/* 预算范围 */}
         <View className='search-panel__block'>
@@ -297,13 +209,13 @@ function SearchPanel({ onSearch, isLoading }: SearchPanelProps) {
             {countryPreferenceChips.length > 0 ? (
               <View className='search-panel__chips'>
                 {countryPreferenceChips.map(item => {
-                  const country = findCountry(item.code)
+                  const country = referenceDataStore.country(item.code)
                   if (!country) return null
                   return (
                     <View key={item.code} className={`search-panel__country-chip is-${item.preference}`}>
                       <Text>
                         {item.preference === 'preferred' ? '↑ ' : '× '}
-                        {countryName(country, locale)}
+                        {locale === 'zh' ? country.nameZh : country.nameEn}
                       </Text>
                     </View>
                   )

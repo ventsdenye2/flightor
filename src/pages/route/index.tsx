@@ -1,257 +1,59 @@
-// pages/route — 路线详情（行程卡 + 中转对比 + 中转玩法 + 价格趋势）
 import { useEffect, useState } from 'react'
 import { View, Text } from '@tarojs/components'
-import Taro, { useRouter, useShareAppMessage } from '@tarojs/taro'
+import Taro, { useRouter } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import DemoBadge from '../../components/common/DemoBadge'
-import BoardingPassItinerary from '../../components/itinerary/BoardingPassItinerary'
-import TransferModeCompare from '../../components/flight/TransferModeCompare'
-import HubExperienceCard from '../../components/hub/HubExperienceCard'
-import PriceTrendPanel from '../../components/trend/PriceTrendPanel'
-import { flightStore } from '../../stores/flightStore'
-import { searchStore } from '../../stores/searchStore'
+import { artifactService, type ArtifactEnvelope } from '../../services/artifactService'
+import { readRouteArtifact, type RouteView } from '../../services/routeArtifact'
 import { userStore } from '../../stores/userStore'
-import { getHubExperience, getHubVisaNote } from '../../mocks/hubs'
-import { cityOf } from '../../mocks/airports'
-import { fetchPriceTrend } from '../../services/flightService'
-import { t, fd, localeStore } from '../../i18n'
-import type { PriceTrendResponse } from '../../types/api'
-import type { ItinerarySegment, TransferOption, FlightOption } from '../../types/flight'
-import { formatPrice } from '../../utils/format'
+import { chatStore } from '../../stores/chatStore'
+import { RouteWorkspace } from '../../components/route/RouteWorkspace'
+import { ResearchWorkspace } from '../../components/route/ResearchWorkspace'
+import { FlightSearchCard } from '../../components/artifacts/FlightSearchCard'
+import { FlightDetail } from '../../components/route/FlightDetail'
+import { resolveArtifactRenderer } from '../../components/artifacts/registry'
+import { getCloudWorkspace, updateCloudTrip } from '../../services/workspaceService'
 import './index.scss'
 
-function toItinerary(flight: FlightOption): ItinerarySegment[] {
-  const locale = localeStore.locale
-  const segs: ItinerarySegment[] = []
-  flight.segments.forEach((s, i) => {
-    segs.push({
-      type: 'flight',
-      flightNo: s.flightNo,
-      airline: s.airline,
-      origin: s.origin,
-      destination: s.destination,
-      departTime: s.departTime,
-      arriveTime: s.arriveTime,
-      duration: s.duration,
-      terminal: ['T1', 'T2', 'T3'][i % 3],
-      gate: `${String.fromCharCode(65 + i)}${12 + i * 7}`
-    })
-    if (i < flight.segments.length - 1 && flight.hub) {
-      segs.push({
-        type: 'layover',
-        origin: flight.hub.iata,
-        duration: flight.hub.layoverMinutes,
-        visaStatus: getHubVisaNote(flight.hub.iata, locale),
-        playTip: flight.hub.layoverMinutes >= 480 ? t('route.playTip') : undefined
-      })
-    }
-  })
-  return segs
-}
-
-function buildTransferOptions(flight: FlightOption): { self: TransferOption; airline: TransferOption } | null {
-  const locale = localeStore.locale
-  const result = flightStore.result
-  if (!result) return null
-  const selfBest = flight.transferType === 'self' ? flight : result.selfTransfer[0]
-  const airlineBest = flight.transferType === 'airline' ? flight : result.airlineTransfer[0]
-  if (!selfBest || !airlineBest) return null
-  return {
-    self: {
-      mode: 'self',
-      price: selfBest.totalPrice,
-      baggagePolicy: t('tmc.baggageSelf'),
-      missedConnectionRisk: 'high',
-      visaRequired: selfBest.hub?.visaStatus === 'required',
-      visaDetail: selfBest.hub ? getHubVisaNote(selfBest.hub.iata, locale) : undefined,
-      stopoverPlayable: (selfBest.hub?.layoverMinutes ?? 0) >= 480,
-      minConnectionTime: selfBest.hub?.layoverMinutes ?? 0,
-      totalDuration: selfBest.totalDuration,
-      protectionLevel: t('tmc.protSelf'),
-      flexibility: t('tmc.flexSelf')
-    },
-    airline: {
-      mode: 'airline',
-      price: airlineBest.totalPrice,
-      baggagePolicy: t('tmc.baggageAirline'),
-      missedConnectionRisk: 'low',
-      visaRequired: false,
-      stopoverPlayable: (airlineBest.hub?.layoverMinutes ?? 0) >= 480,
-      minConnectionTime: airlineBest.hub?.layoverMinutes ?? 0,
-      totalDuration: airlineBest.totalDuration,
-      protectionLevel: t('tmc.protAirline'),
-      flexibility: t('tmc.flexAirline')
-    }
-  }
-}
-
+type State = { key: string; artifact?: ArtifactEnvelope; routes?: RouteView[]; error?: string }
 function RoutePage() {
-  const router = useRouter()
-  const [trend, setTrend] = useState<PriceTrendResponse | null>(null)
-  const locale = localeStore.locale
-
+  const { params } = useRouter()
+  const artifactId = params.artifactId ?? ''
+  const ownerId = userStore.profile?.uid
+  const key = `${ownerId ?? ''}:${userStore.sessionRevision}:${chatStore.currentSessionId}:${artifactId}`
+  const [state, setState] = useState<State>({ key: '' })
+  const [attempt, setAttempt] = useState(0)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState('')
   useEffect(() => {
-    Taro.setNavigationBarTitle({ title: t('nav.route') })
-  }, [locale])
-
-  // 通过分享链接进入时按 id 恢复选中方案
-  useEffect(() => {
-    const id = router.params?.id
-    if (id && !flightStore.selected) {
-      flightStore.selectById(id)
-    }
-  }, [router.params, flightStore.result])
-
-  const flight = flightStore.selected
-  const params = flightStore.lastParams
-
-  useEffect(() => {
-    if (params) {
-      fetchPriceTrend(params.origin, params.destination).then(setTrend).catch(() => {})
-    }
-  }, [params?.origin, params?.destination])
-
-  const saving = flight ? flightStore.savingsOf(flight) : { amount: 0, percent: 0 }
-
-  useShareAppMessage(() => ({
-    title: flight && params
-      ? t('share.route', { o: params.origin, d: params.destination, amt: formatPrice(saving.amount) })
-      : t('share.app'),
-    path: flight ? `/pages/route/index?id=${flight.id}` : '/pages/index/index'
-  }))
-
-  if (!flight) {
-    return (
-      <View className='route-page route-page--empty'>
-        <Text className='route-page__empty-icon'>🛫</Text>
-        <Text>{t('route.expired')}</Text>
-        <View
-          className='route-page__empty-btn'
-          hoverClass='tap-dim'
-          onClick={() => Taro.switchTab({ url: '/pages/index/index' })}
-        >
-          <Text>{t('route.research')}</Text>
-        </View>
-      </View>
-    )
+    Taro.setNavigationBarTitle({ title: '行程详情' })
+    let active = true
+    if (!ownerId || !artifactId) return () => { active = false }
+    setState({ key })
+    artifactService.fetchArtifact(artifactId, { ownerId, sessionId: chatStore.currentSessionId, force: attempt > 0 }).then(artifact => {
+      if (!active) return
+      setState({ key, artifact, ...(artifact.type === 'route_set' ? { routes: readRouteArtifact(artifact) } : {}) })
+    }).catch(error => { if (active) setState({ key, error: error instanceof Error ? error.message : '加载失败，请重试' }) })
+    return () => { active = false }
+  }, [key, attempt])
+  const current = state.key === key ? state : undefined
+  const artifact = current?.artifact
+  async function save(routeId: string) {
+    if (!artifact || !ownerId || saving) return
+    const revision = userStore.sessionRevision
+    setSaving(true)
+    try {
+      const workspace = await getCloudWorkspace(artifact.tripId)
+      if (userStore.profile?.uid !== ownerId || userStore.sessionRevision !== revision) return
+      await updateCloudTrip(artifact.tripId, { expectedVersion: workspace.trip.version, savedRoute: { artifactId: artifact.id, routeId } })
+      if (userStore.profile?.uid === ownerId && userStore.sessionRevision === revision) setSaved('已保存到「我的行程」')
+    } catch (error) { Taro.showToast({ title: error instanceof Error ? error.message : '保存失败', icon: 'none' }) }
+    finally { setSaving(false) }
   }
-
-  const transferOptions = buildTransferOptions(flight)
-  const hubExp = flight.hub ? getHubExperience(flight.hub.iata, locale) : undefined
-  const hubCity = flight.hub ? cityOf(flight.hub.iata, locale) : ''
-  const isFav = userStore.isFavorite(flight.id)
-
-  return (
-    <View className='route-page'>
-      <DemoBadge />
-      {/* 价格总览 */}
-      <View className='route-page__overview'>
-        <View>
-          <Text className='font-code route-page__price'>{formatPrice(flight.totalPrice)}</Text>
-          {saving.amount > 0 && (
-            <Text className='route-page__saving'>
-              {t('route.vsDirect', { amt: formatPrice(saving.amount), pct: saving.percent })}
-            </Text>
-          )}
-          <Text className='route-page__duration'>{t('route.total', { dur: fd(flight.totalDuration), airline: flight.airline })}</Text>
-        </View>
-        <View
-          className={`route-page__fav ${isFav ? 'is-active' : ''}`}
-          hoverClass='tap-dim'
-          onClick={() => {
-            userStore.toggleFavorite(flight)
-            Taro.showToast({ title: isFav ? t('route.favOff') : t('route.favOn'), icon: 'none' })
-          }}
-        >
-          <Text>{isFav ? t('route.faved') : t('route.fav')}</Text>
-        </View>
-      </View>
-
-      {/* 行程单（登机牌样式 + 分享导出） */}
-      <View className='route-page__section'>
-        <BoardingPassItinerary
-          itinerary={toItinerary(flight)}
-          shareTitle={params ? t('share.route', { o: params.origin, d: params.destination, amt: formatPrice(saving.amount) }) : undefined}
-        />
-      </View>
-
-      {/* 中转模式对比 */}
-      {transferOptions && flight.transferType !== 'direct' && (
-        <View className='route-page__section'>
-          <Text className='route-page__section-title'>{t('route.compare')}</Text>
-          <TransferModeCompare
-            selfTransfer={transferOptions.self}
-            airlineTransfer={transferOptions.airline}
-            onSelect={mode => {
-              if (mode === 'airline') {
-                Taro.showModal({
-                  title: t('route.bookTitle'),
-                  content: t('route.bookContent'),
-                  showCancel: false,
-                  confirmText: t('route.gotIt'),
-                  confirmColor: '#0a84ff'
-                })
-              } else {
-                Taro.showToast({ title: t('route.selfPicked'), icon: 'none' })
-              }
-            }}
-          />
-        </View>
-      )}
-
-      {/* Hub 停留体验 */}
-      {hubExp && flight.hub && (
-        <View className='route-page__section'>
-          <Text className='route-page__section-title'>{t('route.play', { city: hubCity })}</Text>
-          <HubExperienceCard
-            hub={hubExp}
-            layoverDuration={flight.hub.layoverMinutes}
-            interests={searchStore.interests}
-          />
-          <View
-            className='route-page__hub-more'
-            hoverClass='tap-dim'
-            onClick={() => Taro.navigateTo({ url: `/subpages/hub-detail/index?iata=${flight.hub!.iata}` })}
-          >
-            <Text>{t('route.guide', { city: hubCity })}</Text>
-          </View>
-        </View>
-      )}
-
-      {/* 价格趋势 */}
-      {trend && (
-        <View className='route-page__section'>
-          <Text className='route-page__section-title'>
-            {t('route.trend', { o: trend.route.origin, d: trend.route.destination })}
-          </Text>
-          <PriceTrendPanel trend={trend} />
-          <View
-            className='route-page__alert-btn'
-            hoverClass='tap-dim'
-            onClick={() =>
-              Taro.navigateTo({
-                url: `/subpages/price-alert/index?origin=${trend.route.origin}&destination=${trend.route.destination}&current=${trend.statistics.current}`
-              })
-            }
-          >
-            <Text>{t('route.alert')}</Text>
-          </View>
-        </View>
-      )}
-
-      <View
-        className='route-page__ai'
-        hoverClass='tap-dim'
-        onClick={() => Taro.switchTab({ url: '/pages/plan/index' })}
-      >
-        <Text>{t('route.aiPlan')}</Text>
-      </View>
-
-      <View className='route-page__disclaimer'>
-        <Text>{t('route.disclaimer')}</Text>
-      </View>
-    </View>
-  )
+  return <View className='route-detail-page'>
+    {!ownerId ? <Text>请登录后查看保存的行程。</Text> : !artifactId ? <Text>此旧链接无法恢复行程，请从航班搜索或规划结果重新打开。</Text> : current?.error ? <View><Text>{current.error}</Text><View className='route-workspace__action' onClick={() => setAttempt(x => x + 1)}>重试</View></View> : !artifact ? <Text>正在加载行程…</Text> : current.routes ? <RouteWorkspace key={key} routes={current.routes} initialRouteId={params.routeId} onSave={save} /> : artifact.type === 'flight_search' && resolveArtifactRenderer(artifact).supported ? params.offerId ? <FlightDetail artifact={artifact} offerId={params.offerId} /> : <FlightSearchCard artifact={artifact} onAction={() => Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodeURIComponent(artifact.id)}` })} /> : <ResearchWorkspace key={key} artifact={artifact} />}
+    {(saving || saved) && <Text>{saving ? '正在保存…' : saved}</Text>}
+    <View className='route-workspace__action' onClick={() => Taro.switchTab({ url: '/pages/plan/index' })}>返回规划</View>
+    <Text className='route-workspace__disclaimer'>签证、过境及入境条件可能因护照、行程和政策变化而不同，请在出行前自行确认最新要求。</Text>
+  </View>
 }
-
 export default observer(RoutePage)

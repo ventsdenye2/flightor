@@ -1,120 +1,17 @@
-@import '../../styles/mixins.scss';
-
-.route-page {
-  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-2xl);
-
-  &--empty {
-    @include flex-center;
-    flex-direction: column;
-    gap: var(--spacing-md);
-    padding-top: 200rpx;
-    color: var(--color-text-secondary);
-  }
-
-  &__empty-icon {
-    font-size: 96rpx;
-  }
-
-  &__empty-btn {
-    padding: var(--spacing-sm) var(--spacing-xl);
-    border-radius: var(--radius-full);
-    background: var(--color-accent-cyan);
-    color: #ffffff;
-    font-weight: bold;
-  }
-
-  &__overview {
-    @include flex-between;
-    align-items: flex-start;
-    margin-bottom: var(--spacing-md);
-    padding: var(--spacing-md);
-    border: 2rpx solid var(--color-bg-border);
-    border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, rgba(10, 132, 255, 0.08), var(--color-bg-card) 55%);
-    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
-  }
-
-  &__price {
-    display: block;
-    font-size: 64rpx;
-    font-weight: bold;
-    color: var(--color-accent-orange);
-  }
-
-  &__saving {
-    display: block;
-    margin-top: 4rpx;
-    color: var(--color-success);
-    font-size: var(--font-size-body);
-    font-weight: bold;
-  }
-
-  &__duration {
-    display: block;
-    margin-top: 4rpx;
-    font-size: var(--font-size-small);
-    color: var(--color-text-placeholder);
-  }
-
-  &__fav {
-    padding: 10rpx 28rpx;
-    border-radius: var(--radius-full);
-    border: 2rpx solid var(--color-bg-border);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-small);
-
-    &.is-active {
-      border-color: var(--color-warning);
-      color: var(--color-warning);
-    }
-  }
-
-  &__section {
-    margin-bottom: var(--spacing-xl);
-  }
-
-  &__section-title {
-    display: block;
-    font-size: var(--font-size-h3);
-    font-weight: bold;
-    margin-bottom: var(--spacing-md);
-  }
-
-  &__hub-more {
-    text-align: center;
-    padding: var(--spacing-md);
-    color: var(--color-accent-cyan);
-    font-size: var(--font-size-small);
-  }
-
-  &__alert-btn {
-    @include flex-center;
-    margin-top: var(--spacing-md);
-    padding: var(--spacing-md) 0;
-    border-radius: var(--radius-md);
-    border: 2rpx solid var(--color-accent-cyan);
-    color: var(--color-accent-cyan);
-    font-size: var(--font-size-body);
-    font-weight: bold;
-  }
-
-  &__disclaimer {
-    text-align: center;
-    font-size: var(--font-size-caption);
-    color: var(--color-text-disabled);
-  }
-}
-
-// AI 行程规划入口
-.route-page__ai {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: var(--spacing-md) var(--spacing-lg) 0;
-  padding: var(--spacing-md) 0;
-  border-radius: var(--radius-full);
-  background: rgba(10, 132, 255, 0.16);
-  color: var(--color-accent-cyan);
-  font-size: var(--font-size-body);
-  font-weight: 600;
+.route-detail-page { padding: 32rpx 28rpx 80rpx; color: var(--color-text-primary); }
+.route-workspace {
+  &__eyebrow { display: block; color: var(--color-accent-teal); font-size: 22rpx; letter-spacing: 3rpx; margin-bottom: 24rpx; }
+  &__title { display: block; font-size: 42rpx; font-weight: 700; line-height: 1.35; margin-bottom: 24rpx; }
+  &__choices { display: flex; flex-wrap: wrap; gap: 16rpx; margin-bottom: 28rpx; }
+  &__choice { flex: 1; min-width: 240rpx; padding: 22rpx; border: 2rpx solid var(--color-bg-border); border-radius: 20rpx; font-size: 24rpx; background: var(--color-bg-card); &.is-active { border-color: var(--color-accent-teal); } }
+  &__choice-path { display: block; font-weight: 700; margin: 12rpx 0; }
+  &__hero, &__section { background: var(--color-bg-card); border-radius: 28rpx; padding: 28rpx; margin-bottom: 24rpx; overflow: hidden; }
+  &__heading { display: block; font-size: 30rpx; font-weight: 600; margin-bottom: 18rpx; }
+  &__price { display: block; color: var(--color-accent-teal); font-size: 38rpx; font-weight: 700; margin: 16rpx 0; }
+  &__muted, &__disclaimer { display: block; font-size: 24rpx; color: var(--color-text-secondary); line-height: 1.7; margin-top: 16rpx; }
+  &__leg { padding: 22rpx; border-left: 4rpx solid var(--color-bg-border); margin: 16rpx 0; background: var(--color-bg-panel); border-radius: 12rpx; &.is-active { border-color: var(--color-accent-teal); } text { display: block; font-size: 25rpx; line-height: 1.65; overflow-wrap: anywhere; } }
+  &__flight { padding: 16rpx 0; border-bottom: 1rpx solid var(--color-bg-border); text { display: block; font-size: 25rpx; line-height: 1.7; } }
+  &__warning, &__stopover { display: block; color: var(--color-warning); font-size: 24rpx; line-height: 1.6; margin: 16rpx 0; }
+  &__reason { display: block; line-height: 1.8; font-size: 27rpx; }
+  &__action { padding: 24rpx; text-align: center; color: var(--color-accent-teal); background: var(--color-bg-panel); border-radius: 18rpx; margin: 20rpx 0; font-size: 28rpx; }
 }

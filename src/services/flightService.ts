@@ -7,6 +7,8 @@ import { findAirport, distanceKm } from '../mocks/airports'
 import { USE_MOCK, request } from '../utils/request'
 import { toDateString } from '../utils/format'
 import { sortByRecommendation } from '../utils/flightRecommendation'
+import { artifactService } from './artifactService'
+import type { CloudArtifactRef } from './conversationService'
 
 // 与云端共用同一份可达性规则；Mock 不再凭空假设任意两机场之间有直飞。
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -388,7 +390,227 @@ function mockPriceTrend(origin: string, destination: string): PriceTrendResponse
 }
 
 // ---------- 对外服务 ----------
-export async function searchFlights(params: SearchParams): Promise<SearchResponse> {
+export interface CloudFlightSearchSession {
+  tripId: string
+  conversationId: string
+  ownerId?: string
+  sessionId?: string
+  idempotencyKey?: string
+}
+
+interface ManualFlightSearchResponse {
+  artifactRef: CloudArtifactRef
+  summary: {
+    failedDates: string[]
+  }
+}
+
+interface DomainFareSegment {
+  flightNumber: string
+  airline: string
+  origin: string
+  destination: string
+  departsAt: string
+  arrivesAt: string
+  durationMinutes: number
+  aircraft?: string
+}
+
+interface DomainFareOffer {
+  id: string
+  segments: DomainFareSegment[]
+  totalAmount: number
+  currency: string
+  totalDurationMinutes: number
+  airlines: string[]
+  transferType: 'direct' | 'airline' | 'self'
+  baggageRecheck?: boolean
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isBoundedText(value: unknown, max: number, allowEmpty = false): value is string {
+  return typeof value === 'string' && value.length <= max && (allowEmpty || value.trim().length > 0)
+}
+
+function isIata(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Z]{3}$/.test(value)
+}
+
+function isTimestamp(value: unknown): value is string {
+  return isBoundedText(value, 64) && Number.isFinite(Date.parse(value))
+}
+
+function parseDomainSegment(value: unknown): DomainFareSegment {
+  if (!isRecord(value)
+    || !isBoundedText(value.flightNumber, 32, true)
+    || !isBoundedText(value.airline, 160, true)
+    || !isIata(value.origin)
+    || !isIata(value.destination)
+    || !isTimestamp(value.departsAt)
+    || !isTimestamp(value.arrivesAt)
+    || !Number.isInteger(value.durationMinutes)
+    || Number(value.durationMinutes) < 0
+    || (value.aircraft !== undefined && !isBoundedText(value.aircraft, 160, true))) {
+    throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+  }
+  return {
+    flightNumber: value.flightNumber,
+    airline: value.airline,
+    origin: value.origin,
+    destination: value.destination,
+    departsAt: value.departsAt,
+    arrivesAt: value.arrivesAt,
+    durationMinutes: Number(value.durationMinutes),
+    ...(typeof value.aircraft === 'string' ? { aircraft: value.aircraft } : {})
+  }
+}
+
+function rawDomainOffers(payload: Record<string, unknown>): unknown[] {
+  if (Array.isArray(payload.offers)) {
+    if (payload.offers.length > 100) throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+    return payload.offers
+  }
+  if (!Array.isArray(payload.results) || payload.results.length > 31) {
+    throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+  }
+  return payload.results.flatMap(result => {
+    if (!isRecord(result) || !Array.isArray(result.offers) || result.offers.length > 100) {
+      throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+    }
+    return result.offers
+  })
+}
+
+function domainOffers(payload: unknown): DomainFareOffer[] {
+  if (!isRecord(payload) || payload.type !== 'flight_search' || !isBoundedText(payload.id, 160)) {
+    throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+  }
+  return rawDomainOffers(payload).map(value => {
+    if (!isRecord(value)
+      || !isBoundedText(value.id, 240)
+      || !Array.isArray(value.segments)
+      || value.segments.length < 1
+      || value.segments.length > 12
+      || !Number.isFinite(value.totalAmount)
+      || Number(value.totalAmount) < 0
+      || !Number.isInteger(value.totalDurationMinutes)
+      || Number(value.totalDurationMinutes) < 0
+      || typeof value.currency !== 'string'
+      || !/^[A-Z]{3}$/.test(value.currency)
+      || !Array.isArray(value.airlines)
+      || value.airlines.length > 12
+      || !value.airlines.every(airline => isBoundedText(airline, 160))) {
+      throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+    }
+    const segments = value.segments.map(parseDomainSegment)
+    const transferType = value.transferType
+    if (transferType !== 'direct' && transferType !== 'airline' && transferType !== 'self') {
+      throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+    }
+    return {
+      id: value.id,
+      segments,
+      totalAmount: Number(value.totalAmount),
+      currency: value.currency,
+      totalDurationMinutes: Number(value.totalDurationMinutes),
+      airlines: value.airlines as string[],
+      transferType,
+      ...(typeof value.baggageRecheck === 'boolean' ? { baggageRecheck: value.baggageRecheck } : {})
+    }
+  })
+}
+
+function toFlightOption(offer: DomainFareOffer): FlightOption {
+  const segments: FlightSegment[] = offer.segments.map(segment => ({
+    flightNo: segment.flightNumber,
+    airline: segment.airline,
+    origin: segment.origin,
+    destination: segment.destination,
+    departTime: segment.departsAt,
+    arriveTime: segment.arrivesAt,
+    duration: segment.durationMinutes,
+    ...(segment.aircraft ? { aircraft: segment.aircraft } : {})
+  }))
+  const connection = segments.length > 1 ? segments[0] : undefined
+  const next = segments.length > 1 ? segments[1] : undefined
+  const layoverMinutes = connection && next
+    ? Math.max(0, Math.round((Date.parse(next.departTime) - Date.parse(connection.arriveTime)) / 60_000))
+    : 0
+  return {
+    id: offer.id,
+    segments,
+    totalPrice: offer.totalAmount,
+    totalDuration: offer.totalDurationMinutes,
+    airline: offer.airlines.join(' + ') || segments.map(segment => segment.airline).filter(Boolean).join(' + '),
+    transferType: offer.transferType,
+    ...(connection && next ? {
+      hub: {
+        iata: connection.destination,
+        city: '',
+        layoverMinutes,
+        baggageRecheck: offer.baggageRecheck ?? offer.transferType === 'self'
+      }
+    } : {})
+  }
+}
+
+export function responseFromFlightSearchArtifact(payload: unknown, ref: CloudArtifactRef, cacheTime: string): SearchResponse {
+  const offers = domainOffers(payload).map(toFlightOption)
+  return {
+    direct: offers.filter(offer => offer.transferType === 'direct'),
+    selfTransfer: offers.filter(offer => offer.transferType === 'self'),
+    airlineTransfer: offers.filter(offer => offer.transferType === 'airline'),
+    metadata: {
+      searchId: ref.id,
+      cacheTime,
+      priceDisclaimer: '价格与余位以供应商复核为准',
+      artifactRef: ref
+    }
+  }
+}
+
+export function paramsFromFlightSearchArtifact(payload: unknown): SearchParams {
+  if (!isRecord(payload)) throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+  const query = isRecord(payload.query) ? payload.query : isRecord(payload.window) ? payload.window : undefined
+  if (!query) throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+  const origin = query.origin
+  const destination = query.destination
+  const departDate = query.departureDate ?? query.departureDateFrom
+  const departDateEnd = query.departureDateTo ?? departDate
+  if (!isIata(origin)
+    || !isIata(destination)
+    || typeof departDate !== 'string'
+    || typeof departDateEnd !== 'string'
+    || !/^\d{4}-\d{2}-\d{2}$/.test(departDate)
+    || !/^\d{4}-\d{2}-\d{2}$/.test(departDateEnd)
+    || departDateEnd < departDate) {
+    throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+  }
+  const returnDate = query.returnDate
+  if (returnDate !== undefined
+    && (typeof returnDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(returnDate) || returnDate < departDateEnd)) {
+    throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
+  }
+  return {
+    origin,
+    originCandidates: [origin],
+    destination,
+    destinationCandidates: [destination],
+    departDate,
+    departDateEnd,
+    ...(returnDate ? { returnDate } : {}),
+    tripType: returnDate ? 'roundtrip' : 'oneway',
+    budgetRange: [0, Number.MAX_SAFE_INTEGER],
+    transferPref: 'any',
+    transitCountryPreferences: { preferred: [], excluded: [] },
+    interests: []
+  }
+}
+
+export async function searchFlights(params: SearchParams, session?: CloudFlightSearchSession): Promise<SearchResponse> {
   // 本地仿真数据只由显式构建开关启用。
   if (USE_MOCK) {
     // 模拟网络延迟，保留 loading 体验
@@ -396,26 +618,38 @@ export async function searchFlights(params: SearchParams): Promise<SearchRespons
     return mockSearch(params)
   }
 
-  // 生产通道：自建后端持有 SerpApi 密钥并缓存结果。
-  return request<SearchResponse>({
+  if (!session) throw new Error('CLOUD_SESSION_REQUIRED')
+  // 生产通道：手动搜索与 Agent 共用 Fare domain service，并只返回 ArtifactRef。
+  const created = await request<ManualFlightSearchResponse>({
     url: '/v1/flight-searches',
     method: 'POST',
     data: {
+      tripId: session.tripId,
+      conversationId: session.conversationId,
       origin: params.origin,
-      origin_candidates: params.originCandidates,
       destination: params.destination,
-      destination_candidates: params.destinationCandidates,
-      depart_date: params.departDate,
-      depart_date_end: params.departDateEnd,
-      stay_range: params.stayRange,
-      transit_country_preferences: params.transitCountryPreferences,
-      currency: 'CNY'
+      departureDate: params.departDate,
+      ...(params.departDateEnd ? { departureDateTo: params.departDateEnd } : {}),
+      ...(params.returnDate ? { returnDate: params.returnDate } : {}),
+      currency: 'CNY',
+      travelClass: 1
     },
+    header: { 'Idempotency-Key': session.idempotencyKey ?? makeFlightSearchIdempotencyKey() },
     showLoading: true,
     loadingText: '正在计算最优航线…',
     timeout: 30000, // 实时报价矩阵需多次供应商查询，放宽超时
-    retry: 0 // 搜索失败直接降级，避免双倍等待
+    retry: 1 // Idempotency-Key makes one bounded transport retry safe.
   })
+  const artifact = await artifactService.fetchArtifact(created.artifactRef.id, {
+    ownerId: session.ownerId,
+    sessionId: session.sessionId
+  })
+  return responseFromFlightSearchArtifact(artifact.payload, created.artifactRef, artifact.updatedAt)
+}
+
+export function makeFlightSearchIdempotencyKey(): string {
+  const part = () => Math.floor(Math.random() * 0x1_0000).toString(16).padStart(4, '0')
+  return `flight-${Date.now().toString(36)}-${part()}${part()}`
 }
 
 export async function fetchPriceTrend(origin: string, destination: string): Promise<PriceTrendResponse> {

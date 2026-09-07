@@ -1,0 +1,8 @@
+.artifact-route {
+  &__list { margin-top: 18rpx; }
+  &__row { display: flex; align-items: baseline; justify-content: space-between; gap: 16rpx; padding: 18rpx 0; border-top: 1rpx solid var(--color-bg-border); }
+  &__path { flex: 1; color: var(--color-text-primary, #fff); font-size: 25rpx; line-height: 1.4; }
+  &__fare { flex-shrink: 0; color: #45c6cb; font-size: 25rpx; font-weight: 600; }
+  &__empty, &__more { display: block; margin-top: 12rpx; color: var(--color-text-secondary, rgba(235, 235, 245, .68)); font-size: 22rpx; }
+  &__warning { display: block; margin-top: 16rpx; padding: 14rpx 16rpx; border-left: 4rpx solid var(--color-warning, #ff9f0a); background: rgba(255, 159, 10, .08); color: var(--color-warning, #ff9f0a); font-size: 22rpx; line-height: 1.4; }
+}

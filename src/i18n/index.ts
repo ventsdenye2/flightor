@@ -450,9 +450,11 @@ const zh: Dict = {
   'nav.priceAlert': '降价提醒',
   'nav.about': '关于',
   'nav.index': '航线比价',
+  'nav.trips': '我的行程',
   'tab.search': '搜索',
   'tab.explore': '探索',
   'tab.plan': '规划',
+  'tab.trips': '行程',
   'tab.profile': '我的',
 
   // 地图图例
@@ -856,9 +858,11 @@ const en: Dict = {
   'nav.priceAlert': 'Price Alert',
   'nav.about': 'About',
   'nav.index': 'Flights',
+  'nav.trips': 'My Trips',
   'tab.search': 'Search',
   'tab.explore': 'Explore',
   'tab.plan': 'Plan',
+  'tab.trips': 'Trips',
   'tab.profile': 'Me',
 
   'map.od': 'Origin/Dest',

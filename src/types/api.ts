@@ -1,6 +1,7 @@
 // src/types/api.ts — 数据接口契约
 import type { FlightOption, PricePoint, LayoverOption } from './flight'
 import type { PriceSignal } from './common'
+import type { CloudArtifactRef } from '../services/conversationService'
 
 /** 搜索请求 */
 export interface SearchRequest {
@@ -23,6 +24,7 @@ export interface SearchResponse {
     connectivityVersion?: string
     connectivityEdges?: number
     topologyFiltered?: number
+    artifactRef?: CloudArtifactRef
   }
 }
 

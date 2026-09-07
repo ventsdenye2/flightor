@@ -2,10 +2,7 @@
 import { View, Text } from '@tarojs/components'
 import { observer } from 'mobx-react-lite'
 import type { FlightOption, FlightSegment } from '../../types/flight'
-import { cityOf } from '../../mocks/airports'
-import { countryName, countryOfAirport } from '../../mocks/countries'
-import { getHubVisaNote } from '../../mocks/hubs'
-import { t, fd, localeStore } from '../../i18n'
+import { t, fd } from '../../i18n'
 import { formatTime, formatPrice, crossDayMark, formatMonthDay } from '../../utils/format'
 import './FlightCompareCard.scss'
 
@@ -24,18 +21,8 @@ interface FlightCompareCardProps {
   onSelect?: (flight: FlightOption) => void
 }
 
-/** 准点率（Mock：按航班号确定性生成 78%-97%，接入真实数据后替换） */
-function punctualityOf(flightNo: string): number {
-  let h = 0
-  for (let i = 0; i < flightNo.length; i++) h = (h * 31 + flightNo.charCodeAt(i)) % 997
-  return 78 + (h % 20)
-}
-
 /** 单个航段：飞常准式 大时间 + 进度线 + 机场码/城市 */
 const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
-  const locale = localeStore.locale
-  const punctuality = punctualityOf(seg.flightNo)
-
   return (
     <View className='fcc__segment'>
       {/* 航班号行 */}
@@ -43,18 +30,15 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
         <View className='fcc__seg-flight'>
           <Text className='font-code fcc__flight-no'>{seg.flightNo}</Text>
           <Text className='fcc__airline'>{seg.airline}</Text>
-          <Text className='fcc__seg-date'>{formatMonthDay(seg.departTime)}</Text>
         </View>
-        <View className={`fcc__punctuality ${punctuality >= 90 ? 'is-good' : punctuality >= 84 ? 'is-mid' : 'is-low'}`}>
-          <Text>{t('fcc.punctuality', { pct: punctuality })}</Text>
-        </View>
+        <Text className='fcc__seg-date'>{formatMonthDay(seg.departTime)}</Text>
       </View>
 
       {/* 大时间 + 飞行进度线 */}
       <View className='fcc__timeline'>
         <View className='fcc__endpoint'>
           <Text className='font-code fcc__time'>{formatTime(seg.departTime)}</Text>
-          <Text className='fcc__city'>{cityOf(seg.origin, locale)}</Text>
+          <Text className='fcc__city'>{seg.origin}</Text>
         </View>
 
         <View className='fcc__track'>
@@ -74,7 +58,7 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
             {formatTime(seg.arriveTime)}
             <Text className='fcc__cross-day'>{crossDayMark(seg.departTime, seg.arriveTime)}</Text>
           </Text>
-          <Text className='fcc__city'>{cityOf(seg.destination, locale)}</Text>
+          <Text className='fcc__city'>{seg.destination}</Text>
         </View>
       </View>
     </View>
@@ -83,10 +67,8 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
 
 function FlightCompareCard(props: FlightCompareCardProps) {
   const { flight, savingsAmount, savingsPercent, badges, recommendationReason, roundtripNote, isExpanded, onToggleExpand, onSelect } = props
-  const locale = localeStore.locale
-  const hubCountry = flight.hub ? countryOfAirport(flight.hub.iata) : undefined
   const hubLabel = flight.hub
-    ? `${cityOf(flight.hub.iata, locale)}${hubCountry ? ` · ${countryName(hubCountry, locale)}` : ''}`
+    ? `${flight.hub.city && flight.hub.city !== flight.hub.iata ? `${flight.hub.city} · ` : ''}${flight.hub.iata}`
     : ''
 
   return (
@@ -175,13 +157,7 @@ function FlightCompareCard(props: FlightCompareCardProps) {
       {isExpanded && flight.hub && (
         <View className='fcc__expand'>
           <Text className='fcc__expand-title'>{t('fcc.playTitle')}</Text>
-          <Text className='fcc__expand-desc'>
-            {t('fcc.playDesc', {
-              city: cityOf(flight.hub.iata, locale),
-              dur: fd(flight.hub.layoverMinutes),
-              visa: getHubVisaNote(flight.hub.iata, locale)
-            })}
-          </Text>
+          <Text className='fcc__expand-desc'>{flight.hub.visaNote || t('risk.disclaimerText')}</Text>
         </View>
       )}
     </View>

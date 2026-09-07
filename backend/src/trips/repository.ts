@@ -33,7 +33,7 @@ export function applyTripContextPatch(current: TripContext, patch: TripContextPa
   return next
 }
 
-export type TripStatus = 'planning' | 'generated' | 'archived'
+export type TripStatus = 'planning' | 'generated' | 'saved' | 'archived'
 
 export interface Trip {
   id: string

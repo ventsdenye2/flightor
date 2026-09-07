@@ -6,6 +6,9 @@ import type { ArtifactRepository } from '../../artifacts/repository.js'
 import type { UserMemoryRepository } from '../../memory/repository.js'
 import type { ResearchAgent } from '../../research-agent/types.js'
 import type { ConnectionSearchService, FlightRoutePlanner, RouteOptimizer } from '../../flight-routing/types.js'
+import type { DestinationDiscoveryService } from '../../destinations/types.js'
+import type { TripRoutePlanner } from '../../trip-planning/types.js'
+import type { TravelGuideBuilder } from '../../travel-guides/artifact.js'
 import type { ChatToolDefinition, FunctionToolCall } from './model.js'
 
 export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
@@ -25,6 +28,10 @@ export interface ToolExecutionContext {
   connectionSearch: ConnectionSearchService
   flightRoutePlanner: FlightRoutePlanner
   routeOptimizer: RouteOptimizer
+  /** Optional during the compatibility window; production cloud composition supplies both. */
+  destinationDiscovery?: DestinationDiscoveryService
+  tripRoutePlanner?: TripRoutePlanner
+  travelGuideBuilder?: TravelGuideBuilder
   /** Runtime-owned ledger; model arguments can never add entries directly. */
   resolvedLocationKeys?: Set<string>
   isGenerationCurrent?: () => boolean

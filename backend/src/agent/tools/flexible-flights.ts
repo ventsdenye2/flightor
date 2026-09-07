@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import { v7 as uuidv7 } from 'uuid'
 import { locationRefKey, locationRefSchema, type LocationRef } from '../../aviation/types.js'
-import { fareSearchResultSchema, type FareSearchResult } from '../../fares/types.js'
+import { fareSearchResultSchema } from '../../fares/types.js'
 import type { FlexibleFareSearchInput } from '../../fares/providers/provider.js'
+import { executeFlexibleFlightSearch } from '../../fares/search-service.js'
 import type { AgentTool } from '../runtime/registry.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
 
@@ -10,12 +10,6 @@ const searchableLocationSchema = locationRefSchema.refine(
   value => value.type === 'airport' && value.iata !== undefined,
   'Flight search requires a canonical airport reference with an IATA code'
 )
-
-const flexibleProviderResultSchema = z.object({
-  results: z.array(fareSearchResultSchema).max(31),
-  scannedDates: z.array(z.iso.date()).max(31),
-  failedDates: z.array(z.iso.date()).max(31)
-}).strict()
 
 export const searchFlexibleFlightsInputSchema = z.object({
   origin: searchableLocationSchema,
@@ -78,11 +72,6 @@ function trusted(context: ToolExecutionContext, locations: LocationRef[]): void 
   }
 }
 
-function sameQuery(result: FareSearchResult, input: FlexibleFareSearchInput): boolean {
-  const q = result.query
-  return q.origin === input.origin && q.destination === input.destination && q.currency === input.currency && q.travelClass === input.travelClass && q.returnDate === input.returnDate && q.departureDate >= input.departureDateFrom && q.departureDate <= input.departureDateTo
-}
-
 export const searchFlexibleFlightsTool: AgentTool<z.infer<typeof searchFlexibleFlightsInputSchema>, z.infer<typeof searchFlexibleFlightsOutputSchema>> = {
   name: 'search_flexible_flights',
   description: 'Search normalized fare options within a bounded departure-date window.',
@@ -92,37 +81,13 @@ export const searchFlexibleFlightsTool: AgentTool<z.infer<typeof searchFlexibleF
   async execute(input, context, signal) {
     trusted(context, [input.origin, input.destination])
     const query: FlexibleFareSearchInput = { origin: key(input.origin), destination: key(input.destination), departureDateFrom: input.departureDateFrom, departureDateTo: input.departureDateTo, ...(input.returnDate ? { returnDate: input.returnDate } : {}), currency: input.currency, travelClass: input.travelClass }
-    const providerResult = flexibleProviderResultSchema.parse(await context.fares.searchFlexibleFlights(query, { signal }))
-    const results = providerResult.results
-    for (const result of results) {
-      if (!sameQuery(result, query)) throw new Error('Fare provider returned a result for a different flexible query')
-      for (const offer of result.offers) {
-        const first = offer.segments[0]; const last = offer.segments[offer.segments.length - 1]
-        if (first?.origin !== query.origin || last?.destination !== query.destination) throw new Error('Fare provider returned an offer for a different route')
-      }
-    }
-    const scannedDates = [...new Set(providerResult.scannedDates)].sort()
-    const successfulDates = [...new Set(results.map(result => result.query.departureDate))].sort()
-    const failedDates = [...new Set(providerResult.failedDates)].sort()
-    const scanned = new Set(scannedDates)
-    for (const date of scannedDates) {
-      if (date < query.departureDateFrom || date > query.departureDateTo) {
-        throw new Error('Fare provider returned a sampled date outside the requested window')
-      }
-    }
-    for (const date of [...successfulDates, ...failedDates]) {
-      if (!scanned.has(date)) throw new Error('Fare provider returned inconsistent sampled-date metadata')
-    }
-    if (successfulDates.some(date => failedDates.includes(date))) {
-      throw new Error('Fare provider marked a sampled date as both successful and failed')
-    }
-    if (results.length === 0 && failedDates.length > 0) {
-      throw new Error('Fare provider failed every sampled date')
-    }
-    if (signal.aborted || context.isGenerationCurrent?.() === false) throw new Error('Flexible fare search was cancelled')
-    const id = uuidv7()
-    const artifact = flexibleFlightSearchArtifactSchema.parse({ id, type: 'flight_search', window: { origin: query.origin, destination: query.destination, departureDateFrom: query.departureDateFrom, departureDateTo: query.departureDateTo, ...(query.returnDate ? { returnDate: query.returnDate } : {}), currency: query.currency, travelClass: query.travelClass }, results, scannedDates, successfulDates, failedDates })
-    const stored = await context.artifacts.create({ id, tripId: context.tripId, conversationId: context.conversationId, type: 'flight_search', schemaVersion: 2, payload: artifact, verification: results.map(result => result.verification) })
+    const { record: stored, payload: rawArtifact } = await executeFlexibleFlightSearch(query, {
+      fares: context.fares, artifacts: context.artifacts,
+      tripId: context.tripId, conversationId: context.conversationId,
+      signal, ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
+    })
+    const artifact = flexibleFlightSearchArtifactSchema.parse(rawArtifact)
+    const { results, scannedDates, successfulDates, failedDates } = artifact
     const offers = results.flatMap(result => result.offers)
     const lowest = results.flatMap(result => result.offers.map(offer => ({ offer, departureDate: result.query.departureDate }))).sort((a, b) => a.offer.totalAmount - b.offer.totalAmount)[0]
     const checkedAt = results.map(result => result.checkedAt).sort().at(-1) ?? new Date().toISOString()

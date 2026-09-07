@@ -200,3 +200,13 @@
 .profile-page__menu-danger {
   color: var(--color-danger);
 }
+.profile-cloud {
+  &__section { background: var(--color-bg-card); border-radius: 28rpx; padding: 28rpx; margin: 24rpx 0; }
+  &__row { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+  &__heading { font-size: 32rpx; font-weight: 600; }
+  &__muted { display: block; font-size: 24rpx; line-height: 1.65; color: var(--color-text-secondary); margin: 12rpx 0; }
+  &__editor { box-sizing: border-box; width: 100%; height: 380rpx; margin-top: 24rpx; padding: 24rpx; background: var(--color-bg-panel); color: var(--color-text-primary); border-radius: 16rpx; font-size: 28rpx; line-height: 1.6; }
+  &__actions { display: flex; flex-wrap: wrap; gap: 12rpx; margin-top: 22rpx; button { font-size: 24rpx; color: var(--color-accent-teal); background: var(--color-bg-panel); margin: 0; } }
+  &__link { padding: 22rpx 0; font-size: 28rpx; color: var(--color-accent-teal); }
+  &__error { display: block; color: var(--color-warning); font-size: 25rpx; line-height: 1.6; }
+}

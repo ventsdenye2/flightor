@@ -1,4 +1,5 @@
 import cors from '@fastify/cors'
+import { registerExploreRoutes } from './routes/explore.js'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
@@ -6,10 +7,8 @@ import Fastify from 'fastify'
 import { ZodError } from 'zod'
 import type { AppContext } from './app/context.js'
 import { isAppError } from './lib/errors.js'
-import { registerAgentRoutes } from './routes/agent.js'
 import { registerAdminSyncRoutes } from './routes/admin-sync.js'
 import { registerAuthRoutes } from './routes/auth.js'
-import { registerAgentConverseRoutes } from './routes/agent-converse.js'
 import { registerFlightSearchRoutes } from './routes/flight-searches.js'
 import { registerHealthRoutes } from './routes/health.js'
 import { registerPreferenceRoutes } from './routes/preferences.js'
@@ -20,6 +19,9 @@ import { registerTripPlanRoutes } from './routes/trip-plans.js'
 import { registerTravelGuideRoutes } from './routes/travel-guides.js'
 import { registerCloudStateRoutes } from './routes/cloud-state.js'
 import { registerCloudAgentRoutes } from './routes/agent-cloud.js'
+import { registerRouteGenerationRoutes } from './routes/route-generation.js'
+import { registerWorkspaceRoutes } from './routes/workspaces.js'
+import { registerEditorialRoutes } from './routes/editorial.js'
 
 export async function buildApp(context: AppContext) {
   const app = Fastify({
@@ -32,7 +34,8 @@ export async function buildApp(context: AppContext) {
           'body.refresh_token',
           'body.code',
           '*.apiKey',
-          '*.token'
+          '*.token',
+          'req.headers.x-admin-token', 'body.password', 'body.refreshToken'
         ],
         censor: '[REDACTED]'
       }
@@ -98,10 +101,12 @@ export async function buildApp(context: AppContext) {
   await registerHealthRoutes(app, context)
   await registerAdminSyncRoutes(app, context)
   await registerAuthRoutes(app, context)
-  await registerAgentRoutes(app, context)
-  await registerAgentConverseRoutes(app, context)
   await registerCloudAgentRoutes(app, context)
   await registerCloudStateRoutes(app, context)
+  await registerWorkspaceRoutes(app, context)
+  await registerEditorialRoutes(app, context)
+  await registerExploreRoutes(app, context)
+  await registerRouteGenerationRoutes(app, context)
   await registerFlightSearchRoutes(app, context)
   await registerRoutePlanRoutes(app, context)
   await registerReferenceDataRoutes(app, context)

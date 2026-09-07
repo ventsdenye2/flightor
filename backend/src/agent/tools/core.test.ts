@@ -4,7 +4,7 @@ import { MockFareProvider } from '../../fares/providers/mock.js'
 import { locationRefKey } from '../../aviation/types.js'
 import { InMemoryTripContextRepository } from '../../trips/repository.js'
 import { emptyTripContext } from '../../trips/types.js'
-import { createCoreToolRegistry } from './core.js'
+import { createCoreToolRegistry, createPlannerToolRegistry } from './core.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
 import { InMemoryUserMemoryRepository } from '../../memory/repository.js'
@@ -40,6 +40,30 @@ function context(): ToolExecutionContext {
 const call = (id: string, name: string, args: unknown) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
 
 describe('core agent tools', () => {
+  it('registers the complete Phase 4B tool vocabulary once', () => {
+    const names = createCoreToolRegistry().definitions().map(definition => definition.function.name)
+    expect(names).toEqual(expect.arrayContaining([
+      'search_destinations',
+      'recommend_destinations',
+      'plan_trip_route',
+      'confirm_flight_price',
+      'confirm_route_price',
+      'research_destination',
+      'build_travel_guide'
+    ]))
+    expect(new Set(names).size).toBe(names.length)
+  })
+
+  it('keeps final route generation out of the conversation Planner vocabulary', () => {
+    const names = createPlannerToolRegistry().definitions().map(definition => definition.function.name)
+    expect(names).not.toEqual(expect.arrayContaining([
+      'search_connection_flights', 'plan_flight_route', 'optimize_route', 'confirm_route_price'
+    ]))
+    expect(names).toEqual(expect.arrayContaining([
+      'search_destinations', 'research_destination', 'search_flights'
+    ]))
+  })
+
   it('resolves a location through the mock provider', async () => {
     const result = await createCoreToolRegistry().execute(call('loc-1', 'resolve_location', { query: 'Shanghai', types: ['city'] }), context(), new AbortController().signal)
     expect(result.ok).toBe(true)

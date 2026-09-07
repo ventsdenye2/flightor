@@ -1,0 +1,114 @@
+.trip-context-chips {
+  box-sizing: border-box;
+  padding: var(--spacing-md);
+  border: 1rpx solid var(--color-bg-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-panel);
+  color: var(--color-text-primary);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    min-height: 56rpx;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  &__title {
+    min-width: 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-small);
+    font-weight: 600;
+  }
+
+  &__edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 88rpx;
+    min-height: 88rpx;
+    margin: -16rpx -12rpx -16rpx 0;
+    padding: 0 16rpx;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-caption);
+    line-height: 1;
+
+    &::after {
+      border: 0;
+    }
+
+    &--pressed {
+      opacity: 0.72;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 72rpx;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-left: 20rpx;
+    border: 1rpx solid rgba(69, 198, 203, 0.28);
+    border-radius: var(--radius-full);
+    background: rgba(27, 38, 51, 0.9);
+  }
+
+  &__label {
+    min-width: 0;
+    max-width: 520rpx;
+    overflow: hidden;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-caption);
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 88rpx;
+    min-width: 88rpx;
+    height: 88rpx;
+    margin: -8rpx -1rpx -8rpx 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 34rpx;
+    font-weight: 400;
+    line-height: 1;
+
+    &::after {
+      border: 0;
+    }
+
+    &--pressed {
+      background: rgba(235, 235, 245, 0.1);
+    }
+  }
+
+  &__empty {
+    display: block;
+    padding: var(--spacing-xs) 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-caption);
+    line-height: 1.5;
+  }
+}

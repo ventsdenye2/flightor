@@ -15,8 +15,8 @@ When documents disagree, apply them in this order:
 3. [`TOOLS.md`](./TOOLS.md) — Agent Tool Registry and implementation status.
 4. [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) — current repository map,
    compatibility constraints, and operating context.
-5. [`CODEX_KICKOFF_PROMPT.md`](./CODEX_KICKOFF_PROMPT.md) — Phase 0/1 kickoff
-   requirements and Multi-Agent working conventions.
+5. [`CODEX_KICKOFF_PROMPT.md`](./CODEX_KICKOFF_PROMPT.md) — continuation
+   guidance and single-agent working conventions.
 6. Domain and operational notes below — useful implementation context, but not
    authority over the architecture or accepted ADRs.
 
@@ -28,6 +28,21 @@ When documents disagree, apply them in this order:
   — cloud identity, trips, conversations, artifacts, and Memory.
 - [`adr/0003-core-tools-phase-3.md`](./adr/0003-core-tools-phase-3.md)
   — Phase 3 Core Tool contracts and Phase 4 engine boundaries.
+- [`adr/0004-production-route-engine-phase-4.md`](./adr/0004-production-route-engine-phase-4.md)
+  — production topology, bounded path search, Pareto optimization, and
+  AeroDataBox adapter boundaries.
+- [`adr/0005-core-tools-and-production-research-phase-4b.md`](./adr/0005-core-tools-and-production-research-phase-4b.md)
+  — remaining Core Tools, immutable fare confirmation, restricted production
+  Research, and Travel Guide artifact composition.
+- [`adr/0006-agent-api-and-route-generation-phase-5.md`](./adr/0006-agent-api-and-route-generation-phase-5.md)
+  — the authenticated public Planner API, restricted conversation tool
+  vocabulary, and the explicit idempotent route-generation run boundary.
+- [`adr/0007-plan-and-flight-workspace-phase-6.md`](./adr/0007-plan-and-flight-workspace-phase-6.md)
+  — Trip Workspace information architecture, typed Artifact rendering, unified
+  manual/Agent flight search, and Flight Explorer ownership.
+
+Phase 6 visual tokens and fidelity constraints are recorded in
+[`design/phase6-design-system.md`](./design/phase6-design-system.md).
 
 ## Domain and operations
 
@@ -46,3 +61,6 @@ Any implementation that adds, removes, or materially changes an Agent-facing
 tool must update `TOOLS.md`. Any cross-domain decision must be captured in a new
 ADR before integration. Keep guidance links rooted under `docs/`; do not create
 new normative architecture or requirement documents in the repository root.
+
+- [Phase 7–9 operation and acceptance](./PHASE789_ACCEPTANCE.md)
+- [ADR 0008](./adr/0008-route-discovery-and-cloud-workspaces.md) — route detail, reviewed discovery and cloud workspaces.

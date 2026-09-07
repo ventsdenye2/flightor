@@ -2,7 +2,7 @@ import type { ConnectionSearchService, FlightRoutePlanner, RouteOptimizer } from
 
 export class RouteCapabilityUnavailableError extends Error {
   readonly code = 'ROUTE_CAPABILITY_UNAVAILABLE'
-  constructor(capability: string) { super(`${capability} is unavailable until Phase 4`) }
+  constructor(capability: string) { super(`${capability} is not configured in this runtime`) }
 }
 export class UnavailableConnectionSearchService implements ConnectionSearchService {
   async search(): Promise<never> { throw new RouteCapabilityUnavailableError('Connection search') }

@@ -1,0 +1,13 @@
+.artifact-unavailable {
+  margin: 24rpx 0;
+  padding: 28rpx;
+  border: 1rpx solid rgba(255, 159, 10, .42);
+  border-radius: 28rpx;
+  background: var(--color-bg-card, #111923);
+
+  &__head { display: flex; justify-content: space-between; gap: 16rpx; }
+  &__label { color: var(--color-warning, #ff9f0a); font-size: 22rpx; letter-spacing: 2rpx; }
+  &__version { color: var(--color-text-secondary, rgba(235, 235, 245, .68)); font-size: 21rpx; }
+  &__body { display: block; margin-top: 14rpx; color: var(--color-text-secondary, rgba(235, 235, 245, .68)); font-size: 25rpx; line-height: 1.5; }
+  &__retry { display: flex; min-height: 88rpx; align-items: center; justify-content: center; margin-top: 20rpx; border-radius: 18rpx; background: rgba(255, 159, 10, .12); color: var(--color-warning, #ff9f0a); font-size: 27rpx; }
+}

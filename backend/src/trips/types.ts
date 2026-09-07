@@ -47,6 +47,16 @@ const activityRefSchema = z.object({
   title: z.string().min(1).max(240)
 }).strict()
 
+const requiredGroundLegSchema = z.object({
+  from: locationRefSchema,
+  to: locationRefSchema,
+  mode: z.enum(['rail', 'bus', 'ferry', 'ground'])
+}).strict().superRefine((value, context) => {
+  const from = value.from.iata ?? value.from.cityCode ?? value.from.id
+  const to = value.to.iata ?? value.to.cityCode ?? value.to.id
+  if (from === to) context.addIssue({ code: 'custom', message: 'Ground leg endpoints must differ', path: ['to'] })
+})
+
 export const tripContextSchema = z.object({
   id: z.string().min(1).max(160),
   origin: locationRefSchema.optional(),
@@ -61,6 +71,7 @@ export const tripContextSchema = z.object({
   transferPreferences: transferPreferencesSchema,
   locationRoleOverrides: z.array(locationRoleOverrideSchema).max(32),
   mustIncludeEvents: z.array(activityRefSchema).max(32),
+  requiredGroundLegs: z.array(requiredGroundLegSchema).max(24).default([]),
   notes: z.array(z.string().min(1).max(500)).max(50),
   version: z.number().int().nonnegative()
 }).strict()
@@ -90,6 +101,7 @@ export function emptyTripContext(id: string): TripContext {
     transferPreferences: {},
     locationRoleOverrides: [],
     mustIncludeEvents: [],
+    requiredGroundLegs: [],
     notes: [],
     version: 0
   }

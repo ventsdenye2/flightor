@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { locationRefSchema } from '../aviation/types.js'
+import { locationRefSchema, verificationRecordSchema } from '../aviation/types.js'
 
 export const researchBriefSchema = z.object({
   destinations: z.array(locationRefSchema).min(1).max(12),
@@ -12,7 +12,7 @@ export const researchBriefSchema = z.object({
 
 export type ResearchBrief = z.infer<typeof researchBriefSchema>
 
-export const researchArtifactSchema = z.object({
+export const legacyResearchArtifactSchema = z.object({
   id: z.string().min(1),
   type: z.literal('research'),
   schemaVersion: z.literal(1),
@@ -27,11 +27,62 @@ export const researchArtifactSchema = z.object({
   createdAt: z.iso.datetime()
 }).strict()
 
+export type LegacyResearchArtifact = z.infer<typeof legacyResearchArtifactSchema>
+
+export const researchSourceAuthoritySchema = z.enum([
+  'official_event',
+  'official_organizer',
+  'government_tourism',
+  'official_venue',
+  'reliable_media',
+  'travel_site',
+  'unknown'
+])
+
+export const researchSourceSchema = z.object({
+  title: z.string().min(1).max(240),
+  url: z.url().max(500),
+  domain: z.string().min(1).max(253),
+  snippet: z.string().min(1).max(800),
+  authority: researchSourceAuthoritySchema,
+  publishedAt: z.iso.datetime().optional()
+}).strict()
+
+export const researchFindingSchema = z.object({
+  id: z.string().min(1).max(160),
+  category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']),
+  destinations: z.array(locationRefSchema).min(1).max(12),
+  title: z.string().min(1).max(240),
+  summary: z.string().min(1).max(1_500),
+  sources: z.array(researchSourceSchema).min(1).max(20),
+  verification: verificationRecordSchema,
+  warnings: z.array(z.string().min(1).max(240)).max(20)
+}).strict()
+
+export const researchArtifactSchema = z.object({
+  id: z.string().min(1).max(160),
+  type: z.literal('research'),
+  schemaVersion: z.literal(2),
+  brief: researchBriefSchema,
+  findings: z.array(researchFindingSchema).max(50),
+  queryCount: z.number().int().nonnegative().max(24),
+  warnings: z.array(z.string().min(1).max(240)).max(40),
+  createdAt: z.iso.datetime()
+}).strict()
+
 export type ResearchArtifact = z.infer<typeof researchArtifactSchema>
+
+export const readableResearchArtifactSchema = z.union([
+  researchArtifactSchema,
+  legacyResearchArtifactSchema
+])
+
+export type ReadableResearchArtifact = z.infer<typeof readableResearchArtifactSchema>
 
 export interface ResearchExecutionContext {
   requestId: string
   signal?: AbortSignal
+  preferenceSummary?: readonly string[]
 }
 
 export interface ResearchAgent {

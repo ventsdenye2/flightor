@@ -2,7 +2,25 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import type { FlightOption, SearchParams } from '../types/flight'
 import { getStorage, setStorage } from '../utils/storage'
-import { wxLogin, UserProfile } from '../services/authService'
+import { clearAuthTokens, wxLogin, UserProfile } from '../services/authService'
+import { clearCloudChatHistory } from './chatHistory'
+
+type UserSessionClearHandler = (ownerId?: string) => void
+const userSessionClearHandlers = new Set<UserSessionClearHandler>()
+
+/**
+ * Register an in-memory owner-scoped state cleanup without introducing a
+ * userStore -> feature-store import cycle. Feature stores register once at
+ * module load and invalidate late requests when auth identity changes.
+ */
+export function registerUserSessionClearHandler(handler: UserSessionClearHandler): () => void {
+  userSessionClearHandlers.add(handler)
+  return () => userSessionClearHandlers.delete(handler)
+}
+
+function clearUserSessionState(ownerId?: string): void {
+  for (const handler of userSessionClearHandlers) handler(ownerId)
+}
 
 export interface FavoriteItem {
   id: string
@@ -32,6 +50,7 @@ export class UserStore {
   // 登录态：null 未登录；登录后跨会话持久化
   profile: UserProfile | null = getStorage<UserProfile | null>('profile', null)
   isLoggingIn = false
+  private authGeneration = 0
 
   constructor() {
     makeAutoObservable(this)
@@ -41,13 +60,24 @@ export class UserStore {
     return this.profile !== null
   }
 
+  get sessionRevision(): number { return this.authGeneration }
+
   /** 登录（可携带头像昵称）；失败抛出由调用方提示 */
   async login(info?: { nickname?: string; avatarUrl?: string }) {
     if (this.isLoggingIn) return
+    const requestId = ++this.authGeneration
     this.isLoggingIn = true
     try {
+      const previousOwnerId = this.profile?.uid
       const profile = await wxLogin(info)
+      if (requestId !== this.authGeneration) {
+        clearAuthTokens()
+        return
+      }
       runInAction(() => {
+        if (previousOwnerId && previousOwnerId !== profile.uid) {
+          clearUserSessionState(previousOwnerId)
+        }
         this.profile = profile
         setStorage('profile', profile)
       })
@@ -69,10 +99,15 @@ export class UserStore {
     this.profile = next
     setStorage('profile', next)
     // 静默同步到服务端（Mock 模式内部直接返回）
-    wxLogin(next).catch(() => {})
+    wxLogin(next, { persistTokens: false }).catch(() => {})
   }
 
   logout() {
+    const ownerId = this.profile?.uid
+    this.authGeneration += 1
+    clearAuthTokens()
+    if (ownerId) clearCloudChatHistory(ownerId)
+    clearUserSessionState(ownerId)
     this.profile = null
     setStorage('profile', null)
   }
