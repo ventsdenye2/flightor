@@ -11,12 +11,22 @@ import type { ProviderCallOptions, ResolveLocationInput } from '../../aviation/p
 import { z } from 'zod'
 import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
 import { InMemoryUserMemoryRepository } from '../../memory/repository.js'
+import { UnavailableResearchAgent } from '../../research-agent/unavailable.js'
+import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from '../../flight-routing/unavailable.js'
 
-const ctx: ToolExecutionContext = { requestId: 'r', conversationId: 'c', tripId: 't', generationId: 'g', trips: new InMemoryTripContextRepository([emptyTripContext('t')]), artifacts: new InMemoryArtifactRepository('u', new Set(['t'])), memory: new InMemoryUserMemoryRepository(), aviation: new MockAviationProvider(), fares: new MockFareProvider() }
+const ctx: ToolExecutionContext = { requestId: 'r', conversationId: 'c', tripId: 't', generationId: 'g', trips: new InMemoryTripContextRepository([emptyTripContext('t')]), artifacts: new InMemoryArtifactRepository('u', new Set(['t'])), memory: new InMemoryUserMemoryRepository(), aviation: new MockAviationProvider(), fares: new MockFareProvider(), research: new UnavailableResearchAgent(), connectionSearch: new UnavailableConnectionSearchService(), flightRoutePlanner: new UnavailableFlightRoutePlanner(), routeOptimizer: new UnavailableRouteOptimizer() }
 const call = (id: string, name: string, args = {}) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
 const tool = (name: string, execute: AgentTool['execute'], extra: Partial<AgentTool> = {}): AgentTool => ({ name, description: name, inputSchema: z.object({}).strict(), outputSchema: z.object({ ok: z.boolean() }), costClass: 'free', costUnits: 1, sideEffect: 'none', parallelSafe: true, timeoutMs: 30, execute, ...extra })
 
 describe('AgentRuntime and ToolRegistry', () => {
+  it('publishes the complete Phase 3 Core Tool vocabulary', () => {
+    expect(createCoreToolRegistry().definitions().map(definition => definition.function.name)).toEqual([
+      'get_trip_context', 'update_trip_context', 'resolve_location', 'search_flights',
+      'search_flexible_flights', 'search_connection_flights', 'plan_flight_route',
+      'optimize_route', 'web_research', 'get_user_memory', 'update_user_memory'
+    ])
+  })
+
   it('returns deterministic errors for unknown and malformed/schema-invalid calls', async () => {
     const reg = createCoreToolRegistry()
     const signal = new AbortController().signal

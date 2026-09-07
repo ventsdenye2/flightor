@@ -15,6 +15,8 @@ import { MockFareProvider } from '../fares/providers/mock.js'
 import { InMemoryUserMemoryRepository } from '../memory/repository.js'
 import { InMemoryTripRepository } from '../trips/repository.js'
 import { registerCloudAgentRoutes } from './agent-cloud.js'
+import { UnavailableResearchAgent } from '../research-agent/unavailable.js'
+import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from '../flight-routing/unavailable.js'
 
 const env = parseEnv({
   NODE_ENV: 'test', DATABASE_URL: 'postgresql://test', REDIS_URL: 'redis://test',
@@ -55,7 +57,11 @@ describe('authenticated cloud Agent route', () => {
       .mockResolvedValueOnce({ message: { role: 'assistant', content: '完成。' } }) }
     const service = new CloudPlannerService({
       trips, conversations, artifacts, memory,
-      runtime: new AgentRuntime(model, createCoreToolRegistry()), aviation: new Aviation(), fares
+      runtime: new AgentRuntime(model, createCoreToolRegistry()), aviation: new Aviation(), fares,
+      research: new UnavailableResearchAgent(),
+      connectionSearch: new UnavailableConnectionSearchService(),
+      flightRoutePlanner: new UnavailableFlightRoutePlanner(),
+      routeOptimizer: new UnavailableRouteOptimizer()
     })
     const owners: string[] = []
     const app = Fastify()

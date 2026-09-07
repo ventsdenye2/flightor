@@ -3,7 +3,7 @@ import { AppError } from '../../lib/errors.js'
 import type { SerpApiClient, SerpFlightSearch } from '../../providers/serpapi/client.js'
 import { itinerariesFromSerpResponse, sampleDates, type FlightOption } from '../../search/serpapi.js'
 import type { FareOffer, FareSearchInput, FareSearchResult } from '../types.js'
-import type { FareProvider, FlexibleFareSearchInput, RefreshFareInput } from './provider.js'
+import type { FareProvider, FlexibleFareSearchInput, FlexibleFareSearchResult, RefreshFareInput } from './provider.js'
 
 type Client = Pick<SerpApiClient, 'searchFlights'>
 
@@ -77,9 +77,9 @@ export class SerpApiFareProvider implements FareProvider {
 
   searchFlights(input: FareSearchInput, options?: ProviderCallOptions): Promise<FareSearchResult> { return this.run(input, options) }
 
-  async searchFlexibleFlights(input: FlexibleFareSearchInput, options?: ProviderCallOptions): Promise<FareSearchResult[]> {
+  async searchFlexibleFlights(input: FlexibleFareSearchInput, options?: ProviderCallOptions): Promise<FlexibleFareSearchResult> {
     const dates = sampleDates(input.departureDateFrom, input.departureDateTo, 4)
-    const results = await Promise.all(dates.map(date => this.run({
+    const settled = await Promise.allSettled(dates.map(date => this.run({
       origin: input.origin,
       destination: input.destination,
       departureDate: date,
@@ -87,7 +87,18 @@ export class SerpApiFareProvider implements FareProvider {
       currency: input.currency,
       travelClass: input.travelClass
     }, options)))
-    return results
+    const results: FareSearchResult[] = []
+    const failedDates: string[] = []
+    let firstFailure: unknown
+    settled.forEach((result, index) => {
+      if (result.status === 'fulfilled') results.push(result.value)
+      else {
+        failedDates.push(dates[index]!)
+        firstFailure ??= result.reason
+      }
+    })
+    if (results.length === 0 && firstFailure !== undefined) throw firstFailure
+    return { results, scannedDates: dates, failedDates }
   }
 
   async refreshFlight(input: RefreshFareInput, options?: ProviderCallOptions): Promise<FareSearchResult> {

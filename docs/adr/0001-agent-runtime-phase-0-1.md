@@ -2,7 +2,7 @@
 
 - Status: Accepted for Phase 0 and Phase 1 implementation
 - Date: 2026-09-06
-- Authority: `FLIGHTOR_ARCHITECTURE.md`
+- Authority: `docs/FLIGHTOR_ARCHITECTURE.md`
 
 ## Context and current-to-target gap
 
@@ -47,7 +47,7 @@ pulled into this foundation milestone.
 ## Phase 0 plan and acceptance
 
 1. Record this gap analysis and migration decision.
-2. Create root `TOOLS.md` and keep implementation status honest.
+2. Create `docs/TOOLS.md` and keep implementation status honest.
 3. Record baseline backend typecheck/test/build and root build behavior.
 4. Make no destructive frontend, database, or directory changes.
 

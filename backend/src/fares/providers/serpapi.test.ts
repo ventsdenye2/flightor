@@ -25,10 +25,23 @@ describe('SerpApiFareProvider', () => {
   it('samples bounded flexible dates and refresh reruns the query', async () => {
     const searchFlights = vi.fn().mockResolvedValue(raw)
     const provider = new SerpApiFareProvider({ searchFlights })
-    const results = await provider.searchFlexibleFlights({ ...input, departureDateFrom: '2026-10-01', departureDateTo: '2026-10-10' })
-    expect(results.length).toBeLessThanOrEqual(4)
-    await provider.refreshFlight({ offerId: results[0]!.offers[0]!.id, query: input })
+    const flexible = await provider.searchFlexibleFlights({ ...input, departureDateFrom: '2026-10-01', departureDateTo: '2026-10-10' })
+    expect(flexible.results.length).toBeLessThanOrEqual(4)
+    expect(flexible.scannedDates).toHaveLength(flexible.results.length)
+    await provider.refreshFlight({ offerId: flexible.results[0]!.offers[0]!.id, query: input })
     expect(searchFlights).toHaveBeenCalled()
+  })
+
+  it('preserves successful sampled dates when another date fails', async () => {
+    const searchFlights = vi.fn()
+      .mockResolvedValueOnce(raw)
+      .mockRejectedValueOnce(new Error('one sampled date failed'))
+      .mockResolvedValue(raw)
+    const provider = new SerpApiFareProvider({ searchFlights })
+    const flexible = await provider.searchFlexibleFlights({ ...input, departureDateFrom: '2026-10-01', departureDateTo: '2026-10-10' })
+    expect(flexible.results.length).toBeGreaterThan(0)
+    expect(flexible.failedDates).toHaveLength(1)
+    expect(flexible.scannedDates).toContain(flexible.failedDates[0])
   })
 
   it('drops provider itineraries whose endpoints do not match the airport query', async () => {

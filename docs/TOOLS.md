@@ -1,7 +1,7 @@
 # FlightOR Agent Tool Registry
 
 This file is the source-of-truth inventory for Agent-facing tools. It follows
-`FLIGHTOR_ARCHITECTURE.md`; implementation status means both code and contract
+`docs/FLIGHTOR_ARCHITECTURE.md`; implementation status means both code and contract
 tests exist. Provider-specific payloads must be normalized before crossing a
 tool boundary.
 
@@ -104,8 +104,8 @@ tool boundary.
 
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
-| `search_flexible_flights` | Planned | Canonical leg + bounded date window → flight-search artifact | Creates artifact | paid | `FareProvider` | Short TTL; partial dates and provider failures are reported |
-| `search_connection_flights` | Planned | Leg/window + active preferences → candidate edge artifact | Creates artifact | expensive | FlightOR connection engine over aviation + fare providers | Topology-first cache/pruning; unavailable fares remain unconfirmed, never invented |
+| `search_flexible_flights` | Implemented (Phase 3) | Canonical leg + ≤31-day window → `flight_search` v2 artifact + compact sampled-date summary | Creates artifact | paid | `FareProvider` (SerpApi/Mock) | Provider discloses sampled/success/failed dates; partial success is preserved and total failure is explicit |
+| `search_connection_flights` | Implemented contract (Phase 3; production service unavailable until Phase 4) | Trusted canonical leg/window + bounded preferences → `route_set:connection_edges` artifact | Creates artifact | expensive | `ConnectionSearchService`; deterministic Mock in tests | Production fails explicitly without the Phase 4 engine; no legacy/OAG payload or invented fare leaks through |
 | `confirm_flight_price` | Planned | Existing offer/artifact ref → refreshed offer | Updates verification/freshness | paid | `FareProvider.refreshFlight` | Bypasses ordinary fare cache; stale/unavailable is explicit |
 | `confirm_route_price` | Planned | Route artifact ref → refreshed fare-critical legs | Updates route verification | expensive | FlightOR service + `FareProvider` | Bounded refresh set; partial confirmation is preserved |
 
@@ -114,14 +114,14 @@ tool boundary.
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
 | `plan_trip_route` | Planned | Trip constraints + verified candidates → visit/day structure | Creates artifact | cheap | FlightOR trip-planning service | Deterministic inputs/version key; does not optimize global flights |
-| `plan_flight_route` | Planned | Cities, dates, candidate edges → complete bounded paths | Creates artifact | cheap | FlightOR path search; no direct provider calls | Synthetic graph golden tests; bounded-search exhaustion is explicit |
-| `optimize_route` | Planned | Complete path candidates + weights → Pareto representatives | Creates artifact | cheap | FlightOR optimizer; no provider calls | Deterministic by algorithm version; invalid candidates are rejected |
+| `plan_flight_route` | Implemented contract (Phase 3; production planner unavailable until Phase 4) | Trusted candidate-edge artifact + canonical nodes/window → `route_set:flight_paths` artifact | Creates artifact | cheap | `FlightRoutePlanner`; no provider calls | Owner/trip/kind/schema checks precede deterministic service handoff; bounded exhaustion is explicit |
+| `optimize_route` | Implemented contract (Phase 3; production optimizer unavailable until Phase 4) | Trusted complete-path artifact + bounded normalized weights → `route_set:optimized_routes` artifact | Creates artifact | cheap | `RouteOptimizer`; no discovery/provider calls | Returns Pareto/rejection counts and compact representatives; wrong/malformed source artifacts fail closed |
 
 ## Research tools
 
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
-| `web_research` | Planned | Bounded question/context → research artifact | Creates artifact | paid | Verified web sources | Topic/freshness cache; unavailable research does not block routing |
+| `web_research` | Implemented contract (Phase 3; production research unavailable) | Strict minimal `ResearchBrief` → `research` v1 artifact + compact confidence counts | Creates artifact | paid | Restricted `ResearchAgent`; deterministic Mock in tests | Agent receives only request ID/signal; production unavailability is bounded and does not fall back to unrestricted legacy search |
 | `research_destination` | Planned | Destination/time/interests → structured research artifact | Creates artifact | paid | Source-priority research service | Expiry by fact type; unsupported claims remain unverified |
 | `build_travel_guide` | Planned | Route + verified research refs → day-level guide artifact | Creates artifact | cheap | FlightOR composition over verified artifacts | Versioned by inputs; missing current-event facts are omitted |
 

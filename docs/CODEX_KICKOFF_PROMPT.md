@@ -4,13 +4,13 @@ You are the lead implementation engineer for the repository:
 
 `ventsdenye2/flightor`
 
-Your task is to migrate the current project toward the architecture defined in the root document:
+Your task is to migrate the current project toward the architecture defined in:
 
-`FLIGHTOR_ARCHITECTURE.md`
+`docs/FLIGHTOR_ARCHITECTURE.md`
 
 ## Mandatory first steps
 
-1. Read `FLIGHTOR_ARCHITECTURE.md` completely.
+1. Read `docs/FLIGHTOR_ARCHITECTURE.md` completely.
 2. Read the current repository structure and identify the existing:
    - conversation agent;
    - OpenRouter adapter;
@@ -55,7 +55,7 @@ Implement the architecture foundation:
 
 Create or update:
 
-- `TOOLS.md`
+- `docs/TOOLS.md`
 
 Document each Agent-facing tool with:
 
@@ -315,7 +315,7 @@ Luna workers provide candidate implementations, not final architectural authorit
 After workers return:
 
 1. inspect their diffs;
-2. verify compliance with `FLIGHTOR_ARCHITECTURE.md` and `TOOLS.md`;
+2. verify compliance with `docs/FLIGHTOR_ARCHITECTURE.md` and `docs/TOOLS.md`;
 3. resolve inconsistencies yourself;
 4. run integration tests;
 5. only then accept the milestone.

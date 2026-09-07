@@ -11,6 +11,12 @@ import { PostgresArtifactRepository } from '../artifacts/postgres.js'
 import { PostgresConversationRepository } from '../conversations/postgres.js'
 import { PostgresUserMemoryRepository } from '../memory/postgres.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
+import { UnavailableResearchAgent } from '../research-agent/unavailable.js'
+import {
+  UnavailableConnectionSearchService,
+  UnavailableFlightRoutePlanner,
+  UnavailableRouteOptimizer
+} from '../flight-routing/unavailable.js'
 
 export const cloudAgentRequestSchema = z.object({
   trip_id: z.string().uuid(),
@@ -31,7 +37,11 @@ function defaultFactory(context: AppContext): CloudAgentServiceFactory {
     return new CloudPlannerService({
       trips, conversations, artifacts, memory, runtime,
       aviation: context.providers.aviation,
-      fares: context.providers.fares
+      fares: context.providers.fares,
+      research: new UnavailableResearchAgent(),
+      connectionSearch: new UnavailableConnectionSearchService(),
+      flightRoutePlanner: new UnavailableFlightRoutePlanner(),
+      routeOptimizer: new UnavailableRouteOptimizer()
     })
   }
 }

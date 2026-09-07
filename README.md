@@ -2,7 +2,7 @@
 
 国际航线比价与多城路线规划微信小程序。前端使用 Taro + React + MobX；`backend/` 为独立自部署后端。原微信云函数仅保留为迁移期兼容/测试资产，当前规划对话统一走自建后端的 `POST /v1/agent/converse`。
 
-后续开发开始前先阅读 [`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md)，其中集中记录当前 MVP 状态、仓库结构、启动方式、外部 API 状态、工程约束和下一步优先级。
+后续开发开始前先阅读 [`docs/PROJECT_CONTEXT.md`](docs/PROJECT_CONTEXT.md)，其中集中记录当前 MVP 状态、仓库结构、启动方式、外部 API 状态、工程约束和下一步优先级。权威架构、Agent kickoff 与 Tool Registry 也统一位于 `docs/`。
 
 ## 快速开始
 

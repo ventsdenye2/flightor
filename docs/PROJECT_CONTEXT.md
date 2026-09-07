@@ -1,6 +1,6 @@
 # FlightOR 项目上下文与开发交接
 
-> 最后更新：2026-09-02
+> 最后更新：2026-09-06
 > 用途：为后续迭代快速恢复上下文。每次完成会影响架构、启动方式、接口、外部依赖或 MVP 范围的开发后，应同步更新本文。
 
 ## 1. 当前目标与产品原则
@@ -30,7 +30,9 @@ src/                 微信小程序前端
   utils/             请求、存储、格式化等工具
 
 backend/             可独立部署的 Fastify 后端
-  src/agent/         多轮槽位提取、白名单校验和规则降级
+  src/agent/         旧对话兼容层 + 新 Tool Calling Runtime、Core Tools 与 cloud Planner seam
+  src/flight-routing/ Phase 3 Connection/Path/Optimizer contracts、Mock 与 unavailable seams
+  src/research-agent/ 受限 Research Agent contract、Mock 与 unavailable seam
   src/routes/        HTTP API
   src/providers/     OAG、SerpApi、OpenRouter 适配器
   src/topology/      OAG 同步、拓扑版本构建
@@ -49,6 +51,26 @@ compose.yaml         PostgreSQL、Redis、API、Worker 编排
 ```
 
 `cloud/` 中仍保留多城规划、聊天、价格趋势等遗留实现及协议测试，但当前小程序运行链路不再调用它们。新功能应进入 `backend/`；若复用旧云函数中的纯算法，应迁移纯逻辑，不要把 `wx-server-sdk` 或云数据库依赖带入自建后端。
+
+权威开发文档统一位于 `docs/`。阅读顺序与文档职责见
+`docs/README.md`；架构冲突时以 `docs/FLIGHTOR_ARCHITECTURE.md` 和已接受 ADR
+为准。不要在仓库根目录新增新的规范性架构/需求文档。
+
+### 新 Agent 迁移状态（Phase 0–3）
+
+- Phase 0/1：Tool Calling Runtime、Tool Registry、Aviation/Fare Provider 抽象及
+  `get_trip_context`、`update_trip_context`、`resolve_location`、`search_flights`
+  vertical slice 已完成。
+- Phase 2：internal user identity、owner-scoped cloud Trip/Conversation/Artifact、
+  versioned Trip Context、Markdown Memory 与临时 `/v1/agent-v2/converse` seam 已完成。
+- Phase 3：`search_flexible_flights` 已接入 FareProvider 并持久化 v2 fare artifact；
+  `search_connection_flights`、`plan_flight_route`、`optimize_route` 已建立严格的
+  deterministic service/tool/artifact contracts；`web_research` 已接入受限
+  Research Agent contract。
+- Phase 4 前，生产 Connection/Path/Optimizer 明确返回 capability unavailable；
+  完整 Research pipeline 也尚未接入。Mock contract tests 可独立验证所有 handoff。
+- 旧 `/v1/agent/converse` 与旧 conversation-agent 继续运行；当前小程序尚未切换到
+  `/v1/agent-v2/converse`。Agent API 迁移属于 Phase 5，不在 Phase 3 destructive switch。
 
 ## 3. 当前系统链路
 

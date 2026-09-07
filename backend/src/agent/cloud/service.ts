@@ -5,6 +5,8 @@ import type { FareProvider } from '../../fares/providers/provider.js'
 import { AppError } from '../../lib/errors.js'
 import type { UserMemoryRepository } from '../../memory/repository.js'
 import type { TripRepository } from '../../trips/repository.js'
+import type { ResearchAgent } from '../../research-agent/types.js'
+import type { ConnectionSearchService, FlightRoutePlanner, RouteOptimizer } from '../../flight-routing/types.js'
 import type { ChatMessage } from '../runtime/model.js'
 import { AgentRuntime } from '../runtime/runtime.js'
 
@@ -19,6 +21,10 @@ export interface CloudPlannerDependencies extends CloudPlannerRepositories {
   runtime: AgentRuntime
   aviation: AviationProvider
   fares: FareProvider
+  research: ResearchAgent
+  connectionSearch: ConnectionSearchService
+  flightRoutePlanner: FlightRoutePlanner
+  routeOptimizer: RouteOptimizer
 }
 
 export interface CloudPlannerTurnInput {
@@ -89,7 +95,11 @@ export class CloudPlannerService {
         artifacts: this.dependencies.artifacts,
         memory: this.dependencies.memory,
         aviation: this.dependencies.aviation,
-        fares: this.dependencies.fares
+        fares: this.dependencies.fares,
+        research: this.dependencies.research,
+        connectionSearch: this.dependencies.connectionSearch,
+        flightRoutePlanner: this.dependencies.flightRoutePlanner,
+        routeOptimizer: this.dependencies.routeOptimizer
       },
       ...(input.signal ? { signal: input.signal } : {})
     })

@@ -733,7 +733,7 @@ active trip.
 
 # 9. Agent-facing Tool Set v1
 
-The repository must maintain a root-level `TOOLS.md`.
+The repository must maintain `docs/TOOLS.md`.
 
 Every Agent-facing tool must document:
 
@@ -2250,7 +2250,7 @@ Do not delete legacy code before the replacement has tests and a working path.
 Deliver:
 
 - this document committed to root;
-- root `TOOLS.md`;
+- `docs/TOOLS.md`;
 - architecture decision notes where needed;
 - no destructive frontend refactor yet.
 
@@ -2428,7 +2428,7 @@ The architecture migration is considered complete when:
 17. Important external facts have internal verification/provenance.
 18. Visa/entry is never represented as guaranteed legal advice.
 19. Core user data is cloud-hosted and future web-client compatible.
-20. `TOOLS.md` and this architecture document remain updated as code evolves.
+20. `docs/TOOLS.md` and this architecture document remain updated as code evolves.
 
 ---
 
@@ -2453,7 +2453,7 @@ Do not implement yet unless directly required by a current task:
 # 35. Engineering Rules for Codex / Future Contributors
 
 1. Read this document before changing Agent architecture.
-2. Update `TOOLS.md` whenever an Agent-facing tool changes.
+2. Update `docs/TOOLS.md` whenever an Agent-facing tool changes.
 3. Do not reintroduce regex as the primary semantic parser.
 4. Do not allow LLMs to invent provider facts.
 5. Do not expose provider-specific schemas beyond provider adapters.

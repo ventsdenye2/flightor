@@ -10,6 +10,8 @@ import type { AgentModelClient } from '../runtime/model.js'
 import { AgentRuntime } from '../runtime/runtime.js'
 import { createCoreToolRegistry } from '../tools/core.js'
 import { CloudPlannerService } from './service.js'
+import { UnavailableResearchAgent } from '../../research-agent/unavailable.js'
+import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from '../../flight-routing/unavailable.js'
 
 const call = (id: string, name: string, args: unknown) => ({
   id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) }
@@ -51,7 +53,13 @@ describe('CloudPlannerService vertical slice', () => {
       ] } })
       .mockResolvedValueOnce({ message: { role: 'assistant', content: '已找到一个经过验证的航班选项。' } }) }
     const runtime = new AgentRuntime(model, createCoreToolRegistry())
-    const service = new CloudPlannerService({ trips, conversations, artifacts, memory, runtime, aviation: new Aviation(), fares })
+    const service = new CloudPlannerService({
+      trips, conversations, artifacts, memory, runtime, aviation: new Aviation(), fares,
+      research: new UnavailableResearchAgent(),
+      connectionSearch: new UnavailableConnectionSearchService(),
+      flightRoutePlanner: new UnavailableFlightRoutePlanner(),
+      routeOptimizer: new UnavailableRouteOptimizer()
+    })
 
     const result = await service.runTurn({
       requestId: 'req-1', tripId: trip.id, conversationId: conversation.id,

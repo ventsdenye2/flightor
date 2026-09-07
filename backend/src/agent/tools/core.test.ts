@@ -8,6 +8,8 @@ import { createCoreToolRegistry } from './core.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
 import { InMemoryUserMemoryRepository } from '../../memory/repository.js'
+import { UnavailableResearchAgent } from '../../research-agent/unavailable.js'
+import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from '../../flight-routing/unavailable.js'
 
 const location = { id: 'airport-pvg', type: 'airport' as const, name: 'Shanghai Pudong', countryCode: 'CN', cityCode: 'SHA', iata: 'PVG' }
 const destination = { id: 'airport-nrt', type: 'airport' as const, name: 'Narita International', countryCode: 'JP', cityCode: 'TYO', iata: 'NRT' }
@@ -27,6 +29,10 @@ function context(): ToolExecutionContext {
     memory: new InMemoryUserMemoryRepository(),
     aviation: new MockAviationProvider({ resolveLocation: { matches: [location], verification: { status: 'verified', checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock-aviation' }] } } }),
     fares: new MockFareProvider({ search: fareResult }),
+    research: new UnavailableResearchAgent(),
+    connectionSearch: new UnavailableConnectionSearchService(),
+    flightRoutePlanner: new UnavailableFlightRoutePlanner(),
+    routeOptimizer: new UnavailableRouteOptimizer(),
     resolvedLocationKeys: new Set([locationRefKey(location), locationRefKey(destination)])
   }
 }

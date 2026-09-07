@@ -6,6 +6,13 @@ export interface FlexibleFareSearchInput extends Omit<FareSearchInput, 'departur
   departureDateTo: string
 }
 
+export interface FlexibleFareSearchResult {
+  results: FareSearchResult[]
+  /** Dates the provider actually attempted; a bounded sample, not necessarily the full window. */
+  scannedDates: string[]
+  failedDates: string[]
+}
+
 export interface RefreshFareInput {
   offerId: string
   query: FareSearchInput
@@ -14,6 +21,6 @@ export interface RefreshFareInput {
 export interface FareProvider {
   readonly name: string
   searchFlights(input: FareSearchInput, options?: ProviderCallOptions): Promise<FareSearchResult>
-  searchFlexibleFlights(input: FlexibleFareSearchInput, options?: ProviderCallOptions): Promise<FareSearchResult[]>
+  searchFlexibleFlights(input: FlexibleFareSearchInput, options?: ProviderCallOptions): Promise<FlexibleFareSearchResult>
   refreshFlight(input: RefreshFareInput, options?: ProviderCallOptions): Promise<FareSearchResult>
 }

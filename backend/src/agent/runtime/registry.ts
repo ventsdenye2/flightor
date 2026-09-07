@@ -4,6 +4,8 @@ import type { FareProvider } from '../../fares/providers/provider.js'
 import type { TripContextRepository } from '../../trips/repository.js'
 import type { ArtifactRepository } from '../../artifacts/repository.js'
 import type { UserMemoryRepository } from '../../memory/repository.js'
+import type { ResearchAgent } from '../../research-agent/types.js'
+import type { ConnectionSearchService, FlightRoutePlanner, RouteOptimizer } from '../../flight-routing/types.js'
 import type { ChatToolDefinition, FunctionToolCall } from './model.js'
 
 export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
@@ -19,6 +21,10 @@ export interface ToolExecutionContext {
   memory: UserMemoryRepository
   aviation: AviationProvider
   fares: FareProvider
+  research: ResearchAgent
+  connectionSearch: ConnectionSearchService
+  flightRoutePlanner: FlightRoutePlanner
+  routeOptimizer: RouteOptimizer
   /** Runtime-owned ledger; model arguments can never add entries directly. */
   resolvedLocationKeys?: Set<string>
   isGenerationCurrent?: () => boolean

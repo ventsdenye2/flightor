@@ -5,6 +5,9 @@ import { fareSearchInputSchema, fareSearchResultSchema, flightSearchArtifactSche
 import { USER_MEMORY_MAX_BYTES } from '../../memory/repository.js'
 import { tripContextPatchSchema, tripContextSchema } from '../../trips/types.js'
 import { ToolRegistry, type AgentTool } from '../runtime/registry.js'
+import { searchFlexibleFlightsTool } from './flexible-flights.js'
+import { optimizeRouteTool, planFlightRouteTool, searchConnectionFlightsTool } from './flight-routing.js'
+import { webResearchTool } from './web-research.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
@@ -297,6 +300,11 @@ export function createCoreToolRegistry(): ToolRegistry {
     .register(updateTripContextTool)
     .register(resolveLocationTool)
     .register(searchFlightsTool)
+    .register(searchFlexibleFlightsTool)
+    .register(searchConnectionFlightsTool)
+    .register(planFlightRouteTool)
+    .register(optimizeRouteTool)
+    .register(webResearchTool)
     .register(getUserMemoryTool)
     .register(updateUserMemoryTool)
 }
