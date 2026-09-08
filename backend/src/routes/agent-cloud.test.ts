@@ -76,7 +76,7 @@ describe('authenticated cloud Agent route', () => {
     expect(response.statusCode).toBe(200)
     expect(owners).toEqual(['internal-7'])
     expect(response.json()).toMatchObject({
-      reply: '完成。', tripId: trip.id, conversationId: conversation.id, stopReason: 'completed',
+      reply: '完成。', tripId: trip.id, conversationId: conversation.id, stopReason: 'responded', delivery: { status: 'not_requested' },
       tripContextSummary: { version: 1, readyForRouteGeneration: false }
     })
     expect(response.json().artifactRefs).toHaveLength(1)

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { locationRefSchema, verificationRecordSchema } from '../aviation/types.js'
+import type { ArtifactWorkspace } from '../artifacts/workspace.js'
 
 const boundedString = (max: number) => z.string().min(1).max(max)
 const MAX_WINDOW_DAYS = 366
@@ -204,6 +205,7 @@ export type RouteServiceContext = {
   signal?: AbortSignal
   tripId?: string
   conversationId?: string
+  artifactWorkspace?: ArtifactWorkspace
   /** Persistent cancellation/ownership checkpoint used before expensive provider boundaries. */
   checkpoint?: () => Promise<void>
 }

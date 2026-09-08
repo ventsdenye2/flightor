@@ -32,18 +32,6 @@ function sanitizeQueryPart(value: string): string {
     .slice(0, MAX_QUERY_PART_LENGTH)
 }
 
-function researchTypeLabel(value: ResearchSearchInput['researchTypes'][number]): string {
-  return value === 'event'
-    ? 'events'
-    : value === 'seasonal'
-      ? 'seasonal highlights'
-      : value === 'activity'
-        ? 'activities'
-        : value === 'stopover'
-          ? 'stopover ideas'
-          : 'practical travel information'
-}
-
 function scopeClause(scope: ResearchQueryScope | undefined): string {
   if (!scope) return ''
   return ` (${scope.domains.map(domain => `site:${domain}`).join(' OR ')})`
@@ -52,12 +40,13 @@ function scopeClause(scope: ResearchQueryScope | undefined): string {
 function buildQuery(input: ResearchSearchInput, policy: ResearchQueryPolicy = CURATED_RESEARCH_QUERY_POLICY): string {
   const parts = [
     input.destination.name,
-    ...input.questions,
-    ...input.researchTypes.map(researchTypeLabel)
+    ...(input.searchTerms ? [input.searchTerms] : input.questions)
   ]
+  // Categories constrain synthesis; combining all their labels into every
+  // topic query incorrectly requires one source to discuss unrelated topics.
   // Evergreen activity pages rarely mention the exact trip dates. Keep the
   // full window in the synthesis brief; only date-sensitive searches need it.
-  if (input.researchTypes.some(type => type === 'event' || type === 'seasonal')) {
+  if (input.researchTypes.every(type => type === 'event' || type === 'seasonal')) {
     if (input.travelWindow?.from) parts.push(input.travelWindow.from.slice(0, 7))
     if (input.travelWindow?.to && input.travelWindow.to.slice(0, 7) !== input.travelWindow?.from?.slice(0, 7)) parts.push(input.travelWindow.to.slice(0, 7))
   }

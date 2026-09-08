@@ -4,6 +4,7 @@ import { z } from 'zod'
 import type { AppContext } from '../app/context.js'
 import { PostgresArtifactRepository } from '../artifacts/postgres.js'
 import type { ArtifactRepository } from '../artifacts/repository.js'
+import { createArtifactWorkspace } from '../artifacts/workspace.js'
 import { authenticateRequest } from '../auth/service.js'
 import { PostgresConversationRepository } from '../conversations/postgres.js'
 import type { ConversationRepository } from '../conversations/repository.js'
@@ -153,10 +154,13 @@ export async function registerFlightSearchRoutes(
       request.raw.once('aborted', () => abortController.abort(new Error('Client disconnected')))
       const common = {
         fares: dependencies.fares,
-        artifacts: dependencies.artifacts,
-        tripId: trip.id,
-        conversationId: conversation.id,
-        signal: abortController.signal
+        ...await createArtifactWorkspace({
+          artifacts: dependencies.artifacts,
+          trips: dependencies.trips,
+          tripId: trip.id,
+          conversationId: conversation.id,
+          signal: abortController.signal
+        }, trip.context)
       }
       const search = input.departureDateTo && input.departureDateTo !== input.departureDate
         ? await executeFlexibleFlightSearch({

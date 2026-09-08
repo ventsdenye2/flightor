@@ -9,6 +9,7 @@ import type {
   CloudTripContextSummary,
   ConversationMessage,
   ConversationPhase,
+  ConversationDelivery,
   DestinationRecommendation,
   DestinationRegion,
   DestinationInterest,
@@ -31,6 +32,7 @@ export const MAX_CHAT_TIMELINE = 12
 export const MAX_CHAT_RECOMMENDATIONS = 3
 export const MAX_CHAT_ACTIONS = 3
 export const MAX_CHAT_ARTIFACT_REFS = 100
+export const MAX_CHAT_DELIVERY_GOALS = 64
 export const MAX_CHAT_ROUTES = 3
 export const MAX_CHAT_ROUTE_LEGS = 8
 export const MAX_CHAT_MESSAGE_CHARS = 1_200
@@ -63,6 +65,7 @@ export interface ConversationTurnSnapshot {
   tripContextSummary?: CloudTripContextSummary
   artifactRefs?: CloudArtifactRef[]
   stopReason?: string
+  delivery?: ConversationDelivery
   routeGeneration?: RouteGenerationRunView
   travelGuide?: TravelGuide
   error?: string
@@ -424,6 +427,8 @@ function sanitizeRouteGenerationRun(value: unknown): RouteGenerationRunView | un
     id,
     tripId,
     ...(conversationId ? { conversationId } : {}),
+    ...(cleanText(value.goalId, 80) ? { goalId: cleanText(value.goalId, 80)! } : {}),
+    ...(cleanText(value.goalRunId, 80) ? { goalRunId: cleanText(value.goalRunId, 80)! } : {}),
     idempotencyKey,
     contextVersion,
     status,
@@ -762,6 +767,7 @@ function sanitizeTurn(value: unknown, fallbackId: string): ConversationTurnSnaps
   const travelGuide = value.travelGuide === undefined ? undefined : sanitizeTravelGuide(value.travelGuide)
   const id = cleanText(value.id, 80) ?? fallbackId
   const error = cleanOptionalText(value.error, 240)
+  const delivery = sanitizeDelivery(value.delivery)
   return {
     id,
     user,
@@ -773,8 +779,22 @@ function sanitizeTurn(value: unknown, fallbackId: string): ConversationTurnSnaps
     ...(tripContextSummary ? { tripContextSummary } : {}),
     ...(artifactRefs ? { artifactRefs } : {}),
     ...(typeof value.stopReason === 'string' && value.stopReason.trim() ? { stopReason: value.stopReason.trim().slice(0, 80) } : {}),
+    ...(delivery ? { delivery } : {}),
     ...(travelGuide ? { travelGuide } : {}),
     ...(error ? { error } : {})
+  }
+}
+
+function sanitizeDelivery(value: unknown, includeGoals = true): ConversationDelivery | undefined {
+  if (!isRecord(value) || !['not_requested', 'pending', 'satisfied', 'partial', 'failed', 'cancelled'].includes(String(value.status))) return
+  const strings = (input: unknown, count: number) => Array.isArray(input)
+    ? input.filter((item): item is string => typeof item === 'string').slice(0, count).map(item => item.slice(0, 240)) : []
+  return {
+    status: value.status as ConversationDelivery['status'],
+    ...(typeof value.goalId === 'string' ? { goalId: value.goalId.slice(0, 80) } : {}),
+    ...(typeof value.kind === 'string' ? { kind: value.kind.slice(0, 80) } : {}),
+    artifactIds: strings(value.artifactIds, MAX_CHAT_ARTIFACT_REFS), missing: strings(value.missing, 40), warnings: strings(value.warnings, 40),
+    ...(includeGoals && Array.isArray(value.goals) ? { goals: value.goals.slice(0, MAX_CHAT_DELIVERY_GOALS).map(goal => sanitizeDelivery(goal, false)).filter((goal): goal is ConversationDelivery => Boolean(goal)) } : {})
   }
 }
 

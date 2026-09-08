@@ -13,12 +13,25 @@ import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
 import { InMemoryUserMemoryRepository } from '../../memory/repository.js'
 import { UnavailableResearchAgent } from '../../research-agent/unavailable.js'
 import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from '../../flight-routing/unavailable.js'
+import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repository.js'
+import { GoalVerifierRegistry, type GoalVerification } from '../goals/verifier.js'
+import { AppError } from '../../lib/errors.js'
 
 const ctx: ToolExecutionContext = { requestId: 'r', conversationId: 'c', tripId: 't', generationId: 'g', trips: new InMemoryTripContextRepository([emptyTripContext('t')]), artifacts: new InMemoryArtifactRepository('u', new Set(['t'])), memory: new InMemoryUserMemoryRepository(), aviation: new MockAviationProvider(), fares: new MockFareProvider(), research: new UnavailableResearchAgent(), connectionSearch: new UnavailableConnectionSearchService(), flightRoutePlanner: new UnavailableFlightRoutePlanner(), routeOptimizer: new UnavailableRouteOptimizer() }
 const call = (id: string, name: string, args = {}) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
 const tool = (name: string, execute: AgentTool['execute'], extra: Partial<AgentTool> = {}): AgentTool => ({ name, description: name, inputSchema: z.object({}).strict(), outputSchema: z.object({ ok: z.boolean() }), costClass: 'free', costUnits: 1, sideEffect: 'none', parallelSafe: true, timeoutMs: 30, execute, ...extra })
 
 describe('AgentRuntime and ToolRegistry', () => {
+  it('preserves safe domain error codes for replanning without exposing internal messages', async () => {
+    const registry = new ToolRegistry().register(tool('stale_source', async () => {
+      throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'internal credential=must-not-leak', 409, { token: 'must-not-leak' })
+    }))
+    const outcome = await registry.execute(call('stale', 'stale_source'), ctx, new AbortController().signal)
+    expect(outcome).toMatchObject({ errorCode: 'TOOL_FAILURE', domainErrorCode: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+    expect(JSON.parse(outcome.content)).toMatchObject({ error: { details: { domainCode: 'TRIP_CONTEXT_VERSION_CONFLICT' } } })
+    expect(outcome.content).not.toContain('must-not-leak')
+  })
+
   it('reads persisted artifacts only from the current trip and bounds large excerpts', async () => {
     const artifacts = new InMemoryArtifactRepository('u', new Set(['t', 'other']))
     const current = await artifacts.create({ tripId: 't', type: 'route_set', schemaVersion: 1, payload: { kind: 'generated_route_set', text: 'x'.repeat(25000) } })
@@ -50,17 +63,18 @@ describe('AgentRuntime and ToolRegistry', () => {
 
   it('allows ordinary conversation to complete without a fixed tool requirement', async () => {
     const registry = new ToolRegistry().register(tool('write', async () => ({ ok: true })))
-    const promise = { message: { role: 'assistant' as const, content: 'I will save it.' } }
+    const promise = { message: { role: 'assistant' as const, content: 'Hello. What would you like to explore?' } }
     const complete = vi.fn().mockResolvedValueOnce(promise)
-    const result = await new AgentRuntime({ complete }, registry).run({ messages: [{ role: 'user', content: 'save' }], context: ctx })
-    expect(result.stopReason).toBe('completed')
+    const result = await new AgentRuntime({ complete }, registry).run({ messages: [{ role: 'user', content: 'Hello' }], context: ctx })
+    expect(result.stopReason).toBe('responded')
+    expect(result.delivery.status).toBe('not_requested')
     expect(result.toolCalls).toBe(0)
     expect(complete).toHaveBeenCalledTimes(1)
     expect(complete.mock.calls[0]?.[2]).toMatchObject({ toolChoice: 'auto' })
   })
   it('publishes the complete Phase 4B Core Tool vocabulary', () => {
     expect(createCoreToolRegistry().definitions().map(definition => definition.function.name)).toEqual([
-      'declare_goal', 'get_active_goal', 'finish_goal', 'cancel_goal', 'start_route_generation',
+      'declare_goal', 'get_active_goal', 'resume_goal', 'finish_goal', 'cancel_goal', 'start_route_generation',
       'get_trip_artifacts', 'read_artifact',
       'get_trip_context', 'update_trip_context', 'resolve_location', 'search_flights',
       'search_flexible_flights', 'confirm_flight_price', 'search_connection_flights',
@@ -113,7 +127,7 @@ describe('AgentRuntime and ToolRegistry', () => {
       .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('update', 'update_trip_context', { patch: { origin: location, destinationIntent: { mode: 'explicit', required: [tokyo], preferred: [], excluded: [] } }, expectedVersion: 0 }), call('fare', 'search_flights', { departureDate: fare.query.departureDate, currency: fare.query.currency, travelClass: fare.query.travelClass, origin: 'PVG', destination: 'NRT' })] } })
       .mockResolvedValueOnce({ message: { role: 'assistant', content: '已找到符合条件的航班。' } }) }
     const result = await new AgentRuntime(model, registry).run({ messages: [{ role: 'user', content: '帮我找上海到东京的航班' }], context: runtimeContext })
-    expect(result).toMatchObject({ reply: '已找到符合条件的航班。', stopReason: 'completed', fallback: false, toolSteps: 2, costUnits: 6 })
+    expect(result).toMatchObject({ reply: '已找到符合条件的航班。', stopReason: 'responded', delivery: { status: 'not_requested' }, fallback: false, toolSteps: 2, costUnits: 6 })
     expect(result.traces.map(trace => trace.toolName)).toEqual(['resolve_location', 'resolve_location', 'update_trip_context', 'search_flights'])
     expect(result.traces[3]?.artifactIds).toHaveLength(1)
   })
@@ -127,5 +141,130 @@ describe('AgentRuntime and ToolRegistry', () => {
     const result = await new AgentRuntime(model, registry, { maxToolCallsPerStep: 8 }).run({ messages: [{ role: 'user', content: 'go' }], context: ctx })
     expect(result.stopReason).toBe('tool_call_limit')
     expect(execute).not.toHaveBeenCalled()
+  })
+})
+
+describe('Server-verified turn delivery', () => {
+  async function setup(verification: GoalVerification) {
+    const goals = new InMemoryGoalRepository('u')
+    const runs = new InMemoryGoalRunRepository('u', goals)
+    const verifiers = new GoalVerifierRegistry().register({ kind: 'travel_guide', async verify() { return verification } })
+    const goal = (await goals.create({
+      tripId: 't', kind: 'travel_guide', createdContextVersion: 0, idempotencyKey: 'goal',
+      parameters: { questions: ['museums'], researchTypes: ['activity'], maxResults: 10, maxCities: 1, allowPartial: false }
+    })).goal
+    const run = (await runs.create({ goalId: goal.id, tripId: 't', generationId: 'g', contextVersion: 0, contextSnapshot: emptyTripContext('t'), idempotencyKey: 'run' })).run
+    const context = {
+      ...ctx, trips: new InMemoryTripContextRepository([emptyTripContext('t')]), ownerId: 'u',
+      goalRepository: goals, goalRunRepository: runs, goalVerifiers: verifiers,
+      activeGoalId: goal.id, activeGoalKind: goal.kind, activeGoalRunId: run.id, activeGoalContextVersion: 0
+    }
+    return { context, goals, runs, goal, run }
+  }
+
+  it('rejects a premature success claim when the Agent omits finish_goal', async () => {
+    const state = await setup({ status: 'pending', artifactIds: [], missing: ['travel_guide_artifact'], warnings: [] })
+    const complete = vi.fn(async () => ({ message: { role: 'assistant' as const, content: 'Your complete itinerary is saved.' } }))
+    const result = await new AgentRuntime({ complete }, new ToolRegistry()).run({ messages: [{ role: 'user', content: 'Save my itinerary' }], context: state.context })
+    expect(result).toMatchObject({ stopReason: 'goal_pending', delivery: { status: 'pending', goalId: state.goal.id } })
+    expect(result.reply).not.toContain('Your complete itinerary is saved.')
+    expect(complete).toHaveBeenCalledTimes(1)
+    expect((await state.runs.get(state.run.id))?.status).toBe('running')
+  })
+
+  it('persists a verified result even without an explicit finish_goal call', async () => {
+    const state = await setup({ status: 'satisfied', artifactIds: [], missing: [], warnings: [] })
+    const complete = vi.fn(async () => ({ message: { role: 'assistant' as const, content: 'Your itinerary is ready.' } }))
+    const result = await new AgentRuntime({ complete }, new ToolRegistry()).run({ messages: [{ role: 'user', content: 'Save my itinerary' }], context: state.context })
+    expect(result).toMatchObject({ stopReason: 'completed', delivery: { status: 'satisfied' } })
+    expect((await state.goals.get(state.goal.id))?.status).toBe('satisfied')
+    expect((await state.runs.get(state.run.id))?.status).toBe('satisfied')
+  })
+
+  it('reports partial results separately from a completed delivery', async () => {
+    const state = await setup({ status: 'partial', artifactIds: [], missing: ['guide_day:2'], warnings: [] })
+    const complete = vi.fn(async () => ({ message: { role: 'assistant' as const, content: 'All days are done.' } }))
+    const result = await new AgentRuntime({ complete }, new ToolRegistry()).run({ messages: [{ role: 'user', content: 'Save all days' }], context: state.context })
+    expect(result).toMatchObject({ stopReason: 'goal_partial', delivery: { status: 'partial', missing: ['guide_day:2'] } })
+    expect(result.reply).not.toContain('All days are done.')
+    expect((await state.runs.get(state.run.id))?.status).toBe('partial')
+  })
+
+  it('keeps each working set scoped when one tool batch switches Goals and aggregates both deliveries', async () => {
+    const state = await setup({ status: 'pending', artifactIds: [], missing: [], warnings: [] })
+    const otherGoal = (await state.goals.create({
+      tripId: 't', kind: 'travel_guide', createdContextVersion: 0, idempotencyKey: 'other-goal',
+      parameters: { questions: ['parks'], researchTypes: ['activity'], maxResults: 10, maxCities: 1, allowPartial: false }
+    })).goal
+    const otherRun = (await state.runs.create({
+      goalId: otherGoal.id, tripId: 't', generationId: 'g', contextVersion: 0,
+      contextSnapshot: emptyTripContext('t'), idempotencyKey: 'other-run'
+    })).run
+    state.context.artifacts = new InMemoryArtifactRepository('u', new Set(['t']))
+    state.context.goalVerifiers = new GoalVerifierRegistry().register({
+      kind: 'travel_guide', async verify(_goal, scope) {
+        const artifactIds = scope.run.workingSet.artifactRefs.map(ref => ref.id)
+        return {
+          status: artifactIds.length === 2 ? 'satisfied' : artifactIds.length === 1 ? 'partial' : 'pending',
+          artifactIds, missing: artifactIds.length === 2 ? [] : ['second_source'], warnings: []
+        }
+      }
+    })
+    const registry = createCoreToolRegistry().register(tool('save_scoped_evidence', async (_input, context) => {
+      if (!context.activeGoalId || !context.activeGoalRunId) throw new Error('Goal scope missing')
+      const artifact = await context.artifacts.create({
+        tripId: context.tripId, goalId: context.activeGoalId, runId: context.activeGoalRunId,
+        tripContextVersion: context.activeGoalContextVersion, type: 'research', schemaVersion: 1, payload: {}
+      })
+      return { artifact: { id: artifact.id } }
+    }, { sideEffect: 'state', parallelSafe: false, outputSchema: z.object({ artifact: z.object({ id: z.string().uuid() }) }) }))
+    const complete = vi.fn()
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [
+        call('goal-a', 'resume_goal', { goalId: state.goal.id }),
+        call('evidence-a1', 'save_scoped_evidence'), call('evidence-a2', 'save_scoped_evidence'),
+        call('goal-b', 'resume_goal', { goalId: otherGoal.id }), call('evidence-b', 'save_scoped_evidence')
+      ] } })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Both goals are complete.' } })
+
+    const result = await new AgentRuntime({ complete }, registry)
+      .run({ messages: [{ role: 'user', content: 'Prepare both plans' }], context: state.context })
+    const firstArtifacts = await state.context.artifacts.listForRun(state.run.id)
+    const secondArtifacts = await state.context.artifacts.listForRun(otherRun.id)
+    expect(firstArtifacts).toHaveLength(2)
+    expect(secondArtifacts).toHaveLength(1)
+    expect((await state.runs.get(state.run.id))?.workingSet.artifactRefs.map(ref => ref.id))
+      .toEqual(expect.arrayContaining(firstArtifacts.map(artifact => artifact.id)))
+    expect((await state.runs.get(state.run.id))?.workingSet.artifactRefs).toHaveLength(2)
+    expect((await state.runs.get(otherRun.id))?.workingSet.artifactRefs.map(ref => ref.id)).toEqual([secondArtifacts[0]!.id])
+    expect(result.delivery.goals).toEqual([
+      expect.objectContaining({ goalId: state.goal.id, status: 'satisfied', artifactIds: expect.arrayContaining(firstArtifacts.map(artifact => artifact.id)) }),
+      expect.objectContaining({ goalId: otherGoal.id, status: 'partial', artifactIds: [secondArtifacts[0]!.id] })
+    ])
+    expect(result).toMatchObject({ stopReason: 'goal_partial', delivery: { status: 'partial' }, toolSteps: 1, toolCalls: 5 })
+    expect(result.reply).not.toContain('Both goals are complete.')
+  })
+
+  it('fails closed when completion evidence cannot be read', async () => {
+    const state = await setup({ status: 'satisfied', artifactIds: [], missing: [], warnings: [] })
+    state.context.goalVerifiers = new GoalVerifierRegistry().register({ kind: 'travel_guide', async verify() { throw new Error('Database unavailable') } })
+    const result = await new AgentRuntime({ complete: async () => ({ message: { role: 'assistant', content: 'Saved.' } }) }, new ToolRegistry())
+      .run({ messages: [{ role: 'user', content: 'Save' }], context: state.context })
+    expect(result).toMatchObject({ stopReason: 'goal_failed', delivery: { status: 'failed', warnings: ['goal_verification_failed'] } })
+    expect((await state.goals.get(state.goal.id))?.status).toBe('pending')
+  })
+
+  it('bounds final verification when an evidence store does not respond', async () => {
+    const state = await setup({ status: 'satisfied', artifactIds: [], missing: [], warnings: [] })
+    state.context.goalVerifiers = new GoalVerifierRegistry().register({ kind: 'travel_guide', async verify() { return new Promise(() => undefined) } })
+    vi.useFakeTimers()
+    try {
+      const pending = new AgentRuntime({ complete: async () => ({ message: { role: 'assistant', content: 'Saved.' } }) }, new ToolRegistry())
+        .run({ messages: [{ role: 'user', content: 'Save' }], context: state.context })
+      await vi.advanceTimersByTimeAsync(3_001)
+      const result = await pending
+      expect(result).toMatchObject({ stopReason: 'goal_pending', delivery: { status: 'pending', warnings: ['goal_verification_interrupted'] } })
+      expect(result.delivery.goals).toMatchObject([{ goalId: state.goal.id, kind: 'travel_guide', status: 'pending' }])
+      expect((await state.goals.get(state.goal.id))?.status).toBe('pending')
+    } finally { vi.useRealTimers() }
   })
 })

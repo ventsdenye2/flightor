@@ -13,7 +13,7 @@ function load(file, dependencies = {}) {
 }
 let passed = 0
 async function test(name, fn) { await fn(); passed++; console.log(`PASS ${name}`) }
-const { readRouteArtifact, fareLabel } = load('src/services/routeArtifact.ts')
+const { readRouteArtifact, fareLabel } = load('src/services/routeArtifact.ts', { './airportTime': load('src/services/airportTime.ts') })
 const a = { id: 'A', name: 'Origin', iata: 'AAA', latitude: 40, longitude: 120 }, b = { id: 'B', name: 'Destination', iata: 'BBB', latitude: 50, longitude: 10 }
 const edge = { id: 'edge', from: a, to: b, transferType: 'direct', warnings: [], segments: [{ from: a, to: b, departureAt: '2026-10-01T10:00:00Z', arrivalAt: '2026-10-01T12:00:00Z', flightNumber: 'QA100' }] }
 const route = { id: 'route', nodes: [{ location: a, role: 'origin' }, { location: b, role: 'destination' }], edges: [edge], transferCount: 0, warnings: [] }

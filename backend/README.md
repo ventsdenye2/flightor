@@ -1,69 +1,60 @@
 # FlightOR Backend
 
-FlightOR 的独立自部署后端。当前骨架包含：
+FlightOR 的独立自部署后端，使用 Fastify、TypeScript、PostgreSQL/Kysely 和 Worker。
+当前公开 Planner 自行选择与组合领域工具；领域服务提供事实、校验和持久化。
+User Memory、Conversation、Trip Context、Artifacts 保持独立。
 
-- Fastify + TypeScript API；
-- PostgreSQL / Kysely 迁移；
-- Redis 限流和健康检查；
-- 微信登录、Access Token、Refresh Token 轮换；
-- 国家、机场、中转国家偏好接口；
-- 带数据版本的三态可达性查询；
-- OAG 路线同步、响应归一化、拓扑边重建与原子版本切换；
-- 国家偏好、安全衔接和长中转软排序；
-- OAG、SerpApi、OpenRouter 服务端 Provider；
-- 兼容旧 `/v1/agent/chat` 多轮需求解析，OpenRouter 失败时可信规则降级；
-- 统一 `/v1/agent/converse` 对话式旅行 Agent：客户端回传完整状态，服务端统一抽取、推荐和路线规划；
-- 有明确攻略意图时，`/v1/agent/converse` 可按第一条确定性路线生成带公开网页来源的游玩攻略；
-- SerpApi 实时报价搜索、标准化和 Redis 短缓存；
-- 可选 `/v1/travel-guides` 路线攻略接口（仅接受已有路线和目录兴趣，不接受任意 URL/query）；
-- 自建 `/v1/route-plans` 多城自然语言规划与 `/v1/route-plans/confirm` 逐段报价确认；
-- PostgreSQL `FOR UPDATE SKIP LOCKED` 持久 Worker；
-- Docker Compose 本地部署。
-
-完整架构见 [`../docs/backend-architecture.md`](../docs/backend-architecture.md)。
+权威契约见 [FlightOR Architecture](../docs/FLIGHTOR_ARCHITECTURE.md)、
+[Tool Registry](../docs/TOOLS.md)、
+[ADR 0010](../docs/adr/0010-domain-owned-planning-workflows.md) 和
+[ADR 0011](../docs/adr/0011-verified-delivery-and-workspace-consistency.md)。
+历史兼容接口不再决定新 Planner 的状态或编排。
 
 ## 1. 配置
 
-```bash
-cd backend
-copy .env.example .env
+在仓库根目录执行：
+
+```powershell
+Copy-Item backend/.env.example backend/.env
 ```
 
-真实密钥只允许写入 `backend/.env` 或生产环境的 Secret Manager。`.env` 已同时被 Git 和 Docker build context 排除。
+已有配置时直接编辑现有文件。真实密钥只写入 `backend/.env`、服务器环境变量或部署平台
+Secret Manager；不要提交到 Git 或注入小程序。
 
-必须配置：
+基础配置：
 
 - `DATABASE_URL`
-- `REDIS_URL`
-- `JWT_SECRET`（至少 32 个字符，每个环境使用独立随机值）
-- `ADMIN_API_TOKEN`（启用管理同步接口时设置，通过 `X-Admin-Token` 传入）
+- `REDIS_URL`；开发环境可显式 `REDIS_ENABLED=false`，生产禁止关闭 Redis
+- `JWT_SECRET`：至少 32 字符，每个环境独立
+- `ADMIN_API_TOKEN`：启用管理同步接口时设置，通过 `X-Admin-Token` 传入
 
-第三方 Provider：
+业务 Provider：
 
-- `OAG_FLIGHT_INFO_KEY`
-- `OAG_CONNECTIONS_KEY`（Flight Info Trial 包含 Connections 时可以复用 Trial key）
-- `OAG_SCHEDULES_KEY`
-- `OAG_MASTER_DATA_KEY`
-- `SERPAPI_KEY`
+- `WX_APPID` / `WX_SECRET`：微信 code 登录
+- `AERODATABOX_API_KEY` / `AERODATABOX_BASE_URL`：航空领域能力
+- `SERPAPI_KEY`：真实航价及网页搜索
 - `OPENROUTER_API_KEY`
-- `OPENROUTER_MODEL`（默认精确值 `deepseek/deepseek-v4-pro-0813`；可由部署环境或 `backend/.env` 替换）
-- `WX_APPID` / `WX_SECRET`
+- `OPENROUTER_MODEL`：代码默认 `deepseek/deepseek-v4-flash-0731`，运行环境可覆盖
+- `PLANNER_MODEL` / `RESEARCH_MODEL`：为空时继承 `OPENROUTER_MODEL`
+- 可选 OAG：`OAG_FLIGHT_INFO_KEY`、`OAG_CONNECTIONS_KEY`、
+  `OAG_SCHEDULES_KEY`、`OAG_MASTER_DATA_KEY`
 
-路径变量采用当前适配器默认值；如果 OAG 订阅合同中的 endpoint 不同，只改环境变量，不改领域代码。
-
-`:3000` 服务正式默认使用精确模型 `deepseek/deepseek-v4-pro-0813`，最终以运行环境解析到的 `OPENROUTER_MODEL` 为准。该付费模型需要 OpenRouter 账户余额、有效 `OPENROUTER_API_KEY` 和可用配额；自动化测试不会发起真实付费调用。当前业务请求传 `reasoning: { effort: 'none', exclude: true }` 时，V4 Pro 适配器会省略不兼容的 `reasoning` 字段；未来显式 `high`/`xhigh` 才转发，DeepSeek Chat 仍省略 reasoning，其他模型保持原有转发行为，且不会自动开启高推理。此前 DeepSeek V3 与 V4 Flash 的直连结果仅作历史样本，不代表当前默认模型。需要替换模型时只改部署环境或 `backend/.env` 的 `OPENROUTER_MODEL`，不要把模型 ID 硬编码到业务模块。
+航空和航价事实由服务端 Provider 归一化，模型提供的名称、坐标、时区或价格不能替代权威事实。
+共享 OpenRouter 适配器按模型能力处理 reasoning；V4 系列的业务 `none` 转为
+`enabled:false`，模型选择与请求参数兼容性集中在配置/适配层。密钥存在不代表余额、订阅、
+模型或端点当前可用。`/health/providers` 只报告配置状态，固定 `verified=false`。
 
 ## 2. 本地运行
 
-完整容器方式：
+需要 Node.js 22+、PostgreSQL，以及默认启用的 Redis。完整容器方式在仓库根目录运行：
 
-```bash
+```powershell
 docker compose up -d --build
 ```
 
-仅用 Docker 启动依赖、在宿主机开发：
+在宿主机开发：
 
-```bash
+```powershell
 docker compose up -d postgres redis
 cd backend
 npm install
@@ -71,210 +62,210 @@ npm run migrate
 npm run dev
 ```
 
-另一个终端启动 Worker：
+另开终端：
 
-```bash
+```powershell
 cd backend
 npm run dev:worker
 ```
 
-默认地址：
+默认 API 为 `http://localhost:3000`，接口说明为 `/docs`。最小健康检查：
 
-- API：`http://localhost:3000`
-- 健康检查：`http://localhost:3000/health/live`
-- 就绪检查：`http://localhost:3000/health/ready`
-- Provider 配置状态：`http://localhost:3000/health/providers`
-- OpenAPI UI：`http://localhost:3000/docs`
+```powershell
+Invoke-RestMethod http://localhost:3000/health/live
+Invoke-RestMethod http://localhost:3000/health/ready
+Invoke-RestMethod http://localhost:3000/health/providers
+```
 
-## 3. 当前 API
+`live` 只证明进程存活；`ready` 检查数据库和启用的 Redis；二者均不验证付费 Provider。
+演示配置与运行记录见 [DEMO_STATUS.md](../docs/DEMO_STATUS.md)。现有
+`backend/.env.demo` 可配合构建后的 `npm run demo:api` / `npm run demo:worker` 使用；
+启动 API 不会替代 Worker 执行持久任务。
 
-| Method | Path | 说明 |
-|---|---|---|
-| GET | `/health/live` | API 进程存活 |
-| GET | `/health/ready` | PostgreSQL / Redis 就绪 |
-| GET | `/health/providers` | 仅返回 Provider 是否配置（明确标记 `verified=false`），不探测也不返回密钥 |
-| POST | `/v1/auth/wechat` | 微信 code 登录 |
-| POST | `/v1/auth/refresh` | Refresh Token 轮换 |
-| POST | `/v1/agent/chat` | 多轮提取行程槽位；OpenRouter 不可用时自动规则降级 |
-| POST | `/v1/agent/converse` | 统一多轮旅行对话；返回阶段、推荐、路线、待补字段与下一步操作 |
-| POST | `/v1/travel-guides` | 根据已返回的目录路线生成带来源的按天游玩攻略 |
-| POST | `/v1/flight-searches` | SerpApi 实时报价同步搜索（MVP 快速路径） |
-| POST | `/v1/route-plans` | 解析多城自然语言约束并生成最多 3 条估算路线 |
-| POST | `/v1/route-plans/confirm` | 对选中的路线逐段查询 SerpApi，失败段保留估算价 |
-| POST | `/v1/trip-plans` | 根据已选航班事实生成单目的地双语行程；OpenRouter 异常时自动规则降级 |
-| GET | `/v1/countries` | 热门国家与国家搜索 |
-| GET | `/v1/airports` | IATA/ICAO/中英文机场城市搜索 |
-| GET | `/v1/users/me/transit-country-preferences` | 当前用户中转国家偏好 |
-| PUT | `/v1/users/me/transit-country-preferences` | 整体替换 preferred / excluded |
-| POST | `/v1/reachability/query` | 最多两次中转、无闭环、日期级三态可达性 |
-| POST | `/v1/admin/sync/oag/location` | 将单个 OAG 机场同步任务写入队列 |
-| POST | `/v1/admin/sync/oag/route` | 将指定 OD/日期的 OAG 同步任务写入队列 |
-| GET | `/v1/admin/jobs/:id` | 轮询管理任务状态 |
-| GET | `/v1/admin/sync-runs/:id` | 查询同步执行状态 |
+## 3. 当前 API 与交付语义
 
-偏好接口需要：
+Trip、Conversation、Artifact、Memory、Planner 和 route-generation 接口均由 JWT 确定 owner：
 
 ```text
 Authorization: Bearer <access-token>
 ```
 
-偏好只有 `preferred` 与 `excluded`，没有记录即“不限”。同一个国家不能同时出现在两个数组。
+| Method | Path | 说明 |
+| --- | --- | --- |
+| GET | `/health/live`、`/health/ready`、`/health/providers` | 进程、依赖就绪及 Provider 配置状态 |
+| POST | `/v1/auth/wechat`、`/v1/auth/refresh` | 微信 code 登录、Refresh Token 轮换 |
+| POST/GET | `/v1/trips` | 创建 owned Trip、查询云端行程 |
+| GET | `/v1/trips/:id` | 读取 owned Trip |
+| PUT | `/v1/trips/:tripId/context` | 按 expected version 更新 Trip Context |
+| POST | `/v1/conversations` | 创建绑定 owned Trip 的 Conversation |
+| GET | `/v1/conversations/:conversationId`、`/v1/conversations/:conversationId/messages` | 恢复 Conversation 与消息 |
+| POST | `/v1/agent/converse` | 当前唯一 Planner 对话入口，返回 compact context、Artifact refs 与 delivery |
+| GET | `/v1/trips/:id/workspace` | 恢复消息、Artifact refs、后台 run 和服务端 delivery verdict |
+| GET | `/v1/artifacts/:id` | 按 owner 读取完整 Artifact |
+| GET/PUT | `/v1/memory` | 独立的用户 Markdown Memory |
+| POST | `/v1/flight-searches` | 认证手动航班搜索，与 Agent 共用 fare/Artifact domain service |
+| POST | `/v1/trips/:tripId/route-generation-runs` | 显式创建路线生成 run，要求 `Idempotency-Key` |
+| GET/DELETE | `/v1/route-generation-runs/:id` | 查询进度与结果、协作取消 |
+| GET | `/v1/countries`、`/v1/airports` | 国家/机场检索 |
+| GET/PUT | `/v1/users/me/transit-country-preferences` | 当前用户 preferred/excluded 中转国家 |
+| POST | `/v1/reachability/query` | 日期级 `reachable / unreachable / unknown` |
+| POST | `/v1/admin/sync/oag/location`、`/v1/admin/sync/oag/route` | 显式创建管理同步任务 |
+| GET | `/v1/admin/jobs/:id`、`/v1/admin/sync-runs/:id` | 管理任务/同步执行状态 |
 
-搜索接口支持最多 3 个出发机场、3 个到达机场和 31 天出发窗口；长窗口均匀采样最多 4 天，以控制第三方配额。响应按前端现有 `direct / selfTransfer / airlineTransfer` 契约返回，其中 SerpApi 暂不识别自行拼票，因此 `selfTransfer` 当前为空数组。
-
-Agent 接口无需登录即可用于 MVP。客户端传最近的对话和已确认槽位，后端从 PostgreSQL 读取有效机场白名单并调用 OpenRouter；模型只能负责理解和提取需求，不能作为航班、价格、签证或衔接安全的事实来源。预算、兴趣、行程天数、中转偏好等可选字段必须能从用户原文中按规则找到明确证据，模型单独返回的虚构默认值会被丢弃。响应中的 `source` 为 `llm` 或 `rules`，`warnings` 包含 `llm_fallback` 时表示本轮已自动使用规则解析，用户仍可继续对话。
-
-统一对话接口 `POST /v1/agent/converse` 同样无需登录，也不在服务端保存会话。客户端每轮回传 `messages`（1–24 条且至少一条 `user`）、上轮完整 `state`（可省略）、可选 `today` 和 `newTrip`。服务端严格拒绝未知字段，响应固定包含 `phase`、双语 `reply`、完整 `state`、`recommendations`、`routes`、`missing`、`suggestedActions`、`source` 与 `warnings`，并始终返回 `Cache-Control: no-store`；该路由另有每 IP 10 次/分钟的限流。`destination_mode=recommend` 时，目的地建议只来自服务端 catalog；明确城市才会进入 `required_iatas`，仅说国家不会猜成某个城市，显式多区域也必须为每个区域提供城市或明确授权推荐。推荐模式缺日期时先进入 `discover` 给出建议并只追问一个高价值问题；仅当 `origin`、`window_from`、`travel_days` 与显式目的地约束齐全才调用确定性 `planJourney`，实时航班/价格仍需走 `/v1/route-plans/confirm`。配置 OpenRouter 时，模型只做证据约束的抽取和最终措辞合成；最终双语回复会再次校验目录城市是否来自服务端已验证的推荐/路线，否则回退规则回复并标记 `reply_fallback`。V4 Pro 0813 的 `reasoning=none` 请求字段由共享 `OpenRouterClient` 省略，未来显式 `high`/`xhigh` 才正确转发；DeepSeek Chat 继续省略 reasoning，其他可配置模型仍按既有行为转发可选 reasoning，调用方不会因默认模型切换而自动开启高推理。没有 key、余额不足、Provider 错误或模型输出非法时，业务继续使用确定性规则降级并返回 `llm_fallback`/对应 warning，不把 Provider 错误细节或密钥带入响应。
-
-预算解析支持明确的纯数字、`八千`、`一万五`、`一万五千`、`两万三`、`1万5`、`1万5千` 和 `1.5万` 等常见口语金额；`一万零五百`按 10500 解析，不完整或有歧义的表达不覆盖。若同一轮有确定性金额，规则值优先于模型的粗粒度金额；后续用户明确改预算时会覆盖客户端回传的旧值。
-
-当最新用户轮明确包含“攻略 / 怎么玩 / 景点 / 每日安排 / 游玩规划 / travel guide / itinerary”等意图，且路线条件齐全并已生成至少一条确定性路线时，Agent 才会触发网页研究；普通路线请求只返回“生成游玩攻略”建议，不消耗 SerpApi 配额。攻略默认使用第一条路线，最多研究其中 3 个目录城市，每城最多 3 条 Google 摘要，单请求最多 2 个并发；搜索结果按规范化城市、兴趣和天数写入 Redis 12 小时缓存。SerpApi 只使用 `engine=google`，查询由服务端目录城市/IATA、受控兴趣枚举和天数组成，客户端不能传 URL、query 或 provider 参数。结果只保留 `http/https` 链接、标题、摘要和解析出的 domain，不抓取整页。
-
-攻略响应新增可选 `travelGuide` 字段，包含双语 `summary`、`days`（每天的城市、活动标题/说明）、`sources`（`title`、`url`、`domain`、`source`）以及 `warnings`。`source` 只会是 `web`、`catalog` 或 `rules`；部分搜索失败仍返回目录级通用安排并标记 warning，无 key 或网络失败不会令对话 500。配置 OpenRouter 时，攻略编辑模型只能看到服务端路线、目录事实和网页摘要；每个模型活动必须引用摘要索引和原文证据，模型输出若包含未验证城市、具体营业时间、价格、签证、安全或预约结论，则丢弃并使用确定性安排。独立 `POST /v1/travel-guides` 仅接受既有 `route`、受控 `travel_days` 和兴趣枚举，另有每 IP 3 次/分钟限流，同样不缓存。
-
-机场匹配优先级为：
-
-1. 用户明确输入 IATA（如 `HND`、`NRT`）时以 IATA 为准；
-2. 用户说具体机场/别名（如 `羽田`、`成田`、`大兴`、`首都机场`、`虹桥`、`浦东`、`盖特威克`、`希思罗`）时以该机场为准；
-3. 用户只说城市时使用稳定 MVP 默认机场：东京→`NRT`、北京→`PEK`、上海→`PVG`、伦敦→`LHR`；
-4. 同一城市的多个机场不会同时填入 origin 和 destination；
-5. 只给国家（如“日本”）不会自动猜城市，仍会继续询问具体城市或 IATA。
-
-“玩 7 天”“一周”等表达只生成 `stay_min`/`stay_max`；只有用户明确说单程或往返时才生成 `trip_type`。小程序检索界面的 roundtrip 是 UI 默认值，不代表 Agent 识别到了用户意图。
-
-当前 MVP 机场数据来自 `src/mocks/airports.ts`，通过 `005_seed_mvp_airports` 迁移写入国家、城市、机场和 `airport_aliases`。机场种子包含成都双流 `CTU` 与成都天府 `TFU`，不得把两个代码混用。
-
-行程规划接口无需登录。客户端只提交路线、已选航班航段、枢纽信息和可选的中转攻略素材，服务端通过 `OPENROUTER_MODEL` 调用 OpenRouter 编排双语时间轴。请求体严格校验 IATA、ISO 日期、航段数组、字符串和数值边界，并拒绝未知字段及相同的出发/目的地：
-
-多城路线接口无需登录。`POST /v1/route-plans` 接收 `{ text, today? }`，其中 `text` 为 1–1000 个字符，`today` 必须是有效的 `YYYY-MM-DD`；省略时使用服务端 UTC 日期。规划阶段只做规则/LLM 约束抽取和确定性估算，不把模型输出当作航班或价格事实；LLM 异常、空响应或非法 JSON 会自动切换规则解析并在 `warnings` 返回 `llm_fallback`。返回的路线最多 3 条，`real`/`hasReal` 用于区分估算段。
-
-`POST /v1/route-plans/confirm` 接收 1–3 条严格校验的 `RoutePick`；每条最多 8 段，整个请求的航段总数也不得超过 8，避免匿名请求一次触发过多 Provider 调用。所有 `cities`、`citySeq` 和航段端点必须属于路线引擎支持的 31 个 IATA allowlist：`CDG AMS FRA MUC ZRH VIE PRG FCO MXP BCN MAD LIS ATH BUD CPH HEL BKK KUL SIN HAN SGN DPS BEG IST CJU SZX CAN PVG PEK CTU HKG`。服务端对每段使用 SerpApi 单程查询，Provider 并发上限为 2，取该段最低的真实报价；Provider 返回的首段出发日期必须与请求航段日期一致才会标记 `real: true`。单段失败不会使整次请求失败，原估算段标记 `real: false`，并由 `probed`、`failed`、`note` 说明降级情况。该路由另有每 IP 3 次/分钟的 route-level 限流，并与全局 Provider 并发上限 2 配合。未配置 `SERPAPI_KEY` 时不发起 Provider 请求，直接返回估算路线并给出说明。Provider 的原始响应、错误文本和密钥不会出现在接口响应中。两条路线接口均返回 `Cache-Control: no-store`。
-
-模型默认由 `OPENROUTER_MODEL=deepseek/deepseek-v4-pro-0813` 指定，最终以运行环境配置为准。可将其替换为当前可用的 OpenRouter 模型；模型可用性、计费和配额由账户及模型目录决定，部署前应自行确认余额和限额。此前 DeepSeek V3 与 V4 Flash 的直连结果仅作历史样本，不代表当前默认模型。
-
-`OpenRouterClient` 统一处理模型兼容性：V4 Pro 0813 请求中的 `reasoning: { "effort": "none", "exclude": true }` 会安全省略，显式 `high`/`xhigh` 才转发；DeepSeek Chat 请求仍不会发送 reasoning，其他模型继续按既有行为转发可选 reasoning。业务调用保持 `none`，不会因“最佳模型”切换而自动启用高推理；`max_tokens` 与 `temperature` 仍按 OpenAI-compatible Chat Completions 方式发送；无 key 或 Provider 失败时不发起网络请求或自动降级到规则结果。
+Planner 请求严格为：
 
 ```json
 {
-  "route": {
-    "origin": "PEK",
-    "destination": "LHR",
-    "depart_date": "2026-09-15",
-    "stay_days": 5,
-    "budget_max": 8000,
-    "interests": ["culture", "food"]
-  },
-  "flight": {
-    "price": 2300,
-    "segments": [{
-      "flightNo": "CA937",
-      "airline": "Air China",
-      "origin": "PEK",
-      "destination": "LHR",
-      "departTime": "2026-09-15T13:00:00+08:00",
-      "arriveTime": "2026-09-15T18:00:00+01:00",
-      "duration": 660
-    }],
-    "hub": null
-  },
-  "hub_guide": null
+  "tripId": "<owned-trip-id>",
+  "conversationId": "<conversation-bound-to-trip-id>",
+  "message": "本轮用户原文"
 }
 ```
 
-响应保持小程序 `TripPlan` 契约，并附加 `source`（`llm` 或 `rules`）和 `warnings`。模型只负责编排，服务端会丢弃非法 JSON/字段，强制用请求中的航班价格覆盖 `budgetCny.flights`，并重新计算 `budgetCny.total`；模型不可改写航段事实。OpenRouter 超时、未配置、响应无法解析或未通过白名单清洗时返回确定性的双语规则方案，并在 `warnings` 中加入 `llm_fallback`。规则方案覆盖 1–7 天、跨日航段、8 小时以上长中转、枢纽攻略/签证素材和自行中转风险提醒，响应禁止缓存（`Cache-Control: no-store`）。
+客户端不回传旧 `state`、messages 数组、recommendations 或路线事实。服务端读取持久会话和
+Trip；回复包含 `conversationId`、`tripId`、`reply`、`tripContextSummary`、
+`artifactRefs`、`suggestedActions`、可选 `memoryChanged`、`warnings`、
+`stopReason` 和 `delivery`。完整 Artifact 单独按 ID 获取。
 
-```json
-{
-  "messages": [{ "role": "user", "content": "2026年9月15日从新加坡去伦敦，玩7天，预算8000" }],
-  "slots": {}
-}
-```
+Agent 可选择、跳过、重复或调整工具顺序；没有固定“目的地 → 日程 → 研究 → 攻略”流程。
+需要持久交付时声明 typed Goal，使用 `finish_goal` 获取领域反馈；模型结束回复时，runtime
+还会校验本轮涉及的 Goal，因此漏调 `finish_goal` 不会绕过完成校验。
+`get_active_goal` 只读取旧目标；接受其条件继续执行需显式调用 `resume_goal`，
+用户修改目标条件时由 Agent 声明新 Goal。
 
-## 4. 小程序真实模式
+`delivery` 包含整体及逐 Goal 的 `status`、`artifactIds`、`missing`、`warnings`，
+并在适用时带 `goalId` / `kind`。状态为
+`not_requested | pending | satisfied | partial | failed | cancelled`：
 
-小程序默认保留 Mock 演示。连接本机 API 时，在项目根目录运行：
+- `stopReason=completed` 仅用于服务端验证的 `delivery.status=satisfied`。
+- `responded` 表示普通文本回应，没有 durable delivery 请求，对应 `not_requested`。
+- 未完成 Goal 使用 `goal_pending | goal_partial | goal_failed | goal_cancelled`。
+- 超时、模型失败、取消等运行时退出保留自己的 stop reason，并另带 delivery verdict。
+
+领域 verifier 检查持久 Artifact 的 schema、owner/Trip、当前 run、版本、来源 lineage、
+接受的机场/日期/目的地和天数覆盖。证据已验证与业务已完成是不同结论；仅有 Artifact、
+错误日期的报价或缺日攻略都不能满足完整请求。模型的成功措辞不是完成证据。
+
+显式 `finish_goal` 和收尾校验共用 `src/agent/goals/completion.ts`。
+`GoalRunRepository.commitCompletion` 在 PostgreSQL 事务内依次锁 Trip、Goal、Goal run，
+复查 owner/scope、revision、版本和终态规则，然后一起提交两个 planning 状态。
+不能改回两个独立 update，也不能让迟到成功覆盖取消或终态。
+
+所有产出路径通过 `src/artifacts/workspace.ts` 冻结服务端读取的 Trip version，在外部调用后
+及写入前复查版本、取消和运行身份；Artifact insert transaction 再检查 Trip/Goal/run。
+来源可跨 Goal/run 复用，但必须同 owner、同 Trip、同 context version。无版本或旧版本
+Artifact 可作为历史读取，不能直接用于当前组合；现阶段没有跨版本兼容策略，
+返回 `ARTIFACT_CONTEXT_VERSION_MISSING` 或 `ARTIFACT_CONTEXT_VERSION_MISMATCH`，
+由 Agent 重新规划，不能给旧证据贴上新版本。
+
+研究领域先将问题分配为至多 8 个目的地/问题检索任务。可选的
+`ResearchQueryPlanner` 只改写短检索词；任务覆盖、目的地、日期和来源限制仍由领域及
+Provider adapter 控制。计划无效时保留原问题检索并记录 warning，不增加调用预算。
+检索并发上限为 2；计划、检索和综合共享取消信号，原始问题保留在 brief 中供综合与审计。
+
+航班和路线的原始时间戳保持不变。Artifact API 的 `presentation.airportTimes` 按
+JSON pointer 提供服务端 `AirportTimeView`，Agent 读取和前端卡片使用同一投影。
+有权威机场时区时显示当地时间及 UTC offset；缺少时区时明确标注 UTC 或时区未知，
+不依赖浏览器所在时区推断。
+
+### 显式路线生成
+
+生成按钮的 POST body 为 `{ conversationId?, expectedTripVersion? }`，记录 `button`
+授权；当前用户明确要求生成路线时，Planner 的零参数 `start_route_generation` 共用同一
+领域服务并记录 `explicit_user_message`。讨论、建议、准备状态和模型推断不构成授权。
+同幂等键和同请求返回原 run，不同请求复用键则冲突。Planner 不暴露内部连接搜索、
+完整路径规划、优化或路线报价确认工具。
+
+run 状态为 `queued → running → succeeded|failed|cancelled`。Snapshot 不可变，但不是继续
+使用旧条件写入的许可：排队或运行中发现当前 Trip 版本变化时，attempt 以
+`TRIP_CONTEXT_VERSION_CONFLICT` 失败，新条件需要新 run。已经完成后才发生的编辑可使历史
+结果变为 stale，历史版本和 provenance 保留。路线 run 的 `succeeded` 只表示执行结束；
+业务是否 satisfied/partial 仍由共享领域校验和 planning Goal/Goal-run 原子提交决定。
+
+当前路线引擎支持一个 canonical airport 起点、一个最终 visit destination 和有限出发窗口。
+返程窗口、多 visit 城市、往返组合、required ground legs 显式 unsupported，不截断成伪完整
+路线。报价/Provider 部分失败保留明确状态，不编造航班或价格。
+
+### 手动搜索与兼容接口
+
+`POST /v1/flight-searches` 要求 `Idempotency-Key` 和严格的
+`{ tripId, conversationId, origin, destination, departureDate, departureDateTo?,
+returnDate?, currency?, travelClass? }`；单机场对，出发窗口最多 31 天。
+服务端建立 workspace，调用与 Agent 相同的 `src/fares/search-service.ts`，
+返回 `artifactRef` 和 compact summary。当前前端提交精确日期；价格确认产生不可变后继
+Artifact，不改写旧报价。当前手动搜索幂等存储为有界进程内实现，多实例部署前需迁移到共享存储。
+
+仍注册的 `/v1/route-plans`、`/v1/route-plans/confirm`、`/v1/trip-plans`、
+`/v1/travel-guides` 为兼容接口，保留各自严格 schema 和降级语义，不作为 Planner 或
+route-generation 的权威交付路径。旧匿名 rule-first converse 和 `/v1/agent/chat`
+未在当前 app 注册，新 Planner 不会在模型故障时静默切回它们。
+
+## 4. 小程序连接与恢复
+
+在仓库根目录运行：
 
 ```powershell
-$env:FLIGHTOR_USE_MOCK='false'
 $env:FLIGHTOR_API_BASE_URL='http://127.0.0.1:3000'
+$env:FLIGHTOR_USE_MOCK='false'
 npm run dev:weapp
 ```
 
-第三方 Provider key 仅从 `backend/.env` 读取。不要恢复根目录 `openrouter.txt` / `serpapi.txt` 的编译期注入方式。
+默认真实模式，仅显式 `FLIGHTOR_USE_MOCK=true` 启用离线 Mock。配置是构建时常量，修改后
+重新构建；真机使用可访问的服务器地址。Provider key 仅保留在后端。
 
-## 5. 数据库迁移
+首次发送会引导登录；取消登录、Trip/Conversation 初始化失败或请求错误时保留草稿。
+共享 session 层处理 token refresh、并发协调和一次 401 重试；登出、账号切换和会话切换
+使迟到响应失效。对话返回后，客户端 GET 当前 Trip workspace，把已受理的后台路线 run
+接入已有 polling/cancel 流程，不再次 POST 创建。
 
-```bash
+`delivery` 随 assistant message 持久化；workspace GET 通过相同 verifier 刷新未完成
+verdict。客户端按 Goal 身份同步服务端结果，不能从对话文本或路线执行成功推断完成。
+
+## 5. 数据库迁移与 Worker
+
+在 `backend` 目录执行：
+
+```powershell
 npm run migrate
-npm run migrate:down
 ```
 
-首版迁移创建国家—城市—机场、用户会话、国家偏好、OAG 时刻与连接、拓扑版本、报价、推荐、行程、价格提醒、同步记录和 Worker 任务等表。
+迁移包含用户会话、航空数据、Trip/Conversation/Memory/Artifact、route-generation、
+planning Goal/Goal run lineage 与 Discovery/审核等表。迁移
+`005_seed_mvp_airports` 是离线种子基线；其保守 down 不删除已有机场和别名。
+`010_planning_goals`、`011_route_generation_goal_lineage` 建立持久目标及运行来源关系。
 
-`005_seed_mvp_airports` 是当前 MVP 机场种子迁移：以 `src/mocks/airports.ts` 为基线，补齐国家（ISO 3166-1 alpha-2）、城市、机场经纬度、中英文名称和常用别名。国家和城市冲突采用 `DO NOTHING`，机场通过 `cities.iata_code` JOIN 获取 bigint `city_id`，冲突时只补空的本地字段，不覆盖已有权威名称、坐标、`active` 或 `source_updated_at`；别名冲突采用 `DO NOTHING`。由于表中没有迁移来源标记，`down` 是保守 no-op，不删除任何别名、机场、城市或国家。
+Worker 从 PostgreSQL `jobs` 以 `FOR UPDATE SKIP LOCKED` 原子领取任务，
+处理 OAG 同步、显式路线生成及 Discovery。路线任务使用 heartbeat、取消检查和 stale-job
+恢复，队列中只传 opaque run ID。拓扑采用新版本构建完成后原子激活，失败继续保留旧版本。
+来源覆盖不足时，可达性返回 `unknown`，不能当成 `unreachable`。
+OAG 同步由管理任务触发；Discovery 按已配置的来源计划调度，发布需人工审核。
 
-同步采取“新版本构建完成后激活”的方式；生产搜索不能读取正在构建的半成品拓扑。
+## 6. 验证
 
-## 6. Worker
+在 `backend` 目录运行代码检查：
 
-Worker 从 `jobs` 表原子领取任务：
-
-```sql
-for update skip locked
-```
-
-多个 Worker 不会互相等待或领取同一任务。失败任务按指数退避重试，超过上限进入 `failed`；超过 15 分钟仍被锁定的任务会在 Worker 启动时恢复。
-
-当前注册任务：
-
-- `noop`：队列链路测试；
-- `oag_locations_probe`：显式触发 OAG Master Data 小流量探测。
-- `oag_sync_location`：归一化并写入国家—城市—机场层级；
-- `oag_sync_route`：读取指定 OD/日期范围，建立新拓扑版本，完整后原子激活。
-
-服务启动不会自动调用第三方 Provider，避免无意消耗试用额度。只有管理接口明确入队后才会同步。
-
-路线同步允许供应商部分成功：例如 Schedules 临时不可用但 Connections 返回了已验证连接时，仍会用连接中的两个航段构建部分拓扑，并在同步结果中记录 Provider 警告。`coverage_complete=false` 时，没有找到路径仍返回 `unknown`，不会误报为不可达。
-
-`POST /v1/reachability/query` 可传：
-
-- `preferredCountries` / `excludedCountries`；登录用户的已保存偏好会自动合并；
-- `minConnectionMinutes`，最小为 60 分钟；自行中转仍采用至少 240 分钟的保守下限；
-- `preferredConnectionMinutes`，默认 720 分钟。超过该时长只降低排序并标记 `long_connection`，不会过滤；6 小时以上会标记 `stopoverPlayable`。
-
-## 7. 验证
-
-```bash
+```powershell
 npm run check
-npm test
+npm test -- --maxWorkers=1
 npm run build
-docker compose config --quiet
 ```
 
-在 Docker 引擎可用后，再执行：
+真实 PostgreSQL 集成套件需要显式 `TEST_DATABASE_URL` 指向独立测试数据库；缺少该变量
+时相关套件会 skip，不能记作通过。完整后端测试串行使用 `--maxWorkers=1`，避免并行
+初始化 `pg_trgm` 等数据库资源的竞态。交付前从根目录补前端测试、类型检查、构建和
+`git diff --check`。
 
-```bash
-docker compose up -d postgres redis
-npm run migrate
-```
+关键回归覆盖 runtime finalization、领域约束与覆盖校验、Goal/run 原子完成、Artifact
+来源版本、Provider 调用中 Trip 变更、取消与晚响应、workspace 恢复及登录 session 竞态。
+这些是检查范围，不是本轮通过结论。当前运行结果见
+[DEMO_STATUS.md](../docs/DEMO_STATUS.md) 和
+[PHASE789_ACCEPTANCE.md](../docs/PHASE789_ACCEPTANCE.md)；
+静态检查、Mock 测试、真实 PostgreSQL、真实 Provider E2E 和微信设备验收分别记录。
 
-然后确认 `/health/ready` 返回 PostgreSQL 与 Redis 均为 `ok`。
+## 7. 安全边界
 
-2026-09-02 旧 Docker 镜像历史联调样本（一次实测，不代表当前最终镜像、Provider 可用性、延迟或价格的稳定保证）：当时 Docker Compose 重建成功，API/Worker 正常运行，PostgreSQL/Redis healthy；数据库迁移 exit 0；`/health/ready` 返回 `ready` 且 PostgreSQL/Redis 均为 `ok`；`/v1/airports?query=东京` 返回 `HND`/`NRT`；非法行程航段拓扑请求返回 `400 INVALID_REQUEST`。该历史样本中的旧容器实际使用过 `OPENROUTER_MODEL=dots-studio/dots-3-note-preview:free`；未读取或披露任何 Provider key，配置来源不作当前断言：`POST /v1/route-plans` 返回 `source=llm`，耗时约 6.093 秒并生成 3 条路线；仅确认第一条 3 段路线时，耗时约 9.426 秒，3/3 段为 `real`，总价为 12051；提交非法 `AAA` IATA 返回 `400 INVALID_REQUEST`。同一次历史联调中，`/v1/trip-plans` 返回 `source=llm`、`warnings=[]`，约 6.1 秒生成 3 天方案，预算为航班 2300、住宿 800、活动 450、总计 3550；三例旧 `/v1/agent/chat` 也均为 `source=llm`，北京→东京识别为 `NRT`、北京→东京羽田识别为 `HND`、北京→日本保持 destination 缺失并继续追问，耗时约 2–3 秒。具体免费模型的 ID、配额和生命周期会变化或下线；以上仅为旧镜像历史记录。
-
-本轮代码验证（代码级稳定检查）：后端 Vitest 共 20 个 test files、121/121 passed；后端 `check`、`build` 和 `git diff --check` 均通过。上述测试覆盖统一对话 schema/客户端状态 allowlist、显式目的地阻塞、多区域补全、规则与 LLM fallback/回复 grounding、无 key、动态日期、软性少中转偏好、确认映射/部分失败/日期不匹配、预算口语金额解析（含歧义表达不覆盖）与规则优先于 LLM 粗解析、跨并发调用的全局 Provider semaphore 及限流配置，以及 OpenRouter 请求参数兼容性；一次 Docker 样本中的 Provider 延迟和票价不构成稳定性承诺。
-
-此前模型切换前的 Provider/服务函数直连验证（2026-09-04，均从 `backend/dist` 调用、不依赖 DB，未输出或记录 key）：OpenRouter `deepseek/deepseek-chat` 的最小“仅回复 OK”请求返回 `success=true`、`content=OK`，只证明当时旧模型与验证环境可用；核心 Agent 原文“我从北京出发，10月1日去日本玩7天，预算一万五，喜欢文化和美食，你帮我选择城市并规划路线”返回 `source=llm`、`phase=plan`、`origin=PEK`、`travel_days=7`、`budget_max=15000`、`destination_mode=recommend`、推荐 `[KIX,NRT]`、2 条路线、`warnings=[]`，修复了此前预算 10000 的问题；攻略第一次组合调用瞬时 `search_failed` 后安全降级 catalog，同一 SerpApi Google Search 直接重试得到 3 条结果，完整旧 DeepSeek 重试返回 `source=web`、3 天游玩、4 个来源、网页域名 `www.facebook.com` / `mercure.accor.com` / `janicerohrssen.com`，并带 `travel_guide_llm_fallback`。该 warning 表示编辑输出未通过严格 grounding，服务保留网页摘要驱动的确定性日程；攻略链路成功但不是当前 V4 Pro、也不是无 warning 的理想 LLM 编辑质量。此前 DeepSeek V3 与 V4 Flash 的直连结果同样仅作历史样本，不代表当前默认模型。
-
-当前默认 V4 Pro 付费 Provider 直连验证（2026-09-04，从 `backend/dist` 调用、不依赖 DB，未输出或记录 key）：使用 `.env` 默认值且调用处未显式提供 model override；请求带业务现有 `reasoning: { effort: 'none', exclude: true }`，共享适配器省略该字段。`configuredModel=deepseek/deepseek-v4-pro-0813`、`responseModel=deepseek/deepseek-v4-pro-0813`、`success=true`、`content=V4 Pro 配置验证成功。`、`promptTokens=97`、`completionTokens=60`、`totalTokens=157`、`cost=$0.00036564`。这证明当前 key、余额、模型 ID 和默认适配路径可用，但不代表 Docker HTTP/UI 已验证。
-
-Docker/HTTP 验证（2026-09-04）：`docker compose ps` 无法连接 `dockerDesktopLinuxEngine`，`localhost:3000` 拒绝连接，故最终 compose 镜像与微信开发者工具 UI 尚未实测。自动验证仍为根项目 `npm test` 140/140、后端 20 个 test files / 121 tests；root/backend typecheck、backend build、weapp build、`git diff --check` 均通过。
-
-## 8. 安全说明
-
-- 不要将 `.env`、Provider 原始响应或微信 OpenID 提交到 Git；
-- 不要把 OAG/SerpApi/OpenRouter key 注入小程序；
-- API 日志已经对授权头、登录 code、refresh token 和常见 token 字段脱敏；
-- `health/providers` 只返回布尔状态；
-- 当前开发 JWT Secret 上生产前必须替换；
-- 已经通过聊天、截图或其他渠道发送过的 Provider key，上线前应撤销并重新生成。
+- 不提交 `.env`、Token、OpenID 或 Provider 原始响应。
+- 小程序不持有 OpenRouter、SerpApi、AeroDataBox 或 OAG 密钥。
+- 日志脱敏授权头、登录 code 和 refresh token；错误返回有界且不泄露 Provider 原始内容。
+- owner、Trip 版本、Goal/run lineage 和显式生成授权来自服务端，不能接受模型声明作为凭据。
+- 上线前替换开发凭据；已泄露的密钥应撤销并重新生成。

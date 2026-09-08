@@ -1,11 +1,16 @@
 # FlightOR 项目上下文与开发交接
 
-> 最后更新：2026-09-07
+> 最后更新：2026-09-08
 > 用途：为后续迭代快速恢复上下文。每次完成会影响架构、启动方式、接口、外部依赖或 MVP 范围的开发后，应同步更新本文。
 
 ## 1. 当前目标与产品原则
 
-今晚演示实时状态见 [DEMO_STATUS.md](./DEMO_STATUS.md)。2026-09-07 本轮真实 API→PostgreSQL Worker→SerpApi 报价路线→云端恢复→对话读取已通过；逐日攻略重跑中，微信 AppSecret/登录与端内交互尚待验收。启动用 `backend/.env.demo` 和 `demo:api` / `demo:worker`，开发环境显式 `REDIS_ENABLED=false` 可保留真实 PostgreSQL 队列运行，生产不可关闭。小程序默认真实模式；仅 `FLIGHTOR_USE_MOCK=true` 启用离线 Mock。详见 ADR 0009。
+演示与真实验收状态见 [DEMO_STATUS.md](./DEMO_STATUS.md) 和
+[PHASE789_ACCEPTANCE.md](./PHASE789_ACCEPTANCE.md)，不要把历史样本当作当前验收结果。
+启动用 `backend/.env.demo` 和 `demo:api` / `demo:worker`，开发环境显式
+`REDIS_ENABLED=false` 可保留真实 PostgreSQL 队列运行，生产不可关闭。小程序默认真实模式；
+仅 `FLIGHTOR_USE_MOCK=true` 启用离线 Mock。产品运行边界见 ADR 0009；Agent 自主编排和
+服务端完成校验见 ADR 0010、[ADR 0011](./adr/0011-verified-delivery-and-workspace-consistency.md)。
 
 FlightOR 是国际航线比价与多城路线规划微信小程序，前端使用 Taro + React + MobX。
 
@@ -58,7 +63,7 @@ compose.yaml         PostgreSQL、Redis、API、Worker 编排
 `docs/README.md`；架构冲突时以 `docs/FLIGHTOR_ARCHITECTURE.md` 和已接受 ADR
 为准。不要在仓库根目录新增新的规范性架构/需求文档。
 
-### 新 Agent 迁移状态（Phase 0–5；前端会话迁移仍在进行）
+### 新 Agent 与 Workspace 实现状态
 
 - Phase 0/1：Tool Calling Runtime、Tool Registry、Aviation/Fare Provider 抽象及
   `get_trip_context`、`update_trip_context`、`resolve_location`、`search_flights`
@@ -79,6 +84,19 @@ compose.yaml         PostgreSQL、Redis、API、Worker 编排
   `research_destination` 与 deterministic `build_travel_guide` 已注册到 cloud Planner。
   `PLANNER_MODEL` 与 `RESEARCH_MODEL` 可独立配置；缺少 SerpApi key 时 Research 明确
   unavailable，但路线、目录与 trip-structure 能力继续运行。
+- Agent 是唯一规划编排层，可根据结果自行选择、跳过、重试和调整工具顺序；没有固定的
+  “目的地 → 日程 → 研究 → 攻略”应用流程。领域服务负责事实、约束与持久化，不能反调
+  Agent tool 或嵌套 Planner runtime。
+- Durable delivery：`finish_goal` 和本轮结束前的自动校验共用
+  `backend/src/agent/goals/completion.ts`；模型漏调完成工具也会校验本轮涉及的 Goal。
+  领域 verifier 检查接受的日期、目的地、天数覆盖、证据资格及 lineage，不能仅凭存在
+  Artifact 判定成功。Goal 与 Goal run 经 `commitCompletion` 原子提交，校验 owner、
+  revision、Trip version 与终态规则，避免并发取消或版本变化造成一半成功、一半未完成。
+- Artifact workspace：`backend/src/artifacts/workspace.ts` 统一读取、来源版本和写入检查，
+  在服务端冻结 Trip version，并在外部调用后及写入前复查；PostgreSQL insert transaction
+  再次检查当前 Trip 和 Goal/run。相同 owner/Trip/version 的来源可跨 Goal/run 复用；
+  旧版本或无版本的历史 Artifact 可读，但不能直接组合成当前版本结果。当前没有跨版本
+  兼容策略，必须返回稳定冲突，由 Agent 重新选择证据或规划。
 - Phase 5 backend cutover：唯一公开 Planner 对话入口为经过 JWT 认证的
   `POST /v1/agent/converse`，使用严格 camelCase `{ tripId, conversationId, message }`
   请求和 compact Trip/Artifact response。Conversation Planner registry 不含最终连接搜索、
@@ -89,6 +107,9 @@ compose.yaml         PostgreSQL、Redis、API、Worker 编排
   `Idempotency-Key`、owner-scoped auth、冻结 Trip Context、协作取消和 terminal immutability。
   按钮入口记录 `button` 授权；明确的对话指令记录 `explicit_user_message` 授权；两者共用同一
   domain service，并创建持久化 Goal/Goal run lineage。
+  冻结 snapshot 不允许绕过实时版本校验：排队或运行中遇到 Trip 变更时，当前 attempt 以
+  `TRIP_CONTEXT_VERSION_CONFLICT` 失败；新条件需新 run。已完成后才发生的编辑仅把历史结果
+  标记为 stale，不把旧结果当作当前交付。
   worker/API 与 mini-program authenticated Trip/Conversation session 已切换完成；客户端支持
   persisted run 恢复、bounded polling retry、取消和 late-response invalidation。Phase 5 gate 已通过；
   真实 PostgreSQL 并发套件需要显式 `TEST_DATABASE_URL`，无测试库时会明确 skip。
@@ -125,8 +146,15 @@ FlightOR Worker
 `{ tripId, conversationId, message }`；用户身份来自 access token，Trip、Conversation、
 Memory 和 Artifact 均按 owner 读取。响应只返回 `conversationId`、`tripId`、compact
 `tripContextSummary`、`reply`、带 `presentationHint` 的 typed `artifactRefs`、
-`suggestedActions`、可选 `memoryChanged`、有上限的 `warnings` 和 `stopReason`。
+`suggestedActions`、可选 `memoryChanged`、有上限的 `warnings`、`stopReason` 和 `delivery`。
 完整 Artifact 通过 owner-scoped `/v1/artifacts/:id` 获取，不嵌入对话文本。
+
+`stopReason=completed` 仅用于领域校验得到 `delivery.status=satisfied` 的交付；
+`responded` 仅表示没有 durable Goal 的普通文本回应，对应 `not_requested`。
+未完成 Goal 使用 `goal_pending|goal_partial|goal_failed|goal_cancelled`，运行时超时等错误
+保留独立 stop reason。`delivery` 包含整体及逐 Goal 的 status、Artifact IDs、missing 和
+warnings；客户端必须采用服务端 verdict，不能从回复文案、工具调用成功或 route run 的
+`succeeded` 推断业务完成。
 
 `suggestedActions` 中的 `generate_route` 只是用户可点击的元数据，本身不会触发路线生成。
 用户点击按钮，或在当前消息中无歧义地明确要求生成路线，才会通过同一 domain service 创建
@@ -143,6 +171,12 @@ Conversation，请求只发送当前 message。owner-scoped cloud IDs、Artifact
 作为新 API 的权威 state，也不会将旧 `state`、recommendations、routes 或价格对象拼接回
 新响应。已受理的 queued/running run 可在重启或重新进入页面后恢复轮询；取消、切换会话和
 logout 都会使迟到响应失效。
+
+对话返回后客户端读取 `GET /v1/trips/:id/workspace`，将对话入口创建的后台 run 接入既有
+轮询和取消流程，不重复 POST 创建。Workspace 读取通过相同领域 verifier 刷新尚未完成的
+message delivery；前端按 Goal 身份同步该 verdict。首次发送会先引导登录，取消登录或
+Trip/Conversation 初始化失败时保留草稿；Token refresh 与一次 401 重试由共享 session
+边界协调，登出和身份切换后的迟到响应不能恢复旧凭据或旧 owner 数据。
 
 Plan 的旧 `UnderstandingPanel` 已删除；当前行程只由服务端 compact summary 生成 chips。
 移除 chip 会发起显式的新 Planner edit，组件本身不会篡改 Context。旧轮次的 compatibility
@@ -171,23 +205,25 @@ Artifact cache identity 并使迟到响应失效。
 - SerpApi 实时报价搜索、标准化和 Redis 10 分钟缓存；
 - 经过 JWT 认证的 `/v1/agent/converse` 新 Planner API，严格校验 owner-scoped Trip/
   Conversation，返回 compact context、Artifact refs、suggested actions、warnings 和
-  stop reason；旧 rule-first converse route 已不再注册；
+  stop reason 和服务端 delivery verdict；旧 rule-first converse route 已不再注册；
 - 显式 route-generation run contract：创建、查询和协作取消均 owner-scoped，要求
   `Idempotency-Key`，冻结 Trip Context version，并把完整结果留在 Artifact；按钮和明确对话
   指令都创建带授权来源的持久化 Goal/run，Agent 不可直接调用内部路线引擎工具；
-- Agentic Goal completion protocol：`declare_goal`、`get_active_goal`、`finish_goal`、
-  `cancel_goal` 使用 PostgreSQL 持久化 owner/Trip/Conversation、冻结 Context、幂等键、状态和
-  working set；完成结果由领域 verifier 检查 Artifact lineage，而不是由模型措辞或工具名决定；
+- Agentic Goal completion protocol：`declare_goal`、`get_active_goal`、`resume_goal`、`finish_goal`、
+  `cancel_goal`；查询只读，显式恢复或声明才接受本轮目标。PostgreSQL 持久化 owner/Trip/Conversation、冻结 Context、幂等键、状态和
+  working set；显式完成和本轮收尾共用领域 verifier，并原子提交 Goal/Goal-run 完成状态；
+  校验包括接受的行程约束、Artifact lineage 与覆盖情况，不由模型措辞或工具名决定；
 - `/v1/trip-plans` 接收选中航班与路线事实，服务端生成行程时间轴，支持 `source=llm|rules` 及非阻塞 `warnings`；
 - OpenRouter、SerpApi 或路线 Provider 缺少凭据/不可用时返回明确 unavailable 或 warning；
   新 Planner 不把旧 rule-first converse 当作静默 fallback，也不编造 Provider 事实；
 - 新 route-generation worker 的当前 MVP 边界是单一最终 visit destination、canonical airport
   origin 和 bounded departure window；多目的地、return window、ground composition 等输入
   显式失败，不伪装成完整路线；
-- Agent 对预算、兴趣、天数、行程类型和中转偏好采用文本证据校验，防止模型填入用户未表达的默认值；
+- Planner 理解用户原文并调用受 schema/领域约束的工具；预算、兴趣和天数来自明确用户需求，
+  不用业务关键词或规则解析器取代语义理解，也不引入用户未表达的默认硬约束；
 - 新增 `005_seed_mvp_airports` 迁移，将 `src/mocks/airports.ts` 的 MVP 机场、城市、国家、常用中英文别名写入 PostgreSQL；
-- Agent 路由从 `airport_aliases` 读取别名，解析优先级为“明确 IATA > 具体机场名/别名 > 城市默认机场”；
-- 同城多机场（如 PEK/PKX、NRT/HND、LHR/LGW）不会同时填入 origin 和 destination；
+- 地点由航空领域解析；共享 Location Identity 保留机场身份与城市归属，fare domain 在付费
+  查询前重新解析权威机场事实，不信任模型复制的名称、坐标或时区；
 - OAG Schedules 不可用时，以 Flight Info Trial 作为直飞数据降级；
 - 管理任务入队与 Job 状态轮询。
 
@@ -200,7 +236,8 @@ Artifact cache identity 并使迟到响应失效。
 | GET | `/health/providers` | 仅检查是否配置，固定标记 `verified=false` |
 | POST | `/v1/auth/wechat` | 微信登录 |
 | POST | `/v1/auth/refresh` | 刷新会话 |
-| POST | `/v1/agent/converse` | JWT 认证 Planner 对话；严格 `{tripId,conversationId,message}`，返回 compact Trip Context、typed Artifact refs、suggested actions、warnings 与 stop reason |
+| POST | `/v1/agent/converse` | JWT 认证 Planner 对话；严格 `{tripId,conversationId,message}`，返回 compact Trip Context、typed Artifact refs、suggested actions、warnings、stop reason 与 delivery verdict |
+| GET | `/v1/trips/:id/workspace` | owner-scoped 云端恢复；返回 Conversation、Artifact refs、后台 run 和经服务端刷新后的未完成 delivery |
 | POST | `/v1/trips/:tripId/route-generation-runs` | Generate Route 按钮入口；要求 `Idempotency-Key`，可选 `conversationId`/`expectedTripVersion`，记录 `button` 授权；明确对话指令通过同一 service 的 Agent tool 入口 |
 | GET | `/v1/route-generation-runs/:runId` | owner-scoped 查询 queued/running/succeeded/failed/cancelled、进度、冻结版本、warnings 与 Artifact ref |
 | DELETE | `/v1/route-generation-runs/:runId` | owner-scoped 协作取消 queued/running run；terminal run 不可变 |
@@ -227,6 +264,11 @@ authenticated conversation response；`backend/src/agent/tools/core.test.ts` 与
 取消/恢复、no-fake-fare 与 client session transport 均有自动化测试。真实数据库下的
 Trip-acceptance、cancel-vs-progress 与 stale-job recovery 并发测试位于
 `backend/src/route-generation/postgres.integration.test.ts`。
+
+交付与一致性 contract pointers：`backend/src/agent/goals/completion*.test.ts`、
+`default-verifiers.test.ts` 和 `postgres.integration.test.ts` 对应共享校验、Goal/run 原子
+完成及竞态；`backend/src/artifacts/workspace.test.ts`、`postgres.integration.test.ts`
+对应来源版本与并发写入边界。测试文件存在不代表本轮已运行或真实 Provider/设备已验收。
 
 ## 5. 后端启动方式
 
@@ -272,7 +314,7 @@ Invoke-RestMethod http://localhost:3000/health/providers
 
 ## 6. 小程序启动方式
 
-默认构建仍使用 Mock，便于离线演示：
+默认构建使用真实后端模式：
 
 ```powershell
 npm install
@@ -289,7 +331,8 @@ npm run dev:weapp
 
 真机不能使用手机自身的 `127.0.0.1` 访问电脑。真机调试时应改为手机可访问的局域网地址；上线时必须使用已备案 HTTPS 域名，并在微信公众平台配置 request 合法域名。
 
-注意：环境变量是构建时常量。修改 API 地址或 Mock 开关后必须重新构建。运行无环境变量的构建会恢复为 Mock。2026-09-01 最后一次生成的 `dist/` 为连接 `http://127.0.0.1:3000` 的非 Mock 产物。
+注意：环境变量是构建时常量。修改 API 地址或 Mock 开关后必须重新构建；仅显式
+`FLIGHTOR_USE_MOCK=true` 启用离线 Mock，不能据旧 `dist/` 或历史构建记录推断当前产物模式。
 
 ## 7. 环境变量
 
@@ -320,7 +363,9 @@ npm run dev:weapp
 
 后端通过 OpenRouter 正式默认使用精确模型 `deepseek/deepseek-v4-flash-0731`（2026-09-07 用户指定），最终以部署环境的 `OPENROUTER_MODEL` 配置为准；可替换为当前可用的其他模型。该付费模型需要有效 `OPENROUTER_API_KEY`、OpenRouter 账户余额和可用配额；如需替换，只通过部署环境或 `backend/.env` 的 `OPENROUTER_MODEL` 配置，不要在业务模块中硬编码模型 ID。共享 `OpenRouterClient` 会按目标模型能力处理 reasoning：业务传 `none` 时 V4 系列转换为 `enabled:false`，Planner/Research 也显式关闭推理；此前省略参数会继承模型默认推理；DeepSeek Chat 继续省略 reasoning，其他模型保持既有行为，不会因切换默认模型自动开启高推理。没有 key、余额不足、Provider 失败或模型输出不合规时，新 Planner 返回明确 provider/unavailable 状态与 bounded warning，不把旧 rule-first converse 当作静默 fallback；自动化测试不发起真实付费调用。此前 DeepSeek V3 与 V4 Flash 的直连结果仅作历史样本，不代表当前默认模型。
 
-统一对话的预算解析支持 `一万五`、`一万五千`、`两万三`、`1万5`、`1万5千`、`1.5万`、`八千`和纯数字等明确格式；`一万零五百`按 10500 保留精度，不完整/歧义表达不覆盖。当前确定性预算对同轮 LLM 粗解析具有优先级，后续明确改预算可覆盖客户端旧 state。
+历史 rule-first 服务中保留的预算口语解析仅供兼容路径和旧协议测试使用。当前公开 Planner
+直接理解用户原文，调用 `update_trip_context` 并由服务端做 schema、版本和领域校验；
+客户端不回传旧 state，也不以该预算解析器或关键词分流充当新 Planner 的语义权威。
 
 ## 8. 外部 API 实测状态
 
@@ -361,8 +406,9 @@ npm run dev:weapp
 - 长中转不是硬过滤，应保留并标记 `long_connection` / `stopoverPlayable`；
 - OAG 时刻不等于可售价格；真实价格以报价 Provider 为准；
 - 大模型不能作为航班存在、价格、签证或安全衔接的事实来源。
-- Agent 只接受服务端数据库中的有效机场代码；前端不得提供可覆盖白名单的机场表。
-- `source=rules` 是 OpenRouter 降级结果，不代表已调用模型；真实报价仍只来自报价 Provider。
+- 机场事实来自服务端航空领域和 Provider；前端或模型不得提供可覆盖权威解析的机场表。
+- 历史兼容接口的 `source=rules` 不代表已调用模型；新 Planner 失败时返回明确状态，不静默
+  切换旧协议。真实报价始终只来自报价 Provider。
 - 非 Mock 小程序不得直连 OpenRouter、SerpApi 或微信云函数；第三方密钥只在自建后端使用。
 
 ### 工程约束
@@ -377,7 +423,11 @@ npm run dev:weapp
 - 报价缓存只能短期使用，并保留“价格以实际购买为准”的提示；
 - 修改已有未提交文件前先查看 `git diff`，不要覆盖用户或其他开发者的改动。
 
-## 10. 当前验证基线
+## 10. 历史验证记录与验证命令
+
+以下 2026-09-04 记录仅保留历史背景；当前自动化、真实 Provider、数据库与微信设备验收
+分别以 [DEMO_STATUS.md](./DEMO_STATUS.md) 和
+[PHASE789_ACCEPTANCE.md](./PHASE789_ACCEPTANCE.md) 的明确记录为准。
 
 截至 2026-09-04，root 真实审核与代码验证结果（Provider/服务函数直连与最终 Docker 镜像分开记录）：
 
@@ -426,12 +476,14 @@ OAG Master Data 开通后，应通过现有 `oag_sync_location` 任务从 OAG �
 旧多城 `routePlanner` 只保留为兼容与离线协议测试；mini-program 已建立/恢复
 owner-scoped Trip 和 Conversation，调用 `/v1/agent/converse`，并通过显式
 route-generation run 触发最终路线。旧 `TripState` 或关键词分流不再是新 Planner
-authority；Phase 6 仍需把完整 Artifact 拉取与 renderer 接到 Trip Workspace。
+authority；完整 Artifact 拉取、typed renderer 和云端 workspace 恢复已接入，实际登录、
+设备交互和真实交付覆盖仍按独立验收记录推进。
 
 1. 让国家、机场选择器从 `/v1/countries`、`/v1/airports` 取数；
 2. 将用户中转偏好接入后端并跨设备同步；
-3. 把收藏、行程、价格提醒从本地 MobX 存储迁到后端；
-4. 将当前仅本地的 Agent 会话历史按需升级为服务端同步，并增加工具调用编排、可观测性和提示词版本管理。
+3. 在既有云端 Trips 基础上继续完善收藏、价格提醒和跨端体验；
+4. 在既有服务端 Conversation 历史与 workspace 恢复基础上完善可观测性和提示词版本管理，
+   保持 Agent 自主选工具及领域完成校验边界。
 
 ### P2：完善搜索产品能力
 

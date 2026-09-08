@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { AppContext } from '../app/context.js'
 import { PostgresArtifactRepository } from '../artifacts/postgres.js'
 import type { ArtifactRepository } from '../artifacts/repository.js'
+import { presentArtifact } from '../artifacts/presentation.js'
 import { authenticateRequest } from '../auth/service.js'
 import { PostgresConversationRepository } from '../conversations/postgres.js'
 import type { ConversationRepository } from '../conversations/repository.js'
@@ -114,7 +115,7 @@ export async function registerCloudStateRoutes(
     const { id } = idParamsSchema.parse(request.params)
     const artifact = await (await repositories(request)).artifacts.get(id)
     if (!artifact) return reply.code(404).send({ error: { code: 'RESOURCE_NOT_FOUND', message: 'Artifact was not found' } })
-    return reply.send({ artifact })
+    return reply.send({ artifact: presentArtifact(artifact) })
   })
 
   app.get('/v1/memory', async (request, reply) => {

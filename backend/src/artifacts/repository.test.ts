@@ -4,7 +4,7 @@ import { InMemoryArtifactRepository } from './repository.js'
 describe('InMemoryArtifactRepository lineage', () => {
   it('stores lineage and supports owner/trip/goal/run scoped reads', async () => {
     const repo = new InMemoryArtifactRepository('owner-a', new Set(['trip-a']))
-    const source = await repo.create({ tripId: 'trip-a', type: 'research', schemaVersion: 1, payload: { ok: true } })
+    const source = await repo.create({ tripId: 'trip-a', type: 'research', schemaVersion: 1, tripContextVersion: 4, payload: { ok: true } })
     const derived = await repo.create({
       tripId: 'trip-a', goalId: 'goal-a', runId: 'run-a', tripContextVersion: 4,
       sourceArtifactIds: [source.id], type: 'route_set', schemaVersion: 1, payload: { route: true }

@@ -56,6 +56,7 @@ const requiredGroundLegSchema = z.object({
   const to = value.to.iata ?? value.to.cityCode ?? value.to.id
   if (from === to) context.addIssue({ code: 'custom', message: 'Ground leg endpoints must differ', path: ['to'] })
 })
+const requiredGroundLegsSchema = z.array(requiredGroundLegSchema).max(24)
 
 export const tripContextSchema = z.object({
   id: z.string().min(1).max(160),
@@ -71,7 +72,7 @@ export const tripContextSchema = z.object({
   transferPreferences: transferPreferencesSchema,
   locationRoleOverrides: z.array(locationRoleOverrideSchema).max(32),
   mustIncludeEvents: z.array(activityRefSchema).max(32),
-  requiredGroundLegs: z.array(requiredGroundLegSchema).max(24).default([]),
+  requiredGroundLegs: requiredGroundLegsSchema.default([]),
   notes: z.array(z.string().min(1).max(500)).max(50),
   version: z.number().int().nonnegative()
 }).strict()
@@ -87,7 +88,9 @@ export const tripContextPatchSchema = tripContextSchema
     returnWindow: dateWindowSchema.nullable().optional(),
     travelDays: z.number().int().min(1).max(60).nullable().optional(),
     budget: budgetSchema.nullable().optional(),
-    pace: z.enum(['relaxed', 'balanced', 'intensive']).nullable().optional()
+    pace: z.enum(['relaxed', 'balanced', 'intensive']).nullable().optional(),
+    // A sparse update must not inherit the full snapshot's [] default.
+    requiredGroundLegs: requiredGroundLegsSchema.optional()
   }).strict()
 
 export type TripContextPatch = z.infer<typeof tripContextPatchSchema>

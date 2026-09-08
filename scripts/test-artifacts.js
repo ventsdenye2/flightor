@@ -55,13 +55,16 @@ const requestStub = async options => {
   }
 }
 
+const airportTime = loadTypeScript('src/services/airportTime.ts')
 const service = loadTypeScript('src/services/artifactService.ts', {
+  './airportTime': airportTime,
   '../utils/request': { request: requestStub }
 })
 const registry = loadTypeScript('src/components/artifacts/registry.ts', {
   '../../services/artifactService': {}
 })
 const flightService = loadTypeScript('src/services/flightService.ts', {
+  './airportTime': airportTime,
   '../mocks/airports': { findAirport: () => undefined, distanceKm: () => 0 },
   '../utils/request': { USE_MOCK: false, request: async () => { throw new Error('unexpected request') } },
   '../utils/format': { toDateString: () => '2026-09-07' },
@@ -175,7 +178,15 @@ console.log('\n【Auth store】logout invalidates an in-flight login')
 let settleLogin
 const loginResponse = new Promise(resolve => { settleLogin = resolve })
 const authStorage = new Map()
+const authSessionModule = loadTypeScript('src/utils/authSession.ts', {
+  '@tarojs/taro': { default: {
+    getStorageSync: key => authStorage.get(key),
+    setStorageSync: (key, value) => authStorage.set(key, value),
+    removeStorageSync: key => authStorage.delete(key)
+  } }
+})
 const authServiceModule = loadTypeScript('src/services/authService.ts', {
+  '../utils/authSession': authSessionModule,
   '@tarojs/taro': {
     default: {
       login: async () => ({ code: 'wx-code' }),
@@ -190,6 +201,7 @@ const authServiceModule = loadTypeScript('src/services/authService.ts', {
   }
 })
 const userStoreModule = loadTypeScript('src/stores/userStore.ts', {
+  '../utils/authSession': authSessionModule,
   mobx: { makeAutoObservable: () => {}, runInAction: action => action() },
   '../utils/storage': { getStorage: (_key, fallback) => fallback, setStorage: () => {} },
   '../services/authService': authServiceModule,

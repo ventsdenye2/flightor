@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { ArtifactRepository } from '../artifacts/repository.js'
+import { checkpoint, createArtifactWorkspace } from '../artifacts/workspace.js'
+import type { TripContextRepository } from '../trips/repository.js'
 import type { AviationProvider } from '../aviation/providers/provider.js'
 import type { LocationRef, VerificationRecord } from '../aviation/types.js'
 import type { FareProvider } from '../fares/providers/provider.js'
@@ -42,6 +44,7 @@ export function airportTimeToIso(value: string, timezone?: string): string | und
 export class LiveFareConnectionSearch implements ConnectionSearchService {
   constructor(private readonly dependencies: {
     artifacts: ArtifactRepository
+    trips: Pick<TripContextRepository, 'get'>
     fares: FareProvider
     aviation: Pick<AviationProvider, 'getAirport'>
     topology: ConnectionSearchService
@@ -52,6 +55,16 @@ export class LiveFareConnectionSearch implements ConnectionSearchService {
     if (!context.tripId || !input.origin.iata || !input.destination.iata) throw new AppError('ROUTE_ORIGIN_REQUIRED', 'Live route search requires an owned trip and airport pair', 422)
     await context.checkpoint?.()
     context.signal?.throwIfAborted()
+    const scope = context.artifactWorkspace ?? await createArtifactWorkspace({
+      artifacts: this.dependencies.artifacts,
+      trips: this.dependencies.trips,
+      tripId: context.tripId,
+      ...(context.conversationId ? { conversationId: context.conversationId } : {}),
+      ...(context.signal ? { signal: context.signal } : {}),
+      ...(context.checkpoint ? { assertActive: context.checkpoint } : {})
+    })
+    if (scope.tripId !== context.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Artifact workspace does not belong to this Trip', 404)
+    await checkpoint(scope)
     const warnings: string[] = []
     const edges: ConnectionEdge[] = []
     const dates = sampleDates(input.window.from, input.window.to, 4)
@@ -69,15 +82,13 @@ export class LiveFareConnectionSearch implements ConnectionSearchService {
     let successfulDates = 0
     let firstFailure: unknown
     for (const date of dates) {
-      await context.checkpoint?.()
+      await checkpoint(scope)
       context.signal?.throwIfAborted()
       try {
         const stored = await executeFlightSearch({ origin: origin.iata!, destination: destination.iata!, departureDate: date, currency: 'CNY', travelClass: 1 }, {
-          artifacts: this.dependencies.artifacts, fares: this.dependencies.fares, tripId: context.tripId,
-          ...(context.conversationId ? { conversationId: context.conversationId } : {}),
-          ...(context.signal ? { signal: context.signal } : {})
+          ...scope, fares: this.dependencies.fares
         })
-        await context.checkpoint?.()
+        await checkpoint(scope)
         successfulDates++
         for (const offer of stored.payload.offers) {
           if (offer.segments.length !== 1 || offer.transferType !== 'direct') { skippedConnections++; continue }
@@ -99,7 +110,7 @@ export class LiveFareConnectionSearch implements ConnectionSearchService {
           }))
         }
       } catch (error) {
-        await context.checkpoint?.()
+        await checkpoint(scope)
         if (context.signal?.aborted) throw error
         firstFailure ??= error
         warnings.push(`Live fare search failed for ${date}.`)
@@ -109,7 +120,7 @@ export class LiveFareConnectionSearch implements ConnectionSearchService {
     let structural
     try { structural = await this.dependencies.topology.search(input, context) }
     catch (error) {
-      await context.checkpoint?.()
+      await checkpoint(scope)
       if (context.signal?.aborted) throw error
       warnings.push('Topology candidates are unavailable; live fare coverage only.')
     }

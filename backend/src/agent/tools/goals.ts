@@ -4,6 +4,7 @@ import {
   flightSearchGoalParametersSchema,
   goalRecordSchema,
   goalRunRecordSchema,
+  goalKindSchema,
   travelGuideGoalParametersSchema,
   tripContextUpdateGoalParametersSchema,
   type GoalRecord,
@@ -11,6 +12,7 @@ import {
 } from '../goals/types.js'
 import type { GoalRepository, GoalRunRepository } from '../goals/repository.js'
 import { goalVerificationSchema, type GoalVerifierRegistry } from '../goals/verifier.js'
+import { completeGoal } from '../goals/completion.js'
 import type { AgentTool } from '../runtime/registry.js'
 
 const missing = (name: string): never => {
@@ -25,7 +27,8 @@ const declareGoalInputSchema = z.discriminatedUnion('kind', [
 
 const declareGoalOutputSchema = z.object({ goal: goalRecordSchema, run: goalRunRecordSchema }).strict()
 const goalIdInputSchema = z.object({ goalId: z.string().uuid() }).strict()
-const goalOutputSchema = z.object({ goal: goalRecordSchema.optional(), run: goalRunRecordSchema.optional() }).strict()
+const goalOutputSchema = z.object({ goal: goalRecordSchema.optional(), run: goalRunRecordSchema.optional(), candidates: z.array(goalRecordSchema).max(40).optional() }).strict()
+const getGoalInputSchema = z.object({ goalId: z.string().uuid().optional(), kind: goalKindSchema.optional() }).strict()
 const finishGoalOutputSchema = z.object({ goal: goalRecordSchema, run: goalRunRecordSchema, verification: goalVerificationSchema }).strict()
 
 function repos(context: Parameters<NonNullable<AgentTool['execute']>>[1]): { goals: GoalRepository; runs: GoalRunRepository; verifiers: GoalVerifierRegistry } {
@@ -36,14 +39,6 @@ function repos(context: Parameters<NonNullable<AgentTool['execute']>>[1]): { goa
 function owner(context: Parameters<NonNullable<AgentTool['execute']>>[1]): string {
   if (!context.ownerId) return missing('Authenticated Goal owner')
   return context.ownerId
-}
-
-async function selectedGoal(context: Parameters<NonNullable<AgentTool['execute']>>[1], goals: GoalRepository): Promise<GoalRecord | undefined> {
-  if (context.activeGoalId) {
-    const active = await goals.get(context.activeGoalId)
-    if (active && active.status !== 'satisfied' && active.status !== 'cancelled') return active
-  }
-  return (await goals.listForTrip(context.tripId)).find(goal => goal.status !== 'satisfied' && goal.status !== 'cancelled')
 }
 
 function runMatchesGoal(
@@ -83,6 +78,7 @@ async function ensureCurrentRun(
         idempotencyKey: `resume:${context.generationId}`
       })).run
   context.activeGoalId = goal.id
+  context.activeGoalKind = goal.kind
   if (run) {
     context.activeGoalRunId = run.id
     context.activeGoalContextVersion = run.contextVersion
@@ -118,6 +114,7 @@ export const declareGoalTool: AgentTool = {
       idempotencyKey: `generation:${context.generationId}`
     })
     context.activeGoalId = created.goal.id
+    context.activeGoalKind = created.goal.kind
     context.activeGoalRunId = run.run.id
     context.activeGoalContextVersion = run.run.contextVersion
     return { goal: created.goal, run: run.run }
@@ -126,17 +123,44 @@ export const declareGoalTool: AgentTool = {
 
 export const getGoalTool: AgentTool = {
   name: 'get_active_goal',
-  description: 'Read the server-selected active Goal for this Trip and resume it with a current-context run when needed. No owner, Trip, or Goal id is accepted from model arguments.',
-  inputSchema: z.object({}).strict(),
+  description: 'Read unfinished goals and their existing runs for this Trip. Returns a selected goal or bounded candidates without activating a goal, creating a run, or accepting its parameters for this turn. To continue a matching objective use resume_goal; to accept new parameters use declare_goal. Owner and Trip are server-owned.',
+  inputSchema: getGoalInputSchema,
   outputSchema: goalOutputSchema,
-  costClass: 'free', costUnits: 0, sideEffect: 'state', parallelSafe: false, timeoutMs: 2_000,
-  async execute(_input, context) {
+  costClass: 'free', costUnits: 0, sideEffect: 'none', parallelSafe: true, timeoutMs: 2_000,
+  async execute(input, context) {
     const { goals, runs } = repos(context)
-    const goal = await selectedGoal(context, goals)
-    if (!goal) return {}
+    const selector = input as z.infer<typeof getGoalInputSchema>
+    const ownerId = owner(context)
+    const candidates = (await goals.listForTrip(context.tripId)).filter(goal => goal.ownerId === ownerId && goal.tripId === context.tripId
+      && goal.status !== 'satisfied' && goal.status !== 'cancelled'
+      && (selector.kind === undefined || goal.kind === selector.kind)
+      && (selector.goalId === undefined || goal.id === selector.goalId)).slice(0, 40)
+    const goal = selector.goalId ? candidates.find(item => item.id === selector.goalId)
+      : candidates.find(item => item.id === context.activeGoalId) ?? (candidates.length === 1 ? candidates[0] : undefined)
+    if (!goal) return { candidates }
     if (goal.ownerId !== owner(context) || goal.tripId !== context.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
-    const run = await ensureCurrentRun(context, goal, runs)
+    const activeRun = context.activeGoalRunId ? await runs.get(context.activeGoalRunId) : undefined
+    const run = runMatchesGoal(activeRun, goal, context) ? activeRun
+      : (await runs.listForGoal(goal.id)).find(candidate => runMatchesGoal(candidate, goal, context))
     return run ? { goal, run } : { goal }
+  }
+}
+
+export const resumeGoalTool: AgentTool = {
+  name: 'resume_goal',
+  description: 'Explicitly continue a durable Goal after inspecting that its saved parameters match the current user objective. Activate an existing current-context run or start a run from the current server Trip snapshot. Use declare_goal for a new objective or changed parameters. Satisfied and cancelled Goals cannot be resumed.',
+  inputSchema: goalIdInputSchema,
+  outputSchema: declareGoalOutputSchema,
+  costClass: 'free', costUnits: 0, sideEffect: 'state', parallelSafe: false, timeoutMs: 2_000,
+  async execute(input, context) {
+    const { goals, runs } = repos(context)
+    const goal = await goals.get((input as z.infer<typeof goalIdInputSchema>).goalId)
+    if (!goal || goal.ownerId !== owner(context) || goal.tripId !== context.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
+    if (goal.status === 'satisfied' || goal.status === 'cancelled') {
+      throw new AppError('GOAL_NOT_RUNNABLE', 'A satisfied or cancelled Goal cannot be resumed', 409)
+    }
+    const run = await ensureCurrentRun(context, goal, runs)
+    return { goal, run }
   }
 }
 
@@ -146,28 +170,14 @@ export const finishGoalTool: AgentTool = {
   inputSchema: goalIdInputSchema,
   outputSchema: finishGoalOutputSchema,
   costClass: 'free', costUnits: 0, sideEffect: 'state', parallelSafe: false, timeoutMs: 5_000,
-  async execute(input, context) {
+  async execute(input, context, signal) {
     const { goals, runs, verifiers } = repos(context)
     const goalId = (input as z.infer<typeof goalIdInputSchema>).goalId
-    const goal = await goals.get(goalId)
-    if (!goal || goal.ownerId !== owner(context) || goal.tripId !== context.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
-    const current = await context.trips.get(context.tripId)
-    const activeRun = context.activeGoalRunId ? await runs.get(context.activeGoalRunId) : undefined
-    const run = current && runMatchesGoal(activeRun, goal, context, current.version)
-      ? activeRun
-      : current ? await runs.latestCompatible({ goalId, tripId: context.tripId, contextVersion: current.version }) : undefined
-    if (!run) throw new AppError('GOAL_RUN_NOT_FOUND', 'No compatible Goal run exists', 409)
-    if (!runMatchesGoal(run, goal, context, current?.version)) {
-      throw new AppError('GOAL_RUN_NOT_FOUND', 'No compatible Goal run exists', 409)
-    }
-    const verification = await verifiers.verify(goal, { ownerId: owner(context), tripId: context.tripId, run, artifacts: context.artifacts, ...(current ? { currentTrip: current } : {}) })
-    // A finish request is not permission to downgrade an unfinished run. The
-    // verifier may explicitly report pending while the Agent gathers evidence.
-    if (verification.status === 'pending') return { goal, run, verification }
-    const runStatus = verification.status === 'satisfied' ? 'satisfied' : verification.status === 'partial' ? 'partial' : 'failed'
-    const updatedRun = await runs.update(run.id, run.revision, { status: runStatus, workingSet: run.workingSet })
-    const updatedGoal = await goals.update(goal.id, goal.revision, { status: verification.status })
-    return { goal: updatedGoal, run: updatedRun, verification }
+    return completeGoal({
+      ownerId: owner(context), tripId: context.tripId, trips: context.trips,
+      artifacts: context.artifacts, goals, runs, verifiers, signal,
+      ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
+    }, { goalId, ...(context.activeGoalRunId ? { runId: context.activeGoalRunId } : {}), closePartialRun: false })
   }
 }
 
@@ -186,8 +196,18 @@ export const cancelGoalTool: AgentTool = {
     const run = runMatchesGoal(activeRun, goal, context)
       ? activeRun
       : (await runs.listForGoal(goal.id)).find(candidate => runMatchesGoal(candidate, goal, context) && candidate.status === 'running')
-    const updatedRun = run && run.status === 'running' ? await runs.update(run.id, run.revision, { status: 'cancelled' }) : run
-    const updatedGoal = await goals.update(goal.id, goal.revision, { status: 'cancelled' })
-    return updatedRun ? { goal: updatedGoal, run: updatedRun } : { goal: updatedGoal }
+    if (run) {
+      const result = await runs.commitCompletion({
+        goalId: goal.id, runId: run.id,
+        expectedGoalRevision: goal.revision, expectedRunRevision: run.revision,
+        goalStatus: 'cancelled', runStatus: run.status === 'running' ? 'cancelled' : run.status
+      })
+      context.activeGoalId = result.goal.id
+      context.activeGoalKind = result.goal.kind
+      context.activeGoalRunId = result.run.id
+      context.activeGoalContextVersion = result.run.contextVersion
+      return result
+    }
+    return { goal: await goals.update(goal.id, goal.revision, { status: 'cancelled' }) }
   }
 }

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { ARTIFACT_TYPES } from '../../artifacts/repository.js'
+import { artifactReadingContent } from '../../artifacts/presentation.js'
 import type { AgentTool } from '../runtime/registry.js'
 
 const reference = z.object({ id: z.string().uuid(), type: z.enum(ARTIFACT_TYPES), schemaVersion: z.number().int().positive() }).strict()
@@ -27,7 +28,7 @@ export const readArtifactTool: AgentTool<z.infer<typeof readInput>, z.infer<type
   async execute(input, context) {
     const record = await context.artifacts.get(input.artifactId)
     if (!record || record.tripId !== context.tripId) throw new Error('Artifact was not found in the current trip')
-    const content = JSON.stringify({ payload: record.payload, verification: record.verification, createdAt: record.createdAt })
+    const content = artifactReadingContent(record)
     return { artifact: { id: record.id, type: record.type, schemaVersion: record.schemaVersion }, content: content.slice(0, 24000), truncated: content.length > 24000 }
   }
 }

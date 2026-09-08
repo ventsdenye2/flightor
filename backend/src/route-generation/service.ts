@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { v7 as uuidv7 } from 'uuid'
 import { createHash } from 'node:crypto'
 import type { ArtifactRecord, ArtifactRepository } from '../artifacts/repository.js'
+import { checkpoint, createArtifactWorkspace, saveWorkspaceArtifact } from '../artifacts/workspace.js'
+import { completeGoal } from '../agent/goals/completion.js'
 import type { GoalRepository, GoalRunRepository } from '../agent/goals/repository.js'
 import type { GoalAuthorizationSource, GoalRunRecord, GoalStatus, GoalWorkingSet } from '../agent/goals/types.js'
 import type { GoalVerifierRegistry } from '../agent/goals/verifier.js'
@@ -60,6 +62,7 @@ const failureMessages: Record<string, string> = {
   ORIGIN_DESTINATION_SAME: 'Origin and destination airports must be different.',
   NO_ROUTE_PATHS: 'No route path satisfied the current trip constraints.',
   ROUTE_GENERATION_CANCELLED: 'Route generation was cancelled.',
+  TRIP_CONTEXT_VERSION_CONFLICT: 'Trip conditions changed during route generation; start a new run for the current version.',
   TRIP_NOT_FOUND: 'The trip was not found.',
   ROUTE_GENERATION_FAILED: 'Route generation failed.'
 }
@@ -360,11 +363,13 @@ async function finishPlanningTerminal(
 ): Promise<void> {
   const lineage = await planningRecords(dependencies, routeRun)
   if (!lineage) return
-  let { goal, run } = lineage
-  if (run.status === 'running') run = await dependencies.goalRuns.update(run.id, run.revision, { status })
-  if (goal.status !== status && goal.status !== 'satisfied' && goal.status !== 'cancelled') {
-    goal = await dependencies.goals.update(goal.id, goal.revision, { status })
-  }
+  const { goal, run } = lineage
+  if (goal.status === 'satisfied' || (status === 'failed' && run.status !== 'running' && run.status !== 'failed')) return
+  await dependencies.goalRuns.commitCompletion({
+    goalId: goal.id, runId: run.id,
+    expectedGoalRevision: goal.revision, expectedRunRevision: run.revision,
+    goalStatus: status, runStatus: run.status === 'running' ? status : run.status
+  })
 }
 
 async function finishPlanningWithArtifacts(
@@ -374,26 +379,15 @@ async function finishPlanningWithArtifacts(
 ): Promise<void> {
   const lineage = await planningRecords(dependencies, routeRun)
   if (!lineage) return
-  const currentTrip = await dependencies.trips.getTrip(routeRun.tripId)
   const workingSet = artifactWorkingSet(lineage.run, records)
-  const runForVerification: GoalRunRecord = { ...lineage.run, workingSet }
-  const verification = await dependencies.goalVerifiers.verify(lineage.goal, {
-    ownerId: routeRun.ownerId,
-    tripId: routeRun.tripId,
-    run: runForVerification,
-    artifacts: dependencies.artifacts,
-    ...(currentTrip ? { currentTrip: currentTrip.context } : {})
-  })
-  // The route job is terminal. If its frozen context became stale while it ran,
-  // preserve the produced evidence but leave the durable Goal explicitly partial.
-  const goalStatus: GoalStatus = verification.status === 'pending' ? 'partial' : verification.status
-  const runStatus = goalStatus === 'satisfied' ? 'satisfied' : goalStatus === 'partial' ? 'partial' : 'failed'
   if (lineage.run.status === 'running') {
-    await dependencies.goalRuns.update(lineage.run.id, lineage.run.revision, { status: runStatus, workingSet })
+    await dependencies.goalRuns.update(lineage.run.id, lineage.run.revision, { status: 'running', workingSet })
   }
-  if (lineage.goal.status !== goalStatus && lineage.goal.status !== 'satisfied' && lineage.goal.status !== 'cancelled') {
-    await dependencies.goals.update(lineage.goal.id, lineage.goal.revision, { status: goalStatus })
-  }
+  await completeGoal({
+    ownerId: routeRun.ownerId, tripId: routeRun.tripId, trips: dependencies.trips,
+    artifacts: dependencies.artifacts, goals: dependencies.goals, runs: dependencies.goalRuns,
+    verifiers: dependencies.goalVerifiers
+  }, { goalId: lineage.goal.id, runId: lineage.run.id })
 }
 
 async function markFailure(dependencies: RouteGenerationDependencies, runId: string, error: unknown, extraWarnings: readonly string[] = []): Promise<RouteGenerationRunRecord | undefined> {
@@ -443,13 +437,28 @@ export async function executeRouteGenerationRun(
   const claimed = await dependencies.runs.claim(runId)
   if (claimed === undefined) {
     const current = await dependencies.runs.get(runId)
-    if (current?.status === 'cancelled') await finishPlanningTerminal(dependencies, current, 'cancelled')
+    // The durable route result is also the replay source for Goal completion.
+    // A worker retry must finish this handoff without repeating provider work.
+    if (current?.status === 'succeeded') {
+      const records = current.goalRunId ? await dependencies.artifacts.listForRun(current.goalRunId, 100) : []
+      await finishPlanningWithArtifacts(dependencies, current, records)
+    } else if (current?.status === 'failed' || current?.status === 'cancelled') {
+      await finishPlanningTerminal(dependencies, current, current.status)
+    }
     if (!current || current.status === 'succeeded' || current.status === 'failed' || current.status === 'cancelled') return current
     if (current.status === 'running') throw new AppError('ROUTE_GENERATION_STUCK', 'Route generation run is already being processed', 409)
     return current
   }
   try {
     const context = tripContextSchema.parse(structuredClone(claimed.contextSnapshot))
+    const workspace = await createArtifactWorkspace({
+      artifacts: dependencies.artifacts, trips: dependencies.trips, tripId: claimed.tripId,
+      ...(claimed.conversationId ? { conversationId: claimed.conversationId } : {}),
+      ...(claimed.goalId ? { goalId: claimed.goalId } : {}),
+      ...(claimed.goalRunId ? { runId: claimed.goalRunId } : {}),
+      tripContextVersion: claimed.contextVersion,
+      assertActive: () => assertRunActive(dependencies, runId)
+    }, context)
     const selection = routeSelection(context)
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
 
@@ -460,7 +469,8 @@ export async function executeRouteGenerationRun(
       acceptsSelfTransfer: selection.acceptsSelfTransfer,
       acceptsLongStopover: selection.acceptsLongStopover,
       maxCandidates: 100
-    }, { tripId: claimed.tripId, ...(claimed.conversationId ? { conversationId: claimed.conversationId } : {}), checkpoint: () => assertRunActive(dependencies, runId) })
+    }, { tripId: claimed.tripId, ...(claimed.conversationId ? { conversationId: claimed.conversationId } : {}), artifactWorkspace: workspace, checkpoint: () => checkpoint(workspace) })
+    await checkpoint(workspace)
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
     if (connectionResult.edges.length === 0) {
       return await markFailure(dependencies, runId, new AppError('NO_ROUTE_PATHS', failureMessage('NO_ROUTE_PATHS'), 422), [
@@ -482,6 +492,7 @@ export async function executeRouteGenerationRun(
         ...(context.travelDays === undefined ? {} : { maxTravelDays: context.travelDays })
       }, maxPaths: 50
     })
+    await checkpoint(workspace)
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
     if (pathPlan.paths.length === 0) {
       return await markFailure(dependencies, runId, new AppError('NO_ROUTE_PATHS', failureMessage('NO_ROUTE_PATHS'), 422), [
@@ -493,6 +504,7 @@ export async function executeRouteGenerationRun(
       paths: pathPlan.paths, weights: {}, preferredLocations: selection.preferredLocations,
       interestLocations: [], maxRepresentatives: 10
     })
+    await checkpoint(workspace)
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
     if (optimization.representatives.length === 0) {
       return await markFailure(dependencies, runId, new AppError('NO_ROUTE_PATHS', failureMessage('NO_ROUTE_PATHS'), 422), [
@@ -510,34 +522,26 @@ export async function executeRouteGenerationRun(
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
 
     const connectionPayload = connectionArtifactPayload(connectionResult, selection)
-    const connectionArtifact = await dependencies.artifacts.create({
-      id: uuidv7(), tripId: claimed.tripId, ...(claimed.conversationId === undefined ? {} : { conversationId: claimed.conversationId }),
-      ...(claimed.goalId === undefined ? {} : { goalId: claimed.goalId }),
-      ...(claimed.goalRunId === undefined ? {} : { runId: claimed.goalRunId }),
-      tripContextVersion: claimed.contextVersion,
+    const connectionArtifact = await saveWorkspaceArtifact(workspace, {
+      id: uuidv7(),
       sourceArtifactIds: connectionPayload.sourceArtifactIds,
       type: 'route_set', schemaVersion: 1, payload: connectionPayload, verification: connectionResult.verification
     })
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
     const pathPayload = pathArtifactPayload(pathPlan, connectionArtifact.id)
-    const pathArtifact = await dependencies.artifacts.create({
-      id: uuidv7(), tripId: claimed.tripId, ...(claimed.conversationId === undefined ? {} : { conversationId: claimed.conversationId }),
-      ...(claimed.goalId === undefined ? {} : { goalId: claimed.goalId }),
-      ...(claimed.goalRunId === undefined ? {} : { runId: claimed.goalRunId }),
-      tripContextVersion: claimed.contextVersion,
+    const pathArtifact = await saveWorkspaceArtifact(workspace, {
+      id: uuidv7(),
       sourceArtifactIds: pathPayload.sourceArtifactIds,
       type: 'route_set', schemaVersion: 1, payload: pathPayload, verification: pathPlan.verification
     })
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
     const optimizedPayload = optimizedArtifactPayload(optimization, pathArtifact.id)
-    const optimizedArtifact = await dependencies.artifacts.create({
-      id: uuidv7(), tripId: claimed.tripId, ...(claimed.conversationId === undefined ? {} : { conversationId: claimed.conversationId }),
-      ...(claimed.goalId === undefined ? {} : { goalId: claimed.goalId }),
-      ...(claimed.goalRunId === undefined ? {} : { runId: claimed.goalRunId }),
-      tripContextVersion: claimed.contextVersion,
+    const optimizedArtifact = await saveWorkspaceArtifact(workspace, {
+      id: uuidv7(),
       sourceArtifactIds: optimizedPayload.sourceArtifactIds,
       type: 'route_set', schemaVersion: 1, payload: optimizedPayload, verification: optimization.verification
     })
+    await checkpoint(workspace)
     const current = await dependencies.runs.get(runId)
     if (isCancelled(current)) return current
     const completed = await dependencies.runs.update(runId, {
@@ -557,6 +561,10 @@ export async function executeRouteGenerationRun(
   } catch (error) {
     if (error instanceof Error && error.message === 'ROUTE_GENERATION_CANCELLED') return dependencies.runs.get(runId)
     dependencies.onFailure?.(error, runId)
+    const current = await dependencies.runs.get(runId)
+    // Computation has already finished. Let the job queue retry the durable
+    // handoff instead of swallowing a storage failure behind a terminal job.
+    if (current?.status === 'succeeded' || current?.status === 'failed') throw error
     return markFailure(dependencies, runId, error)
   }
 }

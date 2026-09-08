@@ -8,6 +8,11 @@ import { routeSetPayloadSchema } from '../flight-routing/types.js'
 import { presentationHint, summarizeTrip } from '../routes/agent-cloud.js'
 import { PostgresRouteGenerationRunRepository } from '../route-generation/repository.js'
 import { toRouteGenerationRunView } from '../route-generation/contracts.js'
+import { goalDeliverySchema, refreshGoalDelivery } from '../agent/goals/completion.js'
+import { PostgresGoalRepository, PostgresGoalRunRepository } from '../agent/goals/postgres.js'
+import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifiers.js'
+import { PostgresTripRepository } from '../trips/postgres.js'
+import { PostgresArtifactRepository } from '../artifacts/postgres.js'
 import { savedRouteSchema, type WorkspacePatch, type WorkspaceRepository, type WorkspaceTrip, type TripWorkspace, type WorkspaceMessage } from './types.js'
 
 const notFound = () => new AppError('RESOURCE_NOT_FOUND', 'Trip or resource was not found', 404)
@@ -48,8 +53,28 @@ export class PostgresWorkspaceRepository implements WorkspaceRepository {
       for (const m of rows) {
         if (m.role !== 'user' && m.role !== 'assistant') continue
         const ids = Array.isArray(m.metadata.artifact_refs) ? m.metadata.artifact_refs : []
-        messages.push({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt, artifactRefs: ids.flatMap(id => typeof id === 'string' && refsById.has(id) ? [refsById.get(id)!] : []) })
+        const delivery = goalDeliverySchema.safeParse(m.metadata.delivery)
+        messages.push({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt, artifactRefs: ids.flatMap(id => typeof id === 'string' && refsById.has(id) ? [refsById.get(id)!] : []), ...(delivery.success ? { delivery: delivery.data } : {}) })
       }
+    }
+    const completionScope = {
+      ownerId: this.userId, tripId,
+      trips: new PostgresTripRepository(this.db, this.userId),
+      artifacts: new PostgresArtifactRepository(this.db, this.userId),
+      goals: new PostgresGoalRepository(this.db, this.userId),
+      runs: new PostgresGoalRunRepository(this.db, this.userId),
+      verifiers: createDefaultGoalVerifierRegistry(), signal: AbortSignal.timeout(3_000)
+    }
+    // Status comes from the server verifier, never from a job's succeeded flag.
+    // Bound refresh latency; historical snapshots remain honest if storage is unavailable.
+    for (const message of [...messages].reverse()) {
+      if (completionScope.signal.aborted) break
+      if (!message.delivery || ['not_requested', 'satisfied', 'cancelled'].includes(message.delivery.status)) continue
+      const snapshot = message.delivery
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const deadline = new Promise<typeof snapshot>(resolve => { timer = setTimeout(() => resolve(snapshot), 3_000) })
+      try { message.delivery = await Promise.race([refreshGoalDelivery(completionScope, snapshot), deadline]) }
+      finally { clearTimeout(timer) }
     }
     const latest = await this.db.selectFrom('route_generation_runs').select('public_id').where('trip_id', '=', trip.id).where('user_id', '=', this.userId).orderBy('public_id', 'desc').limit(1).executeTakeFirst()
     const run = latest ? await new PostgresRouteGenerationRunRepository(this.db, this.userId).get(latest.public_id) : undefined

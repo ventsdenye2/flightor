@@ -5,6 +5,7 @@ import { researchTripDestinations, researchStatusCounts, researchTravelWindow } 
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
 import { canonicalResolvedLocation } from './resolved-locations.js'
 import { workspaceScope } from './workspace-scope.js'
+import type { TripContext } from '../../trips/types.js'
 
 const artifactReferenceSchema = z.object({
   id: z.string().uuid(),
@@ -39,11 +40,21 @@ export const researchDestinationInputSchema = z.object({
 export async function executeResearchBrief(
   input: ResearchBrief,
   context: ToolExecutionContext,
-  signal: AbortSignal
+  signal: AbortSignal,
+  snapshot?: TripContext
 ): Promise<z.infer<typeof researchToolOutputSchema>> {
   const brief = researchBriefSchema.parse(input)
+  const trip = snapshot ?? await context.trips.get(context.tripId)
+  if (!trip) throw new Error('Trip context was not found')
+  const scope = await workspaceScope(context, signal, trip)
   brief.destinations = brief.destinations.map(destination => canonicalResolvedLocation(context, destination))
-  const { record: stored, payload: artifact } = await researchTripDestinations(brief, context.research, workspaceScope(context, signal))
+  // Both research tools inherit only omitted dates, from the snapshot accepted by this workspace.
+  // Explicit windows remain research intent; completion separately checks their coverage.
+  if (brief.travelWindow === undefined) {
+    const travelWindow = researchTravelWindow(trip)
+    if (travelWindow) brief.travelWindow = travelWindow
+  }
+  const { record: stored, payload: artifact } = await researchTripDestinations(brief, context.research, scope)
   return {
     artifact: { id: stored.id, type: 'research', schemaVersion: 2 },
     summary: {
@@ -57,7 +68,7 @@ export async function executeResearchBrief(
 
 export const webResearchTool: AgentTool<ResearchBrief, z.infer<typeof researchToolOutputSchema>> = {
   name: 'web_research',
-  description: 'Compatibility research tool for a complete minimal ResearchBrief. Produces a bounded Research Artifact and never changes Trip or Memory.',
+  description: 'Compatibility research tool for a complete minimal ResearchBrief. An omitted travelWindow inherits the accepted Trip snapshot window; an explicit window keeps its requested scope. Produces a bounded Research Artifact and never changes Trip or Memory.',
   inputSchema: researchBriefSchema,
   outputSchema: researchToolOutputSchema,
   costClass: 'paid',
@@ -86,15 +97,13 @@ export const researchDestinationTool: AgentTool<
   async execute(input, context, signal) {
     const trip = await context.trips.get(context.tripId)
     if (!trip) throw new Error('Trip context was not found')
-    const travelWindow = researchTravelWindow(trip)
     const brief = researchBriefSchema.parse({
       destinations: [canonicalResolvedLocation(context, input.destination)],
-      ...(travelWindow ? { travelWindow } : {}),
       interests: trip.interests,
       questions: input.questions,
       researchTypes: input.researchTypes,
       maxResults: input.maxResults
     })
-    return executeResearchBrief(brief, context, signal)
+    return executeResearchBrief(brief, context, signal, trip)
   }
 }

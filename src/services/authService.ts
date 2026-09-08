@@ -2,6 +2,7 @@
 // Mock 模式：本地游客登录（稳定 uid，离线可用）；真实模式：Taro.login 拿 code → cloud/login 换 openid
 import Taro from '@tarojs/taro'
 import { request, USE_MOCK } from '../utils/request'
+import { assertAuthSession, beginAuthSession, clearAuthSession, commitAuthTokens } from '../utils/authSession'
 
 export interface UserProfile {
   uid: string
@@ -11,13 +12,7 @@ export interface UserProfile {
 
 /** Remove bearer credentials without touching unrelated product storage. */
 export function clearAuthTokens(): void {
-  for (const key of ['access_token', 'refresh_token']) {
-    try {
-      Taro.removeStorageSync(key)
-    } catch {
-      // A missing storage adapter must not prevent the in-memory logout.
-    }
-  }
+  clearAuthSession()
 }
 
 interface LoginResponse {
@@ -35,9 +30,11 @@ export async function wxLogin(
   profile?: { nickname?: string; avatarUrl?: string },
   options: { persistTokens?: boolean } = {}
 ): Promise<UserProfile> {
+  const revision = options.persistTokens !== false ? beginAuthSession() : undefined
   if (USE_MOCK) {
     // 游客模式：本地生成稳定 uid，模拟 300ms 网络延迟
     await new Promise(r => setTimeout(r, 300))
+    if (revision !== undefined) assertAuthSession(revision)
     let uid = Taro.getStorageSync('mock_uid') as string
     if (!uid) {
       uid = `guest-${Date.now().toString(36)}`
@@ -51,6 +48,7 @@ export async function wxLogin(
   }
 
   const { code } = await Taro.login()
+  if (revision !== undefined) assertAuthSession(revision)
   const res = await request<LoginResponse>({
     url: '/v1/auth/wechat',
     method: 'POST',
@@ -61,11 +59,14 @@ export async function wxLogin(
     },
     showLoading: true,
     retry: 0,
+    auth: 'none',
     timeout: 15000
   })
+  if (!res.user?.id || typeof res.accessToken !== 'string' || !res.accessToken || typeof res.refreshToken !== 'string' || !res.refreshToken) {
+    throw new Error('INVALID_LOGIN_RESPONSE')
+  }
   if (options.persistTokens !== false) {
-    Taro.setStorageSync('access_token', res.accessToken)
-    Taro.setStorageSync('refresh_token', res.refreshToken)
+    commitAuthTokens(res, revision!)
   }
   return { uid: res.user.id, nickname: res.user.nickname, avatarUrl: res.user.avatarUrl }
 }

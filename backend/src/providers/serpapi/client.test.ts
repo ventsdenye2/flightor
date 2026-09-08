@@ -100,6 +100,15 @@ describe('SerpApi bounded organic search', () => {
     }
   })
 
+  it('treats the documented successful empty organic response as zero results', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({
+      search_metadata: { status: 'Success' }, search_information: { organic_results_state: 'Fully empty' },
+      error: "Google hasn't returned any results for this query."
+    }) })))
+    try { await expect(new SerpApiClient(config).searchOrganic({ query: 'empty fixture' })).resolves.toEqual([]) }
+    finally { vi.unstubAllGlobals() }
+  })
+
   it('rejects oversized limits, credentials and missing keys before provider use', async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)

@@ -61,7 +61,7 @@ describe('destination Agent tools', () => {
     expect(result.summary.topCandidates.length).toBeLessThanOrEqual(5)
     expect(result.summary.candidateCount).toBeGreaterThan(0)
     const stored = await context.artifacts.get(result.artifact.id)
-    expect(stored).toMatchObject({ tripId: 'trip-1', type: 'destination_set', schemaVersion: 1 })
+    expect(stored).toMatchObject({ tripId: 'trip-1', type: 'destination_set', schemaVersion: 1, tripContextVersion: trip.version })
     const payload = destinationSetPayloadSchema.parse(stored?.payload)
     expect(payload.kind).toBe('destination_candidates')
     expect(payload.candidates.length).toBe(result.summary.candidateCount)
@@ -127,5 +127,27 @@ describe('destination Agent tools', () => {
 
     const missing = await context.artifacts.get('00000000-0000-7000-8000-000000000000')
     expect(missing).toBeUndefined()
+  })
+
+  it('rejects a candidate set from the previous Trip version before day planning', async () => {
+    const context = makeContext({ ...emptyTripContext('trip-1'), travelDays: 5 })
+    const candidates = await searchDestinationsTool.execute(searchDestinationsInputSchema.parse({}), context, new AbortController().signal)
+    await context.trips.update('trip-1', { travelDays: 10 }, 0)
+    await expect(planTripRouteTool.execute(planTripRouteInputSchema.parse({ candidateArtifactId: candidates.artifact.id }), context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'ARTIFACT_CONTEXT_VERSION_MISMATCH' })
+    expect((await context.artifacts.listForTrip('trip-1')).map(record => record.type)).toEqual(['destination_set'])
+  })
+
+  it('does not save discovery results when the Trip changes during the service call', async () => {
+    const context = makeContext()
+    const discover = context.destinationDiscovery.discover.bind(context.destinationDiscovery)
+    context.destinationDiscovery.discover = async (...args) => {
+      const result = await discover(...args)
+      await context.trips.update('trip-1', { travelDays: 10 }, 0)
+      return result
+    }
+    await expect(searchDestinationsTool.execute(searchDestinationsInputSchema.parse({}), context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+    expect(await context.artifacts.listForTrip('trip-1')).toEqual([])
   })
 })

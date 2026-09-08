@@ -59,7 +59,7 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
           {wait !== undefined && wait >= 0 && <Text className='route-workspace__stopover'>在 {e.from.name} 衔接 {durationLabel(wait)} · 入境与活动安排需另行确认</Text>}
           <View className={`route-workspace__leg ${edge?.id === e.id ? 'is-active' : ''}`} onClick={() => setEdgeId(e.id)}>
             <Text className='route-workspace__heading'>{e.from.iata ?? e.from.name} → {e.to.iata ?? e.to.name}</Text>
-            <Text>{e.departureAt ?? '出发时间未提供'}</Text><Text>{e.arrivalAt ?? '抵达时间未提供'}</Text>
+            <Text>出发 {e.departureDisplay}</Text><Text>抵达 {e.arrivalDisplay}</Text>
             <Text>{durationLabel(e.durationMinutes)} · {fareLabel(e.fare)}</Text>
             {e.transferType === 'self' && <Text className='route-workspace__warning'>自行中转：需自行确认行李重托运与衔接时间</Text>}
             {e.airportChange && <Text className='route-workspace__warning'>涉及更换机场，请预留地面交通时间</Text>}
@@ -72,7 +72,7 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
       {edge.segments.map((s, i) => <View key={`${edge.id}-${i}`} className='route-workspace__flight'>
         <Text>{s.flightNumber ?? '航班号未提供'} · {s.marketingCarrier ?? '航司未提供'}</Text>
         <Text>{s.from.iata ?? s.from.name} → {s.to.iata ?? s.to.name}</Text>
-        <Text>{s.departureAt ?? '时间待确认'} → {s.arrivalAt ?? '时间待确认'}</Text>
+        <Text>出发 {s.departureDisplay}</Text><Text>抵达 {s.arrivalDisplay}</Text>
       </View>)}
       <Text className='route-workspace__price'>{fareLabel(edge.fare)}</Text>
       {edge.checkedAt && <Text className='route-workspace__muted'>资料核验于 {edge.checkedAt}</Text>}

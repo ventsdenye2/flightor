@@ -21,6 +21,26 @@ function result(url: string, title = 'Result'): ResearchSearchResult {
 }
 
 describe('ProductionResearchAgent', () => {
+  it('covers later questions within the same bounded search budget and concurrency', async () => {
+    let active = 0
+    let peak = 0
+    const questions: string[] = []
+    const provider: ResearchSearchProvider = { name: 'mock', search: async input => {
+      active += 1
+      peak = Math.max(peak, active)
+      questions.push(input.questions[0]!)
+      await Promise.resolve()
+      active -= 1
+      return result(`https://example.com/${input.questions[0]}`)
+    } }
+    const agent = new ProductionResearchAgent({ searchProvider: provider })
+    const artifact = await agent.research({ ...brief, questions: ['museums', 'food', 'parks', 'accessibility'] }, { requestId: 'r' })
+    expect(questions).toEqual(['museums', 'food', 'parks', 'accessibility'])
+    expect(peak).toBe(2)
+    expect(artifact.queryCount).toBe(4)
+    expect(artifact.warnings).not.toContain('research_questions_partially_sampled')
+  })
+
   it('separates topic questions while preserving a bounded deterministic evidence pool', async () => {
     const provider: ResearchSearchProvider = { name: 'mock', search: vi.fn(async input => result(`https://example.com/${input.questions[0]}`)) }
     const agent = new ProductionResearchAgent({ searchProvider: provider, maxSearchCalls: 2 })

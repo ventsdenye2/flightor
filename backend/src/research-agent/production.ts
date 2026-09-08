@@ -24,8 +24,14 @@ import {
   classifyResearchSourceAuthority,
   verifyResearchFinding
 } from './verification.js'
+import {
+  MAX_RESEARCH_SEARCH_TASKS,
+  validateResearchQueryPlan,
+  type ResearchQueryPlanner,
+  type ResearchQueryTask
+} from './query-planner.js'
 
-const MAX_SEARCH_CALLS = 8
+const MAX_SEARCH_CALLS = MAX_RESEARCH_SEARCH_TASKS
 const MAX_SOURCES = 50
 const DEFAULT_MAX_RESULTS = 10
 const MAX_CONTEXT_PREFERENCES = 32
@@ -34,6 +40,7 @@ const MAX_CONTEXT_PREFERENCE_LENGTH = 160
 export interface ProductionResearchAgentOptions {
   searchProvider: ResearchSearchProvider
   synthesisModel?: ResearchSynthesisModel
+  queryPlanner?: ResearchQueryPlanner
   /** Injectable clock for deterministic artifact/verification tests. */
   now?: () => Date
   maxSearchCalls?: number
@@ -129,7 +136,7 @@ function normalizeSource(value: unknown, destinationIndex: number): NormalizedSo
   return checked.success ? { ...checked.data, destinationIndex } : undefined
 }
 
-function queryInputs(brief: ResearchBrief, destinationIndex: number, preferences: readonly string[], questionIndex = 0): ResearchSearchInput {
+function queryInputs(brief: ResearchBrief, destinationIndex: number, preferences: readonly string[], questionIndex = 0, searchTerms?: string): ResearchSearchInput {
   const destination = brief.destinations[destinationIndex]
   if (!destination) throw new AppError('INVALID_RESEARCH_BRIEF', 'Research destination is missing', 400)
   const interests = [...brief.interests, ...preferences].slice(0, 32)
@@ -138,6 +145,7 @@ function queryInputs(brief: ResearchBrief, destinationIndex: number, preferences
     ...(brief.travelWindow ? { travelWindow: brief.travelWindow } : {}),
     interests,
     questions: [brief.questions[questionIndex]!],
+    ...(searchTerms ? { searchTerms } : {}),
     researchTypes: brief.researchTypes,
     maxResults: Math.min(20, Math.max(10, brief.maxResults ?? DEFAULT_MAX_RESULTS))
   })
@@ -245,6 +253,7 @@ function buildSynthesizedFindings(
 export class ProductionResearchAgent implements ResearchAgent {
   private readonly searchProvider: ResearchSearchProvider
   private readonly synthesisModel: ResearchSynthesisModel | undefined
+  private readonly queryPlanner: ResearchQueryPlanner | undefined
   private readonly clock: (() => Date) | undefined
   private readonly searchCallLimit: number
   private readonly sourceLimit: number
@@ -262,6 +271,7 @@ export class ProductionResearchAgent implements ResearchAgent {
     if (!isProvider(options.searchProvider)) throw new AppError('INVALID_RESEARCH_PROVIDER', 'Research search provider is invalid', 400)
     this.searchProvider = options.searchProvider
     this.synthesisModel = isSynthesis(options.synthesisModel) ? options.synthesisModel : undefined
+    this.queryPlanner = options.queryPlanner
     this.clock = options.now
     this.searchCallLimit = Math.min(MAX_SEARCH_CALLS, Math.max(1, Math.floor(options.maxSearchCalls ?? MAX_SEARCH_CALLS)))
     this.sourceLimit = Math.min(MAX_SOURCES, Math.max(1, Math.floor(options.maxSources ?? MAX_SOURCES)))
@@ -276,10 +286,10 @@ export class ProductionResearchAgent implements ResearchAgent {
     const sources: NormalizedSource[] = []
     const seenUrls = new Set<string>()
     const preferences = context.preferenceSummary ?? []
-    // Cover destinations first, then a second distinct question if budget allows.
-    // Combining museums, food and exact dates into one query proved too narrow.
-    const searches: Array<{ destinationIndex: number; questionIndex: number }> = []
-    for (let questionIndex = 0; questionIndex < Math.min(2, brief.questions.length); questionIndex += 1) {
+    // Cover destinations round-robin for every requested question, bounded by
+    // the search budget. Later questions must not be silently excluded.
+    const searches: ResearchQueryTask[] = []
+    for (let questionIndex = 0; questionIndex < brief.questions.length && searches.length < this.searchCallLimit; questionIndex += 1) {
       for (let destinationIndex = 0; destinationIndex < brief.destinations.length && searches.length < this.searchCallLimit; destinationIndex += 1) {
         searches.push({ destinationIndex, questionIndex })
       }
@@ -289,37 +299,50 @@ export class ProductionResearchAgent implements ResearchAgent {
     if (covered < brief.destinations.length) warnings.push(`research_destinations_skipped:${brief.destinations.length - covered}`)
     if (callCount < brief.destinations.length * brief.questions.length) warnings.push('research_questions_partially_sampled')
 
+    let plannedTerms: string[] = []
+    if (this.queryPlanner) {
+      try {
+        const planInput = { brief, tasks: searches }
+        const queries = await this.queryPlanner.plan(structuredClone(planInput), { ...(context.signal ? { signal: context.signal } : {}) })
+        abortIfNeeded(context.signal)
+        plannedTerms = validateResearchQueryPlan(planInput, { queries }).map(query => query.searchTerms)
+      } catch (error) {
+        if (context.signal?.aborted) throw context.signal.reason ?? error
+        warnings.push('research_query_planning_unavailable_or_invalid')
+      }
+    }
+
     // At most two read-only provider requests in flight; consume their output in
     // planned order so source indexing remains deterministic for synthesis.
     for (let offset = 0; offset < searches.length; offset += 2) {
       abortIfNeeded(context.signal)
       const batch = searches.slice(offset, offset + 2)
-      const outcomes = await Promise.allSettled(batch.map(search => this.searchProvider.search(
-        queryInputs(brief, search.destinationIndex, preferences, search.questionIndex),
+      const outcomes = await Promise.allSettled(batch.map((search, index) => this.searchProvider.search(
+        queryInputs(brief, search.destinationIndex, preferences, search.questionIndex, plannedTerms[offset + index]),
         { ...(context.signal ? { signal: context.signal } : {}) }
       )))
       for (let index = 0; index < batch.length; index += 1) {
-      const { destinationIndex } = batch[index]!
-      try {
-        const outcome = outcomes[index]!
-        if (outcome.status === 'rejected') throw outcome.reason
-        const result = researchSearchResultSchema.parse(outcome.value)
-        abortIfNeeded(context.signal)
-        const candidates = Array.isArray(result.candidates) ? result.candidates : []
-        for (const candidate of candidates) {
-          if (sources.length >= this.sourceLimit) break
-          const normalized = normalizeSource(candidate, destinationIndex)
-          if (!normalized || seenUrls.has(normalized.url)) continue
-          seenUrls.add(normalized.url)
-          sources.push(normalized)
+        const { destinationIndex } = batch[index]!
+        try {
+          const outcome = outcomes[index]!
+          if (outcome.status === 'rejected') throw outcome.reason
+          const result = researchSearchResultSchema.parse(outcome.value)
+          abortIfNeeded(context.signal)
+          const candidates = Array.isArray(result.candidates) ? result.candidates : []
+          for (const candidate of candidates) {
+            if (sources.length >= this.sourceLimit) break
+            const normalized = normalizeSource(candidate, destinationIndex)
+            if (!normalized || seenUrls.has(normalized.url)) continue
+            seenUrls.add(normalized.url)
+            sources.push(normalized)
+          }
+          for (const warning of result.warnings ?? []) {
+            if (warnings.length < 40) warnings.push(boundedWarning(warning))
+          }
+        } catch (error) {
+          if (context.signal?.aborted) throw context.signal.reason ?? error
+          warnings.push(boundedWarning(`research_provider_failed:${this.searchProvider.name}:destination_${destinationIndex}`))
         }
-        for (const warning of result.warnings ?? []) {
-          if (warnings.length < 40) warnings.push(boundedWarning(warning))
-        }
-      } catch (error) {
-        if (context.signal?.aborted) throw context.signal.reason ?? error
-        warnings.push(boundedWarning(`research_provider_failed:${this.searchProvider.name}:destination_${destinationIndex}`))
-      }
       }
     }
 

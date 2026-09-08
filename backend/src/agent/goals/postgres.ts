@@ -15,12 +15,15 @@ import {
   type CreateGoalRunInput,
   type GoalRecord,
   type GoalRunRecord,
-  type GoalRunStatus,
   type GoalRunStatusUpdate,
   type GoalStatusUpdate
 } from './types.js'
 import {
   canonicalFingerprint,
+  canGoalTransition,
+  canRunTransition,
+  goalCompletionInputSchema,
+  planGoalCompletion,
   GoalIdempotencyConflict,
   GoalRevisionConflict,
   GoalRunIdempotencyConflict,
@@ -29,7 +32,9 @@ import {
   GoalStatusConflict,
   type GoalRepository,
   type GoalRunCompatibilityQuery,
-  type GoalRunRepository
+  type GoalRunRepository,
+  type GoalCompletionInput,
+  type GoalCompletionResult
 } from './repository.js'
 
 type Db = Kysely<Database> | Transaction<Database>
@@ -175,19 +180,6 @@ function runFingerprint(input: CreateGoalRunInput): string {
     contextVersion: input.contextVersion,
     contextSnapshot: input.contextSnapshot
   })
-}
-
-function canGoalTransition(status: GoalRecord['status'], nextStatus: GoalRecord['status']): boolean {
-  if (status === nextStatus) return true
-  if (status === 'satisfied' || status === 'cancelled') return false
-  if (status === 'pending') return true
-  if (status === 'failed') return nextStatus === 'satisfied' || nextStatus === 'partial' || nextStatus === 'cancelled'
-  return nextStatus === 'satisfied' || nextStatus === 'failed' || nextStatus === 'cancelled'
-}
-
-function canRunTransition(status: GoalRunStatus, nextStatus: GoalRunStatus): boolean {
-  if (status === nextStatus) return true
-  return status === 'running'
 }
 
 function isTerminal(status: string): boolean {
@@ -404,7 +396,7 @@ export class PostgresGoalRunRepository implements GoalRunRepository {
     const patch = goalRunStatusUpdateSchema.parse(rawPatch)
     return this.db.transaction().execute(async trx => {
       const row = await selectRun(trx).where('planning_goal_runs.public_id', '=', runId)
-        .where('planning_goal_runs.user_id', '=', this.ownerId).forUpdate().executeTakeFirst() as GoalRunRow | undefined
+        .where('planning_goal_runs.user_id', '=', this.ownerId).forUpdate('planning_goal_runs').executeTakeFirst() as GoalRunRow | undefined
       if (!row) throw notFound('Goal run was not found')
       if (row.revision !== expectedRevision) throw new GoalRunRevisionConflict(expectedRevision, row.revision)
       const current = goalRunRecordSchema.shape.status.parse(row.status)
@@ -421,6 +413,36 @@ export class PostgresGoalRunRepository implements GoalRunRepository {
       const updated = await selectRun(trx).where('planning_goal_runs.public_id', '=', runId)
         .where('planning_goal_runs.user_id', '=', this.ownerId).executeTakeFirstOrThrow() as GoalRunRow
       return toRun(updated)
+    })
+  }
+
+  async commitCompletion(rawInput: GoalCompletionInput): Promise<GoalCompletionResult> {
+    const input = goalCompletionInputSchema.parse(rawInput)
+    return this.db.transaction().execute(async trx => {
+      // Match artifact/run creation lock order so completion and new writes cannot deadlock each other.
+      const trip = await trx.selectFrom('trips').innerJoin('planning_goals', 'planning_goals.trip_id', 'trips.id')
+        .select(['trips.id', 'trips.current_context_version'])
+        .where('planning_goals.public_id', '=', input.goalId).where('planning_goals.user_id', '=', this.ownerId)
+        .where('trips.user_id', '=', this.ownerId).forUpdate('trips').executeTakeFirst()
+      if (!trip) throw notFound('Trip was not found')
+      const goalRow = await selectGoal(trx).where('planning_goals.public_id', '=', input.goalId)
+        .where('planning_goals.user_id', '=', this.ownerId).where('planning_goals.trip_id', '=', trip.id)
+        .forUpdate('planning_goals').executeTakeFirst() as GoalRow | undefined
+      const runRow = await selectRun(trx).where('planning_goal_runs.public_id', '=', input.runId)
+        .where('planning_goal_runs.user_id', '=', this.ownerId).where('planning_goal_runs.trip_id', '=', trip.id)
+        .forUpdate('planning_goal_runs').executeTakeFirst() as GoalRunRow | undefined
+      if (!goalRow || !runRow) throw notFound('Goal run was not found')
+      const now = new Date()
+      const result = planGoalCompletion(toGoal(goalRow), toRun(runRow), input, now.toISOString(), trip.current_context_version)
+      if (result.goal.revision !== goalRow.revision) {
+        await trx.updateTable('planning_goals').set({ status: result.goal.status, revision: result.goal.revision,
+          updated_at: now, completed_at: isTerminal(result.goal.status) ? now : null }).where('id', '=', goalRow.id).execute()
+      }
+      if (result.run.revision !== runRow.revision) {
+        await trx.updateTable('planning_goal_runs').set({ status: result.run.status, revision: result.run.revision,
+          updated_at: now, completed_at: isTerminal(result.run.status) ? now : null }).where('id', '=', runRow.id).execute()
+      }
+      return result
     })
   }
 }

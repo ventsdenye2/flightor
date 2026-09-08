@@ -9,6 +9,7 @@ import { toDateString } from '../utils/format'
 import { sortByRecommendation } from '../utils/flightRecommendation'
 import { artifactService } from './artifactService'
 import type { CloudArtifactRef } from './conversationService'
+import { airportTimeDisplay, type AirportTimePresentation } from './airportTime'
 
 // 与云端共用同一份可达性规则；Mock 不再凭空假设任意两机场之间有直飞。
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -412,6 +413,8 @@ interface DomainFareSegment {
   destination: string
   departsAt: string
   arrivesAt: string
+  departureDisplay: string
+  arrivalDisplay: string
   durationMinutes: number
   aircraft?: string
 }
@@ -443,7 +446,7 @@ function isTimestamp(value: unknown): value is string {
   return isBoundedText(value, 64) && Number.isFinite(Date.parse(value))
 }
 
-function parseDomainSegment(value: unknown): DomainFareSegment {
+function parseDomainSegment(value: unknown, presentation?: AirportTimePresentation, pointer = ''): DomainFareSegment {
   if (!isRecord(value)
     || !isBoundedText(value.flightNumber, 32, true)
     || !isBoundedText(value.airline, 160, true)
@@ -463,32 +466,34 @@ function parseDomainSegment(value: unknown): DomainFareSegment {
     destination: value.destination,
     departsAt: value.departsAt,
     arrivesAt: value.arrivesAt,
+    departureDisplay: airportTimeDisplay(value.departsAt, presentation, `${pointer}/departsAt`),
+    arrivalDisplay: airportTimeDisplay(value.arrivesAt, presentation, `${pointer}/arrivesAt`),
     durationMinutes: Number(value.durationMinutes),
     ...(typeof value.aircraft === 'string' ? { aircraft: value.aircraft } : {})
   }
 }
 
-function rawDomainOffers(payload: Record<string, unknown>): unknown[] {
+function rawDomainOffers(payload: Record<string, unknown>): Array<{ value: unknown; pointer: string }> {
   if (Array.isArray(payload.offers)) {
     if (payload.offers.length > 100) throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
-    return payload.offers
+    return payload.offers.map((value, index) => ({ value, pointer: `/offers/${index}` }))
   }
   if (!Array.isArray(payload.results) || payload.results.length > 31) {
     throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
   }
-  return payload.results.flatMap(result => {
+  return payload.results.flatMap((result, resultIndex) => {
     if (!isRecord(result) || !Array.isArray(result.offers) || result.offers.length > 100) {
       throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
     }
-    return result.offers
+    return result.offers.map((value, index) => ({ value, pointer: `/results/${resultIndex}/offers/${index}` }))
   })
 }
 
-function domainOffers(payload: unknown): DomainFareOffer[] {
+function domainOffers(payload: unknown, presentation?: AirportTimePresentation): DomainFareOffer[] {
   if (!isRecord(payload) || payload.type !== 'flight_search' || !isBoundedText(payload.id, 160)) {
     throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
   }
-  return rawDomainOffers(payload).map(value => {
+  return rawDomainOffers(payload).map(({ value, pointer }) => {
     if (!isRecord(value)
       || !isBoundedText(value.id, 240)
       || !Array.isArray(value.segments)
@@ -505,7 +510,7 @@ function domainOffers(payload: unknown): DomainFareOffer[] {
       || !value.airlines.every(airline => isBoundedText(airline, 160))) {
       throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
     }
-    const segments = value.segments.map(parseDomainSegment)
+    const segments = value.segments.map((segment, index) => parseDomainSegment(segment, presentation, `${pointer}/segments/${index}`))
     const transferType = value.transferType
     if (transferType !== 'direct' && transferType !== 'airline' && transferType !== 'self') {
       throw new Error('INVALID_FLIGHT_SEARCH_ARTIFACT')
@@ -531,6 +536,8 @@ function toFlightOption(offer: DomainFareOffer): FlightOption {
     destination: segment.destination,
     departTime: segment.departsAt,
     arriveTime: segment.arrivesAt,
+    departTimeDisplay: segment.departureDisplay,
+    arriveTimeDisplay: segment.arrivalDisplay,
     duration: segment.durationMinutes,
     ...(segment.aircraft ? { aircraft: segment.aircraft } : {})
   }))
@@ -557,8 +564,8 @@ function toFlightOption(offer: DomainFareOffer): FlightOption {
   }
 }
 
-export function responseFromFlightSearchArtifact(payload: unknown, ref: CloudArtifactRef, cacheTime: string): SearchResponse {
-  const offers = domainOffers(payload).map(toFlightOption)
+export function responseFromFlightSearchArtifact(payload: unknown, ref: CloudArtifactRef, cacheTime: string, presentation?: AirportTimePresentation): SearchResponse {
+  const offers = domainOffers(payload, presentation).map(toFlightOption)
   return {
     direct: offers.filter(offer => offer.transferType === 'direct'),
     selfTransfer: offers.filter(offer => offer.transferType === 'self'),
@@ -644,7 +651,7 @@ export async function searchFlights(params: SearchParams, session?: CloudFlightS
     ownerId: session.ownerId,
     sessionId: session.sessionId
   })
-  return responseFromFlightSearchArtifact(artifact.payload, created.artifactRef, artifact.updatedAt)
+  return responseFromFlightSearchArtifact(artifact.payload, created.artifactRef, artifact.updatedAt, artifact.presentation)
 }
 
 export function makeFlightSearchIdempotencyKey(): string {

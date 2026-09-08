@@ -1,9 +1,11 @@
 import { z } from 'zod'
-import { fareSearchResultSchema } from '../../fares/types.js'
 import { fareAirportSelectorSchema, resolveFareAirportPair } from '../../fares/airport-resolver.js'
 import type { FlexibleFareSearchInput } from '../../fares/providers/provider.js'
-import { executeFlexibleFlightSearch } from '../../fares/search-service.js'
+import { executeFlexibleFlightSearch, flexibleFlightSearchArtifactSchema } from '../../fares/search-service.js'
 import type { AgentTool } from '../runtime/registry.js'
+import { workspaceScope } from './workspace-scope.js'
+
+export { flexibleFlightSearchArtifactSchema } from '../../fares/search-service.js'
 
 export const searchFlexibleFlightsInputSchema = z.object({
   origin: fareAirportSelectorSchema,
@@ -22,24 +24,6 @@ export const searchFlexibleFlightsInputSchema = z.object({
   if (days > 30) context.addIssue({ code: 'custom', message: 'Departure window must be at most 31 calendar days', path: ['departureDateTo'] })
   if (input.returnDate && input.returnDate < input.departureDateTo) context.addIssue({ code: 'custom', message: 'Return date must not precede the departure window', path: ['returnDate'] })
 })
-
-export const flexibleFlightSearchArtifactSchema = z.object({
-  id: z.string().uuid(),
-  type: z.literal('flight_search'),
-  window: z.object({
-    origin: z.string().regex(/^[A-Z]{3}$/),
-    destination: z.string().regex(/^[A-Z]{3}$/),
-    departureDateFrom: z.iso.date(),
-    departureDateTo: z.iso.date(),
-    returnDate: z.iso.date().optional(),
-    currency: z.enum(['CNY', 'USD', 'EUR']),
-    travelClass: z.number().int().min(1).max(4)
-  }).strict(),
-  results: z.array(fareSearchResultSchema).max(31),
-  scannedDates: z.array(z.iso.date()).max(31),
-  successfulDates: z.array(z.iso.date()).max(31),
-  failedDates: z.array(z.iso.date()).max(31)
-}).strict()
 
 export const searchFlexibleFlightsOutputSchema = z.object({
   artifact: z.object({ id: z.string().uuid(), type: z.literal('flight_search'), schemaVersion: z.literal(2) }).strict(),
@@ -61,18 +45,14 @@ export const searchFlexibleFlightsTool: AgentTool<z.infer<typeof searchFlexibleF
   outputSchema: searchFlexibleFlightsOutputSchema,
   costClass: 'paid', costUnits: 4, sideEffect: 'state', parallelSafe: false, timeoutMs: 35_000, provider: 'fare_provider',
   async execute(input, context, signal) {
+    const scope = await workspaceScope(context, signal)
     const airports = await resolveFareAirportPair(context.aviation, {
       origin: input.origin,
       destination: input.destination
     }, { ...(context.resolvedLocations ? { trustedLocations: context.resolvedLocations.values() } : {}), signal })
     const query: FlexibleFareSearchInput = { origin: airports.origin.iata, destination: airports.destination.iata, departureDateFrom: input.departureDateFrom, departureDateTo: input.departureDateTo, ...(input.returnDate ? { returnDate: input.returnDate } : {}), currency: input.currency, travelClass: input.travelClass }
     const { record: stored, payload: rawArtifact } = await executeFlexibleFlightSearch(query, {
-      fares: context.fares, artifacts: context.artifacts,
-      tripId: context.tripId, conversationId: context.conversationId,
-      ...(context.activeGoalId ? { goalId: context.activeGoalId } : {}),
-      ...(context.activeGoalRunId ? { runId: context.activeGoalRunId } : {}),
-      ...(context.activeGoalContextVersion === undefined ? {} : { tripContextVersion: context.activeGoalContextVersion }),
-      signal, ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
+      ...scope, fares: context.fares
     })
     const artifact = flexibleFlightSearchArtifactSchema.parse(rawArtifact)
     const { results, scannedDates, successfulDates, failedDates } = artifact

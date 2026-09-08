@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryTripContextRepository, TripContextVersionConflict } from './repository.js'
-import { emptyTripContext } from './types.js'
+import { emptyTripContext, tripContextPatchSchema, tripContextSchema } from './types.js'
 
 describe('InMemoryTripContextRepository', () => {
   it('applies patches immutably and increments the version', async () => {
@@ -18,5 +18,25 @@ describe('InMemoryTripContextRepository', () => {
     await repo.update('trip-1', { notes: ['first'] }, 0)
     await expect(repo.update('trip-1', { notes: ['stale'] }, 0)).rejects.toBeInstanceOf(TripContextVersionConflict)
     await expect(repo.update('missing', { notes: ['x'] })).rejects.toThrow('TRIP_CONTEXT_NOT_FOUND')
+  })
+
+  it('keeps patch fields absent while full snapshots retain backward-compatible defaults', () => {
+    const { requiredGroundLegs: _omitted, ...legacySnapshot } = emptyTripContext('trip-1')
+    expect(tripContextSchema.parse(legacySnapshot).requiredGroundLegs).toEqual([])
+    expect(tripContextPatchSchema.parse({})).toEqual({})
+    expect(tripContextPatchSchema.parse({ notes: ['change only notes'] })).toEqual({ notes: ['change only notes'] })
+  })
+
+  it('preserves ground legs through a parsed sparse patch and clears only on an explicit array', async () => {
+    const groundLegs = [{
+      from: { id: 'city-a', type: 'city' as const, name: 'City A', countryCode: 'JP', cityCode: 'TYO' },
+      to: { id: 'city-b', type: 'city' as const, name: 'City B', countryCode: 'JP', cityCode: 'OSA' },
+      mode: 'rail' as const
+    }]
+    const repo = new InMemoryTripContextRepository([{ ...emptyTripContext('trip-1'), requiredGroundLegs: groundLegs }])
+    const updated = await repo.update('trip-1', tripContextPatchSchema.parse({ notes: ['new notes'] }), 0)
+    expect(updated).toMatchObject({ requiredGroundLegs: groundLegs, notes: ['new notes'], version: 1 })
+    const cleared = await repo.update('trip-1', tripContextPatchSchema.parse({ requiredGroundLegs: [] }), 1)
+    expect(cleared.requiredGroundLegs).toEqual([])
   })
 })
