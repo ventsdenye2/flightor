@@ -2,7 +2,10 @@ import { sql, type Kysely } from 'kysely'
 
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql.raw(`
-    create extension if not exists pg_trgm;
+    -- Keep the extension in a stable shared schema. Tests and tenant-like
+    -- schemas deliberately exclude public tables from their search path, but
+    -- may still reference this schema-qualified operator class safely.
+    create extension if not exists pg_trgm with schema public;
 
     create table countries (
       code char(2) primary key,
@@ -17,8 +20,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       constraint countries_code_upper_chk check (code = upper(code))
     );
     create index countries_popular_idx on countries (popularity_rank) where is_popular and active;
-    create index countries_name_en_trgm_idx on countries using gin (name_en gin_trgm_ops);
-    create index countries_name_zh_trgm_idx on countries using gin (name_zh gin_trgm_ops);
+    create index countries_name_en_trgm_idx on countries using gin (name_en public.gin_trgm_ops);
+    create index countries_name_zh_trgm_idx on countries using gin (name_zh public.gin_trgm_ops);
 
     create table cities (
       id bigint generated always as identity primary key,
@@ -37,8 +40,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     );
     create unique index cities_iata_code_uidx on cities (iata_code) where iata_code is not null;
     create index cities_country_code_idx on cities (country_code);
-    create index cities_name_en_trgm_idx on cities using gin (name_en gin_trgm_ops);
-    create index cities_name_zh_trgm_idx on cities using gin (name_zh gin_trgm_ops);
+    create index cities_name_en_trgm_idx on cities using gin (name_en public.gin_trgm_ops);
+    create index cities_name_zh_trgm_idx on cities using gin (name_zh public.gin_trgm_ops);
 
     create table airports (
       id bigint generated always as identity primary key,
@@ -63,8 +66,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     create unique index airports_icao_code_uidx on airports (icao_code) where icao_code is not null;
     create index airports_city_id_idx on airports (city_id);
     create index airports_country_code_active_idx on airports (country_code, active);
-    create index airports_name_en_trgm_idx on airports using gin (name_en gin_trgm_ops);
-    create index airports_name_zh_trgm_idx on airports using gin (name_zh gin_trgm_ops);
+    create index airports_name_en_trgm_idx on airports using gin (name_en public.gin_trgm_ops);
+    create index airports_name_zh_trgm_idx on airports using gin (name_zh public.gin_trgm_ops);
 
     create table airport_aliases (
       id bigint generated always as identity primary key,
@@ -75,7 +78,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       unique (airport_id, locale, alias_normalized)
     );
     create index airport_aliases_airport_id_idx on airport_aliases (airport_id);
-    create index airport_aliases_normalized_trgm_idx on airport_aliases using gin (alias_normalized gin_trgm_ops);
+    create index airport_aliases_normalized_trgm_idx on airport_aliases using gin (alias_normalized public.gin_trgm_ops);
 
     create table airlines (
       id bigint generated always as identity primary key,

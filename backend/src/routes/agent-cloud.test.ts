@@ -39,6 +39,7 @@ describe('authenticated cloud Agent route', () => {
       override async resolveLocation(input: ResolveLocationInput, _options?: ProviderCallOptions) {
         return { matches: [input.query === 'Tokyo' ? destination : origin], verification: { status: 'verified' as const, checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock' }] } }
       }
+      override async getAirport(input: { iata: string }) { return input.iata === 'NRT' ? destination : input.iata === 'PVG' ? origin : undefined }
     }
     const fares = new MockFareProvider({ search: {
       query: { origin: 'PVG', destination: 'NRT', departureDate: '2026-10-01', currency: 'CNY', travelClass: 1 }, offers: [],
@@ -52,7 +53,7 @@ describe('authenticated cloud Agent route', () => {
       })
       .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [
         call('u', 'update_trip_context', { expectedVersion: 0, patch: { origin, destinationIntent: { mode: 'explicit', required: [destination], preferred: [], excluded: [] } } }),
-        call('f', 'search_flights', { origin, destination, departureDate: '2026-10-01' })
+        call('f', 'search_flights', { origin: 'PVG', destination: 'NRT', departureDate: '2026-10-01' })
       ] } })
       .mockResolvedValueOnce({ message: { role: 'assistant', content: '完成。' } }) }
     const service = new CloudPlannerService({

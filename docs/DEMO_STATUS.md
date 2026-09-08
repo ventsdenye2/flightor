@@ -2,6 +2,14 @@
 
 更新时间：2026-09-07 22:59（北京时间），真实链路验收中。
 
+2026-09-08 架构更新：Planner 已接入持久化 Goal/Goal run、服务端完成验证、Artifact
+lineage，以及共享的按钮/明确对话路线启动服务；内部路线引擎工具仍不暴露给模型。本页下方
+“9 个迁移已应用”和在线链路结果是 2026-09-07 的演示环境快照；新增迁移 010/011 已通过
+隔离 PostgreSQL 集成测试，但尚未把“演示 API/Worker 已迁移并重启”记为当前事实。
+本次代码 gate：后端 71 个文件、352 项非数据库测试通过，4 个数据库套件 17 项顺序通过，
+后端 check/build 与根目录完整回归通过；这些结果仍不等于新的 OpenRouter/SerpApi、Worker
+或微信真机 E2E。
+
 22:07 用户要求改用 DeepSeek V4 Flash：已核验 OpenRouter 在线目录，选定 `deepseek/deepseek-v4-flash-0731`，更新默认值、示例及已忽略的 `.env` / `.env.demo` 三个模型字段（OPENROUTER_MODEL / PLANNER_MODEL / RESEARCH_MODEL），API 已重启，正在验证 Flash 完整攻略链路。旧 Pro 的计时和结果仅作历史对比。
 
 目标：微信端登录 → 多轮对话补齐条件 → 用户明确点击生成 → 实际 Worker/供应商生成路线 → 查看与保存 → 回到对话继续追问。遵守架构的明确生成动作；不以假登录、假航班或 Mock 数据作为真实链路验收。

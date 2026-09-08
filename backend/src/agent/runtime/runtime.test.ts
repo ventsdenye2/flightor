@@ -48,23 +48,19 @@ describe('AgentRuntime and ToolRegistry', () => {
     expect(execute).not.toHaveBeenCalled()
   })
 
-  it('repairs a premature promise once and never completes a missing required write', async () => {
+  it('allows ordinary conversation to complete without a fixed tool requirement', async () => {
     const registry = new ToolRegistry().register(tool('write', async () => ({ ok: true })))
     const promise = { message: { role: 'assistant' as const, content: 'I will save it.' } }
     const complete = vi.fn().mockResolvedValueOnce(promise)
-      .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('w', 'write')] } })
-      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Saved.' } })
-    const result = await new AgentRuntime({ complete }, registry).run({ messages: [{ role: 'user', content: 'save' }], context: ctx, requiredSuccessfulTool: 'write' })
+    const result = await new AgentRuntime({ complete }, registry).run({ messages: [{ role: 'user', content: 'save' }], context: ctx })
     expect(result.stopReason).toBe('completed')
-    expect(result.toolCalls).toBe(1)
-    expect(complete.mock.calls[1]?.[2]).toMatchObject({ toolChoice: 'required' })
-    const stuck = vi.fn().mockResolvedValue(promise)
-    const failed = await new AgentRuntime({ complete: stuck }, registry).run({ messages: [{ role: 'user', content: 'save' }], context: ctx, requiredSuccessfulTool: 'write' })
-    expect(failed.stopReason).toBe('model_failure')
-    expect(stuck).toHaveBeenCalledTimes(2)
+    expect(result.toolCalls).toBe(0)
+    expect(complete).toHaveBeenCalledTimes(1)
+    expect(complete.mock.calls[0]?.[2]).toMatchObject({ toolChoice: 'auto' })
   })
   it('publishes the complete Phase 4B Core Tool vocabulary', () => {
     expect(createCoreToolRegistry().definitions().map(definition => definition.function.name)).toEqual([
+      'declare_goal', 'get_active_goal', 'finish_goal', 'cancel_goal', 'start_route_generation',
       'get_trip_artifacts', 'read_artifact',
       'get_trip_context', 'update_trip_context', 'resolve_location', 'search_flights',
       'search_flexible_flights', 'confirm_flight_price', 'search_connection_flights',
@@ -109,11 +105,12 @@ describe('AgentRuntime and ToolRegistry', () => {
       override async resolveLocation(input: ResolveLocationInput, _options?: ProviderCallOptions) {
         return { matches: [input.query === 'Tokyo' ? tokyo : location], verification: { status: 'verified' as const, checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock-aviation' }] } }
       }
+      override async getAirport(input: { iata: string }) { return input.iata === 'NRT' ? tokyo : input.iata === 'PVG' ? location : undefined }
     }
     const runtimeContext = { ...ctx, aviation: new QueryAviationProvider(), fares: new MockFareProvider({ search: fare }) }
     const model: AgentModelClient = { complete: vi.fn()
       .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('origin', 'resolve_location', { query: 'Shanghai', types: ['city'] }), call('destination', 'resolve_location', { query: 'Tokyo', types: ['city'] })] } })
-      .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('update', 'update_trip_context', { patch: { origin: location, destinationIntent: { mode: 'explicit', required: [tokyo], preferred: [], excluded: [] } }, expectedVersion: 0 }), call('fare', 'search_flights', { departureDate: fare.query.departureDate, currency: fare.query.currency, travelClass: fare.query.travelClass, origin: location, destination: tokyo })] } })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('update', 'update_trip_context', { patch: { origin: location, destinationIntent: { mode: 'explicit', required: [tokyo], preferred: [], excluded: [] } }, expectedVersion: 0 }), call('fare', 'search_flights', { departureDate: fare.query.departureDate, currency: fare.query.currency, travelClass: fare.query.travelClass, origin: 'PVG', destination: 'NRT' })] } })
       .mockResolvedValueOnce({ message: { role: 'assistant', content: '已找到符合条件的航班。' } }) }
     const result = await new AgentRuntime(model, registry).run({ messages: [{ role: 'user', content: '帮我找上海到东京的航班' }], context: runtimeContext })
     expect(result).toMatchObject({ reply: '已找到符合条件的航班。', stopReason: 'completed', fallback: false, toolSteps: 2, costUnits: 6 })

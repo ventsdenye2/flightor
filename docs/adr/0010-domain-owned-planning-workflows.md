@@ -1,6 +1,6 @@
 # ADR 0010 — Agent-owned planning and domain-verified completion
 
-Status: accepted for implementation, revised 2026-09-07.
+Status: accepted and implemented, revised 2026-09-08.
 
 ## Problem
 
@@ -146,8 +146,10 @@ whether authorization came from `button` or `explicit_user_message`.
   selection when the Agent needs to compare or branch.
 - Partial results remain auditable Artifacts and are reported as partial rather
   than silently promoted to complete.
-- Explicit route generation remains a separate authenticated product action;
-  the conversation Agent cannot trigger it as a side effect.
+- Explicit route generation remains a separate authenticated domain action.
+  The button and the Planner's zero-argument start tool share that service, but
+  only a persisted `button` or `explicit_user_message` authorization may queue
+  it; the Planner never receives the internal route-engine tools.
 
 ## Acceptance
 

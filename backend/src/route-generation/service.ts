@@ -1,7 +1,10 @@
 import { z } from 'zod'
 import { v7 as uuidv7 } from 'uuid'
 import { createHash } from 'node:crypto'
-import type { ArtifactRepository } from '../artifacts/repository.js'
+import type { ArtifactRecord, ArtifactRepository } from '../artifacts/repository.js'
+import type { GoalRepository, GoalRunRepository } from '../agent/goals/repository.js'
+import type { GoalAuthorizationSource, GoalRunRecord, GoalStatus, GoalWorkingSet } from '../agent/goals/types.js'
+import type { GoalVerifierRegistry } from '../agent/goals/verifier.js'
 import { locationRefsOverlap, type LocationRef, type VerificationRecord } from '../aviation/types.js'
 import type { ConnectionSearchService, FlightRoutePlanner, RouteOptimizer } from '../flight-routing/types.js'
 import { routeSetPayloadSchema, type CompleteFlightPath, type ConnectionSearchResult, type FlightRoutePlanResult, type RouteOptimizationResult } from '../flight-routing/types.js'
@@ -22,6 +25,9 @@ const routeErrorCodeSchema = z.string().regex(/^[A-Z][A-Z0-9_]{2,63}$/)
 
 export interface RouteGenerationDependencies {
   runs: RouteGenerationRunRepository
+  goals: GoalRepository
+  goalRuns: GoalRunRepository
+  goalVerifiers: GoalVerifierRegistry
   trips: TripRepository
   artifacts: ArtifactRepository
   conversations?: ConversationRepository
@@ -35,6 +41,7 @@ export interface StartRouteGenerationInput extends RouteGenerationRequest {
   ownerId: string
   tripId: string
   idempotencyKey: string
+  authorizationSource: GoalAuthorizationSource
 }
 
 export interface RouteGenerationPipelineResult {
@@ -183,6 +190,10 @@ function requestHash(context: TripContext, conversationId: string | undefined, c
   })).digest('hex')
 }
 
+function scopedIdempotencyKey(prefix: string, value: string): string {
+  return `${prefix}:${createHash('sha256').update(value).digest('hex')}`
+}
+
 export async function startRouteGenerationRun(
   dependencies: RouteGenerationDependencies,
   input: StartRouteGenerationInput
@@ -200,16 +211,65 @@ export async function startRouteGenerationRun(
     const conversation = await dependencies.conversations.get(input.conversationId)
     if (!conversation || conversation.tripId !== input.tripId) throw resourceNotFound('Conversation was not found')
   }
+  let goal: Awaited<ReturnType<GoalRepository['create']>>
+  let goalRun: Awaited<ReturnType<GoalRunRepository['create']>>
+  try {
+    goal = await dependencies.goals.create({
+      tripId: input.tripId,
+      ...(input.conversationId === undefined ? {} : { conversationId: input.conversationId }),
+      kind: 'route_generation',
+      parameters: { requestKey: idempotencyKey },
+      createdContextVersion: trip.currentContextVersion,
+      authorization: { source: input.authorizationSource, grantedAt: new Date().toISOString() },
+      idempotencyKey: scopedIdempotencyKey('route-goal', idempotencyKey)
+    })
+    goalRun = await dependencies.goalRuns.create({
+      goalId: goal.goal.id,
+      tripId: input.tripId,
+      generationId: scopedIdempotencyKey('route-generation', idempotencyKey),
+      contextVersion: trip.currentContextVersion,
+      contextSnapshot: tripContextSchema.parse(structuredClone(trip.context)),
+      idempotencyKey: scopedIdempotencyKey('route-run', idempotencyKey)
+    })
+  } catch (error) {
+    if (isAppError(error) && (error.code === 'GOAL_IDEMPOTENCY_CONFLICT' || error.code === 'GOAL_RUN_IDEMPOTENCY_CONFLICT')) {
+      throw new AppError('IDEMPOTENCY_KEY_REUSE', 'Idempotency-Key was already used for a different request', 409)
+    }
+    throw error
+  }
   const createInput: CreateRouteGenerationRunInput = {
     ownerId: input.ownerId, tripId: input.tripId,
     ...(input.conversationId === undefined ? {} : { conversationId: input.conversationId }),
+    goalId: goal.goal.id,
+    goalRunId: goalRun.run.id,
     idempotencyKey,
     requestHash: requestHash(trip.context, input.conversationId, input.expectedTripVersion ?? trip.currentContextVersion),
     contextVersion: input.expectedTripVersion ?? trip.currentContextVersion,
     contextSnapshot: tripContextSchema.parse(structuredClone(trip.context))
   }
-  const result = await dependencies.runs.createOrGet(createInput)
-  return result
+  try {
+    return await dependencies.runs.createOrGet(createInput)
+  } catch (error) {
+    // A deterministic acceptance failure must not leave an orphaned running
+    // Goal attempt. Unknown infrastructure failures keep it resumable so an
+    // idempotent retry can finish creating the route run.
+    if (isAppError(error) && [
+      'TRIP_CONTEXT_VERSION_CONFLICT',
+      'IDEMPOTENCY_KEY_REUSE',
+      'RESOURCE_NOT_FOUND',
+      'INVALID_ROUTE_GENERATION_LINEAGE'
+    ].includes(error.code)) {
+      let currentRun = await dependencies.goalRuns.get(goalRun.run.id)
+      if (currentRun?.status === 'running') {
+        currentRun = await dependencies.goalRuns.update(currentRun.id, currentRun.revision, { status: 'failed' })
+      }
+      const currentGoal = await dependencies.goals.get(goal.goal.id)
+      if (currentGoal && currentGoal.status !== 'satisfied' && currentGoal.status !== 'cancelled' && currentGoal.status !== 'failed') {
+        await dependencies.goals.update(currentGoal.id, currentGoal.revision, { status: 'failed' })
+      }
+    }
+    throw error
+  }
 }
 
 function verificationOf(value: { verification: VerificationRecord }): VerificationRecord {
@@ -251,7 +311,7 @@ function hasMissingFare(paths: readonly CompleteFlightPath[]): boolean {
   return paths.some(path => path.totalFare === undefined || path.edges.some(edge => edge.fare === undefined || edge.fareArtifactId === undefined))
 }
 
-function isCancelled(run: RouteGenerationRunRecord | undefined): boolean {
+function isCancelled(run: RouteGenerationRunRecord | undefined): run is RouteGenerationRunRecord & { status: 'cancelled' } {
   return run?.status === 'cancelled'
 }
 
@@ -263,19 +323,111 @@ function safeFailure(error: unknown): { code: string; message: string } {
   return { code: 'ROUTE_GENERATION_FAILED', message: failureMessage('ROUTE_GENERATION_FAILED') }
 }
 
+function artifactWorkingSet(run: GoalRunRecord, records: readonly ArtifactRecord[]): GoalWorkingSet {
+  const refs = records.map(record => ({
+    id: record.id,
+    type: record.type,
+    schemaVersion: record.schemaVersion,
+    observedAt: record.updatedAt
+  }))
+  return {
+    artifactRefs: [...new Map([...run.workingSet.artifactRefs, ...refs].map(ref => [ref.id, ref])).values()].slice(0, 100),
+    locationHandles: run.workingSet.locationHandles
+  }
+}
+
+async function planningRecords(
+  dependencies: RouteGenerationDependencies,
+  routeRun: RouteGenerationRunRecord
+) {
+  if (!routeRun.goalId || !routeRun.goalRunId) return undefined
+  const [goal, run] = await Promise.all([
+    dependencies.goals.get(routeRun.goalId),
+    dependencies.goalRuns.get(routeRun.goalRunId)
+  ])
+  if (!goal || !run || goal.ownerId !== routeRun.ownerId || run.ownerId !== routeRun.ownerId
+    || goal.tripId !== routeRun.tripId || run.tripId !== routeRun.tripId || run.goalId !== goal.id
+    || run.contextVersion !== routeRun.contextVersion) {
+    throw new AppError('INVALID_ROUTE_GENERATION_LINEAGE', 'Route generation Goal lineage is invalid', 500)
+  }
+  return { goal, run }
+}
+
+async function finishPlanningTerminal(
+  dependencies: RouteGenerationDependencies,
+  routeRun: RouteGenerationRunRecord,
+  status: Extract<GoalStatus, 'failed' | 'cancelled'>
+): Promise<void> {
+  const lineage = await planningRecords(dependencies, routeRun)
+  if (!lineage) return
+  let { goal, run } = lineage
+  if (run.status === 'running') run = await dependencies.goalRuns.update(run.id, run.revision, { status })
+  if (goal.status !== status && goal.status !== 'satisfied' && goal.status !== 'cancelled') {
+    goal = await dependencies.goals.update(goal.id, goal.revision, { status })
+  }
+}
+
+async function finishPlanningWithArtifacts(
+  dependencies: RouteGenerationDependencies,
+  routeRun: RouteGenerationRunRecord,
+  records: readonly ArtifactRecord[]
+): Promise<void> {
+  const lineage = await planningRecords(dependencies, routeRun)
+  if (!lineage) return
+  const currentTrip = await dependencies.trips.getTrip(routeRun.tripId)
+  const workingSet = artifactWorkingSet(lineage.run, records)
+  const runForVerification: GoalRunRecord = { ...lineage.run, workingSet }
+  const verification = await dependencies.goalVerifiers.verify(lineage.goal, {
+    ownerId: routeRun.ownerId,
+    tripId: routeRun.tripId,
+    run: runForVerification,
+    artifacts: dependencies.artifacts,
+    ...(currentTrip ? { currentTrip: currentTrip.context } : {})
+  })
+  // The route job is terminal. If its frozen context became stale while it ran,
+  // preserve the produced evidence but leave the durable Goal explicitly partial.
+  const goalStatus: GoalStatus = verification.status === 'pending' ? 'partial' : verification.status
+  const runStatus = goalStatus === 'satisfied' ? 'satisfied' : goalStatus === 'partial' ? 'partial' : 'failed'
+  if (lineage.run.status === 'running') {
+    await dependencies.goalRuns.update(lineage.run.id, lineage.run.revision, { status: runStatus, workingSet })
+  }
+  if (lineage.goal.status !== goalStatus && lineage.goal.status !== 'satisfied' && lineage.goal.status !== 'cancelled') {
+    await dependencies.goals.update(lineage.goal.id, lineage.goal.revision, { status: goalStatus })
+  }
+}
+
 async function markFailure(dependencies: RouteGenerationDependencies, runId: string, error: unknown, extraWarnings: readonly string[] = []): Promise<RouteGenerationRunRecord | undefined> {
   const current = await dependencies.runs.get(runId)
-  if (isCancelled(current)) return current
+  if (isCancelled(current)) {
+    await finishPlanningTerminal(dependencies, current, 'cancelled')
+    return current
+  }
   const failure = safeFailure(error)
-  return dependencies.runs.update(runId, {
+  const failed = await dependencies.runs.update(runId, {
     status: 'failed', progressStage: 'failed', progressPercent: 100,
     errorCode: failure.code, errorMessage: failure.message,
     warnings: dedupeWarnings([...(current?.warnings ?? []), ...extraWarnings]), finishedAt: new Date().toISOString()
   })
+  if (failed?.status === 'cancelled') await finishPlanningTerminal(dependencies, failed, 'cancelled')
+  else if (failed?.status === 'failed') await finishPlanningTerminal(dependencies, failed, 'failed')
+  return failed
+}
+
+export async function cancelRouteGenerationRun(
+  dependencies: RouteGenerationDependencies,
+  runId: string
+): Promise<RouteGenerationRunRecord | undefined> {
+  ensureRunId(runId)
+  const cancelled = await dependencies.runs.cancel(runId)
+  if (cancelled?.status === 'cancelled') await finishPlanningTerminal(dependencies, cancelled, 'cancelled')
+  return cancelled
 }
 
 async function cancelledBetweenStages(dependencies: RouteGenerationDependencies, runId: string): Promise<boolean> {
-  return isCancelled(await dependencies.runs.get(runId))
+  const current = await dependencies.runs.get(runId)
+  if (!isCancelled(current)) return false
+  await finishPlanningTerminal(dependencies, current, 'cancelled')
+  return true
 }
 
 async function assertRunActive(dependencies: RouteGenerationDependencies, runId: string): Promise<void> {
@@ -291,6 +443,7 @@ export async function executeRouteGenerationRun(
   const claimed = await dependencies.runs.claim(runId)
   if (claimed === undefined) {
     const current = await dependencies.runs.get(runId)
+    if (current?.status === 'cancelled') await finishPlanningTerminal(dependencies, current, 'cancelled')
     if (!current || current.status === 'succeeded' || current.status === 'failed' || current.status === 'cancelled') return current
     if (current.status === 'running') throw new AppError('ROUTE_GENERATION_STUCK', 'Route generation run is already being processed', 409)
     return current
@@ -356,23 +509,38 @@ export async function executeRouteGenerationRun(
     })
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
 
+    const connectionPayload = connectionArtifactPayload(connectionResult, selection)
     const connectionArtifact = await dependencies.artifacts.create({
       id: uuidv7(), tripId: claimed.tripId, ...(claimed.conversationId === undefined ? {} : { conversationId: claimed.conversationId }),
-      type: 'route_set', schemaVersion: 1, payload: connectionArtifactPayload(connectionResult, selection), verification: connectionResult.verification
+      ...(claimed.goalId === undefined ? {} : { goalId: claimed.goalId }),
+      ...(claimed.goalRunId === undefined ? {} : { runId: claimed.goalRunId }),
+      tripContextVersion: claimed.contextVersion,
+      sourceArtifactIds: connectionPayload.sourceArtifactIds,
+      type: 'route_set', schemaVersion: 1, payload: connectionPayload, verification: connectionResult.verification
     })
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
+    const pathPayload = pathArtifactPayload(pathPlan, connectionArtifact.id)
     const pathArtifact = await dependencies.artifacts.create({
       id: uuidv7(), tripId: claimed.tripId, ...(claimed.conversationId === undefined ? {} : { conversationId: claimed.conversationId }),
-      type: 'route_set', schemaVersion: 1, payload: pathArtifactPayload(pathPlan, connectionArtifact.id), verification: pathPlan.verification
+      ...(claimed.goalId === undefined ? {} : { goalId: claimed.goalId }),
+      ...(claimed.goalRunId === undefined ? {} : { runId: claimed.goalRunId }),
+      tripContextVersion: claimed.contextVersion,
+      sourceArtifactIds: pathPayload.sourceArtifactIds,
+      type: 'route_set', schemaVersion: 1, payload: pathPayload, verification: pathPlan.verification
     })
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
+    const optimizedPayload = optimizedArtifactPayload(optimization, pathArtifact.id)
     const optimizedArtifact = await dependencies.artifacts.create({
       id: uuidv7(), tripId: claimed.tripId, ...(claimed.conversationId === undefined ? {} : { conversationId: claimed.conversationId }),
-      type: 'route_set', schemaVersion: 1, payload: optimizedArtifactPayload(optimization, pathArtifact.id), verification: optimization.verification
+      ...(claimed.goalId === undefined ? {} : { goalId: claimed.goalId }),
+      ...(claimed.goalRunId === undefined ? {} : { runId: claimed.goalRunId }),
+      tripContextVersion: claimed.contextVersion,
+      sourceArtifactIds: optimizedPayload.sourceArtifactIds,
+      type: 'route_set', schemaVersion: 1, payload: optimizedPayload, verification: optimization.verification
     })
     const current = await dependencies.runs.get(runId)
     if (isCancelled(current)) return current
-    return dependencies.runs.update(runId, {
+    const completed = await dependencies.runs.update(runId, {
       status: 'succeeded', progressStage: 'completed', progressPercent: 100,
       resultArtifactId: optimizedArtifact.id,
       warnings: dedupeWarnings([
@@ -380,6 +548,12 @@ export async function executeRouteGenerationRun(
         ...(hasMissingFare(pathPlan.paths) ? ['Fare evidence is unavailable for one or more route legs; no price is fabricated.'] : [])
       ]), errorCode: null, errorMessage: null, finishedAt: new Date().toISOString()
     })
+    if (completed?.status === 'succeeded') {
+      await finishPlanningWithArtifacts(dependencies, completed, [connectionArtifact, pathArtifact, optimizedArtifact])
+    } else if (completed?.status === 'cancelled') {
+      await finishPlanningTerminal(dependencies, completed, 'cancelled')
+    }
+    return completed
   } catch (error) {
     if (error instanceof Error && error.message === 'ROUTE_GENERATION_CANCELLED') return dependencies.runs.get(runId)
     dependencies.onFailure?.(error, runId)

@@ -8,6 +8,8 @@ import { up as cloud } from '../db/migrations/006_cloud_state.js'
 import { up as routing } from '../db/migrations/007_route_generation_runs.js'
 import { up as workspace } from '../db/migrations/008_trip_workspace.js'
 import { up as discovery } from '../db/migrations/009_discovery.js'
+import { up as planning } from '../db/migrations/010_planning_goals.js'
+import { up as routeGoalLineage } from '../db/migrations/011_route_generation_goal_lineage.js'
 import { PostgresUserIdentityRepository } from '../identity/postgres.js'
 import { PostgresWorkspaceRepository } from '../workspaces/postgres.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
@@ -41,7 +43,7 @@ suite('Editorial publishing and cloud workspace PostgreSQL boundaries', () => {
     adminPool = new pg.Pool({ connectionString: databaseUrl })
     await adminPool.query(`create schema "${schema}"`)
     db = new Kysely<Database>({ dialect: new PostgresDialect({ pool: new pg.Pool({ connectionString: databaseUrl, options: `-c search_path=${schema}`, max: 8 }) }) })
-    for (const migrate of [initial, cloud, routing, workspace, discovery]) await migrate(db)
+    for (const migrate of [initial, cloud, routing, workspace, discovery, planning, routeGoalLineage]) await migrate(db)
     const identities = new PostgresUserIdentityRepository(db)
     userId = (await identities.resolveWechat({ providerSubject: `${schema}-owner`, nickname: 'Owner', avatarUrl: '' })).userId
     otherId = (await identities.resolveWechat({ providerSubject: `${schema}-other`, nickname: 'Other', avatarUrl: '' })).userId

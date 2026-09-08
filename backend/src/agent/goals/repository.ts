@@ -62,6 +62,7 @@ export class GoalRunStatusConflict extends AppError {
 export interface GoalRepository {
   create(input: CreateGoalInput): Promise<{ goal: GoalRecord; created: boolean }>
   get(goalId: string): Promise<GoalRecord | undefined>
+  listForTrip(tripId: string): Promise<GoalRecord[]>
   update(goalId: string, expectedRevision: number, patch: GoalStatusUpdate): Promise<GoalRecord>
 }
 
@@ -119,7 +120,9 @@ function goalFingerprint(input: CreateGoalInput): string {
     conversationId: input.conversationId,
     kind: input.kind,
     parameters: input.parameters,
-    authorization: input.authorization
+    // grantedAt is server-observed metadata and changes on a transport retry.
+    // The authorization source is the idempotent request fact.
+    authorizationSource: input.authorization?.source
   })
 }
 
@@ -127,7 +130,6 @@ function runFingerprint(input: CreateGoalRunInput): string {
   return canonicalFingerprint({
     goalId: input.goalId,
     tripId: input.tripId,
-    generationId: input.generationId,
     contextVersion: input.contextVersion,
     contextSnapshot: input.contextSnapshot
   })
@@ -177,7 +179,7 @@ export class InMemoryGoalRepository implements GoalRepository {
   async create(rawInput: CreateGoalInput): Promise<{ goal: GoalRecord; created: boolean }> {
     const input = createGoalInputSchema.parse(rawInput)
     const requestFingerprint = goalFingerprint(input)
-    const existing = [...this.goals.values()].find(goal => goal.ownerId === this.ownerId && goal.idempotencyKey === input.idempotencyKey)
+    const existing = [...this.goals.values()].find(goal => goal.ownerId === this.ownerId && goal.tripId === input.tripId && goal.idempotencyKey === input.idempotencyKey)
     if (existing) {
       if (existing.requestFingerprint !== requestFingerprint) throw new GoalIdempotencyConflict()
       return { goal: cloneGoal(existing), created: false }
@@ -199,6 +201,13 @@ export class InMemoryGoalRepository implements GoalRepository {
   async get(goalId: string): Promise<GoalRecord | undefined> {
     const goal = this.goals.get(goalId)
     return goal?.ownerId === this.ownerId ? cloneGoal(goal) : undefined
+  }
+
+  async listForTrip(tripId: string): Promise<GoalRecord[]> {
+    return [...this.goals.values()]
+      .filter(goal => goal.ownerId === this.ownerId && goal.tripId === tripId)
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt) || right.id.localeCompare(left.id))
+      .map(cloneGoal)
   }
 
   async update(goalId: string, expectedRevision: number, rawPatch: GoalStatusUpdate): Promise<GoalRecord> {
@@ -233,7 +242,7 @@ export class InMemoryGoalRunRepository implements GoalRunRepository {
   async create(rawInput: CreateGoalRunInput): Promise<{ run: GoalRunRecord; created: boolean }> {
     const input = createGoalRunInputSchema.parse(rawInput)
     const requestFingerprint = runFingerprint(input)
-    const existing = [...this.runs.values()].find(run => run.ownerId === this.ownerId && run.idempotencyKey === input.idempotencyKey)
+    const existing = [...this.runs.values()].find(run => run.ownerId === this.ownerId && run.goalId === input.goalId && run.idempotencyKey === input.idempotencyKey)
     if (existing) {
       if (existing.requestFingerprint !== requestFingerprint) throw new GoalRunIdempotencyConflict()
       return { run: cloneRun(existing), created: false }
@@ -241,6 +250,9 @@ export class InMemoryGoalRunRepository implements GoalRunRepository {
     const goal = await this.goals.get(input.goalId)
     if (!goal || goal.ownerId !== this.ownerId || goal.tripId !== input.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
     if (goal.status === 'cancelled' || goal.status === 'satisfied') throw new AppError('GOAL_NOT_RUNNABLE', 'Goal is not runnable', 409)
+    if ([...this.runs.values()].some(run => run.ownerId === this.ownerId && run.goalId === input.goalId && run.status === 'running')) {
+      throw new AppError('GOAL_RUN_ALREADY_RUNNING', 'Goal already has a running execution', 409)
+    }
     const now = new Date().toISOString()
     const run = goalRunRecordSchema.parse({
       id: input.id ?? uuidv7(), ownerId: this.ownerId, goalId: input.goalId,

@@ -18,6 +18,8 @@ type RunRow = {
   user_id: string
   trip_public_id: string
   conversation_public_id: string | null
+  planning_goal_public_id: string | null
+  planning_goal_run_public_id: string | null
   idempotency_key: string
   request_hash: string
   context_json: unknown
@@ -52,6 +54,8 @@ function toRecord(row: RunRow): RouteGenerationRunRecord {
     ownerId: row.user_id,
     tripId: row.trip_public_id,
     ...(row.conversation_public_id === null ? {} : { conversationId: row.conversation_public_id }),
+    ...(row.planning_goal_public_id === null ? {} : { goalId: row.planning_goal_public_id }),
+    ...(row.planning_goal_run_public_id === null ? {} : { goalRunId: row.planning_goal_run_public_id }),
     idempotencyKey: row.idempotency_key,
     requestHash: row.request_hash,
     contextSnapshot: tripContextSchema.parse(typeof row.context_json === 'string' ? JSON.parse(row.context_json) : row.context_json),
@@ -84,10 +88,14 @@ const selectRun = (db: Db) => db
   .selectFrom('route_generation_runs')
   .innerJoin('trips', 'trips.id', 'route_generation_runs.trip_id')
   .leftJoin('conversations', 'conversations.id', 'route_generation_runs.conversation_id')
+  .leftJoin('planning_goals', 'planning_goals.id', 'route_generation_runs.planning_goal_id')
+  .leftJoin('planning_goal_runs', 'planning_goal_runs.id', 'route_generation_runs.planning_goal_run_id')
   .leftJoin('artifacts', 'artifacts.id', 'route_generation_runs.result_artifact_id')
   .select([
     'route_generation_runs.public_id', 'route_generation_runs.user_id',
     'trips.public_id as trip_public_id', 'conversations.public_id as conversation_public_id',
+    'planning_goals.public_id as planning_goal_public_id',
+    'planning_goal_runs.public_id as planning_goal_run_public_id',
     'route_generation_runs.idempotency_key', 'route_generation_runs.request_hash',
     'route_generation_runs.context_json', 'route_generation_runs.context_version',
     'route_generation_runs.status', 'route_generation_runs.progress_stage',
@@ -105,6 +113,9 @@ export class PostgresRouteGenerationRunRepository implements RouteGenerationRunR
 
   async createOrGet(input: CreateRouteGenerationRunInput): Promise<{ run: RouteGenerationRunRecord; created: boolean }> {
     if (this.ownerId !== undefined && this.ownerId !== input.ownerId) throw notFound('Trip was not found')
+    if ((input.goalId === undefined) !== (input.goalRunId === undefined)) {
+      throw new AppError('INVALID_ROUTE_GENERATION_LINEAGE', 'Goal and Goal run lineage must be provided together', 400)
+    }
     return this.db.transaction().execute(async trx => {
       const trip = await trx.selectFrom('trips')
         .select(['id', 'public_id', 'current_context_version'])
@@ -123,7 +134,8 @@ export class PostgresRouteGenerationRunRepository implements RouteGenerationRunR
         .executeTakeFirst() as RunRow | undefined
       if (existing) {
         const current = toRecord(existing)
-        if (current.requestHash !== input.requestHash || current.contextVersion !== input.contextVersion || current.conversationId !== input.conversationId) {
+        if (current.requestHash !== input.requestHash || current.contextVersion !== input.contextVersion
+          || current.conversationId !== input.conversationId || current.goalId !== input.goalId || current.goalRunId !== input.goalRunId) {
           throw new AppError('IDEMPOTENCY_KEY_REUSE', 'Idempotency-Key was already used for a different request', 409)
         }
         return { run: current, created: false }
@@ -151,12 +163,35 @@ export class PostgresRouteGenerationRunRepository implements RouteGenerationRunR
           .where('trip_id', '=', trip.id)
           .executeTakeFirstOrThrow()
 
+      let planningGoalId: string | null = null
+      let planningGoalRunId: string | null = null
+      if (input.goalId !== undefined && input.goalRunId !== undefined) {
+        const goal = await trx.selectFrom('planning_goals').select('id')
+          .where('public_id', '=', input.goalId)
+          .where('user_id', '=', input.ownerId)
+          .where('trip_id', '=', trip.id)
+          .executeTakeFirst()
+        if (!goal) throw notFound('Goal was not found')
+        const goalRun = await trx.selectFrom('planning_goal_runs').select('id')
+          .where('public_id', '=', input.goalRunId)
+          .where('goal_id', '=', goal.id)
+          .where('user_id', '=', input.ownerId)
+          .where('trip_id', '=', trip.id)
+          .where('context_version', '=', input.contextVersion)
+          .executeTakeFirst()
+        if (!goalRun) throw notFound('Goal run was not found')
+        planningGoalId = goal.id
+        planningGoalRunId = goalRun.id
+      }
+
       const publicId = uuidv7()
       const inserted = await trx.insertInto('route_generation_runs').values({
         public_id: publicId,
         user_id: input.ownerId,
         trip_id: trip.id,
         conversation_id: conversationRow?.id ?? null,
+        planning_goal_id: planningGoalId,
+        planning_goal_run_id: planningGoalRunId,
         idempotency_key: input.idempotencyKey,
         request_hash: input.requestHash,
         context_version: input.contextVersion,
@@ -182,7 +217,8 @@ export class PostgresRouteGenerationRunRepository implements RouteGenerationRunR
           .executeTakeFirst() as RunRow | undefined
         if (!raced) throw new AppError('ROUTE_GENERATION_CREATE_FAILED', 'Route generation run could not be created', 500)
         const current = toRecord(raced)
-        if (current.requestHash !== input.requestHash || current.contextVersion !== input.contextVersion || current.conversationId !== input.conversationId) {
+        if (current.requestHash !== input.requestHash || current.contextVersion !== input.contextVersion
+          || current.conversationId !== input.conversationId || current.goalId !== input.goalId || current.goalRunId !== input.goalRunId) {
           throw new AppError('IDEMPOTENCY_KEY_REUSE', 'Idempotency-Key was already used for a different request', 409)
         }
         return { run: current, created: false }
@@ -315,9 +351,13 @@ export class InMemoryRouteGenerationRunRepository implements RouteGenerationRunR
 
   async createOrGet(input: CreateRouteGenerationRunInput): Promise<{ run: RouteGenerationRunRecord; created: boolean }> {
     if (input.ownerId !== this.ownerId || !this.ownedTripIds.has(input.tripId)) throw notFound('Trip was not found')
+    if ((input.goalId === undefined) !== (input.goalRunId === undefined)) {
+      throw new AppError('INVALID_ROUTE_GENERATION_LINEAGE', 'Goal and Goal run lineage must be provided together', 400)
+    }
     const existing = [...this.records.values()].find(run => run.tripId === input.tripId && run.idempotencyKey === input.idempotencyKey)
     if (existing) {
-      if (existing.requestHash !== input.requestHash || existing.contextVersion !== input.contextVersion || existing.conversationId !== input.conversationId) {
+      if (existing.requestHash !== input.requestHash || existing.contextVersion !== input.contextVersion
+        || existing.conversationId !== input.conversationId || existing.goalId !== input.goalId || existing.goalRunId !== input.goalRunId) {
         throw new AppError('IDEMPOTENCY_KEY_REUSE', 'Idempotency-Key was already used for a different request', 409)
       }
       return { run: structuredClone(existing), created: false }
@@ -326,6 +366,8 @@ export class InMemoryRouteGenerationRunRepository implements RouteGenerationRunR
     const run: RouteGenerationRunRecord = {
       id: uuidv7(), ownerId: this.ownerId, tripId: input.tripId,
       ...(input.conversationId === undefined ? {} : { conversationId: input.conversationId }),
+      ...(input.goalId === undefined ? {} : { goalId: input.goalId }),
+      ...(input.goalRunId === undefined ? {} : { goalRunId: input.goalRunId }),
       idempotencyKey: input.idempotencyKey, requestHash: input.requestHash,
       contextSnapshot: structuredClone(input.contextSnapshot), contextVersion: input.contextVersion,
       status: 'queued', progressStage: 'queued', progressPercent: 0,

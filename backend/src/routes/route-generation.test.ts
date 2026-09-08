@@ -1,6 +1,8 @@
 import Fastify from 'fastify'
 import { describe, expect, it } from 'vitest'
 import { InMemoryArtifactRepository } from '../artifacts/repository.js'
+import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifiers.js'
+import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../agent/goals/repository.js'
 import { issueAccessToken } from '../auth/tokens.js'
 import type { AppContext } from '../app/context.js'
 import type { AppEnv } from '../config/env.js'
@@ -22,8 +24,11 @@ async function fixture() {
     destinationIntent: { mode: 'explicit', required: [destination], preferred: [], excluded: [] }
   } })
   const runs = new InMemoryRouteGenerationRunRepository('user-a', new Set([trip.id]))
+  const goals = new InMemoryGoalRepository('user-a')
+  const goalRuns = new InMemoryGoalRunRepository('user-a', goals)
   const dependencies: RouteGenerationDependencies = {
-    runs, trips, artifacts: new InMemoryArtifactRepository('user-a', new Set([trip.id])),
+    runs, goals, goalRuns, goalVerifiers: createDefaultGoalVerifierRegistry(),
+    trips, artifacts: new InMemoryArtifactRepository('user-a', new Set([trip.id])),
     connectionSearch: { search: async () => ({ edges: [], serviceVersion: 'test', verification: { status: 'unverified' as const, checkedAt: '2026-09-07T00:00:00.000Z', confidence: 0, sources: [{ provider: 'test' }] }, warnings: [], truncated: false, exhausted: true }) },
     flightRoutePlanner: new DeterministicFlightRoutePlanner(), routeOptimizer: new ParetoRouteOptimizer()
   }
@@ -52,6 +57,7 @@ describe('route-generation HTTP contract', () => {
     const created = await app.inject({ method: 'POST', url: `/v1/trips/${value.trip.id}/route-generation-runs`, headers: { authorization: `Bearer ${token}`, 'idempotency-key': 'route-1' }, payload: {} })
     expect(created.statusCode).toBe(202)
     expect(created.json().run.status).toBe('queued')
+    expect(created.json().run).toEqual(expect.objectContaining({ goalId: expect.any(String), goalRunId: expect.any(String) }))
     const replay = await app.inject({ method: 'POST', url: `/v1/trips/${value.trip.id}/route-generation-runs`, headers: { authorization: `Bearer ${token}`, 'idempotency-key': 'route-1' }, payload: {} })
     expect(replay.statusCode).toBe(202)
     expect(replay.json().run.id).toBe(created.json().run.id)
@@ -59,6 +65,10 @@ describe('route-generation HTTP contract', () => {
     await value.dependencies.trips.update(value.trip.id, { notes: ['edited after request'] })
     const stale = await app.inject({ method: 'GET', url: `/v1/route-generation-runs/${created.json().run.id}`, headers: { authorization: `Bearer ${token}` } })
     expect(stale.json().run.stale).toBe(true)
+    const cancelled = await app.inject({ method: 'DELETE', url: `/v1/route-generation-runs/${created.json().run.id}`, headers: { authorization: `Bearer ${token}` } })
+    expect(cancelled.json().run.status).toBe('cancelled')
+    await expect(value.dependencies.goals.get(created.json().run.goalId)).resolves.toMatchObject({ status: 'cancelled' })
+    await expect(value.dependencies.goalRuns.get(created.json().run.goalRunId)).resolves.toMatchObject({ status: 'cancelled' })
     await app.close()
   })
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { MockAviationProvider } from '../../aviation/providers/mock.js'
+import type { AirportLookupInput } from '../../aviation/providers/provider.js'
 import { MockFareProvider } from '../../fares/providers/mock.js'
 import { locationRefKey } from '../../aviation/types.js'
 import { InMemoryTripContextRepository } from '../../trips/repository.js'
@@ -20,6 +21,12 @@ const fareResult = {
   verification: { status: 'verified' as const, checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock-fares', reference: 'fixed' }] }
 }
 
+class TestAviationProvider extends MockAviationProvider {
+  override async getAirport(input: AirportLookupInput) {
+    return input.iata === 'PVG' ? location : input.iata === 'NRT' ? destination : undefined
+  }
+}
+
 function context(): ToolExecutionContext {
   const trips = new Set(['trip-1'])
   return {
@@ -27,7 +34,7 @@ function context(): ToolExecutionContext {
     trips: new InMemoryTripContextRepository([emptyTripContext('trip-1')]),
     artifacts: new InMemoryArtifactRepository('user-1', trips),
     memory: new InMemoryUserMemoryRepository(),
-    aviation: new MockAviationProvider({ resolveLocation: { matches: [location], verification: { status: 'verified', checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock-aviation' }] } } }),
+    aviation: new TestAviationProvider({ resolveLocation: { matches: [location], verification: { status: 'verified', checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock-aviation' }] } } }),
     fares: new MockFareProvider({ search: fareResult }),
     research: new UnavailableResearchAgent(),
     connectionSearch: new UnavailableConnectionSearchService(),
@@ -54,13 +61,13 @@ describe('core agent tools', () => {
     expect(new Set(names).size).toBe(names.length)
   })
 
-  it('keeps final route generation out of the conversation Planner vocabulary', () => {
+  it('exposes only the authorized route start operation, not internal route-engine tools', () => {
     const names = createPlannerToolRegistry().definitions().map(definition => definition.function.name)
     expect(names).not.toEqual(expect.arrayContaining([
       'search_connection_flights', 'plan_flight_route', 'optimize_route', 'confirm_route_price'
     ]))
     expect(names).toEqual(expect.arrayContaining([
-      'search_destinations', 'research_destination', 'search_flights'
+      'search_destinations', 'research_destination', 'search_flights', 'start_route_generation'
     ]))
   })
 
@@ -72,7 +79,7 @@ describe('core agent tools', () => {
   })
 
   it('searches flights and emits a deterministic artifact/provenance', async () => {
-    const result = await createCoreToolRegistry().execute(call('fare-1', 'search_flights', { departureDate: fareResult.query.departureDate, currency: fareResult.query.currency, travelClass: fareResult.query.travelClass, origin: location, destination }), context(), new AbortController().signal)
+    const result = await createCoreToolRegistry().execute(call('fare-1', 'search_flights', { departureDate: fareResult.query.departureDate, currency: fareResult.query.currency, travelClass: fareResult.query.travelClass, origin: 'PVG', destination: 'NRT' }), context(), new AbortController().signal)
     const body = JSON.parse(result.content)
     expect(result.ok).toBe(true)
     expect(result.artifactIds).toHaveLength(1)
@@ -103,13 +110,12 @@ describe('core agent tools', () => {
     expect(write.content).toContain('User Memory is disabled')
   })
 
-  it('rejects syntactically valid but unresolved airport facts', async () => {
+  it('rejects unknown airports at the aviation boundary', async () => {
     const ctx = context()
-    ctx.resolvedLocationKeys = new Set()
     const result = await createCoreToolRegistry().execute(call('fare-2', 'search_flights', {
       departureDate: fareResult.query.departureDate,
-      origin: location,
-      destination
+      origin: 'PVG',
+      destination: 'ZZZ'
     }), ctx, new AbortController().signal)
     expect(result).toMatchObject({ ok: false, errorCode: 'TOOL_FAILURE' })
   })
@@ -127,8 +133,8 @@ describe('core agent tools', () => {
     })
     const result = await createCoreToolRegistry().execute(call('fare-3', 'search_flights', {
       departureDate: fareResult.query.departureDate,
-      origin: location,
-      destination
+      origin: 'PVG',
+      destination: 'NRT'
     }), ctx, new AbortController().signal)
     expect(result).toMatchObject({ ok: false, errorCode: 'TOOL_FAILURE' })
   })

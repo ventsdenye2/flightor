@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { SerpApiResearchSearchProvider, buildSerpApiResearchQuery } from './serpapi.js'
+import { CuratedResearchQueryPolicy } from '../query-policy.js'
+import { EMPTY_LOCATION_IDENTITY_POLICY } from '../../locations/identity.js'
 
 const destination = { id: 'city-tyo', type: 'city' as const, name: 'Tokyo', countryCode: 'JP' }
 
@@ -9,6 +11,17 @@ describe('SerpApiResearchSearchProvider', () => {
     expect(query).toContain('(site:gotokyo.org OR site:japan.travel)')
     expect(query).not.toContain('site:evil.example')
     expect(query.length).toBeLessThanOrEqual(480)
+  })
+  it('accepts a generic injected city policy without adapter changes', async () => {
+    const policy = new CuratedResearchQueryPolicy([{
+      countryCode: 'FR', cityCode: 'PAR', domains: ['paris.example'], warning: 'curated_paris_sources'
+    }], EMPTY_LOCATION_IDENTITY_POLICY)
+    const searchOrganic = vi.fn(async () => [])
+    const provider = new SerpApiResearchSearchProvider({ searchOrganic }, policy)
+    const paris = { id: 'city-par', type: 'city' as const, name: 'Paris', countryCode: 'FR', cityCode: 'PAR' }
+    const result = await provider.search({ destination: paris, interests: [], questions: ['museums'], researchTypes: ['activity'], maxResults: 2 })
+    expect(searchOrganic).toHaveBeenCalledWith(expect.objectContaining({ query: expect.stringContaining('(site:paris.example)') }), undefined)
+    expect(result.warnings).toEqual(['curated_paris_sources'])
   })
   it('keeps evergreen activity retrieval independent of exact trip dates', () => {
     const input = { destination, interests: ['food'], questions: ['Tokyo art museums official tourism'], researchTypes: ['activity' as const], maxResults: 8,

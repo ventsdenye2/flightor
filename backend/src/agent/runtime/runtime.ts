@@ -2,6 +2,7 @@ import type { AgentModelClient, ChatMessage, ChatOptions, FunctionToolCall } fro
 import type { ToolExecutionContext, ToolExecutionOutcome } from './registry.js'
 import { ToolRegistry } from './registry.js'
 import { AppError } from '../../lib/errors.js'
+import { addArtifactRef, addLocationHandle } from '../goals/working-set.js'
 
 export interface AgentTrace {
   requestId: string
@@ -33,7 +34,6 @@ export interface AgentRuntimeOptions {
 }
 
 export interface AgentRunInput {
-  requiredSuccessfulTool?: string
   messages: ChatMessage[]
   context: ToolExecutionContext
   signal?: AbortSignal
@@ -67,6 +67,34 @@ function stale(input: AgentRunInput): boolean {
 
 function toolCalls(message: Extract<ChatMessage, { role: 'assistant' }>): FunctionToolCall[] {
   return message.tool_calls ?? []
+}
+
+async function syncActiveGoalWorkingSet(context: ToolExecutionContext, outcome: ToolExecutionOutcome): Promise<void> {
+  if (!outcome.ok || !context.activeGoalRunId || !context.goalRunRepository) return
+  const run = await context.goalRunRepository.get(context.activeGoalRunId)
+  if (!run || run.status !== 'running') return
+  let workingSet = run.workingSet
+  const observedAt = new Date().toISOString()
+  for (const id of outcome.artifactIds) {
+    const artifact = await context.artifacts.getForScope(id, {
+      tripId: context.tripId,
+      ...(context.activeGoalId ? { goalId: context.activeGoalId } : {}),
+      runId: run.id,
+      tripContextVersion: run.contextVersion
+    })
+    if (!artifact) continue
+    workingSet = addArtifactRef(workingSet, { id: artifact.id, type: artifact.type, schemaVersion: artifact.schemaVersion, observedAt })
+  }
+  for (const location of context.resolvedLocations?.values() ?? []) {
+    workingSet = addLocationHandle(workingSet, {
+      id: location.id,
+      kind: location.type,
+      observedAt
+    })
+  }
+  if (JSON.stringify(workingSet) !== JSON.stringify(run.workingSet)) {
+    await context.goalRunRepository.update(run.id, run.revision, { status: 'running', workingSet })
+  }
 }
 
 export class AgentRuntime {
@@ -110,7 +138,6 @@ export class AgentRuntime {
     let costUnits = 0
     let toolSteps = 0
     let executedToolCalls = 0
-    let completionRepairs = 0
     const executionContext: ToolExecutionContext = {
       ...input.context,
       resolvedLocationKeys: new Set<string>(),
@@ -140,7 +167,7 @@ export class AgentRuntime {
         completion = await this.modelClient.complete(messages, this.options.model, {
           ...this.modelOptions,
           tools: this.registry.definitions(),
-          toolChoice: completionRepairs > 0 && !traces.some(trace => trace.toolName === input.requiredSuccessfulTool && trace.toolResultStatus === 'success') ? 'required' : 'auto',
+          toolChoice: 'auto',
           signal: controller.signal
         })
         this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
@@ -158,12 +185,6 @@ export class AgentRuntime {
       messages.push(completion.message)
       const calls = toolCalls(completion.message)
       if (calls.length === 0) {
-        if (input.requiredSuccessfulTool && !traces.some(trace => trace.toolName === input.requiredSuccessfulTool && trace.toolResultStatus === 'success')) {
-          if (completionRepairs >= 1) return fallback('model_failure')
-          completionRepairs += 1
-          messages.push({ role: 'system', content: `The requested action has not been completed. Execute the prerequisite tools and ${input.requiredSuccessfulTool} before replying. A plan or promise is not a saved result. Use the existing tool budget; never invent facts.` })
-          continue
-        }
         const reply = completion.message.content?.trim()
         return reply
           ? { reply, messages, toolSteps, toolCalls: executedToolCalls, costUnits, fallback: false, stopReason: 'completed', traces }
@@ -199,6 +220,11 @@ export class AgentRuntime {
       costUnits += outcomes.reduce((sum, outcome) => sum + outcome.costUnits, 0)
 
       for (const outcome of outcomes) {
+        try {
+          await syncActiveGoalWorkingSet(executionContext, outcome)
+        } catch {
+          outcome.warnings = [...new Set([...outcome.warnings, 'goal_working_set_update_failed'])]
+        }
         const definition = this.registry.get(outcome.toolName)
         const trace: AgentTrace = {
           requestId: input.context.requestId,

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { locationRefKey, locationRefSchema, locationResolutionSchema, type LocationRef } from '../../aviation/types.js'
 import { fareSearchInputSchema } from '../../fares/types.js'
 import { executeFlightSearch } from '../../fares/search-service.js'
+import { fareAirportSelectorSchema, resolveFareAirportPair } from '../../fares/airport-resolver.js'
 import { USER_MEMORY_MAX_BYTES } from '../../memory/repository.js'
 import { tripContextPatchSchema, tripContextSchema } from '../../trips/types.js'
 import { ToolRegistry, type AgentTool } from '../runtime/registry.js'
@@ -14,6 +15,8 @@ import { buildTravelGuideTool } from './travel-guide.js'
 import { getTripArtifactsTool, readArtifactTool } from './artifact-reading.js'
 import { recordResolvedLocations } from './resolved-locations.js'
 import { AppError } from '../../lib/errors.js'
+import { cancelGoalTool, declareGoalTool, finishGoalTool, getGoalTool } from './goals.js'
+import { startRouteGenerationTool } from './route-generation.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
@@ -30,21 +33,15 @@ const resolveLocationInputSchema = z.object({
   types: z.array(z.enum(['city', 'airport'])).min(1).max(2).optional(),
   limit: z.number().int().min(1).max(10).default(5)
 }).strict()
-const searchableLocationSchema = locationRefSchema.refine(
-  value => value.type === 'airport' && value.iata !== undefined,
-  'Flight search requires a canonical airport reference with an IATA code'
-)
 const searchFlightsInputSchema = z.object({
-  origin: searchableLocationSchema,
-  destination: searchableLocationSchema,
+  origin: fareAirportSelectorSchema,
+  destination: fareAirportSelectorSchema,
   departureDate: z.iso.date(),
   returnDate: z.iso.date().optional(),
   currency: z.enum(['CNY', 'USD', 'EUR']).default('CNY'),
   travelClass: z.number().int().min(1).max(4).default(1)
 }).strict().superRefine((input, context) => {
-  const originCode = input.origin.iata ?? input.origin.cityCode
-  const destinationCode = input.destination.iata ?? input.destination.cityCode
-  if (originCode === destinationCode) {
+  if (input.origin.toUpperCase() === input.destination.toUpperCase()) {
     context.addIssue({ code: 'custom', message: 'Origin and destination must differ', path: ['destination'] })
   }
   if (input.returnDate && input.returnDate < input.departureDate) {
@@ -197,7 +194,7 @@ const searchFlightsTool: AgentTool<
   z.infer<typeof searchFlightsOutputSchema>
 > = {
   name: 'search_flights',
-  description: 'Search current fare options for one canonical airport leg. First resolve BOTH origin and destination with types=["airport"] in THIS turn and copy both exact returned objects. Persisted trip locations do not satisfy this prerequisite. Prices and flight facts must come from this tool, never model memory.',
+  description: 'Search current fare options for one airport leg. Pass each endpoint as an IATA code or an airport id returned by resolve_location. The server resolves both selectors back to authoritative airport facts before any paid fare call; never pass names or copied location objects.',
   inputSchema: searchFlightsInputSchema,
   outputSchema: searchFlightsOutputSchema,
   costClass: 'paid',
@@ -209,10 +206,14 @@ const searchFlightsTool: AgentTool<
   timeoutMs: 35_000,
   provider: 'fare_provider',
   async execute(input, context, signal) {
-    assertTrustedLocations(context, [input.origin, input.destination])
+    const airports = await resolveFareAirportPair(context.aviation, {
+      origin: input.origin,
+      destination: input.destination
+    }, { ...(context.resolvedLocations ? { trustedLocations: context.resolvedLocations.values() } : {}), signal })
+    rememberLocations(context, [airports.origin, airports.destination])
     const query = fareSearchInputSchema.parse({
-      origin: input.origin.iata,
-      destination: input.destination.iata,
+      origin: airports.origin.iata,
+      destination: airports.destination.iata,
       departureDate: input.departureDate,
       ...(input.returnDate ? { returnDate: input.returnDate } : {}),
       currency: input.currency,
@@ -223,6 +224,9 @@ const searchFlightsTool: AgentTool<
       artifacts: context.artifacts,
       tripId: context.tripId,
       conversationId: context.conversationId,
+      ...(context.activeGoalId ? { goalId: context.activeGoalId } : {}),
+      ...(context.activeGoalRunId ? { runId: context.activeGoalRunId } : {}),
+      ...(context.activeGoalContextVersion === undefined ? {} : { tripContextVersion: context.activeGoalContextVersion }),
       signal,
       ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
     })
@@ -274,6 +278,11 @@ const updateUserMemoryTool: AgentTool<z.infer<typeof updateUserMemoryInputSchema
 
 export function createCoreToolRegistry(): ToolRegistry {
   return new ToolRegistry()
+    .register(declareGoalTool)
+    .register(getGoalTool)
+    .register(finishGoalTool)
+    .register(cancelGoalTool)
+    .register(startRouteGenerationTool)
     .register(getTripArtifactsTool)
     .register(readArtifactTool)
     .register(getTripContextTool)
@@ -297,12 +306,17 @@ export function createCoreToolRegistry(): ToolRegistry {
 }
 
 /**
- * Conversation runtime vocabulary. Final route generation is intentionally
- * absent: only the explicit authenticated Generate Route action may invoke
- * connection search, complete-path planning, optimization, or route refresh.
+ * Conversation runtime vocabulary. The explicit start operation may enqueue
+ * the deterministic engine, while its internal connection/path/optimization
+ * tools remain unavailable to the Planner.
  */
 export function createPlannerToolRegistry(): ToolRegistry {
   return new ToolRegistry()
+    .register(declareGoalTool)
+    .register(getGoalTool)
+    .register(finishGoalTool)
+    .register(cancelGoalTool)
+    .register(startRouteGenerationTool)
     .register(getTripArtifactsTool)
     .register(readArtifactTool)
     .register(getTripContextTool)

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { InMemoryArtifactRepository } from '../artifacts/repository.js'
+import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifiers.js'
+import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../agent/goals/repository.js'
 import type { ConnectionSearchResult, RouteServiceContext } from '../flight-routing/types.js'
 import { DeterministicFlightRoutePlanner } from '../flight-routing/planner.js'
 import { ParetoRouteOptimizer } from '../flight-routing/optimizer.js'
@@ -58,6 +60,8 @@ async function fixture(options: { edges?: ConnectionSearchResult['edges']; onSea
   const trips = new InMemoryTripRepository()
   const trip = await trips.create({ initialContext: contextPatch() })
   const runs = new InMemoryRouteGenerationRunRepository('user-1', new Set([trip.id]))
+  const goals = new InMemoryGoalRepository('user-1')
+  const goalRuns = new InMemoryGoalRunRepository('user-1', goals)
   const artifacts = new InMemoryArtifactRepository('user-1', new Set([trip.id]))
   const connectionSearch = {
     search: vi.fn(async (_input, context?: RouteServiceContext) => {
@@ -66,11 +70,12 @@ async function fixture(options: { edges?: ConnectionSearchResult['edges']; onSea
     })
   }
   const dependencies: RouteGenerationDependencies = {
-    runs, trips, artifacts, connectionSearch,
+    runs, goals, goalRuns, goalVerifiers: createDefaultGoalVerifierRegistry(),
+    trips, artifacts, connectionSearch,
     flightRoutePlanner: new DeterministicFlightRoutePlanner(),
     routeOptimizer: new ParetoRouteOptimizer()
   }
-  return { trip, trips, runs, artifacts, connectionSearch, dependencies }
+  return { trip, trips, runs, goals, goalRuns, artifacts, connectionSearch, dependencies }
 }
 
 describe('route generation service', () => {
@@ -78,34 +83,41 @@ describe('route generation service', () => {
     const missingOrigin = await fixture()
     await missingOrigin.trips.update(missingOrigin.trip.id, { origin: null })
     await expect(startRouteGenerationRun(missingOrigin.dependencies, {
-      ownerId: 'user-1', tripId: missingOrigin.trip.id, idempotencyKey: 'origin-missing'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: missingOrigin.trip.id, idempotencyKey: 'origin-missing'
     })).rejects.toMatchObject({ code: 'ROUTE_ORIGIN_REQUIRED' })
 
     const missingWindow = await fixture()
     await missingWindow.trips.update(missingWindow.trip.id, { departureWindow: null })
     await expect(startRouteGenerationRun(missingWindow.dependencies, {
-      ownerId: 'user-1', tripId: missingWindow.trip.id, idempotencyKey: 'window-missing'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: missingWindow.trip.id, idempotencyKey: 'window-missing'
     })).rejects.toMatchObject({ code: 'DEPARTURE_WINDOW_REQUIRED' })
   })
 
   it('returns the same durable run and enqueues one job for an idempotent request', async () => {
     const value = await fixture()
     const first = await startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'same-request'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'same-request'
     })
     const second = await startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'same-request'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'same-request'
     })
     expect(first.created).toBe(true)
     expect(second.created).toBe(false)
     expect(second.run.id).toBe(first.run.id)
+    expect(first.run.goalId).toBeDefined()
+    expect(first.run.goalRunId).toBeDefined()
+    expect(second.run).toMatchObject({ goalId: first.run.goalId, goalRunId: first.run.goalRunId })
+    expect(await value.goals.listForTrip(value.trip.id)).toEqual([
+      expect.objectContaining({ id: first.run.goalId, kind: 'route_generation', status: 'pending', authorization: expect.objectContaining({ source: 'button' }) })
+    ])
+    expect(await value.goalRuns.listForGoal(first.run.goalId!)).toHaveLength(1)
     expect(value.runs.enqueuedJobRunIds).toEqual([first.run.id])
   })
 
   it('executes the frozen snapshot even after the trip context changes', async () => {
     const value = await fixture()
     const started = await startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'stale-context'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'stale-context'
     })
     await value.trips.update(value.trip.id, { notes: ['changed after enqueue'] })
     const finished = await executeRouteGenerationRun(value.dependencies, started.run.id)
@@ -118,12 +130,14 @@ describe('route generation service', () => {
     let value!: Awaited<ReturnType<typeof fixture>>
     value = await fixture({ onSearch: async () => { await value.runs.cancel(runId) } })
     const started = await startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'cancel-me'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'cancel-me'
     })
     runId = started.run.id
     const finished = await executeRouteGenerationRun(value.dependencies, started.run.id)
     expect(finished?.status).toBe('cancelled')
     expect(finished?.resultArtifactId).toBeUndefined()
+    await expect(value.goals.get(started.run.goalId!)).resolves.toMatchObject({ status: 'cancelled' })
+    await expect(value.goalRuns.get(started.run.goalRunId!)).resolves.toMatchObject({ status: 'cancelled' })
   })
 
   it('checks persistent cancellation inside connection-provider work', async () => {
@@ -134,7 +148,7 @@ describe('route generation service', () => {
       await context?.checkpoint?.()
     } })
     const started = await startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'cancel-provider-loop'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'cancel-provider-loop'
     })
     runId = started.run.id
 
@@ -145,10 +159,29 @@ describe('route generation service', () => {
     expect(finished?.resultArtifactId).toBeUndefined()
   })
 
+  it('keeps cancellation authoritative when a provider fails after cancellation', async () => {
+    let runId = ''
+    let value!: Awaited<ReturnType<typeof fixture>>
+    value = await fixture({ onSearch: async () => {
+      await value.runs.cancel(runId)
+      throw new Error('provider failed after cancellation')
+    } })
+    const started = await startRouteGenerationRun(value.dependencies, {
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'cancel-before-provider-failure'
+    })
+    runId = started.run.id
+
+    const finished = await executeRouteGenerationRun(value.dependencies, runId)
+
+    expect(finished?.status).toBe('cancelled')
+    await expect(value.goals.get(started.run.goalId!)).resolves.toMatchObject({ status: 'cancelled' })
+    await expect(value.goalRuns.get(started.run.goalRunId!)).resolves.toMatchObject({ status: 'cancelled' })
+  })
+
   it('persists an immutable connection -> paths -> optimized route_set chain without fake fare', async () => {
     const value = await fixture()
     const started = await startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'generate-route'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'generate-route'
     })
     const finished = await executeRouteGenerationRun(value.dependencies, started.run.id)
     expect(finished?.status).toBe('succeeded')
@@ -156,29 +189,47 @@ describe('route generation service', () => {
     expect(finished?.warnings.some(warning => warning.includes('no price is fabricated'))).toBe(true)
     const optimized = await value.artifacts.get(finished!.resultArtifactId!)
     expect(optimized?.type).toBe('route_set')
+    expect(optimized).toMatchObject({
+      goalId: started.run.goalId,
+      runId: started.run.goalRunId,
+      tripContextVersion: started.run.contextVersion
+    })
     expect((optimized?.payload as { kind: string }).kind).toBe('optimized_routes')
     const optimizedPayload = optimized?.payload as { sourceArtifactIds: string[] }
     const paths = await value.artifacts.get(optimizedPayload.sourceArtifactIds[0]!)
     expect((paths?.payload as { kind: string }).kind).toBe('flight_paths')
     const connection = await value.artifacts.get((paths?.payload as { sourceArtifactIds: string[] }).sourceArtifactIds[0]!)
     expect((connection?.payload as { kind: string }).kind).toBe('connection_edges')
+    expect(paths?.sourceArtifactIds).toEqual([connection?.id])
+    expect(optimized?.sourceArtifactIds).toEqual([paths?.id])
+    await expect(value.goals.get(started.run.goalId!)).resolves.toMatchObject({ status: 'satisfied' })
+    await expect(value.goalRuns.get(started.run.goalRunId!)).resolves.toMatchObject({
+      status: 'satisfied',
+      workingSet: { artifactRefs: expect.arrayContaining([
+        expect.objectContaining({ id: connection?.id }),
+        expect.objectContaining({ id: paths?.id }),
+        expect.objectContaining({ id: optimized?.id })
+      ]) }
+    })
   })
 
   it('marks no-path results explicitly and never creates a fake route artifact', async () => {
     const value = await fixture({ edges: [] })
     const started = await startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'no-paths'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'no-paths'
     })
     const finished = await executeRouteGenerationRun(value.dependencies, started.run.id)
     expect(finished).toMatchObject({ status: 'failed', errorCode: 'NO_ROUTE_PATHS' })
     expect(finished?.resultArtifactId).toBeUndefined()
+    await expect(value.goals.get(started.run.goalId!)).resolves.toMatchObject({ status: 'failed' })
+    await expect(value.goalRuns.get(started.run.goalRunId!)).resolves.toMatchObject({ status: 'failed' })
   })
 
   it('rejects unsupported return or multi-city contexts before enqueue', async () => {
     const roundTrip = await fixture()
     await roundTrip.trips.update(roundTrip.trip.id, { returnWindow: { from: '2026-10-10', precision: 'exact' } })
     await expect(startRouteGenerationRun(roundTrip.dependencies, {
-      ownerId: 'user-1', tripId: roundTrip.trip.id, idempotencyKey: 'round-trip'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: roundTrip.trip.id, idempotencyKey: 'round-trip'
     })).rejects.toMatchObject({ code: 'ROUND_TRIP_UNSUPPORTED' })
     expect(roundTrip.runs.enqueuedJobRunIds).toHaveLength(0)
 
@@ -188,7 +239,7 @@ describe('route generation service', () => {
       destinationIntent: { mode: 'explicit', required: [destination, second], preferred: [], excluded: [] }
     })
     await expect(startRouteGenerationRun(multiCity.dependencies, {
-      ownerId: 'user-1', tripId: multiCity.trip.id, idempotencyKey: 'multi-city'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: multiCity.trip.id, idempotencyKey: 'multi-city'
     })).rejects.toMatchObject({ code: 'MULTI_CITY_UNSUPPORTED' })
     expect(multiCity.runs.enqueuedJobRunIds).toHaveLength(0)
 
@@ -197,7 +248,7 @@ describe('route generation service', () => {
       requiredGroundLegs: [{ from: origin, to: destination, mode: 'rail' }]
     })
     await expect(startRouteGenerationRun(groundLeg.dependencies, {
-      ownerId: 'user-1', tripId: groundLeg.trip.id, idempotencyKey: 'ground-leg'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: groundLeg.trip.id, idempotencyKey: 'ground-leg'
     })).rejects.toMatchObject({ code: 'GROUND_LEGS_UNSUPPORTED' })
     expect(groundLeg.runs.enqueuedJobRunIds).toHaveLength(0)
   })
@@ -209,7 +260,7 @@ describe('route generation service', () => {
     })
 
     await expect(startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'soft-preference-only'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'soft-preference-only'
     })).rejects.toMatchObject({ code: 'DESTINATION_AIRPORT_REQUIRED' })
     expect(value.runs.enqueuedJobRunIds).toHaveLength(0)
   })
@@ -221,7 +272,7 @@ describe('route generation service', () => {
       destinationIntent: { mode: 'explicit', required: [destination], preferred: [tokyo], excluded: [] }
     })
     const started = await startRouteGenerationRun(preferred.dependencies, {
-      ownerId: 'user-1', tripId: preferred.trip.id, idempotencyKey: 'city-preference'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: preferred.trip.id, idempotencyKey: 'city-preference'
     })
     await executeRouteGenerationRun(preferred.dependencies, started.run.id)
     expect(preferred.connectionSearch.search).toHaveBeenCalledWith(
@@ -234,7 +285,7 @@ describe('route generation service', () => {
       destinationIntent: { mode: 'explicit', required: [destination], preferred: [], excluded: [city('PAR', 'Paris', 'FR')] }
     })
     await expect(startRouteGenerationRun(excluded.dependencies, {
-      ownerId: 'user-1', tripId: excluded.trip.id, idempotencyKey: 'city-exclusion'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: excluded.trip.id, idempotencyKey: 'city-exclusion'
     })).rejects.toMatchObject({ code: 'DESTINATION_EXCLUDED' })
     expect(excluded.runs.enqueuedJobRunIds).toHaveLength(0)
   })
@@ -242,11 +293,11 @@ describe('route generation service', () => {
   it('conflicts when an idempotency key is reused with another accepted context version', async () => {
     const value = await fixture()
     await startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'reuse-key'
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'reuse-key'
     })
     await value.trips.update(value.trip.id, { notes: ['new version'] })
     await expect(startRouteGenerationRun(value.dependencies, {
-      ownerId: 'user-1', tripId: value.trip.id, idempotencyKey: 'reuse-key', expectedTripVersion: 1
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'reuse-key', expectedTripVersion: 1
     })).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSE' })
   })
 })

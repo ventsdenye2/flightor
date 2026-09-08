@@ -1,6 +1,6 @@
 import { v7 as uuidv7 } from 'uuid'
 import type { Kysely } from 'kysely'
-import type { ArtifactRecord, ArtifactRepository, CreateArtifactInput } from './repository.js'
+import { normalizeSourceArtifactIds, type ArtifactRecord, type ArtifactRepository, type ArtifactScope, type CreateArtifactInput } from './repository.js'
 import { AppError } from '../lib/errors.js'
 import type { Database, JsonValue } from '../db/types.js'
 
@@ -10,6 +10,12 @@ type ArtifactRow = {
   trip_public_id?: string
   conversation_id: string | null
   conversation_public_id?: string | null
+  goal_public_id?: string | null
+  run_public_id?: string | null
+  goal_id?: string | null
+  goal_run_id?: string | null
+  trip_context_version?: number | null
+  source_artifact_ids_json?: unknown
   type: string
   schema_version: number
   payload_json: unknown
@@ -18,17 +24,32 @@ type ArtifactRow = {
   updated_at: Date | string
 }
 
+type UntypedDb = Kysely<any>
+
+function untyped(db: Kysely<Database> | any): UntypedDb {
+  return db as UntypedDb
+}
+
 function toIso(value: Date | string): string {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString()
 }
 
 function toArtifact(row: ArtifactRow): ArtifactRecord {
+  const sourceArtifactIds = Array.isArray(row.source_artifact_ids_json)
+    ? row.source_artifact_ids_json.filter((value): value is string => typeof value === 'string').slice(0, 50)
+    : typeof row.source_artifact_ids_json === 'string'
+      ? parseSourceArtifactIds(row.source_artifact_ids_json)
+      : []
   return {
     id: row.id,
     tripId: row.trip_public_id ?? row.trip_id,
     ...(row.conversation_public_id === null || row.conversation_public_id === undefined
       ? (row.conversation_id === null ? {} : { conversationId: row.conversation_id })
       : { conversationId: row.conversation_public_id }),
+    ...(row.goal_public_id === null || row.goal_public_id === undefined ? {} : { goalId: row.goal_public_id }),
+    ...(row.run_public_id === null || row.run_public_id === undefined ? {} : { runId: row.run_public_id }),
+    ...(row.trip_context_version === null || row.trip_context_version === undefined ? {} : { tripContextVersion: row.trip_context_version }),
+    sourceArtifactIds,
     type: row.type as ArtifactRecord['type'],
     schemaVersion: row.schema_version,
     payload: row.payload_json,
@@ -36,6 +57,38 @@ function toArtifact(row: ArtifactRow): ArtifactRecord {
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at)
   }
+}
+
+function parseSourceArtifactIds(value: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string').slice(0, 50) : []
+  } catch {
+    return []
+  }
+}
+
+function scopeMatches(record: ArtifactRecord, scope: ArtifactScope): boolean {
+  return (scope.tripId === undefined || record.tripId === scope.tripId)
+    && (scope.goalId === undefined || record.goalId === scope.goalId)
+    && (scope.runId === undefined || record.runId === scope.runId)
+    && (scope.tripContextVersion === undefined || record.tripContextVersion === scope.tripContextVersion)
+}
+
+function selectArtifacts(db: UntypedDb) {
+  return db.selectFrom('artifacts')
+    .innerJoin('trips', 'trips.id', 'artifacts.trip_id')
+    .leftJoin('conversations', 'conversations.id', 'artifacts.conversation_id')
+    .leftJoin('planning_goals', 'planning_goals.id', 'artifacts.goal_id')
+    .leftJoin('planning_goal_runs', 'planning_goal_runs.id', 'artifacts.goal_run_id')
+    .select([
+      'artifacts.public_id as id', 'artifacts.trip_id', 'trips.public_id as trip_public_id',
+      'artifacts.conversation_id', 'conversations.public_id as conversation_public_id',
+      'planning_goals.public_id as goal_public_id', 'planning_goal_runs.public_id as run_public_id',
+      'artifacts.trip_context_version', 'artifacts.source_artifact_ids_json', 'artifacts.type',
+      'artifacts.schema_version', 'artifacts.payload_json', 'artifacts.verification_json',
+      'artifacts.created_at', 'artifacts.updated_at'
+    ])
 }
 
 function resourceNotFound(message: string): AppError {
@@ -53,6 +106,16 @@ export class PostgresArtifactRepository implements ArtifactRepository {
     if (!Number.isInteger(input.schemaVersion) || input.schemaVersion < 1) {
       throw new AppError('INVALID_ARTIFACT', 'Artifact schema version must be positive')
     }
+    if (input.tripContextVersion !== undefined && (!Number.isInteger(input.tripContextVersion) || input.tripContextVersion < 0)) {
+      throw new AppError('INVALID_ARTIFACT', 'Artifact Trip Context version must be non-negative')
+    }
+    if (input.runId !== undefined && input.goalId === undefined) {
+      throw new AppError('INVALID_ARTIFACT', 'Artifact goalId is required when runId is provided')
+    }
+    const sourceArtifactIds = normalizeSourceArtifactIds(input.sourceArtifactIds)
+    if (input.id !== undefined && sourceArtifactIds.includes(input.id)) {
+      throw new AppError('INVALID_ARTIFACT', 'Artifact cannot reference itself')
+    }
 
     return this.db.transaction().execute(async trx => {
       const trip = await trx
@@ -62,6 +125,43 @@ export class PostgresArtifactRepository implements ArtifactRepository {
         .where('user_id', '=', this.userId)
         .executeTakeFirst()
       if (!trip) throw resourceNotFound('Trip was not found')
+
+      let goalId: string | null = null
+      if (input.goalId !== undefined) {
+        const goal = await untyped(trx).selectFrom('planning_goals')
+          .select(['id'])
+          .where('public_id', '=', input.goalId)
+          .where('user_id', '=', this.userId)
+          .where('trip_id', '=', trip.id)
+          .executeTakeFirst()
+        if (!goal) throw resourceNotFound('Goal was not found')
+        goalId = goal.id
+      }
+
+      let goalRunId: string | null = null
+      if (input.runId !== undefined) {
+        const run = await untyped(trx).selectFrom('planning_goal_runs')
+          .select(['id', 'goal_id', 'context_version'])
+          .where('public_id', '=', input.runId)
+          .where('user_id', '=', this.userId)
+          .where('trip_id', '=', trip.id)
+          .executeTakeFirst()
+        if (!run || (goalId !== null && run.goal_id !== goalId)) throw resourceNotFound('Goal run was not found')
+        if (input.tripContextVersion !== undefined && input.tripContextVersion !== run.context_version) {
+          throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Artifact Trip Context version does not match goal run', 409)
+        }
+        goalRunId = run.id
+      }
+
+      for (const sourceId of sourceArtifactIds) {
+        const source = await untyped(trx).selectFrom('artifacts')
+          .select('id')
+          .where('public_id', '=', sourceId)
+          .where('user_id', '=', this.userId)
+          .where('trip_id', '=', trip.id)
+          .executeTakeFirst()
+        if (!source) throw resourceNotFound('Source artifact was not found')
+      }
 
       let conversationId: string | null = null
       if (input.conversationId !== undefined) {
@@ -76,13 +176,17 @@ export class PostgresArtifactRepository implements ArtifactRepository {
         conversationId = conversation.id
       }
 
-      const row = await trx
+      const row = await untyped(trx)
         .insertInto('artifacts')
         .values({
           public_id: input.id ?? uuidv7(),
           user_id: this.userId,
           trip_id: trip.id,
           conversation_id: conversationId,
+          goal_id: goalId,
+          goal_run_id: goalRunId,
+          trip_context_version: input.tripContextVersion ?? null,
+          source_artifact_ids_json: JSON.stringify(sourceArtifactIds),
           type: input.type,
           schema_version: input.schemaVersion,
           payload_json: JSON.stringify(input.payload),
@@ -90,7 +194,7 @@ export class PostgresArtifactRepository implements ArtifactRepository {
         })
         .returning([
           'public_id as id', 'trip_id', 'conversation_id', 'type', 'schema_version',
-          'payload_json', 'verification_json', 'created_at', 'updated_at'
+          'payload_json', 'verification_json', 'trip_context_version', 'source_artifact_ids_json', 'created_at', 'updated_at'
         ])
         .executeTakeFirstOrThrow()
 
@@ -98,37 +202,52 @@ export class PostgresArtifactRepository implements ArtifactRepository {
       return {
         ...artifact,
         tripId: input.tripId,
-        ...(input.conversationId === undefined ? {} : { conversationId: input.conversationId })
+        ...(input.conversationId === undefined ? {} : { conversationId: input.conversationId }),
+        ...(input.goalId === undefined ? {} : { goalId: input.goalId }),
+        ...(input.runId === undefined ? {} : { runId: input.runId }),
+        ...(input.tripContextVersion === undefined ? {} : { tripContextVersion: input.tripContextVersion }),
+        sourceArtifactIds
       }
     })
   }
 
   async get(artifactId: string): Promise<ArtifactRecord | undefined> {
-    const row = await this.db
-      .selectFrom('artifacts')
-      .innerJoin('trips', 'trips.id', 'artifacts.trip_id')
-      .leftJoin('conversations', 'conversations.id', 'artifacts.conversation_id')
-      .select([
-        'artifacts.public_id as id', 'artifacts.trip_id', 'trips.public_id as trip_public_id',
-        'artifacts.conversation_id', 'conversations.public_id as conversation_public_id',
-        'artifacts.type', 'artifacts.schema_version', 'artifacts.payload_json',
-        'artifacts.verification_json', 'artifacts.created_at', 'artifacts.updated_at'
-      ])
+    const row = await selectArtifacts(untyped(this.db))
       .where('artifacts.public_id', '=', artifactId)
       .where('artifacts.user_id', '=', this.userId)
       .executeTakeFirst()
     return row ? toArtifact(row) : undefined
   }
 
+  async getForScope(artifactId: string, scope: ArtifactScope): Promise<ArtifactRecord | undefined> {
+    const record = await this.get(artifactId)
+    return record && scopeMatches(record, scope) ? record : undefined
+  }
+
   async listForTrip(tripId: string, limit = 10): Promise<ArtifactRecord[]> {
-    const rows = await this.db.selectFrom('artifacts')
-      .innerJoin('trips', 'trips.id', 'artifacts.trip_id')
-      .leftJoin('conversations', 'conversations.id', 'artifacts.conversation_id')
-      .select(['artifacts.public_id as id', 'artifacts.trip_id', 'trips.public_id as trip_public_id',
-        'artifacts.conversation_id', 'conversations.public_id as conversation_public_id', 'artifacts.type', 'artifacts.schema_version',
-        'artifacts.payload_json', 'artifacts.verification_json', 'artifacts.created_at', 'artifacts.updated_at'])
+    const rows = await selectArtifacts(untyped(this.db))
       .where('artifacts.user_id', '=', this.userId).where('trips.user_id', '=', this.userId).where('trips.public_id', '=', tripId)
-      .orderBy('artifacts.created_at', 'desc').orderBy('artifacts.public_id', 'desc').limit(Math.min(20, Math.max(1, limit))).execute()
+      .orderBy('artifacts.created_at', 'desc').orderBy('artifacts.public_id', 'desc').limit(boundedLimit(limit)).execute()
     return rows.map(toArtifact)
   }
+
+  async listForGoal(goalId: string, limit = 10): Promise<ArtifactRecord[]> {
+    const rows = await selectArtifacts(untyped(this.db))
+      .where('artifacts.user_id', '=', this.userId).where('planning_goals.user_id', '=', this.userId)
+      .where('planning_goals.public_id', '=', goalId)
+      .orderBy('artifacts.created_at', 'desc').orderBy('artifacts.public_id', 'desc').limit(boundedLimit(limit)).execute()
+    return rows.map(toArtifact)
+  }
+
+  async listForRun(runId: string, limit = 10): Promise<ArtifactRecord[]> {
+    const rows = await selectArtifacts(untyped(this.db))
+      .where('artifacts.user_id', '=', this.userId).where('planning_goal_runs.user_id', '=', this.userId)
+      .where('planning_goal_runs.public_id', '=', runId)
+      .orderBy('artifacts.created_at', 'desc').orderBy('artifacts.public_id', 'desc').limit(boundedLimit(limit)).execute()
+    return rows.map(toArtifact)
+  }
+}
+
+function boundedLimit(value: number): number {
+  return Number.isFinite(value) ? Math.min(100, Math.max(1, Math.floor(value))) : 10
 }

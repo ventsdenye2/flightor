@@ -128,6 +128,10 @@ export interface ArtifactsTable {
   schema_version: number
   payload_json: JsonColumn
   verification_json: JsonColumn | null
+  goal_id: string | null
+  goal_run_id: string | null
+  trip_context_version: number | null
+  source_artifact_ids_json: JsonColumn
   created_at: Timestamp
   updated_at: Timestamp
 }
@@ -318,6 +322,8 @@ export interface RouteGenerationRunsTable {
   user_id: string
   trip_id: string
   conversation_id: string | null
+  planning_goal_id: string | null
+  planning_goal_run_id: string | null
   idempotency_key: string
   request_hash: string
   context_json: JsonColumn
@@ -333,6 +339,46 @@ export interface RouteGenerationRunsTable {
   finished_at: NullableTimestamp
   created_at: Timestamp
   updated_at: Timestamp
+}
+
+export interface PlanningGoalsTable {
+  id: Generated<string>
+  public_id: string
+  user_id: string
+  trip_id: string
+  conversation_id: string | null
+  idempotency_key: string
+  request_hash: string
+  kind: string
+  parameters_json: JsonColumn
+  created_context_version: number
+  authorization_source: string | null
+  authorization_granted_at: NullableTimestamp
+  status: 'pending' | 'satisfied' | 'partial' | 'failed' | 'cancelled'
+  revision: Generated<number>
+  created_at: Timestamp
+  updated_at: Timestamp
+  completed_at: NullableTimestamp
+}
+
+export interface PlanningGoalRunsTable {
+  id: Generated<string>
+  public_id: string
+  goal_id: string
+  user_id: string
+  trip_id: string
+  conversation_id: string | null
+  generation_id: string
+  idempotency_key: string
+  request_hash: string
+  context_version: number
+  context_json: JsonColumn
+  status: 'running' | 'satisfied' | 'partial' | 'failed' | 'cancelled'
+  working_set_json: JsonColumn
+  revision: Generated<number>
+  created_at: Timestamp
+  updated_at: Timestamp
+  completed_at: NullableTimestamp
 }
 
 export interface Database {
@@ -387,6 +433,8 @@ export interface Database {
   sync_runs: SyncRunsTable
   jobs: JobsTable
   route_generation_runs: RouteGenerationRunsTable
+  planning_goals: PlanningGoalsTable
+  planning_goal_runs: PlanningGoalRunsTable
 }
 
 export type Country = Selectable<CountriesTable>
@@ -405,3 +453,7 @@ export type Job = Selectable<JobsTable>
 export type NewJob = Insertable<JobsTable>
 export type RouteGenerationRun = Selectable<RouteGenerationRunsTable>
 export type NewRouteGenerationRun = Insertable<RouteGenerationRunsTable>
+export type PlanningGoal = Selectable<PlanningGoalsTable>
+export type NewPlanningGoal = Insertable<PlanningGoalsTable>
+export type PlanningGoalRun = Selectable<PlanningGoalRunsTable>
+export type NewPlanningGoalRun = Insertable<PlanningGoalRunsTable>

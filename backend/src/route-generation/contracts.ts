@@ -42,6 +42,8 @@ export const routeGenerationRunSchema = z.object({
   id: z.string().uuid(),
   tripId: z.string().uuid(),
   conversationId: z.string().uuid().optional(),
+  goalId: z.string().uuid().optional(),
+  goalRunId: z.string().uuid().optional(),
   idempotencyKey: z.string().min(1).max(200),
   contextVersion: z.number().int().nonnegative(),
   status: routeGenerationStatusSchema,
@@ -57,7 +59,11 @@ export const routeGenerationRunSchema = z.object({
   updatedAt: z.string().datetime({ offset: true }),
   startedAt: z.string().datetime({ offset: true }).optional(),
   finishedAt: z.string().datetime({ offset: true }).optional()
-}).strict()
+}).strict().superRefine((value, context) => {
+  if ((value.goalId === undefined) !== (value.goalRunId === undefined)) {
+    context.addIssue({ code: 'custom', path: ['goalRunId'], message: 'Goal and Goal run lineage must be present together' })
+  }
+})
 export type RouteGenerationRunView = z.infer<typeof routeGenerationRunSchema>
 
 export interface RouteGenerationRunRecord {
@@ -65,6 +71,8 @@ export interface RouteGenerationRunRecord {
   ownerId: string
   tripId: string
   conversationId?: string
+  goalId?: string
+  goalRunId?: string
   idempotencyKey: string
   requestHash: string
   contextSnapshot: TripContext
@@ -98,6 +106,8 @@ export interface CreateRouteGenerationRunInput {
   ownerId: string
   tripId: string
   conversationId?: string
+  goalId?: string
+  goalRunId?: string
   idempotencyKey: string
   requestHash: string
   contextVersion: number
@@ -118,6 +128,8 @@ export function toRouteGenerationRunView(run: RouteGenerationRunRecord, options:
     id: run.id,
     tripId: run.tripId,
     ...(run.conversationId === undefined ? {} : { conversationId: run.conversationId }),
+    ...(run.goalId === undefined ? {} : { goalId: run.goalId }),
+    ...(run.goalRunId === undefined ? {} : { goalRunId: run.goalRunId }),
     idempotencyKey: run.idempotencyKey,
     contextVersion: run.contextVersion,
     status: run.status,

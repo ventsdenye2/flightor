@@ -8,10 +8,11 @@ tool boundary.
 The public conversation API is the authenticated `POST /v1/agent/converse`.
 Its Planner registry is intentionally smaller than the complete deterministic
 Core Tool registry: conversation may gather facts, update Trip/Memory, search
-fares, research, and build an outline, but it cannot start final route
-generation. Final connection search, complete-path planning, Pareto
-optimization, and route-price confirmation run only behind the explicit
-owner-scoped route-generation run API described below. `agent-v2` is a removed
+fares, research, and build an outline. It may queue final route generation only
+through the zero-argument `start_route_generation` operation after an
+unambiguous current user instruction. Final connection search, complete-path planning, Pareto
+optimization, and route-price confirmation run only behind the explicit,
+owner-scoped route-generation domain service described below. `agent-v2` is a removed
 migration seam, not a current public API.
 
 ## Status legend
@@ -26,19 +27,19 @@ status: the tool is implemented and tested, but is intentionally absent from
 the public conversation Planner registry and may run only inside the explicit
 route-generation composition.
 
-## Agentic goal controls — architecture migration
+## Agentic goal controls
 
-The current tool registry remains available while the Agentic completion
-protocol is implemented. These controls are **Planned** and must not be treated
-as production capabilities until their PostgreSQL repository, runtime wiring,
-domain verifiers and contract tests are complete:
+The durable Agentic completion protocol is **Implemented** in the PostgreSQL
+production composition and the in-memory test seam. Goal controls validate
+results without prescribing an end-to-end tool sequence:
 
 | Tool | Status | Input / output | Authority and behavior |
 | --- | --- | --- | --- |
-| `declare_goal` | Planned | Typed goal kind plus bounded user-intent parameters → durable goal/run reference | The Planner interprets an explicit user request; owner, Trip, Conversation, current message, context version and idempotency binding come from the server. It does not prescribe a tool sequence. |
-| `get_active_goal` | Planned | No model-supplied owner/Trip → current durable goal, run status and compact working set | Allows cross-turn/process resume without reconstructing execution state from conversation prose. |
-| `finish_goal` | Planned | Optional server-resolved result selector → `pending|satisfied|partial|failed` plus missing capabilities and verified Artifact refs | A kind-specific domain verifier reads persisted owner/run/version/lineage state. Model text, tool names and call counts are not completion evidence. |
-| `cancel_goal` | Planned | Current goal plus explicit user cancellation → cancelled status | Cancellation is persistent and cannot be converted into success by a late tool result. |
+| `declare_goal` | Implemented | `travel_guide`, `flight_search`, or `trip_context_update` plus bounded user-intent parameters → durable goal/run | Owner, Trip, Conversation, context version, timestamps and idempotency binding come from the server. Final route generation uses its dedicated authorized start operation. |
+| `get_active_goal` | Implemented | `{}` → current durable goal, run status and compact working set | Server selects within the authenticated Trip and resumes against a frozen current-context run when needed. |
+| `finish_goal` | Implemented | `{ goalId }` → goal/run plus `pending|satisfied|partial|failed` verification | A kind-specific domain verifier reads persisted owner/run/version/lineage state. Model text, tool names and call counts are not completion evidence. |
+| `cancel_goal` | Implemented | `{ goalId }` → cancelled goal and active run | Owner/Trip scope is server checked; cancellation is persistent and late tool results cannot convert it to success. |
+| `start_route_generation` | Implemented | `{}` → queued route-generation run with durable goal/run lineage | Available to the Planner only for an unambiguous current user instruction. The server records `explicit_user_message`; the authenticated HTTP action records `button`. Internal route-engine tools remain hidden. |
 
 The Planner remains free to choose, skip, repeat and reorder the existing
 domain tools. The goal protocol validates the result; it is not an end-to-end
@@ -169,8 +170,11 @@ timeouts, cancellation, rate limits and duplicate-call guards still apply.
 
 - Tool arguments and tool results are schema validated.
 - Unknown tools fail closed.
-- The runtime enforces a maximum tool-step count, per-turn cost budget, per-tool
-  timeout, caller cancellation, generation-current guard, and structured traces.
+- The runtime enforces a maximum tool-step count, a configurable cost ledger,
+  per-tool timeout, caller cancellation, generation-current guard, and
+  structured traces. The production Planner's function-first configuration
+  sets the ledger ceiling above its maximum possible per-turn tool-call cost,
+  so cost does not block a valid plan in this milestone.
 - Independent read-only calls may run concurrently. State mutations are ordered.
 - Agent-facing tools call domain services/providers directly and never recurse
   through the Agent tool registry.
@@ -182,6 +186,13 @@ timeouts, cancellation, rate limits and duplicate-call guards still apply.
 conversation runtime. It includes:
 
 ```text
+declare_goal
+get_active_goal
+finish_goal
+cancel_goal
+start_route_generation
+get_trip_artifacts
+read_artifact
 get_trip_context
 update_trip_context
 resolve_location
@@ -201,7 +212,8 @@ update_user_memory
 It deliberately excludes `search_connection_flights`, `plan_flight_route`,
 `optimize_route`, and `confirm_route_price`. Those tools remain implemented in
 the complete Core Tool registry for deterministic engine composition and tests,
-but a model response or tool call cannot use them to start a final route.
+but the model cannot call them directly. `start_route_generation` only queues
+that deterministic composition after explicit conversational authorization.
 
 The explicit action is an authenticated, owner-scoped run resource:
 
@@ -211,10 +223,12 @@ GET    /v1/route-generation-runs/:runId
 DELETE /v1/route-generation-runs/:runId
 ```
 
-Creation requires `Idempotency-Key` and accepts only the strict body
+HTTP creation represents the Generate Route button, requires `Idempotency-Key`, and accepts only the strict body
 `{ conversationId?, expectedTripVersion? }`. The server snapshots the owned
 Trip Context, validates an optional same-Trip Conversation, stores a canonical
-request binding, and enqueues only the opaque run ID. Replaying the same key
+request binding, creates an authorized durable Goal/run, and enqueues only the
+opaque route-run ID. The Agent tool uses the same service with a server-derived
+idempotency key and records `explicit_user_message`. Replaying the same key
 returns the existing run; changing the request under an existing key is a
 conflict. Reads and cancellation are owner-scoped. Cancellation is cooperative
 and persistent, and terminal runs are immutable.
@@ -223,7 +237,9 @@ Run status is `queued → running → succeeded|failed|cancelled`, with bounded
 progress, warnings, sanitized errors, and compact result Artifact references.
 The worker uses the frozen context version, so later Trip edits do not mutate a
 running run. Successful results report their frozen version and whether they
-are stale relative to the current Trip.
+are stale relative to the current Trip. Generated Artifacts carry the same Goal
+ID, Goal run ID, Trip Context version, and source-Artifact lineage; server
+verifiers then set the durable Goal to `satisfied` or `partial`.
 
 The Phase 5 generation slice accepts exactly one final visit destination with a
 canonical airport, an origin airport, and a bounded departure window. Return

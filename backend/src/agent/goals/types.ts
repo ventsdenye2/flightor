@@ -24,7 +24,7 @@ export const goalAuthorizationSchema = z.object({
   grantedAt: z.iso.datetime()
 }).strict()
 
-const travelGuideParametersSchema = z.object({
+export const travelGuideGoalParametersSchema = z.object({
   questions: z.array(z.string().trim().min(1).max(500)).min(1).max(8),
   researchTypes: z.array(z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical'])).min(1).max(5),
   maxResults: z.number().int().min(1).max(20),
@@ -32,13 +32,13 @@ const travelGuideParametersSchema = z.object({
   allowPartial: z.boolean()
 }).strict()
 
-const flightSearchParametersSchema = z.object({
+export const flightSearchGoalParametersSchema = z.object({
   requestKey: z.string().trim().min(1).max(200),
   departureDate: z.iso.date().optional(),
   returnDate: z.iso.date().optional()
 }).strict()
 
-const tripContextUpdateParametersSchema = z.object({
+export const tripContextUpdateGoalParametersSchema = z.object({
   fields: z.array(z.enum([
     'origin', 'departureWindow', 'returnWindow', 'travelDays', 'budget',
     'destinationIntent', 'interests', 'pace', 'priorities',
@@ -47,16 +47,16 @@ const tripContextUpdateParametersSchema = z.object({
   ])).min(1).max(14)
 }).strict()
 
-const routeGenerationParametersSchema = z.object({
+export const routeGenerationGoalParametersSchema = z.object({
   requestKey: z.string().trim().min(1).max(200)
 }).strict()
 
 /** Goal parameters are bounded intent constraints, never provider facts. */
 export const goalIntentSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('travel_guide'), parameters: travelGuideParametersSchema }).strict(),
-  z.object({ kind: z.literal('flight_search'), parameters: flightSearchParametersSchema }).strict(),
-  z.object({ kind: z.literal('trip_context_update'), parameters: tripContextUpdateParametersSchema }).strict(),
-  z.object({ kind: z.literal('route_generation'), parameters: routeGenerationParametersSchema }).strict()
+  z.object({ kind: z.literal('travel_guide'), parameters: travelGuideGoalParametersSchema }).strict(),
+  z.object({ kind: z.literal('flight_search'), parameters: flightSearchGoalParametersSchema }).strict(),
+  z.object({ kind: z.literal('trip_context_update'), parameters: tripContextUpdateGoalParametersSchema }).strict(),
+  z.object({ kind: z.literal('route_generation'), parameters: routeGenerationGoalParametersSchema }).strict()
 ])
 export type GoalIntent = z.infer<typeof goalIntentSchema>
 

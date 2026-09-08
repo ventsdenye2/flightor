@@ -18,6 +18,7 @@ import {
   type RouteSetPayload
 } from '../../flight-routing/types.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
+import { toolArtifactLineage } from './artifact-lineage.js'
 
 const verificationStatusSchema = z.enum(['verified', 'partially_verified', 'stale', 'unverified'])
 const artifactReferenceSchema = z.object({
@@ -461,6 +462,7 @@ async function persistFareSnapshot(
   const payload = flightSearchArtifactSchema.parse({ ...result, id, type: 'flight_search', verification })
   const stored = await context.artifacts.create({
     id, tripId: context.tripId, conversationId: context.conversationId,
+    ...toolArtifactLineage(context, [sourceArtifactId]),
     type: 'flight_search', schemaVersion: 1, payload, verification
   })
   assertCurrent(context, signal)
@@ -751,6 +753,7 @@ export const confirmRoutePriceTool: AgentTool<
     const id = uuidv7()
     const stored = await context.artifacts.create({
       id, tripId: context.tripId, conversationId: context.conversationId,
+      ...toolArtifactLineage(context, sourceArtifactIds),
       type: 'route_set', schemaVersion: 1, payload: successorPayload, verification
     })
     assertCurrent(context, signal)

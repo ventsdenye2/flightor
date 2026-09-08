@@ -17,6 +17,10 @@ export interface ArtifactRecord {
   id: string
   tripId: string
   conversationId?: string
+  goalId?: string
+  runId?: string
+  tripContextVersion?: number
+  sourceArtifactIds?: string[]
   type: ArtifactType
   schemaVersion: number
   payload: unknown
@@ -29,16 +33,43 @@ export interface CreateArtifactInput {
   id?: string
   tripId: string
   conversationId?: string
+  goalId?: string
+  runId?: string
+  tripContextVersion?: number
+  sourceArtifactIds?: readonly string[]
   type: ArtifactType
   schemaVersion: number
   payload: unknown
   verification?: unknown
 }
 
+export interface ArtifactScope {
+  tripId?: string
+  goalId?: string
+  runId?: string
+  tripContextVersion?: number
+}
+
+export interface ArtifactRelationship {
+  ownerId: string
+  tripId: string
+  goalId?: string
+  tripContextVersion?: number
+}
+
+/** Optional domain lookups for the deterministic in-memory implementation. */
+export interface ArtifactRelationshipResolver {
+  goal?: (goalId: string) => ArtifactRelationship | Promise<ArtifactRelationship | undefined> | undefined
+  run?: (runId: string) => ArtifactRelationship | Promise<ArtifactRelationship | undefined> | undefined
+}
+
 export interface ArtifactRepository {
   create(input: CreateArtifactInput): Promise<ArtifactRecord>
   get(artifactId: string): Promise<ArtifactRecord | undefined>
   listForTrip?(tripId: string, limit?: number): Promise<ArtifactRecord[]>
+  listForGoal(goalId: string, limit?: number): Promise<ArtifactRecord[]>
+  listForRun(runId: string, limit?: number): Promise<ArtifactRecord[]>
+  getForScope(artifactId: string, scope: ArtifactScope): Promise<ArtifactRecord | undefined>
 }
 
 interface OwnedArtifact extends ArtifactRecord { ownerId: string }
@@ -49,7 +80,8 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
   constructor(
     private readonly ownerId: string,
     private readonly ownedTripIds: Set<string>,
-    sharedRecords: Map<string, OwnedArtifact> = new Map()
+    sharedRecords: Map<string, OwnedArtifact> = new Map(),
+    private readonly relationships: ArtifactRelationshipResolver = {}
   ) {
     this.records = sharedRecords
   }
@@ -59,10 +91,31 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
     if (!Number.isInteger(input.schemaVersion) || input.schemaVersion < 1) {
       throw new AppError('INVALID_ARTIFACT', 'Artifact schema version must be positive')
     }
+    if (input.tripContextVersion !== undefined && (!Number.isInteger(input.tripContextVersion) || input.tripContextVersion < 0)) {
+      throw new AppError('INVALID_ARTIFACT', 'Artifact Trip Context version must be non-negative')
+    }
+    if (input.runId !== undefined && input.goalId === undefined) {
+      throw new AppError('INVALID_ARTIFACT', 'Artifact goalId is required when runId is provided')
+    }
+    const sourceArtifactIds = normalizeSourceArtifactIds(input.sourceArtifactIds)
+    if (input.id !== undefined && sourceArtifactIds.includes(input.id)) {
+      throw new AppError('INVALID_ARTIFACT', 'Artifact cannot reference itself')
+    }
+    for (const sourceId of sourceArtifactIds) {
+      const source = this.records.get(sourceId)
+      if (!source || source.ownerId !== this.ownerId || source.tripId !== input.tripId) {
+        throw new AppError('RESOURCE_NOT_FOUND', 'Source artifact was not found', 404)
+      }
+    }
+    await this.validateRelationships(input)
     const now = new Date().toISOString()
     const record: OwnedArtifact = {
       id: input.id ?? uuidv7(), ownerId: this.ownerId, tripId: input.tripId,
       ...(input.conversationId ? { conversationId: input.conversationId } : {}),
+      ...(input.goalId ? { goalId: input.goalId } : {}),
+      ...(input.runId ? { runId: input.runId } : {}),
+      ...(input.tripContextVersion === undefined ? {} : { tripContextVersion: input.tripContextVersion }),
+      sourceArtifactIds,
       type: input.type, schemaVersion: input.schemaVersion,
       payload: structuredClone(input.payload),
       ...(input.verification === undefined ? {} : { verification: structuredClone(input.verification) }),
@@ -80,10 +133,67 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
     return structuredClone(publicRecord)
   }
 
+  async getForScope(artifactId: string, scope: ArtifactScope): Promise<ArtifactRecord | undefined> {
+    const record = await this.get(artifactId)
+    return record && matchesScope(record, scope) ? record : undefined
+  }
+
   async listForTrip(tripId: string, limit = 10): Promise<ArtifactRecord[]> {
     if (!this.ownedTripIds.has(tripId)) return []
     return [...this.records.values()].filter(record => record.ownerId === this.ownerId && record.tripId === tripId)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)).slice(0, Math.min(20, Math.max(1, limit)))
       .map(({ ownerId: _owner, ...record }) => structuredClone(record))
   }
+
+  async listForGoal(goalId: string, limit = 10): Promise<ArtifactRecord[]> {
+    return this.listScoped(record => record.goalId === goalId, limit)
+  }
+
+  async listForRun(runId: string, limit = 10): Promise<ArtifactRecord[]> {
+    return this.listScoped(record => record.runId === runId, limit)
+  }
+
+  private async listScoped(predicate: (record: ArtifactRecord) => boolean, limit: number): Promise<ArtifactRecord[]> {
+    return [...this.records.values()]
+      .filter(record => record.ownerId === this.ownerId && predicate(record))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))
+      .slice(0, boundedLimit(limit))
+      .map(({ ownerId: _owner, ...record }) => structuredClone(record))
+  }
+
+  private async validateRelationships(input: CreateArtifactInput): Promise<void> {
+    if (input.goalId !== undefined && this.relationships.goal !== undefined) {
+      const goal = await this.relationships.goal(input.goalId)
+      if (!goal || goal.ownerId !== this.ownerId || goal.tripId !== input.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
+    }
+    if (input.runId !== undefined && this.relationships.run !== undefined) {
+      const run = await this.relationships.run(input.runId)
+      if (!run || run.ownerId !== this.ownerId || run.tripId !== input.tripId || (input.goalId !== undefined && run.goalId !== input.goalId)) {
+        throw new AppError('RESOURCE_NOT_FOUND', 'Goal run was not found', 404)
+      }
+      if (input.tripContextVersion !== undefined && run.tripContextVersion !== undefined && input.tripContextVersion !== run.tripContextVersion) {
+        throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Artifact Trip Context version does not match goal run', 409)
+      }
+    }
+  }
+}
+
+function boundedLimit(value: number): number {
+  return Number.isFinite(value) ? Math.min(100, Math.max(1, Math.floor(value))) : 10
+}
+
+export function normalizeSourceArtifactIds(values: readonly string[] | undefined): string[] {
+  const result = [...new Set(values ?? [])]
+  if (result.some(value => typeof value !== 'string' || value.trim().length === 0 || value.length > 160)) {
+    throw new AppError('INVALID_ARTIFACT', 'Source artifact ids must be non-empty and bounded')
+  }
+  if (result.length > 50) throw new AppError('INVALID_ARTIFACT', 'Too many source artifact ids')
+  return result
+}
+
+function matchesScope(record: ArtifactRecord, scope: ArtifactScope): boolean {
+  return (scope.tripId === undefined || record.tripId === scope.tripId)
+    && (scope.goalId === undefined || record.goalId === scope.goalId)
+    && (scope.runId === undefined || record.runId === scope.runId)
+    && (scope.tripContextVersion === undefined || record.tripContextVersion === scope.tripContextVersion)
 }

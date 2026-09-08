@@ -11,11 +11,16 @@ import type { TripRoutePlanner } from '../../trip-planning/types.js'
 import type { TravelGuideBuilder } from '../../travel-guides/artifact.js'
 import type { ChatToolDefinition, FunctionToolCall } from './model.js'
 import type { LocationRef } from '../../aviation/types.js'
+import type { GoalRepository, GoalRunRepository } from '../goals/repository.js'
+import type { GoalVerifierRegistry } from '../goals/verifier.js'
+import type { RouteGenerationDependencies } from '../../route-generation/service.js'
 
 export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
 export type ToolSideEffect = 'none' | 'state'
 
 export interface ToolExecutionContext {
+  /** Authenticated owner for durable Goal records. */
+  ownerId?: string
   requestId: string
   conversationId: string
   tripId: string
@@ -37,6 +42,14 @@ export interface ToolExecutionContext {
   resolvedLocationKeys?: Set<string>
   resolvedLocations?: Map<string, LocationRef>
   isGenerationCurrent?: () => boolean
+  goalRepository?: GoalRepository
+  goalRunRepository?: GoalRunRepository
+  goalVerifiers?: GoalVerifierRegistry
+  /** Explicit conversational route generation uses the same domain service as the button. */
+  routeGeneration?: RouteGenerationDependencies
+  activeGoalId?: string
+  activeGoalRunId?: string
+  activeGoalContextVersion?: number
 }
 
 export interface AgentTool<Input = unknown, Output = unknown> {

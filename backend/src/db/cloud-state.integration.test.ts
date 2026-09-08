@@ -3,6 +3,7 @@ import { Kysely, PostgresDialect } from 'kysely'
 import pg from 'pg'
 import { up as createInitialSchema } from './migrations/001_initial.js'
 import { up as createCloudStateSchema } from './migrations/006_cloud_state.js'
+import { up as createPlanningGoalsSchema } from './migrations/010_planning_goals.js'
 import type { Database } from './types.js'
 import { PostgresUserIdentityRepository } from '../identity/postgres.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
@@ -26,6 +27,7 @@ suite('Phase 2 PostgreSQL integration', () => {
     db = new Kysely<Database>({ dialect: new PostgresDialect({ pool: new pg.Pool({ connectionString: databaseUrl, options: `-c search_path=${schema}` }) }) })
     await createInitialSchema(db)
     await createCloudStateSchema(db)
+    await createPlanningGoalsSchema(db)
     const identities = new PostgresUserIdentityRepository(db)
     const first = await identities.resolveWechat({ providerSubject: 'phase2-user-a', nickname: 'A', avatarUrl: '' })
     const duplicate = await identities.resolveWechat({ providerSubject: 'phase2-user-a', nickname: 'A2', avatarUrl: '' })

@@ -32,6 +32,7 @@ describe('CloudPlannerService vertical slice', () => {
       override async resolveLocation(input: ResolveLocationInput, _options?: ProviderCallOptions) {
         return { matches: [input.query === 'Tokyo' ? tokyo : shanghai], verification: { status: 'verified' as const, checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock-aviation' }] } }
       }
+      override async getAirport(input: { iata: string }) { return input.iata === 'NRT' ? tokyo : input.iata === 'PVG' ? shanghai : undefined }
     }
     const fares = new MockFareProvider({ search: {
       query: { origin: 'PVG', destination: 'NRT', departureDate: '2026-10-01', currency: 'CNY', travelClass: 1 },
@@ -49,7 +50,7 @@ describe('CloudPlannerService vertical slice', () => {
       })
       .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [
         call('trip-1', 'update_trip_context', { expectedVersion: 0, patch: { origin: shanghai, destinationIntent: { mode: 'explicit', required: [tokyo], preferred: [], excluded: [] } } }),
-        call('fare-1', 'search_flights', { origin: shanghai, destination: tokyo, departureDate: '2026-10-01' })
+        call('fare-1', 'search_flights', { origin: 'PVG', destination: 'NRT', departureDate: '2026-10-01' })
       ] } })
       .mockResolvedValueOnce({ message: { role: 'assistant', content: '已找到一个经过验证的航班选项。' } }) }
     const runtime = new AgentRuntime(model, createCoreToolRegistry())

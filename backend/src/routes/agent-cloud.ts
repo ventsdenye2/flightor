@@ -29,6 +29,9 @@ import { ARTIFACT_TYPES, type ArtifactType } from '../artifacts/repository.js'
 import { locationRefSchema } from '../aviation/types.js'
 import type { TripContext } from '../trips/types.js'
 import { evaluateRouteGenerationEligibility } from '../route-generation/service.js'
+import { createRouteGenerationDependencies } from '../route-generation/composition.js'
+import { PostgresGoalRepository, PostgresGoalRunRepository } from '../agent/goals/postgres.js'
+import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifiers.js'
 
 export const cloudAgentRequestSchema = z.object({
   tripId: z.string().uuid(),
@@ -123,10 +126,15 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
     const conversations = new PostgresConversationRepository(context.db, userId)
     const artifacts = new PostgresArtifactRepository(context.db, userId)
     const memory = new PostgresUserMemoryRepository(context.db, userId)
+    const goalRepository = new PostgresGoalRepository(context.db, userId)
+    const goalRunRepository = new PostgresGoalRunRepository(context.db, userId)
     const runtime = new AgentRuntime(context.providers.openrouter, createPlannerToolRegistry(), {
       model: context.env.PLANNER_MODEL,
       turnTimeoutMs: 150_000,
       maxToolSteps: 10,
+      // Product decision: do not let the cost ledger block valid planning in
+      // the current function-first milestone. Other execution guards remain.
+      maxCostUnits: 100,
       modelOptions: { maxTokens: 4096, timeoutMs: 60_000, reasoning: { enabled: false, exclude: true } },
       modelTrace: trace => logger.info({ modelTrace: trace, model: context.env.PLANNER_MODEL }, 'Planner model completed'),
       trace: trace => logger.info({ toolTrace: trace }, 'Planner tool completed')
@@ -135,6 +143,11 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
     const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))
     return new CloudPlannerService({
       trips, conversations, artifacts, memory, runtime,
+      ownerId: userId,
+      goalRepository,
+      goalRunRepository,
+      goalVerifiers: createDefaultGoalVerifierRegistry(),
+      routeGeneration: createRouteGenerationDependencies(context, userId),
       aviation,
       fares: context.providers.fares,
       research: context.env.SERPAPI_KEY

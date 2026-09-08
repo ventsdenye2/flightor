@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { locationRefKey } from '../../aviation/types.js'
+import { MockAviationProvider } from '../../aviation/providers/mock.js'
+import type { AirportLookupInput } from '../../aviation/providers/provider.js'
 import { MockFareProvider } from '../../fares/providers/mock.js'
 import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
 import { InMemoryTripContextRepository } from '../../trips/repository.js'
@@ -14,11 +15,17 @@ const destination = { id: 'airport-nrt', type: 'airport' as const, name: 'Narita
 const base = { origin: 'PVG', destination: 'NRT', currency: 'CNY' as const, travelClass: 1 }
 const result = (date = '2026-10-01', offers = [{ id: 'offer-1', segments: [{ flightNumber: 'M1', airline: 'Mock', origin: 'PVG', destination: 'NRT', departsAt: `${date}T08:00:00Z`, arrivesAt: `${date}T12:00:00Z`, durationMinutes: 240 }], totalAmount: 1200, currency: 'CNY', totalDurationMinutes: 240, airlines: ['Mock'], transferType: 'direct' as const }]) => ({ query: { ...base, departureDate: date }, offers, provider: 'mock-fares', checkedAt: '2026-09-06T00:00:00.000Z', verification: { status: 'verified' as const, checkedAt: '2026-09-06T00:00:00.000Z', confidence: 1, sources: [{ provider: 'mock-fares' }] } })
 
+class TestAviationProvider extends MockAviationProvider {
+  override async getAirport(value: AirportLookupInput) {
+    return value.iata === 'PVG' ? origin : value.iata === 'NRT' ? destination : undefined
+  }
+}
+
 function context(flexible: ReturnType<typeof result>[] = [result()]): ToolExecutionContext {
   const trips = new Set(['trip-1'])
-  return { requestId: 'r', conversationId: 'c', tripId: 'trip-1', generationId: 'g', trips: new InMemoryTripContextRepository([emptyTripContext('trip-1')]), artifacts: new InMemoryArtifactRepository('u', trips), memory: new InMemoryUserMemoryRepository(), aviation: {} as never, fares: new MockFareProvider({ flexible }), resolvedLocationKeys: new Set([locationRefKey(origin), locationRefKey(destination)]) }
+  return { requestId: 'r', conversationId: 'c', tripId: 'trip-1', generationId: 'g', trips: new InMemoryTripContextRepository([emptyTripContext('trip-1')]), artifacts: new InMemoryArtifactRepository('u', trips), memory: new InMemoryUserMemoryRepository(), aviation: new TestAviationProvider(), fares: new MockFareProvider({ flexible }) }
 }
-const input = { origin, destination, departureDateFrom: '2026-10-01', departureDateTo: '2026-10-10', currency: 'CNY' as const, travelClass: 1 }
+const input = { origin: 'PVG', destination: 'NRT', departureDateFrom: '2026-10-01', departureDateTo: '2026-10-10', currency: 'CNY' as const, travelClass: 1 }
 
 describe('search_flexible_flights', () => {
   it('persists one v2 artifact and returns compact summary', async () => {
@@ -63,14 +70,14 @@ describe('search_flexible_flights', () => {
     await expect(searchFlexibleFlightsTool.execute(input, failed, new AbortController().signal)).rejects.toThrow('every sampled date')
   })
   it.each([
-    ['same endpoint', { ...input, destination: origin }],
+    ['same endpoint', { ...input, destination: 'PVG' }],
     ['reversed', { ...input, departureDateFrom: '2026-10-10', departureDateTo: '2026-10-01' }],
     ['over 31 days', { ...input, departureDateTo: '2026-11-01' }],
     ['return before window', { ...input, returnDate: '2026-10-09' }]
   ])('rejects %s', (_name, value) => expect(() => searchFlexibleFlightsInputSchema.parse(value)).toThrow())
-  it('rejects untrusted locations', async () => {
-    const ctx = context(); ctx.resolvedLocationKeys = new Set()
-    await expect(searchFlexibleFlightsTool.execute(input, ctx, new AbortController().signal)).rejects.toThrow('authoritative')
+  it('rejects an unknown airport before fare search', async () => {
+    const ctx = context()
+    await expect(searchFlexibleFlightsTool.execute({ ...input, destination: 'ZZZ' }, ctx, new AbortController().signal)).rejects.toThrow('authoritative')
   })
   it('rejects provider query and endpoint mismatches', async () => {
     const q = context([result('2026-11-01')])

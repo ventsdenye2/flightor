@@ -16,6 +16,9 @@ export interface FlightSearchDomainContext {
   artifacts: ArtifactRepository
   tripId: string
   conversationId?: string
+  goalId?: string
+  runId?: string
+  tripContextVersion?: number
   signal?: AbortSignal
   isCurrent?: () => boolean
 }
@@ -97,6 +100,9 @@ export async function executeFlightSearch(
     id,
     tripId: context.tripId,
     ...(context.conversationId ? { conversationId: context.conversationId } : {}),
+    ...(context.goalId ? { goalId: context.goalId } : {}),
+    ...(context.runId ? { runId: context.runId } : {}),
+    ...(context.tripContextVersion === undefined ? {} : { tripContextVersion: context.tripContextVersion }),
     type: 'flight_search',
     schemaVersion: 1,
     payload,
@@ -159,6 +165,9 @@ export async function executeFlexibleFlightSearch(
     id,
     tripId: context.tripId,
     ...(context.conversationId ? { conversationId: context.conversationId } : {}),
+    ...(context.goalId ? { goalId: context.goalId } : {}),
+    ...(context.runId ? { runId: context.runId } : {}),
+    ...(context.tripContextVersion === undefined ? {} : { tripContextVersion: context.tripContextVersion }),
     type: 'flight_search',
     schemaVersion: 2,
     payload,

@@ -15,6 +15,7 @@ import {
   type RouteGenerationDependenciesFactory
 } from '../route-generation/composition.js'
 import {
+  cancelRouteGenerationRun,
   startRouteGenerationRun,
   type StartRouteGenerationInput
 } from '../route-generation/service.js'
@@ -40,6 +41,7 @@ export async function registerRouteGenerationRoutes(
       ownerId: identity.userId,
       tripId,
       idempotencyKey: requiredIdempotencyKey(request.headers['idempotency-key']),
+      authorizationSource: 'button',
       ...(body.conversationId === undefined ? {} : { conversationId: body.conversationId }),
       ...(body.expectedTripVersion === undefined ? {} : { expectedTripVersion: body.expectedTripVersion })
     }
@@ -65,7 +67,7 @@ export async function registerRouteGenerationRoutes(
     const { id } = routeGenerationRunParamsSchema.parse(request.params)
     const identity = await authenticateRequest(request, context)
     const dependencies = dependenciesForUser(identity.userId)
-    const run = await dependencies.runs.cancel(id)
+    const run = await cancelRouteGenerationRun(dependencies, id)
     if (!run) return reply.code(404).send({ error: { code: 'RESOURCE_NOT_FOUND', message: 'Route generation run was not found' } })
     const currentTrip = await dependencies.trips.getTrip(run.tripId)
     return reply.header('Cache-Control', 'no-store').send({ run: toRouteGenerationRunView(run, { stale: currentTrip?.currentContextVersion !== run.contextVersion }) })

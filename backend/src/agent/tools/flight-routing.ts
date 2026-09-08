@@ -15,6 +15,7 @@ import {
 } from '../../flight-routing/types.js'
 import type { ArtifactRecord } from '../../artifacts/repository.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
+import { toolArtifactLineage } from './artifact-lineage.js'
 
 const MAX_WINDOW_DAYS = 31
 const artifactReferenceSchema = z.object({
@@ -216,6 +217,7 @@ export const searchConnectionFlightsTool: AgentTool<
     })
     const stored = await context.artifacts.create({
       id, tripId: context.tripId, conversationId: context.conversationId,
+      ...toolArtifactLineage(context),
       type: 'route_set', schemaVersion: 1, payload, verification: result.verification
     })
     const availabilityCounts = result.edges.reduce((counts, edge) => {
@@ -286,6 +288,7 @@ export const planFlightRouteTool: AgentTool<
     })
     const stored = await context.artifacts.create({
       id, tripId: context.tripId, conversationId: context.conversationId,
+      ...toolArtifactLineage(context, [source.record.id]),
       type: 'route_set', schemaVersion: 1, payload, verification: result.verification
     })
     return {
@@ -337,6 +340,7 @@ export const optimizeRouteTool: AgentTool<
     })
     const stored = await context.artifacts.create({
       id, tripId: context.tripId, conversationId: context.conversationId,
+      ...toolArtifactLineage(context, [source.record.id]),
       type: 'route_set', schemaVersion: 1, payload, verification: result.verification
     })
     return {

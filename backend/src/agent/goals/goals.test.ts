@@ -66,6 +66,12 @@ describe('Agentic Goal domain', () => {
       authorization: { source: 'button', grantedAt: observedAt }
     })
     expect(created.goal.authorization?.source).toBe('button')
+    const retried = await repository.create({
+      ...input, kind: 'route_generation', idempotencyKey: 'route-goal-1',
+      parameters: { requestKey: 'route-1' },
+      authorization: { source: 'button', grantedAt: '2026-09-07T00:00:01.000Z' }
+    })
+    expect(retried).toMatchObject({ created: false, goal: { id: created.goal.id } })
   })
 
   it('keeps the working set opaque, deduplicated, and immutable to callers', () => {

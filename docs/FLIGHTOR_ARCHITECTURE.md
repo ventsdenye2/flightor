@@ -937,11 +937,13 @@ discover destinations, plan a trip outline, research, and build a travel
 guide. It must not expose the final route-engine tools
 `search_connection_flights`, `plan_flight_route`, `optimize_route`, or
 `confirm_route_price` to the model. The complete Core Tool registry remains
-available to deterministic engine composition and contract tests, but a model
-response or tool call cannot start final route generation.
+available to deterministic engine composition and contract tests. The Planner
+may call only `start_route_generation` to queue that composition, and only when
+the current user message unambiguously requests final generation; it cannot
+invoke the internal engine tools directly.
 
-Final generation is an authenticated explicit action, not a conversational
-side effect. The run resource is:
+Final generation is an authenticated explicit action, never an inferred
+conversational side effect. The product button uses this run resource:
 
 ```text
 POST   /v1/trips/:tripId/route-generation-runs
@@ -949,10 +951,13 @@ GET    /v1/route-generation-runs/:runId
 DELETE /v1/route-generation-runs/:runId
 ```
 
-Creation requires an `Idempotency-Key` and accepts only
+HTTP creation requires an `Idempotency-Key` and accepts only
 `{ conversationId?, expectedTripVersion? }`. The server derives the owner from
 the access token, validates the optional Conversation belongs to the same Trip,
-freezes the accepted Trip Context/version, and enqueues only the opaque run ID.
+freezes the accepted Trip Context/version, records `button` authorization, and
+enqueues only the opaque run ID. `start_route_generation` calls the same domain
+service with server-owned scope/idempotency and records
+`explicit_user_message` authorization.
 The same key and request replay the existing run; changing the request under a
 key is a conflict. Reads and cancellation are owner-scoped. Cancellation is
 cooperative and persistent, while terminal runs are immutable. Status is
@@ -2030,12 +2035,15 @@ Large Artifacts are fetched by owner-scoped ID. `suggestedActions` is metadata
 only: a `generate_route` suggestion never starts a worker. The conversation
 Planner registry excludes final connection search, complete-path planning,
 optimization, and route-price confirmation; those tools are available only to
-the deterministic generation composition.
+the deterministic generation composition. An unambiguous current user message
+may authorize the Planner's zero-argument `start_route_generation` operation;
+discussion, readiness, suggestions, and Planner inference may not.
 
 ## 24.2 Route-generation run
 
-The user explicitly starts final generation through an authenticated run
-resource:
+The user explicitly starts final generation either through the authenticated
+run resource (the Generate Route button) or an unambiguous current conversation
+instruction handled by `start_route_generation`:
 
 ```text
 POST   /v1/trips/:tripId/route-generation-runs
@@ -2043,10 +2051,13 @@ GET    /v1/route-generation-runs/:runId
 DELETE /v1/route-generation-runs/:runId
 ```
 
-Creation requires the `Idempotency-Key` header. Its strict body is
+HTTP creation requires the `Idempotency-Key` header. Its strict body is
 `{ conversationId?, expectedTripVersion? }`. The server validates ownership and
 same-Trip Conversation binding, snapshots the accepted Trip Context and version,
-stores a canonical request binding, and enqueues only the opaque public run ID.
+stores a canonical request binding, creates a durable `route_generation` Goal
+and frozen Goal run with `button` authorization, and enqueues only the opaque
+public route-run ID. The Agent tool derives idempotency and authority from the
+authenticated runtime and records `explicit_user_message` instead.
 The same key and request replay the existing run; a different request under the
 same key is a conflict. Reads and cancellation are owner-scoped. Cancellation
 is cooperative and persistent; terminal runs are immutable.
@@ -2055,7 +2066,10 @@ Run status is `queued → running → succeeded|failed|cancelled`. Status respon
 include bounded progress, warnings, sanitized errors, the frozen context version,
 and compact result Artifact references. A successful result indicates when it is
 stale relative to the current Trip; stale results remain auditable and are never
-silently applied as current state.
+silently applied as current state. Route Artifacts preserve Goal ID, Goal run ID,
+Trip Context version, and source-Artifact lineage. The server-side Goal verifier
+marks the attempt `satisfied` or `partial`; failure and cancellation propagate
+to both run models.
 
 Phase 5 supports exactly one final visit destination resolved to a canonical
 airport, one canonical origin airport, and a bounded departure window. Return
@@ -2100,6 +2114,10 @@ conversation_messages
 trips
 trip_context_versions
 
+planning_goals
+planning_goal_runs
+route_generation_runs
+
 artifacts
 route_sets
 routes
@@ -2125,6 +2143,11 @@ Recommended hybrid:
 - relational columns for identity/status/indexing;
 - JSONB for rapidly evolving artifact payloads;
 - explicit schema validation at application boundary.
+
+Durable planning runs freeze Trip Context in JSONB while relational lineage
+links a route run and every produced Artifact to its Goal/run. Historical
+Artifacts remain valid with nullable Goal lineage; new Agentic work writes Goal
+ID, Goal run ID, Trip Context version, and source Artifact IDs.
 
 ---
 
@@ -2641,7 +2664,7 @@ The architecture migration is considered complete when:
 8. Current trip overrides Memory.
 9. The only public Planner conversation API is authenticated `POST /v1/agent/converse`.
 10. The conversation registry cannot invoke final connection/path/optimizer/route-confirmation tools.
-11. User explicitly triggers route generation through an idempotent, owner-scoped run.
+11. User explicitly triggers route generation through the button or an unambiguous current message; both create an idempotent, owner-scoped run with persisted authorization source.
 12. Route runs freeze Trip Context, support cooperative cancellation, and keep terminal results immutable.
 13. The current run contract rejects unsupported return windows, multi-visit composition, and required ground legs explicitly.
 14. Connection Engine prioritizes preferred cities but still searches alternatives.

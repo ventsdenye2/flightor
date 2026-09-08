@@ -82,10 +82,13 @@ compose.yaml         PostgreSQL、Redis、API、Worker 编排
 - Phase 5 backend cutover：唯一公开 Planner 对话入口为经过 JWT 认证的
   `POST /v1/agent/converse`，使用严格 camelCase `{ tripId, conversationId, message }`
   请求和 compact Trip/Artifact response。Conversation Planner registry 不含最终连接搜索、
-  路径规划、优化或路线报价确认工具；这些能力只能由显式 route-generation run 调用。
+  路径规划、优化或路线报价确认工具；它只可在当前用户消息明确要求生成路线时调用零参数
+  `start_route_generation`，由该操作创建显式 route-generation run。
 - Phase 5 route-generation contract：`POST /v1/trips/:tripId/route-generation-runs`、
   `GET /v1/route-generation-runs/:runId`、`DELETE /v1/route-generation-runs/:runId` 使用
   `Idempotency-Key`、owner-scoped auth、冻结 Trip Context、协作取消和 terminal immutability。
+  按钮入口记录 `button` 授权；明确的对话指令记录 `explicit_user_message` 授权；两者共用同一
+  domain service，并创建持久化 Goal/Goal run lineage。
   worker/API 与 mini-program authenticated Trip/Conversation session 已切换完成；客户端支持
   persisted run 恢复、bounded polling retry、取消和 late-response invalidation。Phase 5 gate 已通过；
   真实 PostgreSQL 并发套件需要显式 `TEST_DATABASE_URL`，无测试库时会明确 skip。
@@ -125,9 +128,10 @@ Memory 和 Artifact 均按 owner 读取。响应只返回 `conversationId`、`tr
 `suggestedActions`、可选 `memoryChanged`、有上限的 `warnings` 和 `stopReason`。
 完整 Artifact 通过 owner-scoped `/v1/artifacts/:id` 获取，不嵌入对话文本。
 
-`suggestedActions` 中的 `generate_route` 只是用户可点击的元数据；它不会由模型回复、
-自然语言或工具调用自动触发最终路线。用户点击后创建显式 route-generation run，并可用
-`Idempotency-Key` 重试；run 使用冻结的 Trip Context，支持 owner-scoped 查询、协作取消、
+`suggestedActions` 中的 `generate_route` 只是用户可点击的元数据，本身不会触发路线生成。
+用户点击按钮，或在当前消息中无歧义地明确要求生成路线，才会通过同一 domain service 创建
+显式 route-generation run；讨论、准备状态和 Planner 自行推断均不构成授权。按钮可用
+`Idempotency-Key` 重试，对话入口使用服务端派生的幂等键；run 使用冻结的 Trip Context，支持 owner-scoped 查询、协作取消、
 进度/警告/错误和 terminal immutability。当前生成 slice 只支持一个 canonical airport
 origin、一个最终 visit destination 和 bounded departure window；return window、多个
 visit destination、round-trip composition、required ground legs 必须显式返回 unsupported，
@@ -169,8 +173,11 @@ Artifact cache identity 并使迟到响应失效。
   Conversation，返回 compact context、Artifact refs、suggested actions、warnings 和
   stop reason；旧 rule-first converse route 已不再注册；
 - 显式 route-generation run contract：创建、查询和协作取消均 owner-scoped，要求
-  `Idempotency-Key`，冻结 Trip Context version，并把完整结果留在 Artifact；实现和 worker
-  仍在本轮工作树中推进；
+  `Idempotency-Key`，冻结 Trip Context version，并把完整结果留在 Artifact；按钮和明确对话
+  指令都创建带授权来源的持久化 Goal/run，Agent 不可直接调用内部路线引擎工具；
+- Agentic Goal completion protocol：`declare_goal`、`get_active_goal`、`finish_goal`、
+  `cancel_goal` 使用 PostgreSQL 持久化 owner/Trip/Conversation、冻结 Context、幂等键、状态和
+  working set；完成结果由领域 verifier 检查 Artifact lineage，而不是由模型措辞或工具名决定；
 - `/v1/trip-plans` 接收选中航班与路线事实，服务端生成行程时间轴，支持 `source=llm|rules` 及非阻塞 `warnings`；
 - OpenRouter、SerpApi 或路线 Provider 缺少凭据/不可用时返回明确 unavailable 或 warning；
   新 Planner 不把旧 rule-first converse 当作静默 fallback，也不编造 Provider 事实；
@@ -194,7 +201,7 @@ Artifact cache identity 并使迟到响应失效。
 | POST | `/v1/auth/wechat` | 微信登录 |
 | POST | `/v1/auth/refresh` | 刷新会话 |
 | POST | `/v1/agent/converse` | JWT 认证 Planner 对话；严格 `{tripId,conversationId,message}`，返回 compact Trip Context、typed Artifact refs、suggested actions、warnings 与 stop reason |
-| POST | `/v1/trips/:tripId/route-generation-runs` | 用户明确触发最终路线生成；要求 `Idempotency-Key`，可选 `conversationId`/`expectedTripVersion` |
+| POST | `/v1/trips/:tripId/route-generation-runs` | Generate Route 按钮入口；要求 `Idempotency-Key`，可选 `conversationId`/`expectedTripVersion`，记录 `button` 授权；明确对话指令通过同一 service 的 Agent tool 入口 |
 | GET | `/v1/route-generation-runs/:runId` | owner-scoped 查询 queued/running/succeeded/failed/cancelled、进度、冻结版本、warnings 与 Artifact ref |
 | DELETE | `/v1/route-generation-runs/:runId` | owner-scoped 协作取消 queued/running run；terminal run 不可变 |
 | POST | `/v1/route-plans/confirm` | 历史兼容路线卡报价确认；不属于新 Planner route-generation authority |
@@ -212,9 +219,11 @@ Artifact cache identity 并使迟到响应失效。
 
 Phase 5 contract/test pointers：`backend/src/routes/agent-cloud.test.ts` 覆盖新的
 authenticated conversation response；`backend/src/agent/tools/core.test.ts` 与
-`backend/src/agent/runtime/runtime.test.ts` 覆盖 Planner registry 不暴露最终路线工具；
+`backend/src/agent/runtime/runtime.test.ts` 覆盖 Planner registry 不暴露最终路线 primitives、
+但提供专用显式 start operation；
 `backend/src/route-generation/contracts.ts`、`repository.ts` 和数据库迁移
-`backend/src/db/migrations/007_route_generation_runs.ts` 保存 run contract；HTTP/worker、
+`backend/src/db/migrations/007_route_generation_runs.ts`、`010_planning_goals.ts`、
+`011_route_generation_goal_lineage.ts` 保存 run/Goal/lineage contract；HTTP/worker、
 取消/恢复、no-fake-fare 与 client session transport 均有自动化测试。真实数据库下的
 Trip-acceptance、cancel-vs-progress 与 stale-job recovery 并发测试位于
 `backend/src/route-generation/postgres.integration.test.ts`。

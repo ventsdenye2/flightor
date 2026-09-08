@@ -1,15 +1,30 @@
 import { AppError } from '../lib/errors.js'
-import type { ArtifactRepository, ArtifactType } from './repository.js'
+import type { ArtifactRepository, ArtifactType, CreateArtifactInput } from './repository.js'
 
 /** Authenticated scope shared by artifact-producing domain services. */
 export interface ArtifactWorkspace {
   artifacts: ArtifactRepository
   tripId: string
   conversationId?: string
+  goalId?: string
+  runId?: string
+  tripContextVersion?: number
   signal?: AbortSignal
   isCurrent?: () => boolean
   /** Workflows use this to check their frozen Trip version before each write. */
   checkpoint?: () => Promise<void>
+}
+
+export function workspaceLineage(
+  scope: ArtifactWorkspace,
+  sourceArtifactIds: readonly string[] = []
+): Pick<CreateArtifactInput, 'goalId' | 'runId' | 'tripContextVersion' | 'sourceArtifactIds'> {
+  return {
+    ...(scope.goalId ? { goalId: scope.goalId } : {}),
+    ...(scope.runId ? { runId: scope.runId } : {}),
+    ...(scope.tripContextVersion === undefined ? {} : { tripContextVersion: scope.tripContextVersion }),
+    sourceArtifactIds
+  }
 }
 
 export async function checkpoint(scope: ArtifactWorkspace): Promise<void> {

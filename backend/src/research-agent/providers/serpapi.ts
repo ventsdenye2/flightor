@@ -9,6 +9,8 @@ import {
   type ResearchSourceCandidate
 } from '../search-provider.js'
 import { classifyResearchSourceAuthority } from '../verification.js'
+import type { ResearchQueryPolicy, ResearchQueryScope } from '../query-policy.js'
+import { CURATED_RESEARCH_QUERY_POLICY } from '../curated-query-policy.js'
 
 const MAX_QUERY_LENGTH = 480
 const MAX_QUERY_PART_LENGTH = 160
@@ -42,7 +44,12 @@ function researchTypeLabel(value: ResearchSearchInput['researchTypes'][number]):
           : 'practical travel information'
 }
 
-function buildQuery(input: ResearchSearchInput): string {
+function scopeClause(scope: ResearchQueryScope | undefined): string {
+  if (!scope) return ''
+  return ` (${scope.domains.map(domain => `site:${domain}`).join(' OR ')})`
+}
+
+function buildQuery(input: ResearchSearchInput, policy: ResearchQueryPolicy = CURATED_RESEARCH_QUERY_POLICY): string {
   const parts = [
     input.destination.name,
     ...input.questions,
@@ -55,10 +62,9 @@ function buildQuery(input: ResearchSearchInput): string {
     if (input.travelWindow?.to && input.travelWindow.to.slice(0, 7) !== input.travelWindow?.from?.slice(0, 7)) parts.push(input.travelWindow.to.slice(0, 7))
   }
   const query = parts.map(sanitizeQueryPart).filter(Boolean).join(' ')
-  // Exact, server-owned public-tourism domains. No model/user string can add
-  // a search operator. Scope stays within the authority-classified source set.
-  const tokyo = input.destination.countryCode === 'JP' && [input.destination.cityCode, input.destination.iata].some(code => code === 'TYO' || code === 'NRT' || code === 'HND')
-  const officialScope = tokyo ? ' (site:gotokyo.org OR site:japan.travel)' : ''
+  // Exact, server-owned domains come from an injected product policy. No
+  // model/user string can add a search operator or destination special-case.
+  const officialScope = scopeClause(policy.scopeFor(input.destination))
   return query.slice(0, MAX_QUERY_LENGTH - officialScope.length) + officialScope
 }
 
@@ -100,14 +106,18 @@ function toCandidate(result: SerpOrganicResult): ResearchSourceCandidate | undef
 export class SerpApiResearchSearchProvider implements ResearchSearchProvider {
   readonly name = 'serpapi-research'
 
-  constructor(private readonly client: OrganicClient) {}
+  constructor(
+    private readonly client: OrganicClient,
+    private readonly queryPolicy: ResearchQueryPolicy = CURATED_RESEARCH_QUERY_POLICY
+  ) {}
 
   async search(input: ResearchSearchInput, options?: { signal?: AbortSignal }): Promise<ResearchSearchResult> {
     const validated = researchSearchInputSchema.parse(input)
     if (options?.signal?.aborted) {
       throw new AppError('PROVIDER_CANCELLED', 'Research search was cancelled', 502, { provider: this.name })
     }
-    const query = buildQuery(validated)
+    const scope = this.queryPolicy.scopeFor(validated.destination)
+    const query = buildQuery(validated, this.queryPolicy)
     if (!query || query.length > MAX_QUERY_LENGTH) {
       throw new AppError('INVALID_RESEARCH_SEARCH', 'Research query is empty or too long', 400)
     }
@@ -135,7 +145,7 @@ export class SerpApiResearchSearchProvider implements ResearchSearchProvider {
     return researchSearchResultSchema.parse({
       candidates,
       checkedAt: new Date().toISOString(),
-      warnings: validated.destination.countryCode === 'JP' && [validated.destination.cityCode, validated.destination.iata].some(code => code === 'TYO' || code === 'NRT' || code === 'HND') ? ['research_uses_curated_public_tourism_sources'] : []
+      warnings: scope?.warning ? [scope.warning] : []
     })
   }
 }

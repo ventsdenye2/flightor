@@ -1,5 +1,7 @@
 import type { AppContext } from '../app/context.js'
 import { PostgresArtifactRepository } from '../artifacts/postgres.js'
+import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifiers.js'
+import { PostgresGoalRepository, PostgresGoalRunRepository } from '../agent/goals/postgres.js'
 import { PostgresConversationRepository } from '../conversations/postgres.js'
 import {
   DeterministicFlightRoutePlanner,
@@ -18,13 +20,17 @@ export type RouteGenerationDependenciesFactory = (trustedUserId: string) => Rout
 export function routeGenerationDependenciesFactory(context: AppContext): RouteGenerationDependenciesFactory {
   return trustedUserId => {
     const trips = new PostgresTripRepository(context.db, trustedUserId)
+    const artifacts = new PostgresArtifactRepository(context.db, trustedUserId)
     return {
       runs: new PostgresRouteGenerationRunRepository(context.db, trustedUserId),
+      goals: new PostgresGoalRepository(context.db, trustedUserId),
+      goalRuns: new PostgresGoalRunRepository(context.db, trustedUserId),
+      goalVerifiers: createDefaultGoalVerifierRegistry(),
       trips,
       conversations: new PostgresConversationRepository(context.db, trustedUserId),
-      artifacts: new PostgresArtifactRepository(context.db, trustedUserId),
+      artifacts,
       connectionSearch: new LiveFareConnectionSearch({
-        artifacts: new PostgresArtifactRepository(context.db, trustedUserId), fares: context.providers.fares,
+        artifacts, fares: context.providers.fares,
         aviation: context.providers.aviation,
         topology: new ProductionConnectionSearchService(new PostgresTopologyRepository(context.db))
       }),

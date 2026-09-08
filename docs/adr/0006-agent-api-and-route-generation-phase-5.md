@@ -1,6 +1,6 @@
 # ADR 0006: Phase 5 Agent API and Explicit Route Generation
 
-- Status: Accepted
+- Status: Accepted; conversational authorization amended by ADR 0010 on 2026-09-08
 - Date: 2026-09-07
 - Owners: FlightOR architecture and integration owner
 - Authority: `docs/FLIGHTOR_ARCHITECTURE.md`
@@ -47,7 +47,7 @@ second public API. The former rule-first converse implementation remains
 unregistered during the cutover and is removed only after the new path and
 mini-program regression suite pass.
 
-### 2. Conversation cannot generate a final route
+### 2. Conversation cannot invoke final-route primitives
 
 The conversation Planner uses a restricted registry. It can resolve locations,
 update Trip Context and Memory, search flights, discover destinations, plan a
@@ -56,8 +56,12 @@ trip outline, research, and build a travel guide. It cannot call
 `confirm_route_price`.
 
 When the Trip contains enough supported input, the API may suggest a
-`generate_route` action. That suggestion is metadata only. No model response,
-tool call, or conversational phrase starts the generation job.
+`generate_route` action. That suggestion is metadata only. As amended by ADR
+0010, an unambiguous current user instruction may call the zero-argument
+`start_route_generation` domain operation; discussion, readiness, a suggestion,
+or Planner inference cannot. The tool records `explicit_user_message`
+authorization and queues the same deterministic service as the product button,
+without exposing any internal route primitive to the model.
 
 ### 3. Route generation is an authenticated run resource
 
@@ -165,7 +169,8 @@ identifiers, but never API keys, tokens, or full private Memory.
 - Request/response schema tests for the new public conversation endpoint.
 - Authentication and cross-owner rejection for Trip, Conversation, Artifact,
   and route-run resources.
-- Tests proving the Planner registry cannot trigger final route generation.
+- Tests proving the Planner registry excludes final-route primitives and that
+  only the dedicated, explicitly authorized start operation can queue them.
 - Idempotency replay/conflict, expected-version conflict, frozen input,
   cancellation, terminal-state, and stale-result tests.
 - Explicit rejection tests for return windows and unsupported multi-visit input.

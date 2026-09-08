@@ -1,4 +1,6 @@
 export * from './types.js'
 export * from './working-set.js'
 export * from './repository.js'
+export * from './postgres.js'
 export * from './verifier.js'
+export * from './default-verifiers.js'

@@ -1,12 +1,14 @@
 import type { ArtifactRepository } from '../../artifacts/repository.js'
 import { z } from 'zod'
 import { goalKindSchema, goalRunRecordSchema, goalStatusSchema, type GoalKind, type GoalRecord, type GoalRunRecord, type GoalStatus, type GoalWorkingSet } from './types.js'
+import type { TripContext } from '../../trips/types.js'
 
 export interface GoalVerificationContext {
   ownerId: string
   tripId: string
   run: GoalRunRecord
   artifacts: ArtifactRepository
+  currentTrip?: TripContext
   now?: string
 }
 

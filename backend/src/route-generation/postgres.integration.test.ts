@@ -4,6 +4,8 @@ import pg from 'pg'
 import { up as createInitialSchema } from '../db/migrations/001_initial.js'
 import { up as createCloudStateSchema } from '../db/migrations/006_cloud_state.js'
 import { up as createRouteGenerationSchema } from '../db/migrations/007_route_generation_runs.js'
+import { up as createPlanningGoalsSchema } from '../db/migrations/010_planning_goals.js'
+import { up as createRouteGoalLineageSchema } from '../db/migrations/011_route_generation_goal_lineage.js'
 import type { Database } from '../db/types.js'
 import { PostgresUserIdentityRepository } from '../identity/postgres.js'
 import { claimNextJob, failJob, heartbeatJob, recoverStaleJobs } from '../jobs/repository.js'
@@ -11,6 +13,7 @@ import { PostgresTripRepository } from '../trips/postgres.js'
 import type { Trip } from '../trips/repository.js'
 import type { TripContext } from '../trips/types.js'
 import { PostgresRouteGenerationRunRepository } from './repository.js'
+import { PostgresGoalRepository, PostgresGoalRunRepository } from '../agent/goals/postgres.js'
 
 const databaseUrl = process.env.TEST_DATABASE_URL
 const suite = databaseUrl ? describe : describe.skip
@@ -32,6 +35,8 @@ suite('Phase 5 PostgreSQL route-generation concurrency', () => {
     await createInitialSchema(db)
     await createCloudStateSchema(db)
     await createRouteGenerationSchema(db)
+    await createPlanningGoalsSchema(db)
+    await createRouteGoalLineageSchema(db)
     const identity = await new PostgresUserIdentityRepository(db).resolveWechat({
       providerSubject: `phase5-${schema}`, nickname: 'Phase 5', avatarUrl: ''
     })
@@ -76,6 +81,40 @@ suite('Phase 5 PostgreSQL route-generation concurrency', () => {
     const warnings = ['No active topology snapshot is available', '报价需重新确认，含 "quoted" text']
     expect(await repository.update(run.id, { progressStage: 'persisting_artifacts', warnings })).toMatchObject({ warnings })
     expect(await repository.update(run.id, { status: 'failed', warnings, errorCode: 'NO_ROUTE_PATHS', errorMessage: 'No routes' })).toMatchObject({ status: 'failed', warnings })
+  })
+
+  it('persists the durable Goal and Goal-run lineage on the queued route run', async () => {
+    const trip = await createTrip()
+    const goals = new PostgresGoalRepository(db, userId)
+    const goalRuns = new PostgresGoalRunRepository(db, userId)
+    const { goal } = await goals.create({
+      tripId: trip.id,
+      kind: 'route_generation',
+      parameters: { requestKey: 'postgres-lineage' },
+      createdContextVersion: trip.currentContextVersion,
+      authorization: { source: 'button', grantedAt: '2026-09-08T00:00:00.000Z' },
+      idempotencyKey: 'postgres-lineage-goal'
+    })
+    const { run: goalRun } = await goalRuns.create({
+      goalId: goal.id,
+      tripId: trip.id,
+      generationId: 'postgres-lineage-generation',
+      contextVersion: trip.currentContextVersion,
+      contextSnapshot: trip.context,
+      idempotencyKey: 'postgres-lineage-run'
+    })
+    const created = await new PostgresRouteGenerationRunRepository(db, userId).createOrGet({
+      ownerId: userId,
+      tripId: trip.id,
+      goalId: goal.id,
+      goalRunId: goalRun.id,
+      idempotencyKey: 'postgres-lineage-route',
+      requestHash: 'f'.repeat(64),
+      contextVersion: trip.currentContextVersion,
+      contextSnapshot: trip.context
+    })
+
+    expect(created.run).toMatchObject({ goalId: goal.id, goalRunId: goalRun.id })
   })
 
   it('serializes run acceptance with a committing TripContext edit', async () => {
