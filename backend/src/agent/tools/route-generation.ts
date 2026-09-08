@@ -41,6 +41,7 @@ export const startRouteGenerationTool: AgentTool<Record<string, never>, z.infer<
       throw new AppError('INVALID_ROUTE_GENERATION_LINEAGE', 'Route generation did not create durable Goal lineage', 500)
     }
     context.activeGoalId = result.run.goalId
+    context.activeGoalKind = 'route_generation'
     context.activeGoalRunId = result.run.goalRunId
     context.activeGoalContextVersion = result.run.contextVersion
     return { run: toRouteGenerationRunView(result.run, { stale: false }), created: result.created }

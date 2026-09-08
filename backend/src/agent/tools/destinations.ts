@@ -154,7 +154,7 @@ export const searchDestinationsTool: AgentTool<
     const serviceInput = destinationInputForTrip(trip, input)
     const service = assertDiscoveryAvailable(context)
     const { record, payload } = await discoverTripDestinations(
-      serviceInput, service, workspaceScope(context, signal), 'destination_candidates'
+      serviceInput, service, await workspaceScope(context, signal, trip), 'destination_candidates'
     )
     addCandidateLocations(context, payload.candidates)
     return {
@@ -195,7 +195,7 @@ export const recommendDestinationsTool: AgentTool<
     }, memoryPreferred)
     const service = assertDiscoveryAvailable(context)
     const { record, payload } = await discoverTripDestinations(
-      serviceInput, service, workspaceScope(context, signal), 'destination_recommendations'
+      serviceInput, service, await workspaceScope(context, signal, trip), 'destination_recommendations'
     )
     addCandidateLocations(context, payload.candidates)
     return {
@@ -247,7 +247,7 @@ export const planTripRouteTool: AgentTool<
       candidateArtifactId: input.candidateArtifactId,
       trip,
       maxCities: input.maxCities
-    }, planner, workspaceScope(context, signal))
+    }, planner, await workspaceScope(context, signal, trip))
     return {
       artifact: { id: record.id, type: 'route', schemaVersion: 1 },
       summary: routeSummary(payload),

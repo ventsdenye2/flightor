@@ -1,11 +1,11 @@
 import { z } from 'zod'
-import { locationRefKey, locationRefSchema, locationResolutionSchema, type LocationRef } from '../../aviation/types.js'
+import { locationRefSchema, locationResolutionSchema, type LocationRef } from '../../aviation/types.js'
 import { fareSearchInputSchema } from '../../fares/types.js'
 import { executeFlightSearch } from '../../fares/search-service.js'
 import { fareAirportSelectorSchema, resolveFareAirportPair } from '../../fares/airport-resolver.js'
 import { USER_MEMORY_MAX_BYTES } from '../../memory/repository.js'
 import { tripContextPatchSchema, tripContextSchema } from '../../trips/types.js'
-import { ToolRegistry, type AgentTool } from '../runtime/registry.js'
+import { ToolRegistry, type AgentTool, type ToolExecutionContext } from '../runtime/registry.js'
 import { searchFlexibleFlightsTool } from './flexible-flights.js'
 import { optimizeRouteTool, planFlightRouteTool, searchConnectionFlightsTool } from './flight-routing.js'
 import { searchDestinationsTool, recommendDestinationsTool, planTripRouteTool } from './destinations.js'
@@ -13,15 +13,37 @@ import { confirmFlightPriceTool, confirmRoutePriceTool } from './fare-confirmati
 import { researchDestinationTool, webResearchTool } from './research.js'
 import { buildTravelGuideTool } from './travel-guide.js'
 import { getTripArtifactsTool, readArtifactTool } from './artifact-reading.js'
-import { recordResolvedLocations } from './resolved-locations.js'
-import { AppError } from '../../lib/errors.js'
-import { cancelGoalTool, declareGoalTool, finishGoalTool, getGoalTool } from './goals.js'
+import { canonicalResolvedLocation, recordResolvedLocations } from './resolved-locations.js'
+import { cancelGoalTool, declareGoalTool, finishGoalTool, getGoalTool, resumeGoalTool } from './goals.js'
 import { startRouteGenerationTool } from './route-generation.js'
+import { workspaceScope } from './workspace-scope.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
+// Model arguments select identities; canonical Trip persistence still requires full LocationRefs.
+const tripLocationInputSchema = z.union([
+  z.string().min(1).max(128).describe('Exact canonical location id from resolve_location, destination discovery, or the existing Trip. Prefer this string selector.'),
+  locationRefSchema.describe('Legacy compatibility only: id/type select a trusted record; supplied descriptive facts are ignored.')
+])
+const groundLegSchema = tripContextSchema.shape.requiredGroundLegs.unwrap().element
+const updateTripContextPatchSchema = tripContextPatchSchema.extend({
+  origin: tripLocationInputSchema.nullable().optional(),
+  destinationIntent: tripContextSchema.shape.destinationIntent.extend({
+    required: z.array(tripLocationInputSchema).max(24),
+    preferred: z.array(tripLocationInputSchema).max(24),
+    excluded: z.array(tripLocationInputSchema).max(24)
+  }).optional(),
+  locationRoleOverrides: z.array(tripContextSchema.shape.locationRoleOverrides.element.extend({
+    location: tripLocationInputSchema
+  })).max(32).optional(),
+  requiredGroundLegs: z.array(z.object({
+    from: tripLocationInputSchema,
+    to: tripLocationInputSchema,
+    mode: groundLegSchema.shape.mode
+  }).strict()).max(24).optional()
+}).strict()
 const updateTripContextInputSchema = z.object({
-  patch: tripContextPatchSchema,
+  patch: updateTripContextPatchSchema,
   expectedVersion: z.number().int().nonnegative().optional()
 }).strict()
 const updateTripContextOutputSchema = z.object({
@@ -85,33 +107,41 @@ function tripLocations(value: z.infer<typeof tripContextSchema>): LocationRef[] 
   ]
 }
 
-function patchLocations(value: z.infer<typeof tripContextPatchSchema>): LocationRef[] {
-  return [
-    ...(value.origin ? [value.origin] : []),
-    ...(value.destinationIntent?.required ?? []),
-    ...(value.destinationIntent?.preferred ?? []),
-    ...(value.destinationIntent?.excluded ?? []),
-    ...(value.locationRoleOverrides ?? []).map(item => item.location),
-    ...(value.requiredGroundLegs ?? []).flatMap(leg => [leg.from, leg.to])
-  ]
-}
-
 function rememberLocations(context: { resolvedLocationKeys?: Set<string> }, values: readonly LocationRef[]): void {
   recordResolvedLocations(context, values)
 }
 
-function assertTrustedLocations(
-  context: { resolvedLocationKeys?: Set<string> },
-  values: readonly LocationRef[],
-  existing: readonly LocationRef[] = []
-): void {
-  const allowed = new Set([
-    ...(context.resolvedLocationKeys ?? []),
-    ...existing.map(locationRefKey)
-  ])
-  for (const value of values) {
-    if (!allowed.has(locationRefKey(value))) throw new AppError('LOCATION_NOT_RESOLVED', 'Location reference was not resolved by an authoritative provider')
+/** Resolve every Trip location position at one boundary, before any repository mutation. */
+function canonicalTripPatch(
+  patch: z.infer<typeof updateTripContextPatchSchema>,
+  context: ToolExecutionContext,
+  current: z.infer<typeof tripContextSchema>
+): z.infer<typeof tripContextPatchSchema> {
+  const authority: ToolExecutionContext = {
+    ...context,
+    resolvedLocationKeys: new Set(context.resolvedLocationKeys),
+    resolvedLocations: new Map()
   }
+  // Existing owned Trip facts are valid across turns; fresh server resolutions win for the same identity.
+  recordResolvedLocations(authority, tripLocations(current))
+  recordResolvedLocations(authority, [...(context.resolvedLocations?.values() ?? [])])
+  const resolve = (location: LocationRef | string) => canonicalResolvedLocation(authority, location)
+  return tripContextPatchSchema.parse({
+    ...patch,
+    ...(patch.origin == null ? {} : { origin: resolve(patch.origin) }),
+    ...(patch.destinationIntent ? { destinationIntent: {
+      ...patch.destinationIntent,
+      required: patch.destinationIntent.required.map(resolve),
+      preferred: patch.destinationIntent.preferred.map(resolve),
+      excluded: patch.destinationIntent.excluded.map(resolve)
+    } } : {}),
+    ...(patch.locationRoleOverrides ? { locationRoleOverrides: patch.locationRoleOverrides.map(item => ({
+      ...item, location: resolve(item.location)
+    })) } : {}),
+    ...(patch.requiredGroundLegs ? { requiredGroundLegs: patch.requiredGroundLegs.map(leg => ({
+      ...leg, from: resolve(leg.from), to: resolve(leg.to)
+    })) } : {})
+  })
 }
 
 const getTripContextTool: AgentTool<
@@ -140,7 +170,7 @@ const updateTripContextTool: AgentTool<
   z.infer<typeof updateTripContextOutputSchema>
 > = {
   name: 'update_trip_context',
-  description: 'Apply explicit current-trip constraints or preferences. This never changes long-term User Memory.',
+  description: 'Apply explicit current-trip constraints or preferences. For origin, destinationIntent required/preferred/excluded, locationRoleOverrides.location, and requiredGroundLegs from/to, pass exact canonical location id STRINGS from resolve_location, destination discovery, or the current Trip. The server restores all location facts; do not copy location descriptions. This never changes long-term User Memory.',
   inputSchema: updateTripContextInputSchema,
   outputSchema: updateTripContextOutputSchema,
   costClass: 'free',
@@ -152,11 +182,11 @@ const updateTripContextTool: AgentTool<
     if (signal.aborted || context.isGenerationCurrent?.() === false) throw new Error('Trip context update was cancelled')
     const current = await context.trips.get(context.tripId)
     if (!current) throw new Error('Active trip context was not found')
-    assertTrustedLocations(context, patchLocations(input.patch), tripLocations(current))
+    const patch = canonicalTripPatch(input.patch, context, current)
     if (Object.keys(input.patch).length === 0) {
       return { tripContext: current, changed: false }
     }
-    const tripContext = await context.trips.update(context.tripId, input.patch, input.expectedVersion, {
+    const tripContext = await context.trips.update(context.tripId, patch, input.expectedVersion ?? current.version, {
       signal,
       ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
     })
@@ -206,6 +236,7 @@ const searchFlightsTool: AgentTool<
   timeoutMs: 35_000,
   provider: 'fare_provider',
   async execute(input, context, signal) {
+    const scope = await workspaceScope(context, signal)
     const airports = await resolveFareAirportPair(context.aviation, {
       origin: input.origin,
       destination: input.destination
@@ -220,15 +251,8 @@ const searchFlightsTool: AgentTool<
       travelClass: input.travelClass
     })
     const { record: stored, payload: artifact } = await executeFlightSearch(query, {
+      ...scope,
       fares: context.fares,
-      artifacts: context.artifacts,
-      tripId: context.tripId,
-      conversationId: context.conversationId,
-      ...(context.activeGoalId ? { goalId: context.activeGoalId } : {}),
-      ...(context.activeGoalRunId ? { runId: context.activeGoalRunId } : {}),
-      ...(context.activeGoalContextVersion === undefined ? {} : { tripContextVersion: context.activeGoalContextVersion }),
-      signal,
-      ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
     })
     const lowest = [...artifact.offers].sort((left, right) => left.totalAmount - right.totalAmount)[0]
     return {
@@ -280,6 +304,7 @@ export function createCoreToolRegistry(): ToolRegistry {
   return new ToolRegistry()
     .register(declareGoalTool)
     .register(getGoalTool)
+    .register(resumeGoalTool)
     .register(finishGoalTool)
     .register(cancelGoalTool)
     .register(startRouteGenerationTool)
@@ -314,6 +339,7 @@ export function createPlannerToolRegistry(): ToolRegistry {
   return new ToolRegistry()
     .register(declareGoalTool)
     .register(getGoalTool)
+    .register(resumeGoalTool)
     .register(finishGoalTool)
     .register(cancelGoalTool)
     .register(startRouteGenerationTool)

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { v7 as uuidv7 } from 'uuid'
+import { z } from 'zod'
 import { AppError } from '../../lib/errors.js'
 import {
   createGoalInputSchema,
@@ -7,6 +8,7 @@ import {
   goalRecordSchema,
   goalRunRecordSchema,
   goalRunStatusUpdateSchema,
+  goalRunStatusSchema,
   goalStatusUpdateSchema,
   type CreateGoalInput,
   type CreateGoalRunInput,
@@ -79,6 +81,60 @@ export interface GoalRunRepository {
   listForGoal(goalId: string): Promise<GoalRunRecord[]>
   latestCompatible(query: GoalRunCompatibilityQuery): Promise<GoalRunRecord | undefined>
   update(runId: string, expectedRevision: number, patch: GoalRunStatusUpdate): Promise<GoalRunRecord>
+  commitCompletion(input: GoalCompletionInput): Promise<GoalCompletionResult>
+}
+
+export const goalCompletionInputSchema = z.object({
+  goalId: z.string().uuid(),
+  runId: z.string().uuid(),
+  expectedGoalRevision: z.number().int().nonnegative(),
+  expectedRunRevision: z.number().int().nonnegative(),
+  goalStatus: z.enum(['satisfied', 'partial', 'failed', 'cancelled']),
+  runStatus: goalRunStatusSchema,
+  currentTripVersion: z.number().int().nonnegative().optional()
+}).strict()
+export type GoalCompletionInput = z.infer<typeof goalCompletionInputSchema>
+export interface GoalCompletionResult { goal: GoalRecord; run: GoalRunRecord }
+
+/** Validate both aggregates before either repository changes state. */
+export function planGoalCompletion(
+  goal: GoalRecord,
+  run: GoalRunRecord,
+  input: GoalCompletionInput,
+  now: string,
+  actualTripVersion?: number
+): GoalCompletionResult {
+  if (goal.id !== input.goalId || run.id !== input.runId || run.goalId !== goal.id
+    || run.ownerId !== goal.ownerId || run.tripId !== goal.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal run was not found', 404)
+  if (input.goalStatus === 'satisfied' && input.currentTripVersion === undefined) {
+    throw new AppError('TRIP_CONTEXT_VERSION_REQUIRED', 'Successful completion requires the verified Trip version', 409)
+  }
+  if (input.currentTripVersion !== undefined && actualTripVersion !== undefined && input.currentTripVersion !== actualTripVersion) {
+    throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Trip changed before Goal completion', 409,
+      { expectedVersion: input.currentTripVersion, actualVersion: actualTripVersion })
+  }
+  if (input.goalStatus === 'satisfied' && goal.kind !== 'trip_context_update'
+    && input.currentTripVersion !== undefined && run.contextVersion !== input.currentTripVersion) {
+    throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Goal run no longer matches the accepted Trip', 409)
+  }
+  const keepsRunning = input.goalStatus === 'partial' && input.runStatus === 'running'
+  const preservesCancelledHistory = input.goalStatus === 'cancelled' && run.status !== 'running' && input.runStatus === run.status
+  if (input.goalStatus !== input.runStatus && !keepsRunning && !preservesCancelledHistory) {
+    throw new AppError('GOAL_COMPLETION_STATUS_MISMATCH', 'Goal and run completion statuses are inconsistent', 409)
+  }
+  // A transport retry after the transaction committed is a read, not another revision.
+  if (goal.status === input.goalStatus && run.status === input.runStatus
+    && goal.revision >= input.expectedGoalRevision && run.revision >= input.expectedRunRevision) return { goal, run }
+  if (goal.revision !== input.expectedGoalRevision) throw new GoalRevisionConflict(input.expectedGoalRevision, goal.revision)
+  if (run.revision !== input.expectedRunRevision) throw new GoalRunRevisionConflict(input.expectedRunRevision, run.revision)
+  if (!canGoalTransition(goal.status, input.goalStatus)) throw new GoalStatusConflict(goal.status, input.goalStatus)
+  if (!canRunTransition(run.status, input.runStatus)) throw new GoalRunStatusConflict(run.status, input.runStatus)
+  return {
+    goal: goalRecordSchema.parse({ ...goal, status: input.goalStatus, revision: goal.revision + Number(goal.status !== input.goalStatus),
+      updatedAt: goal.status === input.goalStatus ? goal.updatedAt : now }),
+    run: goalRunRecordSchema.parse({ ...run, status: input.runStatus, revision: run.revision + Number(run.status !== input.runStatus),
+      updatedAt: run.status === input.runStatus ? run.updatedAt : now })
+  }
 }
 
 export function selectLatestCompatibleRun(
@@ -135,7 +191,7 @@ function runFingerprint(input: CreateGoalRunInput): string {
   })
 }
 
-function canGoalTransition(status: GoalRecord['status'], nextStatus: GoalRecord['status']): boolean {
+export function canGoalTransition(status: GoalRecord['status'], nextStatus: GoalRecord['status']): boolean {
   if (status === nextStatus) return true
   if (status === 'satisfied' || status === 'cancelled') return false
   if (status === 'pending') return true
@@ -143,7 +199,7 @@ function canGoalTransition(status: GoalRecord['status'], nextStatus: GoalRecord[
   return nextStatus === 'satisfied' || nextStatus === 'failed' || nextStatus === 'cancelled'
 }
 
-function canRunTransition(status: GoalRunStatus, nextStatus: GoalRunStatus): boolean {
+export function canRunTransition(status: GoalRunStatus, nextStatus: GoalRunStatus): boolean {
   if (status === nextStatus) return true
   return status === 'running'
 }
@@ -226,6 +282,20 @@ export class InMemoryGoalRepository implements GoalRepository {
     this.goals.set(goal.id, stored)
     return cloneGoal(stored)
   }
+
+  /** Synchronous, completion-specific coordinator; the callback only commits the prepared in-memory run. */
+  commitRunCompletion(input: GoalCompletionInput, run: StoredGoalRun, writeRun: (run: StoredGoalRun) => void, actualTripVersion?: number): GoalCompletionResult {
+    const goal = this.goals.get(input.goalId)
+    if (!goal || goal.ownerId !== this.ownerId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
+    const result = planGoalCompletion(cloneGoal(goal), cloneRun(run), input, new Date().toISOString(), actualTripVersion)
+    const nextGoal = { ...goal, ...result.goal }
+    const nextRun = { ...run, ...result.run }
+    // All validation/cloning occurs before this uninterrupted pair of Map writes.
+    const output = structuredClone(result)
+    writeRun(nextRun)
+    this.goals.set(goal.id, nextGoal)
+    return output
+  }
 }
 
 export class InMemoryGoalRunRepository implements GoalRunRepository {
@@ -234,7 +304,8 @@ export class InMemoryGoalRunRepository implements GoalRunRepository {
   constructor(
     private readonly ownerId: string,
     private readonly goals: GoalRepository,
-    sharedRuns: Map<string, StoredGoalRun> = new Map()
+    sharedRuns: Map<string, StoredGoalRun> = new Map(),
+    private readonly currentTripVersion?: (tripId: string) => number | undefined
   ) {
     this.runs = sharedRuns
   }
@@ -300,5 +371,17 @@ export class InMemoryGoalRunRepository implements GoalRunRepository {
     const stored: StoredGoalRun = { ...next, idempotencyKey: run.idempotencyKey, requestFingerprint: run.requestFingerprint }
     this.runs.set(run.id, stored)
     return cloneRun(stored)
+  }
+
+  async commitCompletion(rawInput: GoalCompletionInput): Promise<GoalCompletionResult> {
+    const input = goalCompletionInputSchema.parse(rawInput)
+    const run = this.runs.get(input.runId)
+    if (!run || run.ownerId !== this.ownerId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal run was not found', 404)
+    if (!(this.goals instanceof InMemoryGoalRepository)) {
+      throw new AppError('GOAL_COMPLETION_UNAVAILABLE', 'In-memory completion requires its matching Goal repository', 503)
+    }
+    const currentVersion = this.currentTripVersion?.(run.tripId)
+    if (this.currentTripVersion && currentVersion === undefined) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
+    return this.goals.commitRunCompletion(input, run, next => this.runs.set(next.id, next), currentVersion)
   }
 }

@@ -3,7 +3,8 @@ import { View, Text } from '@tarojs/components'
 import { observer } from 'mobx-react-lite'
 import type { FlightOption, FlightSegment } from '../../types/flight'
 import { t, fd } from '../../i18n'
-import { formatTime, formatPrice, crossDayMark, formatMonthDay } from '../../utils/format'
+import { formatPrice } from '../../utils/format'
+import { airportTimeDisplay } from '../../services/airportTime'
 import './FlightCompareCard.scss'
 
 interface FlightCompareCardProps {
@@ -31,13 +32,12 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
           <Text className='font-code fcc__flight-no'>{seg.flightNo}</Text>
           <Text className='fcc__airline'>{seg.airline}</Text>
         </View>
-        <Text className='fcc__seg-date'>{formatMonthDay(seg.departTime)}</Text>
       </View>
 
       {/* 大时间 + 飞行进度线 */}
       <View className='fcc__timeline'>
         <View className='fcc__endpoint'>
-          <Text className='font-code fcc__time'>{formatTime(seg.departTime)}</Text>
+          <Text className='font-code fcc__time'>{seg.departTimeDisplay ?? airportTimeDisplay(seg.departTime)}</Text>
           <Text className='fcc__city'>{seg.origin}</Text>
         </View>
 
@@ -55,8 +55,7 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
 
         <View className='fcc__endpoint fcc__endpoint--right'>
           <Text className='font-code fcc__time'>
-            {formatTime(seg.arriveTime)}
-            <Text className='fcc__cross-day'>{crossDayMark(seg.departTime, seg.arriveTime)}</Text>
+            {seg.arriveTimeDisplay ?? airportTimeDisplay(seg.arriveTime)}
           </Text>
           <Text className='fcc__city'>{seg.destination}</Text>
         </View>

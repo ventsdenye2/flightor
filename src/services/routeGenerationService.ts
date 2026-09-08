@@ -28,6 +28,8 @@ export interface RouteGenerationRunView {
   id: string
   tripId: string
   conversationId?: string
+  goalId?: string
+  goalRunId?: string
   idempotencyKey: string
   contextVersion: number
   status: RouteGenerationStatus

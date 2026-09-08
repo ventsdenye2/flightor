@@ -68,7 +68,7 @@ function context(fares: FareProvider): ToolExecutionContext {
 
 async function addFlightArtifact(ctx: ToolExecutionContext, input = query(), offerId = 'offer-1'): Promise<void> {
   await ctx.artifacts.create({
-    id: flightArtifactId, tripId, conversationId: 'conversation-1', type: 'flight_search', schemaVersion: 1,
+    id: flightArtifactId, tripId, conversationId: 'conversation-1', type: 'flight_search', schemaVersion: 1, tripContextVersion: 0,
     payload: { ...result(input, offerId), id: flightArtifactId, type: 'flight_search' }, verification
   })
 }
@@ -111,7 +111,7 @@ async function addRouteArtifact(ctx: ToolExecutionContext, selectedPath = path()
           scoreBreakdown: [], hardConstraintsSatisfied: ['fixture'], tradeoffs: [], warnings: []
         } }], paretoFrontierCount: 1, rejectedCandidateCount: 0
       }
-  await ctx.artifacts.create({ id: routeArtifactId, tripId, conversationId: 'conversation-1', type: 'route_set', schemaVersion: 1, payload, verification })
+  await ctx.artifacts.create({ id: routeArtifactId, tripId, conversationId: 'conversation-1', type: 'route_set', schemaVersion: 1, tripContextVersion: 0, payload, verification })
 }
 
 describe('fare confirmation tools', () => {
@@ -122,7 +122,7 @@ describe('fare confirmation tools', () => {
     expect(output.summary).toMatchObject({ offerId: 'offer-1', price: { amount: 1300, currency: 'CNY' }, verificationStatus: 'verified' })
     expect(output.artifact.id).not.toBe(flightArtifactId)
     const stored = await ctx.artifacts.get(output.artifact.id)
-    expect(stored).toMatchObject({ type: 'flight_search', schemaVersion: 1, payload: { id: output.artifact.id } })
+    expect(stored).toMatchObject({ type: 'flight_search', schemaVersion: 1, tripContextVersion: 0, payload: { id: output.artifact.id } })
     const sources = (stored?.payload as { verification: { sources: Array<{ reference?: string }> } }).verification.sources
     expect(sources.some(source => source.reference?.includes(flightArtifactId))).toBe(true)
     expect(sources.some(source => source.reference?.includes('offer-1'))).toBe(true)
@@ -134,6 +134,25 @@ describe('fare confirmation tools', () => {
     await expect(confirmFlightPriceTool.execute({ artifactId: flightArtifactId, offerId: 'missing' }, ctx, new AbortController().signal)).rejects.toThrow()
     await expect(confirmFlightPriceTool.execute({ artifactId: flightArtifactId, offerId: 'offer-1' }, ctx, new AbortController().signal)).rejects.toThrow()
     expect(await ctx.artifacts.get('missing-successor')).toBeUndefined()
+  })
+
+  it('rejects old-version fare sources before refresh and rechecks the Trip before saving a refresh', async () => {
+    const refresh = vi.fn(async input => result(input.query, input.offerId))
+    const stale = context(provider(refresh))
+    await addFlightArtifact(stale)
+    await stale.trips.update(tripId, { travelDays: 10 }, 0)
+    await expect(confirmFlightPriceTool.execute({ artifactId: flightArtifactId, offerId: 'offer-1' }, stale, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'ARTIFACT_CONTEXT_VERSION_MISMATCH' })
+    expect(refresh).not.toHaveBeenCalled()
+
+    const racing = context(provider(async input => {
+      await racing.trips.update(tripId, { travelDays: 10 }, 0)
+      return result(input.query, input.offerId)
+    }))
+    await addFlightArtifact(racing)
+    await expect(confirmFlightPriceTool.execute({ artifactId: flightArtifactId, offerId: 'offer-1' }, racing, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+    expect(await racing.artifacts.listForTrip?.(tripId)).toHaveLength(1)
   })
 
   it('confirms a strong route binding, keeps the source immutable, and recomputes total fare', async () => {

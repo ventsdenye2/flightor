@@ -30,7 +30,7 @@ export function routeGenerationDependenciesFactory(context: AppContext): RouteGe
       conversations: new PostgresConversationRepository(context.db, trustedUserId),
       artifacts,
       connectionSearch: new LiveFareConnectionSearch({
-        artifacts, fares: context.providers.fares,
+        artifacts, trips, fares: context.providers.fares,
         aviation: context.providers.aviation,
         topology: new ProductionConnectionSearchService(new PostgresTopologyRepository(context.db))
       }),

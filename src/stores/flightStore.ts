@@ -105,7 +105,7 @@ export class FlightStore {
         presentationHint: 'flight_cards'
       } as const
       const params = paramsFromFlightSearchArtifact(artifact.payload)
-      const result = responseFromFlightSearchArtifact(artifact.payload, ref, artifact.updatedAt)
+      const result = responseFromFlightSearchArtifact(artifact.payload, ref, artifact.updatedAt, artifact.presentation)
       runInAction(() => {
         if (!this.isCurrent(requestId, ownerId, sessionId)) return
         this.result = result

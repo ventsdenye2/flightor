@@ -3,6 +3,7 @@ import type { ToolExecutionContext, ToolExecutionOutcome } from './registry.js'
 import { ToolRegistry } from './registry.js'
 import { AppError } from '../../lib/errors.js'
 import { addArtifactRef, addLocationHandle } from '../goals/working-set.js'
+import { completeGoal, noGoalDelivery, summarizeGoalDelivery, type GoalDelivery, type GoalDeliveryItem } from '../goals/completion.js'
 
 export interface AgentTrace {
   requestId: string
@@ -18,6 +19,7 @@ export interface AgentTrace {
   artifactIds: string[]
   warnings: string[]
   errorCode?: string
+  domainErrorCode?: string
 }
 
 export interface AgentRuntimeOptions {
@@ -47,11 +49,20 @@ export interface AgentRunResult {
   toolCalls: number
   costUnits: number
   fallback: boolean
-  stopReason: 'completed' | 'max_tool_steps' | 'tool_call_limit' | 'model_failure' | 'cancelled' | 'turn_timeout' | 'stale_generation'
+  stopReason: 'responded' | 'completed' | 'goal_pending' | 'goal_partial' | 'goal_failed' | 'goal_cancelled' | 'max_tool_steps' | 'tool_call_limit' | 'model_failure' | 'cancelled' | 'turn_timeout' | 'stale_generation'
+  delivery: GoalDelivery
   traces: AgentTrace[]
 }
 
-const DEFAULT_FALLBACK = '抱歉，本轮处理没有完整结束。你的行程状态没有被猜测性修改，请稍后重试。'
+const DEFAULT_FALLBACK = '本轮处理未完整结束，已保存的结果会保留。你可以继续对话重试。'
+
+function deliveryReply(delivery: GoalDelivery, modelReply: string): string {
+  if (delivery.status === 'not_requested' || delivery.status === 'satisfied') return modelReply
+  if (delivery.status === 'pending') return '这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。'
+  if (delivery.status === 'partial') return '已保存可用的部分结果，但还没有完成全部行程要求。请查看结果卡片中的覆盖情况，可以继续完善。'
+  if (delivery.status === 'cancelled') return '这项任务已取消，已有结果会保留。'
+  return '本次结果未通过完成校验，暂时不能作为已完成的行程。已保存的结果会保留，可以继续对话重试。'
+}
 
 function controllerFor(signal?: AbortSignal): AbortController {
   const controller = new AbortController()
@@ -144,8 +155,65 @@ export class AgentRuntime {
       resolvedLocations: new Map(),
       isGenerationCurrent: () => !stale(input)
     }
+    const touchedGoals = new Map<string, { runId: string; kind: ToolExecutionContext['activeGoalKind'] }>()
+    const observeGoal = () => {
+      if (executionContext.activeGoalId && executionContext.activeGoalRunId) {
+        touchedGoals.set(executionContext.activeGoalId, { runId: executionContext.activeGoalRunId, kind: executionContext.activeGoalKind })
+      }
+    }
+    observeGoal()
 
-    const fallback = (stopReason: AgentRunResult['stopReason']): AgentRunResult => ({
+    const readDelivery = async (persist: boolean): Promise<GoalDelivery> => {
+      if (touchedGoals.size === 0) return noGoalDelivery()
+      const items: GoalDeliveryItem[] = [...touchedGoals].flatMap(([goalId, { kind }]) => kind ? [{
+        goalId, kind, status: 'pending' as const, artifactIds: [], missing: ['goal_verification'], warnings: []
+      }] : [])
+      const finalizationController = controllerFor(persist ? controller.signal : undefined)
+      const interrupted = (): GoalDelivery => ({
+        status: 'pending', artifactIds: [], missing: ['goal_verification'],
+        warnings: ['goal_verification_interrupted'], goals: structuredClone(items)
+      })
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const deadline = new Promise<GoalDelivery>(resolve => {
+        timer = setTimeout(() => {
+          finalizationController.abort(new Error('Goal finalization timeout'))
+          resolve(interrupted())
+        }, 3_000)
+      })
+      const verify = async (): Promise<GoalDelivery> => {
+        try {
+          if (!executionContext.ownerId || !executionContext.goalRepository
+            || !executionContext.goalRunRepository || !executionContext.goalVerifiers) {
+            throw new Error('Goal completion is not configured')
+          }
+          for (const [goalId, { runId }] of touchedGoals) {
+            const completed = await completeGoal({
+              ownerId: executionContext.ownerId, tripId: executionContext.tripId,
+              trips: executionContext.trips, artifacts: executionContext.artifacts,
+              goals: executionContext.goalRepository, runs: executionContext.goalRunRepository,
+              verifiers: executionContext.goalVerifiers,
+              signal: finalizationController.signal,
+              ...(persist && executionContext.isGenerationCurrent ? { isCurrent: executionContext.isGenerationCurrent } : {})
+            }, { goalId, runId, persist })
+            const item = { goalId, kind: completed.goal.kind, ...completed.verification }
+            const index = items.findIndex(value => value.goalId === goalId)
+            if (index < 0) items.push(item)
+            else items[index] = item
+          }
+          return summarizeGoalDelivery(items)
+        } catch {
+          if (finalizationController.signal.aborted) return interrupted()
+          return {
+            status: 'failed', artifactIds: [], missing: ['goal_verification'],
+            warnings: ['goal_verification_failed'], goals: items
+          }
+        }
+      }
+      try { return await Promise.race([verify(), deadline]) }
+      finally { clearTimeout(timer) }
+    }
+
+    const fallback = async (stopReason: AgentRunResult['stopReason'], delivery?: GoalDelivery): Promise<AgentRunResult> => ({
       reply: this.fallbackReply,
       messages,
       toolSteps,
@@ -153,104 +221,117 @@ export class AgentRuntime {
       costUnits,
       fallback: true,
       stopReason,
+      delivery: delivery ?? await readDelivery(false),
       traces
     })
 
     try {
       while (true) {
-      if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
-      if (stale(input)) return fallback('stale_generation')
+        if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
+        if (stale(input)) return fallback('stale_generation')
 
-      let completion
-      const modelStarted = Date.now()
-      try {
-        completion = await this.modelClient.complete(messages, this.options.model, {
-          ...this.modelOptions,
-          tools: this.registry.definitions(),
-          toolChoice: 'auto',
-          signal: controller.signal
-        })
-        this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
-          ...(completion.finishReason ? { finishReason: completion.finishReason } : {}) })
-      } catch (error) {
-        this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
-          errorCode: error instanceof AppError ? error.code : 'MODEL_FAILURE' })
-        return fallback(controller.signal.aborted ? (turnTimedOut ? 'turn_timeout' : 'cancelled') : 'model_failure')
-      }
-
-      if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
-      if (stale(input)) return fallback('stale_generation')
-      // Truncated text or tool arguments must never be accepted as a completed turn.
-      if (completion.finishReason === 'length' || completion.finishReason === 'content_filter') return fallback('model_failure')
-      messages.push(completion.message)
-      const calls = toolCalls(completion.message)
-      if (calls.length === 0) {
-        const reply = completion.message.content?.trim()
-        return reply
-          ? { reply, messages, toolSteps, toolCalls: executedToolCalls, costUnits, fallback: false, stopReason: 'completed', traces }
-          : fallback('model_failure')
-      }
-      if (toolSteps >= this.maxToolSteps) return fallback('max_tool_steps')
-      if (calls.length > this.maxToolCallsPerStep || executedToolCalls + calls.length > this.maxToolCallsPerTurn) {
-        return fallback('tool_call_limit')
-      }
-
-      const executable: Array<{ call: FunctionToolCall; allowed: boolean }> = []
-      let reservedCost = costUnits
-      for (const call of calls) {
-        const tool = this.registry.get(call.function.name)
-        const allowed = tool === undefined || reservedCost + tool.costUnits <= this.maxCostUnits
-        if (allowed && tool) reservedCost += tool.costUnits
-        executable.push({ call, allowed })
-      }
-      const canRunInParallel = executable.every(({ call, allowed }) => {
-        const tool = this.registry.get(call.function.name)
-        return !allowed || (tool !== undefined && tool.parallelSafe && tool.sideEffect === 'none')
-      })
-      const executeOne = ({ call, allowed }: { call: FunctionToolCall; allowed: boolean }) => allowed
-        ? this.registry.execute(call, executionContext, controller.signal)
-        : Promise.resolve(this.registry.budgetExceeded(call))
-      const outcomes: ToolExecutionOutcome[] = []
-      if (canRunInParallel) outcomes.push(...await Promise.all(executable.map(executeOne)))
-      else {
-        for (const item of executable) outcomes.push(await executeOne(item))
-      }
-      toolSteps += 1
-      executedToolCalls += outcomes.length
-      costUnits += outcomes.reduce((sum, outcome) => sum + outcome.costUnits, 0)
-
-      for (const outcome of outcomes) {
+        let completion
+        const modelStarted = Date.now()
         try {
-          await syncActiveGoalWorkingSet(executionContext, outcome)
-        } catch {
-          outcome.warnings = [...new Set([...outcome.warnings, 'goal_working_set_update_failed'])]
+          completion = await this.modelClient.complete(messages, this.options.model, {
+            ...this.modelOptions,
+            tools: this.registry.definitions(),
+            toolChoice: 'auto',
+            signal: controller.signal
+          })
+          this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
+            ...(completion.finishReason ? { finishReason: completion.finishReason } : {}) })
+        } catch (error) {
+          this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
+            errorCode: error instanceof AppError ? error.code : 'MODEL_FAILURE' })
+          return fallback(controller.signal.aborted ? (turnTimedOut ? 'turn_timeout' : 'cancelled') : 'model_failure')
         }
-        const definition = this.registry.get(outcome.toolName)
-        const trace: AgentTrace = {
-          requestId: input.context.requestId,
-          conversationId: input.context.conversationId,
-          tripId: input.context.tripId,
-          generationId: input.context.generationId,
-          agentStep: toolSteps,
-          toolName: outcome.toolName,
-          toolDurationMs: outcome.durationMs,
-          toolResultStatus: outcome.ok ? 'success' : 'error',
-          artifactIds: outcome.artifactIds,
-          warnings: outcome.warnings,
-          ...(outcome.provider ? { provider: outcome.provider } : {}),
-          ...(definition ? { providerCostClass: definition.costClass } : {}),
-          ...(outcome.errorCode ? { errorCode: outcome.errorCode } : {})
+
+        if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
+        if (stale(input)) return fallback('stale_generation')
+        // Truncated text or tool arguments must never be accepted as a completed turn.
+        if (completion.finishReason === 'length' || completion.finishReason === 'content_filter') return fallback('model_failure')
+        messages.push(completion.message)
+        const calls = toolCalls(completion.message)
+        if (calls.length === 0) {
+          const reply = completion.message.content?.trim()
+          if (!reply) return fallback('model_failure')
+          const delivery = await readDelivery(true)
+          if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled', delivery)
+          if (stale(input)) return fallback('stale_generation', delivery)
+          const stopReason: AgentRunResult['stopReason'] = delivery.status === 'not_requested' ? 'responded'
+            : delivery.status === 'satisfied' ? 'completed' : `goal_${delivery.status}`
+          return {
+            reply: deliveryReply(delivery, reply), messages, toolSteps,
+            toolCalls: executedToolCalls, costUnits, fallback: false, stopReason, delivery, traces
+          }
         }
-        traces.push(trace)
-        this.options.trace?.(trace)
-        messages.push({
-          role: 'tool',
-          tool_call_id: outcome.toolCallId,
-          name: outcome.toolName,
-          content: outcome.content
+        if (toolSteps >= this.maxToolSteps) return fallback('max_tool_steps')
+        if (calls.length > this.maxToolCallsPerStep || executedToolCalls + calls.length > this.maxToolCallsPerTurn) {
+          return fallback('tool_call_limit')
+        }
+
+        const executable: Array<{ call: FunctionToolCall; allowed: boolean }> = []
+        let reservedCost = costUnits
+        for (const call of calls) {
+          const tool = this.registry.get(call.function.name)
+          const allowed = tool === undefined || reservedCost + tool.costUnits <= this.maxCostUnits
+          if (allowed && tool) reservedCost += tool.costUnits
+          executable.push({ call, allowed })
+        }
+        const canRunInParallel = executable.every(({ call, allowed }) => {
+          const tool = this.registry.get(call.function.name)
+          return !allowed || (tool !== undefined && tool.parallelSafe && tool.sideEffect === 'none')
         })
+        const executeOne = async ({ call, allowed }: { call: FunctionToolCall; allowed: boolean }) => {
+          const outcome = allowed
+            ? await this.registry.execute(call, executionContext, controller.signal)
+            : this.registry.budgetExceeded(call)
+          observeGoal()
+          try {
+            await syncActiveGoalWorkingSet(executionContext, outcome)
+          } catch {
+            outcome.warnings = [...new Set([...outcome.warnings, 'goal_working_set_update_failed'])]
+          }
+          return outcome
+        }
+        const outcomes: ToolExecutionOutcome[] = []
+        if (canRunInParallel) outcomes.push(...await Promise.all(executable.map(executeOne)))
+        else {
+          for (const item of executable) outcomes.push(await executeOne(item))
+        }
+        toolSteps += 1
+        executedToolCalls += outcomes.length
+        costUnits += outcomes.reduce((sum, outcome) => sum + outcome.costUnits, 0)
+
+        for (const outcome of outcomes) {
+          const definition = this.registry.get(outcome.toolName)
+          const trace: AgentTrace = {
+            requestId: input.context.requestId,
+            conversationId: input.context.conversationId,
+            tripId: input.context.tripId,
+            generationId: input.context.generationId,
+            agentStep: toolSteps,
+            toolName: outcome.toolName,
+            toolDurationMs: outcome.durationMs,
+            toolResultStatus: outcome.ok ? 'success' : 'error',
+            artifactIds: outcome.artifactIds,
+            warnings: outcome.warnings,
+            ...(outcome.provider ? { provider: outcome.provider } : {}),
+            ...(definition ? { providerCostClass: definition.costClass } : {}),
+            ...(outcome.errorCode ? { errorCode: outcome.errorCode } : {}),
+            ...(outcome.domainErrorCode ? { domainErrorCode: outcome.domainErrorCode } : {})
+          }
+          traces.push(trace)
+          this.options.trace?.(trace)
+          messages.push({
+            role: 'tool',
+            tool_call_id: outcome.toolCallId,
+            name: outcome.toolName,
+            content: outcome.content
+          })
+        }
       }
-    }
     } finally {
       clearTimeout(turnTimer)
     }

@@ -156,6 +156,17 @@ export interface CloudArtifactRef {
 /** Exact response shape from the authenticated cloud Planner. */
 export type ConversationPhase = 'discover' | 'clarify' | 'plan'
 
+/** Durable business outcome, independent of whether the model finished speaking. */
+export interface ConversationDelivery {
+  status: 'not_requested' | 'pending' | 'satisfied' | 'partial' | 'failed' | 'cancelled'
+  goalId?: string
+  kind?: string
+  artifactIds: string[]
+  missing: string[]
+  warnings: string[]
+  goals?: ConversationDelivery[]
+}
+
 export interface ConversationResponse {
   conversationId: string
   tripId: string
@@ -166,6 +177,7 @@ export interface ConversationResponse {
   memoryChanged?: boolean
   warnings: string[]
   stopReason: string
+  delivery?: ConversationDelivery
 }
 
 /** Exact request shape from the mini-program to POST /v1/agent/converse. */

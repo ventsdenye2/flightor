@@ -116,9 +116,10 @@
 
   &__time {
     display: block;
-    font-size: 52rpx;
+    font-size: 24rpx;
     font-weight: bold;
-    line-height: 1.2;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
     color: var(--color-text-primary);
   }
 

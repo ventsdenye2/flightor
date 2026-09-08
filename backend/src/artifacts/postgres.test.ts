@@ -27,13 +27,14 @@ class FakeSelect {
   innerJoin() { this.joined = true; return this }
   leftJoin() { this.leftJoined = true; return this }
   select() { return this }
+  forShare() { return this }
   where(column: string, _operator: string, value: unknown) { this.conditions.push({ column, value }); return this }
   private value(name: string) { return this.conditions.find(item => item.column === name || item.column.endsWith(`.${name}`))?.value }
   async executeTakeFirst(): Promise<Row | undefined> {
     const owner = this.value('user_id')
     if (this.table === 'trips') {
       const row = this.db.trips.find(item => item.public_id === this.value('public_id') && item.user_id === owner)
-      return row ? { id: row.id } : undefined
+      return row ? { id: row.id, current_context_version: row.current_context_version } : undefined
     }
     if (this.table === 'conversations') {
       const row = this.db.conversations.find(item => item.public_id === this.value('public_id') && item.user_id === owner &&
@@ -42,11 +43,11 @@ class FakeSelect {
     }
     if (this.table === 'planning_goals') {
       const row = this.db.planningGoals.find(item => item.public_id === this.value('public_id') && item.user_id === owner && item.trip_id === this.value('trip_id'))
-      return row ? { id: row.id, created_context_version: row.created_context_version } : undefined
+      return row ? { id: row.id, created_context_version: row.created_context_version, status: row.status } : undefined
     }
     if (this.table === 'planning_goal_runs') {
       const row = this.db.planningGoalRuns.find(item => item.public_id === this.value('public_id') && item.user_id === owner && item.trip_id === this.value('trip_id'))
-      return row ? { id: row.id, goal_id: row.goal_id, context_version: row.context_version } : undefined
+      return row ? { id: row.id, goal_id: row.goal_id, context_version: row.context_version, status: row.status } : undefined
     }
     const row = this.db.artifacts.find(item => item.public_id === this.value('public_id') && item.user_id === owner)
     if (!row) return undefined
@@ -112,11 +113,11 @@ describe('PostgresArtifactRepository', () => {
 
   it('persists and returns goal/run/context/source lineage after relationship checks', async () => {
     const db = new FakeDb()
-    db.trips.push({ id: '11', public_id: 'trip-public', user_id: 'user-a' })
-    db.planningGoals.push({ id: '31', public_id: 'goal-public', trip_id: '11', user_id: 'user-a' })
-    db.planningGoalRuns.push({ id: '41', public_id: 'run-public', goal_id: '31', trip_id: '11', user_id: 'user-a', context_version: 4 })
+    db.trips.push({ id: '11', public_id: 'trip-public', user_id: 'user-a', current_context_version: 4 })
+    db.planningGoals.push({ id: '31', public_id: 'goal-public', trip_id: '11', user_id: 'user-a', status: 'pending' })
+    db.planningGoalRuns.push({ id: '41', public_id: 'run-public', goal_id: '31', trip_id: '11', user_id: 'user-a', context_version: 4, status: 'running' })
     const repo = new PostgresArtifactRepository(asDb(db), 'user-a')
-    const source = await repo.create({ tripId: 'trip-public', type: 'research', schemaVersion: 1, payload: { source: true } })
+    const source = await repo.create({ tripId: 'trip-public', type: 'research', schemaVersion: 1, tripContextVersion: 4, payload: { source: true } })
     const derived = await repo.create({
       tripId: 'trip-public', goalId: 'goal-public', runId: 'run-public', tripContextVersion: 4,
       sourceArtifactIds: [source.id], type: 'route_set', schemaVersion: 1, payload: { derived: true }

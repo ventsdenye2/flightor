@@ -566,6 +566,22 @@ The Agent receives compact summaries and IDs.
 
 The frontend fetches full artifact detail when needed.
 
+All Artifact-producing domain services use `backend/src/artifacts/workspace.ts`
+as the shared read/write boundary, including manual search and background route
+generation. The workspace freezes a server-read Trip Context version, checks
+owner/Trip scope and cancellation, and repeats the version checkpoint after
+external calls and immediately before persistence. PostgreSQL also checks the
+current Trip and Goal/run state within the Artifact insert transaction.
+
+Source Artifacts must belong to the same owner and Trip and carry the same
+context version as the output. Compatible evidence may come from a different
+Goal/run; the new output records its own lineage and the source IDs. Legacy
+Artifacts without a version and sources from another version remain readable
+for history, but cannot be composed into a current result without an explicit
+compatibility policy. Relabeling an old five-day route as a new ten-day guide is
+invalid. Cross-version compatibility is not currently implemented: return a
+stable conflict and let the Agent choose fresh evidence or re-plan.
+
 ---
 
 # 8. Agent Runtime
@@ -577,7 +593,8 @@ for step in 0..MAX_STEPS {
   response = LLM(messages, tools)
 
   if response has no tool calls:
-    return final response
+    delivery = verify goals touched by this turn
+    return response with server-derived delivery and stop reason
 
   execute tool calls
   append tool results
@@ -594,7 +611,7 @@ for step in 0..MAX_STEPS {
 - tool-specific permission policy;
 - tool execution tracing;
 - cancellation / generation ID;
-- deterministic fallback response.
+- bounded failure responses that preserve the separate delivery verdict.
 
 ---
 
@@ -655,10 +672,35 @@ facts, validation and persistence; the Agent owns the changing plan.
 For requests that require a durable result, use a typed goal and a generic
 server-verified completion operation. The completion verifier reads
 owner-scoped persisted Artifacts, lineage, the active run and Trip Context
-version and returns `pending`, `satisfied`, `partial` or `failed`. Model text,
-tool names, prompt phrases and call counts are never completion evidence.
+version and returns `pending`, `satisfied`, `partial` or `failed`; cancellation
+remains `cancelled`. Model text, tool names, prompt phrases and call counts are
+never completion evidence.
 Ordinary conversation without a durable goal may still finish directly with a
 text response.
+
+Explicit `finish_goal` and response finalization use the same completion service
+in `backend/src/agent/goals/completion.ts`. Before returning a text-only model
+response, the runtime verifies every Goal touched in that turn even if the model
+omitted `finish_goal`. A pending, partial, failed or cancelled verdict cannot be
+promoted by a narrated success. The Agent may use completion feedback to choose
+its next tools within the normal loop; the server does not prescribe a repair
+sequence or inspect keywords.
+
+`stopReason` describes why the turn stopped. `completed` is reserved for a
+verified `delivery.status=satisfied`; `responded` means an ordinary response
+without a requested durable delivery (`not_requested`). Other Goal outcomes use
+`goal_pending`, `goal_partial`, `goal_failed` or `goal_cancelled`. Runtime failures
+such as timeout retain their own stop reason and carry a separate delivery
+verdict. Evidence verification and business completion are separate: correct
+sources alone do not establish matching dates, destinations or full day coverage.
+
+Completion commits the durable planning Goal and its Goal run atomically through
+`GoalRunRepository.commitCompletion`. The PostgreSQL transaction locks Trip,
+Goal and Goal run in that order and validates scope, expected revisions, current
+Trip version and legal transitions before updating either completion status.
+Cancellation and immutable terminal runs cannot be overwritten by late success.
+The public route-generation run is a separate execution resource; its
+`succeeded` status alone is not the business delivery verdict.
 
 Goals persist across turns and process restarts. A goal records its accepted
 Trip Context version, authorization source, current status and result Artifact
@@ -666,12 +708,30 @@ references so the Agent can resume or re-plan after a timeout without deriving
 business state from old prose. Partial Artifacts remain saved and auditable;
 they can inform another plan but cannot satisfy a complete goal.
 
+Goal inspection and acceptance are separate operations. `get_active_goal` is a
+read-only query: it neither creates a run nor binds saved parameters to the
+current turn. The Agent explicitly chooses `resume_goal` for an unchanged
+objective or declares a new Goal when the accepted parameters change.
+
 The runtime maintains an owner/trip/run-scoped working set for Artifacts and
 canonical location resolutions. A tool may use a validated latest-compatible
 result from that working set or an explicit compatible reference when the Agent
 needs to choose between alternatives. In both cases, the server establishes
 authority and lineage; the model does not establish facts by copying an object
 or an Artifact ID.
+
+Research query wording is a bounded model capability within the research
+domain. The domain fixes at most eight destination/question tasks; a query
+planner can only supply one short plain-text topic per task. The adapter owns
+canonical destinations, date handling and source restrictions. Invalid planning
+falls back to the original questions with an explicit warning, without extra
+search calls. Planning, search and synthesis share the operation cancellation
+signal. The original brief remains the synthesis and audit input.
+
+Airport time presentation is also server-owned. Raw timestamps remain immutable;
+Artifact presentation and Agent reads derive the same local airport time and
+explicit offset from canonical IANA zones. Without a trusted zone, display the
+known UTC/provider time basis explicitly instead of guessing from client locale.
 
 For the current functional milestone, configured fare and research tools may be
 used autonomously when relevant to an accepted goal. Cost optimization is not a
@@ -974,10 +1034,13 @@ frozen Trip Context
 ```
 
 The run reports its frozen context version, bounded progress/warnings and
-compact Artifact references. A successful result remains auditable and is
-marked stale when the current Trip has since changed; it is never silently
-applied as the current route. Missing credentials or partial fare coverage
-remain explicit unavailable/warning states, never invented prices.
+compact Artifact references. A current-version conflict while queued/running
+fails the attempt with `TRIP_CONTEXT_VERSION_CONFLICT`; the immutable snapshot
+does not permit stale writes. Results completed before a subsequent Trip edit
+remain auditable and can be marked stale. Execution success does not establish
+Goal satisfaction; the domain verifier supplies the delivery verdict. Missing
+credentials or partial fare coverage remain explicit unavailable/warning states,
+never invented prices.
 
 ---
 
@@ -2027,7 +2090,16 @@ is intentionally compact:
   suggestedActions: SuggestedAction[],
   memoryChanged?: boolean,
   warnings: string[],
-  stopReason: string
+  stopReason: string,
+  delivery: {
+    status: 'not_requested' | 'pending' | 'satisfied' | 'partial' | 'failed' | 'cancelled',
+    goalId?: string,
+    kind?: GoalKind,
+    artifactIds: string[],
+    missing: string[],
+    warnings: string[],
+    goals: GoalDeliveryItem[]
+  }
 }
 ```
 
@@ -2038,6 +2110,16 @@ optimization, and route-price confirmation; those tools are available only to
 the deterministic generation composition. An unambiguous current user message
 may authorize the Planner's zero-argument `start_route_generation` operation;
 discussion, readiness, suggestions, and Planner inference may not.
+
+`delivery` is a server verdict, persisted with the assistant message. The
+per-goal entries contain Goal identity/kind, verification status, Artifact IDs,
+missing requirements and warnings; optional top-level Goal identity describes
+a single applicable Goal. Clients render this verdict rather than inferring
+completion from `reply`, tool traces or a successful route worker. After a
+conversation result, the client reconciles `GET /v1/trips/:id/workspace` and
+attaches any accepted background route run to the existing polling/cancellation
+flow. Workspace reads refresh unfinished delivery snapshots with the same
+verifiers, so background progress can update delivery without another POST.
 
 ## 24.2 Route-generation run
 
@@ -2064,12 +2146,20 @@ is cooperative and persistent; terminal runs are immutable.
 
 Run status is `queued → running → succeeded|failed|cancelled`. Status responses
 include bounded progress, warnings, sanitized errors, the frozen context version,
-and compact result Artifact references. A successful result indicates when it is
-stale relative to the current Trip; stale results remain auditable and are never
-silently applied as current state. Route Artifacts preserve Goal ID, Goal run ID,
-Trip Context version, and source-Artifact lineage. The server-side Goal verifier
-marks the attempt `satisfied` or `partial`; failure and cancellation propagate
-to both run models.
+and compact result Artifact references. The snapshot is immutable, but it does
+not authorize writes after the live Trip changes: a queued or running attempt
+that encounters a different current version fails with
+`TRIP_CONTEXT_VERSION_CONFLICT`. The worker checks before work, after provider
+calls and at Artifact writes; a fresh run is required for the revised Trip.
+Already-persisted historical results remain auditable with their original
+version. A run that completed before a later Trip edit may be reported as stale;
+this does not permit an in-flight stale snapshot to finish as current work.
+
+Route Artifacts preserve Goal ID, Goal run ID, Trip Context version and source
+lineage. The shared server-side completion service verifies the result and
+atomically updates the planning Goal and Goal run to `satisfied` or `partial`;
+failure and cancellation also synchronize those planning records. Route-run
+execution success and verified business delivery remain distinct.
 
 Phase 5 supports exactly one final visit destination resolved to a canonical
 airport, one canonical origin airport, and a bounded departure window. Return
@@ -2147,7 +2237,10 @@ Recommended hybrid:
 Durable planning runs freeze Trip Context in JSONB while relational lineage
 links a route run and every produced Artifact to its Goal/run. Historical
 Artifacts remain valid with nullable Goal lineage; new Agentic work writes Goal
-ID, Goal run ID, Trip Context version, and source Artifact IDs.
+ID, Goal run ID, Trip Context version, and source Artifact IDs. Historical
+readability does not imply eligibility as current-version composition evidence.
+Planning Goal/Goal-run completion uses one transaction, with revision and Trip
+version validation; it must not use two independent status updates.
 
 ---
 
@@ -2558,7 +2651,8 @@ optimizer/route-confirmation tools.
 
 Final generation is an explicit authenticated run with idempotency, owner
 authorization, frozen Trip Context, cooperative cancellation, progress, stale
-result reporting, and terminal immutability:
+historical-result reporting, version-conflict failure for active work, and
+terminal immutability:
 
 ```text
 POST   /v1/trips/:tripId/route-generation-runs

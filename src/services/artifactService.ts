@@ -1,5 +1,6 @@
 import { request } from '../utils/request'
 import type { CloudArtifactRef } from './conversationService'
+import { readAirportTimePresentation, type AirportTimePresentation } from './airportTime'
 
 /**
  * The API returns complete artifacts only from the owner-scoped endpoint. The
@@ -12,6 +13,7 @@ export interface ArtifactEnvelope {
   type: string
   schemaVersion: number
   payload: unknown
+  presentation?: AirportTimePresentation
   verification?: unknown
   createdAt: string
   updatedAt: string
@@ -77,6 +79,7 @@ export function validateArtifactEnvelope(value: unknown): ArtifactEnvelope {
     throw new ArtifactValidationError('Artifact schemaVersion is outside the supported bounds')
   }
   const schemaVersion = Number(value.schemaVersion)
+  const presentation = readAirportTimePresentation(value.presentation)
   if (!isRecord(value.payload)) throw new ArtifactValidationError('Artifact payload must be an object')
   if (!validOptionalId(value.conversationId)) throw new ArtifactValidationError('Artifact conversationId is invalid')
   if (!validTimestamp(value.createdAt) || !validTimestamp(value.updatedAt)) {
@@ -90,6 +93,7 @@ export function validateArtifactEnvelope(value: unknown): ArtifactEnvelope {
     type: value.type,
     schemaVersion,
     payload: value.payload,
+    ...(presentation ? { presentation } : {}),
     ...(value.verification === undefined ? {} : { verification: value.verification }),
     createdAt: value.createdAt,
     updatedAt: value.updatedAt

@@ -39,6 +39,9 @@ export interface FlightSegment {
   destination: string
   departTime: string
   arriveTime: string
+  /** Server-projected airport clocks for display; raw timestamps remain unchanged. */
+  departTimeDisplay?: string
+  arriveTimeDisplay?: string
   duration: number           // 分钟
   aircraft?: string
 }
@@ -88,6 +91,8 @@ export interface ItinerarySegment {
   destination?: string
   departTime?: string
   arriveTime?: string
+  departTimeDisplay?: string
+  arriveTimeDisplay?: string
   terminal?: string
   gate?: string
   duration?: number

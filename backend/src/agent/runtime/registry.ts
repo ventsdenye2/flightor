@@ -13,7 +13,9 @@ import type { ChatToolDefinition, FunctionToolCall } from './model.js'
 import type { LocationRef } from '../../aviation/types.js'
 import type { GoalRepository, GoalRunRepository } from '../goals/repository.js'
 import type { GoalVerifierRegistry } from '../goals/verifier.js'
+import type { GoalKind } from '../goals/types.js'
 import type { RouteGenerationDependencies } from '../../route-generation/service.js'
+import { isAppError } from '../../lib/errors.js'
 
 export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
 export type ToolSideEffect = 'none' | 'state'
@@ -48,6 +50,7 @@ export interface ToolExecutionContext {
   /** Explicit conversational route generation uses the same domain service as the button. */
   routeGeneration?: RouteGenerationDependencies
   activeGoalId?: string
+  activeGoalKind?: GoalKind
   activeGoalRunId?: string
   activeGoalContextVersion?: number
 }
@@ -85,6 +88,7 @@ export interface ToolExecutionOutcome {
   durationMs: number
   provider?: string
   errorCode?: ToolErrorCode
+  domainErrorCode?: string
   artifactIds: string[]
   warnings: string[]
 }
@@ -94,7 +98,7 @@ function asSafeMessage(value: unknown): string {
     if (value.code === 'TRIP_CONTEXT_VERSION_CONFLICT') return 'Trip context version conflict'
     if (value.code === 'USER_MEMORY_VERSION_CONFLICT') return 'User Memory version conflict'
     if (value.code === 'USER_MEMORY_DISABLED') return 'User Memory is disabled'
-    if (value.code === 'LOCATION_NOT_RESOLVED') return 'Location prerequisite failed. Call resolve_location in THIS turn before retrying. For flight tools resolve BOTH origin and destination with types=["airport"] and copy both exact returned objects; resolving only one is insufficient. For research pass the exact returned location id. Persisted trip data alone does not satisfy this guard.'
+    if (value.code === 'LOCATION_NOT_RESOLVED') return 'Use a canonical location id from resolve_location or destination discovery for this operation. Fare searches accept airport IATA codes and resolve both airports on the server.'
   }
   return 'Tool execution failed'
 }
@@ -275,15 +279,19 @@ export class ToolRegistry {
         : parentSignal.aborted
           ? 'TOOL_CANCELLED'
           : 'TOOL_FAILURE'
+      const domainErrorCode = errorCode === 'TOOL_FAILURE' && isAppError(error) && /^[A-Z][A-Z0-9_]{0,79}$/.test(error.code)
+        ? error.code : undefined
       return {
         toolCallId: call.id,
         toolName: tool.name,
         ok: false,
-        content: errorContent(errorCode, errorCode === 'TOOL_TIMEOUT' ? 'Tool execution timed out' : asSafeMessage(error)),
+        content: errorContent(errorCode, errorCode === 'TOOL_TIMEOUT' ? 'Tool execution timed out' : asSafeMessage(error),
+          domainErrorCode ? { domainCode: domainErrorCode } : undefined),
         costUnits: tool.costUnits,
         durationMs: Date.now() - started,
         ...(tool.provider ? { provider: tool.provider } : {}),
         errorCode,
+        ...(domainErrorCode ? { domainErrorCode } : {}),
         artifactIds: [],
         warnings: []
       }

@@ -55,6 +55,28 @@ export interface ArtifactRelationship {
   tripId: string
   goalId?: string
   tripContextVersion?: number
+  status?: string
+}
+
+/** Shared source-envelope policy for both domain composition and atomic repository writes. */
+export function assertArtifactContextVersion(record: { tripContextVersion?: number; payload?: unknown }, expectedVersion: number): void {
+  if (record.tripContextVersion === undefined) {
+    throw new AppError('ARTIFACT_CONTEXT_VERSION_MISSING', 'Source artifact has no Trip Context version; regenerate it before using it as current evidence', 409)
+  }
+  const payloadVersion = record.payload !== null && typeof record.payload === 'object' && 'tripContextVersion' in record.payload
+    ? record.payload.tripContextVersion : undefined
+  if (record.tripContextVersion !== expectedVersion
+    || (payloadVersion !== undefined && payloadVersion !== record.tripContextVersion)) {
+    throw new AppError('ARTIFACT_CONTEXT_VERSION_MISMATCH', 'Source artifact does not match the accepted Trip Context version; re-plan from current inputs', 409)
+  }
+}
+
+export function assertArtifactGoalWritable(status: string): void {
+  if (status === 'cancelled' || status === 'satisfied') throw new AppError('GOAL_NOT_RUNNABLE', 'Goal no longer accepts artifact writes', 409)
+}
+
+export function assertArtifactRunWritable(status: string): void {
+  if (status !== 'running') throw new AppError('GOAL_RUN_NOT_ACTIVE', 'Goal run no longer accepts artifact writes', 409)
 }
 
 /** Optional domain lookups for the deterministic in-memory implementation. */
@@ -106,6 +128,7 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
       if (!source || source.ownerId !== this.ownerId || source.tripId !== input.tripId) {
         throw new AppError('RESOURCE_NOT_FOUND', 'Source artifact was not found', 404)
       }
+      if (input.tripContextVersion !== undefined) assertArtifactContextVersion(source, input.tripContextVersion)
     }
     await this.validateRelationships(input)
     const now = new Date().toISOString()
@@ -165,6 +188,7 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
     if (input.goalId !== undefined && this.relationships.goal !== undefined) {
       const goal = await this.relationships.goal(input.goalId)
       if (!goal || goal.ownerId !== this.ownerId || goal.tripId !== input.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
+      if (goal.status !== undefined) assertArtifactGoalWritable(goal.status)
     }
     if (input.runId !== undefined && this.relationships.run !== undefined) {
       const run = await this.relationships.run(input.runId)
@@ -174,6 +198,7 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
       if (input.tripContextVersion !== undefined && run.tripContextVersion !== undefined && input.tripContextVersion !== run.tripContextVersion) {
         throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Artifact Trip Context version does not match goal run', 409)
       }
+      if (run.status !== undefined) assertArtifactRunWritable(run.status)
     }
   }
 }

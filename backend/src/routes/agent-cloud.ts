@@ -25,6 +25,7 @@ import { DeterministicTripRoutePlanner } from '../trip-planning/planner.js'
 import { DeterministicTravelGuideBuilder } from '../travel-guides/artifact-builder.js'
 import { ProductionResearchAgent } from '../research-agent/production.js'
 import { OpenRouterResearchSynthesisModel } from '../providers/openrouter/research.js'
+import { OpenRouterResearchQueryPlanner } from '../providers/openrouter/research-query-planner.js'
 import { ARTIFACT_TYPES, type ArtifactType } from '../artifacts/repository.js'
 import { locationRefSchema } from '../aviation/types.js'
 import type { TripContext } from '../trips/types.js'
@@ -32,6 +33,7 @@ import { evaluateRouteGenerationEligibility } from '../route-generation/service.
 import { createRouteGenerationDependencies } from '../route-generation/composition.js'
 import { PostgresGoalRepository, PostgresGoalRunRepository } from '../agent/goals/postgres.js'
 import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifiers.js'
+import { goalDeliverySchema } from '../agent/goals/completion.js'
 
 export const cloudAgentRequestSchema = z.object({
   tripId: z.string().uuid(),
@@ -86,7 +88,8 @@ export const cloudAgentResponseSchema = z.object({
   suggestedActions: z.array(suggestedActionSchema).max(5),
   memoryChanged: z.boolean().optional(),
   warnings: z.array(z.string().min(1).max(240)).max(40),
-  stopReason: z.string().min(1).max(80)
+  stopReason: z.string().min(1).max(80),
+  delivery: goalDeliverySchema
 }).strict()
 
 export type CloudAgentServiceFactory = (trustedUserId: string) => CloudPlannerService
@@ -151,10 +154,11 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
       aviation,
       fares: context.providers.fares,
       research: context.env.SERPAPI_KEY
-        ? new ProductionResearchAgent(
-          context.providers.researchSearch,
-          new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL)
-        )
+        ? new ProductionResearchAgent({
+          searchProvider: context.providers.researchSearch,
+          synthesisModel: new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL),
+          queryPlanner: new OpenRouterResearchQueryPlanner(context.providers.openrouter, context.env.RESEARCH_MODEL)
+        })
         : new UnavailableResearchAgent(),
       connectionSearch: new ProductionConnectionSearchService(topology, context.providers.fares),
       flightRoutePlanner: new DeterministicFlightRoutePlanner(),
@@ -202,7 +206,8 @@ export async function registerCloudAgentRoutes(
         : [{ id: 'continue_planning', label: 'Continue planning', kind: 'message' }],
       ...(result.memoryChanged ? { memoryChanged: true } : {}),
       warnings: result.warnings,
-      stopReason: result.stopReason
+      stopReason: result.stopReason,
+      delivery: result.delivery
     })
     return reply.header('Cache-Control', 'no-store').send(response)
   })

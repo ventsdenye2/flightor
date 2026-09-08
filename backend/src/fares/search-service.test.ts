@@ -3,7 +3,8 @@ import { InMemoryArtifactRepository } from '../artifacts/repository.js'
 import { InMemoryTripRepository } from '../trips/repository.js'
 import { MockFareProvider } from './providers/mock.js'
 import { InMemoryFlightSearchIdempotencyStore } from './idempotency.js'
-import { executeFlexibleFlightSearch } from './search-service.js'
+import { executeFlexibleFlightSearch, executeFlightSearch } from './search-service.js'
+import { createArtifactWorkspace } from '../artifacts/workspace.js'
 
 const origin = { type: 'airport' as const, iata: 'PEK', name: 'Beijing', countryCode: 'CN' }
 const destination = { type: 'airport' as const, iata: 'KIX', name: 'Osaka', countryCode: 'JP' }
@@ -16,7 +17,7 @@ describe('flight search domain input validation', () => {
     const trips = new InMemoryTripRepository()
     const trip = await trips.create({ title: 'Flexible validation' })
     const artifacts = new InMemoryArtifactRepository('owner-1', new Set([trip.id]))
-    const context = { fares, artifacts, tripId: trip.id, conversationId: 'conversation-1' }
+    const context = { fares, ...await createArtifactWorkspace({ artifacts, trips, tripId: trip.id, conversationId: 'conversation-1' }) }
 
     await expect(executeFlexibleFlightSearch({
       origin: 'pek', destination: 'KIX', departureDateFrom: '2026-10-01', departureDateTo: '2026-10-01', currency: 'CNY', travelClass: 1
@@ -37,9 +38,35 @@ describe('flight search domain input validation', () => {
     const artifacts = new InMemoryArtifactRepository('owner-1', new Set([trip.id]))
     const result = await executeFlexibleFlightSearch({
       origin: origin.iata, destination: destination.iata, departureDateFrom: '2026-10-01', departureDateTo: '2026-10-03', currency: 'CNY', travelClass: 1
-    }, { fares, artifacts, tripId: trip.id, conversationId: 'conversation-1' })
+    }, { fares, ...await createArtifactWorkspace({ artifacts, trips, tripId: trip.id, conversationId: 'conversation-1' }) })
     expect(result.record.schemaVersion).toBe(2)
+    expect(result.record.tripContextVersion).toBe(trip.context.version)
     expect(result.payload.window.departureDateTo).toBe('2026-10-03')
+  })
+
+  it('blocks exact and flexible results if the Trip changes while the provider is running', async () => {
+    for (const flexible of [false, true]) {
+      const trips = new InMemoryTripRepository()
+      const trip = await trips.create()
+      const artifacts = new InMemoryArtifactRepository('owner-1', new Set([trip.id]))
+      const fares = new MockFareProvider()
+      const checkedAt = new Date().toISOString()
+      const verification = { status: 'verified' as const, checkedAt, confidence: 1, sources: [{ provider: 'test' }] }
+      fares.searchFlights = async query => {
+        await trips.update(trip.id, { travelDays: 10 }, 0)
+        return { query, offers: [], provider: 'test', checkedAt, verification }
+      }
+      fares.searchFlexibleFlights = async () => {
+        await trips.update(trip.id, { travelDays: 10 }, 0)
+        return { results: [], scannedDates: [], failedDates: [] }
+      }
+      const scope = { fares, ...await createArtifactWorkspace({ artifacts, trips, tripId: trip.id }) }
+      const pending = flexible
+        ? executeFlexibleFlightSearch({ origin: 'PEK', destination: 'KIX', departureDateFrom: '2026-10-01', departureDateTo: '2026-10-03', currency: 'CNY', travelClass: 1 }, scope)
+        : executeFlightSearch({ origin: 'PEK', destination: 'KIX', departureDate: '2026-10-01', currency: 'CNY', travelClass: 1 }, scope)
+      await expect(pending).rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+      expect(await artifacts.listForTrip(trip.id)).toEqual([])
+    }
   })
 })
 

@@ -28,6 +28,10 @@ describe('SerpApiResearchSearchProvider', () => {
       travelWindow: { from: '2026-10-10', to: '2026-10-14' } }
     expect(buildSerpApiResearchQuery(input)).not.toContain('2026')
     expect(buildSerpApiResearchQuery({ ...input, researchTypes: ['event'] })).toContain('2026 10')
+    const mixed = buildSerpApiResearchQuery({ ...input, researchTypes: ['event', 'activity', 'practical'] })
+    expect(mixed).not.toContain('2026')
+    expect(mixed).not.toContain('practical travel information')
+    expect(mixed).toContain('Tokyo art museums official tourism')
   })
   it('builds a bounded plain-text query and classifies only safe authority hosts', async () => {
     const searchOrganic = vi.fn(async (_input: unknown, _signal?: AbortSignal) => [

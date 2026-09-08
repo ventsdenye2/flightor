@@ -1,66 +1,65 @@
-# 今晚微信 Agent 演示状态
+# 对话规划 MVP 验收状态
 
-更新时间：2026-09-07 22:59（北京时间），真实链路验收中。
+更新时间：2026-09-08。当前代码基于 `9670ca9`，本轮改动尚未提交。
 
-2026-09-08 架构更新：Planner 已接入持久化 Goal/Goal run、服务端完成验证、Artifact
-lineage，以及共享的按钮/明确对话路线启动服务；内部路线引擎工具仍不暴露给模型。本页下方
-“9 个迁移已应用”和在线链路结果是 2026-09-07 的演示环境快照；新增迁移 010/011 已通过
-隔离 PostgreSQL 集成测试，但尚未把“演示 API/Worker 已迁移并重启”记为当前事实。
-本次代码 gate：后端 71 个文件、352 项非数据库测试通过，4 个数据库套件 17 项顺序通过，
-后端 check/build 与根目录完整回归通过；这些结果仍不等于新的 OpenRouter/SerpApi、Worker
-或微信真机 E2E。
+## 当前实现
 
-22:07 用户要求改用 DeepSeek V4 Flash：已核验 OpenRouter 在线目录，选定 `deepseek/deepseek-v4-flash-0731`，更新默认值、示例及已忽略的 `.env` / `.env.demo` 三个模型字段（OPENROUTER_MODEL / PLANNER_MODEL / RESEARCH_MODEL），API 已重启，正在验证 Flash 完整攻略链路。旧 Pro 的计时和结果仅作历史对比。
+- Planner 自主选择、跳过、重排和复用领域工具；没有规定 discovery → research → guide 的固定流程。
+- `get_active_goal` 只读，`resume_goal` 显式继续旧目标；地点输入由服务端根据可信 ID 恢复权威字段。
+- `finish_goal`、回合收尾和后台任务共用领域校验。`completed` 只对应服务端 `delivery.satisfied`；普通回应为 `responded`。机票日期、逐日覆盖、地点、来源、版本和证据有效期均参与判定。
+- Goal/Goal run 原子提交。后台 job 终态可重放 Goal 协调，供应商工作不因该协调重试而重复。
+- Artifact workspace 冻结当前版本并校验来源；运行期间改条件或取消会阻止后续写入。旧产物保留历史读取能力。
+- 小程序保留登录前草稿，统一刷新 token 和一次 401 重试；对话启动路线后通过 workspace GET 接入现有轮询。客户端只采纳服务端 delivery。
+- 首次登录的发送占用与会话展示状态分离，避免重复 bootstrap；机场时间使用服务端统一投影并标明时区。
+- 研究增加有界短检索词规划，最多 8 次检索、并发 2；规划、检索与综合共享取消信号。
 
-目标：微信端登录 → 多轮对话补齐条件 → 用户明确点击生成 → 实际 Worker/供应商生成路线 → 查看与保存 → 回到对话继续追问。遵守架构的明确生成动作；不以假登录、假航班或 Mock 数据作为真实链路验收。
+## 本轮证据
 
-## 正在处理
+| 范围 | 已观察结果 |
+| --- | --- |
+| 后端 | 最终普通回归 81 suites / 514 tests 通过；5 suites / 26 项 PostgreSQL 集成测试单独通过，合计 540 项；TypeScript 构建通过 |
+| 前端 | 最终完整 npm test、TypeScript 通过；真实模式 weapp 构建已通过。最后的登录发送占用修复通过测试和类型检查，未再次构建 |
+| 数据库 | PostgreSQL 16.15 独立临时实例，127.0.0.1:55439；flightor_demo/test 已创建，demo 的 001–011 迁移全部成功 |
+| API / Worker | 本地 API health/ready 返回 postgres=ok、redis=disabled_local；Worker 已启动 |
+| 真实对话与机票 | 地点 ID 边界修复后，新会话 5.9 秒记录条件；真实航班搜索 11.3 秒完成并保存 flight_search，13 个报价，服务端 delivery=satisfied |
+| 真实路线与恢复 | 对话触发去程路线生成成功，保存 2 个有价比较方案；选择保存、workspace 恢复及服务端 delivery 校验通过。报价为本轮 02:18 UTC 的快照 |
+| 完整攻略 | 尚未通过。最新研究实际成功耗时约 80 秒；TravelGuide 已保存，但混入无旅行日期的旧研究且超过 Goal.maxResults，delivery=partial；整轮 150 秒超时。未降低验收条件或把 partial 当成功 |
+| 微信登录 / 真机 | 未验收：WX_SECRET 未配置；测试脚本使用独立数据库中的随机开发身份，不覆盖微信 code 交换 |
 
-| 环节 | 状态 | 证据 / 下一步 |
-| --- | --- | --- |
-| 本地 API / Worker | 运行中 | 127.0.0.1:3000，独立 flightor_demo 数据库；真实 PostgreSQL Worker；Redis 明确 disabled_local |
-| 微信登录 | 等待 AppSecret | 已从项目配置同步 WX_APPID，WX_SECRET 仍未配置 |
-| 前端构建 | 真实模式构建通过 | 默认关闭 Mock；本次显式 false，API 指向 http://127.0.0.1:3000，Webpack 成功；根 npm test 通过 |
-| 多轮 Planner | 修复后从新会话重跑 | 首轮 19 秒成功持久化 v1，未调用搜索；早先首轮只承诺未落库的问题已在新会话复测修正 |
-| 路线生成 | 真实 Worker 已成功 | 修复非空 warnings 写入 PostgreSQL JSONB 的数组序列化；真实报价生成两条路线，1002 / 1007 CNY，云端恢复 succeeded |
-| 生成后追问 | 真实在线通过 | 19.5 秒；读取已存报价回答 9C 6217、14:55→19:00、1002 CNY，未重新搜索 |
-| 逐日攻略 | 城市关联修复完成，真实复测中 | 定位到东京研究 TYO 与路线 NRT 不匹配导致条目被全部过滤；新增城市别名回归通过。原始摘要降级为未核实，避免旧展览误入攻略；新研究正在验证五天内容 |
-| 微信开发者工具运行 | 待验证 | 本机工具进程存在，正在检查 CLI 与自动化入口 |
+用户于本轮要求总结并结束，实施与后续诊断已停止，未提交 Git。完整攻略必须实际保存 TravelGuide，五天均有符合来源和约束的内容，服务端交付状态为 satisfied。
 
-## 已有基线
+下一步应统一攻略组合与 Goal 的日期、研究类别及条目上限契约，使 builder 能在既有证据中选择合适条目，然后再跑真实验收。该方案尚未实施；研究耗时和整轮预算也需要验证。关键交付路径已收敛，本轮未进行全仓历史补丁清理。
 
-提交 b2dbe74；后端全量 314 测试通过，AeroDataBox 后续回归 9/9；根测试和生产构建通过。机场/航线/时刻、真实票价及 Research 曾分别在线实测成功，尚不等价于本次完整演示链路。
+保留证据：`backend/.demo/e2e-guide-pending-20260908.json` 含真实机票/路线通过与首次攻略失败；`e2e-guide-before-query-planner-20260908.json` 保留上轮部分结果；`e2e-evidence.json` 为最终 partial/timeout 结果。文件均在忽略目录，session 文件含 token，不提交。
 
-本轮后端全量 68 suites / 336 tests 通过，包含全部 13 项 PostgreSQL 集成测试（无 skip）；全量使用 `--maxWorkers=1`，避免多个测试同时初始化 pg_trgm 扩展的竞争。随后地点前置条件错误提示的15项回归及构建通过。演示脚本身份是独立数据库中的随机开发测试用户，东京日期、预算、偏好均为合成测试输入；它不替代小程序微信 code 交换验收。用户已明确授权该合成行程的 OpenRouter/SerpApi 在线验证。
+## 本地运行
 
-22:55 结构化合成探针通过：Flash 对已存真实来源输出9条有来源索引的研究发现。研究现在使用严格 JSON Schema，来源索引、类别、目的地仍由服务器校验；未经合成的原始摘要始终未核实。22:57 新会话首轮存储成功，次轮漏解析出发机场导致失败；修复笼统错误提示为明确的双机场前置条件，正在续轮恢复测试。不能将此次新会话称为无重试全链路通过。
-
-阶段提交 `367ca5b` 已完成（真实路线与 Flash 切换）。Flash 在线机票复测55.6秒成功，返回13个真实报价；研究的地点对象抄写失败已改为服务端按本轮已解析ID取回事实，29项相关回归通过，正在在线复测。研究按两类问题分别检索，最多并发2个、总量仍不超过8；有据活动按各天分配，避免首日占满。
-
-模型兼容：线上探针 `reasoning.enabled=false` 返回 HTTP 200、1.17 秒、reasoning_tokens=0。Planner 和 Research 明确关闭推理，V4 的旧 `effort=none` 转换为该参数；相关 18 项回归通过。Planner 使用一次研究工具调用、内部按主题有界检索后先保存攻略，避免重复检索耗尽单轮；截断 completion 不再标记 completed。前端对话超时180秒，高于后端150秒。
-
-## 当前最短启动方式
-
-依赖：本地 PostgreSQL 容器须运行；`backend/.env.demo` 已配置独立 `flightor_demo` 数据库与服务密钥，文件被 Git 忽略。所有 9 个迁移已应用。Redis 仅开发模式可显式关闭，生产仍强制启用。
+数据库需先监听 `backend/.env.demo` 中的地址。该文件已忽略，密钥不写入验收记录。当前独立 PostgreSQL 位于系统临时目录，未安装系统服务；主机重启后需重新启动。
 
 ```powershell
 npm --prefix backend run build
+# backend 目录内，应用演示数据库迁移
+cd backend
+node --env-file=.env.demo dist/db/migrate.js
+cd ..
 npm --prefix backend run demo:api
 # 第二终端
 npm --prefix backend run demo:worker
-# 第三终端，仓库根目录
+# 第三终端
+Invoke-RestMethod http://127.0.0.1:3000/health/ready
+npm --prefix backend run demo:e2e -- --with-guide --conversational-route
+```
+
+E2E 写入独立 flightor_demo，结果为 `backend/.demo/e2e-evidence.json`；session 文件含开发 token，不提交。重复启动服务前检查已有进程。
+
+```powershell
 $env:FLIGHTOR_USE_MOCK = 'false'
 $env:FLIGHTOR_API_BASE_URL = 'http://127.0.0.1:3000'
 npm run build:weapp
-Invoke-RestMethod http://127.0.0.1:3000/health/ready
 ```
 
-当前 API/Worker 已启动，无需重复启动。开发者工具导入仓库的 `project.config.json`（miniprogramRoot 为 dist），本地调试关闭合法域名校验。实际手机不能访问电脑的 127.0.0.1，需要可达的 HTTPS API 后重建；目前未部署公网服务。
+开发者工具导入仓库 `project.config.json`。真实微信登录需要在 `backend/.env` 或演示环境覆盖中配置 `WX_SECRET` 并重启 API；手机访问还需要可达 HTTPS API。构建通过不代表微信运行验收通过。本轮未部署公网服务。
 
-`WX_SECRET` 仍须配置到 `backend/.env.demo` 并重启 API 才能验收微信登录。开发者工具进程存在，但 CLI 当前登录配置路径不匹配，自动化入口未就绪；不绕过工具认证。
+## 范围与限制
 
-验收对话：先发送“上海浦东到东京成田，5天，美术馆和日料，机票预算5000元，先记录不要搜索”；再发送“2026年10月10日出发，去程直飞优先，查真实机票”；点击“生成路线”，查看报价；追问最便宜航班详情；请求只在东京的五日逐日攻略。保存/恢复需在微信端实际点击核验。
-
-## 更新规则
-
-每个阻塞修复、运行验证、失败和阶段提交立即更新本文件，并同步 PROJECT_CONTEXT / PHASE789_ACCEPTANCE 中影响运行方式的条目。验收只写实际观测，不把静态测试等同于微信运行结果。
+当前最终航线引擎支持单起点、单目的地、去程；多城市、往返和地面交通组合仍明确不支持。攻略验证器覆盖结构化约束及来源，不能证明任意自由文本问题的全部语义均已回答。过期或无版本来源不作为当前交付成功证据。

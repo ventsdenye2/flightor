@@ -4,6 +4,7 @@ import type { Conversation } from '../conversations/repository.js'
 import type { ArtifactType } from '../artifacts/repository.js'
 import type { summarizeTrip } from '../routes/agent-cloud.js'
 import type { RouteGenerationRunView } from '../route-generation/contracts.js'
+import type { GoalDelivery } from '../agent/goals/completion.js'
 
 export const savedRouteSchema = z.object({ artifactId: z.string().uuid(), routeId: z.string().min(1).max(160), contextVersion: z.number().int().nonnegative() }).strict()
 export type SavedRoute = z.infer<typeof savedRouteSchema>
@@ -19,7 +20,7 @@ export interface WorkspaceTrip {
   contextVersion: number; savedRoute: SavedRoute | null; createdAt: string; updatedAt: string
 }
 export interface WorkspaceArtifactRef { id: string; type: ArtifactType; schemaVersion: number; presentationHint: string }
-export interface WorkspaceMessage { id: string; role: 'user' | 'assistant'; content: string; artifactRefs: WorkspaceArtifactRef[]; createdAt: string }
+export interface WorkspaceMessage { id: string; role: 'user' | 'assistant'; content: string; artifactRefs: WorkspaceArtifactRef[]; createdAt: string; delivery?: GoalDelivery }
 export interface TripWorkspace {
   trip: WorkspaceTrip; tripContextSummary: ReturnType<typeof summarizeTrip>
   conversations: Conversation[]; conversationId: string | null

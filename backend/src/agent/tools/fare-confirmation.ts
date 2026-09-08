@@ -18,7 +18,8 @@ import {
   type RouteSetPayload
 } from '../../flight-routing/types.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
-import { toolArtifactLineage } from './artifact-lineage.js'
+import { checkpoint, loadWorkspaceArtifact, saveWorkspaceArtifact, type ArtifactWorkspace } from '../../artifacts/workspace.js'
+import { workspaceScope } from './workspace-scope.js'
 
 const verificationStatusSchema = z.enum(['verified', 'partially_verified', 'stale', 'unverified'])
 const artifactReferenceSchema = z.object({
@@ -197,12 +198,10 @@ function weakQueryForEdge(edge: ConnectionEdge): FareSearchInput | undefined {
 }
 
 async function loadFlightArtifact(
-  context: ToolExecutionContext,
+  scope: ArtifactWorkspace,
   artifactId: string
 ): Promise<{ record: ArtifactRecord; payload: FlightSearchArtifact }> {
-  const record = await context.artifacts.get(artifactId)
-  if (!record || record.tripId !== context.tripId) throw new Error('Fare artifact was not found')
-  if (record.type !== 'flight_search' || record.schemaVersion !== 1) throw new Error('Fare artifact is not a supported flight search')
+  const record = await loadWorkspaceArtifact(scope, artifactId, 'flight_search', [1])
   const payload = flightSearchArtifactSchema.parse(record.payload)
   if (payload.id !== record.id) throw new Error('Fare artifact payload id does not match its record')
   return { record, payload }
@@ -223,13 +222,11 @@ function selectedPath(payload: RouteSetPayload, pathId: string): CompleteFlightP
 }
 
 async function loadRouteArtifact(
-  context: ToolExecutionContext,
+  scope: ArtifactWorkspace,
   artifactId: string,
   pathId: string
 ): Promise<{ record: ArtifactRecord; payload: RouteSetPayload; path: CompleteFlightPath }> {
-  const record = await context.artifacts.get(artifactId)
-  if (!record || record.tripId !== context.tripId) throw new Error('Route artifact was not found')
-  if (record.type !== 'route_set' || record.schemaVersion !== 1) throw new Error('Route artifact is not a supported route set')
+  const record = await loadWorkspaceArtifact(scope, artifactId, 'route_set', [1])
   const payload = routeSetPayloadSchema.parse(record.payload)
   if (payload.kind !== 'flight_paths' && payload.kind !== 'optimized_routes') {
     throw new Error('Route confirmation requires flight paths or optimized routes')
@@ -448,24 +445,20 @@ async function refreshCandidates(
 }
 
 async function persistFareSnapshot(
-  context: ToolExecutionContext,
+  scope: ArtifactWorkspace,
   result: FareSearchResult,
   sourceArtifactId: string,
   offerId: string,
-  weak: boolean,
-  signal: AbortSignal
+  weak: boolean
 ): Promise<{ id: string; payload: FlightSearchArtifact }> {
-  assertCurrent(context, signal)
   const id = uuidv7()
   let verification = appendSources(result.verification, sourceArtifactId, offerId)
   if (weak) verification = forcePartiallyVerified(verification)
   const payload = flightSearchArtifactSchema.parse({ ...result, id, type: 'flight_search', verification })
-  const stored = await context.artifacts.create({
-    id, tripId: context.tripId, conversationId: context.conversationId,
-    ...toolArtifactLineage(context, [sourceArtifactId]),
+  const stored = await saveWorkspaceArtifact(scope, {
+    id, sourceArtifactIds: [sourceArtifactId],
     type: 'flight_search', schemaVersion: 1, payload, verification
   })
-  assertCurrent(context, signal)
   return { id: stored.id, payload }
 }
 
@@ -631,7 +624,7 @@ function replaceSelectedPath(payload: RouteSetPayload, pathId: string, updated: 
 }
 
 async function prepareCandidates(
-  context: ToolExecutionContext,
+  scope: ArtifactWorkspace,
   path: CompleteFlightPath
 ): Promise<RefreshCandidate[]> {
   const candidates: RefreshCandidate[] = []
@@ -640,7 +633,7 @@ async function prepareCandidates(
     if (edge.fareArtifactId !== undefined && edge.fareOfferId !== undefined) {
       let sourceArtifact: { record: ArtifactRecord; payload: FlightSearchArtifact } | undefined
       try {
-        sourceArtifact = await loadFlightArtifact(context, edge.fareArtifactId)
+        sourceArtifact = await loadFlightArtifact(scope, edge.fareArtifactId)
       } catch {
         sourceArtifact = undefined
       }
@@ -662,16 +655,17 @@ export const confirmFlightPriceTool: AgentTool<
   costClass: 'paid', costUnits: 4, sideEffect: 'state', parallelSafe: false,
   timeoutMs: 35_000, provider: 'fare_provider',
   async execute(input, context, signal) {
-    const source = await loadFlightArtifact(context, input.artifactId)
+    const scope = await workspaceScope(context, signal)
+    const source = await loadFlightArtifact(scope, input.artifactId)
     const sourceOffer = source.payload.offers.find(item => item.id === input.offerId)
     if (sourceOffer === undefined) throw new Error('The requested fare offer was not found')
     if (!offerEndpointsMatch(sourceOffer, source.payload.query)) throw new Error('Source fare offer endpoints do not match its query')
-    assertCurrent(context, signal)
+    await checkpoint(scope)
     const raw = await refreshLimiter.run(signal, () => context.fares.refreshFlight({ offerId: input.offerId, query: source.payload.query }, { signal }))
     assertCurrent(context, signal)
     const validated = validateRefreshResult(raw, source.payload.query, input.offerId)
     assertCurrent(context, signal)
-    const stored = await persistFareSnapshot(context, validated.result, source.record.id, input.offerId, false, signal)
+    const stored = await persistFareSnapshot(scope, validated.result, source.record.id, input.offerId, false)
     return {
       artifact: { id: stored.id, type: 'flight_search', schemaVersion: 1 },
       summary: {
@@ -694,13 +688,14 @@ export const confirmRoutePriceTool: AgentTool<
   costClass: 'expensive', costUnits: 8, sideEffect: 'state', parallelSafe: false,
   timeoutMs: 60_000, provider: 'fare_provider',
   async execute(input, context, signal) {
+    const scope = await workspaceScope(context, signal)
     const requestedMaxLegs = input.maxLegs ?? 12
-    const source = await loadRouteArtifact(context, input.routeArtifactId, input.pathId)
+    const source = await loadRouteArtifact(scope, input.routeArtifactId, input.pathId)
     const fareLegCount = source.path.edges.filter(edge => edge.fareOfferId !== undefined).length
     if (fareLegCount > requestedMaxLegs) throw new Error('Route fare confirmation exceeds maxLegs')
     assertCurrent(context, signal)
 
-    const candidates = await prepareCandidates(context, source.path)
+    const candidates = await prepareCandidates(scope, source.path)
     const outcomes = await refreshCandidates(candidates, context, signal)
     assertCurrent(context, signal)
 
@@ -708,12 +703,11 @@ export const confirmRoutePriceTool: AgentTool<
     for (const outcome of outcomes) {
       if (outcome.kind !== 'confirmed' || outcome.result === undefined || outcome.offerId === undefined) continue
       const snapshot = await persistFareSnapshot(
-        context,
+        scope,
         outcome.result,
         outcome.sourceArtifactId ?? source.record.id,
         outcome.offerId,
-        outcome.weak,
-        signal
+        outcome.weak
       )
       outcome.snapshotId = snapshot.id
       outcome.snapshotVerification = snapshot.payload.verification
@@ -751,9 +745,8 @@ export const confirmRoutePriceTool: AgentTool<
     })
     assertCurrent(context, signal)
     const id = uuidv7()
-    const stored = await context.artifacts.create({
-      id, tripId: context.tripId, conversationId: context.conversationId,
-      ...toolArtifactLineage(context, sourceArtifactIds),
+    const stored = await saveWorkspaceArtifact(scope, {
+      id, sourceArtifactIds,
       type: 'route_set', schemaVersion: 1, payload: successorPayload, verification
     })
     assertCurrent(context, signal)

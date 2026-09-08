@@ -39,7 +39,7 @@ export const buildTravelGuideTool: AgentTool<
   provider: 'travel_guide_builder',
   async execute(input, context, signal) {
     if (!context.travelGuideBuilder) throw new Error('Travel guide builder is unavailable')
-    const { record: stored, payload } = await composeTravelGuide(input, context.travelGuideBuilder, workspaceScope(context, signal))
+    const { record: stored, payload } = await composeTravelGuide(input, context.travelGuideBuilder, await workspaceScope(context, signal))
     return {
       artifact: { id: stored.id, type: 'travel_guide', schemaVersion: 1 },
       summary: {

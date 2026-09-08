@@ -67,7 +67,7 @@ describe('CloudPlannerService vertical slice', () => {
       generationId: 'gen-1', message: '帮我找上海到东京的航班'
     })
 
-    expect(result).toMatchObject({ reply: '已找到一个经过验证的航班选项。', tripVersion: 1, stopReason: 'completed' })
+    expect(result).toMatchObject({ reply: '已找到一个经过验证的航班选项。', tripVersion: 1, stopReason: 'responded', delivery: { status: 'not_requested' } })
     expect(result.artifactRefs).toHaveLength(1)
     expect(result.artifactRefs[0]).toMatchObject({ type: 'flight_search', schemaVersion: 1 })
     expect(result.memoryChanged).toBe(false)

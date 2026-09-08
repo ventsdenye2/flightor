@@ -1,5 +1,5 @@
 import { request, USE_MOCK } from '../utils/request'
-import type { CloudArtifactRef, CloudTripContextSummary } from './conversationService'
+import type { CloudArtifactRef, CloudTripContextSummary, ConversationDelivery } from './conversationService'
 import type { RouteGenerationRunView } from './routeGenerationService'
 
 export interface WorkspaceTrip {
@@ -12,7 +12,7 @@ export interface CloudWorkspace {
   trip: WorkspaceTrip; tripContextSummary: CloudTripContextSummary
   conversations: Array<{ id: string; tripId: string; title: string; status: string; createdAt: string; updatedAt: string }>
   conversationId: string | null
-  messages: Array<{ id: string; role: 'user' | 'assistant'; content: string; artifactRefs: CloudArtifactRef[]; createdAt: string }>
+  messages: Array<{ id: string; role: 'user' | 'assistant'; content: string; artifactRefs: CloudArtifactRef[]; createdAt: string; delivery?: ConversationDelivery }>
   artifactRefs: CloudArtifactRef[]
   routeGeneration?: RouteGenerationRunView
 }

@@ -92,4 +92,69 @@ suite('PostgreSQL durable planning goals', () => {
     const foreign = new PostgresGoalRepository(db, '999999999')
     await expect(foreign.get(goal.id)).resolves.toBeUndefined()
   })
+
+  async function completionFixture(key: string) {
+    const trip = await createTrip()
+    const goals = new PostgresGoalRepository(db, userId)
+    const runs = new PostgresGoalRunRepository(db, userId)
+    const { goal } = await goals.create(goalInput(trip.id, key))
+    const { run } = await runs.create({ goalId: goal.id, tripId: trip.id, generationId: key, contextVersion: 0,
+      contextSnapshot: emptyTripContext(trip.id), idempotencyKey: key })
+    const input = { goalId: goal.id, runId: run.id, expectedGoalRevision: 0, expectedRunRevision: 0,
+      goalStatus: 'satisfied' as const, runStatus: 'satisfied' as const, currentTripVersion: 0 }
+    return { trip, goals, runs, goal, run, input }
+  }
+
+  it('atomically completes both aggregates and idempotently replays a successful commit', async () => {
+    const test = await completionFixture('atomic-success')
+    const first = await test.runs.commitCompletion(test.input)
+    expect(first).toMatchObject({ goal: { status: 'satisfied', revision: 1 }, run: { status: 'satisfied', revision: 1 } })
+    expect(await test.runs.commitCompletion(test.input)).toEqual(first)
+  })
+
+  it('rolls back the Goal write if the run write fails inside the transaction', async () => {
+    const test = await completionFixture('atomic-failure')
+    await pool.query(`CREATE FUNCTION reject_atomic_run() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN IF NEW.generation_id = 'atomic-failure' THEN RAISE EXCEPTION 'injected completion failure'; END IF; RETURN NEW; END $$`)
+    await pool.query('CREATE TRIGGER reject_atomic_run BEFORE UPDATE ON planning_goal_runs FOR EACH ROW EXECUTE FUNCTION reject_atomic_run()')
+    try {
+      await expect(test.runs.commitCompletion(test.input)).rejects.toThrow('injected completion failure')
+      expect(await test.goals.get(test.goal.id)).toMatchObject({ status: 'pending', revision: 0 })
+      expect(await test.runs.get(test.run.id)).toMatchObject({ status: 'running', revision: 0 })
+    } finally {
+      await pool.query('DROP TRIGGER reject_atomic_run ON planning_goal_runs')
+      await pool.query('DROP FUNCTION reject_atomic_run()')
+    }
+  })
+
+  it('repairs a historical run-only completion without rewriting the terminal run', async () => {
+    const test = await completionFixture('atomic-repair')
+    const run = await test.runs.update(test.run.id, 0, { status: 'satisfied' })
+    const result = await test.runs.commitCompletion({ ...test.input, expectedRunRevision: run.revision })
+    expect(result.goal).toMatchObject({ status: 'satisfied', revision: 1 })
+    expect(result.run).toEqual(run)
+  })
+
+  it('rejects concurrent completion/cancellation conflicts without half-written statuses', async () => {
+    const test = await completionFixture('atomic-race')
+    const results = await Promise.allSettled([
+      test.runs.commitCompletion(test.input),
+      test.runs.commitCompletion({ ...test.input, goalStatus: 'cancelled', runStatus: 'cancelled' })
+    ])
+    expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1)
+    const goal = await test.goals.get(test.goal.id)
+    const run = await test.runs.get(test.run.id)
+    expect(goal?.status).toBe(run?.status)
+    expect(['satisfied', 'cancelled']).toContain(goal?.status)
+  })
+
+  it('checks the locked current Trip version and owner before committing', async () => {
+    const test = await completionFixture('atomic-context')
+    await new PostgresTripRepository(db, userId).update(test.trip.id, { notes: ['changed before commit'] })
+    await expect(test.runs.commitCompletion(test.input)).rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+    const foreign = new PostgresGoalRunRepository(db, '999999999')
+    await expect(foreign.commitCompletion(test.input)).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' })
+    expect(await test.goals.get(test.goal.id)).toMatchObject({ status: 'pending', revision: 0 })
+    expect(await test.runs.get(test.run.id)).toMatchObject({ status: 'running', revision: 0 })
+  })
 })

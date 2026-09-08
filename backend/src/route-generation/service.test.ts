@@ -114,15 +114,30 @@ describe('route generation service', () => {
     expect(value.runs.enqueuedJobRunIds).toEqual([first.run.id])
   })
 
-  it('executes the frozen snapshot even after the trip context changes', async () => {
+  it('rejects an obsolete queued snapshot before calling a provider', async () => {
     const value = await fixture()
     const started = await startRouteGenerationRun(value.dependencies, {
       ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'stale-context'
     })
     await value.trips.update(value.trip.id, { notes: ['changed after enqueue'] })
     const finished = await executeRouteGenerationRun(value.dependencies, started.run.id)
-    expect(finished?.status).toBe('succeeded')
+    expect(finished).toMatchObject({ status: 'failed', errorCode: 'TRIP_CONTEXT_VERSION_CONFLICT' })
     expect(finished?.contextVersion).toBe(0)
+    expect(finished?.resultArtifactId).toBeUndefined()
+    expect(value.connectionSearch.search).not.toHaveBeenCalled()
+    expect(await value.artifacts.listForTrip(value.trip.id)).toHaveLength(0)
+  })
+
+  it('does not persist route artifacts when the Trip changes during provider work', async () => {
+    let value!: Awaited<ReturnType<typeof fixture>>
+    value = await fixture({ onSearch: async () => { await value.trips.update(value.trip.id, { travelDays: 10 }) } })
+    const started = await startRouteGenerationRun(value.dependencies, {
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'change-during-search'
+    })
+    const finished = await executeRouteGenerationRun(value.dependencies, started.run.id)
+    expect(finished).toMatchObject({ status: 'failed', errorCode: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+    expect(await value.artifacts.listForTrip(value.trip.id)).toHaveLength(0)
+    expect((await value.goals.get(started.run.goalId!))?.status).toBe('failed')
   })
 
   it('cancels between stages without writing a result artifact', async () => {
@@ -223,6 +238,66 @@ describe('route generation service', () => {
     expect(finished?.resultArtifactId).toBeUndefined()
     await expect(value.goals.get(started.run.goalId!)).resolves.toMatchObject({ status: 'failed' })
     await expect(value.goalRuns.get(started.run.goalRunId!)).resolves.toMatchObject({ status: 'failed' })
+  })
+
+  it.each(['working_set', 'completion'] as const)('replays a successful route result after a %s storage failure', async phase => {
+    const value = await fixture()
+    const started = await startRouteGenerationRun(value.dependencies, {
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: `retry-${phase}`
+    })
+    const failure = new Error('temporary Goal storage failure')
+    if (phase === 'working_set') vi.spyOn(value.goalRuns, 'update').mockRejectedValueOnce(failure)
+    else vi.spyOn(value.goalRuns, 'commitCompletion').mockRejectedValueOnce(failure)
+
+    await expect(executeRouteGenerationRun(value.dependencies, started.run.id)).rejects.toBe(failure)
+    const persisted = await value.runs.get(started.run.id)
+    expect(persisted?.status).toBe('succeeded')
+    expect((await value.goals.get(started.run.goalId!))?.status).toBe('pending')
+    expect((await value.goalRuns.get(started.run.goalRunId!))?.status).toBe('running')
+
+    const retried = await executeRouteGenerationRun(value.dependencies, started.run.id)
+    expect(retried).toEqual(persisted)
+    expect(value.connectionSearch.search).toHaveBeenCalledOnce()
+    expect(await value.artifacts.listForRun(started.run.goalRunId!)).toHaveLength(3)
+    expect((await value.goals.get(started.run.goalId!))?.status).toBe('satisfied')
+    const completed = await value.goalRuns.get(started.run.goalRunId!)
+    expect(completed?.status).toBe('satisfied')
+    expect(completed?.workingSet.artifactRefs).toHaveLength(3)
+    expect(completed?.workingSet.artifactRefs.some(ref => ref.id === persisted?.resultArtifactId)).toBe(true)
+  })
+
+  it('replays a failed route result when persisting the Goal failure must be retried', async () => {
+    const value = await fixture({ edges: [] })
+    const started = await startRouteGenerationRun(value.dependencies, {
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'retry-failed-goal'
+    })
+    const failure = new Error('temporary Goal storage failure')
+    vi.spyOn(value.goalRuns, 'commitCompletion').mockRejectedValueOnce(failure)
+    await expect(executeRouteGenerationRun(value.dependencies, started.run.id)).rejects.toBe(failure)
+    expect((await value.runs.get(started.run.id))?.status).toBe('failed')
+    expect((await value.goals.get(started.run.goalId!))?.status).toBe('pending')
+
+    expect(await executeRouteGenerationRun(value.dependencies, started.run.id)).toMatchObject({ status: 'failed', errorCode: 'NO_ROUTE_PATHS' })
+    expect(value.connectionSearch.search).toHaveBeenCalledOnce()
+    expect((await value.goals.get(started.run.goalId!))?.status).toBe('failed')
+    expect((await value.goalRuns.get(started.run.goalRunId!))?.status).toBe('failed')
+  })
+
+  it('replays cancellation when the original Goal cancellation could not be persisted', async () => {
+    const value = await fixture()
+    const started = await startRouteGenerationRun(value.dependencies, {
+      ownerId: 'user-1', authorizationSource: 'button', tripId: value.trip.id, idempotencyKey: 'retry-cancelled-goal'
+    })
+    await value.runs.cancel(started.run.id)
+    const failure = new Error('temporary Goal storage failure')
+    vi.spyOn(value.goalRuns, 'commitCompletion').mockRejectedValueOnce(failure)
+    await expect(executeRouteGenerationRun(value.dependencies, started.run.id)).rejects.toBe(failure)
+    expect((await value.goals.get(started.run.goalId!))?.status).toBe('pending')
+
+    expect((await executeRouteGenerationRun(value.dependencies, started.run.id))?.status).toBe('cancelled')
+    expect(value.connectionSearch.search).not.toHaveBeenCalled()
+    expect((await value.goals.get(started.run.goalId!))?.status).toBe('cancelled')
+    expect((await value.goalRuns.get(started.run.goalRunId!))?.status).toBe('cancelled')
   })
 
   it('rejects unsupported return or multi-city contexts before enqueue', async () => {

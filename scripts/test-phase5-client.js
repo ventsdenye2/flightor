@@ -207,6 +207,9 @@ let clearOwnerHistory = () => {}
 let lastCreatedRouteKey = ''
 const chatStoreUserStore = { profile: { uid: 'user-a' } }
 let bootstrapCloudSessionStub = async () => ({ tripId: 'trip-1', conversationId: 'conversation-1' })
+let converseStub = async () => { throw new Error('conversation stub not configured') }
+let workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: { version: 7, destinations: { mode: 'explicit', required: [], preferred: [], excluded: [] }, interests: [], readyForRouteGeneration: true }, artifactRefs: [], messages: [] })
+class ApiRequestError extends Error { constructor(status, code, message) { super(message); this.status = status; this.code = code } }
 const routeAction = {
   createRouteGenerationRun: async options => {
     routeActionCalls.create.push(options)
@@ -249,13 +252,14 @@ vm.runInNewContext(chatStoreCompiled, {
     if (specifier === '../services/routeService') return { confirmPicks: async () => [] }
     if (specifier === '../services/conversationService') return {
       emptyTripState: service.emptyTripState,
-      converse: async () => { throw new Error('conversation stub not configured') },
+      converse: (...args) => converseStub(...args),
       bootstrapCloudSession: (...args) => bootstrapCloudSessionStub(...args)
     }
     if (specifier === './flightStore') return { flightStore: { select: () => {} } }
     if (specifier === '../i18n') return { t: key => key }
     if (specifier === './chatHistory') return chatHistoryRuntime
-    if (specifier === '../utils/request') return { USE_MOCK: false }
+    if (specifier === '../utils/request') return { USE_MOCK: false, ApiRequestError }
+    if (specifier === '../services/workspaceService') return { getCloudWorkspace: (...args) => workspaceStub(...args) }
     if (specifier === './userStore') return {
       userStore: chatStoreUserStore,
       registerUserSessionClearHandler: () => () => {}
@@ -480,6 +484,7 @@ routeAction.cancelRun = () => makeRun('succeeded', { resultArtifactId: 'artifact
 await cancelWinnerStore.cancelRouteGeneration('en')
 check('ChatStore keeps a worker-won success when cancellation loses the race', cancelWinnerStore.routeGeneration?.status === 'succeeded'
   && cancelWinnerStore.routeGeneration.resultArtifactId === 'artifact-winner'
+  && cancelWinnerStore.artifactRefs.some(ref => ref.id === 'artifact-winner')
   && cancelWinnerStore.routeGenerationError === '')
 
 resetRouteActionHarness()
@@ -528,6 +533,170 @@ let rejectedOwner = false
 try { cloudStore.openCloudWorkspace({ conversationId: 'foreign' }, 'user-b') } catch { rejectedOwner = true }
 check('Cloud workspace rejects a response for another owner before mutation', rejectedOwner
   && cloudStore.currentSessionId === 'cloud-conversation-cloud')
+
+// Conversation acceptance and background task reconciliation use real store behavior.
+resetRouteActionHarness()
+chatStoreUserStore.profile = null
+const anonymousStore = new ChatStore()
+check('unauthenticated send is rejected with a visible error and no accepted turn', await anonymousStore.send('keep my draft', 'en') === false
+  && anonymousStore.multiError.includes('Sign in') && anonymousStore.timeline.length === 0)
+chatStoreUserStore.profile = { uid: 'user-a' }
+bootstrapCloudSessionStub = async () => { throw new Error('offline') }
+const failedBootstrapStore = new ChatStore()
+check('failed bootstrap preserves the caller draft by returning not accepted', await failedBootstrapStore.send('keep my draft', 'en') === false
+  && failedBootstrapStore.multiError && failedBootstrapStore.timeline.length === 0)
+bootstrapCloudSessionStub = async () => ({ tripId: 'trip-1', conversationId: 'conversation-1' })
+
+const delivery = { status: 'pending', goalId: 'goal-route-1', kind: 'route_generation', artifactIds: [], missing: [], warnings: [] }
+const response = { tripId: 'trip-1', conversationId: 'conversation-1', reply: 'The route is queued.', tripContextSummary: (await workspaceStub()).tripContextSummary,
+  artifactRefs: [], suggestedActions: [], warnings: [], stopReason: 'goal_pending', delivery }
+converseStub = async () => response
+workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [], messages: [],
+  routeGeneration: makeRun('running', { goalId: delivery.goalId }) })
+const conversationRouteStore = makeRouteStore()
+let finishConversationRoutePoll
+routeAction.getRun = () => new Promise(resolve => { finishConversationRoutePoll = resolve })
+check('pending business delivery is accepted as a conversation response', await conversationRouteStore.send('generate the route', 'en') === true
+  && conversationRouteStore.timeline.at(-1).delivery.status === 'pending')
+for (let attempt = 0; attempt < 8 && !finishConversationRoutePoll; attempt += 1) await Promise.resolve()
+check('conversation-queued route starts GET polling without a duplicate POST', routeActionCalls.create.length === 0
+  && routeActionCalls.get.length === 1 && conversationRouteStore.routeGenerationLoading)
+workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [],
+  messages: [{ id: 'server-message', role: 'assistant', delivery: { ...delivery, status: 'partial', missing: ['coverage'] } }] })
+finishConversationRoutePoll(makeRun('succeeded', { goalId: delivery.goalId, resultArtifactId: 'artifact-conversation-route' }))
+for (let attempt = 0; attempt < 16; attempt += 1) await Promise.resolve()
+check('terminal route GET refreshes server delivery and never promotes partial evidence to satisfied', conversationRouteStore.timeline.at(-1).delivery.status === 'partial'
+  && conversationRouteStore.artifactRefs.some(ref => ref.id === 'artifact-conversation-route'))
+
+resetRouteActionHarness()
+const staleWorkspaceStore = makeRouteStore()
+let resolveWorkspace
+workspaceStub = () => new Promise(resolve => { resolveWorkspace = resolve })
+const staleRefresh = staleWorkspaceStore.refreshWorkspace('en')
+const nextWorkspaceSession = history.createEmptyChatSession('next-workspace')
+nextWorkspaceSession.ownerId = 'user-a'
+staleWorkspaceStore.sessions.push(nextWorkspaceSession)
+staleWorkspaceStore.switchSession(nextWorkspaceSession.id)
+resolveWorkspace({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [{ id: 'stale-ref' }], routeGeneration: makeRun('running') })
+await staleRefresh
+check('late workspace response cannot repopulate another session or start its polling', staleWorkspaceStore.currentSessionId === nextWorkspaceSession.id
+  && staleWorkspaceStore.routeGeneration === undefined && staleWorkspaceStore.artifactRefs.length === 0 && routeActionCalls.get.length === 0)
+
+resetRouteActionHarness()
+const refreshRecoveryStore = makeRouteStore()
+workspaceStub = async () => { throw new Error('offline') }
+await refreshRecoveryStore.refreshWorkspace('en')
+check('workspace refresh failure is actionable even before any run is attached', refreshRecoveryStore.routeGenerationError.includes('Refresh') && !refreshRecoveryStore.routeGeneration)
+workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [], messages: [], routeGeneration: makeRun('succeeded', { resultArtifactId: 'restored-result' }) })
+await refreshRecoveryStore.refreshWorkspace('en')
+check('refresh recovers a finished server run using GET only', !refreshRecoveryStore.routeGenerationError && refreshRecoveryStore.routeGeneration.status === 'succeeded'
+  && refreshRecoveryStore.artifactRefs.some(ref => ref.id === 'restored-result') && routeActionCalls.create.length === 0)
+
+workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [], messages: [], routeGeneration: makeRun('running') })
+await refreshRecoveryStore.refreshWorkspace('en')
+check('an older workspace snapshot cannot regress a completed run or restart its polling', refreshRecoveryStore.routeGeneration.status === 'succeeded'
+  && routeActionCalls.get.length === 0)
+workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [], messages: [], routeGeneration: makeRun('succeeded', { id: 'another-conversation-run', conversationId: 'another-conversation', resultArtifactId: 'shared-trip-result' }) })
+await refreshRecoveryStore.refreshWorkspace('en')
+check('same-Trip results remain available across conversations', refreshRecoveryStore.routeGeneration.id === 'another-conversation-run'
+  && refreshRecoveryStore.artifactRefs.some(ref => ref.id === 'shared-trip-result'))
+
+const pendingHistory = history.createEmptyChatSession('delivery-history')
+pendingHistory.messages = [{ role: 'user', content: 'generate' }, { role: 'assistant', content: 'queued' }]
+pendingHistory.timeline = [{ id: 'pending', user: pendingHistory.messages[0], assistant: pendingHistory.messages[1], recommendations: [], suggestedActions: [], routes: [], warnings: [], delivery }]
+const recoveredDelivery = history.sanitizeHistoryPayload(history.makeChatHistoryPayload(pendingHistory.id, [pendingHistory])).sessions[0]?.timeline[0]?.delivery
+check('pending delivery survives local history without becoming completed', recoveredDelivery?.status === 'pending' && recoveredDelivery.goalId === delivery.goalId)
+
+const restoredCloudDeliveryStore = makeRouteStore()
+restoredCloudDeliveryStore.openCloudWorkspace({
+  trip: { id: 'trip-1', title: 'Restored trip' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary,
+  artifactRefs: [], routeGeneration: makeRun('succeeded', { goalId: delivery.goalId, resultArtifactId: 'cloud-finished-route' }),
+  messages: [{ id: 'cloud-request', role: 'user', content: 'generate', artifactRefs: [] },
+    { id: 'cloud-delivery', role: 'assistant', content: 'queued', artifactRefs: [], delivery }]
+}, 'user-a')
+check('cloud restoration preserves server delivery independently of route run success', restoredCloudDeliveryStore.timeline[0].delivery.status === 'pending'
+  && restoredCloudDeliveryStore.timeline[0].delivery.goalId === delivery.goalId
+  && restoredCloudDeliveryStore.artifactRefs.some(ref => ref.id === 'cloud-finished-route'))
+
+const multiDelivery = { status: 'pending', artifactIds: [], missing: [], warnings: [], goals: [delivery, { ...delivery, goalId: 'goal-research' }] }
+restoredCloudDeliveryStore.timeline[0].delivery = multiDelivery
+workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [],
+  messages: [{ id: 'server-multi', role: 'assistant', delivery: { ...multiDelivery, status: 'partial', goals: [...multiDelivery.goals].reverse() } }] })
+await restoredCloudDeliveryStore.refreshWorkspace('en')
+check('multiple Goals reconcile by identity and keep the server aggregate verdict', restoredCloudDeliveryStore.timeline[0].delivery.status === 'partial')
+
+const manyGoalDelivery = { status: 'pending', artifactIds: [], missing: [], warnings: [],
+  goals: Array.from({ length: 21 }, (_, index) => ({ ...delivery, goalId: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}` })) }
+pendingHistory.timeline[0].delivery = manyGoalDelivery
+const recoveredManyGoals = history.sanitizeHistoryPayload(history.makeChatHistoryPayload(pendingHistory.id, [pendingHistory])).sessions[0]?.timeline[0]?.delivery
+check('a valid 21-Goal delivery preserves every business identity through local history', recoveredManyGoals?.goals.length === 21
+  && recoveredManyGoals.goals.every((goal, index) => goal.goalId === manyGoalDelivery.goals[index].goalId))
+restoredCloudDeliveryStore.timeline[0].delivery = recoveredManyGoals
+workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [],
+  messages: [{ id: 'server-many', role: 'assistant', delivery: { ...manyGoalDelivery, status: 'satisfied', goals: [...manyGoalDelivery.goals].reverse().map(goal => ({ ...goal, status: 'satisfied' })) } }] })
+await restoredCloudDeliveryStore.refreshWorkspace('en')
+check('a restored 21-Goal turn still matches the server completion verdict', restoredCloudDeliveryStore.timeline[0].delivery.status === 'satisfied'
+  && restoredCloudDeliveryStore.timeline[0].delivery.goals.length === 21)
+
+// Send occupancy must outlive owner activation/history restoration, but not a session boundary.
+workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [], messages: [] })
+const sentRequests = []
+converseStub = async request => { sentRequests.push(request); return { ...response, tripId: request.tripId, conversationId: request.conversationId } }
+chatStoreUserStore.profile = null
+const firstLoginSendStore = new ChatStore()
+chatStoreUserStore.profile = { uid: 'user-a' }
+let initialBootstrapResolvers = []
+bootstrapCloudSessionStub = () => new Promise(resolve => initialBootstrapResolvers.push(resolve))
+const firstLoginSend = firstLoginSendStore.send('preserved login draft', 'en')
+const duplicateAfterLogin = await firstLoginSendStore.send('preserved login draft', 'en')
+check('first login keeps one send occupied while owner activation initializes the cloud session', firstLoginSendStore.isThinking
+  && !duplicateAfterLogin && initialBootstrapResolvers.length === 1)
+initialBootstrapResolvers[0]({ tripId: 'trip-1', conversationId: 'conversation-1' })
+check('the first accepted login send completes once and releases its occupancy', await firstLoginSend === true
+  && !firstLoginSendStore.isThinking && sentRequests.length === 1)
+
+const failedInitializationStore = new ChatStore()
+bootstrapCloudSessionStub = async () => { throw new Error('bootstrap unavailable') }
+const failedInitializationAccepted = await failedInitializationStore.send('retry after initialization failure', 'en')
+bootstrapCloudSessionStub = async () => ({ tripId: 'trip-1', conversationId: 'conversation-1' })
+check('failed initialization releases occupancy so a later send can succeed', !failedInitializationAccepted
+  && !failedInitializationStore.isThinking && await failedInitializationStore.send('retry after initialization failure', 'en') === true
+  && !failedInitializationStore.isThinking)
+
+const switchOccupancyStore = new ChatStore()
+initialBootstrapResolvers = []
+bootstrapCloudSessionStub = () => new Promise(resolve => initialBootstrapResolvers.push(resolve))
+const oldSessionSend = switchOccupancyStore.send('old workspace request', 'en')
+const destinationSession = history.createEmptyChatSession('send-after-switch')
+destinationSession.ownerId = 'user-a'
+switchOccupancyStore.sessions.push(destinationSession)
+switchOccupancyStore.switchSession(destinationSession.id)
+const newSessionSend = switchOccupancyStore.send('new workspace request', 'en')
+initialBootstrapResolvers[0]({ tripId: 'old-trip', conversationId: 'old-conversation' })
+const oldSessionAccepted = await oldSessionSend
+check('switching sessions permits a new send and late old completion cannot release its occupancy', !oldSessionAccepted
+  && initialBootstrapResolvers.length === 2 && switchOccupancyStore.isThinking
+  && await switchOccupancyStore.send('duplicate in new workspace', 'en') === false)
+initialBootstrapResolvers[1]({ tripId: 'trip-1', conversationId: 'conversation-1' })
+check('the new workspace send succeeds after the previous request is discarded', await newSessionSend === true
+  && !switchOccupancyStore.isThinking && switchOccupancyStore.timeline.at(-1).user.content === 'new workspace request')
+
+const logoutOccupancyStore = new ChatStore()
+initialBootstrapResolvers = []
+const oldOwnerSend = logoutOccupancyStore.send('old owner request', 'en')
+chatStoreUserStore.profile = null
+clearOwnerHistory('user-a')
+const logoutReleasedOccupancy = !logoutOccupancyStore.isThinking
+chatStoreUserStore.profile = { uid: 'user-b' }
+const newOwnerSend = logoutOccupancyStore.send('new owner request', 'en')
+initialBootstrapResolvers[0]({ tripId: 'old-owner-trip', conversationId: 'old-owner-conversation' })
+const oldOwnerAccepted = await oldOwnerSend
+check('logout releases the old occupancy and late responses cannot unlock the next owner send', logoutReleasedOccupancy && !oldOwnerAccepted
+  && initialBootstrapResolvers.length === 2 && logoutOccupancyStore.isThinking
+  && await logoutOccupancyStore.send('duplicate for new owner', 'en') === false)
+initialBootstrapResolvers[1]({ tripId: 'trip-1', conversationId: 'conversation-1' })
+check('a new owner can finish sending after logout without waiting for the old request', await newOwnerSend === true
+  && !logoutOccupancyStore.isThinking && logoutOccupancyStore.timeline.at(-1).user.content === 'new owner request')
 
 console.log(`\n结果：${passed} 通过 / ${failed} 失败`)
 process.exit(failed > 0 ? 1 : 0)

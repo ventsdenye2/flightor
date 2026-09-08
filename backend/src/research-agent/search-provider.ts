@@ -1,12 +1,15 @@
 import { z } from 'zod'
 import { locationRefSchema } from '../aviation/types.js'
 import { researchBriefSchema, researchSourceAuthoritySchema } from './types.js'
+import { researchSearchTermsSchema } from './query-planner.js'
 
 export const researchSearchInputSchema = z.object({
   destination: locationRefSchema,
   travelWindow: researchBriefSchema.shape.travelWindow.optional(),
   interests: z.array(z.string().trim().min(1).max(80)).max(32),
   questions: z.array(z.string().trim().min(1).max(500)).min(1).max(8),
+  /** Optional domain-validated retrieval wording; original questions remain in the ResearchBrief. */
+  searchTerms: researchSearchTermsSchema.optional(),
   researchTypes: researchBriefSchema.shape.researchTypes,
   maxResults: z.number().int().min(1).max(20)
 }).strict()

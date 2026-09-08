@@ -15,7 +15,8 @@ import {
 } from '../../flight-routing/types.js'
 import type { ArtifactRecord } from '../../artifacts/repository.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
-import { toolArtifactLineage } from './artifact-lineage.js'
+import { loadWorkspaceArtifact, saveWorkspaceArtifact, type ArtifactWorkspace } from '../../artifacts/workspace.js'
+import { workspaceScope } from './workspace-scope.js'
 
 const MAX_WINDOW_DAYS = 31
 const artifactReferenceSchema = z.object({
@@ -167,20 +168,14 @@ function pathSummary(path: CompleteFlightPath) {
 }
 
 async function loadRouteSet(
-  context: ToolExecutionContext,
+  scope: ArtifactWorkspace,
   artifactId: string,
   expectedKind: RouteSetPayload['kind']
 ): Promise<{ record: ArtifactRecord; payload: RouteSetPayload }> {
-  const record = await context.artifacts.get(artifactId)
-  if (!record || record.tripId !== context.tripId) throw new Error('Source route artifact was not found')
-  if (record.type !== 'route_set' || record.schemaVersion !== 1) throw new Error('Source artifact is not a supported route set')
+  const record = await loadWorkspaceArtifact(scope, artifactId, 'route_set', [1])
   const payload = routeSetPayloadSchema.parse(record.payload)
   if (payload.kind !== expectedKind) throw new Error(`Source route artifact must contain ${expectedKind}`)
   return { record, payload }
-}
-
-function assertCurrent(context: ToolExecutionContext, signal: AbortSignal): void {
-  if (signal.aborted || context.isGenerationCurrent?.() === false) throw new Error('Route operation was cancelled')
 }
 
 export const searchConnectionFlightsTool: AgentTool<
@@ -196,6 +191,7 @@ export const searchConnectionFlightsTool: AgentTool<
     assertTrustedLocations(context, [input.origin, input.destination, ...input.preferredLocations, ...input.excludedLocations])
     const trip = await context.trips.get(context.tripId)
     if (!trip) throw new Error('Trip context was not found')
+    const scope = await workspaceScope(context, signal, trip)
     const avoided = trip.locationRoleOverrides.filter(item => item.role === 'avoid').map(item => item.location)
     const serviceInput = connectionSearchInputSchema.parse({
       ...input,
@@ -204,8 +200,7 @@ export const searchConnectionFlightsTool: AgentTool<
       acceptsSelfTransfer: trip.transferPreferences.acceptsSelfTransfer ?? false,
       acceptsLongStopover: trip.transferPreferences.acceptsLongStopover ?? false
     })
-    const result = connectionSearchResultSchema.parse(await context.connectionSearch.search(serviceInput, { signal }))
-    assertCurrent(context, signal)
+    const result = connectionSearchResultSchema.parse(await context.connectionSearch.search(serviceInput, { signal, tripId: scope.tripId, artifactWorkspace: scope }))
     const id = uuidv7()
     const payload = routeSetPayloadSchema.parse({
       kind: 'connection_edges', schemaVersion: 1,
@@ -215,9 +210,8 @@ export const searchConnectionFlightsTool: AgentTool<
       edges: result.edges, verification: result.verification,
       warnings: result.warnings, truncated: result.truncated, exhausted: result.exhausted
     })
-    const stored = await context.artifacts.create({
-      id, tripId: context.tripId, conversationId: context.conversationId,
-      ...toolArtifactLineage(context),
+    const stored = await saveWorkspaceArtifact(scope, {
+      id,
       type: 'route_set', schemaVersion: 1, payload, verification: result.verification
     })
     const availabilityCounts = result.edges.reduce((counts, edge) => {
@@ -253,7 +247,8 @@ export const planFlightRouteTool: AgentTool<
     assertTrustedLocations(context, input.nodes.map(node => node.location))
     const trip = await context.trips.get(context.tripId)
     if (!trip) throw new Error('Trip context was not found')
-    const source = await loadRouteSet(context, input.candidateArtifactId, 'connection_edges')
+    const scope = await workspaceScope(context, signal, trip)
+    const source = await loadRouteSet(scope, input.candidateArtifactId, 'connection_edges')
     if (source.payload.kind !== 'connection_edges') throw new Error('Source route artifact has an invalid kind')
     const originNode = input.nodes.find(node => node.role === 'origin') ?? input.nodes[0]!
     const destinationNode = [...input.nodes].reverse().find(node => node.role === 'destination') ?? input.nodes[input.nodes.length - 1]!
@@ -277,7 +272,6 @@ export const planFlightRouteTool: AgentTool<
       nodes: input.nodes, edges: source.payload.edges, window: input.window,
       constraints, maxPaths: input.maxPaths
     }, { signal }))
-    assertCurrent(context, signal)
     const id = uuidv7()
     const payload = routeSetPayloadSchema.parse({
       kind: 'flight_paths', schemaVersion: 1,
@@ -286,9 +280,8 @@ export const planFlightRouteTool: AgentTool<
       verification: result.verification, warnings: result.warnings,
       truncated: result.truncated, exhausted: result.exhausted
     })
-    const stored = await context.artifacts.create({
-      id, tripId: context.tripId, conversationId: context.conversationId,
-      ...toolArtifactLineage(context, [source.record.id]),
+    const stored = await saveWorkspaceArtifact(scope, {
+      id, sourceArtifactIds: [source.record.id],
       type: 'route_set', schemaVersion: 1, payload, verification: result.verification
     })
     return {
@@ -316,7 +309,8 @@ export const optimizeRouteTool: AgentTool<
   async execute(input, context, signal) {
     const trip = await context.trips.get(context.tripId)
     if (!trip) throw new Error('Trip context was not found')
-    const source = await loadRouteSet(context, input.pathArtifactId, 'flight_paths')
+    const scope = await workspaceScope(context, signal, trip)
+    const source = await loadRouteSet(scope, input.pathArtifactId, 'flight_paths')
     if (source.payload.kind !== 'flight_paths') throw new Error('Source route artifact has an invalid kind')
     const weights = Object.fromEntries(
       Object.entries(input.weights).filter((entry): entry is [string, number] => entry[1] !== undefined)
@@ -327,7 +321,6 @@ export const optimizeRouteTool: AgentTool<
       interestLocations: [],
       maxRepresentatives: input.maxRepresentatives
     }, { signal }))
-    assertCurrent(context, signal)
     const id = uuidv7()
     const payload = routeSetPayloadSchema.parse({
       kind: 'optimized_routes', schemaVersion: 1,
@@ -338,9 +331,8 @@ export const optimizeRouteTool: AgentTool<
       verification: result.verification, warnings: result.warnings,
       truncated: result.truncated, exhausted: result.exhausted
     })
-    const stored = await context.artifacts.create({
-      id, tripId: context.tripId, conversationId: context.conversationId,
-      ...toolArtifactLineage(context, [source.record.id]),
+    const stored = await saveWorkspaceArtifact(scope, {
+      id, sourceArtifactIds: [source.record.id],
       type: 'route_set', schemaVersion: 1, payload, verification: result.verification
     })
     return {

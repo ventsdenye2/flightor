@@ -36,8 +36,9 @@ results without prescribing an end-to-end tool sequence:
 | Tool | Status | Input / output | Authority and behavior |
 | --- | --- | --- | --- |
 | `declare_goal` | Implemented | `travel_guide`, `flight_search`, or `trip_context_update` plus bounded user-intent parameters → durable goal/run | Owner, Trip, Conversation, context version, timestamps and idempotency binding come from the server. Final route generation uses its dedicated authorized start operation. |
-| `get_active_goal` | Implemented | `{}` → current durable goal, run status and compact working set | Server selects within the authenticated Trip and resumes against a frozen current-context run when needed. |
-| `finish_goal` | Implemented | `{ goalId }` → goal/run plus `pending|satisfied|partial|failed` verification | A kind-specific domain verifier reads persisted owner/run/version/lineage state. Model text, tool names and call counts are not completion evidence. |
+| `get_active_goal` | Implemented | `{ goalId?, kind? }` → matching goal/existing run or bounded candidates | Read-only and owner/Trip scoped. Inspection does not accept saved parameters for this turn, activate a Goal, or create/close a run. An existing returned run may belong to an earlier Trip version. |
+| `resume_goal` | Implemented | `{ goalId }` → goal/current-context run | Explicitly activates a saved objective whose parameters match the current request. Reuses a current run or creates one from the server Trip snapshot; satisfied/cancelled Goals cannot resume. Changed parameters require `declare_goal`. |
+| `finish_goal` | Implemented | `{ goalId }` → goal/run plus verification status | Returns `pending`, `satisfied`, `partial`, `failed` or `cancelled`. Shares completion with response finalization; domain constraints/coverage and lineage are verified before an atomic Goal/Goal-run status commit. |
 | `cancel_goal` | Implemented | `{ goalId }` → cancelled goal and active run | Owner/Trip scope is server checked; cancellation is persistent and late tool results cannot convert it to success. |
 | `start_route_generation` | Implemented | `{}` → queued route-generation run with durable goal/run lineage | Available to the Planner only for an unambiguous current user instruction. The server records `explicit_user_message`; the authenticated HTTP action records `button`. Internal route-engine tools remain hidden. |
 
@@ -46,6 +47,46 @@ domain tools. The goal protocol validates the result; it is not an end-to-end
 workflow. During the current functional milestone, configured fare and
 research calls are not blocked by a product cost budget, although normal
 timeouts, cancellation, rate limits and duplicate-call guards still apply.
+
+The runtime verifies the Goals touched in a turn before returning a final text
+response, including when the model omitted `finish_goal`. Flight-search
+verification checks accepted airports/dates and sampled-date coverage; guide
+verification checks requested day/destination coverage and eligible referenced
+research; route verification checks accepted constraints and source path lineage.
+The existence of an Artifact or verified evidence is insufficient by itself.
+Reading a Goal does not add it to this turn's delivery. The Agent inspects saved
+parameters, then explicitly chooses `resume_goal` or declares a new objective;
+the server does not select that intent from keywords or prior Goal existence.
+
+Every Planner response carries a server-derived `delivery` with aggregate and
+per-Goal status, Artifact IDs, missing requirements and warnings. Only
+`delivery.status=satisfied` permits `stopReason=completed`. `responded` pairs with
+`not_requested` for ordinary conversation; incomplete durable goals use
+`goal_pending|goal_partial|goal_failed|goal_cancelled`. Transport/runtime failures
+retain their own stop reasons and the separate delivery verdict. The client must
+not infer completion from text or a background route run's `succeeded` status.
+
+`backend/src/agent/goals/completion.ts` coordinates completion through
+`GoalRunRepository.commitCompletion`: PostgreSQL locks Trip, Goal and Goal run,
+validates owner/scope, revisions, context version and terminal-state rules, then
+commits both planning statuses together. A concurrent cancel or stale completion
+cannot leave one planning record satisfied and the other unfinished.
+
+## Shared Artifact workspace
+
+Artifact-producing tools and non-conversational actions use the domain workspace
+in `backend/src/artifacts/workspace.ts`. It freezes the server-read Trip version,
+checks cancellation/current operation, validates source owner/Trip/type/schema and
+context version, and checkpoints after external work and before writes.
+PostgreSQL repeats current Trip and Goal/run checks in the insert transaction.
+
+Sources may be reused across Goals/runs only within the same owner, Trip and
+context version. Old-version and unversioned legacy Artifacts remain readable as
+history; without an explicit compatibility policy they cannot be composed into
+a new current-version Artifact. The server returns a stable conflict instead of
+copying a new version onto old evidence. This boundary applies equally to fare
+search/confirmation, destinations, trip planning, research, guides and background
+route generation. Tools never supply their own duplicate lineage-write policy.
 
 ## Phase 1 vertical slice
 
@@ -69,18 +110,32 @@ timeouts, cancellation, rate limits and duplicate-call guards still apply.
 
 - Status: **Implemented** (Phase 2 PostgreSQL optimistic concurrency + in-memory test seam)
 - Purpose: Apply explicit, trip-local user constraints and preferences.
-- Input: `{ patch: TripContextPatch, expectedVersion?: number }`; unknown fields
-  and invalid ranges are rejected. The model cannot select another trip ID.
+- Input: `{ patch, expectedVersion?: number }`. The patch uses the Trip Context
+  fields, with canonical location ID strings in `origin`, each
+  `destinationIntent.required/preferred/excluded` entry,
+  `locationRoleOverrides[].location`, and `requiredGroundLegs[].from/to`.
+  IDs must come from this turn's authoritative location/destination results or
+  the existing owned Trip. `origin: null` still clears the field. Unknown fields,
+  unknown/ambiguous IDs and invalid ranges are rejected; the model cannot select
+  another Trip ID. The shared patch schema preserves omitted fields; full-Trip
+  defaults such as `requiredGroundLegs=[]` are not implicit edits. An explicit
+  empty array clears a list.
 - Output: `{ tripContext: TripContext, changed: boolean }`.
 - Side effects: Mutates only the active Trip Context; it never writes User
   Memory or Conversation history.
 - Cost class: `free`.
 - Authority: Explicit current-user statements interpreted by the Agent and
-  validated deterministically.
+  validated deterministically. One boundary restores canonical LocationRefs for
+  every location field and validates the resulting Trip patch before mutation.
+  Legacy full-object arguments remain compatible, but their ID/type select the
+  trusted server record; copied names, countries, airport codes, coordinates and
+  time zones cannot override its facts.
 - Provider dependencies: None.
 - Cache behavior: Invalidates any trip-context cache after a successful write.
 - Failure behavior: Validation, authorization, or version conflicts are returned
-  as structured tool errors; writes are atomic.
+  as structured tool errors; writes are atomic. When `expectedVersion` is omitted,
+  the update is bound to the server version read for location resolution, so a
+  concurrent Trip edit cannot silently replace the snapshot used by this patch.
 
 ### `resolve_location`
 
@@ -106,7 +161,9 @@ timeouts, cancellation, rate limits and duplicate-call guards still apply.
 - Purpose: Search real fare options for one requested leg and return the same
   `FlightSearchArtifact` contract used by manual Flight Explorer flows.
 - Input: `{ origin, destination, departureDate, returnDate?, currency?,
-  travelClass? }` using canonical location/airport references.
+  travelClass? }` using an IATA selector or a trusted airport ID. The fare domain
+  resolves authoritative airport facts before a paid call; copied location
+  descriptions cannot override the provider record.
 - Output: `{ artifact: { id, type, schemaVersion }, summary }` for the Planner.
   The repository stores the complete normalized `FlightSearchArtifact`, including
   offers, query parameters, `checkedAt`, provider provenance, and verification.
@@ -166,6 +223,30 @@ timeouts, cancellation, rate limits and duplicate-call guards still apply.
 | `research_destination` | Implemented (Phase 4B) | Trusted destination + active Trip window/interests/questions → `research` v2 artifact | Creates artifact | paid | Same restricted Research pipeline | Every finding has standard verification/TTL; event snippet evidence is never fully verified |
 | `build_travel_guide` | Implemented (Phase 4B) | Owner-scoped trip-route + research refs → `travel_guide` v1 artifact | Creates artifact | cheap | Deterministic FlightOR composition | Performs no search; stale/unverified findings are omitted and missing days remain empty |
 
+Both research tools use `executeResearchBrief` to bind the request to one accepted
+Trip/workspace snapshot. When `web_research.travelWindow` is omitted, it inherits
+the same `researchTravelWindow(snapshot)` as `research_destination`: start from
+the departure window, extend its latest departure by `travelDays - 1`, and use an
+explicit return-window end when present. A Trip without dates supplies no window.
+An explicit research window, including a partial window, is preserved; it is not
+widened to manufacture goal coverage. The normal verifier still checks whether
+saved evidence covers the accepted Trip. Defaults are applied before the new
+research call and Artifact write, never to an existing Artifact. A changed Trip
+version rejects the attempt at the workspace boundary.
+
+Production research has an injected `ResearchQueryPlanner` for retrieval wording.
+The domain first selects up to eight destination/question tasks; one bounded
+OpenRouter request returns short terms for exactly those indexed tasks. The
+planner cannot change task coverage, add sources or supply URLs/search operators.
+Original questions remain in the saved brief and synthesis input. The search
+adapter alone adds canonical destination, date-sensitive constraints and the
+server source policy, with at most two search requests in flight. Invalid or
+unavailable query planning falls back to the original sanitized query and adds
+`research_query_planning_unavailable_or_invalid`. Caller cancellation propagates
+through query planning, search and synthesis; the additional model request stays
+inside the research tool's existing deadline. Shorter queries improve retrieval
+intent but do not verify sources or guarantee results.
+
 ## Runtime-wide execution policy
 
 - Tool arguments and tool results are schema validated.
@@ -188,6 +269,7 @@ conversation runtime. It includes:
 ```text
 declare_goal
 get_active_goal
+resume_goal
 finish_goal
 cancel_goal
 start_route_generation
@@ -235,11 +317,20 @@ and persistent, and terminal runs are immutable.
 
 Run status is `queued → running → succeeded|failed|cancelled`, with bounded
 progress, warnings, sanitized errors, and compact result Artifact references.
-The worker uses the frozen context version, so later Trip edits do not mutate a
-running run. Successful results report their frozen version and whether they
-are stale relative to the current Trip. Generated Artifacts carry the same Goal
-ID, Goal run ID, Trip Context version, and source-Artifact lineage; server
-verifiers then set the durable Goal to `satisfied` or `partial`.
+The worker uses the frozen context version and compares it with the live Trip.
+A Trip edit encountered while queued/running fails the current attempt with
+`TRIP_CONTEXT_VERSION_CONFLICT`; it cannot continue writing under the old
+snapshot or relabel those results. Start a fresh run for revised conditions.
+Results completed before a later edit remain auditable and may be shown as stale
+with their original version. Generated Artifacts carry Goal ID, Goal run ID,
+Trip Context version and source lineage. The shared completion service verifies
+the accepted constraints and atomically commits the planning Goal/Goal-run
+verdict, which may be `partial` even when route execution `succeeded`.
+
+After a conversational start, the client reads the authenticated Trip workspace
+and attaches the accepted run to the existing polling/cancellation flow. It does
+not issue another creation request. Workspace responses refresh unfinished
+message delivery verdicts through the same server verifiers.
 
 The Phase 5 generation slice accepts exactly one final visit destination with a
 canonical airport, an origin airport, and a bounded departure window. Return

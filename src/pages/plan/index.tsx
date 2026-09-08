@@ -1,11 +1,12 @@
 // pages/plan — default Trip Workspace tab
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View, Text, Input, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import DemoBadge from '../../components/common/DemoBadge'
 import {
   chatStore,
+  registerChatSessionChangeHandler,
   formatConversationWarning,
   isConversationTurnInteractive,
   type ChatSessionRecord,
@@ -28,6 +29,8 @@ import { ArtifactTimelineItem } from '../../components/artifacts'
 import type { ArtifactEnvelope } from '../../services/artifactService'
 import { artifactService } from '../../services/artifactService'
 import { userStore } from '../../stores/userStore'
+import LoginSheet from '../../components/common/LoginSheet'
+import { conversationDeliveryLabel } from '../../components/plan/conversationDelivery'
 import './index.scss'
 
 const ROUTE_LABEL_KEY: Record<string, string> = {
@@ -430,6 +433,7 @@ interface ConversationTurnViewProps extends TurnAttachmentsProps {
 }
 
 function ConversationTurnView({ turn, pending, ownerId, sessionId, onArtifactAction, ...attachmentProps }: ConversationTurnViewProps) {
+  const deliveryLabel = conversationDeliveryLabel(turn.delivery, attachmentProps.locale)
   return (
     <View className='agent-chat__turn'>
       <View className='agent-chat__msg agent-chat__msg--user'>
@@ -444,6 +448,7 @@ function ConversationTurnView({ turn, pending, ownerId, sessionId, onArtifactAct
           <Text>{t('chat.thinking')}</Text>
         </View>
       ) : null}
+      {deliveryLabel && <View className='agent-chat__card'><Text>{deliveryLabel}</Text></View>}
       <TurnAttachments turn={turn} {...attachmentProps} />
       {turn.artifactRefs?.map(ref => (
         <ArtifactTimelineItem
@@ -469,9 +474,12 @@ const AgentChat = observer(() => {
   const [routeExpanded, setRouteExpanded] = useState<Record<string, boolean>>({})
   const [guideExpanded, setGuideExpanded] = useState<Record<string, boolean>>({})
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [loginOpen, setLoginOpen] = useState(false)
+  const draftRevision = useRef(0)
+  const submitting = useRef(false)
   const locale = localeStore.locale
   const ownerId = userStore.profile?.uid
-  const busy = chatStore.isThinking || chatStore.multiLoading || chatStore.multiConfirming || chatStore.routeGenerationLoading
+  const busy = chatStore.isThinking || chatStore.multiLoading || chatStore.multiConfirming
   const routeAction = chatStore.suggestedActions.find(action => action.kind === 'route_generation')
   const timelineArtifactIds = new Set(chatStore.timeline.flatMap(turn => turn.artifactRefs?.map(ref => ref.id) ?? []))
   const workspaceArtifactRefs = chatStore.artifactRefs.filter(ref => !timelineArtifactIds.has(ref.id))
@@ -480,29 +488,44 @@ const AgentChat = observer(() => {
     if (chatStore.timeline.length === 0 && !chatStore.tripContextSummary) {
       setRouteExpanded({})
       setGuideExpanded({})
-      setInput('')
     }
   }, [chatStore.timeline.length, chatStore.tripContextSummary])
 
   useEffect(() => {
     setRouteExpanded({})
     setGuideExpanded({})
-    setInput('')
   }, [chatStore.currentSessionId])
+
+  useEffect(() => registerChatSessionChangeHandler((_sessionId, nextOwner) => {
+    // A login expiry must not discard the message being submitted. Explicit
+    // workspace switches invalidate its draft so late completion cannot clear another one.
+    if (!nextOwner && submitting.current) return
+    draftRevision.current += 1
+    setInput('')
+  }), [])
 
   useEffect(() => {
     artifactService.setSession(ownerId, chatStore.currentSessionId)
   }, [ownerId, chatStore.currentSessionId])
 
-  const handleSend = () => {
-    if (!input.trim() || busy) return
-    void chatStore.send(input, locale)
-    setInput('')
+  const submitMessage = async (message: string) => {
+    if (!message.trim() || busy) return
+    if (chatStore.requiresLogin) { setLoginOpen(true); return }
+    const revision = draftRevision.current
+    submitting.current = true
+    try {
+      const accepted = await chatStore.send(message, locale)
+      if (accepted && draftRevision.current === revision) setInput(current => current === message ? '' : current)
+    } finally { submitting.current = false }
   }
+
+  const handleSend = () => submitMessage(input)
 
   const handleSuggestedAction = (message: string) => {
     if (busy) return
-    void chatStore.send(message, locale)
+    draftRevision.current += 1
+    setInput(message)
+    void submitMessage(message)
   }
 
   const handleRecommendation = (recommendation: DestinationRecommendation) => {
@@ -510,7 +533,7 @@ const AgentChat = observer(() => {
     const message = locale === 'zh'
       ? `把${recommendation.cityZh}加入必去城市`
       : `Add ${recommendation.cityEn} to my must-visit cities`
-    void chatStore.send(message, locale)
+    handleSuggestedAction(message)
   }
 
   const handleCopyGuideSource = (source: TravelGuideSource) => {
@@ -534,6 +557,7 @@ const AgentChat = observer(() => {
 
   const handleSelectSession = (sessionId: string) => {
     chatStore.switchSession(sessionId)
+    void chatStore.refreshWorkspace(locale)
     setInput('')
     setRouteExpanded({})
     setGuideExpanded({})
@@ -559,7 +583,7 @@ const AgentChat = observer(() => {
     const message = locale === 'zh'
       ? `从本次行程上下文中移除「${chip.label}」`
       : `Remove "${chip.label}" from this trip context`
-    void chatStore.send(message, locale)
+    handleSuggestedAction(message)
   }
 
   const handleArtifactAction = (artifact: ArtifactEnvelope) => {
@@ -602,10 +626,25 @@ const AgentChat = observer(() => {
           onClose={() => setHistoryOpen(false)}
         />
       )}
+      {chatStore.requiresLogin && (
+        <View className='agent-chat__card'>
+          <Text>{locale === 'zh' ? '登录后开始规划，输入内容会保留。' : 'Sign in to start planning. Your message will be kept.'}</Text>
+          <View className='agent-chat__action' hoverClass='tap-dim' onClick={() => setLoginOpen(true)}><Text>{locale === 'zh' ? '登录并继续' : 'Sign in and continue'}</Text></View>
+        </View>
+      )}
+      {chatStore.multiError && !chatStore.timeline.some(turn => turn.error === chatStore.multiError) && (
+        <View className='agent-chat__card agent-chat__card--error'><Text>{chatStore.multiError}</Text></View>
+      )}
+      {chatStore.routeGenerationError && (
+        <View className='agent-chat__card agent-chat__card--error'>
+          <Text>{chatStore.routeGenerationError}</Text>
+          <View className='agent-chat__action' hoverClass='tap-dim' onClick={() => void chatStore.refreshWorkspace(locale)}><Text>{locale === 'zh' ? '刷新结果' : 'Refresh results'}</Text></View>
+        </View>
+      )}
       {chatStore.routeGeneration && (
         <View className='agent-chat__card agent-chat__route-generation'>
           <Text>
-            {locale === 'zh' ? '路线生成' : 'Route generation'} · {chatStore.routeGeneration.status} · {chatStore.routeGeneration.progress.percent}%
+            {locale === 'zh' ? '路线生成' : 'Route generation'} · {({ queued: locale === 'zh' ? '等待处理' : 'Queued', running: locale === 'zh' ? '处理中' : 'In progress', succeeded: locale === 'zh' ? '已完成' : 'Complete', failed: locale === 'zh' ? '未完成' : 'Failed', cancelled: locale === 'zh' ? '已取消' : 'Cancelled' })[chatStore.routeGeneration.status]} · {chatStore.routeGeneration.progress.percent}%
             {chatStore.routeGeneration.stale ? ` · ${locale === 'zh' ? '结果已过期' : 'stale result'}` : ''}
           </Text>
           {!isRouteGenerationTerminal(chatStore.routeGeneration.status) && !chatStore.routeGenerationLoading && (
@@ -623,10 +662,9 @@ const AgentChat = observer(() => {
             </View>
           )}
           {chatStore.routeGeneration.resultArtifactId && (
-            <Text>{locale === 'zh' ? `结果 Artifact：${chatStore.routeGeneration.resultArtifactId}` : `Result artifact: ${chatStore.routeGeneration.resultArtifactId}`}</Text>
+            <Text>{locale === 'zh' ? '路线已保存，可在下方查看。' : 'The route is saved and available below.'}</Text>
           )}
           {chatStore.routeGeneration.error && <Text>{chatStore.routeGeneration.error.message}</Text>}
-          {chatStore.routeGenerationError && <Text>{chatStore.routeGenerationError}</Text>}
           {chatStore.routeGeneration.warnings.map((warning, index) => <Text key={`route-generation-warning-${index}`}>{warning}</Text>)}
         </View>
       )}
@@ -713,7 +751,7 @@ const AgentChat = observer(() => {
             <View className='agent-chat__quick-action-mark'><Text>FLIGHT</Text></View>
             <View className='agent-chat__quick-action-copy'>
               <Text className='agent-chat__quick-action-title'>{locale === 'zh' ? '查航班' : 'Search flights'}</Text>
-              <Text className='agent-chat__quick-action-subtitle'>{locale === 'zh' ? '打开航班探索，结果保存为 Artifact' : 'Open Flight Explorer and save results as an Artifact'}</Text>
+              <Text className='agent-chat__quick-action-subtitle'>{locale === 'zh' ? '按日期与目的地查询，结果保存在当前行程' : 'Search by date and destination, and keep results with this trip'}</Text>
             </View>
             <Text className='agent-chat__quick-action-chevron'>›</Text>
           </View>
@@ -752,23 +790,25 @@ const AgentChat = observer(() => {
           placeholder={t('chat.placeholder')}
           placeholderClass='agent-chat__placeholder'
           confirmType='send'
-          onInput={e => setInput(e.detail.value)}
-          onConfirm={handleSend}
+          onInput={e => { draftRevision.current += 1; setInput(e.detail.value) }}
+          onConfirm={() => void handleSend()}
         />
         <View
           className={`agent-chat__send ${input.trim() && !busy ? '' : 'is-disabled'}`}
           hoverClass='tap-dim'
-          onClick={handleSend}
+          onClick={() => void handleSend()}
         >
           <Text>{t('chat.send')}</Text>
         </View>
       </View>
+      <LoginSheet visible={loginOpen} onClose={() => setLoginOpen(false)} onSuccess={() => void handleSend()} />
     </View>
   )
 })
 
 function PlanPage() {
   const locale = localeStore.locale
+  useDidShow(() => { if (!chatStore.isThinking) void chatStore.refreshWorkspace(locale) })
 
   useEffect(() => {
     Taro.setNavigationBarTitle({ title: t('nav.tripPlan') })

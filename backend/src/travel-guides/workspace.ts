@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
-import { checkpoint, loadWorkspaceArtifact, workspaceLineage, type ArtifactWorkspace } from '../artifacts/workspace.js'
+import { loadWorkspaceArtifact, saveWorkspaceArtifact, type ArtifactWorkspace } from '../artifacts/workspace.js'
 import { readableResearchArtifactSchema } from '../research-agent/types.js'
 import { tripRoutePlanPayloadSchema } from '../trip-planning/types.js'
 import { travelGuideArtifactPayloadSchema, type TravelGuideBuilder } from './artifact.js'
@@ -16,7 +16,6 @@ export async function composeTravelGuide(input: { routeArtifactId: string; resea
   }
   const payload = travelGuideArtifactPayloadSchema.parse(await builder.build({ routeArtifactId: input.routeArtifactId, route, researchArtifacts }, { ...(scope.signal ? { signal: scope.signal } : {}) }))
   if (payload.routeArtifactId !== input.routeArtifactId || input.researchArtifactIds.some(id => !payload.sourceArtifactIds.includes(id))) throw new Error('Travel guide builder returned mismatched source references')
-  await checkpoint(scope)
-  const record = await scope.artifacts.create({ id: uuidv7(), tripId: scope.tripId, ...(scope.conversationId ? { conversationId: scope.conversationId } : {}), ...workspaceLineage(scope, [input.routeArtifactId, ...new Set(input.researchArtifactIds)]), type: 'travel_guide', schemaVersion: 1, payload, verification: payload.verification })
+  const record = await saveWorkspaceArtifact(scope, { id: uuidv7(), sourceArtifactIds: [routeRecord.id, ...new Set(input.researchArtifactIds)], type: 'travel_guide', schemaVersion: 1, payload, verification: payload.verification })
   return { record, payload }
 }

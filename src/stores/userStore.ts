@@ -4,6 +4,7 @@ import type { FlightOption, SearchParams } from '../types/flight'
 import { getStorage, setStorage } from '../utils/storage'
 import { clearAuthTokens, wxLogin, UserProfile } from '../services/authService'
 import { clearCloudChatHistory } from './chatHistory'
+import { AuthSessionChangedError, onAuthInvalidated } from '../utils/authSession'
 
 type UserSessionClearHandler = (ownerId?: string) => void
 const userSessionClearHandlers = new Set<UserSessionClearHandler>()
@@ -54,6 +55,7 @@ export class UserStore {
 
   constructor() {
     makeAutoObservable(this)
+    onAuthInvalidated(() => this.logout())
   }
 
   get isLoggedIn(): boolean {
@@ -64,15 +66,14 @@ export class UserStore {
 
   /** 登录（可携带头像昵称）；失败抛出由调用方提示 */
   async login(info?: { nickname?: string; avatarUrl?: string }) {
-    if (this.isLoggingIn) return
+    if (this.isLoggingIn) return false
     const requestId = ++this.authGeneration
     this.isLoggingIn = true
     try {
       const previousOwnerId = this.profile?.uid
       const profile = await wxLogin(info)
       if (requestId !== this.authGeneration) {
-        clearAuthTokens()
-        return
+        return false
       }
       runInAction(() => {
         if (previousOwnerId && previousOwnerId !== profile.uid) {
@@ -81,9 +82,13 @@ export class UserStore {
         this.profile = profile
         setStorage('profile', profile)
       })
+      return true
+    } catch (error) {
+      if (error instanceof AuthSessionChangedError) return false
+      throw error
     } finally {
       runInAction(() => {
-        this.isLoggingIn = false
+        if (requestId === this.authGeneration) this.isLoggingIn = false
       })
     }
   }
@@ -105,6 +110,7 @@ export class UserStore {
   logout() {
     const ownerId = this.profile?.uid
     this.authGeneration += 1
+    this.isLoggingIn = false
     clearAuthTokens()
     if (ownerId) clearCloudChatHistory(ownerId)
     clearUserSessionState(ownerId)

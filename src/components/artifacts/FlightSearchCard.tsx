@@ -17,7 +17,7 @@ function amountLabel(amount: number | undefined, currency: string | undefined): 
 export function FlightSearchCard({ artifact, onAction }: FlightSearchCardProps) {
   const payload = record(artifact.payload)
   if (!payload) return null
-  const offers = displayOffers(payload)
+  const offers = displayOffers(payload, artifact.presentation)
   const query = record(payload.query) ?? record(payload.window)
   const route = query ? `${firstText(query.origin, query.originCode) ?? ''} → ${firstText(query.destination, query.destinationCode) ?? ''}` : undefined
   const routeLabel = route && route !== ' → ' ? route : undefined
@@ -57,6 +57,8 @@ export function FlightSearchCard({ artifact, onAction }: FlightSearchCardProps) 
                     {offer.airlines.join(' · ') || 'Airline not provided'}
                     {offer.transferType ? ` · ${offer.transferType}` : ''}
                   </Text>
+                  <Text className='artifact-flight__meta'>出发 {first?.departure ?? '时间未提供'}</Text>
+                  <Text className='artifact-flight__meta'>抵达 {last?.arrival ?? '时间未提供'}</Text>
                 </View>
                 <View className='artifact-flight__offer-side'>
                   {price && <Text className='artifact-flight__price'>{price}</Text>}

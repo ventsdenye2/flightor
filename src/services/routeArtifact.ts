@@ -1,4 +1,5 @@
 import type { ArtifactEnvelope } from './artifactService'
+import { airportTimeDisplay, type AirportTimePresentation } from './airportTime'
 
 export interface RouteLocation {
   id: string; name: string; iata?: string; latitude?: number; longitude?: number
@@ -6,11 +7,12 @@ export interface RouteLocation {
 export interface RouteLeg {
   id: string; from: RouteLocation; to: RouteLocation
   departureAt?: string; arrivalAt?: string; durationMinutes?: number
+  departureDisplay: string; arrivalDisplay: string
   flightNumber?: string; marketingCarrier?: string
   fare?: { amount: number; currency: string }
   fareArtifactId?: string; transferType: 'direct' | 'protected' | 'self'
   airportChange: boolean; warnings: string[]; checkedAt?: string
-  segments: Array<{ from: RouteLocation; to: RouteLocation; departureAt?: string; arrivalAt?: string; flightNumber?: string; marketingCarrier?: string }>
+  segments: Array<{ from: RouteLocation; to: RouteLocation; departureAt?: string; arrivalAt?: string; departureDisplay: string; arrivalDisplay: string; flightNumber?: string; marketingCarrier?: string }>
 }
 export interface RouteView {
   id: string; nodes: Array<{ location: RouteLocation; role: string }>; edges: RouteLeg[]
@@ -42,30 +44,35 @@ function money(value: unknown): RouteView['totalFare'] {
   return v && num(v.amount, Number.MAX_SAFE_INTEGER) !== undefined && typeof v.currency === 'string' && /^[A-Z]{3}$/.test(v.currency)
     ? { amount: v.amount as number, currency: v.currency } : undefined
 }
-function leg(value: unknown): RouteLeg | undefined {
+function leg(value: unknown, presentation?: AirportTimePresentation, pointer = ''): RouteLeg | undefined {
   const v = obj(value), from = location(v?.from), to = location(v?.to)
   if (!v || !str(v.id, 160) || !from || !to || from.id === to.id || !['direct', 'protected', 'self'].includes(String(v.transferType))) return undefined
   const departureAt = instant(v.departureAt), arrivalAt = instant(v.arrivalAt)
   if (departureAt && arrivalAt && Date.parse(arrivalAt) < Date.parse(departureAt)) return undefined
   const segments: RouteLeg['segments'] = []
   if (v.segments !== undefined && (!Array.isArray(v.segments) || !v.segments.length || v.segments.length > 4)) return undefined
-  for (const raw of list(v.segments, 4)) {
+  for (const [index, raw] of list(v.segments, 4).entries()) {
     const s = obj(raw), a = location(s?.from), b = location(s?.to)
     if (!s || !a || !b || a.id === b.id) return undefined
     const departure = instant(s.departureAt), arrival = instant(s.arrivalAt)
     if (departure && arrival && Date.parse(arrival) < Date.parse(departure)) return undefined
     if (segments.length && segments[segments.length - 1].to.id !== a.id && v.airportChange !== true) return undefined
-    segments.push({ from: a, to: b, departureAt: departure, arrivalAt: arrival, flightNumber: str(s.flightNumber, 32), marketingCarrier: str(s.marketingCarrier, 80) })
+    segments.push({ from: a, to: b, departureAt: departure, arrivalAt: arrival,
+      departureDisplay: airportTimeDisplay(departure, presentation, `${pointer}/segments/${index}/departureAt`),
+      arrivalDisplay: airportTimeDisplay(arrival, presentation, `${pointer}/segments/${index}/arrivalAt`),
+      flightNumber: str(s.flightNumber, 32), marketingCarrier: str(s.marketingCarrier, 80) })
   }
   if (segments.length && (segments[0].from.id !== from.id || segments[segments.length - 1].to.id !== to.id)) return undefined
   return {
     id: String(v.id), from, to, departureAt, arrivalAt, durationMinutes: num(v.durationMinutes),
+    departureDisplay: airportTimeDisplay(departureAt, presentation, `${pointer}/departureAt`),
+    arrivalDisplay: airportTimeDisplay(arrivalAt, presentation, `${pointer}/arrivalAt`),
     fare: money(v.fare), fareArtifactId: str(v.fareArtifactId, 160),
     transferType: v.transferType as RouteLeg['transferType'], airportChange: v.airportChange === true,
     warnings: texts(v.warnings), checkedAt: instant(obj(v.verification)?.checkedAt), segments
   }
 }
-function path(value: unknown, scored?: Obj): RouteView | undefined {
+function path(value: unknown, scored?: Obj, presentation?: AirportTimePresentation, pointer = ''): RouteView | undefined {
   const v = obj(value)
   if (!v || !str(v.id, 160) || !Array.isArray(v.nodes) || !Array.isArray(v.edges) || v.nodes.length < 2 || v.nodes.length > 32 || v.edges.length !== v.nodes.length - 1 || num(v.transferCount, 30) === undefined || !Number.isInteger(v.transferCount)) return undefined
   const nodes: RouteView['nodes'] = []
@@ -76,7 +83,7 @@ function path(value: unknown, scored?: Obj): RouteView | undefined {
   }
   const edges: RouteLeg[] = []
   for (let i = 0; i < v.edges.length; i++) {
-    const e = leg(v.edges[i])
+    const e = leg(v.edges[i], presentation, `${pointer}/edges/${i}`)
     if (!e || e.from.id !== nodes[i].location.id || e.to.id !== nodes[i + 1].location.id) return undefined
     edges.push(e)
   }
@@ -95,25 +102,25 @@ function path(value: unknown, scored?: Obj): RouteView | undefined {
 }
 
 /** Reject malformed complete paths as a unit, so the UI cannot draw a false connection. */
-export function readRouteArtifact(artifact: Pick<ArtifactEnvelope, 'type' | 'schemaVersion' | 'payload'>): RouteView[] {
+export function readRouteArtifact(artifact: Pick<ArtifactEnvelope, 'type' | 'schemaVersion' | 'payload' | 'presentation'>): RouteView[] {
   const v = obj(artifact.payload)
   if (artifact.type !== 'route_set' || artifact.schemaVersion !== 1 || v?.schemaVersion !== 1) throw new Error('暂不支持此路线版本')
   const result: RouteView[] = []
   if (v.kind === 'optimized_routes') {
-    for (const raw of requiredList(v.representatives, 50)) {
-      const scored = obj(raw), route = path(scored?.path, scored)
+    for (const [index, raw] of requiredList(v.representatives, 50).entries()) {
+      const scored = obj(raw), route = path(scored?.path, scored, artifact.presentation, `/representatives/${index}/path`)
       if (!route) throw new Error('路线数据不完整，请重新生成')
       result.push(route)
     }
   } else if (v.kind === 'flight_paths') {
-    for (const raw of requiredList(v.paths, 200)) {
-      const route = path(raw)
+    for (const [index, raw] of requiredList(v.paths, 200).entries()) {
+      const route = path(raw, undefined, artifact.presentation, `/paths/${index}`)
       if (!route) throw new Error('路线数据不完整，请重新生成')
       result.push(route)
     }
   } else if (v.kind === 'connection_edges') {
-    for (const raw of requiredList(v.edges, 500)) {
-      const e = leg(raw)
+    for (const [index, raw] of requiredList(v.edges, 500).entries()) {
+      const e = leg(raw, artifact.presentation, `/edges/${index}`)
       if (!e) throw new Error('航段数据不完整')
       result.push({ id: e.id, nodes: [{ location: e.from, role: 'origin' }, { location: e.to, role: 'destination' }], edges: [e], totalFare: e.fare, totalDurationMinutes: e.durationMinutes, transferCount: Math.max(0, e.segments.length - 1), badges: [], warnings: e.warnings, reasons: [], tradeoffs: [] })
     }

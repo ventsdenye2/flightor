@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
-import { checkpoint, workspaceLineage, type ArtifactWorkspace } from '../artifacts/workspace.js'
+import { checkpoint, saveWorkspaceArtifact, type ArtifactWorkspace } from '../artifacts/workspace.js'
 import type { VerificationRecord } from '../aviation/types.js'
 import { researchArtifactSchema, researchBriefSchema, type ResearchAgent, type ResearchArtifact, type ResearchBrief } from './types.js'
 import type { TripContext } from '../trips/types.js'
@@ -32,7 +32,6 @@ export async function researchTripDestinations(input: ResearchBrief, research: R
   if (JSON.stringify(result.brief) !== JSON.stringify(brief)) throw new Error('Research agent returned a mismatched brief')
   if (result.findings.length > (brief.maxResults ?? 10)) throw new Error('Research agent returned too many findings')
   const payload = researchArtifactSchema.parse({ ...result, id: uuidv7() })
-  await checkpoint(scope)
-  const record = await scope.artifacts.create({ id: payload.id, tripId: scope.tripId, ...(scope.conversationId ? { conversationId: scope.conversationId } : {}), ...workspaceLineage(scope), type: 'research', schemaVersion: 2, payload, verification: verification(payload) })
+  const record = await saveWorkspaceArtifact(scope, { id: payload.id, type: 'research', schemaVersion: 2, payload, verification: verification(payload) })
   return { record, payload }
 }

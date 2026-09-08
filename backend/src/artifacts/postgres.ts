@@ -1,8 +1,9 @@
 import { v7 as uuidv7 } from 'uuid'
 import type { Kysely } from 'kysely'
-import { normalizeSourceArtifactIds, type ArtifactRecord, type ArtifactRepository, type ArtifactScope, type CreateArtifactInput } from './repository.js'
+import { assertArtifactContextVersion, assertArtifactGoalWritable, assertArtifactRunWritable, normalizeSourceArtifactIds, type ArtifactRecord, type ArtifactRepository, type ArtifactScope, type CreateArtifactInput } from './repository.js'
 import { AppError } from '../lib/errors.js'
 import type { Database, JsonValue } from '../db/types.js'
+import { TripContextVersionConflict } from '../trips/repository.js'
 
 type ArtifactRow = {
   id: string
@@ -120,47 +121,61 @@ export class PostgresArtifactRepository implements ArtifactRepository {
     return this.db.transaction().execute(async trx => {
       const trip = await trx
         .selectFrom('trips')
-        .select('id')
+        .select(['id', 'current_context_version'])
         .where('public_id', '=', input.tripId)
         .where('user_id', '=', this.userId)
+        .forShare()
         .executeTakeFirst()
       if (!trip) throw resourceNotFound('Trip was not found')
+      if (input.tripContextVersion !== undefined && input.tripContextVersion !== trip.current_context_version) {
+        throw new TripContextVersionConflict(input.tripContextVersion, trip.current_context_version)
+      }
 
       let goalId: string | null = null
       if (input.goalId !== undefined) {
         const goal = await untyped(trx).selectFrom('planning_goals')
-          .select(['id'])
+          .select(['id', 'status'])
           .where('public_id', '=', input.goalId)
           .where('user_id', '=', this.userId)
           .where('trip_id', '=', trip.id)
+          .forShare()
           .executeTakeFirst()
         if (!goal) throw resourceNotFound('Goal was not found')
+        assertArtifactGoalWritable(goal.status)
         goalId = goal.id
       }
 
       let goalRunId: string | null = null
       if (input.runId !== undefined) {
         const run = await untyped(trx).selectFrom('planning_goal_runs')
-          .select(['id', 'goal_id', 'context_version'])
+          .select(['id', 'goal_id', 'context_version', 'status'])
           .where('public_id', '=', input.runId)
           .where('user_id', '=', this.userId)
           .where('trip_id', '=', trip.id)
+          .forShare()
           .executeTakeFirst()
         if (!run || (goalId !== null && run.goal_id !== goalId)) throw resourceNotFound('Goal run was not found')
         if (input.tripContextVersion !== undefined && input.tripContextVersion !== run.context_version) {
           throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Artifact Trip Context version does not match goal run', 409)
         }
+        assertArtifactRunWritable(run.status)
         goalRunId = run.id
       }
 
       for (const sourceId of sourceArtifactIds) {
         const source = await untyped(trx).selectFrom('artifacts')
-          .select('id')
+          .select(['id', 'trip_context_version', 'payload_json'])
           .where('public_id', '=', sourceId)
           .where('user_id', '=', this.userId)
           .where('trip_id', '=', trip.id)
           .executeTakeFirst()
         if (!source) throw resourceNotFound('Source artifact was not found')
+        if (input.tripContextVersion !== undefined) {
+          assertArtifactContextVersion({
+            ...(source.trip_context_version === null ? {} : { tripContextVersion: source.trip_context_version }),
+            payload: source.payload_json
+          }, input.tripContextVersion)
+        }
       }
 
       let conversationId: string | null = null

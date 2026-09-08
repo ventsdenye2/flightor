@@ -1,6 +1,7 @@
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
-import type { ArtifactRecord, ArtifactRepository } from '../artifacts/repository.js'
+import type { ArtifactRecord } from '../artifacts/repository.js'
+import { checkpoint, saveWorkspaceArtifact, type ArtifactWorkspace } from '../artifacts/workspace.js'
 import type { FareProvider, FlexibleFareSearchInput } from './providers/provider.js'
 import {
   fareSearchInputSchema,
@@ -11,16 +12,8 @@ import {
   type FlightSearchArtifact
 } from './types.js'
 
-export interface FlightSearchDomainContext {
+export interface FlightSearchDomainContext extends ArtifactWorkspace {
   fares: FareProvider
-  artifacts: ArtifactRepository
-  tripId: string
-  conversationId?: string
-  goalId?: string
-  runId?: string
-  tripContextVersion?: number
-  signal?: AbortSignal
-  isCurrent?: () => boolean
 }
 
 export interface StoredFlightSearch<TPayload> {
@@ -60,11 +53,23 @@ export const flexibleFareSearchInputSchema = z.object({
   }
 })
 
-function assertCurrent(context: FlightSearchDomainContext): void {
-  if (context.signal?.aborted || context.isCurrent?.() === false) {
-    throw new Error('Flight search was cancelled')
-  }
-}
+export const flexibleFlightSearchArtifactSchema = z.object({
+  id: z.string().uuid(),
+  type: z.literal('flight_search'),
+  window: z.object({
+    origin: z.string().regex(/^[A-Z]{3}$/),
+    destination: z.string().regex(/^[A-Z]{3}$/),
+    departureDateFrom: z.iso.date(),
+    departureDateTo: z.iso.date(),
+    returnDate: z.iso.date().optional(),
+    currency: z.enum(['CNY', 'USD', 'EUR']),
+    travelClass: z.number().int().min(1).max(4)
+  }).strict(),
+  results: z.array(fareSearchResultSchema).max(31),
+  scannedDates: z.array(z.iso.date()).max(31),
+  successfulDates: z.array(z.iso.date()).max(31),
+  failedDates: z.array(z.iso.date()).max(31)
+}).strict()
 
 function assertMatchingResult(result: FareSearchResult, query: FareSearchInput): void {
   if (result.query.origin !== query.origin
@@ -90,19 +95,13 @@ export async function executeFlightSearch(
   context: FlightSearchDomainContext
 ): Promise<StoredFlightSearch<FlightSearchArtifact>> {
   const query = fareSearchInputSchema.parse(rawInput)
-  assertCurrent(context)
+  await checkpoint(context)
   const result = fareSearchResultSchema.parse(await context.fares.searchFlights(query, context.signal ? { signal: context.signal } : undefined))
   assertMatchingResult(result, query)
-  assertCurrent(context)
   const id = uuidv7()
   const payload = flightSearchArtifactSchema.parse({ ...result, id, type: 'flight_search' })
-  const record = await context.artifacts.create({
+  const record = await saveWorkspaceArtifact(context, {
     id,
-    tripId: context.tripId,
-    ...(context.conversationId ? { conversationId: context.conversationId } : {}),
-    ...(context.goalId ? { goalId: context.goalId } : {}),
-    ...(context.runId ? { runId: context.runId } : {}),
-    ...(context.tripContextVersion === undefined ? {} : { tripContextVersion: context.tripContextVersion }),
     type: 'flight_search',
     schemaVersion: 1,
     payload,
@@ -127,7 +126,7 @@ export async function executeFlexibleFlightSearch(
   context: FlightSearchDomainContext
 ): Promise<StoredFlightSearch<FlexibleFlightSearchArtifact>> {
   const query = flexibleFareSearchInputSchema.parse(rawQuery)
-  assertCurrent(context)
+  await checkpoint(context)
   const providerResult = await context.fares.searchFlexibleFlights(query, context.signal ? { signal: context.signal } : undefined)
   const results = providerResult.results.map(result => fareSearchResultSchema.parse(result))
   for (const result of results) {
@@ -150,7 +149,6 @@ export async function executeFlexibleFlightSearch(
     throw new Error('Fare provider marked a sampled date as both successful and failed')
   }
   if (results.length === 0 && failedDates.length > 0) throw new Error('Fare provider failed every sampled date')
-  assertCurrent(context)
   const id = uuidv7()
   const payload: FlexibleFlightSearchArtifact = {
     id,
@@ -161,13 +159,8 @@ export async function executeFlexibleFlightSearch(
     successfulDates,
     failedDates
   }
-  const record = await context.artifacts.create({
+  const record = await saveWorkspaceArtifact(context, {
     id,
-    tripId: context.tripId,
-    ...(context.conversationId ? { conversationId: context.conversationId } : {}),
-    ...(context.goalId ? { goalId: context.goalId } : {}),
-    ...(context.runId ? { runId: context.runId } : {}),
-    ...(context.tripContextVersion === undefined ? {} : { tripContextVersion: context.tripContextVersion }),
     type: 'flight_search',
     schemaVersion: 2,
     payload,

@@ -4,7 +4,7 @@ import { locationRefKey } from '../../aviation/types.js'
 import { InMemoryTripContextRepository } from '../../trips/repository.js'
 import { emptyTripContext } from '../../trips/types.js'
 import { MockResearchAgent } from '../../research-agent/mock.js'
-import { researchDestinationTool, webResearchTool } from './research.js'
+import { executeResearchBrief, researchDestinationTool, webResearchTool } from './research.js'
 import { recordResolvedLocations } from './resolved-locations.js'
 
 const destination = { id: 'city-tyo', type: 'city' as const, name: 'Tokyo', countryCode: 'JP', cityCode: 'TYO' }
@@ -83,6 +83,74 @@ describe('research Agent tools', () => {
     expect(research.mock.calls[0]?.[0].travelWindow).toEqual({ from: '2026-10-30', to: '2026-11-03' })
   })
 
+  it.each(['web-first', 'destination-first'])('uses the same snapshot window across research tools (%s)', async order => {
+    const delegate = new MockResearchAgent([finding])
+    const research = vi.fn(delegate.research.bind(delegate))
+    const executionContext = context({ research }) as any
+    executionContext.trips = new InMemoryTripContextRepository([{ ...emptyTripContext('t'), interests: brief.interests, travelDays: 5,
+      departureWindow: { from: '2026-10-30', to: '2026-10-30', precision: 'exact' } }])
+    const web = () => webResearchTool.execute(brief, executionContext, new AbortController().signal)
+    const destinationResearch = () => researchDestinationTool.execute({
+      destination, questions: brief.questions, researchTypes: brief.researchTypes, maxResults: brief.maxResults
+    }, executionContext, new AbortController().signal)
+    const first = await (order === 'web-first' ? web() : destinationResearch())
+    const second = await (order === 'web-first' ? destinationResearch() : web())
+    expect(research.mock.calls[0]?.[0]).toEqual(research.mock.calls[1]?.[0])
+    expect(research.mock.calls[0]?.[0].travelWindow).toEqual({ from: '2026-10-30', to: '2026-11-03' })
+    for (const result of [first, second]) {
+      const stored = await executionContext.artifacts.get(result.artifact.id)
+      expect(stored.tripContextVersion).toBe(0)
+      expect(stored.payload.brief.travelWindow).toEqual({ from: '2026-10-30', to: '2026-11-03' })
+    }
+  })
+
+  it.each([
+    { from: '2026-12-01', to: '2026-12-02' },
+    { from: '2026-12-01' },
+    {}
+  ])('preserves an explicitly supplied research window without widening it: %j', async travelWindow => {
+    const delegate = new MockResearchAgent([finding])
+    const research = vi.fn(delegate.research.bind(delegate))
+    const executionContext = context({ research }) as any
+    const result = await webResearchTool.execute({ ...brief, travelWindow }, executionContext, new AbortController().signal)
+    expect(research.mock.calls[0]?.[0].travelWindow).toEqual(travelWindow)
+    const stored = await executionContext.artifacts.get(result.artifact.id)
+    expect(stored.payload.brief.travelWindow).toEqual(travelWindow)
+  })
+
+  it('keeps the window absent when the accepted Trip has no dates', async () => {
+    const delegate = new MockResearchAgent([finding])
+    const research = vi.fn(delegate.research.bind(delegate))
+    const executionContext = context({ research }) as any
+    executionContext.trips = new InMemoryTripContextRepository([emptyTripContext('t')])
+    const result = await webResearchTool.execute(brief, executionContext, new AbortController().signal)
+    expect(research.mock.calls[0]?.[0].travelWindow).toBeUndefined()
+    expect((await executionContext.artifacts.get(result.artifact.id)).payload.brief.travelWindow).toBeUndefined()
+  })
+
+  it('rejects a stale accepted snapshot before research instead of deriving from a newer Trip', async () => {
+    const delegate = new MockResearchAgent([finding])
+    const research = vi.fn(delegate.research.bind(delegate))
+    const executionContext = context({ research }) as any
+    const snapshot = await executionContext.trips.get('t')
+    await executionContext.trips.update('t', { travelDays: 10 }, snapshot.version)
+    await expect(executeResearchBrief(brief, executionContext, new AbortController().signal, snapshot))
+      .rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+    expect(research).not.toHaveBeenCalled()
+    expect(await executionContext.artifacts.listForTrip('t')).toEqual([])
+  })
+
+  it('creates new window-bound evidence without relabeling a prior Artifact', async () => {
+    const executionContext = context(new MockResearchAgent([finding])) as any
+    const first = await webResearchTool.execute({ ...brief, travelWindow: { from: '2026-09-01', to: '2026-09-02' } }, executionContext, new AbortController().signal)
+    const original = await executionContext.artifacts.get(first.artifact.id)
+    const second = await webResearchTool.execute(brief, executionContext, new AbortController().signal)
+    expect(second.artifact.id).not.toBe(first.artifact.id)
+    expect(await executionContext.artifacts.get(first.artifact.id)).toEqual(original)
+    expect((await executionContext.artifacts.get(second.artifact.id)).payload.brief.travelWindow)
+      .toEqual({ from: '2026-10-01', to: '2026-10-07' })
+  })
+
   it('rejects mismatched output, untrusted destinations, and stale generations', async () => {
     const mismatch = {
       research: vi.fn(async () => ({
@@ -96,5 +164,20 @@ describe('research Agent tools', () => {
     await expect(webResearchTool.execute(brief, untrusted, new AbortController().signal)).rejects.toThrow('authoritative')
     const stale = { ...(context(new MockResearchAgent()) as any), isGenerationCurrent: () => false }
     await expect(webResearchTool.execute(brief, stale, new AbortController().signal)).rejects.toThrow('cancelled')
+  })
+
+  it('does not persist research after the Trip changes during the provider call', async () => {
+    const delegate = new MockResearchAgent([finding])
+    const executionContext = context(delegate) as any
+    const research = vi.fn(async (...args: Parameters<typeof delegate.research>) => {
+      const result = await delegate.research(...args)
+      await executionContext.trips.update('t', { travelDays: 10 }, 0)
+      return result
+    })
+    executionContext.research = { research }
+    await expect(webResearchTool.execute(brief, executionContext, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+    expect(research).toHaveBeenCalledOnce()
+    expect(await executionContext.artifacts.listForTrip('t')).toEqual([])
   })
 })

@@ -4,7 +4,7 @@ import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import type { ItinerarySegment } from '../../types/flight'
 import { t, fd } from '../../i18n'
-import { formatTime, formatMonthDay } from '../../utils/format'
+import { airportTimeDisplay } from '../../services/airportTime'
 import './BoardingPassItinerary.scss'
 
 interface BoardingPassItineraryProps {
@@ -14,7 +14,7 @@ interface BoardingPassItineraryProps {
 }
 
 const EXPORT_W = 620
-const ROW_FLIGHT = 130
+const ROW_FLIGHT = 148
 const ROW_LAYOVER = 70
 
 function BoardingPassItinerary({ itinerary, passenger, shareTitle }: BoardingPassItineraryProps) {
@@ -69,21 +69,17 @@ function BoardingPassItinerary({ itinerary, passenger, shareTitle }: BoardingPas
           ctx.fillText(`${seg.airline ?? ''}`, 130, y + 30)
 
           ctx.fillStyle = '#ffffff'
-          ctx.font = 'bold 22px Menlo, monospace'
-          ctx.fillText(`${seg.origin} ${seg.departTime ? formatTime(seg.departTime) : ''}`, 40, y + 66)
-          ctx.fillStyle = '#0a84ff'
-          ctx.fillText('→', 268, y + 66)
-          ctx.fillStyle = '#ffffff'
-          ctx.fillText(`${seg.destination} ${seg.arriveTime ? formatTime(seg.arriveTime) : ''}`, 300, y + 66)
+          ctx.font = '12px sans-serif'
+          ctx.fillText(`${seg.origin} ${seg.departTimeDisplay ?? airportTimeDisplay(seg.departTime)}`, 40, y + 62, EXPORT_W - 80)
+          ctx.fillText(`${seg.destination} ${seg.arriveTimeDisplay ?? airportTimeDisplay(seg.arriveTime)}`, 40, y + 86, EXPORT_W - 80)
 
           ctx.fillStyle = 'rgba(235, 235, 245, 0.3)'
           ctx.font = '12px sans-serif'
           const meta = [
-            seg.departTime ? formatMonthDay(seg.departTime) : '',
             seg.terminal ? t('bpi.terminal', { t: seg.terminal }) : '',
             seg.gate ? t('bpi.gate', { g: seg.gate }) : ''
           ].filter(Boolean).join(' · ')
-          ctx.fillText(meta, 40, y + 96)
+          ctx.fillText(meta, 40, y + 116)
           y += ROW_FLIGHT
         } else {
           // 中转段
@@ -142,8 +138,7 @@ function BoardingPassItinerary({ itinerary, passenger, shareTitle }: BoardingPas
             <View className='bpi__flight-route'>
               <View className='bpi__flight-point'>
                 <Text className='font-code bpi__flight-iata'>{seg.origin}</Text>
-                <Text className='bpi__flight-time'>{seg.departTime ? formatTime(seg.departTime) : '—'}</Text>
-                <Text className='bpi__flight-date'>{seg.departTime ? formatMonthDay(seg.departTime) : ''}</Text>
+                <Text className='bpi__flight-time'>{seg.departTimeDisplay ?? airportTimeDisplay(seg.departTime)}</Text>
               </View>
               <View className='bpi__flight-track'>
                 <View className='bpi__flight-line' />
@@ -152,8 +147,7 @@ function BoardingPassItinerary({ itinerary, passenger, shareTitle }: BoardingPas
               </View>
               <View className='bpi__flight-point bpi__flight-point--right'>
                 <Text className='font-code bpi__flight-iata'>{seg.destination}</Text>
-                <Text className='bpi__flight-time'>{seg.arriveTime ? formatTime(seg.arriveTime) : '—'}</Text>
-                <Text className='bpi__flight-date'>{seg.arriveTime ? formatMonthDay(seg.arriveTime) : ''}</Text>
+                <Text className='bpi__flight-time'>{seg.arriveTimeDisplay ?? airportTimeDisplay(seg.arriveTime)}</Text>
               </View>
             </View>
             <View className='bpi__flight-meta'>

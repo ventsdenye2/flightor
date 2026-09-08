@@ -2,6 +2,8 @@ import Fastify from 'fastify'
 import { ZodError } from 'zod'
 import { describe, expect, it } from 'vitest'
 import { InMemoryArtifactRepository } from '../artifacts/repository.js'
+import { readArtifactTool } from '../agent/tools/artifact-reading.js'
+import type { ToolExecutionContext } from '../agent/runtime/registry.js'
 import type { AppContext } from '../app/context.js'
 import { issueAccessToken } from '../auth/tokens.js'
 import { parseEnv } from '../config/env.js'
@@ -102,5 +104,37 @@ describe('cloud state API authorization contract', () => {
     expect(response.statusCode).toBe(401)
     expect(response.json()).toMatchObject({ code: 'UNAUTHORIZED' })
     await app.close()
+  })
+
+  it('shares explicit airport-local time views between the artifact API and Agent reads', async () => {
+    const app = Fastify()
+    const trips = new InMemoryTripRepository()
+    const trip = await trips.create({ title: 'Airport time presentation' })
+    const ownedTripIds = new Set([trip.id])
+    const artifacts = new InMemoryArtifactRepository('42', ownedTripIds)
+    const payload = { kind: 'connection_edges', edges: [{
+      from: { id: 'PVG', iata: 'PVG', timezone: 'Asia/Shanghai' },
+      to: { id: 'NRT', iata: 'NRT', timezone: 'Asia/Tokyo' },
+      departureAt: '2026-10-10T06:55:00.000Z', arrivalAt: '2026-10-10T10:00:00.000Z'
+    }] }
+    const stored = await artifacts.create({ tripId: trip.id, type: 'route_set', schemaVersion: 1, payload })
+    await registerCloudStateRoutes(app, { env } as unknown as AppContext, () => ({
+      trips, artifacts, conversations: new InMemoryConversationRepository('42', ownedTripIds), memory: new InMemoryUserMemoryRepository()
+    }))
+    const token = await issueAccessToken({ userId: '42', publicId: 'user-public' }, env)
+    try {
+      const response = await app.inject({ method: 'GET', url: `/v1/artifacts/${stored.id}`, headers: { authorization: `Bearer ${token}` } })
+      expect(response.statusCode).toBe(200)
+      const presented = response.json().artifact
+      expect(presented.payload).toEqual(payload)
+      expect(presented.presentation.airportTimes['/edges/0/departureAt'].display).toBe('2026-10-10 14:55 (Asia/Shanghai, UTC+08:00)')
+      expect(presented.presentation.airportTimes['/edges/0/arrivalAt'].display).toBe('2026-10-10 19:00 (Asia/Tokyo, UTC+09:00)')
+
+      const result = await readArtifactTool.execute({ artifactId: stored.id }, { tripId: trip.id, artifacts } as ToolExecutionContext, new AbortController().signal)
+      const readable = JSON.parse(result.content)
+      expect(readable.payload.edges[0].departureAt).toEqual(presented.presentation.airportTimes['/edges/0/departureAt'])
+      expect(readable.payload.edges[0].arrivalAt).toEqual(presented.presentation.airportTimes['/edges/0/arrivalAt'])
+      expect((await artifacts.get(stored.id))?.payload).toEqual(payload)
+    } finally { await app.close() }
   })
 })

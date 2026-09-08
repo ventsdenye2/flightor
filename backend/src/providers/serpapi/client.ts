@@ -168,6 +168,13 @@ function providerStatusError(value: unknown): boolean {
 
 function normalizeOrganicResults(value: unknown): SerpOrganicResult[] {
   const root = isRecord(value) ? value : {}
+  const metadata = isRecord(root.search_metadata) ? root.search_metadata : undefined
+  const information = isRecord(root.search_information) ? root.search_information : undefined
+  // SerpApi documents Success + Fully empty as a successful search, even when
+  // an explanatory error string is present. This is distinct from an outage.
+  // https://serpapi.com/api-status-and-error-codes
+  if (metadata?.status === 'Success' && information?.organic_results_state === 'Fully empty'
+    && (!Array.isArray(root.organic_results) || root.organic_results.length === 0)) return []
   if (providerStatusError(root)) {
     throw new AppError('PROVIDER_UNAVAILABLE', 'serpapi returned a search error', 502, { provider: 'serpapi' })
   }

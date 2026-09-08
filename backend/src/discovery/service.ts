@@ -5,6 +5,7 @@ import type { LocationRef } from '../aviation/types.js'
 import { ProductionResearchAgent } from '../research-agent/production.js'
 import type { ResearchAgent, ResearchArtifact } from '../research-agent/types.js'
 import { OpenRouterResearchSynthesisModel } from '../providers/openrouter/research.js'
+import { OpenRouterResearchQueryPlanner } from '../providers/openrouter/research-query-planner.js'
 import { PostgresDiscoveryRepository } from './postgres.js'
 import { tripTemplateSchema, type DiscoveryInput, type TripTemplate } from './types.js'
 
@@ -77,5 +78,9 @@ export async function executeDiscovery(
   }
 }
 export function runProductionDiscovery(context: AppContext, runId: string) {
-  return executeDiscovery(new PostgresDiscoveryRepository(context.db), new PostgresLocationResolver(context.db), new ProductionResearchAgent(context.providers.researchSearch, new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL)), runId)
+  return executeDiscovery(new PostgresDiscoveryRepository(context.db), new PostgresLocationResolver(context.db), new ProductionResearchAgent({
+    searchProvider: context.providers.researchSearch,
+    synthesisModel: new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL),
+    queryPlanner: new OpenRouterResearchQueryPlanner(context.providers.openrouter, context.env.RESEARCH_MODEL)
+  }), runId)
 }
