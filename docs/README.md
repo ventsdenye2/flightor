@@ -41,7 +41,9 @@ When documents disagree, apply them in this order:
   — Trip Workspace information architecture, typed Artifact rendering, unified
   manual/Agent flight search, and Flight Explorer ownership.
 
-Phase 6 visual tokens and fidelity constraints are recorded in
+The accepted visual baseline for new and redesigned user-facing screens is
+[`design/ui-experience-v1.md`](./design/ui-experience-v1.md) (2026-09-13).
+The previous Phase 6 visual tokens and fidelity constraints remain recorded in
 [`design/phase6-design-system.md`](./design/phase6-design-system.md).
 
 ## Domain and operations
@@ -57,6 +59,8 @@ Phase 6 visual tokens and fidelity constraints are recorded in
   source-backed Agent-authored daily schedules, local commands and boundaries.
   [ADR 0012](./adr/0012-agent-authored-itineraries.md) records the scoped decision;
   [DEMO_STATUS](./DEMO_STATUS.md) separates implementation from live acceptance.
+- [UI Experience v1 交接](./UI_PHASE_HANDOFF.md) — 已认可的手机优先美术方向、独立 UI 样稿、运行命令与未验收边界；[统一美术规范](./design/ui-experience-v1.md)。
+
 - [`backend-architecture.md`](./backend-architecture.md) — legacy/current
   backend notes.
 - [`multi-city-plan.md`](./multi-city-plan.md) — multi-city planning notes.

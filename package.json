@@ -11,6 +11,8 @@
   "scripts": {
     "build:weapp": "taro build --type weapp",
     "build:weapp:local": "node scripts/build-local-weapp.cjs",
+    "build:ui-experience": "node scripts/build-ui-experience.cjs",
+    "check:ui-experience": "tsc -p apps/ui-preview/taro-entry/tsconfig.json --noEmit",
     "dev:weapp": "npm run build:weapp -- --watch",
     "gen:icons": "node scripts/gen-icons.js",
     "gen:guides": "node scripts/gen-guides.js",
