@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+  "startedAt": "2026-09-12T19:49:14.796Z",
+  "sourceProtocol": "research-v3-aligned-contract-routing",
+  "expectedSamples": 32,
+  "sourceHash": "7148faa3c591ca09773118aaad325358a3a8ffeee362c8225bb750c79e8a5047",
+  "sourceFiles": [
+    {
+      "path": "all-results.json",
+      "sha256": "63c1ec8f9ea578b33a5437fca2f54fc1a5e92e954bcd93521c009f8e4f8590b6"
+    },
+    {
+      "path": "archive-manifest.json",
+      "sha256": "945d154565f4a561efee8f83115469c59e76cbbd2472e018a75bdb670a3bc4c6"
+    },
+    {
+      "path": "inputs/cases.json",
+      "sha256": "e75b03961f2398461fc57ed39222a01628b2eb5cbab7225f1ea8fac67316c7ec"
+    },
+    {
+      "path": "inputs/models.json",
+      "sha256": "c123ac5f0430911960f37d786500ba21ae9d363798a21d72f95ad3c69b2b6e4c"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-002.json",
+      "sha256": "dc7e7a4abe956da48ace1df67fb39b7c5733f0cf82da75a94a1d36aa25946713"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-003.json",
+      "sha256": "21500d47b61feb4580454ebc7922a6dee4e743e1cc36acbcf479040d1ad4fee9"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-004.json",
+      "sha256": "dafde0a67d5f434be17bf1d86cfdadcff7ec75afa164e9cdf5be64e5b2aef9ee"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-005.json",
+      "sha256": "7a301e7c0b41fd810e2f175a86810332d07ac9385bc8ab347410584ef1f20acd"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-006.json",
+      "sha256": "d53d75c3f2db439017511660163154d8e5297c129b68fd2e30a4894fa0b3a109"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-008.json",
+      "sha256": "4d289571dc907f8133c41135ff1d1db8ac8975cfccbd6ee54741224b342c56c7"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-009.json",
+      "sha256": "e10812c18adc6c57291fda2e74b08fec3eeb94a4662843e5d4b83b9002d31d86"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-010.json",
+      "sha256": "3fe0d70596572a2503ab1f1706e56fb8ed6aa0c4c6c217bd19ea41b7213d0530"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-011.json",
+      "sha256": "31577f41245ba49fbf6c043a7fa3e3ae4acb0ef808e3d8f3968586038d490c07"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-012.json",
+      "sha256": "863864db35c9ee7890664bb5dec73191c8e95facfb0b3dcfebec6b41e294955f"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-014.json",
+      "sha256": "299cd793bfd67c9187667261f892d85f302cb8b19ba2f6bc51917ec1120fdece"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-016.json",
+      "sha256": "a6346c55086740ae08dcb5bf3a9ccf02978b5ba6651bae33c0a685dcf0d6df13"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-017.json",
+      "sha256": "f08aa76df15bcc1ab123a8f25b1ed5a5d97d99ac33864dc7b24fad0ae00a20cb"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-020.json",
+      "sha256": "296f0227fafadc4de15e36f50ad9eac4045e9acd86c950c57cf33c4c91303275"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-021.json",
+      "sha256": "01c7725e79a5616c1e6b7865cbb092035041fae07478662a85a1d8f5277af171"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-023.json",
+      "sha256": "a2e3f0c9dcda397d2b6fa1ba1212484046a27cc3c858d7f2fe88d133262dfceb"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-024.json",
+      "sha256": "2248cebb65febe83f10a66da55dd0489a081782298bba21459677bf9e46ea898"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-026.json",
+      "sha256": "7b0b2643b2b3e96fd38b3931aaee7f5f9b11ebb1917cf3fdfa55949f7ce6c29e"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-027.json",
+      "sha256": "2af49e03b17359687d0349abb700dc21e056fdca3515d1eb3068f38963a2e17f"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-028.json",
+      "sha256": "2d129e443c2ee112dd3fe52094f77734e6e8f84cd1833ec034ea402cbc85a83e"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-029.json",
+      "sha256": "f6a0cb89ce6ae4486d2e74a15eae6493793b0bcdbcfe201936d1c8e6e7e5ea19"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-033.json",
+      "sha256": "a322a4796836fc0535fec82e8c863515075a60633bdaf527da9183bd4dfc4b08"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-034.json",
+      "sha256": "b274eb3b1377c609e456c14dfe867435ccbd6dc1129be853817e422aa4ed992b"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-035.json",
+      "sha256": "9044814a011ef59de5cc00795f7e1787804d93646ef4b72f10e393fb7e5cac00"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-036.json",
+      "sha256": "a4aedf043b40351d64913cb4bcc76253ced361781c665723ee12ff86c5f49718"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-039.json",
+      "sha256": "5374859ae3395e36aec34153f10fedae32ddd0bc85123baead53422328563614"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-040.json",
+      "sha256": "d833a14fc5f46a7868354b4740dc2a2c7a99f3f4393bf6ac3c8655afd4c9ce42"
+    },
+    {
+      "path": "runs/candidate-screen-v3/sample-042.json",
+      "sha256": "90150c71f8ce48a6107f391423b80b12f2f1eafaea34459cd944c37415cc0015"
+    },
+    {
+      "path": "runs/research-screen-v3/sample-001.json",
+      "sha256": "af3c673764681c9dbd3637a9b973f9e05bd2ef50b72c87c07c26d8fd614f4c98"
+    },
+    {
+      "path": "runs/research-screen-v3/sample-004.json",
+      "sha256": "8824642453778859453ac4968558ab4cb75db97124262d560d229bdc3104b743"
+    },
+    {
+      "path": "runs/research-screen-v3/sample-007.json",
+      "sha256": "67283d2526d551c6fd6fe7d66f0313175f68e96ccafb7e0964b375503aabc9d6"
+    },
+    {
+      "path": "runs/research-screen-v3/sample-010.json",
+      "sha256": "fe620262c73de552d3ee794042351706961e876194efd707a9fd21b92c46420f"
+    }
+  ],
+  "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+  "codeHash": "813d35cb6752dd3fca49b8b95702dbf75b7d8e55f662dcfc26ee2cc3eb1e79e3",
+  "files": [
+    {
+      "path": "backend-replay.mjs",
+      "sha256": "3921e8a01e138113b3f33401f60591c0e11f928dbe6ceb69016f6e4d81c20835"
+    },
+    {
+      "path": "planner-integration.mjs",
+      "sha256": "624f631232f5fbcf7309c8cb693c956e67a80f1e24d52563bbbce4983885e217"
+    },
+    {
+      "path": "thin-research.mjs",
+      "sha256": "722f4d7f231cd9fb641780a69dbf2aa68b3c7ca7d1fa4ca43b2586ee2741f44f"
+    },
+    {
+      "path": "baseline.mjs",
+      "sha256": "aa3d5af6c521d10705395c989ccaa21c21b4fddab1b0baed4f56d806e9979aae"
+    },
+    {
+      "path": "../travel-research/contracts.mjs",
+      "sha256": "6db94b97599091fd829941cfed25818f5edb808aba0781cfafd7ef70e0b95b99"
+    },
+    {
+      "path": "../travel-research/normalization.mjs",
+      "sha256": "015c963a2852a3e9e0ec49b49bfcc5a16de9de7d65626685ff7dda79aee31488"
+    }
+  ],
+  "boundaries": {
+    "transport": "Exact archived receipt, cloned once per request. No new model, search or API call.",
+    "planner": "Offline scripted decisions through real CloudPlannerService, AgentRuntime and Planner registry. attemptGuide=true; unchanged fixture selection and domain verification.",
+    "persistence": "Independent owner and in-memory repositories per sample; real Goal/run relation resolver and Trip-version callback. No DB, server or port.",
+    "clock": "Research checkedAt uses the original sample startedAt; backend/runtime clocks retain actual replay time. Trip dates and domain policy are unchanged.",
+    "evidence": "Archived receipts were generated from full user request plus brief; adapter prompts use the brief. This checks recorded-output integration, not fresh model behavior, factual truth, quality ranking, latency or Planner autonomy.",
+    "selection": "The scripted guide distributes findings across days under the first destination. Rejections, including multi-city/date/coverage limitations, are retained without tuning.",
+    "networkGuard": "globalThis.fetch is blocked and restored in finally; no production transport is injected. This is not an OS-level network sandbox.",
+    "dependencies": "Read-only use of installed backend/node_modules junction; lockfile hashed, dependency bytes not frozen"
+  }
+}

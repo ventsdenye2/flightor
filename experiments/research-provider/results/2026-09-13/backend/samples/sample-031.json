@@ -1,0 +1,907 @@
+{
+  "sampleId": "candidate-screen-v3/sample-040",
+  "caseId": "activity-09",
+  "model": "z-ai/glm-5.3-flash",
+  "sampleFile": "samples/sample-031.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-040.json",
+  "sourceSha256": "d833a14fc5f46a7868354b4740dc2a2c7a99f3f4393bf6ac3c8655afd4c9ce42",
+  "receiptSha256": "c565d02143aead329cb13538fb73c41ad756320d348a6622429393cc6ed981fc",
+  "recordedAt": "2026-09-12T18:52:53.308Z",
+  "travelWindow": {
+    "from": "2026-11-12",
+    "to": "2026-11-14"
+  },
+  "recordedStatus": "responded",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_35a13ab5-41e0-460a-851a-2a09cdc7f6bc.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+        "departureWindow": {
+          "from": "2026-11-12",
+          "to": "2026-11-12",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-11-14",
+          "to": "2026-11-14",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:HKG",
+              "type": "city",
+              "name": "香港",
+              "countryCode": "HK"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "历史",
+          "海边步道",
+          "一位成人",
+          "每天门票总预算150港币",
+          "交通餐饮住宿不计入此预算",
+          "免费或低价"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-c46a-752c-abd1-5e09e92cb546",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_35a13ab5-41e0-460a-851a-2a09cdc7f6bc",
+        "thin_research_disposition:partial",
+        "research_evidence_is_snippet_only",
+        "候选清单尚未构成每天门票总额的承诺；以上两项均为免费，远低于每日150港币预算。",
+        "受搜索次数限制，未能核实其他符合历史/海边步道兴趣的候选（如大馆、西九文化区艺术公园海滨长廊、中环至湾仔海滨步道、孙中山史迹径等）的当前门票与开放情况，建议后续补充核实。",
+        "尖沙咀海滨长廊的开放时间及夜间灯光汇演时间未核实。",
+        "香港历史博物馆2026年11月12-14日的具体开放时间及当日是否有收费特展未核实（逢周二休馆的惯例需确认是否适用）。"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c462-70dc-92f9-26d59371a516",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c462-70dc-92f9-26d59371a516",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "f91723c9-9798-4f95-a2a9-662a2ed11cb2",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c45c-7219-9a01-60f2f1c71494\",\"departureWindow\":{\"from\":\"2026-11-12\",\"to\":\"2026-11-12\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-14\",\"to\":\"2026-11-14\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:HKG\",\"type\":\"city\",\"name\":\"香港\",\"countryCode\":\"HK\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"历史\",\"海边步道\",\"一位成人\",\"每天门票总预算150港币\",\"交通餐饮住宿不计入此预算\",\"免费或低价\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+              "departureWindow": {
+                "from": "2026-11-12",
+                "to": "2026-11-12",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-11-14",
+                "to": "2026-11-14",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:HKG",
+                    "type": "city",
+                    "name": "香港",
+                    "countryCode": "HK"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "历史",
+                "海边步道",
+                "一位成人",
+                "每天门票总预算150港币",
+                "交通餐饮住宿不计入此预算",
+                "免费或低价"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "研究最多6个符合历史或海边步道兴趣的免费或低价活动候选，给出有依据的成人门票、币种及免费条件，并明确候选清单尚未构成每天门票总额的承诺。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c462-70dc-92f9-26d59371a516",
+          "runId": "01a0972a-c462-70dc-92f9-284a2914ae9f",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "b425cc6d-2247-4d0b-9fab-72bdd494d4fb",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c462-70dc-92f9-26d59371a516\",\"ownerId\":\"backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20\",\"tripId\":\"01a0972a-c45c-7219-9a01-60f2f1c71494\",\"conversationId\":\"01a0972a-c45c-7219-9a01-6489d0eec151\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究最多6个符合历史或海边步道兴趣的免费或低价活动候选，给出有依据的成人门票、币种及免费条件，并明确候选清单尚未构成每天门票总额的承诺。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.538Z\",\"updatedAt\":\"2026-09-12T19:49:17.538Z\"},\"run\":{\"id\":\"01a0972a-c462-70dc-92f9-284a2914ae9f\",\"ownerId\":\"backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20\",\"goalId\":\"01a0972a-c462-70dc-92f9-26d59371a516\",\"tripId\":\"01a0972a-c45c-7219-9a01-60f2f1c71494\",\"generationId\":\"offline-generation-ee04b907-70dd-435d-9438-1f85c149f097\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c45c-7219-9a01-60f2f1c71494\",\"departureWindow\":{\"from\":\"2026-11-12\",\"to\":\"2026-11-12\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-14\",\"to\":\"2026-11-14\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:HKG\",\"type\":\"city\",\"name\":\"香港\",\"countryCode\":\"HK\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"历史\",\"海边步道\",\"一位成人\",\"每天门票总预算150港币\",\"交通餐饮住宿不计入此预算\",\"免费或低价\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.538Z\",\"updatedAt\":\"2026-09-12T19:49:17.538Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 2,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c462-70dc-92f9-26d59371a516",
+              "ownerId": "backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20",
+              "tripId": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+              "conversationId": "01a0972a-c45c-7219-9a01-6489d0eec151",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究最多6个符合历史或海边步道兴趣的免费或低价活动候选，给出有依据的成人门票、币种及免费条件，并明确候选清单尚未构成每天门票总额的承诺。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.538Z",
+              "updatedAt": "2026-09-12T19:49:17.538Z"
+            },
+            "run": {
+              "id": "01a0972a-c462-70dc-92f9-284a2914ae9f",
+              "ownerId": "backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20",
+              "goalId": "01a0972a-c462-70dc-92f9-26d59371a516",
+              "tripId": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+              "generationId": "offline-generation-ee04b907-70dd-435d-9438-1f85c149f097",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+                "departureWindow": {
+                  "from": "2026-11-12",
+                  "to": "2026-11-12",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-14",
+                  "to": "2026-11-14",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:HKG",
+                      "type": "city",
+                      "name": "香港",
+                      "countryCode": "HK"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "历史",
+                  "海边步道",
+                  "一位成人",
+                  "每天门票总预算150港币",
+                  "交通餐饮住宿不计入此预算",
+                  "免费或低价"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.538Z",
+              "updatedAt": "2026-09-12T19:49:17.538Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:HKG",
+              "type": "city",
+              "name": "香港",
+              "countryCode": "HK"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-11-12",
+            "to": "2026-11-14"
+          },
+          "interests": [
+            "历史",
+            "海边步道",
+            "一位成人",
+            "每天门票总预算150港币",
+            "交通餐饮住宿不计入此预算",
+            "免费或低价"
+          ],
+          "questions": [
+            "研究最多6个符合历史或海边步道兴趣的免费或低价活动候选，给出有依据的成人门票、币种及免费条件，并明确候选清单尚未构成每天门票总额的承诺。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c462-70dc-92f9-26d59371a516",
+          "runId": "01a0972a-c462-70dc-92f9-284a2914ae9f",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "112b5fb1-0ac1-4c2c-8e9c-09f98e8441ff",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-c46a-752c-abd1-5e09e92cb546\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":2,\"statusCounts\":{\"verified\":0,\"partially_verified\":1,\"stale\":0,\"unverified\":1},\"createdAt\":\"2026-09-12T18:52:53.308Z\"},\"findings\":[{\"id\":\"finding_3aaaa84160b823b3a2ddcea7\",\"title\":\"尖沙咀海滨长廊（海边步道）\",\"summary\":\"免费开放的海滨步道，由尖沙咀天星码头延伸至红磡，全长约1.6公里，可欣赏维多利亚港景色，符合海边步道兴趣。门票：免费（港币0），无适用人群限制。开放时间未逐一核实。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:HKG\",\"name\":\"香港\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_16a95d8c7ff606717db98979\",\"title\":\"香港历史博物馆（含「香港故事」常设展）\",\"summary\":\"官方入场费页面显示「香港故事」常设展览、国家安全展览厅及长安万象—陕西隋唐文明展均免费入场；个别专题展览或需另外收费。符合历史兴趣，免费条件下门票为港币0。四岁以下儿童毋须购票（成人亦免费）。2026年4-6月季刊亦确认多项展览免费参观。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:HKG\",\"name\":\"香港\"}],\"verificationStatus\":\"unverified\"}],\"warnings\":[\"thin_research_audit:thin_audit_35a13ab5-41e0-460a-851a-2a09cdc7f6bc\",\"thin_research_disposition:partial\",\"research_evidence_is_snippet_only\",\"候选清单尚未构成每天门票总额的承诺；以上两项均为免费，远低于每日150港币预算。\",\"受搜索次数限制，未能核实其他符合历史/海边步道兴趣的候选（如大馆、西九文化区艺术公园海滨长廊、中环至湾仔海滨步道、孙中山史迹径等）的当前门票与开放情况，建议后续补充核实。\",\"尖沙咀海滨长廊的开放时间及夜间灯光汇演时间未核实。\",\"香港历史博物馆2026年11月12-14日的具体开放时间及当日是否有收费特展未核实（逢周二休馆的惯例需确认是否适用）。\"]}}",
+          "costUnits": 4,
+          "durationMs": 5,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-c46a-752c-abd1-5e09e92cb546"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_35a13ab5-41e0-460a-851a-2a09cdc7f6bc",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "候选清单尚未构成每天门票总额的承诺；以上两项均为免费，远低于每日150港币预算。",
+            "受搜索次数限制，未能核实其他符合历史/海边步道兴趣的候选（如大馆、西九文化区艺术公园海滨长廊、中环至湾仔海滨步道、孙中山史迹径等）的当前门票与开放情况，建议后续补充核实。",
+            "尖沙咀海滨长廊的开放时间及夜间灯光汇演时间未核实。",
+            "香港历史博物馆2026年11月12-14日的具体开放时间及当日是否有收费特展未核实（逢周二休馆的惯例需确认是否适用）。"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-c46a-752c-abd1-5e09e92cb546",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 2,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 1,
+                "stale": 0,
+                "unverified": 1
+              },
+              "createdAt": "2026-09-12T18:52:53.308Z"
+            },
+            "findings": [
+              {
+                "id": "finding_3aaaa84160b823b3a2ddcea7",
+                "title": "尖沙咀海滨长廊（海边步道）",
+                "summary": "免费开放的海滨步道，由尖沙咀天星码头延伸至红磡，全长约1.6公里，可欣赏维多利亚港景色，符合海边步道兴趣。门票：免费（港币0），无适用人群限制。开放时间未逐一核实。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:HKG",
+                    "name": "香港"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_16a95d8c7ff606717db98979",
+                "title": "香港历史博物馆（含「香港故事」常设展）",
+                "summary": "官方入场费页面显示「香港故事」常设展览、国家安全展览厅及长安万象—陕西隋唐文明展均免费入场；个别专题展览或需另外收费。符合历史兴趣，免费条件下门票为港币0。四岁以下儿童毋须购票（成人亦免费）。2026年4-6月季刊亦确认多项展览免费参观。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:HKG",
+                    "name": "香港"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_35a13ab5-41e0-460a-851a-2a09cdc7f6bc",
+              "thin_research_disposition:partial",
+              "research_evidence_is_snippet_only",
+              "候选清单尚未构成每天门票总额的承诺；以上两项均为免费，远低于每日150港币预算。",
+              "受搜索次数限制，未能核实其他符合历史/海边步道兴趣的候选（如大馆、西九文化区艺术公园海滨长廊、中环至湾仔海滨步道、孙中山史迹径等）的当前门票与开放情况，建议后续补充核实。",
+              "尖沙咀海滨长廊的开放时间及夜间灯光汇演时间未核实。",
+              "香港历史博物馆2026年11月12-14日的具体开放时间及当日是否有收费特展未核实（逢周二休馆的惯例需确认是否适用）。"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-c46a-752c-abd1-5e09e92cb546"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:HKG",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_3aaaa84160b823b3a2ddcea7",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "cityId": "city:HKG",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_16a95d8c7ff606717db98979",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "cityId": "city:HKG",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": []
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-c462-70dc-92f9-26d59371a516",
+          "runId": "01a0972a-c462-70dc-92f9-284a2914ae9f",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "ea2431f7-2dd3-4046-9393-64c13fee6c1b",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"eligible_research_evidence\",\"guide_daily_activity_coverage\",\"guide_research_type:practical\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 1,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "eligible_research_evidence",
+              "guide_daily_activity_coverage",
+              "guide_research_type:practical"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-c462-70dc-92f9-26d59371a516"
+        },
+        "scope": {
+          "goalId": "01a0972a-c462-70dc-92f9-26d59371a516",
+          "runId": "01a0972a-c462-70dc-92f9-284a2914ae9f",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "0cd71b6f-3cd9-4dc7-ae23-9b736c9dca90",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c462-70dc-92f9-26d59371a516\",\"ownerId\":\"backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20\",\"tripId\":\"01a0972a-c45c-7219-9a01-60f2f1c71494\",\"conversationId\":\"01a0972a-c45c-7219-9a01-6489d0eec151\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究最多6个符合历史或海边步道兴趣的免费或低价活动候选，给出有依据的成人门票、币种及免费条件，并明确候选清单尚未构成每天门票总额的承诺。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.538Z\",\"updatedAt\":\"2026-09-12T19:49:17.538Z\"},\"run\":{\"id\":\"01a0972a-c462-70dc-92f9-284a2914ae9f\",\"ownerId\":\"backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20\",\"goalId\":\"01a0972a-c462-70dc-92f9-26d59371a516\",\"tripId\":\"01a0972a-c45c-7219-9a01-60f2f1c71494\",\"generationId\":\"offline-generation-ee04b907-70dd-435d-9438-1f85c149f097\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c45c-7219-9a01-60f2f1c71494\",\"departureWindow\":{\"from\":\"2026-11-12\",\"to\":\"2026-11-12\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-14\",\"to\":\"2026-11-14\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:HKG\",\"type\":\"city\",\"name\":\"香港\",\"countryCode\":\"HK\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"历史\",\"海边步道\",\"一位成人\",\"每天门票总预算150港币\",\"交通餐饮住宿不计入此预算\",\"免费或低价\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-c46a-752c-abd1-5e09e92cb546\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:17.546Z\"}],\"locationHandles\":[{\"id\":\"city:HKG\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:17.539Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:17.538Z\",\"updatedAt\":\"2026-09-12T19:49:17.547Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c462-70dc-92f9-26d59371a516",
+              "ownerId": "backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20",
+              "tripId": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+              "conversationId": "01a0972a-c45c-7219-9a01-6489d0eec151",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究最多6个符合历史或海边步道兴趣的免费或低价活动候选，给出有依据的成人门票、币种及免费条件，并明确候选清单尚未构成每天门票总额的承诺。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.538Z",
+              "updatedAt": "2026-09-12T19:49:17.538Z"
+            },
+            "run": {
+              "id": "01a0972a-c462-70dc-92f9-284a2914ae9f",
+              "ownerId": "backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20",
+              "goalId": "01a0972a-c462-70dc-92f9-26d59371a516",
+              "tripId": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+              "generationId": "offline-generation-ee04b907-70dd-435d-9438-1f85c149f097",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+                "departureWindow": {
+                  "from": "2026-11-12",
+                  "to": "2026-11-12",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-14",
+                  "to": "2026-11-14",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:HKG",
+                      "type": "city",
+                      "name": "香港",
+                      "countryCode": "HK"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "历史",
+                  "海边步道",
+                  "一位成人",
+                  "每天门票总预算150港币",
+                  "交通餐饮住宿不计入此预算",
+                  "免费或低价"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-c46a-752c-abd1-5e09e92cb546",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:17.546Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:HKG",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:17.539Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:17.538Z",
+              "updatedAt": "2026-09-12T19:49:17.547Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-c46a-752c-abd1-5e09e92cb546",
+        "tripId": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+        "conversationId": "01a0972a-c45c-7219-9a01-6489d0eec151",
+        "goalId": "01a0972a-c462-70dc-92f9-26d59371a516",
+        "runId": "01a0972a-c462-70dc-92f9-284a2914ae9f",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-c46a-752c-abd1-5e09e92cb546",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:HKG",
+                "type": "city",
+                "name": "香港",
+                "countryCode": "HK"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-11-12",
+              "to": "2026-11-14"
+            },
+            "interests": [
+              "历史",
+              "海边步道",
+              "一位成人",
+              "每天门票总预算150港币",
+              "交通餐饮住宿不计入此预算",
+              "免费或低价"
+            ],
+            "questions": [
+              "研究最多6个符合历史或海边步道兴趣的免费或低价活动候选，给出有依据的成人门票、币种及免费条件，并明确候选清单尚未构成每天门票总额的承诺。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_3aaaa84160b823b3a2ddcea7",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:HKG",
+                  "type": "city",
+                  "name": "香港",
+                  "countryCode": "HK"
+                }
+              ],
+              "title": "尖沙咀海滨长廊（海边步道）",
+              "summary": "免费开放的海滨步道，由尖沙咀天星码头延伸至红磡，全长约1.6公里，可欣赏维多利亚港景色，符合海边步道兴趣。门票：免费（港币0），无适用人群限制。开放时间未逐一核实。",
+              "sources": [
+                {
+                  "title": "香港自遊樂在18區 - 尖沙咀海濱長廊",
+                  "url": "https://www.gohk.gov.hk/tc/spots/spot_detail.php?spot=Tsim+Sha+Tsui+Promenade",
+                  "domain": "www.gohk.gov.hk",
+                  "snippet": "咀海濱長廊由尖沙咀天星碼頭一直伸延至紅磡建灣街，沿途維多利亞港的美麗景色盡入眼簾。尖沙咀海濱長廊是世界各地訪港旅客的必到熱點，亦是攝影愛好者取景拍照的勝地。每逢節慶期間，",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "香港尖沙咀海滨公园 - 香港旅游 - 香港自由行",
+                  "url": "http://www.3hk.cn/travel/attractions/1379.html",
+                  "domain": "www.3hk.cn",
+                  "snippet": "# 香港尖沙咀海滨公园\n...\n景点地址：九龙尖沙咀东海旁\n...\n开放时间：免费开放\n...\n门票信息：免费入场\n...\n九龙尖沙咀东海旁，可看到维多利亚港海景。公园全长1.6公里，西至尖沙咀天星码头，",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:52:53.308Z",
+                "expiresAt": "2026-12-11T18:52:53.308Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.gohk.gov.hk/tc/spots/spot_detail.php?spot=Tsim+Sha+Tsui+Promenade"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "http://www.3hk.cn/travel/attractions/1379.html"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified"
+              ]
+            },
+            {
+              "id": "finding_16a95d8c7ff606717db98979",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:HKG",
+                  "type": "city",
+                  "name": "香港",
+                  "countryCode": "HK"
+                }
+              ],
+              "title": "香港历史博物馆（含「香港故事」常设展）",
+              "summary": "官方入场费页面显示「香港故事」常设展览、国家安全展览厅及长安万象—陕西隋唐文明展均免费入场；个别专题展览或需另外收费。符合历史兴趣，免费条件下门票为港币0。四岁以下儿童毋须购票（成人亦免费）。2026年4-6月季刊亦确认多项展览免费参观。",
+              "sources": [
+                {
+                  "title": "香港歷史博物館 - 入場及開放時間",
+                  "url": "https://hk.history.museum/tc/web/mh/plan-your-visit/admission.html",
+                  "domain": "hk.history.museum",
+                  "snippet": "| 香港賽馬會呈獻系列：長安萬象—陝西隋唐文明展：免費 「香港故事」常設展覽：免費 國家安全展覽廳：免費 |\n| --- |\n...\n、三至五",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "香港历史博物馆 - 常见问题",
+                  "url": "https://hk.history.museum/sc/web/mh/about-us/faq.html",
+                  "domain": "hk.history.museum",
+                  "snippet": "日除外\n...\n| 博物馆入场费用多少？ | 免费 | 更多 |\n| 专题展览需要另外收费吗？ | 个别专题展览或需另外收费 | |\n| 幼童需购票入场吗？ | 四岁以下的儿童毋须购票 | 更多 |",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "香港歷史博物館2026年第二季季刊",
+                  "url": "https://hk.history.museum/documents/publications/newsletter/HKMH_Newsletter_Apr-Jun2026.pdf",
+                  "domain": "hk.history.museum",
+                  "snippet": "免費參觀\n\n...\n\nFree admission\n\n...\n\n#### 'Hong Kong Story' Permanent Exhibition 「香港故事」常設展覽 香港歷史博物館地下展覽廳\n\n...\n\n#### 1.4.2026 ─ 展覽 Exhibitions\n\n...\n\n免費參觀\n\n...\n\n展覽 Exhibition 25.4 – 24.8.2026 \n教育互動區 Interactive Zone 25.4 – 30.11.2026\n\n...\n\n免費入場\n\n...\n\nFree admission",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:52:53.308Z",
+                "expiresAt": "2026-12-11T18:52:53.308Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://hk.history.museum/tc/web/mh/plan-your-visit/admission.html"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://hk.history.museum/sc/web/mh/about-us/faq.html"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://hk.history.museum/documents/publications/newsletter/HKMH_Newsletter_Apr-Jun2026.pdf"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            }
+          ],
+          "queryCount": 4,
+          "warnings": [
+            "thin_research_audit:thin_audit_35a13ab5-41e0-460a-851a-2a09cdc7f6bc",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "候选清单尚未构成每天门票总额的承诺；以上两项均为免费，远低于每日150港币预算。",
+            "受搜索次数限制，未能核实其他符合历史/海边步道兴趣的候选（如大馆、西九文化区艺术公园海滨长廊、中环至湾仔海滨步道、孙中山史迹径等）的当前门票与开放情况，建议后续补充核实。",
+            "尖沙咀海滨长廊的开放时间及夜间灯光汇演时间未核实。",
+            "香港历史博物馆2026年11月12-14日的具体开放时间及当日是否有收费特展未核实（逢周二休馆的惯例需确认是否适用）。"
+          ],
+          "createdAt": "2026-09-12T18:52:53.308Z"
+        },
+        "verification": {
+          "status": "partially_verified",
+          "checkedAt": "2026-09-12T18:52:53.308Z",
+          "confidence": 0.2,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://www.gohk.gov.hk/tc/spots/spot_detail.php?spot=Tsim+Sha+Tsui+Promenade"
+            },
+            {
+              "provider": "research-search",
+              "reference": "http://www.3hk.cn/travel/attractions/1379.html"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://hk.history.museum/tc/web/mh/plan-your-visit/admission.html"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://hk.history.museum/sc/web/mh/about-us/faq.html"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://hk.history.museum/documents/publications/newsletter/HKMH_Newsletter_Apr-Jun2026.pdf"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:17.546Z",
+        "updatedAt": "2026-09-12T19:49:17.546Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-c462-70dc-92f9-26d59371a516",
+        "ownerId": "backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20",
+        "tripId": "01a0972a-c45c-7219-9a01-60f2f1c71494",
+        "conversationId": "01a0972a-c45c-7219-9a01-6489d0eec151",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "研究最多6个符合历史或海边步道兴趣的免费或低价活动候选，给出有依据的成人门票、币种及免费条件，并明确候选清单尚未构成每天门票总额的承诺。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:17.538Z",
+        "updatedAt": "2026-09-12T19:49:17.538Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "partial",
+  "providerError": null,
+  "effectiveDisposition": "partial",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 2,
+      "verificationEligibleFindingCount": 1,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 1,
+        "unverified": 1,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "eligible_research_evidence",
+        "guide_daily_activity_coverage",
+        "guide_research_type:practical"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

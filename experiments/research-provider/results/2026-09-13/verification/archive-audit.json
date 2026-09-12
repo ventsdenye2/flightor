@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-09-12T19:52:14.871Z",
+  "firstRoundCommit": "f3906e3ab785f46bbf48b68d1a4d23837b6cfac1",
+  "providerSamples": 32,
+  "backendSamples": 32,
+  "independentlyPersistedAudits": 64,
+  "firstArchiveFilesVerified": 148,
+  "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+  "tests": {
+    "total": 67,
+    "passed": 67,
+    "failed": 0,
+    "skipped": 0
+  },
+  "secretAndLocalPathPatternMatches": 0,
+  "newApiCostUsd": 0,
+  "policy": "Exact copies of explicit offline run metadata, per-request audits and per-sample receipts. TAP line endings normalized to LF. No backend snapshot, environment, dependencies or first-round raw evidence is copied or modified."
+}

@@ -1,0 +1,1125 @@
+{
+  "sampleId": "research-screen-v3/sample-010",
+  "caseId": "activity-06",
+  "model": "qwen/qwen3.8-flash",
+  "sampleFile": "samples/sample-004.json",
+  "sourceFile": "runs/research-screen-v3/sample-010.json",
+  "sourceSha256": "fe620262c73de552d3ee794042351706961e876194efd707a9fd21b92c46420f",
+  "receiptSha256": "dd5ede377170e454b5d9a771142735d200db52e712e103dec9b958dfe7a2292b",
+  "recordedAt": "2026-09-12T18:44:58.962Z",
+  "travelWindow": {
+    "from": "2026-10-20",
+    "to": "2026-10-22"
+  },
+  "recordedStatus": "responded",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_1764d17a-16f8-46de-b7c5-c07139ae5280.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+        "departureWindow": {
+          "from": "2026-10-20",
+          "to": "2026-10-20",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-10-22",
+          "to": "2026-10-22",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:MUC",
+              "type": "city",
+              "name": "慕尼黑",
+              "countryCode": "DE"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "当地文化",
+          "美食",
+          "节庆",
+          "核实当年啤酒节是否覆盖旅行日期",
+          "旅行日期不能改"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-c009-7007-8106-051c6f058488",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_1764d17a-16f8-46de-b7c5-c07139ae5280",
+        "thin_research_disposition:recommend",
+        "research_evidence_is_snippet_only",
+        "MUCHO巧克力节的具体开幕时间是否包含10月20-22日的预热活动尚未确认，目前仅知主活动日为10月24-25日。",
+        "部分博物馆或景点在10月下旬的具体开放时间可能因维护或特殊活动而调整，建议出行前再次核对官网。",
+        "未找到2026年10月20-22日期间其他大型特定节庆活动的确切信息，上述推荐基于常规文化活动及已确认的集市日期。"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "0e749f7e-d6b4-4345-a622-8b7c96b55b0f",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-bff2-758c-b5b9-d7e04a55f967\",\"departureWindow\":{\"from\":\"2026-10-20\",\"to\":\"2026-10-20\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-22\",\"to\":\"2026-10-22\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:MUC\",\"type\":\"city\",\"name\":\"慕尼黑\",\"countryCode\":\"DE\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"当地文化\",\"美食\",\"节庆\",\"核实当年啤酒节是否覆盖旅行日期\",\"旅行日期不能改\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+              "departureWindow": {
+                "from": "2026-10-20",
+                "to": "2026-10-20",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-10-22",
+                "to": "2026-10-22",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:MUC",
+                    "type": "city",
+                    "name": "慕尼黑",
+                    "countryCode": "DE"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "当地文化",
+                "美食",
+                "节庆",
+                "核实当年啤酒节是否覆盖旅行日期",
+                "旅行日期不能改"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "从当年主办方或官方信息核实慕尼黑啤酒节是否覆盖2026年10月20日至22日，区分朋友说法与已找到的证据。",
+              "研究旅行日期内最多6个文化、美食或节庆活动候选；若目标节庆不匹配则提供替代。"
+            ],
+            "researchTypes": [
+              "event",
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+          "runId": "01a0972a-bffd-7111-bd19-bf1a50e73004",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "25bdc08f-2960-4b03-880b-1914ad2f5a06",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-bffc-716d-968e-4a8ed1f6f733\",\"ownerId\":\"backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d\",\"tripId\":\"01a0972a-bff2-758c-b5b9-d7e04a55f967\",\"conversationId\":\"01a0972a-bff3-7735-8ebe-3561957b72f2\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"从当年主办方或官方信息核实慕尼黑啤酒节是否覆盖2026年10月20日至22日，区分朋友说法与已找到的证据。\",\"研究旅行日期内最多6个文化、美食或节庆活动候选；若目标节庆不匹配则提供替代。\"],\"researchTypes\":[\"event\",\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.412Z\",\"updatedAt\":\"2026-09-12T19:49:16.412Z\"},\"run\":{\"id\":\"01a0972a-bffd-7111-bd19-bf1a50e73004\",\"ownerId\":\"backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d\",\"goalId\":\"01a0972a-bffc-716d-968e-4a8ed1f6f733\",\"tripId\":\"01a0972a-bff2-758c-b5b9-d7e04a55f967\",\"generationId\":\"offline-generation-cf008b69-61fa-4f3d-9ac7-49567fb71a93\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-bff2-758c-b5b9-d7e04a55f967\",\"departureWindow\":{\"from\":\"2026-10-20\",\"to\":\"2026-10-20\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-22\",\"to\":\"2026-10-22\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:MUC\",\"type\":\"city\",\"name\":\"慕尼黑\",\"countryCode\":\"DE\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"当地文化\",\"美食\",\"节庆\",\"核实当年啤酒节是否覆盖旅行日期\",\"旅行日期不能改\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.413Z\",\"updatedAt\":\"2026-09-12T19:49:16.413Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 2,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+              "ownerId": "backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d",
+              "tripId": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+              "conversationId": "01a0972a-bff3-7735-8ebe-3561957b72f2",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "从当年主办方或官方信息核实慕尼黑啤酒节是否覆盖2026年10月20日至22日，区分朋友说法与已找到的证据。",
+                  "研究旅行日期内最多6个文化、美食或节庆活动候选；若目标节庆不匹配则提供替代。"
+                ],
+                "researchTypes": [
+                  "event",
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.412Z",
+              "updatedAt": "2026-09-12T19:49:16.412Z"
+            },
+            "run": {
+              "id": "01a0972a-bffd-7111-bd19-bf1a50e73004",
+              "ownerId": "backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d",
+              "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+              "tripId": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+              "generationId": "offline-generation-cf008b69-61fa-4f3d-9ac7-49567fb71a93",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+                "departureWindow": {
+                  "from": "2026-10-20",
+                  "to": "2026-10-20",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-22",
+                  "to": "2026-10-22",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:MUC",
+                      "type": "city",
+                      "name": "慕尼黑",
+                      "countryCode": "DE"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "当地文化",
+                  "美食",
+                  "节庆",
+                  "核实当年啤酒节是否覆盖旅行日期",
+                  "旅行日期不能改"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.413Z",
+              "updatedAt": "2026-09-12T19:49:16.413Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:MUC",
+              "type": "city",
+              "name": "慕尼黑",
+              "countryCode": "DE"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-10-20",
+            "to": "2026-10-22"
+          },
+          "interests": [
+            "当地文化",
+            "美食",
+            "节庆",
+            "核实当年啤酒节是否覆盖旅行日期",
+            "旅行日期不能改"
+          ],
+          "questions": [
+            "从当年主办方或官方信息核实慕尼黑啤酒节是否覆盖2026年10月20日至22日，区分朋友说法与已找到的证据。",
+            "研究旅行日期内最多6个文化、美食或节庆活动候选；若目标节庆不匹配则提供替代。"
+          ],
+          "researchTypes": [
+            "event",
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+          "runId": "01a0972a-bffd-7111-bd19-bf1a50e73004",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "d0e235cc-57a3-4435-ae6a-367c6b28ccf2",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-c009-7007-8106-051c6f058488\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":6,\"statusCounts\":{\"verified\":0,\"partially_verified\":1,\"stale\":0,\"unverified\":5},\"createdAt\":\"2026-09-12T18:44:58.962Z\"},\"findings\":[{\"id\":\"finding_b6186fd7a41f048c3f3a0a9b\",\"title\":\"核实：2026年慕尼黑啤酒节日期不覆盖您的旅行窗口\",\"summary\":\"根据官方信息，第191届慕尼黑啤酒节（Oktoberfest）将于2026年9月19日至10月4日举行。您计划的旅行日期为2026年10月20日至22日，此时啤酒节已经结束约两周。朋友的说法不准确，建议不要为此调整行程或期待在10月下旬参加啤酒节。\",\"category\":\"practical\",\"destinations\":[{\"id\":\"city:MUC\",\"name\":\"慕尼黑\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_9fdf64b1d0ba81b2be699ce3\",\"title\":\"奥厄集市（Auer Dult - Kirchweihdult）\",\"summary\":\"这是慕尼黑传统的秋季集市，通常在十月举行。2026年的“Kirchweihdult”定于10月17日至25日，完全覆盖您的旅行日期（10月20-22日）。地点在Mariahilfplatz，提供传统巴伐利亚美食、手工艺品和游乐设施，是体验当地民俗文化的绝佳替代选择。\",\"category\":\"event\",\"destinations\":[{\"id\":\"city:MUC\",\"name\":\"慕尼黑\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_d5e673f7615772e6e9836b53\",\"title\":\"MUCHO 慕尼黑巧克力节\",\"summary\":\"如果您喜欢美食体验，MUCHO（Munich Chocolate Festival）将于2026年10月24日和25日举行。虽然主要活动在您离开后开始，但部分预热活动或相关展览可能在10月下旬陆续展开，建议关注其官方网站以获取最新日程更新。这是一个专注于手工巧克力和可可豆到成品（Bean-to-Bar）的节庆活动。\",\"category\":\"event\",\"destinations\":[{\"id\":\"city:MUC\",\"name\":\"慕尼黑\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_ebfa72c97af6660bf1b54635\",\"title\":\"参观德意志博物馆（Deutsches Museum）\",\"summary\":\"作为世界上规模最大的科技博物馆之一，德意志博物馆全年开放，不受季节限制。在10月下旬，您可以避开夏季旅游高峰，更舒适地探索从航空、航海到物理、化学等领域的展品。馆内设有餐厅，可品尝简单的巴伐利亚风味餐点。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:MUC\",\"name\":\"慕尼黑\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_956efb8baf248acccc74ff9f\",\"title\":\"老彼得教堂（Alter Peter）与玛利亚广场漫步\",\"summary\":\"10月的慕尼黑秋高气爽，适合步行游览市中心。登上老彼得教堂塔楼可俯瞰全城秋色。玛利亚广场周边的谷物市场（Viktualienmarkt）即使在啤酒节后依然热闹，提供新鲜农产品、奶酪和熟食，是体验当地饮食文化的好机会。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:MUC\",\"name\":\"慕尼黑\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_7664b392d1275f65698b764e\",\"title\":\"宁芬堡宫（Schloss Nymphenburg）花园散步\",\"summary\":\"宁芬堡宫的皇家花园在秋季景色宜人，且通常免费向公众开放（宫殿内部需购票）。这里远离市中心的喧嚣，适合放松身心，感受巴伐利亚历史与自然之美。附近也有多家传统餐馆可供用餐。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:MUC\",\"name\":\"慕尼黑\"}],\"verificationStatus\":\"unverified\"}],\"warnings\":[\"thin_research_audit:thin_audit_1764d17a-16f8-46de-b7c5-c07139ae5280\",\"thin_research_disposition:recommend\",\"research_evidence_is_snippet_only\",\"MUCHO巧克力节的具体开幕时间是否包含10月20-22日的预热活动尚未确认，目前仅知主活动日为10月24-25日。\",\"部分博物馆或景点在10月下旬的具体开放时间可能因维护或特殊活动而调整，建议出行前再次核对官网。\",\"未找到2026年10月20-22日期间其他大型特定节庆活动的确切信息，上述推荐基于常规文化活动及已确认的集市日期。\"]}}",
+          "costUnits": 4,
+          "durationMs": 9,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-c009-7007-8106-051c6f058488"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_1764d17a-16f8-46de-b7c5-c07139ae5280",
+            "thin_research_disposition:recommend",
+            "research_evidence_is_snippet_only",
+            "MUCHO巧克力节的具体开幕时间是否包含10月20-22日的预热活动尚未确认，目前仅知主活动日为10月24-25日。",
+            "部分博物馆或景点在10月下旬的具体开放时间可能因维护或特殊活动而调整，建议出行前再次核对官网。",
+            "未找到2026年10月20-22日期间其他大型特定节庆活动的确切信息，上述推荐基于常规文化活动及已确认的集市日期。"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-c009-7007-8106-051c6f058488",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 6,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 1,
+                "stale": 0,
+                "unverified": 5
+              },
+              "createdAt": "2026-09-12T18:44:58.962Z"
+            },
+            "findings": [
+              {
+                "id": "finding_b6186fd7a41f048c3f3a0a9b",
+                "title": "核实：2026年慕尼黑啤酒节日期不覆盖您的旅行窗口",
+                "summary": "根据官方信息，第191届慕尼黑啤酒节（Oktoberfest）将于2026年9月19日至10月4日举行。您计划的旅行日期为2026年10月20日至22日，此时啤酒节已经结束约两周。朋友的说法不准确，建议不要为此调整行程或期待在10月下旬参加啤酒节。",
+                "category": "practical",
+                "destinations": [
+                  {
+                    "id": "city:MUC",
+                    "name": "慕尼黑"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_9fdf64b1d0ba81b2be699ce3",
+                "title": "奥厄集市（Auer Dult - Kirchweihdult）",
+                "summary": "这是慕尼黑传统的秋季集市，通常在十月举行。2026年的“Kirchweihdult”定于10月17日至25日，完全覆盖您的旅行日期（10月20-22日）。地点在Mariahilfplatz，提供传统巴伐利亚美食、手工艺品和游乐设施，是体验当地民俗文化的绝佳替代选择。",
+                "category": "event",
+                "destinations": [
+                  {
+                    "id": "city:MUC",
+                    "name": "慕尼黑"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_d5e673f7615772e6e9836b53",
+                "title": "MUCHO 慕尼黑巧克力节",
+                "summary": "如果您喜欢美食体验，MUCHO（Munich Chocolate Festival）将于2026年10月24日和25日举行。虽然主要活动在您离开后开始，但部分预热活动或相关展览可能在10月下旬陆续展开，建议关注其官方网站以获取最新日程更新。这是一个专注于手工巧克力和可可豆到成品（Bean-to-Bar）的节庆活动。",
+                "category": "event",
+                "destinations": [
+                  {
+                    "id": "city:MUC",
+                    "name": "慕尼黑"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_ebfa72c97af6660bf1b54635",
+                "title": "参观德意志博物馆（Deutsches Museum）",
+                "summary": "作为世界上规模最大的科技博物馆之一，德意志博物馆全年开放，不受季节限制。在10月下旬，您可以避开夏季旅游高峰，更舒适地探索从航空、航海到物理、化学等领域的展品。馆内设有餐厅，可品尝简单的巴伐利亚风味餐点。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:MUC",
+                    "name": "慕尼黑"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_956efb8baf248acccc74ff9f",
+                "title": "老彼得教堂（Alter Peter）与玛利亚广场漫步",
+                "summary": "10月的慕尼黑秋高气爽，适合步行游览市中心。登上老彼得教堂塔楼可俯瞰全城秋色。玛利亚广场周边的谷物市场（Viktualienmarkt）即使在啤酒节后依然热闹，提供新鲜农产品、奶酪和熟食，是体验当地饮食文化的好机会。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:MUC",
+                    "name": "慕尼黑"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_7664b392d1275f65698b764e",
+                "title": "宁芬堡宫（Schloss Nymphenburg）花园散步",
+                "summary": "宁芬堡宫的皇家花园在秋季景色宜人，且通常免费向公众开放（宫殿内部需购票）。这里远离市中心的喧嚣，适合放松身心，感受巴伐利亚历史与自然之美。附近也有多家传统餐馆可供用餐。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:MUC",
+                    "name": "慕尼黑"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_1764d17a-16f8-46de-b7c5-c07139ae5280",
+              "thin_research_disposition:recommend",
+              "research_evidence_is_snippet_only",
+              "MUCHO巧克力节的具体开幕时间是否包含10月20-22日的预热活动尚未确认，目前仅知主活动日为10月24-25日。",
+              "部分博物馆或景点在10月下旬的具体开放时间可能因维护或特殊活动而调整，建议出行前再次核对官网。",
+              "未找到2026年10月20-22日期间其他大型特定节庆活动的确切信息，上述推荐基于常规文化活动及已确认的集市日期。"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-c009-7007-8106-051c6f058488"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:MUC",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_b6186fd7a41f048c3f3a0a9b",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_ebfa72c97af6660bf1b54635",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "cityId": "city:MUC",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_9fdf64b1d0ba81b2be699ce3",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_956efb8baf248acccc74ff9f",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "cityId": "city:MUC",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_d5e673f7615772e6e9836b53",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_7664b392d1275f65698b764e",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+          "runId": "01a0972a-bffd-7111-bd19-bf1a50e73004",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "802159d8-ff94-44a3-a249-93c3ab1011f8",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"eligible_research_evidence\",\"guide_daily_activity_coverage\",\"guide_research_type:event\",\"guide_research_type:activity\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"event\",\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 2,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "eligible_research_evidence",
+              "guide_daily_activity_coverage",
+              "guide_research_type:event",
+              "guide_research_type:activity"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "event",
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733"
+        },
+        "scope": {
+          "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+          "runId": "01a0972a-bffd-7111-bd19-bf1a50e73004",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "5bf3b86a-cb9c-4188-9b2a-995ac8f9757a",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-bffc-716d-968e-4a8ed1f6f733\",\"ownerId\":\"backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d\",\"tripId\":\"01a0972a-bff2-758c-b5b9-d7e04a55f967\",\"conversationId\":\"01a0972a-bff3-7735-8ebe-3561957b72f2\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"从当年主办方或官方信息核实慕尼黑啤酒节是否覆盖2026年10月20日至22日，区分朋友说法与已找到的证据。\",\"研究旅行日期内最多6个文化、美食或节庆活动候选；若目标节庆不匹配则提供替代。\"],\"researchTypes\":[\"event\",\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.412Z\",\"updatedAt\":\"2026-09-12T19:49:16.412Z\"},\"run\":{\"id\":\"01a0972a-bffd-7111-bd19-bf1a50e73004\",\"ownerId\":\"backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d\",\"goalId\":\"01a0972a-bffc-716d-968e-4a8ed1f6f733\",\"tripId\":\"01a0972a-bff2-758c-b5b9-d7e04a55f967\",\"generationId\":\"offline-generation-cf008b69-61fa-4f3d-9ac7-49567fb71a93\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-bff2-758c-b5b9-d7e04a55f967\",\"departureWindow\":{\"from\":\"2026-10-20\",\"to\":\"2026-10-20\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-22\",\"to\":\"2026-10-22\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:MUC\",\"type\":\"city\",\"name\":\"慕尼黑\",\"countryCode\":\"DE\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"当地文化\",\"美食\",\"节庆\",\"核实当年啤酒节是否覆盖旅行日期\",\"旅行日期不能改\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-c009-7007-8106-051c6f058488\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:16.426Z\"}],\"locationHandles\":[{\"id\":\"city:MUC\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:16.414Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:16.413Z\",\"updatedAt\":\"2026-09-12T19:49:16.426Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+              "ownerId": "backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d",
+              "tripId": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+              "conversationId": "01a0972a-bff3-7735-8ebe-3561957b72f2",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "从当年主办方或官方信息核实慕尼黑啤酒节是否覆盖2026年10月20日至22日，区分朋友说法与已找到的证据。",
+                  "研究旅行日期内最多6个文化、美食或节庆活动候选；若目标节庆不匹配则提供替代。"
+                ],
+                "researchTypes": [
+                  "event",
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.412Z",
+              "updatedAt": "2026-09-12T19:49:16.412Z"
+            },
+            "run": {
+              "id": "01a0972a-bffd-7111-bd19-bf1a50e73004",
+              "ownerId": "backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d",
+              "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+              "tripId": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+              "generationId": "offline-generation-cf008b69-61fa-4f3d-9ac7-49567fb71a93",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+                "departureWindow": {
+                  "from": "2026-10-20",
+                  "to": "2026-10-20",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-22",
+                  "to": "2026-10-22",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:MUC",
+                      "type": "city",
+                      "name": "慕尼黑",
+                      "countryCode": "DE"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "当地文化",
+                  "美食",
+                  "节庆",
+                  "核实当年啤酒节是否覆盖旅行日期",
+                  "旅行日期不能改"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-c009-7007-8106-051c6f058488",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:16.426Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:MUC",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:16.414Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:16.413Z",
+              "updatedAt": "2026-09-12T19:49:16.426Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-c009-7007-8106-051c6f058488",
+        "tripId": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+        "conversationId": "01a0972a-bff3-7735-8ebe-3561957b72f2",
+        "goalId": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+        "runId": "01a0972a-bffd-7111-bd19-bf1a50e73004",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-c009-7007-8106-051c6f058488",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:MUC",
+                "type": "city",
+                "name": "慕尼黑",
+                "countryCode": "DE"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-10-20",
+              "to": "2026-10-22"
+            },
+            "interests": [
+              "当地文化",
+              "美食",
+              "节庆",
+              "核实当年啤酒节是否覆盖旅行日期",
+              "旅行日期不能改"
+            ],
+            "questions": [
+              "从当年主办方或官方信息核实慕尼黑啤酒节是否覆盖2026年10月20日至22日，区分朋友说法与已找到的证据。",
+              "研究旅行日期内最多6个文化、美食或节庆活动候选；若目标节庆不匹配则提供替代。"
+            ],
+            "researchTypes": [
+              "event",
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_b6186fd7a41f048c3f3a0a9b",
+              "category": "practical",
+              "destinations": [
+                {
+                  "id": "city:MUC",
+                  "type": "city",
+                  "name": "慕尼黑",
+                  "countryCode": "DE"
+                }
+              ],
+              "title": "核实：2026年慕尼黑啤酒节日期不覆盖您的旅行窗口",
+              "summary": "根据官方信息，第191届慕尼黑啤酒节（Oktoberfest）将于2026年9月19日至10月4日举行。您计划的旅行日期为2026年10月20日至22日，此时啤酒节已经结束约两周。朋友的说法不准确，建议不要为此调整行程或期待在10月下旬参加啤酒节。",
+              "sources": [
+                {
+                  "title": "Welcome to the official Site of the Munich Oktoberfest 2026 - Oktoberfest.de",
+                  "url": "https://www.oktoberfest.de/en",
+                  "domain": "www.oktoberfest.de",
+                  "snippet": "of the City of Munich. In 2026, the 191st Oktoberfest will take place from September 19 to October 4 on the Theresienwiese. Oktoberfest is the world’s largest folk festival, a unique work of art in its own right, and a piece of Munich’s soul. It is a",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Oktoberfest in Munich: Program, Tents, Map and more - muenchen.de",
+                  "url": "https://www.muenchen.de/en/events/oktoberfest",
+                  "domain": "www.muenchen.de",
+                  "snippet": "# Oktoberfest in Munich from 19 September to 4 October 2026\n\n...\n\nThe 191st Oktoberfest takes place at Munich's Theresienwiese from September 19 to October 4, 2026. Here you find the most important information about the world's largest funfair.\n\n...\n\n- Location: Theresienwiese in Munich\n- Date: Starts Saturday, Sept. 19, 2026, ends Sunday, Oct. 4, 2026\n- Visitors: 6.5 million at the Oktoberfest 2025\n- History: the first Oktoberfest was held on Oct. 12, 1810",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:44:58.962Z",
+                "expiresAt": "2026-11-11T18:44:58.962Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.oktoberfest.de/en"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.muenchen.de/en/events/oktoberfest"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified"
+              ]
+            },
+            {
+              "id": "finding_9fdf64b1d0ba81b2be699ce3",
+              "category": "event",
+              "destinations": [
+                {
+                  "id": "city:MUC",
+                  "type": "city",
+                  "name": "慕尼黑",
+                  "countryCode": "DE"
+                }
+              ],
+              "title": "奥厄集市（Auer Dult - Kirchweihdult）",
+              "summary": "这是慕尼黑传统的秋季集市，通常在十月举行。2026年的“Kirchweihdult”定于10月17日至25日，完全覆盖您的旅行日期（10月20-22日）。地点在Mariahilfplatz，提供传统巴伐利亚美食、手工艺品和游乐设施，是体验当地民俗文化的绝佳替代选择。",
+              "sources": [
+                {
+                  "title": "Everything about the Auer Dult 2026 in Munich: Dates & Tips - muenchen.de",
+                  "url": "https://www.muenchen.de/en/events/auer-dult-2026",
+                  "domain": "www.muenchen.de",
+                  "snippet": "The Auer Dult takes place three times a year: the Maidult from April 25 to May 3, the Jakobidult from July 25 to August 2, and the Kirchweihdult from October 17 to 25. The venue is always Mariahilfplatz in the Au district.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:44:58.962Z",
+                "expiresAt": "2026-10-12T18:44:58.962Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.muenchen.de/en/events/auer-dult-2026"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "event_date_is_snippet_only"
+              ]
+            },
+            {
+              "id": "finding_d5e673f7615772e6e9836b53",
+              "category": "event",
+              "destinations": [
+                {
+                  "id": "city:MUC",
+                  "type": "city",
+                  "name": "慕尼黑",
+                  "countryCode": "DE"
+                }
+              ],
+              "title": "MUCHO 慕尼黑巧克力节",
+              "summary": "如果您喜欢美食体验，MUCHO（Munich Chocolate Festival）将于2026年10月24日和25日举行。虽然主要活动在您离开后开始，但部分预热活动或相关展览可能在10月下旬陆续展开，建议关注其官方网站以获取最新日程更新。这是一个专注于手工巧克力和可可豆到成品（Bean-to-Bar）的节庆活动。",
+              "sources": [
+                {
+                  "title": "MUCHO Munich Chocolate Festival",
+                  "url": "https://muchofestival.de/",
+                  "domain": "muchofestival.de",
+                  "snippet": "MUCHO Munich Chocolate Festival\n\n...\n\n24.10. + 25.10.2026\n\n...\n\nMUCHO – Munich Chocolate Festival ist Münchens erstes Festival rund um die Welt der Schokolade. Du probierst dich durch außergewöhnliche Schokoladen aus aller Welt und tauchst ein in ein Erlebnis voller Geschmack, Handwerk und Community.\n\n...\n\n### Schokoladen-verkostungen\n\nTauche ein in kuratierte Tastings und erlebe die Vielfalt von Bean-to-Bar Schokoladen, Grand Cru Kakaos",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:44:58.962Z",
+                "expiresAt": "2026-10-12T18:44:58.962Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://muchofestival.de/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "event_date_is_snippet_only"
+              ]
+            },
+            {
+              "id": "finding_ebfa72c97af6660bf1b54635",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:MUC",
+                  "type": "city",
+                  "name": "慕尼黑",
+                  "countryCode": "DE"
+                }
+              ],
+              "title": "参观德意志博物馆（Deutsches Museum）",
+              "summary": "作为世界上规模最大的科技博物馆之一，德意志博物馆全年开放，不受季节限制。在10月下旬，您可以避开夏季旅游高峰，更舒适地探索从航空、航海到物理、化学等领域的展品。馆内设有餐厅，可品尝简单的巴伐利亚风味餐点。",
+              "sources": [
+                {
+                  "title": "Munich in October 2026: events & things to do",
+                  "url": "https://www.munich.travel/",
+                  "domain": "www.munich.travel",
+                  "snippet": "Starkbier festivals in Munich in 2026 Finally, it's the traditional strong beer season in Munich, again. Here you will find the best Starkbier (strong beer) festivals in 2026 and interesting facts about the history of Starkbier.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:44:58.962Z",
+                "expiresAt": "2026-12-11T18:44:58.962Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.munich.travel/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_956efb8baf248acccc74ff9f",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:MUC",
+                  "type": "city",
+                  "name": "慕尼黑",
+                  "countryCode": "DE"
+                }
+              ],
+              "title": "老彼得教堂（Alter Peter）与玛利亚广场漫步",
+              "summary": "10月的慕尼黑秋高气爽，适合步行游览市中心。登上老彼得教堂塔楼可俯瞰全城秋色。玛利亚广场周边的谷物市场（Viktualienmarkt）即使在啤酒节后依然热闹，提供新鲜农产品、奶酪和熟食，是体验当地饮食文化的好机会。",
+              "sources": [
+                {
+                  "title": "Munich in October 2026: events & things to do",
+                  "url": "https://www.munich.travel/",
+                  "domain": "www.munich.travel",
+                  "snippet": "Starkbier festivals in Munich in 2026 Finally, it's the traditional strong beer season in Munich, again. Here you will find the best Starkbier (strong beer) festivals in 2026 and interesting facts about the history of Starkbier.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:44:58.962Z",
+                "expiresAt": "2026-12-11T18:44:58.962Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.munich.travel/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_7664b392d1275f65698b764e",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:MUC",
+                  "type": "city",
+                  "name": "慕尼黑",
+                  "countryCode": "DE"
+                }
+              ],
+              "title": "宁芬堡宫（Schloss Nymphenburg）花园散步",
+              "summary": "宁芬堡宫的皇家花园在秋季景色宜人，且通常免费向公众开放（宫殿内部需购票）。这里远离市中心的喧嚣，适合放松身心，感受巴伐利亚历史与自然之美。附近也有多家传统餐馆可供用餐。",
+              "sources": [
+                {
+                  "title": "Munich in October 2026: events & things to do",
+                  "url": "https://www.munich.travel/",
+                  "domain": "www.munich.travel",
+                  "snippet": "Starkbier festivals in Munich in 2026 Finally, it's the traditional strong beer season in Munich, again. Here you will find the best Starkbier (strong beer) festivals in 2026 and interesting facts about the history of Starkbier.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:44:58.962Z",
+                "expiresAt": "2026-12-11T18:44:58.962Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.munich.travel/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            }
+          ],
+          "queryCount": 5,
+          "warnings": [
+            "thin_research_audit:thin_audit_1764d17a-16f8-46de-b7c5-c07139ae5280",
+            "thin_research_disposition:recommend",
+            "research_evidence_is_snippet_only",
+            "MUCHO巧克力节的具体开幕时间是否包含10月20-22日的预热活动尚未确认，目前仅知主活动日为10月24-25日。",
+            "部分博物馆或景点在10月下旬的具体开放时间可能因维护或特殊活动而调整，建议出行前再次核对官网。",
+            "未找到2026年10月20-22日期间其他大型特定节庆活动的确切信息，上述推荐基于常规文化活动及已确认的集市日期。"
+          ],
+          "createdAt": "2026-09-12T18:44:58.962Z"
+        },
+        "verification": {
+          "status": "partially_verified",
+          "checkedAt": "2026-09-12T18:44:58.962Z",
+          "confidence": 0.2,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://www.oktoberfest.de/en"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.muenchen.de/en/events/oktoberfest"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.muenchen.de/en/events/auer-dult-2026"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://muchofestival.de/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.munich.travel/"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:16.425Z",
+        "updatedAt": "2026-09-12T19:49:16.425Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-bffc-716d-968e-4a8ed1f6f733",
+        "ownerId": "backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d",
+        "tripId": "01a0972a-bff2-758c-b5b9-d7e04a55f967",
+        "conversationId": "01a0972a-bff3-7735-8ebe-3561957b72f2",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "从当年主办方或官方信息核实慕尼黑啤酒节是否覆盖2026年10月20日至22日，区分朋友说法与已找到的证据。",
+            "研究旅行日期内最多6个文化、美食或节庆活动候选；若目标节庆不匹配则提供替代。"
+          ],
+          "researchTypes": [
+            "event",
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:16.412Z",
+        "updatedAt": "2026-09-12T19:49:16.412Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "recommend",
+  "providerError": null,
+  "effectiveDisposition": "recommend",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 6,
+      "verificationEligibleFindingCount": 1,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 1,
+        "unverified": 5,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "eligible_research_evidence",
+        "guide_daily_activity_coverage",
+        "guide_research_type:event",
+        "guide_research_type:activity"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

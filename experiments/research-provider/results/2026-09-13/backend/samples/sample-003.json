@@ -1,0 +1,1162 @@
+{
+  "sampleId": "research-screen-v3/sample-007",
+  "caseId": "activity-05",
+  "model": "z-ai/glm-5.3-flash",
+  "sampleFile": "samples/sample-003.json",
+  "sourceFile": "runs/research-screen-v3/sample-007.json",
+  "sourceSha256": "67283d2526d551c6fd6fe7d66f0313175f68e96ccafb7e0964b375503aabc9d6",
+  "receiptSha256": "21a510efc4e6bed4da51f4b1bf84c47ec4f1d9866ebb8b3df9ae0eceece02dc5",
+  "recordedAt": "2026-09-12T18:43:25.583Z",
+  "travelWindow": {
+    "from": "2026-11-09",
+    "to": "2026-11-10"
+  },
+  "recordedStatus": "responded",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_31c91c18-56c3-4131-9261-69529ce59588.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+        "departureWindow": {
+          "from": "2026-11-09",
+          "to": "2026-11-09",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-11-10",
+          "to": "2026-11-10",
+          "precision": "exact"
+        },
+        "travelDays": 2,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:SIN",
+              "type": "city",
+              "name": "新加坡",
+              "countryCode": "SG"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "樟宜机场T3转机",
+          "22:00至次日04:00",
+          "行李直挂",
+          "不入境",
+          "国际中转区",
+          "休息",
+          "夜间餐饮"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-bfce-75af-8d9a-9a22e66caf97",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_31c91c18-56c3-4131-9261-69529ce59588",
+        "thin_research_disposition:partial",
+        "research_evidence_is_snippet_only",
+        "source_excerpt_truncated",
+        "T3中转区各餐饮档口在22:00–04:00的具体营业时间未能核实，深夜可能仅部分开放",
+        "T3免费电影院的深夜放映安排未核实",
+        "付费淋浴的具体价格与深夜开放情况未核实",
+        "Skytrain在深夜（约22:00–04:00）的运营班次与间隔未核实",
+        "Ambassador Transit Hotel 2026年11月已转为Changi Transit Hotel运营，新价格与预订流程需以changitransithotel.com为准",
+        "搜索次数受限，未能进一步核实ST3PS美食广场等具体夜间营业信息"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "14ae6ce9-6d17-4d87-82be-25f97fcda520",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-bfb4-715d-b4ea-10fb3b298db8\",\"departureWindow\":{\"from\":\"2026-11-09\",\"to\":\"2026-11-09\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-10\",\"to\":\"2026-11-10\",\"precision\":\"exact\"},\"travelDays\":2,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SIN\",\"type\":\"city\",\"name\":\"新加坡\",\"countryCode\":\"SG\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"樟宜机场T3转机\",\"22:00至次日04:00\",\"行李直挂\",\"不入境\",\"国际中转区\",\"休息\",\"夜间餐饮\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+              "departureWindow": {
+                "from": "2026-11-09",
+                "to": "2026-11-09",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-11-10",
+                "to": "2026-11-10",
+                "precision": "exact"
+              },
+              "travelDays": 2,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:SIN",
+                    "type": "city",
+                    "name": "新加坡",
+                    "countryCode": "SG"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "樟宜机场T3转机",
+                "22:00至次日04:00",
+                "行李直挂",
+                "不入境",
+                "国际中转区",
+                "休息",
+                "夜间餐饮"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "研究樟宜机场国际中转区内适用于22:00至次日04:00的休息、吃饭或短时体验候选，核实空侧位置、夜间开放及到T3的通行条件；资料不足时保留未知。"
+            ],
+            "researchTypes": [
+              "stopover",
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+          "runId": "01a0972a-bfbe-70c8-b7c3-eeb623caa2fd",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "1cc55a1d-7c8e-4162-8584-07e1485de4e7",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-bfbe-70c8-b7c3-ea336e356880\",\"ownerId\":\"backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c\",\"tripId\":\"01a0972a-bfb4-715d-b4ea-10fb3b298db8\",\"conversationId\":\"01a0972a-bfb5-77ce-a933-c3b3c354abbf\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究樟宜机场国际中转区内适用于22:00至次日04:00的休息、吃饭或短时体验候选，核实空侧位置、夜间开放及到T3的通行条件；资料不足时保留未知。\"],\"researchTypes\":[\"stopover\",\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.350Z\",\"updatedAt\":\"2026-09-12T19:49:16.350Z\"},\"run\":{\"id\":\"01a0972a-bfbe-70c8-b7c3-eeb623caa2fd\",\"ownerId\":\"backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c\",\"goalId\":\"01a0972a-bfbe-70c8-b7c3-ea336e356880\",\"tripId\":\"01a0972a-bfb4-715d-b4ea-10fb3b298db8\",\"generationId\":\"offline-generation-54363203-d181-418f-9f4c-72b9a4aa9b5a\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-bfb4-715d-b4ea-10fb3b298db8\",\"departureWindow\":{\"from\":\"2026-11-09\",\"to\":\"2026-11-09\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-10\",\"to\":\"2026-11-10\",\"precision\":\"exact\"},\"travelDays\":2,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SIN\",\"type\":\"city\",\"name\":\"新加坡\",\"countryCode\":\"SG\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"樟宜机场T3转机\",\"22:00至次日04:00\",\"行李直挂\",\"不入境\",\"国际中转区\",\"休息\",\"夜间餐饮\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.350Z\",\"updatedAt\":\"2026-09-12T19:49:16.350Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+              "ownerId": "backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c",
+              "tripId": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+              "conversationId": "01a0972a-bfb5-77ce-a933-c3b3c354abbf",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究樟宜机场国际中转区内适用于22:00至次日04:00的休息、吃饭或短时体验候选，核实空侧位置、夜间开放及到T3的通行条件；资料不足时保留未知。"
+                ],
+                "researchTypes": [
+                  "stopover",
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.350Z",
+              "updatedAt": "2026-09-12T19:49:16.350Z"
+            },
+            "run": {
+              "id": "01a0972a-bfbe-70c8-b7c3-eeb623caa2fd",
+              "ownerId": "backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c",
+              "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+              "tripId": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+              "generationId": "offline-generation-54363203-d181-418f-9f4c-72b9a4aa9b5a",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+                "departureWindow": {
+                  "from": "2026-11-09",
+                  "to": "2026-11-09",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-10",
+                  "to": "2026-11-10",
+                  "precision": "exact"
+                },
+                "travelDays": 2,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:SIN",
+                      "type": "city",
+                      "name": "新加坡",
+                      "countryCode": "SG"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "樟宜机场T3转机",
+                  "22:00至次日04:00",
+                  "行李直挂",
+                  "不入境",
+                  "国际中转区",
+                  "休息",
+                  "夜间餐饮"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.350Z",
+              "updatedAt": "2026-09-12T19:49:16.350Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:SIN",
+              "type": "city",
+              "name": "新加坡",
+              "countryCode": "SG"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-11-09",
+            "to": "2026-11-10"
+          },
+          "interests": [
+            "樟宜机场T3转机",
+            "22:00至次日04:00",
+            "行李直挂",
+            "不入境",
+            "国际中转区",
+            "休息",
+            "夜间餐饮"
+          ],
+          "questions": [
+            "研究樟宜机场国际中转区内适用于22:00至次日04:00的休息、吃饭或短时体验候选，核实空侧位置、夜间开放及到T3的通行条件；资料不足时保留未知。"
+          ],
+          "researchTypes": [
+            "stopover",
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+          "runId": "01a0972a-bfbe-70c8-b7c3-eeb623caa2fd",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "0768bc18-12a5-4dfb-a1f9-a87fb5d5018c",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-bfce-75af-8d9a-9a22e66caf97\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":6,\"statusCounts\":{\"verified\":0,\"partially_verified\":2,\"stale\":0,\"unverified\":4},\"createdAt\":\"2026-09-12T18:43:25.583Z\"},\"findings\":[{\"id\":\"finding_862c6062155e7cadffb3383b\",\"title\":\"Ambassador Transit Hotel（T3 中转区，Level 3）\",\"summary\":\"位于T3出发中转大厅3层（紧邻电影院），24小时营业，无需入境即可按小时或过夜订房，适合22:00–04:00小睡。注意：官方页面显示2026年10月1日起运营方由Ambassador Transit Hotel转为Changi Transit Hotel，预订需通过changitransithotel.com，价格与房型请以新官网为准。\",\"category\":\"stopover\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_ec4f14e64636d586f06c684b\",\"title\":\"Ambassador Transit Lounge（T3 中转区 Level 3）\",\"summary\":\"T3中转区3层的付费休息室，官方目录标注24小时开放，提供餐饮、淋浴和休息区，可凭Priority Pass等会员或现场付费进入，无需入境。\",\"category\":\"stopover\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_2bdeb048d1deeb2679cb7879\",\"title\":\"T3 中转区免费电影院\",\"summary\":\"T3中转区3层设有免费电影院（紧邻Ambassador Transit Hotel），通常全天开放播放电影，是深夜消磨时间的免费短时体验；具体深夜场次安排未能核实。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_9aa3eae40e26fd1389d11c3b\",\"title\":\"付费淋浴与休息设施\",\"summary\":\"T3中转区内有按次付费淋浴服务（多与Ambassador Transit Lounge/酒店等设施绑定），适合6小时转机中快速洗漱；具体深夜时段价格与排队情况未能核实。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_c613bafb4c8452b00f01d4e1\",\"title\":\"T3 中转区夜间餐饮\",\"summary\":\"T3中转区有多处餐饮（本地面食/叻沙档口、Heavenly Wang、Coffee Bean等咖啡简餐），部分评价称价格相对合理；但各档口在22:00–04:00的具体营业时间未能逐一核实，深夜可能仅部分开放，建议到店确认。\",\"category\":\"practical\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_2dc54601e8428cd4ca3d8788\",\"title\":\"不入境转机通行条件\",\"summary\":\"行李直挂情况下，抵达后沿国际中转区Transfer指示牌前往T3即可，全程不出境；T2/T3中转区之间有免费Skytrain连接（深夜班次间隔需现场确认）。所有上述候选均位于空侧中转区，符合不入境要求。\",\"category\":\"practical\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"unverified\"}],\"warnings\":[\"thin_research_audit:thin_audit_31c91c18-56c3-4131-9261-69529ce59588\",\"thin_research_disposition:partial\",\"research_evidence_is_snippet_only\",\"source_excerpt_truncated\",\"T3中转区各餐饮档口在22:00–04:00的具体营业时间未能核实，深夜可能仅部分开放\",\"T3免费电影院的深夜放映安排未核实\",\"付费淋浴的具体价格与深夜开放情况未核实\",\"Skytrain在深夜（约22:00–04:00）的运营班次与间隔未核实\",\"Ambassador Transit Hotel 2026年11月已转为Changi Transit Hotel运营，新价格与预订流程需以changitransithotel.com为准\",\"搜索次数受限，未能进一步核实ST3PS美食广场等具体夜间营业信息\"]}}",
+          "costUnits": 4,
+          "durationMs": 12,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-bfce-75af-8d9a-9a22e66caf97"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_31c91c18-56c3-4131-9261-69529ce59588",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "source_excerpt_truncated",
+            "T3中转区各餐饮档口在22:00–04:00的具体营业时间未能核实，深夜可能仅部分开放",
+            "T3免费电影院的深夜放映安排未核实",
+            "付费淋浴的具体价格与深夜开放情况未核实",
+            "Skytrain在深夜（约22:00–04:00）的运营班次与间隔未核实",
+            "Ambassador Transit Hotel 2026年11月已转为Changi Transit Hotel运营，新价格与预订流程需以changitransithotel.com为准",
+            "搜索次数受限，未能进一步核实ST3PS美食广场等具体夜间营业信息"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-bfce-75af-8d9a-9a22e66caf97",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 6,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 2,
+                "stale": 0,
+                "unverified": 4
+              },
+              "createdAt": "2026-09-12T18:43:25.583Z"
+            },
+            "findings": [
+              {
+                "id": "finding_862c6062155e7cadffb3383b",
+                "title": "Ambassador Transit Hotel（T3 中转区，Level 3）",
+                "summary": "位于T3出发中转大厅3层（紧邻电影院），24小时营业，无需入境即可按小时或过夜订房，适合22:00–04:00小睡。注意：官方页面显示2026年10月1日起运营方由Ambassador Transit Hotel转为Changi Transit Hotel，预订需通过changitransithotel.com，价格与房型请以新官网为准。",
+                "category": "stopover",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_ec4f14e64636d586f06c684b",
+                "title": "Ambassador Transit Lounge（T3 中转区 Level 3）",
+                "summary": "T3中转区3层的付费休息室，官方目录标注24小时开放，提供餐饮、淋浴和休息区，可凭Priority Pass等会员或现场付费进入，无需入境。",
+                "category": "stopover",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_2bdeb048d1deeb2679cb7879",
+                "title": "T3 中转区免费电影院",
+                "summary": "T3中转区3层设有免费电影院（紧邻Ambassador Transit Hotel），通常全天开放播放电影，是深夜消磨时间的免费短时体验；具体深夜场次安排未能核实。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_9aa3eae40e26fd1389d11c3b",
+                "title": "付费淋浴与休息设施",
+                "summary": "T3中转区内有按次付费淋浴服务（多与Ambassador Transit Lounge/酒店等设施绑定），适合6小时转机中快速洗漱；具体深夜时段价格与排队情况未能核实。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_c613bafb4c8452b00f01d4e1",
+                "title": "T3 中转区夜间餐饮",
+                "summary": "T3中转区有多处餐饮（本地面食/叻沙档口、Heavenly Wang、Coffee Bean等咖啡简餐），部分评价称价格相对合理；但各档口在22:00–04:00的具体营业时间未能逐一核实，深夜可能仅部分开放，建议到店确认。",
+                "category": "practical",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_2dc54601e8428cd4ca3d8788",
+                "title": "不入境转机通行条件",
+                "summary": "行李直挂情况下，抵达后沿国际中转区Transfer指示牌前往T3即可，全程不出境；T2/T3中转区之间有免费Skytrain连接（深夜班次间隔需现场确认）。所有上述候选均位于空侧中转区，符合不入境要求。",
+                "category": "practical",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_31c91c18-56c3-4131-9261-69529ce59588",
+              "thin_research_disposition:partial",
+              "research_evidence_is_snippet_only",
+              "source_excerpt_truncated",
+              "T3中转区各餐饮档口在22:00–04:00的具体营业时间未能核实，深夜可能仅部分开放",
+              "T3免费电影院的深夜放映安排未核实",
+              "付费淋浴的具体价格与深夜开放情况未核实",
+              "Skytrain在深夜（约22:00–04:00）的运营班次与间隔未核实",
+              "Ambassador Transit Hotel 2026年11月已转为Changi Transit Hotel运营，新价格与预订流程需以changitransithotel.com为准",
+              "搜索次数受限，未能进一步核实ST3PS美食广场等具体夜间营业信息"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-bfce-75af-8d9a-9a22e66caf97"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:SIN",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_862c6062155e7cadffb3383b",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_2bdeb048d1deeb2679cb7879",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_c613bafb4c8452b00f01d4e1",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "cityId": "city:SIN",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_ec4f14e64636d586f06c684b",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_9aa3eae40e26fd1389d11c3b",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_2dc54601e8428cd4ca3d8788",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+          "runId": "01a0972a-bfbe-70c8-b7c3-eeb623caa2fd",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "a413d5aa-eb2c-4f5c-8781-a9fd88540457",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"eligible_research_evidence\",\"guide_research_type:activity\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"stopover\",\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 3,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "eligible_research_evidence",
+              "guide_research_type:activity"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "stopover",
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880"
+        },
+        "scope": {
+          "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+          "runId": "01a0972a-bfbe-70c8-b7c3-eeb623caa2fd",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "115b30f8-f6cf-4c8c-94b0-4aca7ccf39dc",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-bfbe-70c8-b7c3-ea336e356880\",\"ownerId\":\"backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c\",\"tripId\":\"01a0972a-bfb4-715d-b4ea-10fb3b298db8\",\"conversationId\":\"01a0972a-bfb5-77ce-a933-c3b3c354abbf\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究樟宜机场国际中转区内适用于22:00至次日04:00的休息、吃饭或短时体验候选，核实空侧位置、夜间开放及到T3的通行条件；资料不足时保留未知。\"],\"researchTypes\":[\"stopover\",\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.350Z\",\"updatedAt\":\"2026-09-12T19:49:16.350Z\"},\"run\":{\"id\":\"01a0972a-bfbe-70c8-b7c3-eeb623caa2fd\",\"ownerId\":\"backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c\",\"goalId\":\"01a0972a-bfbe-70c8-b7c3-ea336e356880\",\"tripId\":\"01a0972a-bfb4-715d-b4ea-10fb3b298db8\",\"generationId\":\"offline-generation-54363203-d181-418f-9f4c-72b9a4aa9b5a\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-bfb4-715d-b4ea-10fb3b298db8\",\"departureWindow\":{\"from\":\"2026-11-09\",\"to\":\"2026-11-09\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-10\",\"to\":\"2026-11-10\",\"precision\":\"exact\"},\"travelDays\":2,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SIN\",\"type\":\"city\",\"name\":\"新加坡\",\"countryCode\":\"SG\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"樟宜机场T3转机\",\"22:00至次日04:00\",\"行李直挂\",\"不入境\",\"国际中转区\",\"休息\",\"夜间餐饮\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-bfce-75af-8d9a-9a22e66caf97\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:16.368Z\"}],\"locationHandles\":[{\"id\":\"city:SIN\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:16.351Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:16.350Z\",\"updatedAt\":\"2026-09-12T19:49:16.368Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+              "ownerId": "backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c",
+              "tripId": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+              "conversationId": "01a0972a-bfb5-77ce-a933-c3b3c354abbf",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究樟宜机场国际中转区内适用于22:00至次日04:00的休息、吃饭或短时体验候选，核实空侧位置、夜间开放及到T3的通行条件；资料不足时保留未知。"
+                ],
+                "researchTypes": [
+                  "stopover",
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.350Z",
+              "updatedAt": "2026-09-12T19:49:16.350Z"
+            },
+            "run": {
+              "id": "01a0972a-bfbe-70c8-b7c3-eeb623caa2fd",
+              "ownerId": "backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c",
+              "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+              "tripId": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+              "generationId": "offline-generation-54363203-d181-418f-9f4c-72b9a4aa9b5a",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+                "departureWindow": {
+                  "from": "2026-11-09",
+                  "to": "2026-11-09",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-10",
+                  "to": "2026-11-10",
+                  "precision": "exact"
+                },
+                "travelDays": 2,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:SIN",
+                      "type": "city",
+                      "name": "新加坡",
+                      "countryCode": "SG"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "樟宜机场T3转机",
+                  "22:00至次日04:00",
+                  "行李直挂",
+                  "不入境",
+                  "国际中转区",
+                  "休息",
+                  "夜间餐饮"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-bfce-75af-8d9a-9a22e66caf97",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:16.368Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:SIN",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:16.351Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:16.350Z",
+              "updatedAt": "2026-09-12T19:49:16.368Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-bfce-75af-8d9a-9a22e66caf97",
+        "tripId": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+        "conversationId": "01a0972a-bfb5-77ce-a933-c3b3c354abbf",
+        "goalId": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+        "runId": "01a0972a-bfbe-70c8-b7c3-eeb623caa2fd",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-bfce-75af-8d9a-9a22e66caf97",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:SIN",
+                "type": "city",
+                "name": "新加坡",
+                "countryCode": "SG"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-11-09",
+              "to": "2026-11-10"
+            },
+            "interests": [
+              "樟宜机场T3转机",
+              "22:00至次日04:00",
+              "行李直挂",
+              "不入境",
+              "国际中转区",
+              "休息",
+              "夜间餐饮"
+            ],
+            "questions": [
+              "研究樟宜机场国际中转区内适用于22:00至次日04:00的休息、吃饭或短时体验候选，核实空侧位置、夜间开放及到T3的通行条件；资料不足时保留未知。"
+            ],
+            "researchTypes": [
+              "stopover",
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_862c6062155e7cadffb3383b",
+              "category": "stopover",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "Ambassador Transit Hotel（T3 中转区，Level 3）",
+              "summary": "位于T3出发中转大厅3层（紧邻电影院），24小时营业，无需入境即可按小时或过夜订房，适合22:00–04:00小睡。注意：官方页面显示2026年10月1日起运营方由Ambassador Transit Hotel转为Changi Transit Hotel，预订需通过changitransithotel.com，价格与房型请以新官网为准。",
+              "sources": [
+                {
+                  "title": "Changi Airport Transit Hotels - Singapore Airport Stays",
+                  "url": "https://www.changiairport.com/au/en/at-changi/facilities-and-services-directory/transit-hotels.html",
+                  "domain": "www.changiairport.com",
+                  "snippet": "T3 Transit Level3 Ambassador Transit Hotel, Departure Transit Hall (next to the Movie Theatre)\n\n...\n\nOpen 24 hours\n\nDaily\n\n...\n\n### Ambassador Transit Hotel\n\n...\n\nLocation: Level 3, Departure Transit Hall South Operating Hours: 24 hours Tel: +65 6288 8911 Map\n\n...\n\nPlease note that effective from 3 November 2026, Ambassador Transit Hotel will transition from its current operator to Changi Transit Hotel. Bookings for stays from 3 November 2026 onwards can be made directly at https://www.changitransithotel.com\n\n...\n\nTerminal 3 Location: Level 3, Departure Transit Hall (next to the Movie Theatre) Operating Hours: 24 hours Tel:+65 6507 9788 (6565079788) Map Please note that effective from 1 October 2026, Ambassador Transit Hotel will transition from its current operator to Changi Transit Hotel",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:43:25.583Z",
+                "expiresAt": "2026-12-11T18:43:25.583Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.changiairport.com/au/en/at-changi/facilities-and-services-directory/transit-hotels.html"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_ec4f14e64636d586f06c684b",
+              "category": "stopover",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "Ambassador Transit Lounge（T3 中转区 Level 3）",
+              "summary": "T3中转区3层的付费休息室，官方目录标注24小时开放，提供餐饮、淋浴和休息区，可凭Priority Pass等会员或现场付费进入，无需入境。",
+              "sources": [
+                {
+                  "title": "Ambassador Transit Lounge | Changi Airport Terminals 2 & 3",
+                  "url": "https://www.changiairport.com/en/at-changi/facilities-and-services-directory/ambassador-transit-lounge.html",
+                  "domain": "www.changiairport.com",
+                  "snippet": "All T2 T3\n\n TRANSIT \n\n T2 Transit Level3 \n\n +65 6241 0978 (+65%206241%200978%20) \n\n Open 24 hours \n\n Daily \n\n T3 Transit Level3 \n\n +65 6507 9798 (+65%206507%209798%20) \n\n Open 24 hours \n\n Daily",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Ambassador Transit Lounge SIN AIRPORT Terminal 3 Singapore Changi Airport | Priority Pass",
+                  "url": "https://www.prioritypass.com/en-GB/lounges/singapore/singapore-changi-airport/sin0-ambassador-transit-lounge",
+                  "domain": "www.prioritypass.com",
+                  "snippet": "Ambassador Transit Lounge\n...\nAIRPORT Terminal 3\n...\nAmbassador Transit Lounge\n...\nSingapore Changi Airport, Terminal 3\n...\n## Hours: 00:00 - 23:59\n...\nTake the escalator\n...\nGate B1",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:43:25.583Z",
+                "expiresAt": "2026-12-11T18:43:25.583Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.changiairport.com/en/at-changi/facilities-and-services-directory/ambassador-transit-lounge.html"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.prioritypass.com/en-GB/lounges/singapore/singapore-changi-airport/sin0-ambassador-transit-lounge"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified"
+              ]
+            },
+            {
+              "id": "finding_2bdeb048d1deeb2679cb7879",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "T3 中转区免费电影院",
+              "summary": "T3中转区3层设有免费电影院（紧邻Ambassador Transit Hotel），通常全天开放播放电影，是深夜消磨时间的免费短时体验；具体深夜场次安排未能核实。",
+              "sources": [
+                {
+                  "title": "Changi Airport Transit Hotels - Singapore Airport Stays",
+                  "url": "https://www.changiairport.com/au/en/at-changi/facilities-and-services-directory/transit-hotels.html",
+                  "domain": "www.changiairport.com",
+                  "snippet": "T3 Transit Level3 Ambassador Transit Hotel, Departure Transit Hall (next to the Movie Theatre)\n\n...\n\nOpen 24 hours\n\nDaily\n\n...\n\n### Ambassador Transit Hotel\n\n...\n\nLocation: Level 3, Departure Transit Hall South Operating Hours: 24 hours Tel: +65 6288 8911 Map\n\n...\n\nPlease note that effective from 3 November 2026, Ambassador Transit Hotel will transition from its current operator to Changi Transit Hotel. Bookings for stays from 3 November 2026 onwards can be made directly at https://www.changitransithotel.com\n\n...\n\nTerminal 3 Location: Level 3, Departure Transit Hall (next to the Movie Theatre) Operating Hours: 24 hours Tel:+65 6507 9788 (6565079788) Map Please note that effective from 1 October 2026, Ambassador Transit Hotel will transition from its current operator to Changi Transit Hotel",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:43:25.583Z",
+                "expiresAt": "2026-12-11T18:43:25.583Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.changiairport.com/au/en/at-changi/facilities-and-services-directory/transit-hotels.html"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_9aa3eae40e26fd1389d11c3b",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "付费淋浴与休息设施",
+              "summary": "T3中转区内有按次付费淋浴服务（多与Ambassador Transit Lounge/酒店等设施绑定），适合6小时转机中快速洗漱；具体深夜时段价格与排队情况未能核实。",
+              "sources": [
+                {
+                  "title": "Ambassador Transit Lounge | Changi Airport Terminals 2 & 3",
+                  "url": "https://www.changiairport.com/en/at-changi/facilities-and-services-directory/ambassador-transit-lounge.html",
+                  "domain": "www.changiairport.com",
+                  "snippet": "All T2 T3\n\n TRANSIT \n\n T2 Transit Level3 \n\n +65 6241 0978 (+65%206241%200978%20) \n\n Open 24 hours \n\n Daily \n\n T3 Transit Level3 \n\n +65 6507 9798 (+65%206507%209798%20) \n\n Open 24 hours \n\n Daily",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:43:25.583Z",
+                "expiresAt": "2026-12-11T18:43:25.583Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.changiairport.com/en/at-changi/facilities-and-services-directory/ambassador-transit-lounge.html"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_c613bafb4c8452b00f01d4e1",
+              "category": "practical",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "T3 中转区夜间餐饮",
+              "summary": "T3中转区有多处餐饮（本地面食/叻沙档口、Heavenly Wang、Coffee Bean等咖啡简餐），部分评价称价格相对合理；但各档口在22:00–04:00的具体营业时间未能逐一核实，深夜可能仅部分开放，建议到店确认。",
+              "sources": [
+                {
+                  "title": "Eating at Transit Terminal 3 Changi Airport: Best Eats & Tips",
+                  "url": "https://kopitiam.com.sg/2026/01/09/eating-at-transit-terminal-3-changi-airport/",
+                  "domain": "kopitiam.com.sg",
+                  "snippet": "Terminals at Singapore’s Changi Airport aren’t just for flights — they’re also mini food-courts and cafés where travelers can enjoy Singapore favourites and international bites before take-off or during long layovers. Terminal 3 (T3) has a nice range of options spread throughout the departure and transit areas.\n\n...\n\nThis is a local-Asian stall serving quick noodles, laksa, coffee and juices. Reviews suggest that its noodle meals are considered quite affordable for an airport location — some dishes reportedly go for about AUD 6 (~S$5.50) at least, which for many travellers is surprisingly reasonable compared with other airport food\n\n...\n\n- Transit lounges aren’t the cheapest place to eat in Singapore — but they’re usually clean, convenient and quick for travellers in a hurry.\n- If you have",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Terminal 3 Food Guide – 41 Best Food Places In Changi Airport Terminal 3 [2026]",
+                  "url": "https://singaporeverified.com/food/terminal-3-food-guide/",
+                  "domain": "singaporeverified.com",
+                  "snippet": "sad sandwiches, but\n...\nglides past\n...\naround departures,\n...\ndining should be.\n...\n📍 65 Airport Boulevard S819663🕒 Daily, Open24hours",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:43:25.583Z",
+                "expiresAt": "2026-11-11T18:43:25.583Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://kopitiam.com.sg/2026/01/09/eating-at-transit-terminal-3-changi-airport/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://singaporeverified.com/food/terminal-3-food-guide/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_2dc54601e8428cd4ca3d8788",
+              "category": "practical",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "不入境转机通行条件",
+              "summary": "行李直挂情况下，抵达后沿国际中转区Transfer指示牌前往T3即可，全程不出境；T2/T3中转区之间有免费Skytrain连接（深夜班次间隔需现场确认）。所有上述候选均位于空侧中转区，符合不入境要求。",
+              "sources": [
+                {
+                  "title": "Dining Directory: Restaurants & Food - Singapore",
+                  "url": "https://www.changiairport.com/",
+                  "domain": "www.changiairport.com",
+                  "snippet": "GO PLACES YOU'VE DREAMED OF\n\n National Day 2026 at Changi Airport & Jewel | Events, Promotions & Things to Do\n...\nCelebrate National Day at Ch\n...\n### USEFUL INFORMATION FOR {DIRECTION} PASSENGERS \n\nWhat’s Happening",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Ambassador Transit Lounge | Changi Airport Terminals 2 & 3",
+                  "url": "https://www.changiairport.com/en/at-changi/facilities-and-services-directory/ambassador-transit-lounge.html",
+                  "domain": "www.changiairport.com",
+                  "snippet": "All T2 T3\n\n TRANSIT \n\n T2 Transit Level3 \n\n +65 6241 0978 (+65%206241%200978%20) \n\n Open 24 hours \n\n Daily \n\n T3 Transit Level3 \n\n +65 6507 9798 (+65%206507%209798%20) \n\n Open 24 hours \n\n Daily",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:43:25.583Z",
+                "expiresAt": "2026-11-11T18:43:25.583Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.changiairport.com/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.changiairport.com/en/at-changi/facilities-and-services-directory/ambassador-transit-lounge.html"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            }
+          ],
+          "queryCount": 4,
+          "warnings": [
+            "thin_research_audit:thin_audit_31c91c18-56c3-4131-9261-69529ce59588",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "source_excerpt_truncated",
+            "T3中转区各餐饮档口在22:00–04:00的具体营业时间未能核实，深夜可能仅部分开放",
+            "T3免费电影院的深夜放映安排未核实",
+            "付费淋浴的具体价格与深夜开放情况未核实",
+            "Skytrain在深夜（约22:00–04:00）的运营班次与间隔未核实",
+            "Ambassador Transit Hotel 2026年11月已转为Changi Transit Hotel运营，新价格与预订流程需以changitransithotel.com为准",
+            "搜索次数受限，未能进一步核实ST3PS美食广场等具体夜间营业信息"
+          ],
+          "createdAt": "2026-09-12T18:43:25.583Z"
+        },
+        "verification": {
+          "status": "partially_verified",
+          "checkedAt": "2026-09-12T18:43:25.583Z",
+          "confidence": 0.2,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://www.changiairport.com/au/en/at-changi/facilities-and-services-directory/transit-hotels.html"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.changiairport.com/en/at-changi/facilities-and-services-directory/ambassador-transit-lounge.html"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.prioritypass.com/en-GB/lounges/singapore/singapore-changi-airport/sin0-ambassador-transit-lounge"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://kopitiam.com.sg/2026/01/09/eating-at-transit-terminal-3-changi-airport/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://singaporeverified.com/food/terminal-3-food-guide/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.changiairport.com/"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:16.367Z",
+        "updatedAt": "2026-09-12T19:49:16.367Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-bfbe-70c8-b7c3-ea336e356880",
+        "ownerId": "backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c",
+        "tripId": "01a0972a-bfb4-715d-b4ea-10fb3b298db8",
+        "conversationId": "01a0972a-bfb5-77ce-a933-c3b3c354abbf",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "研究樟宜机场国际中转区内适用于22:00至次日04:00的休息、吃饭或短时体验候选，核实空侧位置、夜间开放及到T3的通行条件；资料不足时保留未知。"
+          ],
+          "researchTypes": [
+            "stopover",
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:16.350Z",
+        "updatedAt": "2026-09-12T19:49:16.350Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "partial",
+  "providerError": null,
+  "effectiveDisposition": "partial",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 6,
+      "verificationEligibleFindingCount": 2,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 2,
+        "unverified": 4,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "eligible_research_evidence",
+        "guide_research_type:activity"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

@@ -1,0 +1,734 @@
+{
+  "sampleId": "candidate-screen-v3/sample-006",
+  "caseId": "activity-04",
+  "model": "qwen/qwen3.8-flash",
+  "sampleFile": "samples/sample-009.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-006.json",
+  "sourceSha256": "d53d75c3f2db439017511660163154d8e5297c129b68fd2e30a4894fa0b3a109",
+  "receiptSha256": "88f82996395ec5c23420a42f632ff84099d116fcceb3f8183b0bccac4195bdab",
+  "recordedAt": "2026-09-12T18:46:39.981Z",
+  "travelWindow": {
+    "from": "2026-10-18",
+    "to": "2026-10-18"
+  },
+  "recordedStatus": "responded",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_875f6970-a0b1-4dbf-a961-0101dc0646db.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+        "departureWindow": {
+          "from": "2026-10-18",
+          "to": "2026-10-18",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-10-18",
+          "to": "2026-10-18",
+          "precision": "exact"
+        },
+        "travelDays": 1,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:SEL",
+              "type": "city",
+              "name": "首尔",
+              "countryCode": "KR"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "仁川机场中转",
+          "当地10:00落地17:30起飞",
+          "进城吃饭",
+          "入境资格未知",
+          "航站楼未知",
+          "行李直挂未知"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-c0d6-74fb-81ee-b5427a4d39ba",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_875f6970-a0b1-4dbf-a961-0101dc0646db",
+        "thin_research_disposition:clarify",
+        "research_evidence_is_snippet_only",
+        "thin_research_findings_excluded:3",
+        "thin_research_no_admissible_findings",
+        "用户具体国籍及是否持有有效韩国签证或K-ETA（韩国电子旅行许可）。",
+        "用户是否符合韩国过境免签政策（如持有美、加、澳、新、欧等特定国家签证并前往第三国）。",
+        "行李是否直挂至最终目的地（若需提取行李则必须入境，且耗时增加）。",
+        "抵达与出发航站楼是否相同（跨航站楼移动需额外时间）。",
+        "2026年10月18日当天的入境排队实时状况及航班准点率。"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "06b036e1-40c7-434d-b170-145fffa8a497",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c0c4-769a-9fd7-ad079b3b369a\",\"departureWindow\":{\"from\":\"2026-10-18\",\"to\":\"2026-10-18\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-18\",\"to\":\"2026-10-18\",\"precision\":\"exact\"},\"travelDays\":1,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SEL\",\"type\":\"city\",\"name\":\"首尔\",\"countryCode\":\"KR\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"仁川机场中转\",\"当地10:00落地17:30起飞\",\"进城吃饭\",\"入境资格未知\",\"航站楼未知\",\"行李直挂未知\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+              "departureWindow": {
+                "from": "2026-10-18",
+                "to": "2026-10-18",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-10-18",
+                "to": "2026-10-18",
+                "precision": "exact"
+              },
+              "travelDays": 1,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:SEL",
+                    "type": "city",
+                    "name": "首尔",
+                    "countryCode": "KR"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "仁川机场中转",
+                "当地10:00落地17:30起飞",
+                "进城吃饭",
+                "入境资格未知",
+                "航站楼未知",
+                "行李直挂未知"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "在7.5小时仁川中转且入境资格、航站楼和行李安排未知时，提出最多两个必要澄清问题，并区分机场内候选和需满足条件才能考虑的市区候选。"
+            ],
+            "researchTypes": [
+              "stopover",
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+          "runId": "01a0972a-c0cc-7350-96c1-0b1ac420102f",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "74706001-44ea-4f53-8919-54f73206186a",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c0cc-7350-96c1-077b8fcf779a\",\"ownerId\":\"backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31\",\"tripId\":\"01a0972a-c0c4-769a-9fd7-ad079b3b369a\",\"conversationId\":\"01a0972a-c0c5-736f-a99a-e72fc2d98208\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"在7.5小时仁川中转且入境资格、航站楼和行李安排未知时，提出最多两个必要澄清问题，并区分机场内候选和需满足条件才能考虑的市区候选。\"],\"researchTypes\":[\"stopover\",\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.620Z\",\"updatedAt\":\"2026-09-12T19:49:16.620Z\"},\"run\":{\"id\":\"01a0972a-c0cc-7350-96c1-0b1ac420102f\",\"ownerId\":\"backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31\",\"goalId\":\"01a0972a-c0cc-7350-96c1-077b8fcf779a\",\"tripId\":\"01a0972a-c0c4-769a-9fd7-ad079b3b369a\",\"generationId\":\"offline-generation-7b803a9a-a608-4ab2-a9c5-06adbcb59b35\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c0c4-769a-9fd7-ad079b3b369a\",\"departureWindow\":{\"from\":\"2026-10-18\",\"to\":\"2026-10-18\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-18\",\"to\":\"2026-10-18\",\"precision\":\"exact\"},\"travelDays\":1,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SEL\",\"type\":\"city\",\"name\":\"首尔\",\"countryCode\":\"KR\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"仁川机场中转\",\"当地10:00落地17:30起飞\",\"进城吃饭\",\"入境资格未知\",\"航站楼未知\",\"行李直挂未知\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.620Z\",\"updatedAt\":\"2026-09-12T19:49:16.620Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 2,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+              "ownerId": "backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31",
+              "tripId": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+              "conversationId": "01a0972a-c0c5-736f-a99a-e72fc2d98208",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "在7.5小时仁川中转且入境资格、航站楼和行李安排未知时，提出最多两个必要澄清问题，并区分机场内候选和需满足条件才能考虑的市区候选。"
+                ],
+                "researchTypes": [
+                  "stopover",
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.620Z",
+              "updatedAt": "2026-09-12T19:49:16.620Z"
+            },
+            "run": {
+              "id": "01a0972a-c0cc-7350-96c1-0b1ac420102f",
+              "ownerId": "backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31",
+              "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+              "tripId": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+              "generationId": "offline-generation-7b803a9a-a608-4ab2-a9c5-06adbcb59b35",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+                "departureWindow": {
+                  "from": "2026-10-18",
+                  "to": "2026-10-18",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-18",
+                  "to": "2026-10-18",
+                  "precision": "exact"
+                },
+                "travelDays": 1,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:SEL",
+                      "type": "city",
+                      "name": "首尔",
+                      "countryCode": "KR"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "仁川机场中转",
+                  "当地10:00落地17:30起飞",
+                  "进城吃饭",
+                  "入境资格未知",
+                  "航站楼未知",
+                  "行李直挂未知"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.620Z",
+              "updatedAt": "2026-09-12T19:49:16.620Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:SEL",
+              "type": "city",
+              "name": "首尔",
+              "countryCode": "KR"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-10-18",
+            "to": "2026-10-18"
+          },
+          "interests": [
+            "仁川机场中转",
+            "当地10:00落地17:30起飞",
+            "进城吃饭",
+            "入境资格未知",
+            "航站楼未知",
+            "行李直挂未知"
+          ],
+          "questions": [
+            "在7.5小时仁川中转且入境资格、航站楼和行李安排未知时，提出最多两个必要澄清问题，并区分机场内候选和需满足条件才能考虑的市区候选。"
+          ],
+          "researchTypes": [
+            "stopover",
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+          "runId": "01a0972a-c0cc-7350-96c1-0b1ac420102f",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "d6455db7-7061-4a04-865d-9e7dac4a0ae6",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-c0d6-74fb-81ee-b5427a4d39ba\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":0,\"statusCounts\":{\"verified\":0,\"partially_verified\":0,\"stale\":0,\"unverified\":0},\"createdAt\":\"2026-09-12T18:46:39.981Z\"},\"findings\":[],\"warnings\":[\"thin_research_audit:thin_audit_875f6970-a0b1-4dbf-a961-0101dc0646db\",\"thin_research_disposition:clarify\",\"research_evidence_is_snippet_only\",\"thin_research_findings_excluded:3\",\"thin_research_no_admissible_findings\",\"用户具体国籍及是否持有有效韩国签证或K-ETA（韩国电子旅行许可）。\",\"用户是否符合韩国过境免签政策（如持有美、加、澳、新、欧等特定国家签证并前往第三国）。\",\"行李是否直挂至最终目的地（若需提取行李则必须入境，且耗时增加）。\",\"抵达与出发航站楼是否相同（跨航站楼移动需额外时间）。\",\"2026年10月18日当天的入境排队实时状况及航班准点率。\"]}}",
+          "costUnits": 4,
+          "durationMs": 6,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-c0d6-74fb-81ee-b5427a4d39ba"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_875f6970-a0b1-4dbf-a961-0101dc0646db",
+            "thin_research_disposition:clarify",
+            "research_evidence_is_snippet_only",
+            "thin_research_findings_excluded:3",
+            "thin_research_no_admissible_findings",
+            "用户具体国籍及是否持有有效韩国签证或K-ETA（韩国电子旅行许可）。",
+            "用户是否符合韩国过境免签政策（如持有美、加、澳、新、欧等特定国家签证并前往第三国）。",
+            "行李是否直挂至最终目的地（若需提取行李则必须入境，且耗时增加）。",
+            "抵达与出发航站楼是否相同（跨航站楼移动需额外时间）。",
+            "2026年10月18日当天的入境排队实时状况及航班准点率。"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-c0d6-74fb-81ee-b5427a4d39ba",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 0,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 0,
+                "stale": 0,
+                "unverified": 0
+              },
+              "createdAt": "2026-09-12T18:46:39.981Z"
+            },
+            "findings": [],
+            "warnings": [
+              "thin_research_audit:thin_audit_875f6970-a0b1-4dbf-a961-0101dc0646db",
+              "thin_research_disposition:clarify",
+              "research_evidence_is_snippet_only",
+              "thin_research_findings_excluded:3",
+              "thin_research_no_admissible_findings",
+              "用户具体国籍及是否持有有效韩国签证或K-ETA（韩国电子旅行许可）。",
+              "用户是否符合韩国过境免签政策（如持有美、加、澳、新、欧等特定国家签证并前往第三国）。",
+              "行李是否直挂至最终目的地（若需提取行李则必须入境，且耗时增加）。",
+              "抵达与出发航站楼是否相同（跨航站楼移动需额外时间）。",
+              "2026年10月18日当天的入境排队实时状况及航班准点率。"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-c0d6-74fb-81ee-b5427a4d39ba"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:SEL",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": []
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+          "runId": "01a0972a-c0cc-7350-96c1-0b1ac420102f",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "2c4376d7-5c89-407f-8cfe-94a83601b939",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"guide_no_selected_findings\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"stopover\",\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 0,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "guide_no_selected_findings"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "stopover",
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a"
+        },
+        "scope": {
+          "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+          "runId": "01a0972a-c0cc-7350-96c1-0b1ac420102f",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "9b925561-1f1a-460c-b58f-bea4a5eafeab",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c0cc-7350-96c1-077b8fcf779a\",\"ownerId\":\"backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31\",\"tripId\":\"01a0972a-c0c4-769a-9fd7-ad079b3b369a\",\"conversationId\":\"01a0972a-c0c5-736f-a99a-e72fc2d98208\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"在7.5小时仁川中转且入境资格、航站楼和行李安排未知时，提出最多两个必要澄清问题，并区分机场内候选和需满足条件才能考虑的市区候选。\"],\"researchTypes\":[\"stopover\",\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.620Z\",\"updatedAt\":\"2026-09-12T19:49:16.620Z\"},\"run\":{\"id\":\"01a0972a-c0cc-7350-96c1-0b1ac420102f\",\"ownerId\":\"backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31\",\"goalId\":\"01a0972a-c0cc-7350-96c1-077b8fcf779a\",\"tripId\":\"01a0972a-c0c4-769a-9fd7-ad079b3b369a\",\"generationId\":\"offline-generation-7b803a9a-a608-4ab2-a9c5-06adbcb59b35\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c0c4-769a-9fd7-ad079b3b369a\",\"departureWindow\":{\"from\":\"2026-10-18\",\"to\":\"2026-10-18\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-18\",\"to\":\"2026-10-18\",\"precision\":\"exact\"},\"travelDays\":1,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SEL\",\"type\":\"city\",\"name\":\"首尔\",\"countryCode\":\"KR\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"仁川机场中转\",\"当地10:00落地17:30起飞\",\"进城吃饭\",\"入境资格未知\",\"航站楼未知\",\"行李直挂未知\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-c0d6-74fb-81ee-b5427a4d39ba\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:16.631Z\"}],\"locationHandles\":[{\"id\":\"city:SEL\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:16.621Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:16.620Z\",\"updatedAt\":\"2026-09-12T19:49:16.631Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+              "ownerId": "backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31",
+              "tripId": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+              "conversationId": "01a0972a-c0c5-736f-a99a-e72fc2d98208",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "在7.5小时仁川中转且入境资格、航站楼和行李安排未知时，提出最多两个必要澄清问题，并区分机场内候选和需满足条件才能考虑的市区候选。"
+                ],
+                "researchTypes": [
+                  "stopover",
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.620Z",
+              "updatedAt": "2026-09-12T19:49:16.620Z"
+            },
+            "run": {
+              "id": "01a0972a-c0cc-7350-96c1-0b1ac420102f",
+              "ownerId": "backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31",
+              "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+              "tripId": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+              "generationId": "offline-generation-7b803a9a-a608-4ab2-a9c5-06adbcb59b35",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+                "departureWindow": {
+                  "from": "2026-10-18",
+                  "to": "2026-10-18",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-18",
+                  "to": "2026-10-18",
+                  "precision": "exact"
+                },
+                "travelDays": 1,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:SEL",
+                      "type": "city",
+                      "name": "首尔",
+                      "countryCode": "KR"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "仁川机场中转",
+                  "当地10:00落地17:30起飞",
+                  "进城吃饭",
+                  "入境资格未知",
+                  "航站楼未知",
+                  "行李直挂未知"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-c0d6-74fb-81ee-b5427a4d39ba",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:16.631Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:SEL",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:16.621Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:16.620Z",
+              "updatedAt": "2026-09-12T19:49:16.631Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-c0d6-74fb-81ee-b5427a4d39ba",
+        "tripId": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+        "conversationId": "01a0972a-c0c5-736f-a99a-e72fc2d98208",
+        "goalId": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+        "runId": "01a0972a-c0cc-7350-96c1-0b1ac420102f",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-c0d6-74fb-81ee-b5427a4d39ba",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:SEL",
+                "type": "city",
+                "name": "首尔",
+                "countryCode": "KR"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-10-18",
+              "to": "2026-10-18"
+            },
+            "interests": [
+              "仁川机场中转",
+              "当地10:00落地17:30起飞",
+              "进城吃饭",
+              "入境资格未知",
+              "航站楼未知",
+              "行李直挂未知"
+            ],
+            "questions": [
+              "在7.5小时仁川中转且入境资格、航站楼和行李安排未知时，提出最多两个必要澄清问题，并区分机场内候选和需满足条件才能考虑的市区候选。"
+            ],
+            "researchTypes": [
+              "stopover",
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [],
+          "queryCount": 5,
+          "warnings": [
+            "thin_research_audit:thin_audit_875f6970-a0b1-4dbf-a961-0101dc0646db",
+            "thin_research_disposition:clarify",
+            "research_evidence_is_snippet_only",
+            "thin_research_findings_excluded:3",
+            "thin_research_no_admissible_findings",
+            "用户具体国籍及是否持有有效韩国签证或K-ETA（韩国电子旅行许可）。",
+            "用户是否符合韩国过境免签政策（如持有美、加、澳、新、欧等特定国家签证并前往第三国）。",
+            "行李是否直挂至最终目的地（若需提取行李则必须入境，且耗时增加）。",
+            "抵达与出发航站楼是否相同（跨航站楼移动需额外时间）。",
+            "2026年10月18日当天的入境排队实时状况及航班准点率。"
+          ],
+          "createdAt": "2026-09-12T18:46:39.981Z"
+        },
+        "verification": {
+          "status": "unverified",
+          "checkedAt": "2026-09-12T18:46:39.981Z",
+          "confidence": 0,
+          "sources": []
+        },
+        "createdAt": "2026-09-12T19:49:16.630Z",
+        "updatedAt": "2026-09-12T19:49:16.630Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-c0cc-7350-96c1-077b8fcf779a",
+        "ownerId": "backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31",
+        "tripId": "01a0972a-c0c4-769a-9fd7-ad079b3b369a",
+        "conversationId": "01a0972a-c0c5-736f-a99a-e72fc2d98208",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "在7.5小时仁川中转且入境资格、航站楼和行李安排未知时，提出最多两个必要澄清问题，并区分机场内候选和需满足条件才能考虑的市区候选。"
+          ],
+          "researchTypes": [
+            "stopover",
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:16.620Z",
+        "updatedAt": "2026-09-12T19:49:16.620Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "clarify",
+  "providerError": null,
+  "effectiveDisposition": "clarify",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 0,
+      "verificationEligibleFindingCount": 0,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 0,
+        "unverified": 0,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "guide_no_selected_findings"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

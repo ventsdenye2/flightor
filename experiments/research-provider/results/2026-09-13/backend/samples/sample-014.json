@@ -1,0 +1,439 @@
+{
+  "sampleId": "candidate-screen-v3/sample-012",
+  "caseId": "activity-13",
+  "model": "z-ai/glm-5.3-flash",
+  "sampleFile": "samples/sample-014.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-012.json",
+  "sourceSha256": "863864db35c9ee7890664bb5dec73191c8e95facfb0b3dcfebec6b41e294955f",
+  "receiptSha256": "e345034a8d2694baeb6249c3a2b6a5264edc790e09003b47dff804f1f560c643",
+  "recordedAt": "2026-09-12T18:47:40.234Z",
+  "travelWindow": {
+    "from": "2026-10-10",
+    "to": "2026-10-12"
+  },
+  "recordedStatus": "responded",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-315d678b-2a93-4284-bc2e-fc1d044f388d",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_2d75199d-8185-469e-9a88-be3c78bd31ab.json"
+  ],
+  "providerStatus": "rejected",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c1a0-75ed-b2be-d7b51ff5f031",
+        "departureWindow": {
+          "from": "2026-10-10",
+          "to": "2026-10-10",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-10-12",
+          "to": "2026-10-12",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:HGH",
+              "type": "city",
+              "name": "杭州",
+              "countryCode": "CN"
+            },
+            {
+              "id": "city:SHAOXING",
+              "type": "city",
+              "name": "绍兴",
+              "countryCode": "CN"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "文化",
+          "餐饮",
+          "酒店步行20分钟内是硬条件",
+          "杭州或绍兴尚未确定",
+          "住宿街区未知"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [],
+      "memoryChanged": false,
+      "warnings": [],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c1a6-721d-9865-46363f60bda5",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c1a6-721d-9865-46363f60bda5",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "46df4361-3a91-4194-b265-89c6b1c5ddd3",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c1a0-75ed-b2be-d7b51ff5f031\",\"departureWindow\":{\"from\":\"2026-10-10\",\"to\":\"2026-10-10\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-12\",\"to\":\"2026-10-12\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:HGH\",\"type\":\"city\",\"name\":\"杭州\",\"countryCode\":\"CN\"},{\"id\":\"city:SHAOXING\",\"type\":\"city\",\"name\":\"绍兴\",\"countryCode\":\"CN\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"文化\",\"餐饮\",\"酒店步行20分钟内是硬条件\",\"杭州或绍兴尚未确定\",\"住宿街区未知\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c1a0-75ed-b2be-d7b51ff5f031",
+              "departureWindow": {
+                "from": "2026-10-10",
+                "to": "2026-10-10",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-10-12",
+                "to": "2026-10-12",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:HGH",
+                    "type": "city",
+                    "name": "杭州",
+                    "countryCode": "CN"
+                  },
+                  {
+                    "id": "city:SHAOXING",
+                    "type": "city",
+                    "name": "绍兴",
+                    "countryCode": "CN"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "文化",
+                "餐饮",
+                "酒店步行20分钟内是硬条件",
+                "杭州或绍兴尚未确定",
+                "住宿街区未知"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "住宿城市在杭州和绍兴之间未定、具体位置未知，但酒店步行20分钟内是硬条件；提出最多两个必要澄清问题，不将两个候选城市误作已确定的多城行程。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 2,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c1a6-721d-9865-46363f60bda5",
+          "runId": "01a0972a-c1a6-721d-9865-48f2c5f9881d",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "5cbdd824-92d4-4bff-94b5-f11389c7e5cf",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c1a6-721d-9865-46363f60bda5\",\"ownerId\":\"backend-replay-315d678b-2a93-4284-bc2e-fc1d044f388d\",\"tripId\":\"01a0972a-c1a0-75ed-b2be-d7b51ff5f031\",\"conversationId\":\"01a0972a-c1a0-75ed-b2be-db905d3b4395\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"住宿城市在杭州和绍兴之间未定、具体位置未知，但酒店步行20分钟内是硬条件；提出最多两个必要澄清问题，不将两个候选城市误作已确定的多城行程。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":2,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.838Z\",\"updatedAt\":\"2026-09-12T19:49:16.838Z\"},\"run\":{\"id\":\"01a0972a-c1a6-721d-9865-48f2c5f9881d\",\"ownerId\":\"backend-replay-315d678b-2a93-4284-bc2e-fc1d044f388d\",\"goalId\":\"01a0972a-c1a6-721d-9865-46363f60bda5\",\"tripId\":\"01a0972a-c1a0-75ed-b2be-d7b51ff5f031\",\"generationId\":\"offline-generation-1088c676-75ad-4a60-82f6-de86a334953a\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c1a0-75ed-b2be-d7b51ff5f031\",\"departureWindow\":{\"from\":\"2026-10-10\",\"to\":\"2026-10-10\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-12\",\"to\":\"2026-10-12\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:HGH\",\"type\":\"city\",\"name\":\"杭州\",\"countryCode\":\"CN\"},{\"id\":\"city:SHAOXING\",\"type\":\"city\",\"name\":\"绍兴\",\"countryCode\":\"CN\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"文化\",\"餐饮\",\"酒店步行20分钟内是硬条件\",\"杭州或绍兴尚未确定\",\"住宿街区未知\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.838Z\",\"updatedAt\":\"2026-09-12T19:49:16.838Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c1a6-721d-9865-46363f60bda5",
+              "ownerId": "backend-replay-315d678b-2a93-4284-bc2e-fc1d044f388d",
+              "tripId": "01a0972a-c1a0-75ed-b2be-d7b51ff5f031",
+              "conversationId": "01a0972a-c1a0-75ed-b2be-db905d3b4395",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "住宿城市在杭州和绍兴之间未定、具体位置未知，但酒店步行20分钟内是硬条件；提出最多两个必要澄清问题，不将两个候选城市误作已确定的多城行程。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 2,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.838Z",
+              "updatedAt": "2026-09-12T19:49:16.838Z"
+            },
+            "run": {
+              "id": "01a0972a-c1a6-721d-9865-48f2c5f9881d",
+              "ownerId": "backend-replay-315d678b-2a93-4284-bc2e-fc1d044f388d",
+              "goalId": "01a0972a-c1a6-721d-9865-46363f60bda5",
+              "tripId": "01a0972a-c1a0-75ed-b2be-d7b51ff5f031",
+              "generationId": "offline-generation-1088c676-75ad-4a60-82f6-de86a334953a",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c1a0-75ed-b2be-d7b51ff5f031",
+                "departureWindow": {
+                  "from": "2026-10-10",
+                  "to": "2026-10-10",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-12",
+                  "to": "2026-10-12",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:HGH",
+                      "type": "city",
+                      "name": "杭州",
+                      "countryCode": "CN"
+                    },
+                    {
+                      "id": "city:SHAOXING",
+                      "type": "city",
+                      "name": "绍兴",
+                      "countryCode": "CN"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "文化",
+                  "餐饮",
+                  "酒店步行20分钟内是硬条件",
+                  "杭州或绍兴尚未确定",
+                  "住宿街区未知"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.838Z",
+              "updatedAt": "2026-09-12T19:49:16.838Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:HGH",
+              "type": "city",
+              "name": "杭州",
+              "countryCode": "CN"
+            },
+            {
+              "id": "city:SHAOXING",
+              "type": "city",
+              "name": "绍兴",
+              "countryCode": "CN"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-10-10",
+            "to": "2026-10-12"
+          },
+          "interests": [
+            "文化",
+            "餐饮",
+            "酒店步行20分钟内是硬条件",
+            "杭州或绍兴尚未确定",
+            "住宿街区未知"
+          ],
+          "questions": [
+            "住宿城市在杭州和绍兴之间未定、具体位置未知，但酒店步行20分钟内是硬条件；提出最多两个必要澄清问题，不将两个候选城市误作已确定的多城行程。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c1a6-721d-9865-46363f60bda5",
+          "runId": "01a0972a-c1a6-721d-9865-48f2c5f9881d",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "9b09b3c9-f8a9-4c62-bb0e-79e211f991eb",
+          "toolName": "web_research",
+          "ok": false,
+          "content": "{\"ok\":false,\"error\":{\"code\":\"TOOL_FAILURE\",\"message\":\"Tool execution failed\"}}",
+          "costUnits": 4,
+          "durationMs": 3,
+          "provider": "research_agent",
+          "errorCode": "TOOL_FAILURE",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": false,
+          "error": {
+            "code": "TOOL_FAILURE",
+            "message": "Tool execution failed"
+          }
+        }
+      }
+    ],
+    "artifacts": [],
+    "goals": [
+      {
+        "id": "01a0972a-c1a6-721d-9865-46363f60bda5",
+        "ownerId": "backend-replay-315d678b-2a93-4284-bc2e-fc1d044f388d",
+        "tripId": "01a0972a-c1a0-75ed-b2be-d7b51ff5f031",
+        "conversationId": "01a0972a-c1a0-75ed-b2be-db905d3b4395",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "住宿城市在杭州和绍兴之间未定、具体位置未知，但酒店步行20分钟内是硬条件；提出最多两个必要澄清问题，不将两个候选城市误作已确定的多城行程。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 2,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:16.838Z",
+        "updatedAt": "2026-09-12T19:49:16.838Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "failed",
+  "providerError": {
+    "name": "ThinResearchError",
+    "code": "THIN_RESEARCH_SEARCH_COUNT_UNKNOWN",
+    "statusCode": 502,
+    "details": null
+  },
+  "effectiveDisposition": null,
+  "scriptedPlannerCalls": 4,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": false,
+      "errorCode": "TOOL_FAILURE",
+      "persisted": false,
+      "findingCount": 0,
+      "verificationEligibleFindingCount": 0,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 0,
+        "unverified": 0,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": false,
+      "toolOk": false,
+      "status": null,
+      "errorCode": null,
+      "issues": []
+    },
+    "finishGoal": {
+      "attempted": false,
+      "toolOk": false,
+      "verificationStatus": null,
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

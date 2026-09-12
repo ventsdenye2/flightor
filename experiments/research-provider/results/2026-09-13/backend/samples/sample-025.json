@@ -1,0 +1,1089 @@
+{
+  "sampleId": "candidate-screen-v3/sample-029",
+  "caseId": "activity-12",
+  "model": "qwen/qwen3.8-flash",
+  "sampleFile": "samples/sample-025.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-029.json",
+  "sourceSha256": "f6a0cb89ce6ae4486d2e74a15eae6493793b0bcdbcfe201936d1c8e6e7e5ea19",
+  "receiptSha256": "7a14078b180ce5e99b8cc379c3461cbd1d3b25c352873c9b611502a483785f77",
+  "recordedAt": "2026-09-12T18:50:56.423Z",
+  "travelWindow": {
+    "from": "2026-11-16",
+    "to": "2026-11-19"
+  },
+  "recordedStatus": "responded",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_f5849e2e-30bd-44c3-982a-9989ed1bd713.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c360-7461-8829-b83336ea839c",
+        "departureWindow": {
+          "from": "2026-11-16",
+          "to": "2026-11-16",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-11-19",
+          "to": "2026-11-19",
+          "precision": "exact"
+        },
+        "travelDays": 4,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:FUK",
+              "type": "city",
+              "name": "福冈",
+              "countryCode": "JP"
+            },
+            {
+              "id": "city:BEPPU",
+              "type": "city",
+              "name": "别府",
+              "countryCode": "JP"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "地方饮食",
+          "温泉文化",
+          "福冈11月16日至17日",
+          "别府11月18日至19日",
+          "城市顺序固定",
+          "每城至少2个候选"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-c372-70d0-a9a8-3556ef0ae197",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_f5849e2e-30bd-44c3-982a-9989ed1bd713",
+        "thin_research_disposition:partial",
+        "research_evidence_is_snippet_only",
+        "source_excerpt_truncated",
+        "未能在本次搜索中获取别府特定公共浴场（如竹瓦温泉、砂汤）的精确2026年收费标准及最新维护公告。",
+        "福冈屋台的具体菜单价格和个别店铺的临时停业安排需根据当日实际情况确认。"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "85bc24c1-2c00-415b-8083-da0da3518b41",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c360-7461-8829-b83336ea839c\",\"departureWindow\":{\"from\":\"2026-11-16\",\"to\":\"2026-11-16\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-19\",\"to\":\"2026-11-19\",\"precision\":\"exact\"},\"travelDays\":4,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:FUK\",\"type\":\"city\",\"name\":\"福冈\",\"countryCode\":\"JP\"},{\"id\":\"city:BEPPU\",\"type\":\"city\",\"name\":\"别府\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"地方饮食\",\"温泉文化\",\"福冈11月16日至17日\",\"别府11月18日至19日\",\"城市顺序固定\",\"每城至少2个候选\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c360-7461-8829-b83336ea839c",
+              "departureWindow": {
+                "from": "2026-11-16",
+                "to": "2026-11-16",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-11-19",
+                "to": "2026-11-19",
+                "precision": "exact"
+              },
+              "travelDays": 4,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:FUK",
+                    "type": "city",
+                    "name": "福冈",
+                    "countryCode": "JP"
+                  },
+                  {
+                    "id": "city:BEPPU",
+                    "type": "city",
+                    "name": "别府",
+                    "countryCode": "JP"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "地方饮食",
+                "温泉文化",
+                "福冈11月16日至17日",
+                "别府11月18日至19日",
+                "城市顺序固定",
+                "每城至少2个候选"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "在两城合计最多6个、每城至少2个的范围内研究地方饮食或温泉文化活动，明确归属城市及对应停留日期：福冈11月16日至17日，别府11月18日至19日。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 2,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+          "runId": "01a0972a-c368-711b-bbd7-e0c27351534d",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "4f2994a6-d052-48fa-a8a2-ae1e8b0783a7",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c368-711b-bbd7-ddb2b337216a\",\"ownerId\":\"backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c\",\"tripId\":\"01a0972a-c360-7461-8829-b83336ea839c\",\"conversationId\":\"01a0972a-c361-7118-8cf7-2f9086a1dcd8\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"在两城合计最多6个、每城至少2个的范围内研究地方饮食或温泉文化活动，明确归属城市及对应停留日期：福冈11月16日至17日，别府11月18日至19日。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":2,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.288Z\",\"updatedAt\":\"2026-09-12T19:49:17.288Z\"},\"run\":{\"id\":\"01a0972a-c368-711b-bbd7-e0c27351534d\",\"ownerId\":\"backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c\",\"goalId\":\"01a0972a-c368-711b-bbd7-ddb2b337216a\",\"tripId\":\"01a0972a-c360-7461-8829-b83336ea839c\",\"generationId\":\"offline-generation-d2c4a9a3-8597-4765-a7e1-065f81edf156\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c360-7461-8829-b83336ea839c\",\"departureWindow\":{\"from\":\"2026-11-16\",\"to\":\"2026-11-16\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-19\",\"to\":\"2026-11-19\",\"precision\":\"exact\"},\"travelDays\":4,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:FUK\",\"type\":\"city\",\"name\":\"福冈\",\"countryCode\":\"JP\"},{\"id\":\"city:BEPPU\",\"type\":\"city\",\"name\":\"别府\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"地方饮食\",\"温泉文化\",\"福冈11月16日至17日\",\"别府11月18日至19日\",\"城市顺序固定\",\"每城至少2个候选\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.288Z\",\"updatedAt\":\"2026-09-12T19:49:17.288Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+              "ownerId": "backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c",
+              "tripId": "01a0972a-c360-7461-8829-b83336ea839c",
+              "conversationId": "01a0972a-c361-7118-8cf7-2f9086a1dcd8",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "在两城合计最多6个、每城至少2个的范围内研究地方饮食或温泉文化活动，明确归属城市及对应停留日期：福冈11月16日至17日，别府11月18日至19日。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 2,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.288Z",
+              "updatedAt": "2026-09-12T19:49:17.288Z"
+            },
+            "run": {
+              "id": "01a0972a-c368-711b-bbd7-e0c27351534d",
+              "ownerId": "backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c",
+              "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+              "tripId": "01a0972a-c360-7461-8829-b83336ea839c",
+              "generationId": "offline-generation-d2c4a9a3-8597-4765-a7e1-065f81edf156",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c360-7461-8829-b83336ea839c",
+                "departureWindow": {
+                  "from": "2026-11-16",
+                  "to": "2026-11-16",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-19",
+                  "to": "2026-11-19",
+                  "precision": "exact"
+                },
+                "travelDays": 4,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:FUK",
+                      "type": "city",
+                      "name": "福冈",
+                      "countryCode": "JP"
+                    },
+                    {
+                      "id": "city:BEPPU",
+                      "type": "city",
+                      "name": "别府",
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "地方饮食",
+                  "温泉文化",
+                  "福冈11月16日至17日",
+                  "别府11月18日至19日",
+                  "城市顺序固定",
+                  "每城至少2个候选"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.288Z",
+              "updatedAt": "2026-09-12T19:49:17.288Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:FUK",
+              "type": "city",
+              "name": "福冈",
+              "countryCode": "JP"
+            },
+            {
+              "id": "city:BEPPU",
+              "type": "city",
+              "name": "别府",
+              "countryCode": "JP"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-11-16",
+            "to": "2026-11-19"
+          },
+          "interests": [
+            "地方饮食",
+            "温泉文化",
+            "福冈11月16日至17日",
+            "别府11月18日至19日",
+            "城市顺序固定",
+            "每城至少2个候选"
+          ],
+          "questions": [
+            "在两城合计最多6个、每城至少2个的范围内研究地方饮食或温泉文化活动，明确归属城市及对应停留日期：福冈11月16日至17日，别府11月18日至19日。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+          "runId": "01a0972a-c368-711b-bbd7-e0c27351534d",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "9bee9968-3dd5-486a-a010-ac572c9d6e3d",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-c372-70d0-a9a8-3556ef0ae197\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":4,\"statusCounts\":{\"verified\":0,\"partially_verified\":3,\"stale\":0,\"unverified\":1},\"createdAt\":\"2026-09-12T18:50:56.423Z\"},\"findings\":[{\"id\":\"finding_0a726eeced065d14857813ae\",\"title\":\"中洲屋台街夜游与博多拉面体验\",\"summary\":\"在福冈停留期间（11月16日至17日），可前往那珂川沿岸的中洲屋台街。这里约有20至30家屋台，提供豚骨拉面、烤串和关东煮等地方美食。多数店铺营业时间为18:00至次日凌晨2:00，人均预算约2000-3000日元。建议携带现金，并提前确认具体店铺的定休日。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:FUK\",\"name\":\"福冈\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_82fa9dcb4b942a71e5763d6b\",\"title\":\"天神地区特色屋台美食探索\",\"summary\":\"福冈天神站周边分布着多家风格各异的屋台，氛围相对中洲更为成熟且受当地上班族喜爱。可以尝试以飞鱼出汁为特色的关东煮或创意料理。由于屋台经营时间不一，建议在出发前通过社交媒体或官方网站核实目标店铺的实时营业状态。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:FUK\",\"name\":\"福冈\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_85ce0adf086308159cfd4524\",\"title\":\"别府八大地狱巡礼（海地狱与血池地狱）\",\"summary\":\"在别府停留期间（11月18日至19日），推荐购买“别府地狱巡游”共通观览券参观七大奇观。其中海地狱呈现钴蓝色高温泉水，血池地狱则因富含铁质而呈赤红色。七处景点统一开放时间为8:00至17:00，全年无休。成人共通券价格为2400日元。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:BEPPU\",\"name\":\"别府\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_11b0996ceda2bf13dc685657\",\"title\":\"别府温泉文化深度游览指南\",\"summary\":\"别府是日本温泉涌出量最丰富的地区之一。除了观赏地狱景观，游客还可体验独特的地热烹饪文化（如地狱蒸）。建议利用共通观览券规划路线，注意部分地狱景点间需步行或乘坐巴士。关于具体的入浴设施（如砂汤或竹瓦温泉）的最新价格及开放时间，需进一步查询官方信息。\",\"category\":\"practical\",\"destinations\":[{\"id\":\"city:BEPPU\",\"name\":\"别府\"}],\"verificationStatus\":\"partially_verified\"}],\"warnings\":[\"thin_research_audit:thin_audit_f5849e2e-30bd-44c3-982a-9989ed1bd713\",\"thin_research_disposition:partial\",\"research_evidence_is_snippet_only\",\"source_excerpt_truncated\",\"未能在本次搜索中获取别府特定公共浴场（如竹瓦温泉、砂汤）的精确2026年收费标准及最新维护公告。\",\"福冈屋台的具体菜单价格和个别店铺的临时停业安排需根据当日实际情况确认。\"]}}",
+          "costUnits": 4,
+          "durationMs": 6,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-c372-70d0-a9a8-3556ef0ae197"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_f5849e2e-30bd-44c3-982a-9989ed1bd713",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "source_excerpt_truncated",
+            "未能在本次搜索中获取别府特定公共浴场（如竹瓦温泉、砂汤）的精确2026年收费标准及最新维护公告。",
+            "福冈屋台的具体菜单价格和个别店铺的临时停业安排需根据当日实际情况确认。"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-c372-70d0-a9a8-3556ef0ae197",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 4,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 3,
+                "stale": 0,
+                "unverified": 1
+              },
+              "createdAt": "2026-09-12T18:50:56.423Z"
+            },
+            "findings": [
+              {
+                "id": "finding_0a726eeced065d14857813ae",
+                "title": "中洲屋台街夜游与博多拉面体验",
+                "summary": "在福冈停留期间（11月16日至17日），可前往那珂川沿岸的中洲屋台街。这里约有20至30家屋台，提供豚骨拉面、烤串和关东煮等地方美食。多数店铺营业时间为18:00至次日凌晨2:00，人均预算约2000-3000日元。建议携带现金，并提前确认具体店铺的定休日。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:FUK",
+                    "name": "福冈"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_82fa9dcb4b942a71e5763d6b",
+                "title": "天神地区特色屋台美食探索",
+                "summary": "福冈天神站周边分布着多家风格各异的屋台，氛围相对中洲更为成熟且受当地上班族喜爱。可以尝试以飞鱼出汁为特色的关东煮或创意料理。由于屋台经营时间不一，建议在出发前通过社交媒体或官方网站核实目标店铺的实时营业状态。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:FUK",
+                    "name": "福冈"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_85ce0adf086308159cfd4524",
+                "title": "别府八大地狱巡礼（海地狱与血池地狱）",
+                "summary": "在别府停留期间（11月18日至19日），推荐购买“别府地狱巡游”共通观览券参观七大奇观。其中海地狱呈现钴蓝色高温泉水，血池地狱则因富含铁质而呈赤红色。七处景点统一开放时间为8:00至17:00，全年无休。成人共通券价格为2400日元。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:BEPPU",
+                    "name": "别府"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_11b0996ceda2bf13dc685657",
+                "title": "别府温泉文化深度游览指南",
+                "summary": "别府是日本温泉涌出量最丰富的地区之一。除了观赏地狱景观，游客还可体验独特的地热烹饪文化（如地狱蒸）。建议利用共通观览券规划路线，注意部分地狱景点间需步行或乘坐巴士。关于具体的入浴设施（如砂汤或竹瓦温泉）的最新价格及开放时间，需进一步查询官方信息。",
+                "category": "practical",
+                "destinations": [
+                  {
+                    "id": "city:BEPPU",
+                    "name": "别府"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_f5849e2e-30bd-44c3-982a-9989ed1bd713",
+              "thin_research_disposition:partial",
+              "research_evidence_is_snippet_only",
+              "source_excerpt_truncated",
+              "未能在本次搜索中获取别府特定公共浴场（如竹瓦温泉、砂汤）的精确2026年收费标准及最新维护公告。",
+              "福冈屋台的具体菜单价格和个别店铺的临时停业安排需根据当日实际情况确认。"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-c372-70d0-a9a8-3556ef0ae197"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:FUK",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_0a726eeced065d14857813ae",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "cityId": "city:FUK",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_82fa9dcb4b942a71e5763d6b",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "cityId": "city:FUK",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_85ce0adf086308159cfd4524",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 4,
+              "cityId": "city:FUK",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_11b0996ceda2bf13dc685657",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+          "runId": "01a0972a-c368-711b-bbd7-e0c27351534d",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "98cfde69-e651-4756-8aa8-52af1fd783fe",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"guide_item_evidence_mismatch\"],\"requirements\":{\"maxCities\":2,\"maxResults\":6,\"researchTypes\":[\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 2,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "guide_item_evidence_mismatch"
+            ],
+            "requirements": {
+              "maxCities": 2,
+              "maxResults": 6,
+              "researchTypes": [
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a"
+        },
+        "scope": {
+          "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+          "runId": "01a0972a-c368-711b-bbd7-e0c27351534d",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "460b187e-294f-43c5-9e2e-6f42fc342b5a",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c368-711b-bbd7-ddb2b337216a\",\"ownerId\":\"backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c\",\"tripId\":\"01a0972a-c360-7461-8829-b83336ea839c\",\"conversationId\":\"01a0972a-c361-7118-8cf7-2f9086a1dcd8\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"在两城合计最多6个、每城至少2个的范围内研究地方饮食或温泉文化活动，明确归属城市及对应停留日期：福冈11月16日至17日，别府11月18日至19日。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":2,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.288Z\",\"updatedAt\":\"2026-09-12T19:49:17.288Z\"},\"run\":{\"id\":\"01a0972a-c368-711b-bbd7-e0c27351534d\",\"ownerId\":\"backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c\",\"goalId\":\"01a0972a-c368-711b-bbd7-ddb2b337216a\",\"tripId\":\"01a0972a-c360-7461-8829-b83336ea839c\",\"generationId\":\"offline-generation-d2c4a9a3-8597-4765-a7e1-065f81edf156\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c360-7461-8829-b83336ea839c\",\"departureWindow\":{\"from\":\"2026-11-16\",\"to\":\"2026-11-16\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-19\",\"to\":\"2026-11-19\",\"precision\":\"exact\"},\"travelDays\":4,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:FUK\",\"type\":\"city\",\"name\":\"福冈\",\"countryCode\":\"JP\"},{\"id\":\"city:BEPPU\",\"type\":\"city\",\"name\":\"别府\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"地方饮食\",\"温泉文化\",\"福冈11月16日至17日\",\"别府11月18日至19日\",\"城市顺序固定\",\"每城至少2个候选\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-c372-70d0-a9a8-3556ef0ae197\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:17.299Z\"}],\"locationHandles\":[{\"id\":\"city:FUK\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:17.289Z\"},{\"id\":\"city:BEPPU\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:17.289Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:17.288Z\",\"updatedAt\":\"2026-09-12T19:49:17.299Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+              "ownerId": "backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c",
+              "tripId": "01a0972a-c360-7461-8829-b83336ea839c",
+              "conversationId": "01a0972a-c361-7118-8cf7-2f9086a1dcd8",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "在两城合计最多6个、每城至少2个的范围内研究地方饮食或温泉文化活动，明确归属城市及对应停留日期：福冈11月16日至17日，别府11月18日至19日。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 2,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.288Z",
+              "updatedAt": "2026-09-12T19:49:17.288Z"
+            },
+            "run": {
+              "id": "01a0972a-c368-711b-bbd7-e0c27351534d",
+              "ownerId": "backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c",
+              "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+              "tripId": "01a0972a-c360-7461-8829-b83336ea839c",
+              "generationId": "offline-generation-d2c4a9a3-8597-4765-a7e1-065f81edf156",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c360-7461-8829-b83336ea839c",
+                "departureWindow": {
+                  "from": "2026-11-16",
+                  "to": "2026-11-16",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-19",
+                  "to": "2026-11-19",
+                  "precision": "exact"
+                },
+                "travelDays": 4,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:FUK",
+                      "type": "city",
+                      "name": "福冈",
+                      "countryCode": "JP"
+                    },
+                    {
+                      "id": "city:BEPPU",
+                      "type": "city",
+                      "name": "别府",
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "地方饮食",
+                  "温泉文化",
+                  "福冈11月16日至17日",
+                  "别府11月18日至19日",
+                  "城市顺序固定",
+                  "每城至少2个候选"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-c372-70d0-a9a8-3556ef0ae197",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:17.299Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:FUK",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:17.289Z"
+                  },
+                  {
+                    "id": "city:BEPPU",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:17.289Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:17.288Z",
+              "updatedAt": "2026-09-12T19:49:17.299Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-c372-70d0-a9a8-3556ef0ae197",
+        "tripId": "01a0972a-c360-7461-8829-b83336ea839c",
+        "conversationId": "01a0972a-c361-7118-8cf7-2f9086a1dcd8",
+        "goalId": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+        "runId": "01a0972a-c368-711b-bbd7-e0c27351534d",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-c372-70d0-a9a8-3556ef0ae197",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:FUK",
+                "type": "city",
+                "name": "福冈",
+                "countryCode": "JP"
+              },
+              {
+                "id": "city:BEPPU",
+                "type": "city",
+                "name": "别府",
+                "countryCode": "JP"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-11-16",
+              "to": "2026-11-19"
+            },
+            "interests": [
+              "地方饮食",
+              "温泉文化",
+              "福冈11月16日至17日",
+              "别府11月18日至19日",
+              "城市顺序固定",
+              "每城至少2个候选"
+            ],
+            "questions": [
+              "在两城合计最多6个、每城至少2个的范围内研究地方饮食或温泉文化活动，明确归属城市及对应停留日期：福冈11月16日至17日，别府11月18日至19日。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_0a726eeced065d14857813ae",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:FUK",
+                  "type": "city",
+                  "name": "福冈",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "中洲屋台街夜游与博多拉面体验",
+              "summary": "在福冈停留期间（11月16日至17日），可前往那珂川沿岸的中洲屋台街。这里约有20至30家屋台，提供豚骨拉面、烤串和关东煮等地方美食。多数店铺营业时间为18:00至次日凌晨2:00，人均预算约2000-3000日元。建议携带现金，并提前确认具体店铺的定休日。",
+              "sources": [
+                {
+                  "title": "初めての中洲屋台街ガイド！定番グルメ・人気屋台・予算相場を解説 | GOOD LUCK TRIP",
+                  "url": "https://www.gltjp.com/ja/article/item/21461/",
+                  "domain": "www.gltjp.com",
+                  "snippet": "| 立地 | 博多区中洲の那珂川沿い | 福岡市の中心繁華街である天神周辺 | 福岡市中央区長浜エリア |\n| --- | --- | --- | --- |\n| 雰囲気 | ネオンの明るい夜の下、エネルギーにあふれた賑やかな雰囲気 | 地元客と観光客が入り交じる、おしゃれで大人な雰囲気 | 昔ながらの屋台文化を感じやすいローカルな雰囲気 |\n| 魅力 | 福岡らしい夜の風景を満喫できる | アクセスに優れ、天神の街並みを眺めながら食事ができる | 長浜ラーメンで知られるエリアならではの食文化に触れられる |\n| おすすめの人 | ・初めて福岡に訪れる人 ・観光気分を味わたい人 | ・さまざま料理を楽しみたい人 ・1人飲みをする予定の人 | ・食へのこだわりが強い人 ・ローカルな屋台文化を感じたい人 |\n\n...\n\n多くの屋台は18時頃から深夜2時頃にかけて営業しており、福岡の夜をゆっくり楽しめる。 定休日および営業時間は店舗ごとに違うので、事前にSNSや公式サイトを確認すると安心だ。\n\n...\n\n中洲屋台街は入場料不要、注文した飲食代と（一部店舗では）お通し・チャージ料を支払うのが基本。 福岡市のルール整備により料金表示を行う屋台が増えており、初めて訪れる観光客でも利用しやすくなっている。 明朗会計の店が多く（ぼったくりの心配はほぼなく）、メニューに価格表示がない場合でも注文前に確認すれば大丈夫だ。 予算は1軒あたり2,000〜3,000円程度が目安で、複数の屋台を巡るなら5,000円前後を見込んでおくとよい。 また、会計のキャッシュレス化が近年進んでいるが、非対応店もあるので現金を持参すると安心。\n\n...\n\n1. 豚骨ラーメン・焼きラーメン\n\n...\n\n数ある屋台グルメのなかでも、博多名物「豚骨ラーメン」・「焼きラーメン」は外せない。 どちらも屋台ならではのライブ感と",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "中洲の屋台（福岡）｜博多の夜を彩る屋台文化完全ガイド | BESPES",
+                  "url": "https://article.bespes-jt.com/ja/article/nakasu-yatai-fukuoka/",
+                  "domain": "article.bespes-jt.com",
+                  "snippet": "には約100軒の屋台が営業しています。中でも中洲エリアは那珂川沿いに約20〜30軒の屋台が並ぶ最大の屋台街で、博多ラーメン、焼き鳥、おでん、餃子といった福岡のソウルフードを、夜風に",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:50:56.423Z",
+                "expiresAt": "2026-12-11T18:50:56.423Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.gltjp.com/ja/article/item/21461/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://article.bespes-jt.com/ja/article/nakasu-yatai-fukuoka/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_82fa9dcb4b942a71e5763d6b",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:FUK",
+                  "type": "city",
+                  "name": "福冈",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "天神地区特色屋台美食探索",
+              "summary": "福冈天神站周边分布着多家风格各异的屋台，氛围相对中洲更为成熟且受当地上班族喜爱。可以尝试以飞鱼出汁为特色的关东煮或创意料理。由于屋台经营时间不一，建议在出发前通过社交媒体或官方网站核实目标店铺的实时营业状态。",
+              "sources": [
+                {
+                  "title": "中洲の屋台、場所と地図でわかる見つけ方と初心者ガイド | 『ふくおかさんぽ』 ~ 歩いて、味わって、感じるローカル福岡 ~",
+                  "url": "https://fukuoka-travel.net/archives/2647",
+                  "domain": "fukuoka-travel.net",
+                  "snippet": "、天神エリアの屋台は地下鉄天神駅周辺に点在していて、地元のビジネスマンやサラリーマンが多く利用しています。比較的静かで落ち着いた雰囲気です。天神は老舗の屋台と新しい屋台が",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "福岡の屋台おすすめ2026｜天神・中洲・長浜の現役屋台と選び方",
+                  "url": "https://www.i-fukuoka.jp/",
+                  "domain": "www.i-fukuoka.jp",
+                  "snippet": "福岡市内の\n...\n・スーパー銭湯・サウナ\n...\n福岡市内で\n...\n・スーパー銭湯\n...\n、休館\n...\n、家族風呂の\n...\n条件は変更\n...\n連休・年末",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:50:56.423Z",
+                "expiresAt": "2026-12-11T18:50:56.423Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://fukuoka-travel.net/archives/2647"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.i-fukuoka.jp/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified"
+              ]
+            },
+            {
+              "id": "finding_85ce0adf086308159cfd4524",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:BEPPU",
+                  "type": "city",
+                  "name": "别府",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "别府八大地狱巡礼（海地狱与血池地狱）",
+              "summary": "在别府停留期间（11月18日至19日），推荐购买“别府地狱巡游”共通观览券参观七大奇观。其中海地狱呈现钴蓝色高温泉水，血池地狱则因富含铁质而呈赤红色。七处景点统一开放时间为8:00至17:00，全年无休。成人共通券价格为2400日元。",
+              "sources": [
+                {
+                  "title": "営業案内 | 別府地獄めぐり公式サイト(別府地獄組合)",
+                  "url": "http://www.beppu-jigoku.com/fee/",
+                  "domain": "www.beppu-jigoku.com",
+                  "snippet": "#### 営業時間（７地獄共通）\n\n 8：00～17：00 （年中無休）\n...\n| 個人 | 2,400円 | 1,200円 |\n| 団体20人以上 | 2,000円 | 1,000円 |\n| 障がい者（個人） | 1,200円 | 600円 |\n| 障がい者（20人以上） | 1,000円 |",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "営業案内 | 別府地獄めぐり公式サイト(別府地獄組合)",
+                  "url": "https://beppu-jigoku.com/",
+                  "domain": "beppu-jigoku.com",
+                  "snippet": "ルトブル一で98度もある海地獄、酸化鉄の成分で噴気までが赤い血の池地獄、一定の間隔で熱湯と噴気を噴出する龍巻地獄、白池地獄、鬼石坊主地獄、鬼山地獄、かまど地獄の7つの地獄をめ",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:50:56.423Z",
+                "expiresAt": "2026-12-11T18:50:56.423Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "http://www.beppu-jigoku.com/fee/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://beppu-jigoku.com/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_11b0996ceda2bf13dc685657",
+              "category": "practical",
+              "destinations": [
+                {
+                  "id": "city:BEPPU",
+                  "type": "city",
+                  "name": "别府",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "别府温泉文化深度游览指南",
+              "summary": "别府是日本温泉涌出量最丰富的地区之一。除了观赏地狱景观，游客还可体验独特的地热烹饪文化（如地狱蒸）。建议利用共通观览券规划路线，注意部分地狱景点间需步行或乘坐巴士。关于具体的入浴设施（如砂汤或竹瓦温泉）的最新价格及开放时间，需进一步查询官方信息。",
+              "sources": [
+                {
+                  "title": "開演時間・入場料 - 血の池地獄",
+                  "url": "https://chinoike.com/",
+                  "domain": "chinoike.com",
+                  "snippet": "- ### 別府地獄めぐり \n\n『血の池地獄』『海地獄』『竜巻地獄』『白池地獄』『鬼石坊主地獄』『鬼山地獄』『かまど地獄』。この別府の七つの”地獄”を2時間前後で巡る小旅行の事を”別府",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "海地獄【公式サイト】｜大分・別府の観光スポット",
+                  "url": "https://www.umijigoku.co.jp/fee/",
+                  "domain": "www.umijigoku.co.jp",
+                  "snippet": "電話 : 0977-66-0121 / FAX : 0977-66-0124 / 開園時間 8:00~17:00 年中無休\n...\n### 【べっぷ地獄めぐり】 共通観覧券入場料金表\n...\n| 5\n...\n◯営業時間:8:00〜17:00(年中無休) ◯無料駐車場完備\n...\n-jigoku.com/",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:50:56.423Z",
+                "expiresAt": "2026-11-11T18:50:56.423Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://chinoike.com/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.umijigoku.co.jp/fee/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified"
+              ]
+            }
+          ],
+          "queryCount": 5,
+          "warnings": [
+            "thin_research_audit:thin_audit_f5849e2e-30bd-44c3-982a-9989ed1bd713",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "source_excerpt_truncated",
+            "未能在本次搜索中获取别府特定公共浴场（如竹瓦温泉、砂汤）的精确2026年收费标准及最新维护公告。",
+            "福冈屋台的具体菜单价格和个别店铺的临时停业安排需根据当日实际情况确认。"
+          ],
+          "createdAt": "2026-09-12T18:50:56.423Z"
+        },
+        "verification": {
+          "status": "partially_verified",
+          "checkedAt": "2026-09-12T18:50:56.423Z",
+          "confidence": 0.2,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://www.gltjp.com/ja/article/item/21461/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://article.bespes-jt.com/ja/article/nakasu-yatai-fukuoka/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://fukuoka-travel.net/archives/2647"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.i-fukuoka.jp/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "http://www.beppu-jigoku.com/fee/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://beppu-jigoku.com/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://chinoike.com/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.umijigoku.co.jp/fee/"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:17.298Z",
+        "updatedAt": "2026-09-12T19:49:17.298Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-c368-711b-bbd7-ddb2b337216a",
+        "ownerId": "backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c",
+        "tripId": "01a0972a-c360-7461-8829-b83336ea839c",
+        "conversationId": "01a0972a-c361-7118-8cf7-2f9086a1dcd8",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "在两城合计最多6个、每城至少2个的范围内研究地方饮食或温泉文化活动，明确归属城市及对应停留日期：福冈11月16日至17日，别府11月18日至19日。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 2,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:17.288Z",
+        "updatedAt": "2026-09-12T19:49:17.288Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "partial",
+  "providerError": null,
+  "effectiveDisposition": "partial",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 4,
+      "verificationEligibleFindingCount": 3,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 3,
+        "unverified": 1,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "guide_item_evidence_mismatch"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}
