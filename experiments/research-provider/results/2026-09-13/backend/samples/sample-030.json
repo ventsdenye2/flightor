@@ -1,0 +1,903 @@
+{
+  "sampleId": "candidate-screen-v3/sample-039",
+  "caseId": "activity-01",
+  "model": "z-ai/glm-5.3-flash",
+  "sampleFile": "samples/sample-030.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-039.json",
+  "sourceSha256": "5374859ae3395e36aec34153f10fedae32ddd0bc85123baead53422328563614",
+  "receiptSha256": "721d4ab3b3e9b06673cbd255d1e61b1eecd87724c6a70aedff1aed822416d26b",
+  "recordedAt": "2026-09-12T18:52:45.073Z",
+  "travelWindow": {
+    "from": "2026-10-14",
+    "to": "2026-10-16"
+  },
+  "recordedStatus": "unlinked_evidence",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_9f156658-c40e-4d55-8f2f-e000ac17a3d0.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+        "departureWindow": {
+          "from": "2026-10-14",
+          "to": "2026-10-14",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-10-16",
+          "to": "2026-10-16",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "东京",
+              "countryCode": "JP"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "建筑",
+          "地方历史",
+          "安静街区",
+          "两位成年人",
+          "室内外兼顾"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-c440-769e-81ac-02c7af289285",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_9f156658-c40e-4d55-8f2f-e000ac17a3d0",
+        "thin_research_disposition:partial",
+        "research_evidence_is_snippet_only",
+        "thin_research_findings_excluded:1",
+        "source_excerpt_truncated",
+        "搜索额度有限，未能核实以下候选的2026年最新信息，需自行确认：东京国立博物馆（上野，建筑与历史，室内，附近可衔接谷中）的展览与预约要求",
+        "神乐坂（安静历史街区、路地石阶）与代代木国立竞技场（隈研吾建筑）2026年的开放与参观方式未能查证",
+        "吉卜力美术馆门票需提前在指定日期网络抽选/购买，2026年10月场次销售日程未确认",
+        "10月中旬天气与是否需要更多雨天备选未核实",
+        "所有开放时间、票价、休馆日以出行前官网为准"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "35ccd4d1-41b2-4ca4-9167-fac5bdd1d97e",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c42f-74db-82b5-5c1fa6cb27f3\",\"departureWindow\":{\"from\":\"2026-10-14\",\"to\":\"2026-10-14\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-16\",\"to\":\"2026-10-16\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:TYO\",\"type\":\"city\",\"name\":\"东京\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"建筑\",\"地方历史\",\"安静街区\",\"两位成年人\",\"室内外兼顾\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+              "departureWindow": {
+                "from": "2026-10-14",
+                "to": "2026-10-14",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-10-16",
+                "to": "2026-10-16",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:TYO",
+                    "type": "city",
+                    "name": "东京",
+                    "countryCode": "JP"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "建筑",
+                "地方历史",
+                "安静街区",
+                "两位成年人",
+                "室内外兼顾"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "为首次到访的两位成年人研究最多6个建筑、地方历史或安静街区活动候选，说明适配理由、预计参观时长及预约要求。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+          "runId": "01a0972a-c436-754d-bbdc-4cc01687b570",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "5de457aa-a745-4864-8f9f-ecb3d0074f47",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c436-754d-bbdc-49b285da0ed3\",\"ownerId\":\"backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92\",\"tripId\":\"01a0972a-c42f-74db-82b5-5c1fa6cb27f3\",\"conversationId\":\"01a0972a-c42f-74db-82b5-6078a6f3267e\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"为首次到访的两位成年人研究最多6个建筑、地方历史或安静街区活动候选，说明适配理由、预计参观时长及预约要求。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.494Z\",\"updatedAt\":\"2026-09-12T19:49:17.494Z\"},\"run\":{\"id\":\"01a0972a-c436-754d-bbdc-4cc01687b570\",\"ownerId\":\"backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92\",\"goalId\":\"01a0972a-c436-754d-bbdc-49b285da0ed3\",\"tripId\":\"01a0972a-c42f-74db-82b5-5c1fa6cb27f3\",\"generationId\":\"offline-generation-c7ca7520-e105-49ef-8ebc-28cbc843e1ad\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c42f-74db-82b5-5c1fa6cb27f3\",\"departureWindow\":{\"from\":\"2026-10-14\",\"to\":\"2026-10-14\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-16\",\"to\":\"2026-10-16\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:TYO\",\"type\":\"city\",\"name\":\"东京\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"建筑\",\"地方历史\",\"安静街区\",\"两位成年人\",\"室内外兼顾\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.494Z\",\"updatedAt\":\"2026-09-12T19:49:17.494Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+              "ownerId": "backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92",
+              "tripId": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+              "conversationId": "01a0972a-c42f-74db-82b5-6078a6f3267e",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "为首次到访的两位成年人研究最多6个建筑、地方历史或安静街区活动候选，说明适配理由、预计参观时长及预约要求。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.494Z",
+              "updatedAt": "2026-09-12T19:49:17.494Z"
+            },
+            "run": {
+              "id": "01a0972a-c436-754d-bbdc-4cc01687b570",
+              "ownerId": "backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92",
+              "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+              "tripId": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+              "generationId": "offline-generation-c7ca7520-e105-49ef-8ebc-28cbc843e1ad",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+                "departureWindow": {
+                  "from": "2026-10-14",
+                  "to": "2026-10-14",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-16",
+                  "to": "2026-10-16",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:TYO",
+                      "type": "city",
+                      "name": "东京",
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "建筑",
+                  "地方历史",
+                  "安静街区",
+                  "两位成年人",
+                  "室内外兼顾"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.494Z",
+              "updatedAt": "2026-09-12T19:49:17.494Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "东京",
+              "countryCode": "JP"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-10-14",
+            "to": "2026-10-16"
+          },
+          "interests": [
+            "建筑",
+            "地方历史",
+            "安静街区",
+            "两位成年人",
+            "室内外兼顾"
+          ],
+          "questions": [
+            "为首次到访的两位成年人研究最多6个建筑、地方历史或安静街区活动候选，说明适配理由、预计参观时长及预约要求。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+          "runId": "01a0972a-c436-754d-bbdc-4cc01687b570",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "c4f6a64c-0cc9-49f5-8cee-5d316a6706aa",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-c440-769e-81ac-02c7af289285\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":2,\"statusCounts\":{\"verified\":0,\"partially_verified\":2,\"stale\":0,\"unverified\":0},\"createdAt\":\"2026-09-12T18:52:45.073Z\"},\"findings\":[{\"id\":\"finding_58e6b83a74d5c34f183717aa\",\"title\":\"江户东京博物馆\",\"summary\":\"2026年3月31日重新开馆，通过大型模型与体感展示讲述江户至现代的东京史，非常适合首次到访者建立城市历史脉络，直接契合'地方历史'兴趣。室内活动，雨天可选。位于两国站，JR总武线步行3分钟。常设展一般票800日元，另有大河剧特别展'丰臣兄弟！'（2026/9/15–11/8，与你们的行程重叠）。开放时间约9:30–17:30（周六至19:30），周一休馆（10/14–16为周三至周五，均在开放日）。建议参观时长2.5–3.5小时。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:TYO\",\"name\":\"东京\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_b3462abcedc8bd1b98167f7c\",\"title\":\"预约与开放信息核实要点\",\"summary\":\"江户东京博物馆提供线上票（常设展指定日期800日元），建议行前在官网预约，并确认10月周一是否为特别开馆；特别展需另行购票。谷根千无需预约。所有票价、开放时间以出行前官网最新公告为准。\",\"category\":\"practical\",\"destinations\":[{\"id\":\"city:TYO\",\"name\":\"东京\"}],\"verificationStatus\":\"partially_verified\"}],\"warnings\":[\"thin_research_audit:thin_audit_9f156658-c40e-4d55-8f2f-e000ac17a3d0\",\"thin_research_disposition:partial\",\"research_evidence_is_snippet_only\",\"thin_research_findings_excluded:1\",\"source_excerpt_truncated\",\"搜索额度有限，未能核实以下候选的2026年最新信息，需自行确认：东京国立博物馆（上野，建筑与历史，室内，附近可衔接谷中）的展览与预约要求\",\"神乐坂（安静历史街区、路地石阶）与代代木国立竞技场（隈研吾建筑）2026年的开放与参观方式未能查证\",\"吉卜力美术馆门票需提前在指定日期网络抽选/购买，2026年10月场次销售日程未确认\",\"10月中旬天气与是否需要更多雨天备选未核实\",\"所有开放时间、票价、休馆日以出行前官网为准\"]}}",
+          "costUnits": 4,
+          "durationMs": 6,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-c440-769e-81ac-02c7af289285"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_9f156658-c40e-4d55-8f2f-e000ac17a3d0",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "thin_research_findings_excluded:1",
+            "source_excerpt_truncated",
+            "搜索额度有限，未能核实以下候选的2026年最新信息，需自行确认：东京国立博物馆（上野，建筑与历史，室内，附近可衔接谷中）的展览与预约要求",
+            "神乐坂（安静历史街区、路地石阶）与代代木国立竞技场（隈研吾建筑）2026年的开放与参观方式未能查证",
+            "吉卜力美术馆门票需提前在指定日期网络抽选/购买，2026年10月场次销售日程未确认",
+            "10月中旬天气与是否需要更多雨天备选未核实",
+            "所有开放时间、票价、休馆日以出行前官网为准"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-c440-769e-81ac-02c7af289285",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 2,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 2,
+                "stale": 0,
+                "unverified": 0
+              },
+              "createdAt": "2026-09-12T18:52:45.073Z"
+            },
+            "findings": [
+              {
+                "id": "finding_58e6b83a74d5c34f183717aa",
+                "title": "江户东京博物馆",
+                "summary": "2026年3月31日重新开馆，通过大型模型与体感展示讲述江户至现代的东京史，非常适合首次到访者建立城市历史脉络，直接契合'地方历史'兴趣。室内活动，雨天可选。位于两国站，JR总武线步行3分钟。常设展一般票800日元，另有大河剧特别展'丰臣兄弟！'（2026/9/15–11/8，与你们的行程重叠）。开放时间约9:30–17:30（周六至19:30），周一休馆（10/14–16为周三至周五，均在开放日）。建议参观时长2.5–3.5小时。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:TYO",
+                    "name": "东京"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_b3462abcedc8bd1b98167f7c",
+                "title": "预约与开放信息核实要点",
+                "summary": "江户东京博物馆提供线上票（常设展指定日期800日元），建议行前在官网预约，并确认10月周一是否为特别开馆；特别展需另行购票。谷根千无需预约。所有票价、开放时间以出行前官网最新公告为准。",
+                "category": "practical",
+                "destinations": [
+                  {
+                    "id": "city:TYO",
+                    "name": "东京"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_9f156658-c40e-4d55-8f2f-e000ac17a3d0",
+              "thin_research_disposition:partial",
+              "research_evidence_is_snippet_only",
+              "thin_research_findings_excluded:1",
+              "source_excerpt_truncated",
+              "搜索额度有限，未能核实以下候选的2026年最新信息，需自行确认：东京国立博物馆（上野，建筑与历史，室内，附近可衔接谷中）的展览与预约要求",
+              "神乐坂（安静历史街区、路地石阶）与代代木国立竞技场（隈研吾建筑）2026年的开放与参观方式未能查证",
+              "吉卜力美术馆门票需提前在指定日期网络抽选/购买，2026年10月场次销售日程未确认",
+              "10月中旬天气与是否需要更多雨天备选未核实",
+              "所有开放时间、票价、休馆日以出行前官网为准"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-c440-769e-81ac-02c7af289285"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:TYO",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_58e6b83a74d5c34f183717aa",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "cityId": "city:TYO",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_b3462abcedc8bd1b98167f7c",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "cityId": "city:TYO",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": []
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+          "runId": "01a0972a-c436-754d-bbdc-4cc01687b570",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "ff6af4f8-e854-42c1-97c5-d495b718425e",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"guide_daily_activity_coverage\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 0,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "guide_daily_activity_coverage"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3"
+        },
+        "scope": {
+          "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+          "runId": "01a0972a-c436-754d-bbdc-4cc01687b570",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "7f4e4bef-475b-4b60-a0f2-74e638f89610",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c436-754d-bbdc-49b285da0ed3\",\"ownerId\":\"backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92\",\"tripId\":\"01a0972a-c42f-74db-82b5-5c1fa6cb27f3\",\"conversationId\":\"01a0972a-c42f-74db-82b5-6078a6f3267e\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"为首次到访的两位成年人研究最多6个建筑、地方历史或安静街区活动候选，说明适配理由、预计参观时长及预约要求。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.494Z\",\"updatedAt\":\"2026-09-12T19:49:17.494Z\"},\"run\":{\"id\":\"01a0972a-c436-754d-bbdc-4cc01687b570\",\"ownerId\":\"backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92\",\"goalId\":\"01a0972a-c436-754d-bbdc-49b285da0ed3\",\"tripId\":\"01a0972a-c42f-74db-82b5-5c1fa6cb27f3\",\"generationId\":\"offline-generation-c7ca7520-e105-49ef-8ebc-28cbc843e1ad\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c42f-74db-82b5-5c1fa6cb27f3\",\"departureWindow\":{\"from\":\"2026-10-14\",\"to\":\"2026-10-14\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-16\",\"to\":\"2026-10-16\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:TYO\",\"type\":\"city\",\"name\":\"东京\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"建筑\",\"地方历史\",\"安静街区\",\"两位成年人\",\"室内外兼顾\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-c440-769e-81ac-02c7af289285\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:17.506Z\"}],\"locationHandles\":[{\"id\":\"city:TYO\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:17.495Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:17.494Z\",\"updatedAt\":\"2026-09-12T19:49:17.506Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+              "ownerId": "backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92",
+              "tripId": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+              "conversationId": "01a0972a-c42f-74db-82b5-6078a6f3267e",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "为首次到访的两位成年人研究最多6个建筑、地方历史或安静街区活动候选，说明适配理由、预计参观时长及预约要求。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.494Z",
+              "updatedAt": "2026-09-12T19:49:17.494Z"
+            },
+            "run": {
+              "id": "01a0972a-c436-754d-bbdc-4cc01687b570",
+              "ownerId": "backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92",
+              "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+              "tripId": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+              "generationId": "offline-generation-c7ca7520-e105-49ef-8ebc-28cbc843e1ad",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+                "departureWindow": {
+                  "from": "2026-10-14",
+                  "to": "2026-10-14",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-16",
+                  "to": "2026-10-16",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:TYO",
+                      "type": "city",
+                      "name": "东京",
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "建筑",
+                  "地方历史",
+                  "安静街区",
+                  "两位成年人",
+                  "室内外兼顾"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-c440-769e-81ac-02c7af289285",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:17.506Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:TYO",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:17.495Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:17.494Z",
+              "updatedAt": "2026-09-12T19:49:17.506Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-c440-769e-81ac-02c7af289285",
+        "tripId": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+        "conversationId": "01a0972a-c42f-74db-82b5-6078a6f3267e",
+        "goalId": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+        "runId": "01a0972a-c436-754d-bbdc-4cc01687b570",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-c440-769e-81ac-02c7af289285",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:TYO",
+                "type": "city",
+                "name": "东京",
+                "countryCode": "JP"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-10-14",
+              "to": "2026-10-16"
+            },
+            "interests": [
+              "建筑",
+              "地方历史",
+              "安静街区",
+              "两位成年人",
+              "室内外兼顾"
+            ],
+            "questions": [
+              "为首次到访的两位成年人研究最多6个建筑、地方历史或安静街区活动候选，说明适配理由、预计参观时长及预约要求。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_58e6b83a74d5c34f183717aa",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:TYO",
+                  "type": "city",
+                  "name": "东京",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "江户东京博物馆",
+              "summary": "2026年3月31日重新开馆，通过大型模型与体感展示讲述江户至现代的东京史，非常适合首次到访者建立城市历史脉络，直接契合'地方历史'兴趣。室内活动，雨天可选。位于两国站，JR总武线步行3分钟。常设展一般票800日元，另有大河剧特别展'丰臣兄弟！'（2026/9/15–11/8，与你们的行程重叠）。开放时间约9:30–17:30（周六至19:30），周一休馆（10/14–16为周三至周五，均在开放日）。建议参观时长2.5–3.5小时。",
+              "sources": [
+                {
+                  "title": "东京都江户东京博物馆_东京旅游官方网站GO TOKYO",
+                  "url": "https://www.gotokyo.org/cn/spot/1745/index.html",
+                  "domain": "www.gotokyo.org",
+                  "snippet": "在东京都江户东京博物馆度过一天，追溯从江户时代延续至现代的东京时光。 东京并非一直都是如今这座充满近未来感的超级大都市，在1868年更名为“东京”之前，该地区被称为“江户”。在东京都江户东京博物馆，您可以深入了解江户引人入胜的历史。 东京都江户东京博物馆因大规模整修工程而长期休馆，现于2026年3月31日重新开业。这座博物馆从“知识”和“体感”两面传达东京的历史，对于初次造访东京的人而言，它是了解这座城市的入口；而对于熟悉东京的人而言，它是重新发现东京魅力的场所。无论您年龄或背景如何，这座博物馆都值得一访。\n\n...\n\n- 可通过自己的智能手机，免费使用多语言语音导览\n- 参观前后可在餐厅或咖啡厅度过悠闲时光\n\n...\n\n- 两国站 JR总武线西出口步行3分钟\n- 两国站（江户东京博物馆前）都营大江户线 A3・A4出口步行1分钟\n- 都营两国站前（江户东京博物馆前）｜都营巴士锦27、两28、门33路线｜墨田区内循环巴士“墨田百景Sumimaru-kun、Sumirin-chan（南部路线）”下车｜步行3分钟\n\n...\n\n| 开放时间 | 9:30～17:30 周二周三周四周五周日节假日 9:30～19:30 周六 ※因店铺、设施或楼层而异 ※入场截止时间为营业结束前30分钟 休息日: 周一年末年初休息日逢节假日则次日休息 |\n| --- | --- |\n| 费用 | 普通费用:800日元 现金 VISA JCB MasterCard（万事达卡） AMEX（美国运通卡） 费用因店铺或设施而异 |\n| 设施信息 | 厕所饮食设施全面禁烟停车场提供Wi-Fi服务 日语英文 日语英文 设有残疾人车位（轮椅可用）入馆自动门设有无障碍通道自动扶梯电梯对应轮椅车电梯无障碍厕所（多功能厕所）人工肛门患者可用厕所（简便式）厕所设有扶手设有换尿布台设有婴儿安全座位或婴儿椅成人用折叠式床提供轮椅",
+                  "authority": "government_tourism"
+                },
+                {
+                  "title": "EDO-TOKYO MUSEUM",
+                  "url": "https://www.edo-tokyo-museum.or.jp/",
+                  "domain": "www.edo-tokyo-museum.or.jp",
+                  "snippet": "### 江戸東京博物館リニューアル記念・NHK大河ドラマ特別展「豊臣兄弟！」\n...\n: 2026年9月15日（火）- 2026年11月8日（日）\n...\n9,0",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "線上票｜江戶東京博物館",
+                  "url": "https://edo-tokyo-museum.or.jp/zh-tw/news/online-ticket/",
+                  "domain": "edo-tokyo-museum.or.jp",
+                  "snippet": "線上票｜江戶東京博物館\n...\n自3月19日（週四）起開始發售線上門票。 票種僅限【常設展】一般 指定日期（800日圓）。\n...\n門票無法在網站購買。 「65歲以上」「\n...\n請在來館當\n...\n需取票",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:52:45.073Z",
+                "expiresAt": "2026-12-11T18:52:45.073Z",
+                "confidence": 0.58,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.gotokyo.org/cn/spot/1745/index.html"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.edo-tokyo-museum.or.jp/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://edo-tokyo-museum.or.jp/zh-tw/news/online-ticket/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_b3462abcedc8bd1b98167f7c",
+              "category": "practical",
+              "destinations": [
+                {
+                  "id": "city:TYO",
+                  "type": "city",
+                  "name": "东京",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "预约与开放信息核实要点",
+              "summary": "江户东京博物馆提供线上票（常设展指定日期800日元），建议行前在官网预约，并确认10月周一是否为特别开馆；特别展需另行购票。谷根千无需预约。所有票价、开放时间以出行前官网最新公告为准。",
+              "sources": [
+                {
+                  "title": "線上票｜江戶東京博物館",
+                  "url": "https://edo-tokyo-museum.or.jp/zh-tw/news/online-ticket/",
+                  "domain": "edo-tokyo-museum.or.jp",
+                  "snippet": "線上票｜江戶東京博物館\n...\n自3月19日（週四）起開始發售線上門票。 票種僅限【常設展】一般 指定日期（800日圓）。\n...\n門票無法在網站購買。 「65歲以上」「\n...\n請在來館當\n...\n需取票",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "东京都江户东京博物馆_东京旅游官方网站GO TOKYO",
+                  "url": "https://www.gotokyo.org/cn/spot/1745/index.html",
+                  "domain": "www.gotokyo.org",
+                  "snippet": "在东京都江户东京博物馆度过一天，追溯从江户时代延续至现代的东京时光。 东京并非一直都是如今这座充满近未来感的超级大都市，在1868年更名为“东京”之前，该地区被称为“江户”。在东京都江户东京博物馆，您可以深入了解江户引人入胜的历史。 东京都江户东京博物馆因大规模整修工程而长期休馆，现于2026年3月31日重新开业。这座博物馆从“知识”和“体感”两面传达东京的历史，对于初次造访东京的人而言，它是了解这座城市的入口；而对于熟悉东京的人而言，它是重新发现东京魅力的场所。无论您年龄或背景如何，这座博物馆都值得一访。\n\n...\n\n- 可通过自己的智能手机，免费使用多语言语音导览\n- 参观前后可在餐厅或咖啡厅度过悠闲时光\n\n...\n\n- 两国站 JR总武线西出口步行3分钟\n- 两国站（江户东京博物馆前）都营大江户线 A3・A4出口步行1分钟\n- 都营两国站前（江户东京博物馆前）｜都营巴士锦27、两28、门33路线｜墨田区内循环巴士“墨田百景Sumimaru-kun、Sumirin-chan（南部路线）”下车｜步行3分钟\n\n...\n\n| 开放时间 | 9:30～17:30 周二周三周四周五周日节假日 9:30～19:30 周六 ※因店铺、设施或楼层而异 ※入场截止时间为营业结束前30分钟 休息日: 周一年末年初休息日逢节假日则次日休息 |\n| --- | --- |\n| 费用 | 普通费用:800日元 现金 VISA JCB MasterCard（万事达卡） AMEX（美国运通卡） 费用因店铺或设施而异 |\n| 设施信息 | 厕所饮食设施全面禁烟停车场提供Wi-Fi服务 日语英文 日语英文 设有残疾人车位（轮椅可用）入馆自动门设有无障碍通道自动扶梯电梯对应轮椅车电梯无障碍厕所（多功能厕所）人工肛门患者可用厕所（简便式）厕所设有扶手设有换尿布台设有婴儿安全座位或婴儿椅成人用折叠式床提供轮椅",
+                  "authority": "government_tourism"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:52:45.073Z",
+                "expiresAt": "2026-11-11T18:52:45.073Z",
+                "confidence": 0.58,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://edo-tokyo-museum.or.jp/zh-tw/news/online-ticket/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.gotokyo.org/cn/spot/1745/index.html"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified",
+                "source_excerpt_truncated"
+              ]
+            }
+          ],
+          "queryCount": 6,
+          "warnings": [
+            "thin_research_audit:thin_audit_9f156658-c40e-4d55-8f2f-e000ac17a3d0",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "thin_research_findings_excluded:1",
+            "source_excerpt_truncated",
+            "搜索额度有限，未能核实以下候选的2026年最新信息，需自行确认：东京国立博物馆（上野，建筑与历史，室内，附近可衔接谷中）的展览与预约要求",
+            "神乐坂（安静历史街区、路地石阶）与代代木国立竞技场（隈研吾建筑）2026年的开放与参观方式未能查证",
+            "吉卜力美术馆门票需提前在指定日期网络抽选/购买，2026年10月场次销售日程未确认",
+            "10月中旬天气与是否需要更多雨天备选未核实",
+            "所有开放时间、票价、休馆日以出行前官网为准"
+          ],
+          "createdAt": "2026-09-12T18:52:45.073Z"
+        },
+        "verification": {
+          "status": "partially_verified",
+          "checkedAt": "2026-09-12T18:52:45.073Z",
+          "confidence": 0.58,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://www.gotokyo.org/cn/spot/1745/index.html"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.edo-tokyo-museum.or.jp/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://edo-tokyo-museum.or.jp/zh-tw/news/online-ticket/"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:17.505Z",
+        "updatedAt": "2026-09-12T19:49:17.505Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-c436-754d-bbdc-49b285da0ed3",
+        "ownerId": "backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92",
+        "tripId": "01a0972a-c42f-74db-82b5-5c1fa6cb27f3",
+        "conversationId": "01a0972a-c42f-74db-82b5-6078a6f3267e",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "为首次到访的两位成年人研究最多6个建筑、地方历史或安静街区活动候选，说明适配理由、预计参观时长及预约要求。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:17.494Z",
+        "updatedAt": "2026-09-12T19:49:17.494Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "partial",
+  "providerError": null,
+  "effectiveDisposition": "partial",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 2,
+      "verificationEligibleFindingCount": 2,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 2,
+        "unverified": 0,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "guide_daily_activity_coverage"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

@@ -1,0 +1,1114 @@
+{
+  "sampleId": "candidate-screen-v3/sample-033",
+  "caseId": "activity-16",
+  "model": "qwen/qwen3.8-flash",
+  "sampleFile": "samples/sample-026.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-033.json",
+  "sourceSha256": "a322a4796836fc0535fec82e8c863515075a60633bdaf527da9183bd4dfc4b08",
+  "receiptSha256": "5cdcdf880c5c6c636e22f3f38f85b069b039c66df6ccb650b299af045a7c7417",
+  "recordedAt": "2026-09-12T18:51:29.163Z",
+  "travelWindow": {
+    "from": "2026-11-23",
+    "to": "2026-11-25"
+  },
+  "recordedStatus": "invalid_output",
+  "recordedRawValid": false,
+  "ownerId": "backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_4fc29e98-af95-4629-a994-a88392035f14.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+        "departureWindow": {
+          "from": "2026-11-23",
+          "to": "2026-11-23",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-11-25",
+          "to": "2026-11-25",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:REK",
+              "type": "city",
+              "name": "雷克雅未克",
+              "countryCode": "IS"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "当地文化",
+          "极光",
+          "核实无链接帖子中的蓝月鲸鱼节",
+          "节庆名称可能不准确",
+          "不保证极光可见"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-c39c-734d-8440-14b69404a2ea",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_4fc29e98-af95-4629-a994-a88392035f14",
+        "thin_research_disposition:partial",
+        "research_evidence_is_snippet_only",
+        "thin_research_structure_normalized",
+        "source_excerpt_truncated",
+        "“蓝月鲸鱼节”是否在2026年11月24日真实存在：当前检索未见权威公告，判定为未证实；亦无法确认是否存在名称相近但不同的活动。",
+        "2026年11月是否出现“蓝月亮”天文现象及其与所谓节庆的关联：本次未能核实到可靠来源。",
+        "极光可见性：受云量与地磁活动影响，无法保证在2026年11月23–25日任一夜晚可见。",
+        "观鲸船游在2026年11月23–25日的具体班次、时长、票价、登船点与无障碍/儿童限制：未确认。",
+        "博物馆/文化场馆在2026年11月23–25日的开放时间、是否需要预约、票价与饮食相关服务（如馆内咖啡/餐厅）：未确认。",
+        "所有候选活动的实时库存、价格变动与退改政策：未确认。"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "1af82a2e-b545-4459-a3f9-c348797cfa33",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c38d-7716-a95f-a37efe56b6c5\",\"departureWindow\":{\"from\":\"2026-11-23\",\"to\":\"2026-11-23\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-25\",\"to\":\"2026-11-25\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:REK\",\"type\":\"city\",\"name\":\"雷克雅未克\",\"countryCode\":\"IS\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"当地文化\",\"极光\",\"核实无链接帖子中的蓝月鲸鱼节\",\"节庆名称可能不准确\",\"不保证极光可见\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+              "departureWindow": {
+                "from": "2026-11-23",
+                "to": "2026-11-23",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-11-25",
+                "to": "2026-11-25",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:REK",
+                    "type": "city",
+                    "name": "雷克雅未克",
+                    "countryCode": "IS"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "当地文化",
+                "极光",
+                "核实无链接帖子中的蓝月鲸鱼节",
+                "节庆名称可能不准确",
+                "不保证极光可见"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "核实无链接帖子所称2026年11月24日雷克雅未克“蓝月鲸鱼节”，区分找到权威公告、找到疑似同名活动与尚未证实。",
+              "研究旅行窗口内最多6个当地文化或极光相关候选，对天气依赖、日期和预约未知项保留不确定性。"
+            ],
+            "researchTypes": [
+              "event",
+              "seasonal",
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+          "runId": "01a0972a-c394-72e5-8be5-0c6f395635a9",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "7c1ab369-af43-4e9e-9977-4b4a919009b7",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c394-72e5-8be5-0ae7ad70f3a3\",\"ownerId\":\"backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4\",\"tripId\":\"01a0972a-c38d-7716-a95f-a37efe56b6c5\",\"conversationId\":\"01a0972a-c38e-7454-906b-47977cb988bc\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"核实无链接帖子所称2026年11月24日雷克雅未克“蓝月鲸鱼节”，区分找到权威公告、找到疑似同名活动与尚未证实。\",\"研究旅行窗口内最多6个当地文化或极光相关候选，对天气依赖、日期和预约未知项保留不确定性。\"],\"researchTypes\":[\"event\",\"seasonal\",\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.332Z\",\"updatedAt\":\"2026-09-12T19:49:17.332Z\"},\"run\":{\"id\":\"01a0972a-c394-72e5-8be5-0c6f395635a9\",\"ownerId\":\"backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4\",\"goalId\":\"01a0972a-c394-72e5-8be5-0ae7ad70f3a3\",\"tripId\":\"01a0972a-c38d-7716-a95f-a37efe56b6c5\",\"generationId\":\"offline-generation-c576baac-634b-45d6-9467-8f31d7c9c2ba\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c38d-7716-a95f-a37efe56b6c5\",\"departureWindow\":{\"from\":\"2026-11-23\",\"to\":\"2026-11-23\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-25\",\"to\":\"2026-11-25\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:REK\",\"type\":\"city\",\"name\":\"雷克雅未克\",\"countryCode\":\"IS\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"当地文化\",\"极光\",\"核实无链接帖子中的蓝月鲸鱼节\",\"节庆名称可能不准确\",\"不保证极光可见\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.332Z\",\"updatedAt\":\"2026-09-12T19:49:17.332Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+              "ownerId": "backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4",
+              "tripId": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+              "conversationId": "01a0972a-c38e-7454-906b-47977cb988bc",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "核实无链接帖子所称2026年11月24日雷克雅未克“蓝月鲸鱼节”，区分找到权威公告、找到疑似同名活动与尚未证实。",
+                  "研究旅行窗口内最多6个当地文化或极光相关候选，对天气依赖、日期和预约未知项保留不确定性。"
+                ],
+                "researchTypes": [
+                  "event",
+                  "seasonal",
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.332Z",
+              "updatedAt": "2026-09-12T19:49:17.332Z"
+            },
+            "run": {
+              "id": "01a0972a-c394-72e5-8be5-0c6f395635a9",
+              "ownerId": "backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4",
+              "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+              "tripId": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+              "generationId": "offline-generation-c576baac-634b-45d6-9467-8f31d7c9c2ba",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+                "departureWindow": {
+                  "from": "2026-11-23",
+                  "to": "2026-11-23",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-25",
+                  "to": "2026-11-25",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:REK",
+                      "type": "city",
+                      "name": "雷克雅未克",
+                      "countryCode": "IS"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "当地文化",
+                  "极光",
+                  "核实无链接帖子中的蓝月鲸鱼节",
+                  "节庆名称可能不准确",
+                  "不保证极光可见"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.332Z",
+              "updatedAt": "2026-09-12T19:49:17.332Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:REK",
+              "type": "city",
+              "name": "雷克雅未克",
+              "countryCode": "IS"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-11-23",
+            "to": "2026-11-25"
+          },
+          "interests": [
+            "当地文化",
+            "极光",
+            "核实无链接帖子中的蓝月鲸鱼节",
+            "节庆名称可能不准确",
+            "不保证极光可见"
+          ],
+          "questions": [
+            "核实无链接帖子所称2026年11月24日雷克雅未克“蓝月鲸鱼节”，区分找到权威公告、找到疑似同名活动与尚未证实。",
+            "研究旅行窗口内最多6个当地文化或极光相关候选，对天气依赖、日期和预约未知项保留不确定性。"
+          ],
+          "researchTypes": [
+            "event",
+            "seasonal",
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+          "runId": "01a0972a-c394-72e5-8be5-0c6f395635a9",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "f023f6d0-c8ea-4bd0-8d53-dc099c22637d",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-c39c-734d-8440-14b69404a2ea\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":5,\"statusCounts\":{\"verified\":0,\"partially_verified\":2,\"stale\":0,\"unverified\":3},\"createdAt\":\"2026-09-12T18:51:29.163Z\"},\"findings\":[{\"id\":\"finding_cdcb19dc58aef066a0fde02e\",\"title\":\"“蓝月鲸鱼节”（2026年11月24日）——未证实\",\"summary\":\"在已检索到的雷克雅未克11月活动与节庆资料中，未发现任何名为“蓝月鲸鱼节”或类似名称的官方/权威公告；当地可查的11月主要节庆为Iceland Airwaves音乐节（2026年11月5–7日），而观鲸季方面仅见“全年最后一班观鲸船于11月30日出发”等信息，均与11月24日的“蓝月鲸鱼节”不符。结论：该说法目前【尚未证实】，且无法排除名称被误传、拼写偏差或根本不存在的可能。建议以visitreykjavik.is / reykjavik.is等市政与官方旅游渠道为准再复核。\",\"category\":\"event\",\"destinations\":[{\"id\":\"city:REK\",\"name\":\"雷克雅未克\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_35c1f095e006a100b8a98a1a\",\"title\":\"极光观测（天气依赖，不保证可见）\",\"summary\":\"11月下旬雷克雅未克黑夜较长，具备观测极光的季节条件，但能否看到完全取决于云量、太阳活动与光污染规避，属于【不可保证】的体验。常见做法是参加带向导的极光团（巴士/船/雪地摩托等），以提高在晴窗期找到合适地点的概率。具体出发时间、集合点、退款政策与价格需以所选运营商当日公告为准（本次未能核实到窗口内某场次的确认信息）。\",\"category\":\"seasonal\",\"destinations\":[{\"id\":\"city:REK\",\"name\":\"雷克雅未克\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_c0a5e6367aa44ac44c92df6f\",\"title\":\"观鲸船游（Faxaflói湾，季节性运营）\",\"summary\":\"从旧港出发的观鲸船游在11月仍可能有班次（有资料提到10月1日至11月30日期间存在固定时段，如上午9点/下午1点及晚间9点等），但不同公司运营日期差异较大，部分快艇类项目在10月底即结束。若你想结合“鲸鱼”主题体验，可将此作为替代方案，而非等待未经证实的“鲸鱼节”。【日期/时刻/票价/适老无障碍均未在本次检索中确认】。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:REK\",\"name\":\"雷克雅未克\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_19124c6abf04dd9dfb8ce45e\",\"title\":\"当地文化：博物馆与城市历史街区漫步\",\"summary\":\"雷克雅未克适合用半天至一天做室内文化体验（国家博物馆、艺术博物馆、Einar Jónsson雕塑馆等类型场馆通常更受天气影响小），并搭配Laugavegur主街、旧港区与Hallgrímskirkja周边步行感受本地生活氛围。由于本次检索未覆盖各馆在2026年11月23–25日的开放时间与门票细节，请将【开放时间/预约要求/票价】视为待确认项。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:REK\",\"name\":\"雷克雅未克\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_405b36e0fc5db3bb56957ca7\",\"title\":\"11月下旬出行实用提示（天气与日照）\",\"summary\":\"11月冰岛多风、湿冷且日照短，户外活动（尤其极光与海岸观鲸）对天气高度敏感，建议预留弹性时间并准备防风防水保暖装备。市内交通与景点排队情况会随天气波动；如需夜间外出看极光，优先选择有取消/改期政策的正规团，避免自行驾车前往偏远地点。以上为通用建议，不构成对任何具体场次或路况的保证。\",\"category\":\"practical\",\"destinations\":[{\"id\":\"city:REK\",\"name\":\"雷克雅未克\"}],\"verificationStatus\":\"unverified\"}],\"warnings\":[\"thin_research_audit:thin_audit_4fc29e98-af95-4629-a994-a88392035f14\",\"thin_research_disposition:partial\",\"research_evidence_is_snippet_only\",\"thin_research_structure_normalized\",\"source_excerpt_truncated\",\"“蓝月鲸鱼节”是否在2026年11月24日真实存在：当前检索未见权威公告，判定为未证实；亦无法确认是否存在名称相近但不同的活动。\",\"2026年11月是否出现“蓝月亮”天文现象及其与所谓节庆的关联：本次未能核实到可靠来源。\",\"极光可见性：受云量与地磁活动影响，无法保证在2026年11月23–25日任一夜晚可见。\",\"观鲸船游在2026年11月23–25日的具体班次、时长、票价、登船点与无障碍/儿童限制：未确认。\",\"博物馆/文化场馆在2026年11月23–25日的开放时间、是否需要预约、票价与饮食相关服务（如馆内咖啡/餐厅）：未确认。\",\"所有候选活动的实时库存、价格变动与退改政策：未确认。\"]}}",
+          "costUnits": 4,
+          "durationMs": 6,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-c39c-734d-8440-14b69404a2ea"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_4fc29e98-af95-4629-a994-a88392035f14",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "thin_research_structure_normalized",
+            "source_excerpt_truncated",
+            "“蓝月鲸鱼节”是否在2026年11月24日真实存在：当前检索未见权威公告，判定为未证实；亦无法确认是否存在名称相近但不同的活动。",
+            "2026年11月是否出现“蓝月亮”天文现象及其与所谓节庆的关联：本次未能核实到可靠来源。",
+            "极光可见性：受云量与地磁活动影响，无法保证在2026年11月23–25日任一夜晚可见。",
+            "观鲸船游在2026年11月23–25日的具体班次、时长、票价、登船点与无障碍/儿童限制：未确认。",
+            "博物馆/文化场馆在2026年11月23–25日的开放时间、是否需要预约、票价与饮食相关服务（如馆内咖啡/餐厅）：未确认。",
+            "所有候选活动的实时库存、价格变动与退改政策：未确认。"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-c39c-734d-8440-14b69404a2ea",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 5,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 2,
+                "stale": 0,
+                "unverified": 3
+              },
+              "createdAt": "2026-09-12T18:51:29.163Z"
+            },
+            "findings": [
+              {
+                "id": "finding_cdcb19dc58aef066a0fde02e",
+                "title": "“蓝月鲸鱼节”（2026年11月24日）——未证实",
+                "summary": "在已检索到的雷克雅未克11月活动与节庆资料中，未发现任何名为“蓝月鲸鱼节”或类似名称的官方/权威公告；当地可查的11月主要节庆为Iceland Airwaves音乐节（2026年11月5–7日），而观鲸季方面仅见“全年最后一班观鲸船于11月30日出发”等信息，均与11月24日的“蓝月鲸鱼节”不符。结论：该说法目前【尚未证实】，且无法排除名称被误传、拼写偏差或根本不存在的可能。建议以visitreykjavik.is / reykjavik.is等市政与官方旅游渠道为准再复核。",
+                "category": "event",
+                "destinations": [
+                  {
+                    "id": "city:REK",
+                    "name": "雷克雅未克"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_35c1f095e006a100b8a98a1a",
+                "title": "极光观测（天气依赖，不保证可见）",
+                "summary": "11月下旬雷克雅未克黑夜较长，具备观测极光的季节条件，但能否看到完全取决于云量、太阳活动与光污染规避，属于【不可保证】的体验。常见做法是参加带向导的极光团（巴士/船/雪地摩托等），以提高在晴窗期找到合适地点的概率。具体出发时间、集合点、退款政策与价格需以所选运营商当日公告为准（本次未能核实到窗口内某场次的确认信息）。",
+                "category": "seasonal",
+                "destinations": [
+                  {
+                    "id": "city:REK",
+                    "name": "雷克雅未克"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_c0a5e6367aa44ac44c92df6f",
+                "title": "观鲸船游（Faxaflói湾，季节性运营）",
+                "summary": "从旧港出发的观鲸船游在11月仍可能有班次（有资料提到10月1日至11月30日期间存在固定时段，如上午9点/下午1点及晚间9点等），但不同公司运营日期差异较大，部分快艇类项目在10月底即结束。若你想结合“鲸鱼”主题体验，可将此作为替代方案，而非等待未经证实的“鲸鱼节”。【日期/时刻/票价/适老无障碍均未在本次检索中确认】。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:REK",
+                    "name": "雷克雅未克"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_19124c6abf04dd9dfb8ce45e",
+                "title": "当地文化：博物馆与城市历史街区漫步",
+                "summary": "雷克雅未克适合用半天至一天做室内文化体验（国家博物馆、艺术博物馆、Einar Jónsson雕塑馆等类型场馆通常更受天气影响小），并搭配Laugavegur主街、旧港区与Hallgrímskirkja周边步行感受本地生活氛围。由于本次检索未覆盖各馆在2026年11月23–25日的开放时间与门票细节，请将【开放时间/预约要求/票价】视为待确认项。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:REK",
+                    "name": "雷克雅未克"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_405b36e0fc5db3bb56957ca7",
+                "title": "11月下旬出行实用提示（天气与日照）",
+                "summary": "11月冰岛多风、湿冷且日照短，户外活动（尤其极光与海岸观鲸）对天气高度敏感，建议预留弹性时间并准备防风防水保暖装备。市内交通与景点排队情况会随天气波动；如需夜间外出看极光，优先选择有取消/改期政策的正规团，避免自行驾车前往偏远地点。以上为通用建议，不构成对任何具体场次或路况的保证。",
+                "category": "practical",
+                "destinations": [
+                  {
+                    "id": "city:REK",
+                    "name": "雷克雅未克"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_4fc29e98-af95-4629-a994-a88392035f14",
+              "thin_research_disposition:partial",
+              "research_evidence_is_snippet_only",
+              "thin_research_structure_normalized",
+              "source_excerpt_truncated",
+              "“蓝月鲸鱼节”是否在2026年11月24日真实存在：当前检索未见权威公告，判定为未证实；亦无法确认是否存在名称相近但不同的活动。",
+              "2026年11月是否出现“蓝月亮”天文现象及其与所谓节庆的关联：本次未能核实到可靠来源。",
+              "极光可见性：受云量与地磁活动影响，无法保证在2026年11月23–25日任一夜晚可见。",
+              "观鲸船游在2026年11月23–25日的具体班次、时长、票价、登船点与无障碍/儿童限制：未确认。",
+              "博物馆/文化场馆在2026年11月23–25日的开放时间、是否需要预约、票价与饮食相关服务（如馆内咖啡/餐厅）：未确认。",
+              "所有候选活动的实时库存、价格变动与退改政策：未确认。"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-c39c-734d-8440-14b69404a2ea"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:REK",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_cdcb19dc58aef066a0fde02e",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_19124c6abf04dd9dfb8ce45e",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "cityId": "city:REK",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_35c1f095e006a100b8a98a1a",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_405b36e0fc5db3bb56957ca7",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "cityId": "city:REK",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_c0a5e6367aa44ac44c92df6f",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+          "runId": "01a0972a-c394-72e5-8be5-0c6f395635a9",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "5e609d4c-e75a-4444-a76a-5f695ab34353",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"eligible_research_evidence\",\"guide_daily_activity_coverage\",\"guide_research_type:seasonal\",\"guide_research_type:practical\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"event\",\"seasonal\",\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 1,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "eligible_research_evidence",
+              "guide_daily_activity_coverage",
+              "guide_research_type:seasonal",
+              "guide_research_type:practical"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "event",
+                "seasonal",
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3"
+        },
+        "scope": {
+          "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+          "runId": "01a0972a-c394-72e5-8be5-0c6f395635a9",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "b9c79019-3320-4c87-b989-97e8a7a40285",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c394-72e5-8be5-0ae7ad70f3a3\",\"ownerId\":\"backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4\",\"tripId\":\"01a0972a-c38d-7716-a95f-a37efe56b6c5\",\"conversationId\":\"01a0972a-c38e-7454-906b-47977cb988bc\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"核实无链接帖子所称2026年11月24日雷克雅未克“蓝月鲸鱼节”，区分找到权威公告、找到疑似同名活动与尚未证实。\",\"研究旅行窗口内最多6个当地文化或极光相关候选，对天气依赖、日期和预约未知项保留不确定性。\"],\"researchTypes\":[\"event\",\"seasonal\",\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.332Z\",\"updatedAt\":\"2026-09-12T19:49:17.332Z\"},\"run\":{\"id\":\"01a0972a-c394-72e5-8be5-0c6f395635a9\",\"ownerId\":\"backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4\",\"goalId\":\"01a0972a-c394-72e5-8be5-0ae7ad70f3a3\",\"tripId\":\"01a0972a-c38d-7716-a95f-a37efe56b6c5\",\"generationId\":\"offline-generation-c576baac-634b-45d6-9467-8f31d7c9c2ba\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c38d-7716-a95f-a37efe56b6c5\",\"departureWindow\":{\"from\":\"2026-11-23\",\"to\":\"2026-11-23\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-25\",\"to\":\"2026-11-25\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:REK\",\"type\":\"city\",\"name\":\"雷克雅未克\",\"countryCode\":\"IS\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"当地文化\",\"极光\",\"核实无链接帖子中的蓝月鲸鱼节\",\"节庆名称可能不准确\",\"不保证极光可见\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-c39c-734d-8440-14b69404a2ea\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:17.341Z\"}],\"locationHandles\":[{\"id\":\"city:REK\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:17.332Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:17.332Z\",\"updatedAt\":\"2026-09-12T19:49:17.342Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+              "ownerId": "backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4",
+              "tripId": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+              "conversationId": "01a0972a-c38e-7454-906b-47977cb988bc",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "核实无链接帖子所称2026年11月24日雷克雅未克“蓝月鲸鱼节”，区分找到权威公告、找到疑似同名活动与尚未证实。",
+                  "研究旅行窗口内最多6个当地文化或极光相关候选，对天气依赖、日期和预约未知项保留不确定性。"
+                ],
+                "researchTypes": [
+                  "event",
+                  "seasonal",
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.332Z",
+              "updatedAt": "2026-09-12T19:49:17.332Z"
+            },
+            "run": {
+              "id": "01a0972a-c394-72e5-8be5-0c6f395635a9",
+              "ownerId": "backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4",
+              "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+              "tripId": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+              "generationId": "offline-generation-c576baac-634b-45d6-9467-8f31d7c9c2ba",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+                "departureWindow": {
+                  "from": "2026-11-23",
+                  "to": "2026-11-23",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-25",
+                  "to": "2026-11-25",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:REK",
+                      "type": "city",
+                      "name": "雷克雅未克",
+                      "countryCode": "IS"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "当地文化",
+                  "极光",
+                  "核实无链接帖子中的蓝月鲸鱼节",
+                  "节庆名称可能不准确",
+                  "不保证极光可见"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-c39c-734d-8440-14b69404a2ea",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:17.341Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:REK",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:17.332Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:17.332Z",
+              "updatedAt": "2026-09-12T19:49:17.342Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-c39c-734d-8440-14b69404a2ea",
+        "tripId": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+        "conversationId": "01a0972a-c38e-7454-906b-47977cb988bc",
+        "goalId": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+        "runId": "01a0972a-c394-72e5-8be5-0c6f395635a9",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-c39c-734d-8440-14b69404a2ea",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:REK",
+                "type": "city",
+                "name": "雷克雅未克",
+                "countryCode": "IS"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-11-23",
+              "to": "2026-11-25"
+            },
+            "interests": [
+              "当地文化",
+              "极光",
+              "核实无链接帖子中的蓝月鲸鱼节",
+              "节庆名称可能不准确",
+              "不保证极光可见"
+            ],
+            "questions": [
+              "核实无链接帖子所称2026年11月24日雷克雅未克“蓝月鲸鱼节”，区分找到权威公告、找到疑似同名活动与尚未证实。",
+              "研究旅行窗口内最多6个当地文化或极光相关候选，对天气依赖、日期和预约未知项保留不确定性。"
+            ],
+            "researchTypes": [
+              "event",
+              "seasonal",
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_cdcb19dc58aef066a0fde02e",
+              "category": "event",
+              "destinations": [
+                {
+                  "id": "city:REK",
+                  "type": "city",
+                  "name": "雷克雅未克",
+                  "countryCode": "IS"
+                }
+              ],
+              "title": "“蓝月鲸鱼节”（2026年11月24日）——未证实",
+              "summary": "在已检索到的雷克雅未克11月活动与节庆资料中，未发现任何名为“蓝月鲸鱼节”或类似名称的官方/权威公告；当地可查的11月主要节庆为Iceland Airwaves音乐节（2026年11月5–7日），而观鲸季方面仅见“全年最后一班观鲸船于11月30日出发”等信息，均与11月24日的“蓝月鲸鱼节”不符。结论：该说法目前【尚未证实】，且无法排除名称被误传、拼写偏差或根本不存在的可能。建议以visitreykjavik.is / reykjavik.is等市政与官方旅游渠道为准再复核。",
+              "sources": [
+                {
+                  "title": "Iceland in November 2026: Weather, Events and the Best Tours | Best Iceland Tours",
+                  "url": "https://best-iceland-tours.com/iceland-in-november",
+                  "domain": "best-iceland-tours.com",
+                  "snippet": "## Events and festivals in November 2026\n\n...\n\nIceland Airwaves is the November fixture, running from 5 to 7 November 2026 across Reykjavik venues. The other November date that affects bookings is 30 November, when the last whale watching cruise of the year sails.\n\n| Event | Dates | Where | Cost |\n| --- | --- | --- | --- |\n| Iceland Airwaves | 5 to 7 November 2026 | Venues across central Reykjavik | Ticketed, festival wristband |\n| Natural ice cave season opens | From November 2026 | Vatnajokull, South East Iceland | Booked directly with South East Iceland operators |\n| Last whale watching cruise of the year | 30 November 2026 | Reykjavik old harbour | From £72 |\n\n...\n\nIceland Airwaves is the only thing that reliably fills Reykjavik in November. It is a working music festival rather than a",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "City Life — Festivals in Reykjavík | Reykjavik",
+                  "url": "https://reykjavik.is/",
+                  "domain": "reykjavik.is",
+                  "snippet": "Forsíða | Reykjavik\n...\n# Hæ! Hvernig getum\n...\nð?\n...\ngrannavars\n...\ner samstarfsverkef\n...\nReykjavíkurb\n...\nar, lögreglunnar og íb\n...\ner mikilvægur hle\n...\nur í að fækka in\n...\nen um leið\n...\nog myndar þ\n...\nmeð öruggara og",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Things to Do in Reykjavik in November (2026)",
+                  "url": "https://thingstodoinreykjavik.com/month/november/",
+                  "domain": "thingstodoinreykjavik.com",
+                  "snippet": "6. The 5-day pass includes midnight sets in record stores and laundromats, with locals performing alongside international acts. Daytime shows are free with wristband; after-midnight sets require venue-specific tickets.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:51:29.163Z",
+                "expiresAt": "2026-10-12T18:51:29.163Z",
+                "confidence": 0.45,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://best-iceland-tours.com/iceland-in-november"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://reykjavik.is/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://thingstodoinreykjavik.com/month/november/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified",
+                "event_date_is_snippet_only",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_35c1f095e006a100b8a98a1a",
+              "category": "seasonal",
+              "destinations": [
+                {
+                  "id": "city:REK",
+                  "type": "city",
+                  "name": "雷克雅未克",
+                  "countryCode": "IS"
+                }
+              ],
+              "title": "极光观测（天气依赖，不保证可见）",
+              "summary": "11月下旬雷克雅未克黑夜较长，具备观测极光的季节条件，但能否看到完全取决于云量、太阳活动与光污染规避，属于【不可保证】的体验。常见做法是参加带向导的极光团（巴士/船/雪地摩托等），以提高在晴窗期找到合适地点的概率。具体出发时间、集合点、退款政策与价格需以所选运营商当日公告为准（本次未能核实到窗口内某场次的确认信息）。",
+              "sources": [
+                {
+                  "title": "Whale-Watching and Northern Lights Cruise from Reykjavik (Iceland)",
+                  "url": "https://www.the-boat-tours.com/reykjavik-iceland/whale-watching-and-northern-lights-cruise-from-reykjavik_39405",
+                  "domain": "www.the-boat-tours.com",
+                  "snippet": "1 October - 30 November: 9am or 1pm and 9pm\n\n...\n\nThe 3-hour whale-watching excursion departs from the Old Harbour in Reykjavík. Observe the minke whales, dolphins, porpoises, and humpback whales in Faxaflói bay. Soak in the gorgeous views and admire your surroundings bathed in the winter glow. Also, keep your eyes peeled for the",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:51:29.163Z",
+                "expiresAt": "2026-10-27T18:51:29.163Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.the-boat-tours.com/reykjavik-iceland/whale-watching-and-northern-lights-cruise-from-reykjavik_39405"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_c0a5e6367aa44ac44c92df6f",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:REK",
+                  "type": "city",
+                  "name": "雷克雅未克",
+                  "countryCode": "IS"
+                }
+              ],
+              "title": "观鲸船游（Faxaflói湾，季节性运营）",
+              "summary": "从旧港出发的观鲸船游在11月仍可能有班次（有资料提到10月1日至11月30日期间存在固定时段，如上午9点/下午1点及晚间9点等），但不同公司运营日期差异较大，部分快艇类项目在10月底即结束。若你想结合“鲸鱼”主题体验，可将此作为替代方案，而非等待未经证实的“鲸鱼节”。【日期/时刻/票价/适老无障碍均未在本次检索中确认】。",
+              "sources": [
+                {
+                  "title": "Whale-Watching and Northern Lights Cruise from Reykjavik (Iceland)",
+                  "url": "https://www.the-boat-tours.com/reykjavik-iceland/whale-watching-and-northern-lights-cruise-from-reykjavik_39405",
+                  "domain": "www.the-boat-tours.com",
+                  "snippet": "1 October - 30 November: 9am or 1pm and 9pm\n\n...\n\nThe 3-hour whale-watching excursion departs from the Old Harbour in Reykjavík. Observe the minke whales, dolphins, porpoises, and humpback whales in Faxaflói bay. Soak in the gorgeous views and admire your surroundings bathed in the winter glow. Also, keep your eyes peeled for the",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Iceland in November 2026: Weather, Events and the Best Tours | Best Iceland Tours",
+                  "url": "https://best-iceland-tours.com/iceland-in-november",
+                  "domain": "best-iceland-tours.com",
+                  "snippet": "## Events and festivals in November 2026\n\n...\n\nIceland Airwaves is the November fixture, running from 5 to 7 November 2026 across Reykjavik venues. The other November date that affects bookings is 30 November, when the last whale watching cruise of the year sails.\n\n| Event | Dates | Where | Cost |\n| --- | --- | --- | --- |\n| Iceland Airwaves | 5 to 7 November 2026 | Venues across central Reykjavik | Ticketed, festival wristband |\n| Natural ice cave season opens | From November 2026 | Vatnajokull, South East Iceland | Booked directly with South East Iceland operators |\n| Last whale watching cruise of the year | 30 November 2026 | Reykjavik old harbour | From £72 |\n\n...\n\nIceland Airwaves is the only thing that reliably fills Reykjavik in November. It is a working music festival rather than a",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:51:29.163Z",
+                "expiresAt": "2026-12-11T18:51:29.163Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.the-boat-tours.com/reykjavik-iceland/whale-watching-and-northern-lights-cruise-from-reykjavik_39405"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://best-iceland-tours.com/iceland-in-november"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_19124c6abf04dd9dfb8ce45e",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:REK",
+                  "type": "city",
+                  "name": "雷克雅未克",
+                  "countryCode": "IS"
+                }
+              ],
+              "title": "当地文化：博物馆与城市历史街区漫步",
+              "summary": "雷克雅未克适合用半天至一天做室内文化体验（国家博物馆、艺术博物馆、Einar Jónsson雕塑馆等类型场馆通常更受天气影响小），并搭配Laugavegur主街、旧港区与Hallgrímskirkja周边步行感受本地生活氛围。由于本次检索未覆盖各馆在2026年11月23–25日的开放时间与门票细节，请将【开放时间/预约要求/票价】视为待确认项。",
+              "sources": [
+                {
+                  "title": "City Life — Festivals in Reykjavík | Reykjavik",
+                  "url": "https://reykjavik.is/",
+                  "domain": "reykjavik.is",
+                  "snippet": "Forsíða | Reykjavik\n...\n# Hæ! Hvernig getum\n...\nð?\n...\ngrannavars\n...\ner samstarfsverkef\n...\nReykjavíkurb\n...\nar, lögreglunnar og íb\n...\ner mikilvægur hle\n...\nur í að fækka in\n...\nen um leið\n...\nog myndar þ\n...\nmeð öruggara og",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:51:29.163Z",
+                "expiresAt": "2026-12-11T18:51:29.163Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://reykjavik.is/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_405b36e0fc5db3bb56957ca7",
+              "category": "practical",
+              "destinations": [
+                {
+                  "id": "city:REK",
+                  "type": "city",
+                  "name": "雷克雅未克",
+                  "countryCode": "IS"
+                }
+              ],
+              "title": "11月下旬出行实用提示（天气与日照）",
+              "summary": "11月冰岛多风、湿冷且日照短，户外活动（尤其极光与海岸观鲸）对天气高度敏感，建议预留弹性时间并准备防风防水保暖装备。市内交通与景点排队情况会随天气波动；如需夜间外出看极光，优先选择有取消/改期政策的正规团，避免自行驾车前往偏远地点。以上为通用建议，不构成对任何具体场次或路况的保证。",
+              "sources": [
+                {
+                  "title": "Iceland in November 2026: Weather, Events and the Best Tours | Best Iceland Tours",
+                  "url": "https://best-iceland-tours.com/iceland-in-november",
+                  "domain": "best-iceland-tours.com",
+                  "snippet": "## Events and festivals in November 2026\n\n...\n\nIceland Airwaves is the November fixture, running from 5 to 7 November 2026 across Reykjavik venues. The other November date that affects bookings is 30 November, when the last whale watching cruise of the year sails.\n\n| Event | Dates | Where | Cost |\n| --- | --- | --- | --- |\n| Iceland Airwaves | 5 to 7 November 2026 | Venues across central Reykjavik | Ticketed, festival wristband |\n| Natural ice cave season opens | From November 2026 | Vatnajokull, South East Iceland | Booked directly with South East Iceland operators |\n| Last whale watching cruise of the year | 30 November 2026 | Reykjavik old harbour | From £72 |\n\n...\n\nIceland Airwaves is the only thing that reliably fills Reykjavik in November. It is a working music festival rather than a",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:51:29.163Z",
+                "expiresAt": "2026-11-11T18:51:29.163Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://best-iceland-tours.com/iceland-in-november"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "source_excerpt_truncated"
+              ]
+            }
+          ],
+          "queryCount": 5,
+          "warnings": [
+            "thin_research_audit:thin_audit_4fc29e98-af95-4629-a994-a88392035f14",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "thin_research_structure_normalized",
+            "source_excerpt_truncated",
+            "“蓝月鲸鱼节”是否在2026年11月24日真实存在：当前检索未见权威公告，判定为未证实；亦无法确认是否存在名称相近但不同的活动。",
+            "2026年11月是否出现“蓝月亮”天文现象及其与所谓节庆的关联：本次未能核实到可靠来源。",
+            "极光可见性：受云量与地磁活动影响，无法保证在2026年11月23–25日任一夜晚可见。",
+            "观鲸船游在2026年11月23–25日的具体班次、时长、票价、登船点与无障碍/儿童限制：未确认。",
+            "博物馆/文化场馆在2026年11月23–25日的开放时间、是否需要预约、票价与饮食相关服务（如馆内咖啡/餐厅）：未确认。",
+            "所有候选活动的实时库存、价格变动与退改政策：未确认。"
+          ],
+          "createdAt": "2026-09-12T18:51:29.163Z"
+        },
+        "verification": {
+          "status": "partially_verified",
+          "checkedAt": "2026-09-12T18:51:29.163Z",
+          "confidence": 0.2,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://best-iceland-tours.com/iceland-in-november"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://reykjavik.is/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://thingstodoinreykjavik.com/month/november/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.the-boat-tours.com/reykjavik-iceland/whale-watching-and-northern-lights-cruise-from-reykjavik_39405"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:17.341Z",
+        "updatedAt": "2026-09-12T19:49:17.341Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-c394-72e5-8be5-0ae7ad70f3a3",
+        "ownerId": "backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4",
+        "tripId": "01a0972a-c38d-7716-a95f-a37efe56b6c5",
+        "conversationId": "01a0972a-c38e-7454-906b-47977cb988bc",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "核实无链接帖子所称2026年11月24日雷克雅未克“蓝月鲸鱼节”，区分找到权威公告、找到疑似同名活动与尚未证实。",
+            "研究旅行窗口内最多6个当地文化或极光相关候选，对天气依赖、日期和预约未知项保留不确定性。"
+          ],
+          "researchTypes": [
+            "event",
+            "seasonal",
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:17.332Z",
+        "updatedAt": "2026-09-12T19:49:17.332Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "partial",
+  "providerError": null,
+  "effectiveDisposition": "partial",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 5,
+      "verificationEligibleFindingCount": 2,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 2,
+        "unverified": 3,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "eligible_research_evidence",
+        "guide_daily_activity_coverage",
+        "guide_research_type:seasonal",
+        "guide_research_type:practical"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

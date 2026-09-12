@@ -1,0 +1,1206 @@
+{
+  "sampleId": "candidate-screen-v3/sample-042",
+  "caseId": "activity-07",
+  "model": "z-ai/glm-5.3-flash",
+  "sampleFile": "samples/sample-032.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-042.json",
+  "sourceSha256": "90150c71f8ce48a6107f391423b80b12f2f1eafaea34459cd944c37415cc0015",
+  "receiptSha256": "b638c5e237c26cdcbe456751cd776743115f195a096f34b9a51a3f576679ebe4",
+  "recordedAt": "2026-09-12T18:53:18.915Z",
+  "travelWindow": {
+    "from": "2026-11-03",
+    "to": "2026-11-05"
+  },
+  "recordedStatus": "responded",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_9d928bc9-c74d-437e-ac4a-0dfd9ea888cb.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+        "departureWindow": {
+          "from": "2026-11-03",
+          "to": "2026-11-03",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-11-05",
+          "to": "2026-11-05",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:KYO",
+              "type": "city",
+              "name": "京都",
+              "countryCode": "JP"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "红叶",
+          "夜间特别开放",
+          "区分往年规律与当年公告",
+          "接受非最佳观赏状态"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-c49d-73e8-a2bc-5062a9b035f3",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_9d928bc9-c74d-437e-ac4a-0dfd9ea888cb",
+        "thin_research_disposition:partial",
+        "research_evidence_is_snippet_only",
+        "source_excerpt_truncated",
+        "高台寺2026年点灯日期与票价未经官方公告确认,仅有2025年往年数据(约10月24日-12月14日、约600日元)",
+        "二条城NAKED 2026年10月23日-12月5日来自二手英文汇总,具体开放时段、票价及购票方式未在检索摘要中列明",
+        "天龍寺2026年晨间特别开放的具体时间未确认",
+        "琉璃光院2026年秋季特别拝観仅见2025年日期(10/1-12/13),且11月中旬起需抽选,2026年安排未确认",
+        "11月3-5日红叶状态仅能按往年规律预测,当年实际变色需临近出行时参考红叶前线情报",
+        "東寺夜间拝観预约/整理券制2026年是否维持仅现场购票,官方摘要中注明可能变更"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "9980028e-0e47-47b6-8a6d-90616cee680d",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c48b-721f-ae53-1e9cc720201c\",\"departureWindow\":{\"from\":\"2026-11-03\",\"to\":\"2026-11-03\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-05\",\"to\":\"2026-11-05\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:KYO\",\"type\":\"city\",\"name\":\"京都\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"红叶\",\"夜间特别开放\",\"区分往年规律与当年公告\",\"接受非最佳观赏状态\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+              "departureWindow": {
+                "from": "2026-11-03",
+                "to": "2026-11-03",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-11-05",
+                "to": "2026-11-05",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:KYO",
+                    "type": "city",
+                    "name": "京都",
+                    "countryCode": "JP"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "红叶",
+                "夜间特别开放",
+                "区分往年规律与当年公告",
+                "接受非最佳观赏状态"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "研究2026年11月3日至5日京都红叶及夜间特别开放候选，分别说明季节规律、当年已公布日期与待确认事项。"
+            ],
+            "researchTypes": [
+              "seasonal",
+              "event",
+              "activity"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+          "runId": "01a0972a-c493-7763-a94a-3185c865b877",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "2d6e1583-1640-4c76-8386-38d7c93d1de8",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c493-7763-a94a-2e4f38834f6a\",\"ownerId\":\"backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe\",\"tripId\":\"01a0972a-c48b-721f-ae53-1e9cc720201c\",\"conversationId\":\"01a0972a-c48c-736d-b3b2-f9d3c6207486\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究2026年11月3日至5日京都红叶及夜间特别开放候选，分别说明季节规律、当年已公布日期与待确认事项。\"],\"researchTypes\":[\"seasonal\",\"event\",\"activity\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.587Z\",\"updatedAt\":\"2026-09-12T19:49:17.587Z\"},\"run\":{\"id\":\"01a0972a-c493-7763-a94a-3185c865b877\",\"ownerId\":\"backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe\",\"goalId\":\"01a0972a-c493-7763-a94a-2e4f38834f6a\",\"tripId\":\"01a0972a-c48b-721f-ae53-1e9cc720201c\",\"generationId\":\"offline-generation-4823c2c3-1f4c-4e94-aa2c-db48a78c5602\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c48b-721f-ae53-1e9cc720201c\",\"departureWindow\":{\"from\":\"2026-11-03\",\"to\":\"2026-11-03\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-05\",\"to\":\"2026-11-05\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:KYO\",\"type\":\"city\",\"name\":\"京都\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"红叶\",\"夜间特别开放\",\"区分往年规律与当年公告\",\"接受非最佳观赏状态\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.587Z\",\"updatedAt\":\"2026-09-12T19:49:17.587Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 2,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+              "ownerId": "backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe",
+              "tripId": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+              "conversationId": "01a0972a-c48c-736d-b3b2-f9d3c6207486",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究2026年11月3日至5日京都红叶及夜间特别开放候选，分别说明季节规律、当年已公布日期与待确认事项。"
+                ],
+                "researchTypes": [
+                  "seasonal",
+                  "event",
+                  "activity"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.587Z",
+              "updatedAt": "2026-09-12T19:49:17.587Z"
+            },
+            "run": {
+              "id": "01a0972a-c493-7763-a94a-3185c865b877",
+              "ownerId": "backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe",
+              "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+              "tripId": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+              "generationId": "offline-generation-4823c2c3-1f4c-4e94-aa2c-db48a78c5602",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+                "departureWindow": {
+                  "from": "2026-11-03",
+                  "to": "2026-11-03",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-05",
+                  "to": "2026-11-05",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:KYO",
+                      "type": "city",
+                      "name": "京都",
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "红叶",
+                  "夜间特别开放",
+                  "区分往年规律与当年公告",
+                  "接受非最佳观赏状态"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.587Z",
+              "updatedAt": "2026-09-12T19:49:17.587Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:KYO",
+              "type": "city",
+              "name": "京都",
+              "countryCode": "JP"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-11-03",
+            "to": "2026-11-05"
+          },
+          "interests": [
+            "红叶",
+            "夜间特别开放",
+            "区分往年规律与当年公告",
+            "接受非最佳观赏状态"
+          ],
+          "questions": [
+            "研究2026年11月3日至5日京都红叶及夜间特别开放候选，分别说明季节规律、当年已公布日期与待确认事项。"
+          ],
+          "researchTypes": [
+            "seasonal",
+            "event",
+            "activity"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+          "runId": "01a0972a-c493-7763-a94a-3185c865b877",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "536a3496-5c0f-4351-9070-92f333788572",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-c49d-73e8-a2bc-5062a9b035f3\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":6,\"statusCounts\":{\"verified\":0,\"partially_verified\":3,\"stale\":0,\"unverified\":3},\"createdAt\":\"2026-09-12T18:53:18.915Z\"},\"findings\":[{\"id\":\"finding_4922fd0ea6681e07226e8d8f\",\"title\":\"東寺 夜間特別拝観・ライトアップ(2026年已公布:10月31日~12月13日)\",\"summary\":\"已公布2026年安排,正好覆盖11月3-5日。18:00-21:30(21:00截止入场),夜间拝観费大人1,000日元、高中生500日元。金堂、讲堂及水镜庭院可赏夜枫。官方无提前预约制,当日现场购票,但2026年运营方式可能调整,行前应再查官网确认。\",\"category\":\"event\",\"destinations\":[{\"id\":\"city:KYO\",\"name\":\"京都\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_8404ed30e8da45cf30014167\",\"title\":\"二条城 NAKED 秋之光的祭典(2026年已公布:10月23日~12月5日)\",\"summary\":\"据英文资料,二条城与NAKED合作的夜间光影活动已公布2026年为10月23日至12月5日,覆盖出行日期。主要在御苑和名庭园投影灯光,属现代光雕而非传统点灯。具体开放时段与票价在检索到的摘要中未详列,需以二条城官网为准(标为待确认)。\",\"category\":\"event\",\"destinations\":[{\"id\":\"city:KYO\",\"name\":\"京都\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_38268bf9cb2998a379bd257e\",\"title\":\"高台寺夜间点灯(往年规律:约10月下旬~12月中旬)\",\"summary\":\"往年高台寺点灯期极长,2025年约为10月24日至12月14日,17:00-22:00,约600日元,通常覆盖11月上旬。本次检索未能获取其2026年正式公告(检索配额限制),日期与票价按往年规律估计,出发前需查高台寺官网确认。\",\"category\":\"event\",\"destinations\":[{\"id\":\"city:KYO\",\"name\":\"京都\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_733b7f90098ba095f9dd0e89\",\"title\":\"天龍寺(岚山)白天赏枫+晨间特别开放\",\"summary\":\"据2026汇总资料,天龍寺已公布秋季晨间特别开放时间,适合清晨人少时在曹源池庭园赏枫。岚山一带往年11月上旬已有初秋色(比市区稍早),11月3-5日可见渐进变红而非满山全红,与你接受非最佳状态的前提相符。晨间开放具体时间需再确认(标为待确认)。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:KYO\",\"name\":\"京都\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_4f8cd6d2d8722acbca8ef046\",\"title\":\"2026年京都红叶季节规律:市区见頃约11月中下旬\",\"summary\":\"往年规律:京都红叶通常11月中旬开始,市中心最佳观赏期多在11月20日至12月初。11月3-5日属于季节早期,东福寺、永観堂等知名处尚未见頃,但早期色叶、绿色向红色过渡的景观及避开人潮是优势。如想看得更红,可优先岚山、高台寺等较早区域。\",\"category\":\"seasonal\",\"destinations\":[{\"id\":\"city:KYO\",\"name\":\"京都\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_369e698586df56ed4e5cb5c8\",\"title\":\"清水寺、永観堂夜枫(2026年已公布但不在你行程窗口内)\",\"summary\":\"已确认2026年公告:清水寺夜间特别拝観为11月21-30日(21:30闭门、21:00最后入场);永観堂夜间点灯为11月20日-12月6日(17:30-20:30入场,中高生以上1,000日元)。两者均晚于你11月3-5日的行程,无法参加,列出供计划参考;东福寺为白天限定,无夜枫。\",\"category\":\"event\",\"destinations\":[{\"id\":\"city:KYO\",\"name\":\"京都\"}],\"verificationStatus\":\"partially_verified\"}],\"warnings\":[\"thin_research_audit:thin_audit_9d928bc9-c74d-437e-ac4a-0dfd9ea888cb\",\"thin_research_disposition:partial\",\"research_evidence_is_snippet_only\",\"source_excerpt_truncated\",\"高台寺2026年点灯日期与票价未经官方公告确认,仅有2025年往年数据(约10月24日-12月14日、约600日元)\",\"二条城NAKED 2026年10月23日-12月5日来自二手英文汇总,具体开放时段、票价及购票方式未在检索摘要中列明\",\"天龍寺2026年晨间特别开放的具体时间未确认\",\"琉璃光院2026年秋季特别拝観仅见2025年日期(10/1-12/13),且11月中旬起需抽选,2026年安排未确认\",\"11月3-5日红叶状态仅能按往年规律预测,当年实际变色需临近出行时参考红叶前线情报\",\"東寺夜间拝観预约/整理券制2026年是否维持仅现场购票,官方摘要中注明可能变更\"]}}",
+          "costUnits": 4,
+          "durationMs": 6,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-c49d-73e8-a2bc-5062a9b035f3"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_9d928bc9-c74d-437e-ac4a-0dfd9ea888cb",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "source_excerpt_truncated",
+            "高台寺2026年点灯日期与票价未经官方公告确认,仅有2025年往年数据(约10月24日-12月14日、约600日元)",
+            "二条城NAKED 2026年10月23日-12月5日来自二手英文汇总,具体开放时段、票价及购票方式未在检索摘要中列明",
+            "天龍寺2026年晨间特别开放的具体时间未确认",
+            "琉璃光院2026年秋季特别拝観仅见2025年日期(10/1-12/13),且11月中旬起需抽选,2026年安排未确认",
+            "11月3-5日红叶状态仅能按往年规律预测,当年实际变色需临近出行时参考红叶前线情报",
+            "東寺夜间拝観预约/整理券制2026年是否维持仅现场购票,官方摘要中注明可能变更"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-c49d-73e8-a2bc-5062a9b035f3",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 6,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 3,
+                "stale": 0,
+                "unverified": 3
+              },
+              "createdAt": "2026-09-12T18:53:18.915Z"
+            },
+            "findings": [
+              {
+                "id": "finding_4922fd0ea6681e07226e8d8f",
+                "title": "東寺 夜間特別拝観・ライトアップ(2026年已公布:10月31日~12月13日)",
+                "summary": "已公布2026年安排,正好覆盖11月3-5日。18:00-21:30(21:00截止入场),夜间拝観费大人1,000日元、高中生500日元。金堂、讲堂及水镜庭院可赏夜枫。官方无提前预约制,当日现场购票,但2026年运营方式可能调整,行前应再查官网确认。",
+                "category": "event",
+                "destinations": [
+                  {
+                    "id": "city:KYO",
+                    "name": "京都"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_8404ed30e8da45cf30014167",
+                "title": "二条城 NAKED 秋之光的祭典(2026年已公布:10月23日~12月5日)",
+                "summary": "据英文资料,二条城与NAKED合作的夜间光影活动已公布2026年为10月23日至12月5日,覆盖出行日期。主要在御苑和名庭园投影灯光,属现代光雕而非传统点灯。具体开放时段与票价在检索到的摘要中未详列,需以二条城官网为准(标为待确认)。",
+                "category": "event",
+                "destinations": [
+                  {
+                    "id": "city:KYO",
+                    "name": "京都"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_38268bf9cb2998a379bd257e",
+                "title": "高台寺夜间点灯(往年规律:约10月下旬~12月中旬)",
+                "summary": "往年高台寺点灯期极长,2025年约为10月24日至12月14日,17:00-22:00,约600日元,通常覆盖11月上旬。本次检索未能获取其2026年正式公告(检索配额限制),日期与票价按往年规律估计,出发前需查高台寺官网确认。",
+                "category": "event",
+                "destinations": [
+                  {
+                    "id": "city:KYO",
+                    "name": "京都"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_733b7f90098ba095f9dd0e89",
+                "title": "天龍寺(岚山)白天赏枫+晨间特别开放",
+                "summary": "据2026汇总资料,天龍寺已公布秋季晨间特别开放时间,适合清晨人少时在曹源池庭园赏枫。岚山一带往年11月上旬已有初秋色(比市区稍早),11月3-5日可见渐进变红而非满山全红,与你接受非最佳状态的前提相符。晨间开放具体时间需再确认(标为待确认)。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:KYO",
+                    "name": "京都"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_4f8cd6d2d8722acbca8ef046",
+                "title": "2026年京都红叶季节规律:市区见頃约11月中下旬",
+                "summary": "往年规律:京都红叶通常11月中旬开始,市中心最佳观赏期多在11月20日至12月初。11月3-5日属于季节早期,东福寺、永観堂等知名处尚未见頃,但早期色叶、绿色向红色过渡的景观及避开人潮是优势。如想看得更红,可优先岚山、高台寺等较早区域。",
+                "category": "seasonal",
+                "destinations": [
+                  {
+                    "id": "city:KYO",
+                    "name": "京都"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_369e698586df56ed4e5cb5c8",
+                "title": "清水寺、永観堂夜枫(2026年已公布但不在你行程窗口内)",
+                "summary": "已确认2026年公告:清水寺夜间特别拝観为11月21-30日(21:30闭门、21:00最后入场);永観堂夜间点灯为11月20日-12月6日(17:30-20:30入场,中高生以上1,000日元)。两者均晚于你11月3-5日的行程,无法参加,列出供计划参考;东福寺为白天限定,无夜枫。",
+                "category": "event",
+                "destinations": [
+                  {
+                    "id": "city:KYO",
+                    "name": "京都"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_9d928bc9-c74d-437e-ac4a-0dfd9ea888cb",
+              "thin_research_disposition:partial",
+              "research_evidence_is_snippet_only",
+              "source_excerpt_truncated",
+              "高台寺2026年点灯日期与票价未经官方公告确认,仅有2025年往年数据(约10月24日-12月14日、约600日元)",
+              "二条城NAKED 2026年10月23日-12月5日来自二手英文汇总,具体开放时段、票价及购票方式未在检索摘要中列明",
+              "天龍寺2026年晨间特别开放的具体时间未确认",
+              "琉璃光院2026年秋季特别拝観仅见2025年日期(10/1-12/13),且11月中旬起需抽选,2026年安排未确认",
+              "11月3-5日红叶状态仅能按往年规律预测,当年实际变色需临近出行时参考红叶前线情报",
+              "東寺夜间拝観预约/整理券制2026年是否维持仅现场购票,官方摘要中注明可能变更"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-c49d-73e8-a2bc-5062a9b035f3"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:KYO",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_4922fd0ea6681e07226e8d8f",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_733b7f90098ba095f9dd0e89",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "cityId": "city:KYO",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_8404ed30e8da45cf30014167",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_4f8cd6d2d8722acbca8ef046",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "cityId": "city:KYO",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_38268bf9cb2998a379bd257e",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_369e698586df56ed4e5cb5c8",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+          "runId": "01a0972a-c493-7763-a94a-3185c865b877",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "d8bd9414-901f-4de3-9bf6-ba74d23fc59a",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"eligible_research_evidence\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"seasonal\",\"event\",\"activity\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 2,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "eligible_research_evidence"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "seasonal",
+                "event",
+                "activity"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a"
+        },
+        "scope": {
+          "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+          "runId": "01a0972a-c493-7763-a94a-3185c865b877",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "f1e94eb8-6baf-4111-bc2b-c41bea82a970",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c493-7763-a94a-2e4f38834f6a\",\"ownerId\":\"backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe\",\"tripId\":\"01a0972a-c48b-721f-ae53-1e9cc720201c\",\"conversationId\":\"01a0972a-c48c-736d-b3b2-f9d3c6207486\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究2026年11月3日至5日京都红叶及夜间特别开放候选，分别说明季节规律、当年已公布日期与待确认事项。\"],\"researchTypes\":[\"seasonal\",\"event\",\"activity\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.587Z\",\"updatedAt\":\"2026-09-12T19:49:17.587Z\"},\"run\":{\"id\":\"01a0972a-c493-7763-a94a-3185c865b877\",\"ownerId\":\"backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe\",\"goalId\":\"01a0972a-c493-7763-a94a-2e4f38834f6a\",\"tripId\":\"01a0972a-c48b-721f-ae53-1e9cc720201c\",\"generationId\":\"offline-generation-4823c2c3-1f4c-4e94-aa2c-db48a78c5602\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c48b-721f-ae53-1e9cc720201c\",\"departureWindow\":{\"from\":\"2026-11-03\",\"to\":\"2026-11-03\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-05\",\"to\":\"2026-11-05\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:KYO\",\"type\":\"city\",\"name\":\"京都\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"红叶\",\"夜间特别开放\",\"区分往年规律与当年公告\",\"接受非最佳观赏状态\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-c49d-73e8-a2bc-5062a9b035f3\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:17.598Z\"}],\"locationHandles\":[{\"id\":\"city:KYO\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:17.589Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:17.587Z\",\"updatedAt\":\"2026-09-12T19:49:17.598Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+              "ownerId": "backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe",
+              "tripId": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+              "conversationId": "01a0972a-c48c-736d-b3b2-f9d3c6207486",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究2026年11月3日至5日京都红叶及夜间特别开放候选，分别说明季节规律、当年已公布日期与待确认事项。"
+                ],
+                "researchTypes": [
+                  "seasonal",
+                  "event",
+                  "activity"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.587Z",
+              "updatedAt": "2026-09-12T19:49:17.587Z"
+            },
+            "run": {
+              "id": "01a0972a-c493-7763-a94a-3185c865b877",
+              "ownerId": "backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe",
+              "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+              "tripId": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+              "generationId": "offline-generation-4823c2c3-1f4c-4e94-aa2c-db48a78c5602",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+                "departureWindow": {
+                  "from": "2026-11-03",
+                  "to": "2026-11-03",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-05",
+                  "to": "2026-11-05",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:KYO",
+                      "type": "city",
+                      "name": "京都",
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "红叶",
+                  "夜间特别开放",
+                  "区分往年规律与当年公告",
+                  "接受非最佳观赏状态"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-c49d-73e8-a2bc-5062a9b035f3",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:17.598Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:KYO",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:17.589Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:17.587Z",
+              "updatedAt": "2026-09-12T19:49:17.598Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-c49d-73e8-a2bc-5062a9b035f3",
+        "tripId": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+        "conversationId": "01a0972a-c48c-736d-b3b2-f9d3c6207486",
+        "goalId": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+        "runId": "01a0972a-c493-7763-a94a-3185c865b877",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-c49d-73e8-a2bc-5062a9b035f3",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:KYO",
+                "type": "city",
+                "name": "京都",
+                "countryCode": "JP"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-11-03",
+              "to": "2026-11-05"
+            },
+            "interests": [
+              "红叶",
+              "夜间特别开放",
+              "区分往年规律与当年公告",
+              "接受非最佳观赏状态"
+            ],
+            "questions": [
+              "研究2026年11月3日至5日京都红叶及夜间特别开放候选，分别说明季节规律、当年已公布日期与待确认事项。"
+            ],
+            "researchTypes": [
+              "seasonal",
+              "event",
+              "activity"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_4922fd0ea6681e07226e8d8f",
+              "category": "event",
+              "destinations": [
+                {
+                  "id": "city:KYO",
+                  "type": "city",
+                  "name": "京都",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "東寺 夜間特別拝観・ライトアップ(2026年已公布:10月31日~12月13日)",
+              "summary": "已公布2026年安排,正好覆盖11月3-5日。18:00-21:30(21:00截止入场),夜间拝観费大人1,000日元、高中生500日元。金堂、讲堂及水镜庭院可赏夜枫。官方无提前预约制,当日现场购票,但2026年运营方式可能调整,行前应再查官网确认。",
+              "sources": [
+                {
+                  "title": "東寺の紅葉ライトアップ2026｜夜間特別拝観は10月31日から、料金と昼夜の違い · Glos Travel",
+                  "url": "https://glostravel.com/ja/article/toji-temple-autumn-leaves",
+                  "domain": "glostravel.com",
+                  "snippet": "夜間の時間は 18時から21時30分までで、拝観の受付は21時までです。閉門が21時30分なので、水鏡をゆっくり撮りたい方も、遅くとも21時前には入っておくと安心です。\n\n...\n\n拝観券は当日、現地の窓口で購入します。日時指定の事前予約や整理券について、公式からの案内はありませんが、2026年の運用は変わることもあるので、直前に公式サイトで確認しておくと確実です。\n\n...\n\n夜間特別拝観（金堂・講堂のライトアップ・10月31日〜12月13日）は、大人1,000円、高校生500円です。夜間は団体割引や共通券の設定はなく、個人料金のみです。中学生以下の料金は公式に案内がないため、小さなお子さん連れの方は現地の窓口で確認してください。",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Kyoto Autumn Leaves 2026: Peak Mid-to-Late Nov, 3 Confirmed Light-Ups from October 31 · Glos Travel",
+                  "url": "https://glostravel.com/en/article/kyoto-autumn-leaves-2026",
+                  "domain": "glostravel.com",
+                  "snippet": "As far as we could verify, three temples have published evening-opening dates: To-ji (東寺) from October 31 to December 13, Eikando (永観堂) from November 20 to December 6, and Kiyomizu-dera (清水寺) from November 21 to 30. Tenryu-ji (天龍寺) has set its early-morning garden hours.\n\n...\n\n## Eikando Zenrin-ji: Illumination from November 20, Separate Day and Night Tickets\n\n...\n\n| Admission | Dates, hours, price |\n| --- | --- |\n| Autumn Treasures Exhibition | November 11 – December 6, 2026 / ticket office 9:00–16:00, gates close 17:00 / ¥1,500 adults |\n| Illumination | November 20 – December 6, 2026 / ticket office 17:30–20:30, gates close 21:00 / ¥1,000 junior high and up |\n\n...\n\n## Kiyomizu-dera: Evening Opening November 21–30\n\n...\n\nKiyomizu-dera's published 2026 gate schedule marks November 21 to 30 ",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:53:18.915Z",
+                "expiresAt": "2026-10-12T18:53:18.915Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://glostravel.com/ja/article/toji-temple-autumn-leaves"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://glostravel.com/en/article/kyoto-autumn-leaves-2026"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "event_date_is_snippet_only",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_8404ed30e8da45cf30014167",
+              "category": "event",
+              "destinations": [
+                {
+                  "id": "city:KYO",
+                  "type": "city",
+                  "name": "京都",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "二条城 NAKED 秋之光的祭典(2026年已公布:10月23日~12月5日)",
+              "summary": "据英文资料,二条城与NAKED合作的夜间光影活动已公布2026年为10月23日至12月5日,覆盖出行日期。主要在御苑和名庭园投影灯光,属现代光雕而非传统点灯。具体开放时段与票价在检索到的摘要中未详列,需以二条城官网为准(标为待确认)。",
+              "sources": [
+                {
+                  "title": "Kyoto Autumn Illuminations 2026: A Practical Night-Viewing Guide for Self-Guided Travelers | BluePlanet",
+                  "url": "https://selfguidejapan.com/blog/kyoto-autumn-illuminations-2026",
+                  "domain": "selfguidejapan.com",
+                  "snippet": ". Two 2026 schedules are already published: Kiyomizu-dera November 21–30 and Nijo Castle (NAKED) October 23 – December 5. Most temples open at sunset and close by 21:30, with walk-up ticketing. Target two venues per night, not five — and go on a",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:53:18.915Z",
+                "expiresAt": "2026-10-12T18:53:18.915Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://selfguidejapan.com/blog/kyoto-autumn-illuminations-2026"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "event_date_is_snippet_only"
+              ]
+            },
+            {
+              "id": "finding_38268bf9cb2998a379bd257e",
+              "category": "event",
+              "destinations": [
+                {
+                  "id": "city:KYO",
+                  "type": "city",
+                  "name": "京都",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "高台寺夜间点灯(往年规律:约10月下旬~12月中旬)",
+              "summary": "往年高台寺点灯期极长,2025年约为10月24日至12月14日,17:00-22:00,约600日元,通常覆盖11月上旬。本次检索未能获取其2026年正式公告(检索配额限制),日期与票价按往年规律估计,出发前需查高台寺官网确认。",
+              "sources": [
+                {
+                  "title": "2026京都红叶最佳赏枫地点与时间全指南 | MICHI 道",
+                  "url": "https://michi-japan.group/zh/articles/autumn-foliage-kyoto-2026",
+                  "domain": "michi-japan.group",
+                  "snippet": "2025年约11月15日–12月10日，17:30–21:00，约¥800\n- 清水寺 — 2025年约11月22日–12月7日，17:30–21:30，约¥500\n- 高台寺 — 时间最长之一，2025年约10月24日–12月14日，17:00–22:00，约¥600\n- 知恩院 —",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Kyoto Autumn Temple Light-Ups 2026 — Kiyomizu-dera, Kōdai-ji & Eikan-dō at Night | MICHI 道",
+                  "url": "https://michi-japan.group/en/articles/kyoto-autumn-temple-lightups-2026",
+                  "domain": "michi-japan.group",
+                  "snippet": "Kyoto's autumn night light-ups run from around late October to early December, with the color itself peaking in the second half of November — most years the best window for central Kyoto falls somewhere around November 20 to early December. Four of the city's best-known autumn temples handle the evening differently: Kiyomizu-dera, Kōdai-ji and Eikan-dō (Zenrin-ji) hold special evening illuminations, while Tōfuku-ji — home of the famous Tsūtenkyō bridge — is daytime-only.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:53:18.915Z",
+                "expiresAt": "2026-10-12T18:53:18.915Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://michi-japan.group/zh/articles/autumn-foliage-kyoto-2026"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://michi-japan.group/en/articles/kyoto-autumn-temple-lightups-2026"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "event_date_is_snippet_only"
+              ]
+            },
+            {
+              "id": "finding_733b7f90098ba095f9dd0e89",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:KYO",
+                  "type": "city",
+                  "name": "京都",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "天龍寺(岚山)白天赏枫+晨间特别开放",
+              "summary": "据2026汇总资料,天龍寺已公布秋季晨间特别开放时间,适合清晨人少时在曹源池庭园赏枫。岚山一带往年11月上旬已有初秋色(比市区稍早),11月3-5日可见渐进变红而非满山全红,与你接受非最佳状态的前提相符。晨间开放具体时间需再确认(标为待确认)。",
+              "sources": [
+                {
+                  "title": "Kyoto Autumn Leaves 2026: Peak Mid-to-Late Nov, 3 Confirmed Light-Ups from October 31 · Glos Travel",
+                  "url": "https://glostravel.com/en/article/kyoto-autumn-leaves-2026",
+                  "domain": "glostravel.com",
+                  "snippet": "As far as we could verify, three temples have published evening-opening dates: To-ji (東寺) from October 31 to December 13, Eikando (永観堂) from November 20 to December 6, and Kiyomizu-dera (清水寺) from November 21 to 30. Tenryu-ji (天龍寺) has set its early-morning garden hours.\n\n...\n\n## Eikando Zenrin-ji: Illumination from November 20, Separate Day and Night Tickets\n\n...\n\n| Admission | Dates, hours, price |\n| --- | --- |\n| Autumn Treasures Exhibition | November 11 – December 6, 2026 / ticket office 9:00–16:00, gates close 17:00 / ¥1,500 adults |\n| Illumination | November 20 – December 6, 2026 / ticket office 17:30–20:30, gates close 21:00 / ¥1,000 junior high and up |\n\n...\n\n## Kiyomizu-dera: Evening Opening November 21–30\n\n...\n\nKiyomizu-dera's published 2026 gate schedule marks November 21 to 30 ",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Autumn Leaves in Kyoto 2026: Where & When to See Fall Foliage | MICHI 道",
+                  "url": "https://michi-japan.group/en/articles/autumn-foliage-kyoto-2026",
+                  "domain": "michi-japan.group",
+                  "snippet": "Kyoto's autumn leaves typically peak in the second half of November 2026, with top spots like Tofukuji, Eikando and Arashiyama running mid-November into early December. Here's where to go, what's free, and which temples light up at night.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:53:18.915Z",
+                "expiresAt": "2026-12-11T18:53:18.915Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://glostravel.com/en/article/kyoto-autumn-leaves-2026"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://michi-japan.group/en/articles/autumn-foliage-kyoto-2026"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_4f8cd6d2d8722acbca8ef046",
+              "category": "seasonal",
+              "destinations": [
+                {
+                  "id": "city:KYO",
+                  "type": "city",
+                  "name": "京都",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "2026年京都红叶季节规律:市区见頃约11月中下旬",
+              "summary": "往年规律:京都红叶通常11月中旬开始,市中心最佳观赏期多在11月20日至12月初。11月3-5日属于季节早期,东福寺、永観堂等知名处尚未见頃,但早期色叶、绿色向红色过渡的景观及避开人潮是优势。如想看得更红,可优先岚山、高台寺等较早区域。",
+              "sources": [
+                {
+                  "title": "Autumn Leaves in Kyoto 2026: Where & When to See Fall Foliage | MICHI 道",
+                  "url": "https://michi-japan.group/en/articles/autumn-foliage-kyoto-2026",
+                  "domain": "michi-japan.group",
+                  "snippet": "Kyoto's autumn leaves typically peak in the second half of November 2026, with top spots like Tofukuji, Eikando and Arashiyama running mid-November into early December. Here's where to go, what's free, and which temples light up at night.",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Kyoto Autumn Temple Light-Ups 2026 — Kiyomizu-dera, Kōdai-ji & Eikan-dō at Night | MICHI 道",
+                  "url": "https://michi-japan.group/en/articles/kyoto-autumn-temple-lightups-2026",
+                  "domain": "michi-japan.group",
+                  "snippet": "Kyoto's autumn night light-ups run from around late October to early December, with the color itself peaking in the second half of November — most years the best window for central Kyoto falls somewhere around November 20 to early December. Four of the city's best-known autumn temples handle the evening differently: Kiyomizu-dera, Kōdai-ji and Eikan-dō (Zenrin-ji) hold special evening illuminations, while Tōfuku-ji — home of the famous Tsūtenkyō bridge — is daytime-only.",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "京都賞楓名所、紅葉資訊、夜楓情報-2026年資料陸續更新中(9/4第1次更新) – 小氣少年的部落格",
+                  "url": "https://nicklee.tw/760/kyoto-momiji/",
+                  "domain": "nicklee.tw",
+                  "snippet": "琉璃光院 秋天特別拜觀：2025.10.01~12.13 10:00~17:00 (最後入場 16:30) 需要抽籤：11.13~12.6 (僅能使用明信片抽籤,郵戳以8/20之前有效) 不需抽籤：10.01~11.12、12.07~12.13 門票：￥2000 遊記：琉璃光院\n\n",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:53:18.915Z",
+                "expiresAt": "2026-10-27T18:53:18.915Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://michi-japan.group/en/articles/autumn-foliage-kyoto-2026"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://michi-japan.group/en/articles/kyoto-autumn-temple-lightups-2026"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://nicklee.tw/760/kyoto-momiji/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified"
+              ]
+            },
+            {
+              "id": "finding_369e698586df56ed4e5cb5c8",
+              "category": "event",
+              "destinations": [
+                {
+                  "id": "city:KYO",
+                  "type": "city",
+                  "name": "京都",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "清水寺、永観堂夜枫(2026年已公布但不在你行程窗口内)",
+              "summary": "已确认2026年公告:清水寺夜间特别拝観为11月21-30日(21:30闭门、21:00最后入场);永観堂夜间点灯为11月20日-12月6日(17:30-20:30入场,中高生以上1,000日元)。两者均晚于你11月3-5日的行程,无法参加,列出供计划参考;东福寺为白天限定,无夜枫。",
+              "sources": [
+                {
+                  "title": "Kyoto Autumn Leaves 2026: Peak Mid-to-Late Nov, 3 Confirmed Light-Ups from October 31 · Glos Travel",
+                  "url": "https://glostravel.com/en/article/kyoto-autumn-leaves-2026",
+                  "domain": "glostravel.com",
+                  "snippet": "As far as we could verify, three temples have published evening-opening dates: To-ji (東寺) from October 31 to December 13, Eikando (永観堂) from November 20 to December 6, and Kiyomizu-dera (清水寺) from November 21 to 30. Tenryu-ji (天龍寺) has set its early-morning garden hours.\n\n...\n\n## Eikando Zenrin-ji: Illumination from November 20, Separate Day and Night Tickets\n\n...\n\n| Admission | Dates, hours, price |\n| --- | --- |\n| Autumn Treasures Exhibition | November 11 – December 6, 2026 / ticket office 9:00–16:00, gates close 17:00 / ¥1,500 adults |\n| Illumination | November 20 – December 6, 2026 / ticket office 17:30–20:30, gates close 21:00 / ¥1,000 junior high and up |\n\n...\n\n## Kiyomizu-dera: Evening Opening November 21–30\n\n...\n\nKiyomizu-dera's published 2026 gate schedule marks November 21 to 30 ",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "永観堂の紅葉2026｜夜間ライトアップは11月20日から、拝観料と混雑を避ける時間 · Glos Travel",
+                  "url": "https://glostravel.com/ja/article/eikando-autumn-leaves",
+                  "domain": "glostravel.com",
+                  "snippet": "2026年（令和8年）の秋の特別拝観は、昼と夜で期間が分かれています。昼の「秋の寺宝展」が先に始まり、夜間ライトアップは9日遅れの11月20日から始まります。\n\n...\n\n| 拝観 | 期間 | 時間 |\n| --- | --- | --- |\n| 秋の寺宝展（昼） | 11月11日(水)〜12月6日(日) | 9:00〜16:00受付／17:00閉門 |\n| 夜間ライトアップ | 11月20日(金)〜12月6日(日) | 17:30〜20:30受付／21:00閉門 |\n\n...\n\nここで気をつけたいのが、ライトアップの始まりは11月20日だという点です。寺宝展は11月11日から開催されていますが、11月19日までは夜間拝観がありません。紅葉が見頃に入っていても、11月19日以前に夜の景色を目当てに行くと空振りになります。\n\n...\n\n永観堂の秋は、昼の寺宝展（11月11日〜12月6日）と夜のライトアップ（11月20日〜12月6日）が入替制です。公式のお知らせにも「秋の寺宝展とライトアップは入替制で、継続しての拝観はできません」と明記されています。つまり、昼の拝観券では夜まで境内にとどまることはできず、夜のライトアップを見るには一度外に出て、別料金で入り直します。\n\n...\n\n- 秋の寺宝展（昼）：一般1,500円、大学・専門学校生1,000円、小中高生800円\n- 夜間ライトアップ（11月20日〜）：中高生以上は一律1,000円",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Kyoto Autumn Temple Light-Ups 2026 — Kiyomizu-dera, Kōdai-ji & Eikan-dō at Night | MICHI 道",
+                  "url": "https://michi-japan.group/en/articles/kyoto-autumn-temple-lightups-2026",
+                  "domain": "michi-japan.group",
+                  "snippet": "Kyoto's autumn night light-ups run from around late October to early December, with the color itself peaking in the second half of November — most years the best window for central Kyoto falls somewhere around November 20 to early December. Four of the city's best-known autumn temples handle the evening differently: Kiyomizu-dera, Kōdai-ji and Eikan-dō (Zenrin-ji) hold special evening illuminations, while Tōfuku-ji — home of the famous Tsūtenkyō bridge — is daytime-only.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:53:18.915Z",
+                "expiresAt": "2026-10-12T18:53:18.915Z",
+                "confidence": 0.45,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://glostravel.com/en/article/kyoto-autumn-leaves-2026"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://glostravel.com/ja/article/eikando-autumn-leaves"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://michi-japan.group/en/articles/kyoto-autumn-temple-lightups-2026"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified",
+                "event_date_is_snippet_only",
+                "source_excerpt_truncated"
+              ]
+            }
+          ],
+          "queryCount": 4,
+          "warnings": [
+            "thin_research_audit:thin_audit_9d928bc9-c74d-437e-ac4a-0dfd9ea888cb",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "source_excerpt_truncated",
+            "高台寺2026年点灯日期与票价未经官方公告确认,仅有2025年往年数据(约10月24日-12月14日、约600日元)",
+            "二条城NAKED 2026年10月23日-12月5日来自二手英文汇总,具体开放时段、票价及购票方式未在检索摘要中列明",
+            "天龍寺2026年晨间特别开放的具体时间未确认",
+            "琉璃光院2026年秋季特别拝観仅见2025年日期(10/1-12/13),且11月中旬起需抽选,2026年安排未确认",
+            "11月3-5日红叶状态仅能按往年规律预测,当年实际变色需临近出行时参考红叶前线情报",
+            "東寺夜间拝観预约/整理券制2026年是否维持仅现场购票,官方摘要中注明可能变更"
+          ],
+          "createdAt": "2026-09-12T18:53:18.915Z"
+        },
+        "verification": {
+          "status": "partially_verified",
+          "checkedAt": "2026-09-12T18:53:18.915Z",
+          "confidence": 0.2,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://glostravel.com/ja/article/toji-temple-autumn-leaves"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://glostravel.com/en/article/kyoto-autumn-leaves-2026"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://selfguidejapan.com/blog/kyoto-autumn-illuminations-2026"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://michi-japan.group/zh/articles/autumn-foliage-kyoto-2026"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://michi-japan.group/en/articles/kyoto-autumn-temple-lightups-2026"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://michi-japan.group/en/articles/autumn-foliage-kyoto-2026"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://nicklee.tw/760/kyoto-momiji/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://glostravel.com/ja/article/eikando-autumn-leaves"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:17.597Z",
+        "updatedAt": "2026-09-12T19:49:17.597Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-c493-7763-a94a-2e4f38834f6a",
+        "ownerId": "backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe",
+        "tripId": "01a0972a-c48b-721f-ae53-1e9cc720201c",
+        "conversationId": "01a0972a-c48c-736d-b3b2-f9d3c6207486",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "研究2026年11月3日至5日京都红叶及夜间特别开放候选，分别说明季节规律、当年已公布日期与待确认事项。"
+          ],
+          "researchTypes": [
+            "seasonal",
+            "event",
+            "activity"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:17.587Z",
+        "updatedAt": "2026-09-12T19:49:17.587Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "partial",
+  "providerError": null,
+  "effectiveDisposition": "partial",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 6,
+      "verificationEligibleFindingCount": 3,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 3,
+        "unverified": 3,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "eligible_research_evidence"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

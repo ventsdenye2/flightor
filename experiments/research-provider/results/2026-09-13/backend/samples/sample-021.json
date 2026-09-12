@@ -1,0 +1,417 @@
+{
+  "sampleId": "candidate-screen-v3/sample-024",
+  "caseId": "activity-14",
+  "model": "qwen/qwen3.8-flash",
+  "sampleFile": "samples/sample-021.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-024.json",
+  "sourceSha256": "2248cebb65febe83f10a66da55dd0489a081782298bba21459677bf9e46ea898",
+  "receiptSha256": "d34a14728718b55067445eb45f61bec1326621cc188f266846b598ff17bd389d",
+  "recordedAt": "2026-09-12T18:49:40.333Z",
+  "travelWindow": {
+    "from": "2026-10-10",
+    "to": "2026-10-12"
+  },
+  "recordedStatus": "invalid_output",
+  "recordedRawValid": false,
+  "ownerId": "backend-replay-d8264cf7-27a7-4944-a10b-869de0b915cd",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_5c304bb5-0410-448c-bf60-7216d93df2e4.json"
+  ],
+  "providerStatus": "rejected",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c2bf-73ca-9454-f1ad29c6126f",
+        "departureWindow": {
+          "from": "2026-10-10",
+          "to": "2026-10-10",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-10-12",
+          "to": "2026-10-12",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:PAR",
+              "type": "city",
+              "name": "巴黎",
+              "countryCode": "FR"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "文化",
+          "存在10月17日不可改期预约",
+          "必须围绕该预约研究",
+          "旅行窗口与预约日期冲突",
+          "尚未确认优先条件"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [],
+      "memoryChanged": false,
+      "warnings": [],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c2c6-70e5-9a20-9bea3618ad82",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c2c6-70e5-9a20-9bea3618ad82",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "579ac23f-53a0-4687-ad22-5f4ccce9911a",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c2bf-73ca-9454-f1ad29c6126f\",\"departureWindow\":{\"from\":\"2026-10-10\",\"to\":\"2026-10-10\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-12\",\"to\":\"2026-10-12\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:PAR\",\"type\":\"city\",\"name\":\"巴黎\",\"countryCode\":\"FR\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"文化\",\"存在10月17日不可改期预约\",\"必须围绕该预约研究\",\"旅行窗口与预约日期冲突\",\"尚未确认优先条件\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c2bf-73ca-9454-f1ad29c6126f",
+              "departureWindow": {
+                "from": "2026-10-10",
+                "to": "2026-10-10",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-10-12",
+                "to": "2026-10-12",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:PAR",
+                    "type": "city",
+                    "name": "巴黎",
+                    "countryCode": "FR"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "文化",
+                "存在10月17日不可改期预约",
+                "必须围绕该预约研究",
+                "旅行窗口与预约日期冲突",
+                "尚未确认优先条件"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "旅行窗口为2026年10月10日至12日，但不可改期的10月17日预约又被要求必须纳入；先指出冲突并澄清应以哪个时间条件为准，不自行改写任何日期。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c2c6-70e5-9a20-9bea3618ad82",
+          "runId": "01a0972a-c2c7-7335-aa63-c6edabd4fe16",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "b4ad8dd7-72f2-4a13-a21a-78cb5f26e53f",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c2c6-70e5-9a20-9bea3618ad82\",\"ownerId\":\"backend-replay-d8264cf7-27a7-4944-a10b-869de0b915cd\",\"tripId\":\"01a0972a-c2bf-73ca-9454-f1ad29c6126f\",\"conversationId\":\"01a0972a-c2bf-73ca-9454-f7bac70a3ea6\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"旅行窗口为2026年10月10日至12日，但不可改期的10月17日预约又被要求必须纳入；先指出冲突并澄清应以哪个时间条件为准，不自行改写任何日期。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.126Z\",\"updatedAt\":\"2026-09-12T19:49:17.126Z\"},\"run\":{\"id\":\"01a0972a-c2c7-7335-aa63-c6edabd4fe16\",\"ownerId\":\"backend-replay-d8264cf7-27a7-4944-a10b-869de0b915cd\",\"goalId\":\"01a0972a-c2c6-70e5-9a20-9bea3618ad82\",\"tripId\":\"01a0972a-c2bf-73ca-9454-f1ad29c6126f\",\"generationId\":\"offline-generation-41a0e208-0e08-43f2-8d77-aed3271bcb76\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c2bf-73ca-9454-f1ad29c6126f\",\"departureWindow\":{\"from\":\"2026-10-10\",\"to\":\"2026-10-10\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-12\",\"to\":\"2026-10-12\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:PAR\",\"type\":\"city\",\"name\":\"巴黎\",\"countryCode\":\"FR\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"文化\",\"存在10月17日不可改期预约\",\"必须围绕该预约研究\",\"旅行窗口与预约日期冲突\",\"尚未确认优先条件\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.127Z\",\"updatedAt\":\"2026-09-12T19:49:17.127Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c2c6-70e5-9a20-9bea3618ad82",
+              "ownerId": "backend-replay-d8264cf7-27a7-4944-a10b-869de0b915cd",
+              "tripId": "01a0972a-c2bf-73ca-9454-f1ad29c6126f",
+              "conversationId": "01a0972a-c2bf-73ca-9454-f7bac70a3ea6",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "旅行窗口为2026年10月10日至12日，但不可改期的10月17日预约又被要求必须纳入；先指出冲突并澄清应以哪个时间条件为准，不自行改写任何日期。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.126Z",
+              "updatedAt": "2026-09-12T19:49:17.126Z"
+            },
+            "run": {
+              "id": "01a0972a-c2c7-7335-aa63-c6edabd4fe16",
+              "ownerId": "backend-replay-d8264cf7-27a7-4944-a10b-869de0b915cd",
+              "goalId": "01a0972a-c2c6-70e5-9a20-9bea3618ad82",
+              "tripId": "01a0972a-c2bf-73ca-9454-f1ad29c6126f",
+              "generationId": "offline-generation-41a0e208-0e08-43f2-8d77-aed3271bcb76",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c2bf-73ca-9454-f1ad29c6126f",
+                "departureWindow": {
+                  "from": "2026-10-10",
+                  "to": "2026-10-10",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-12",
+                  "to": "2026-10-12",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:PAR",
+                      "type": "city",
+                      "name": "巴黎",
+                      "countryCode": "FR"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "文化",
+                  "存在10月17日不可改期预约",
+                  "必须围绕该预约研究",
+                  "旅行窗口与预约日期冲突",
+                  "尚未确认优先条件"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.127Z",
+              "updatedAt": "2026-09-12T19:49:17.127Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:PAR",
+              "type": "city",
+              "name": "巴黎",
+              "countryCode": "FR"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-10-10",
+            "to": "2026-10-12"
+          },
+          "interests": [
+            "文化",
+            "存在10月17日不可改期预约",
+            "必须围绕该预约研究",
+            "旅行窗口与预约日期冲突",
+            "尚未确认优先条件"
+          ],
+          "questions": [
+            "旅行窗口为2026年10月10日至12日，但不可改期的10月17日预约又被要求必须纳入；先指出冲突并澄清应以哪个时间条件为准，不自行改写任何日期。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c2c6-70e5-9a20-9bea3618ad82",
+          "runId": "01a0972a-c2c7-7335-aa63-c6edabd4fe16",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "769afc1a-7878-4e85-b313-82335f63d298",
+          "toolName": "web_research",
+          "ok": false,
+          "content": "{\"ok\":false,\"error\":{\"code\":\"TOOL_FAILURE\",\"message\":\"Tool execution failed\"}}",
+          "costUnits": 4,
+          "durationMs": 3,
+          "provider": "research_agent",
+          "errorCode": "TOOL_FAILURE",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": false,
+          "error": {
+            "code": "TOOL_FAILURE",
+            "message": "Tool execution failed"
+          }
+        }
+      }
+    ],
+    "artifacts": [],
+    "goals": [
+      {
+        "id": "01a0972a-c2c6-70e5-9a20-9bea3618ad82",
+        "ownerId": "backend-replay-d8264cf7-27a7-4944-a10b-869de0b915cd",
+        "tripId": "01a0972a-c2bf-73ca-9454-f1ad29c6126f",
+        "conversationId": "01a0972a-c2bf-73ca-9454-f7bac70a3ea6",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "旅行窗口为2026年10月10日至12日，但不可改期的10月17日预约又被要求必须纳入；先指出冲突并澄清应以哪个时间条件为准，不自行改写任何日期。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:17.126Z",
+        "updatedAt": "2026-09-12T19:49:17.126Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "failed",
+  "providerError": {
+    "name": "ThinResearchError",
+    "code": "THIN_RESEARCH_OUTPUT_INVALID",
+    "statusCode": 502,
+    "details": [
+      "invalid_finding:0"
+    ]
+  },
+  "effectiveDisposition": null,
+  "scriptedPlannerCalls": 4,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": false,
+      "errorCode": "TOOL_FAILURE",
+      "persisted": false,
+      "findingCount": 0,
+      "verificationEligibleFindingCount": 0,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 0,
+        "unverified": 0,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": false,
+      "toolOk": false,
+      "status": null,
+      "errorCode": null,
+      "issues": []
+    },
+    "finishGoal": {
+      "attempted": false,
+      "toolOk": false,
+      "verificationStatus": null,
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

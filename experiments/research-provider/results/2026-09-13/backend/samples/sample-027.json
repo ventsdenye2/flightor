@@ -1,0 +1,1110 @@
+{
+  "sampleId": "candidate-screen-v3/sample-034",
+  "caseId": "activity-15",
+  "model": "qwen/qwen3.8-flash",
+  "sampleFile": "samples/sample-027.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-034.json",
+  "sourceSha256": "b274eb3b1377c609e456c14dfe867435ccbd6dc1129be853817e422aa4ed992b",
+  "receiptSha256": "a33fc8c5fbb636ba445f30ab30327fa4ddd5242b317b47f968f3c430a35b110c",
+  "recordedAt": "2026-09-12T18:51:44.860Z",
+  "travelWindow": {
+    "from": "2026-11-20",
+    "to": "2026-11-20"
+  },
+  "recordedStatus": "invalid_output",
+  "recordedRawValid": false,
+  "ownerId": "backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_ca80bf7c-1c38-460c-a243-c168cec5251b.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c3b9-70b8-99f7-01883103581d",
+        "departureWindow": {
+          "from": "2026-11-20",
+          "to": "2026-11-20",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-11-20",
+          "to": "2026-11-20",
+          "precision": "exact"
+        },
+        "travelDays": 1,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "东京",
+              "countryCode": "JP"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "浅草附近",
+          "室内文化",
+          "仅替换15:00至17:00室外散步",
+          "体验本身最多90分钟",
+          "预留往返时间",
+          "保留上午参观及12:00和18:00餐饮"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-c3c7-7008-bcd7-be3614974a5c",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_ca80bf7c-1c38-460c-a243-c168cec5251b",
+        "thin_research_disposition:recommend",
+        "research_evidence_is_snippet_only",
+        "thin_research_structure_normalized",
+        "source_excerpt_truncated",
+        "所有候选均未确认2026年11月20日15:00–17:00的实际可预约状态、剩余名额或临时闭馆/维护安排。",
+        "部分场所（茶禅、時代屋、求楽、江戸切子オジマ）未在检索结果中给出明确的单次体验时长，无法保证严格控制在90分钟以内。",
+        "各地点与上午浅草参观及18:00晚餐之间的精确步行/公共交通耗时未验证，往返缓冲时间仅为保守估计。",
+        "无障碍设施、外语服务深度、饮食限制适配（如抹茶/和菓子成分）等信息未确认。",
+        "价格与取消政策未在检索结果中完整呈现，需以官方页面或预订平台为准。"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "518257e1-d34f-4c0d-a518-71dcb6bd7b7e",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c3b9-70b8-99f7-01883103581d\",\"departureWindow\":{\"from\":\"2026-11-20\",\"to\":\"2026-11-20\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-20\",\"to\":\"2026-11-20\",\"precision\":\"exact\"},\"travelDays\":1,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:TYO\",\"type\":\"city\",\"name\":\"东京\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"浅草附近\",\"室内文化\",\"仅替换15:00至17:00室外散步\",\"体验本身最多90分钟\",\"预留往返时间\",\"保留上午参观及12:00和18:00餐饮\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c3b9-70b8-99f7-01883103581d",
+              "departureWindow": {
+                "from": "2026-11-20",
+                "to": "2026-11-20",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-11-20",
+                "to": "2026-11-20",
+                "precision": "exact"
+              },
+              "travelDays": 1,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:TYO",
+                    "type": "city",
+                    "name": "东京",
+                    "countryCode": "JP"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "浅草附近",
+                "室内文化",
+                "仅替换15:00至17:00室外散步",
+                "体验本身最多90分钟",
+                "预留往返时间",
+                "保留上午参观及12:00和18:00餐饮"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "仅为2026年11月20日15:00至17:00这一时段研究浅草附近最多6个室内文化替代候选，体验本身最多90分钟，说明位置、开放或预约条件和往返时间的不确定性，保留其余计划。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+          "runId": "01a0972a-c3bf-736d-942d-7938bfdca083",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "1536c4e3-d914-4805-bd0a-78e9c4b7333e",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c3bf-736d-942d-766a6f9b3178\",\"ownerId\":\"backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6\",\"tripId\":\"01a0972a-c3b9-70b8-99f7-01883103581d\",\"conversationId\":\"01a0972a-c3b9-70b8-99f7-07636a2ea05e\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"仅为2026年11月20日15:00至17:00这一时段研究浅草附近最多6个室内文化替代候选，体验本身最多90分钟，说明位置、开放或预约条件和往返时间的不确定性，保留其余计划。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.375Z\",\"updatedAt\":\"2026-09-12T19:49:17.375Z\"},\"run\":{\"id\":\"01a0972a-c3bf-736d-942d-7938bfdca083\",\"ownerId\":\"backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6\",\"goalId\":\"01a0972a-c3bf-736d-942d-766a6f9b3178\",\"tripId\":\"01a0972a-c3b9-70b8-99f7-01883103581d\",\"generationId\":\"offline-generation-e0ab8dd4-d20d-4fbb-b870-6960e04d0d17\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c3b9-70b8-99f7-01883103581d\",\"departureWindow\":{\"from\":\"2026-11-20\",\"to\":\"2026-11-20\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-20\",\"to\":\"2026-11-20\",\"precision\":\"exact\"},\"travelDays\":1,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:TYO\",\"type\":\"city\",\"name\":\"东京\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"浅草附近\",\"室内文化\",\"仅替换15:00至17:00室外散步\",\"体验本身最多90分钟\",\"预留往返时间\",\"保留上午参观及12:00和18:00餐饮\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.375Z\",\"updatedAt\":\"2026-09-12T19:49:17.375Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+              "ownerId": "backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6",
+              "tripId": "01a0972a-c3b9-70b8-99f7-01883103581d",
+              "conversationId": "01a0972a-c3b9-70b8-99f7-07636a2ea05e",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "仅为2026年11月20日15:00至17:00这一时段研究浅草附近最多6个室内文化替代候选，体验本身最多90分钟，说明位置、开放或预约条件和往返时间的不确定性，保留其余计划。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.375Z",
+              "updatedAt": "2026-09-12T19:49:17.375Z"
+            },
+            "run": {
+              "id": "01a0972a-c3bf-736d-942d-7938bfdca083",
+              "ownerId": "backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6",
+              "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+              "tripId": "01a0972a-c3b9-70b8-99f7-01883103581d",
+              "generationId": "offline-generation-e0ab8dd4-d20d-4fbb-b870-6960e04d0d17",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c3b9-70b8-99f7-01883103581d",
+                "departureWindow": {
+                  "from": "2026-11-20",
+                  "to": "2026-11-20",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-20",
+                  "to": "2026-11-20",
+                  "precision": "exact"
+                },
+                "travelDays": 1,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:TYO",
+                      "type": "city",
+                      "name": "东京",
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "浅草附近",
+                  "室内文化",
+                  "仅替换15:00至17:00室外散步",
+                  "体验本身最多90分钟",
+                  "预留往返时间",
+                  "保留上午参观及12:00和18:00餐饮"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.375Z",
+              "updatedAt": "2026-09-12T19:49:17.375Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "东京",
+              "countryCode": "JP"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-11-20",
+            "to": "2026-11-20"
+          },
+          "interests": [
+            "浅草附近",
+            "室内文化",
+            "仅替换15:00至17:00室外散步",
+            "体验本身最多90分钟",
+            "预留往返时间",
+            "保留上午参观及12:00和18:00餐饮"
+          ],
+          "questions": [
+            "仅为2026年11月20日15:00至17:00这一时段研究浅草附近最多6个室内文化替代候选，体验本身最多90分钟，说明位置、开放或预约条件和往返时间的不确定性，保留其余计划。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+          "runId": "01a0972a-c3bf-736d-942d-7938bfdca083",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "5e510e67-f8fd-4f88-9375-ae1df0df2924",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-c3c7-7008-bcd7-be3614974a5c\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":6,\"statusCounts\":{\"verified\":0,\"partially_verified\":0,\"stale\":0,\"unverified\":6},\"createdAt\":\"2026-09-12T18:51:44.860Z\"},\"findings\":[{\"id\":\"finding_b2e5a5208906cd8df2fbd049\",\"title\":\"サクラ咲（和菓子作り＋抹茶体験）\",\"summary\":\"位于雷门1-9-2（雷门WEST 1F），提供季节练切和菓子制作与抹茶体验，官方标注所需时间约1小时起，适合90分钟窗口。开放场次含15:00、16:00等；需提前预约，建议开始时间前5分钟到场。注意：搜索结果未确认2026年11月20日具体场次是否满员或临时调整，请以官网/预订平台实时确认为准。往返浅草寺一带步行距离短，但请预留至少15–20分钟缓冲以应对排队与交通。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:TYO\",\"name\":\"东京\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_6bb9f323bf733e1d7c59740c\",\"title\":\"茶禅（上生菓子づくり・茶道体験）\",\"summary\":\"地址为台东区浅草1-4-7 勉強堂ビル5F，在正式茶室进行茶道与上生菓子制作体验，属室内文化活动。搜索结果未给出明确时长与当日可预约时段，无法确认是否可在90分钟内完成并留出往返时间；亦未确认2026年11月20日的开放与预约情况。建议先联系确认课程长度、最晚入场时间与取消政策后再纳入候选。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:TYO\",\"name\":\"东京\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_32b6a420c503f4b737ebe483\",\"title\":\"時代屋（和菓子作り体験施設）\",\"summary\":\"位于雷门南侧、驹形堂附近，是时代屋旗下的日本文化体验设施，设有大中小三个房间，承接各类预约。搜索结果未披露单次体验的固定时长、每日可预约时段及2026年11月20日可用性，因此不能保证满足“体验本身最多90分钟”的要求。需向店家核实课程时长、集合地点与退改规则。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:TYO\",\"name\":\"东京\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_5578d35beb5d9f9120c310dc\",\"title\":\"求楽 浅草たい焼き工房（たい焼き体験®️）\",\"summary\":\"提供现烤鲷鱼烧制作体验，营业时间为9:00–22:00，单人或7人以上需通过表单咨询日期、人数与姓名等信息。该活动偏饮食手作，是否完全符合您期望的“室内文化”定位可自行判断；搜索信息未标明单次体验确切时长，需确认能否控制在90分钟内并预留往返时间。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:TYO\",\"name\":\"东京\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_c6e8dec74084f5b6ea2aec6a\",\"title\":\"すみだ北斎美術館（常设展参观）\",\"summary\":\"开馆时间通常为9:30–17:30，最后入场17:00，周一闭馆（若周一为节假日则顺延至次日）。从浅草前往墨田区横川需一定交通时间，且15:00–17:00仅120分钟总窗口，扣除往返后实际观展可能不足90分钟，存在赶场风险。搜索结果未确认2026年11月20日是否有特别休馆或展览变动，也未提供无障碍与餐饮相关信息。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:TYO\",\"name\":\"东京\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_b0863150295dc6da52040d32\",\"title\":\"江戸切子浅草オジマ（玻璃切割工艺体验）\",\"summary\":\"传统江户切子工坊，可在匠人指导下于透明玻璃上雕刻图案并带走成品，提供英文说明。店铺营业时间9:00–17:00，工坊9:00–16:00，周一与周五休息（也可能不定期关闭）。由于工坊16:00结束，若安排15:00开始，体验时长必须非常紧凑才能兼顾往返；搜索结果未明确单次体验所需分钟数与2026年11月20日预约余量，需直接联系确认。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:TYO\",\"name\":\"东京\"}],\"verificationStatus\":\"unverified\"}],\"warnings\":[\"thin_research_audit:thin_audit_ca80bf7c-1c38-460c-a243-c168cec5251b\",\"thin_research_disposition:recommend\",\"research_evidence_is_snippet_only\",\"thin_research_structure_normalized\",\"source_excerpt_truncated\",\"所有候选均未确认2026年11月20日15:00–17:00的实际可预约状态、剩余名额或临时闭馆/维护安排。\",\"部分场所（茶禅、時代屋、求楽、江戸切子オジマ）未在检索结果中给出明确的单次体验时长，无法保证严格控制在90分钟以内。\",\"各地点与上午浅草参观及18:00晚餐之间的精确步行/公共交通耗时未验证，往返缓冲时间仅为保守估计。\",\"无障碍设施、外语服务深度、饮食限制适配（如抹茶/和菓子成分）等信息未确认。\",\"价格与取消政策未在检索结果中完整呈现，需以官方页面或预订平台为准。\"]}}",
+          "costUnits": 4,
+          "durationMs": 6,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-c3c7-7008-bcd7-be3614974a5c"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_ca80bf7c-1c38-460c-a243-c168cec5251b",
+            "thin_research_disposition:recommend",
+            "research_evidence_is_snippet_only",
+            "thin_research_structure_normalized",
+            "source_excerpt_truncated",
+            "所有候选均未确认2026年11月20日15:00–17:00的实际可预约状态、剩余名额或临时闭馆/维护安排。",
+            "部分场所（茶禅、時代屋、求楽、江戸切子オジマ）未在检索结果中给出明确的单次体验时长，无法保证严格控制在90分钟以内。",
+            "各地点与上午浅草参观及18:00晚餐之间的精确步行/公共交通耗时未验证，往返缓冲时间仅为保守估计。",
+            "无障碍设施、外语服务深度、饮食限制适配（如抹茶/和菓子成分）等信息未确认。",
+            "价格与取消政策未在检索结果中完整呈现，需以官方页面或预订平台为准。"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-c3c7-7008-bcd7-be3614974a5c",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 6,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 0,
+                "stale": 0,
+                "unverified": 6
+              },
+              "createdAt": "2026-09-12T18:51:44.860Z"
+            },
+            "findings": [
+              {
+                "id": "finding_b2e5a5208906cd8df2fbd049",
+                "title": "サクラ咲（和菓子作り＋抹茶体験）",
+                "summary": "位于雷门1-9-2（雷门WEST 1F），提供季节练切和菓子制作与抹茶体验，官方标注所需时间约1小时起，适合90分钟窗口。开放场次含15:00、16:00等；需提前预约，建议开始时间前5分钟到场。注意：搜索结果未确认2026年11月20日具体场次是否满员或临时调整，请以官网/预订平台实时确认为准。往返浅草寺一带步行距离短，但请预留至少15–20分钟缓冲以应对排队与交通。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:TYO",
+                    "name": "东京"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_6bb9f323bf733e1d7c59740c",
+                "title": "茶禅（上生菓子づくり・茶道体験）",
+                "summary": "地址为台东区浅草1-4-7 勉強堂ビル5F，在正式茶室进行茶道与上生菓子制作体验，属室内文化活动。搜索结果未给出明确时长与当日可预约时段，无法确认是否可在90分钟内完成并留出往返时间；亦未确认2026年11月20日的开放与预约情况。建议先联系确认课程长度、最晚入场时间与取消政策后再纳入候选。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:TYO",
+                    "name": "东京"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_32b6a420c503f4b737ebe483",
+                "title": "時代屋（和菓子作り体験施設）",
+                "summary": "位于雷门南侧、驹形堂附近，是时代屋旗下的日本文化体验设施，设有大中小三个房间，承接各类预约。搜索结果未披露单次体验的固定时长、每日可预约时段及2026年11月20日可用性，因此不能保证满足“体验本身最多90分钟”的要求。需向店家核实课程时长、集合地点与退改规则。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:TYO",
+                    "name": "东京"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_5578d35beb5d9f9120c310dc",
+                "title": "求楽 浅草たい焼き工房（たい焼き体験®️）",
+                "summary": "提供现烤鲷鱼烧制作体验，营业时间为9:00–22:00，单人或7人以上需通过表单咨询日期、人数与姓名等信息。该活动偏饮食手作，是否完全符合您期望的“室内文化”定位可自行判断；搜索信息未标明单次体验确切时长，需确认能否控制在90分钟内并预留往返时间。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:TYO",
+                    "name": "东京"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_c6e8dec74084f5b6ea2aec6a",
+                "title": "すみだ北斎美術館（常设展参观）",
+                "summary": "开馆时间通常为9:30–17:30，最后入场17:00，周一闭馆（若周一为节假日则顺延至次日）。从浅草前往墨田区横川需一定交通时间，且15:00–17:00仅120分钟总窗口，扣除往返后实际观展可能不足90分钟，存在赶场风险。搜索结果未确认2026年11月20日是否有特别休馆或展览变动，也未提供无障碍与餐饮相关信息。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:TYO",
+                    "name": "东京"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_b0863150295dc6da52040d32",
+                "title": "江戸切子浅草オジマ（玻璃切割工艺体验）",
+                "summary": "传统江户切子工坊，可在匠人指导下于透明玻璃上雕刻图案并带走成品，提供英文说明。店铺营业时间9:00–17:00，工坊9:00–16:00，周一与周五休息（也可能不定期关闭）。由于工坊16:00结束，若安排15:00开始，体验时长必须非常紧凑才能兼顾往返；搜索结果未明确单次体验所需分钟数与2026年11月20日预约余量，需直接联系确认。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:TYO",
+                    "name": "东京"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_ca80bf7c-1c38-460c-a243-c168cec5251b",
+              "thin_research_disposition:recommend",
+              "research_evidence_is_snippet_only",
+              "thin_research_structure_normalized",
+              "source_excerpt_truncated",
+              "所有候选均未确认2026年11月20日15:00–17:00的实际可预约状态、剩余名额或临时闭馆/维护安排。",
+              "部分场所（茶禅、時代屋、求楽、江戸切子オジマ）未在检索结果中给出明确的单次体验时长，无法保证严格控制在90分钟以内。",
+              "各地点与上午浅草参观及18:00晚餐之间的精确步行/公共交通耗时未验证，往返缓冲时间仅为保守估计。",
+              "无障碍设施、外语服务深度、饮食限制适配（如抹茶/和菓子成分）等信息未确认。",
+              "价格与取消政策未在检索结果中完整呈现，需以官方页面或预订平台为准。"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-c3c7-7008-bcd7-be3614974a5c"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:TYO",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_b2e5a5208906cd8df2fbd049",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_6bb9f323bf733e1d7c59740c",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_32b6a420c503f4b737ebe483",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_5578d35beb5d9f9120c310dc",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_c6e8dec74084f5b6ea2aec6a",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_b0863150295dc6da52040d32",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+          "runId": "01a0972a-c3bf-736d-942d-7938bfdca083",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "e2c57b64-f1de-4ce5-9eec-528c8da48308",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"eligible_research_evidence\",\"guide_daily_activity_coverage\",\"guide_research_type:activity\",\"guide_research_type:practical\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 2,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "eligible_research_evidence",
+              "guide_daily_activity_coverage",
+              "guide_research_type:activity",
+              "guide_research_type:practical"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178"
+        },
+        "scope": {
+          "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+          "runId": "01a0972a-c3bf-736d-942d-7938bfdca083",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "b8efea63-ae53-4d29-94ce-acdc7350b85f",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c3bf-736d-942d-766a6f9b3178\",\"ownerId\":\"backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6\",\"tripId\":\"01a0972a-c3b9-70b8-99f7-01883103581d\",\"conversationId\":\"01a0972a-c3b9-70b8-99f7-07636a2ea05e\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"仅为2026年11月20日15:00至17:00这一时段研究浅草附近最多6个室内文化替代候选，体验本身最多90分钟，说明位置、开放或预约条件和往返时间的不确定性，保留其余计划。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.375Z\",\"updatedAt\":\"2026-09-12T19:49:17.375Z\"},\"run\":{\"id\":\"01a0972a-c3bf-736d-942d-7938bfdca083\",\"ownerId\":\"backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6\",\"goalId\":\"01a0972a-c3bf-736d-942d-766a6f9b3178\",\"tripId\":\"01a0972a-c3b9-70b8-99f7-01883103581d\",\"generationId\":\"offline-generation-e0ab8dd4-d20d-4fbb-b870-6960e04d0d17\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c3b9-70b8-99f7-01883103581d\",\"departureWindow\":{\"from\":\"2026-11-20\",\"to\":\"2026-11-20\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-20\",\"to\":\"2026-11-20\",\"precision\":\"exact\"},\"travelDays\":1,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:TYO\",\"type\":\"city\",\"name\":\"东京\",\"countryCode\":\"JP\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"浅草附近\",\"室内文化\",\"仅替换15:00至17:00室外散步\",\"体验本身最多90分钟\",\"预留往返时间\",\"保留上午参观及12:00和18:00餐饮\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-c3c7-7008-bcd7-be3614974a5c\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:17.384Z\"}],\"locationHandles\":[{\"id\":\"city:TYO\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:17.375Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:17.375Z\",\"updatedAt\":\"2026-09-12T19:49:17.385Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+              "ownerId": "backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6",
+              "tripId": "01a0972a-c3b9-70b8-99f7-01883103581d",
+              "conversationId": "01a0972a-c3b9-70b8-99f7-07636a2ea05e",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "仅为2026年11月20日15:00至17:00这一时段研究浅草附近最多6个室内文化替代候选，体验本身最多90分钟，说明位置、开放或预约条件和往返时间的不确定性，保留其余计划。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.375Z",
+              "updatedAt": "2026-09-12T19:49:17.375Z"
+            },
+            "run": {
+              "id": "01a0972a-c3bf-736d-942d-7938bfdca083",
+              "ownerId": "backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6",
+              "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+              "tripId": "01a0972a-c3b9-70b8-99f7-01883103581d",
+              "generationId": "offline-generation-e0ab8dd4-d20d-4fbb-b870-6960e04d0d17",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c3b9-70b8-99f7-01883103581d",
+                "departureWindow": {
+                  "from": "2026-11-20",
+                  "to": "2026-11-20",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-20",
+                  "to": "2026-11-20",
+                  "precision": "exact"
+                },
+                "travelDays": 1,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:TYO",
+                      "type": "city",
+                      "name": "东京",
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "浅草附近",
+                  "室内文化",
+                  "仅替换15:00至17:00室外散步",
+                  "体验本身最多90分钟",
+                  "预留往返时间",
+                  "保留上午参观及12:00和18:00餐饮"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-c3c7-7008-bcd7-be3614974a5c",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:17.384Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:TYO",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:17.375Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:17.375Z",
+              "updatedAt": "2026-09-12T19:49:17.385Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-c3c7-7008-bcd7-be3614974a5c",
+        "tripId": "01a0972a-c3b9-70b8-99f7-01883103581d",
+        "conversationId": "01a0972a-c3b9-70b8-99f7-07636a2ea05e",
+        "goalId": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+        "runId": "01a0972a-c3bf-736d-942d-7938bfdca083",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-c3c7-7008-bcd7-be3614974a5c",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:TYO",
+                "type": "city",
+                "name": "东京",
+                "countryCode": "JP"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-11-20",
+              "to": "2026-11-20"
+            },
+            "interests": [
+              "浅草附近",
+              "室内文化",
+              "仅替换15:00至17:00室外散步",
+              "体验本身最多90分钟",
+              "预留往返时间",
+              "保留上午参观及12:00和18:00餐饮"
+            ],
+            "questions": [
+              "仅为2026年11月20日15:00至17:00这一时段研究浅草附近最多6个室内文化替代候选，体验本身最多90分钟，说明位置、开放或预约条件和往返时间的不确定性，保留其余计划。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_b2e5a5208906cd8df2fbd049",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:TYO",
+                  "type": "city",
+                  "name": "东京",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "サクラ咲（和菓子作り＋抹茶体験）",
+              "summary": "位于雷门1-9-2（雷门WEST 1F），提供季节练切和菓子制作与抹茶体验，官方标注所需时间约1小时起，适合90分钟窗口。开放场次含15:00、16:00等；需提前预约，建议开始时间前5分钟到场。注意：搜索结果未确认2026年11月20日具体场次是否满员或临时调整，请以官网/预订平台实时确认为准。往返浅草寺一带步行距离短，但请预留至少15–20分钟缓冲以应对排队与交通。",
+              "sources": [
+                {
+                  "title": "【東京・浅草・和菓子作り】『17名以上団体専用』浅草で楽しむ和菓子作り＆抹茶体験 ～季節の練り切りをつくろう～｜アソビュー！",
+                  "url": "https://www.asoview.com/item/activity/pln3000047174/",
+                  "domain": "www.asoview.com",
+                  "snippet": "【東京・浅草・和菓子作り】『17名以上団体専用』浅草で楽しむ和菓子作り＆抹茶体験 ～季節の練り切りをつくろう～｜アソビュー！\n\n...\n\n# 口コミ(21) サクラ咲 【東京・浅草・和菓子作り】『17名以上団体専用』浅草で楽しむ和菓子作り＆抹茶体験 ～季節の練り切りをつくろう～\n\n...\n\n対象年齢 6歳〜100歳 所要時間 約1時間〜 予約人数\n\n...\n\n| 集合場所 | サクラ咲 〒111-0034東京都台東区雷門1-9-2地図を見る |\n| --- | --- |\n| 集合時間 | 開始時間の5分前までに受付をお願いいたします。 |\n| 開催場所 | 東京都台東区雷門1-9-2雷門ウェスト1階 |\n| 開始時間 | 10:00／11:00／12:00／13:00／14:00／15:00／16:00 |\n| アクセス方法 |\n| 駐車場 | 駐車場はございませんので、お近くのパーキングをご利用ください。 |",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:51:44.860Z",
+                "expiresAt": "2026-12-11T18:51:44.860Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.asoview.com/item/activity/pln3000047174/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_6bb9f323bf733e1d7c59740c",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:TYO",
+                  "type": "city",
+                  "name": "东京",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "茶禅（上生菓子づくり・茶道体験）",
+              "summary": "地址为台东区浅草1-4-7 勉強堂ビル5F，在正式茶室进行茶道与上生菓子制作体验，属室内文化活动。搜索结果未给出明确时长与当日可预约时段，无法确认是否可在90分钟内完成并留出往返时间；亦未确认2026年11月20日的开放与预约情况。建议先联系确认课程长度、最晚入场时间与取消政策后再纳入候选。",
+              "sources": [
+                {
+                  "title": "🌸浅草で誰でもカンタン 上生菓子づくり体験 「4月のお知らせ」",
+                  "url": "https://www.chazen-co.jp/",
+                  "domain": "www.chazen-co.jp",
+                  "snippet": "最大40名様が一緒に体験できる\n...\n間の和室\n...\n## 本格的なお茶室で茶道体験\n...\n## 和菓子作り体験\n...\n### 浅草で茶道体験 ASAK\n...\n〒111-0032 東京都台東区浅草1-4-7 勉強堂ビル5F",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:51:44.860Z",
+                "expiresAt": "2026-12-11T18:51:44.860Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.chazen-co.jp/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_32b6a420c503f4b737ebe483",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:TYO",
+                  "type": "city",
+                  "name": "东京",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "時代屋（和菓子作り体験施設）",
+              "summary": "位于雷门南侧、驹形堂附近，是时代屋旗下的日本文化体验设施，设有大中小三个房间，承接各类预约。搜索结果未披露单次体验的固定时长、每日可预约时段及2026年11月20日可用性，因此不能保证满足“体验本身最多90分钟”的要求。需向店家核实课程时长、集合地点与退改规则。",
+              "sources": [
+                {
+                  "title": "和菓子作り",
+                  "url": "https://jidaiya.biz/",
+                  "domain": "jidaiya.biz",
+                  "snippet": "雷門の南、駒形堂のすぐ近くにある時代屋第二の日本文化体験施設で、大・中・小の３ルームあり。\n...\n各種ご予約承ります。お問い合せ・お申込みは時代屋へ。",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:51:44.860Z",
+                "expiresAt": "2026-12-11T18:51:44.860Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://jidaiya.biz/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_5578d35beb5d9f9120c310dc",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:TYO",
+                  "type": "city",
+                  "name": "东京",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "求楽 浅草たい焼き工房（たい焼き体験®️）",
+              "summary": "提供现烤鲷鱼烧制作体验，营业时间为9:00–22:00，单人或7人以上需通过表单咨询日期、人数与姓名等信息。该活动偏饮食手作，是否完全符合您期望的“室内文化”定位可自行判断；搜索信息未标明单次体验确切时长，需确认能否控制在90分钟内并预留往返时间。",
+              "sources": [
+                {
+                  "title": "たい焼き体験®️ | 和を体験 浅草たい焼き工房『求楽』Asakusa GURAKU 公式ウェブサイト",
+                  "url": "https://guraku.jp/experience/",
+                  "domain": "guraku.jp",
+                  "snippet": "・公式サイトからの予約は２～6人です。1人及び7人以上のお客様はお問合せフォームから①希望日時、②人数（大人・子供の内訳）、③氏名等をご連絡ください。\n...\n️ ：9:00〜22:00",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:51:44.860Z",
+                "expiresAt": "2026-12-11T18:51:44.860Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://guraku.jp/experience/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_c6e8dec74084f5b6ea2aec6a",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:TYO",
+                  "type": "city",
+                  "name": "东京",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "すみだ北斎美術館（常设展参观）",
+              "summary": "开馆时间通常为9:30–17:30，最后入场17:00，周一闭馆（若周一为节假日则顺延至次日）。从浅草前往墨田区横川需一定交通时间，且15:00–17:00仅120分钟总窗口，扣除往返后实际观展可能不足90分钟，存在赶场风险。搜索结果未确认2026年11月20日是否有特别休馆或展览变动，也未提供无障碍与餐饮相关信息。",
+              "sources": [
+                {
+                  "title": "すみだ北斎美術館 - トップ",
+                  "url": "https://hokusai-museum.jp/?content_id=24",
+                  "domain": "hokusai-museum.jp",
+                  "snippet": "Open Today Open Hours 9:30 - 17:30\n...\nLast admission 17:00\n...\nHere, we provide you information on how to use the museum, including our open hours, entry hours, days closed and access.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:51:44.860Z",
+                "expiresAt": "2026-12-11T18:51:44.860Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://hokusai-museum.jp/?content_id=24"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_b0863150295dc6da52040d32",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:TYO",
+                  "type": "city",
+                  "name": "东京",
+                  "countryCode": "JP"
+                }
+              ],
+              "title": "江戸切子浅草オジマ（玻璃切割工艺体验）",
+              "summary": "传统江户切子工坊，可在匠人指导下于透明玻璃上雕刻图案并带走成品，提供英文说明。店铺营业时间9:00–17:00，工坊9:00–16:00，周一与周五休息（也可能不定期关闭）。由于工坊16:00结束，若安排15:00开始，体验时长必须非常紧凑才能兼顾往返；搜索结果未明确单次体验所需分钟数与2026年11月20日预约余量，需直接联系确认。",
+              "sources": [
+                {
+                  "title": "Edo Kiriko Asakusa Ojima | KYUSHU x TOKYO (JAPAN)",
+                  "url": "https://www.kyushuandtokyo.org/spot_239/",
+                  "domain": "www.kyushuandtokyo.org",
+                  "snippet": "Edo Kiriko is a traditional Japanese glass craft that evolved toward the end of the Edo period. It is characterized by beautiful cut patterns, soft curves that evoke the Edo sentimentality, and myriad designs. At this long-established traditional workshop in Asakusa that has been in business for three generations, you can learn the techniques of Edo Kiriko from craftsmen who have inherited the traditions since the Edo period, and experience the process of \"arazuri\" which involves engraving patterns into transparent glass. You can create your own original glass work using traditional Edo Kiriko techniques. Information in English is also available to help visitors gain a deeper understanding of traditional Japanese crafts. The production experience takes place while you learn how to cut and ",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:51:44.860Z",
+                "expiresAt": "2026-12-11T18:51:44.860Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.kyushuandtokyo.org/spot_239/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "source_excerpt_truncated"
+              ]
+            }
+          ],
+          "queryCount": 5,
+          "warnings": [
+            "thin_research_audit:thin_audit_ca80bf7c-1c38-460c-a243-c168cec5251b",
+            "thin_research_disposition:recommend",
+            "research_evidence_is_snippet_only",
+            "thin_research_structure_normalized",
+            "source_excerpt_truncated",
+            "所有候选均未确认2026年11月20日15:00–17:00的实际可预约状态、剩余名额或临时闭馆/维护安排。",
+            "部分场所（茶禅、時代屋、求楽、江戸切子オジマ）未在检索结果中给出明确的单次体验时长，无法保证严格控制在90分钟以内。",
+            "各地点与上午浅草参观及18:00晚餐之间的精确步行/公共交通耗时未验证，往返缓冲时间仅为保守估计。",
+            "无障碍设施、外语服务深度、饮食限制适配（如抹茶/和菓子成分）等信息未确认。",
+            "价格与取消政策未在检索结果中完整呈现，需以官方页面或预订平台为准。"
+          ],
+          "createdAt": "2026-09-12T18:51:44.860Z"
+        },
+        "verification": {
+          "status": "unverified",
+          "checkedAt": "2026-09-12T18:51:44.860Z",
+          "confidence": 0.2,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://www.asoview.com/item/activity/pln3000047174/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.chazen-co.jp/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://jidaiya.biz/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://guraku.jp/experience/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://hokusai-museum.jp/?content_id=24"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.kyushuandtokyo.org/spot_239/"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:17.384Z",
+        "updatedAt": "2026-09-12T19:49:17.384Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-c3bf-736d-942d-766a6f9b3178",
+        "ownerId": "backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6",
+        "tripId": "01a0972a-c3b9-70b8-99f7-01883103581d",
+        "conversationId": "01a0972a-c3b9-70b8-99f7-07636a2ea05e",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "仅为2026年11月20日15:00至17:00这一时段研究浅草附近最多6个室内文化替代候选，体验本身最多90分钟，说明位置、开放或预约条件和往返时间的不确定性，保留其余计划。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:17.375Z",
+        "updatedAt": "2026-09-12T19:49:17.375Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "recommend",
+  "providerError": null,
+  "effectiveDisposition": "recommend",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 6,
+      "verificationEligibleFindingCount": 0,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 0,
+        "unverified": 6,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "eligible_research_evidence",
+        "guide_daily_activity_coverage",
+        "guide_research_type:activity",
+        "guide_research_type:practical"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}
