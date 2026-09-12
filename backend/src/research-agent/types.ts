@@ -69,6 +69,11 @@ export const researchArtifactSchema = z.object({
   brief: researchBriefSchema,
   findings: z.array(researchFindingSchema).max(50),
   queryCount: z.number().int().nonnegative().max(24),
+  /** Optional v2 additions: absent fields preserve artifacts written before native research. */
+  disposition: z.enum(['recommend', 'partial', 'clarify']).optional(),
+  uncertainties: z.array(z.string().trim().min(1).max(240)).max(24).optional(),
+  /** Opaque server-side generation audit reference; raw provider data stays out of the Artifact. */
+  generationAuditId: z.string().uuid().optional(),
   warnings: z.array(z.string().min(1).max(240)).max(40),
   createdAt: z.iso.datetime()
 }).strict()
@@ -86,6 +91,13 @@ export interface ResearchExecutionContext {
   requestId: string
   signal?: AbortSignal
   preferenceSummary?: readonly string[]
+  /** Trusted workspace facts for audit attribution only; never model context. */
+  ownerId?: string
+  tripId?: string
+  conversationId?: string
+  goalId?: string
+  runId?: string
+  tripContextVersion?: number
 }
 
 export interface ResearchAgent {

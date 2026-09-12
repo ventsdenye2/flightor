@@ -26,6 +26,9 @@ import { DeterministicTripRoutePlanner } from '../trip-planning/planner.js'
 import { DeterministicTravelGuideBuilder } from '../travel-guides/artifact-builder.js'
 import { ProductionResearchAgent } from '../research-agent/production.js'
 import { OpenRouterResearchSynthesisModel } from '../providers/openrouter/research.js'
+import { NativeResearchAgent } from '../research-agent/native.js'
+import { PostgresNativeResearchLedger } from '../research-agent/native-postgres.js'
+import { OpenRouterNativeResearchTransport } from '../providers/openrouter/native-research.js'
 import { ARTIFACT_TYPES, type ArtifactType } from '../artifacts/repository.js'
 import { locationRefSchema } from '../aviation/types.js'
 import type { TripContext } from '../trips/types.js'
@@ -153,12 +156,16 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
       routeGeneration: createRouteGenerationDependencies(context, userId),
       aviation,
       fares: context.providers.fares,
-      research: context.env.SERPAPI_KEY
-        ? new ProductionResearchAgent({
-          searchProvider: context.providers.researchSearch,
-          synthesisModel: new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL)
-        })
-        : new UnavailableResearchAgent(),
+      research: context.env.NATIVE_RESEARCH_PROVIDER === 'openrouter_native'
+        ? new NativeResearchAgent({ model: context.env.NATIVE_RESEARCH_MODEL, transport: new OpenRouterNativeResearchTransport(context.providers.openrouter),
+          ledger: new PostgresNativeResearchLedger(context.db, userId), budgetId: context.env.NATIVE_RESEARCH_BUDGET_ID,
+          maxCallUsdMicros: context.env.NATIVE_RESEARCH_MAX_CALL_USD_MICROS, timeoutMs: context.env.NATIVE_RESEARCH_TIMEOUT_MS })
+        : context.env.SERPAPI_KEY
+          ? new ProductionResearchAgent({
+            searchProvider: context.providers.researchSearch,
+            synthesisModel: new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL)
+          })
+          : new UnavailableResearchAgent(),
       connectionSearch: new ProductionConnectionSearchService(topology, context.providers.fares),
       flightRoutePlanner: new DeterministicFlightRoutePlanner(),
       routeOptimizer: new ParetoRouteOptimizer(),

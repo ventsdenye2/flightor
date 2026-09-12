@@ -4,6 +4,7 @@ import type { ToolExecutionContext } from '../runtime/registry.js'
 
 export async function workspaceScope(context: ToolExecutionContext, signal: AbortSignal, snapshot?: TripContext): Promise<ArtifactWorkspace & { requestId: string }> {
   const scope = await createArtifactWorkspace({ artifacts: context.artifacts, trips: context.trips, tripId: context.tripId, conversationId: context.conversationId, signal,
+    ...(context.ownerId ? { ownerId: context.ownerId } : {}),
     ...(context.activeGoalId ? { goalId: context.activeGoalId } : {}),
     ...(context.activeGoalRunId ? { runId: context.activeGoalRunId } : {}),
     ...(context.activeGoalContextVersion === undefined ? {} : { tripContextVersion: context.activeGoalContextVersion }),

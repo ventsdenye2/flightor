@@ -24,6 +24,14 @@ describe('parseEnv', () => {
     expect(env.OPENROUTER_MODEL).toBe('deepseek/deepseek-v4-flash-0731')
     expect(env.PLANNER_MODEL).toBe(env.OPENROUTER_MODEL)
     expect(env.RESEARCH_MODEL).toBe(env.OPENROUTER_MODEL)
+    expect(env.NATIVE_RESEARCH_PROVIDER).toBe('serpapi')
+    expect(env.NATIVE_RESEARCH_MAX_CALL_USD_MICROS).toBe(0)
+  })
+
+  it('only accepts the evaluated native models and a non-negative explicit cap', () => {
+    expect(parseEnv({ ...validEnv, NATIVE_RESEARCH_PROVIDER: 'openrouter_native', NATIVE_RESEARCH_MODEL: 'z-ai/glm-5.3-flash', NATIVE_RESEARCH_MAX_CALL_USD_MICROS: '1000' }))
+      .toMatchObject({ NATIVE_RESEARCH_PROVIDER: 'openrouter_native', NATIVE_RESEARCH_MODEL: 'z-ai/glm-5.3-flash', NATIVE_RESEARCH_MAX_CALL_USD_MICROS: 1000 })
+    expect(() => parseEnv({ ...validEnv, NATIVE_RESEARCH_MODEL: 'other/model' })).toThrow('NATIVE_RESEARCH_MODEL')
   })
 
   it('keeps an explicitly configured model override', () => {

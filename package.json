@@ -19,7 +19,7 @@
     "dev:weapp": "npm run build:weapp -- --watch",
     "gen:icons": "node scripts/gen-icons.js",
     "gen:guides": "node scripts/gen-guides.js",
-    "test": "npm run test:budget && npm run test:chat-history && npm run test:phase5-client && npm run test:conversation-progress && npm run test:session-recovery && npm run test:trip-context-chips && npm run test:artifacts && npm run test:flight-connections && npm run test:airport-times && npm run test:phase6-client && npm run test:phase789-client && npm run test:oag && npm run test:connectivity && npm run test:route && npm run test:route-real && npm run test:route-llm && npm run test:route-cloud",
+    "test": "npm run test:budget && npm run test:chat-history && npm run test:phase5-client && npm run test:conversation-progress && npm run test:session-recovery && npm run test:trip-context-chips && npm run test:artifacts && npm run test:flight-connections && npm run test:airport-times && npm run test:phase6-client && npm run test:phase789-client && npm run test:oag && npm run test:connectivity && npm run test:route && npm run test:route-real && npm run test:route-llm && npm run test:route-cloud && npm run test:production-presentation",
     "test:budget": "node scripts/test-budget.cjs",
     "test:trip-context-chips": "node scripts/test-trip-context-chips.js",
     "test:chat-history": "node scripts/test-chat-history.js",
@@ -44,7 +44,8 @@
     "backend:down": "docker compose down",
     "test:phase789-client": "node scripts/test-phase789-client.js",
     "admin:dev": "npm --prefix apps/admin run dev",
-    "admin:build": "npm --prefix apps/admin run build"
+    "admin:build": "npm --prefix apps/admin run build",
+    "test:production-presentation": "node scripts/test-production-presentation.cjs"
   },
   "overrides": {
     "webpack": "5.78.0"

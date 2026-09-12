@@ -40,7 +40,14 @@ const envSchema = z.object({
   OPENROUTER_BASE_URL: optionalUrl.default('https://openrouter.ai/api/v1'),
   OPENROUTER_MODEL: z.string().trim().min(1).default('deepseek/deepseek-v4-flash-0731'),
   PLANNER_MODEL: z.string().trim().default(''),
-  RESEARCH_MODEL: z.string().trim().default('')
+  RESEARCH_MODEL: z.string().trim().default(''),
+  /** Default remains the established SerpApi + synthesis path. */
+  NATIVE_RESEARCH_PROVIDER: z.enum(['serpapi', 'openrouter_native']).default('serpapi'),
+  NATIVE_RESEARCH_MODEL: z.enum(['qwen/qwen3.8-flash', 'z-ai/glm-5.3-flash']).default('qwen/qwen3.8-flash'),
+  /** Shared DB budget key; its amount is provisioned separately and never initialized by a request. */
+  NATIVE_RESEARCH_BUDGET_ID: z.string().trim().max(160).default(''),
+  NATIVE_RESEARCH_MAX_CALL_USD_MICROS: z.coerce.number().int().min(0).max(1_000_000_000_000).default(0),
+  NATIVE_RESEARCH_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(95_000).default(95_000)
 })
 
 export type AppEnv = z.infer<typeof envSchema>

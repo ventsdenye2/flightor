@@ -4,6 +4,8 @@ This directory contains the documents that guide architecture, implementation,
 operations, and Agent development. The repository-root `README.md` is the
 project entry point; normative engineering guidance lives here.
 
+Latest local integration: [2026-09-13 production handoff](./HANDOFF_2026-09-13_PRODUCTION_INTEGRATION.md), including the confirmed UI reference, local service commands, live API evidence, budget rounds, and remaining WeChat acceptance work.
+
 ## Authority order
 
 When documents disagree, apply them in this order:

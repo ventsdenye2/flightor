@@ -4,6 +4,7 @@ import { Icon, Photo } from './VisualMedia'
 import { formatPrice, priceStatusLabel, tripDurationLabel, travelerLabel } from './presentation'
 import type { TripPresentation } from './presentation'
 import { DemoNote, PageHeader } from './SharedUI'
+import './experience.scss'
 import './planner.scss'
 
 interface PlannerPageProps {
@@ -11,6 +12,14 @@ interface PlannerPageProps {
   onOpenTrip: () => void
   onSearchFlights: () => void
   initialPrompt?: string
+  onSubmitPrompt?: (message: string) => void
+  productionBusy?: boolean
+  productionError?: string
+  productionReply?: string
+  productionPrompt?: string
+  productionResultAvailable?: boolean
+  onCancelProduction?: () => void
+  onExit?: () => void
 }
 
 const suggestions = [
@@ -19,7 +28,8 @@ const suggestions = [
   { title: '只有一个长周末', prompt: '下一个长周末想出去走走，从上海出发，两个人，想要轻松、不赶路的安排。', icon: 'calendar' }
 ]
 
-export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '' }: PlannerPageProps) {
+export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, onCancelProduction, onExit }: PlannerPageProps) {
+  const production = Boolean(onSubmitPrompt)
   const sampleLabel = `${trip.destination} · ${tripDurationLabel(trip)}`
   const samplePrompt = `从${trip.route[0] || '出发地待定'}出发，去${trip.destination}，${tripDurationLabel(trip)}，${travelerLabel(trip)}，安排轻松一点。`
   const price = trip.flights[0]?.price
@@ -27,6 +37,7 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
   const [submitted, setSubmitted] = useState('')
   const [phase, setPhase] = useState<'idle' | 'loading' | 'ready' | 'cancelled'>('idle')
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const receivedPrompt = useRef('')
 
   useEffect(() => {
     if (pending.current) clearTimeout(pending.current)
@@ -36,6 +47,13 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
     setPhase('idle')
   }, [initialPrompt])
 
+  useEffect(() => {
+    if (!production) return
+    if (productionPrompt && receivedPrompt.current !== productionPrompt) { receivedPrompt.current = productionPrompt; setSubmitted(productionPrompt); setPhase(productionError ? 'cancelled' : productionBusy ? 'loading' : 'ready') }
+    if (productionBusy) { setPhase('loading'); if (productionPrompt) setSubmitted(productionPrompt) }
+    else if (submitted) setPhase(productionError ? 'cancelled' : 'ready')
+  }, [production, productionBusy, productionError, submitted, productionPrompt])
+
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current) }, [])
 
   const start = (message: string) => {
@@ -43,10 +61,19 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
     setSubmitted(message.trim())
     setDraft('')
     setPhase('loading')
+    if (onSubmitPrompt) {
+      onSubmitPrompt(message.trim())
+      return
+    }
     // Only advances local preview state; the result is the injected sample, never model output.
     pending.current = setTimeout(() => { setPhase('ready'); pending.current = null }, 1100)
   }
   const cancel = () => {
+    if (onCancelProduction) {
+      onCancelProduction()
+      setPhase('cancelled')
+      return
+    }
     if (pending.current) clearTimeout(pending.current)
     pending.current = null
     setPhase('cancelled')
@@ -60,7 +87,7 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
   }
 
   return <>
-    <PageHeader action={submitted || draft ? <Button className='ux-text-button' onClick={() => reset()}>重新开始</Button> : undefined} />
+    <PageHeader action={<View>{submitted || draft ? <Button className='ux-text-button' disabled={productionBusy} onClick={() => reset()}>重新输入</Button> : null}{onExit ? <Button className='ux-text-button' onClick={onExit}>经典规划</Button> : null}</View>} />
     <View className='ux-scroll pl-scroll' key={submitted ? 'conversation' : 'welcome'}>
       {!submitted ? <View className='pl-welcome'>
         <Text className='pl-title'>好旅行，<Text className='pl-title-line'>从一个想法开始。</Text></Text>
@@ -77,31 +104,31 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
       </View> : <View className='pl-conversation'>
         <Text className='pl-conversation-label'>这一次，想这样出发</Text>
         <View className='pl-user-message'><Text>{submitted}</Text></View>
-        <View className='pl-reply-brand'><View className='pl-reply-mark'><Icon name='plane' /></View><Text>FlightOR</Text><Text className='pl-demo-badge'>示例体验</Text></View>
+        <View className='pl-reply-brand'><View className='pl-reply-mark'><Icon name='plane' /></View><Text>FlightOR</Text><Text className='pl-demo-badge'>{production ? '我的旅行规划' : '示例体验'}</Text></View>
         {phase === 'loading' ? <View className='pl-generating' role='status' aria-live='polite'>
-          <View className='pl-loading-line'><View className='pl-loading-dot' /><Text>正在打开参考行程…</Text></View>
-          <Text className='ux-muted'>先用{sampleLabel}示例，看看旅程会如何展开。</Text>
+          <View className='pl-loading-line'><View className='pl-loading-dot' /><Text>{production ? '正在规划你的旅程…' : '正在打开参考行程…'}</Text></View>
+          <Text className='ux-muted'>{production ? '正在查询资料并整理安排，回复会保存在当前行程。' : `先用${sampleLabel}示例，看看旅程会如何展开。`}</Text>
           <View className='pl-loading-skeleton'><View /><View /><View /></View>
-          <Button className='ux-text-button' onClick={cancel}>取消查看</Button>
+          <Button className='ux-text-button' disabled={production && !onCancelProduction} onClick={cancel}>{production ? '取消规划' : '取消查看'}</Button>
         </View> : phase === 'cancelled' ? <View className='pl-cancelled' role='status'>
           <Text className='ux-section-title'>已暂停，想法还在这里</Text><Text className='ux-muted'>可以继续查看参考，也可以重新写下你的想法。</Text>
           <View className='pl-inline-actions'><Button className='ux-text-button' onClick={() => start(submitted)}>继续查看</Button><Button className='ux-text-button' onClick={() => reset(submitted)}>修改想法</Button></View>
         </View> : <>
-          <Text className='pl-reply-copy'>先看看这份参考。<Text className='pl-reply-copy-line'>{trip.description}</Text></Text>
-          <Button className='pl-result' onClick={onOpenTrip}>
+          {productionError ? <Text className='pl-reply-copy'>{productionError}</Text> : <Text className='pl-reply-copy'>{production ? productionReply || '正在等待规划回复。' : '先看看这份参考。'}<Text className='pl-reply-copy-line'>{trip.description}</Text></Text>}
+          {(!production || productionResultAvailable) && <Button className='pl-result' onClick={onOpenTrip}>
             <Photo src={trip.cover?.src} description={trip.cover?.description || '图片待补充'} className='pl-result-photo' retry={false} />
-            <View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {tripDurationLabel(trip)}</Text><Text>固定示例</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || '路线待确认'} · {travelerLabel(trip)}</Text><View className='pl-result-bottom'><View><Text className='pl-result-price'>{formatPrice(price)}{price && price.status !== 'unknown' && price.amount !== null ? <Text>{price.unit === 'person' ? ' / 人' : ' / 合计'}</Text> : null}</Text><Text className='ux-caption'>{priceStatusLabel(price)}</Text></View><View className='pl-open-result'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></View>
-          </Button>
+            <View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {tripDurationLabel(trip)}</Text><Text>{production ? '已保存结果' : '固定示例'}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || '路线待确认'} · {travelerLabel(trip)}</Text><View className='pl-result-bottom'><View><Text className='pl-result-price'>{formatPrice(price)}{price && price.status !== 'unknown' && price.amount !== null ? <Text>{price.unit === 'person' ? ' / 人' : ' / 合计'}</Text> : null}</Text><Text className='ux-caption'>{priceStatusLabel(price)}</Text></View><View className='pl-open-result'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></View>
+          </Button>}
           <View className='pl-result-status'><Icon name='info' /><Text>{trip.days.length ? `已有 ${trip.days.filter(day => day.status === 'ready').length} 天参考安排，可查看和调整` : '每日安排尚未补充，可先查看旅行信息'}</Text></View>
-          <DemoNote text={`这是固定的${sampleLabel}参考，未按输入内容生成；航班、价格与安排均为示例。`} />
-          <View className='pl-followups'><Button className='pl-followup' onClick={() => reset(submitted)}><Text>修改我的想法</Text><Icon name='arrow-right' /></Button><Button className='pl-followup' onClick={onSearchFlights}><Text>比较航班示例</Text><Icon name='plane' /></Button></View>
+          <DemoNote text={production ? '结果来自当前登录行程；缺少的日期、价格、坐标与媒体保持待确认。' : `这是固定的${sampleLabel}参考，未按输入内容生成；航班、价格与安排均为示例。`} />
+          <View className='pl-followups'><Button className='pl-followup' onClick={() => reset(submitted)}><Text>修改我的想法</Text><Icon name='arrow-right' /></Button><Button className='pl-followup' onClick={onSearchFlights}><Text>{production ? '查看航班' : '比较航班示例'}</Text><Icon name='plane' /></Button></View>
         </>}
       </View>}
     </View>
     {!submitted ? <View className='pl-composer'>
       <View className='pl-input-wrap'><Textarea className='pl-textarea' value={draft} maxlength={600} ariaLabel='旅行想法' placeholder='例如：从哪里出发、去几天、和谁一起、喜欢什么…' onInput={event => setDraft(event.detail.value)} /><View className='pl-composer-actions'><Text className='pl-composer-hint'>{draft ? `${draft.length}/600` : '目的地、天数、预算，都可以聊聊'}</Text>{draft ? <Button className='ux-icon-button pl-clear' ariaLabel='清空旅行想法' onClick={() => setDraft('')}><Icon name='close' /></Button> : null}</View></View>
-      <Button className='ux-primary pl-submit' disabled={!draft.trim()} onClick={() => start(draft)}><Text>查看行程示例</Text><Icon name='arrow-right' /></Button>
-      <Text className='pl-composer-note'>演示模式 · 将展示{sampleLabel}固定参考</Text>
+      <Button className='ux-primary pl-submit' disabled={!draft.trim() || productionBusy} onClick={() => start(draft)}><Text>{production ? '开始规划' : '查看行程示例'}</Text><Icon name='arrow-right' /></Button>
+      <Text className='pl-composer-note'>{production ? '生成后的行程会自动保存到我的行程' : `演示模式 · 将展示${sampleLabel}固定参考`}</Text>
     </View> : null}
   </>
 }

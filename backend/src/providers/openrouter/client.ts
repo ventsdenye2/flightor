@@ -8,6 +8,7 @@ import type {
 } from '../../agent/runtime/model.js'
 import { AppError } from '../../lib/errors.js'
 import { fetchJson } from '../../lib/http.js'
+import type { NativeResearchReceipt } from '../../research-agent/native.js'
 
 export type {
   ChatCompletion,
@@ -133,6 +134,33 @@ export class OpenRouterClient {
     }
     return { message, ...(typeof finishReason === 'string' ? { finishReason } : {}) }
   }
+
+  /** Native research needs raw annotations and provider accounting; Planner completion deliberately remains compact. */
+  async completeNativeResearch(body: Record<string, unknown>, options: { signal: AbortSignal; timeoutMs: number }): Promise<NativeResearchReceipt> {
+    if (!this.config.OPENROUTER_API_KEY) throw new AppError('PROVIDER_NOT_CONFIGURED', 'OpenRouter is not configured', 503)
+    const response = await fetchJson<Record<string, unknown>>(
+      `${this.config.OPENROUTER_BASE_URL.replace(/\/$/, '')}/chat/completions`,
+      { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${this.config.OPENROUTER_API_KEY}` }, body: JSON.stringify(body) },
+      { provider: 'openrouter', timeoutMs: Math.min(95_000, Math.max(1_000, options.timeoutMs)), signal: options.signal }
+    )
+    const choice = Array.isArray(response.choices) ? response.choices[0] : undefined
+    if (!isRecord(choice) || !isRecord(choice.message)) throw new AppError('PROVIDER_UNAVAILABLE', 'OpenRouter returned no native research completion', 502)
+    const rawUsage = isRecord(response.usage) ? response.usage : undefined
+    const costUsdMicros = usdMicrosFromProviderCost(rawUsage?.cost)
+    return {
+      ...(typeof response.id === 'string' ? { id: response.id } : {}), ...(typeof response.model === 'string' ? { model: response.model } : {}), provider: 'openrouter',
+      ...(typeof choice.finish_reason === 'string' ? { finishReason: choice.finish_reason } : {}),
+      message: { ...(typeof choice.message.role === 'string' ? { role: choice.message.role } : {}), content: choice.message.content, ...(choice.message.annotations === undefined ? {} : { annotations: choice.message.annotations }), ...(choice.message.tool_calls === undefined ? {} : { tool_calls: choice.message.tool_calls }) },
+      ...(rawUsage ? { usage: rawUsage } : {}), ...(costUsdMicros === undefined ? {} : { costUsdMicros })
+    }
+  }
+}
+
+/** Provider costs may have sub-micro precision; round upward so accounting never understates a known bill. */
+export function usdMicrosFromProviderCost(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return undefined
+  const micros = Math.ceil(value * 1_000_000)
+  return Number.isSafeInteger(micros) ? micros : undefined
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

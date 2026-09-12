@@ -6,6 +6,8 @@ import { assertArtifactContextVersion, type ArtifactRecord, type ArtifactReposit
 /** Authenticated scope shared by artifact-producing domain services. */
 export interface ArtifactWorkspace {
   artifacts: ArtifactRepository
+  /** Authenticated owner, carried only to domain-owned infrastructure such as research audit linking. */
+  ownerId?: string
   trips: Pick<TripContextRepository, 'get'>
   tripId: string
   conversationId?: string
@@ -71,7 +73,8 @@ export async function loadWorkspaceArtifact(scope: ArtifactWorkspace, id: string
 /** A single write boundary for domain-produced Artifacts; callers cannot override scope or lineage. */
 export async function saveWorkspaceArtifact(
   scope: ArtifactWorkspace,
-  input: Pick<CreateArtifactInput, 'id' | 'type' | 'schemaVersion' | 'payload' | 'verification' | 'sourceArtifactIds'>
+  input: Pick<CreateArtifactInput, 'id' | 'type' | 'schemaVersion' | 'payload' | 'verification' | 'sourceArtifactIds'>,
+  options?: { researchAuditId?: string }
 ): Promise<ArtifactRecord> {
   assertArtifactContextVersion({ tripContextVersion: scope.tripContextVersion, payload: input.payload }, scope.tripContextVersion)
   for (const id of new Set(input.sourceArtifactIds)) {
@@ -80,10 +83,15 @@ export async function saveWorkspaceArtifact(
     assertWorkspaceArtifactVersion(scope, source)
   }
   await checkpoint(scope)
-  return scope.artifacts.create({
+  const create = {
     ...input,
     tripId: scope.tripId,
     ...(scope.conversationId ? { conversationId: scope.conversationId } : {}),
     ...workspaceLineage(scope, input.sourceArtifactIds)
-  })
+  }
+  if (options?.researchAuditId) {
+    if (!scope.artifacts.createWithResearchAudit) throw new AppError('RESEARCH_AUDIT_LINK_UNAVAILABLE', 'Research audit cannot be linked to the workspace artifact', 503)
+    return scope.artifacts.createWithResearchAudit(create, options.researchAuditId)
+  }
+  return scope.artifacts.create(create)
 }

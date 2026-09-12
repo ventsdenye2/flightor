@@ -87,6 +87,8 @@ export interface ArtifactRelationshipResolver {
 
 export interface ArtifactRepository {
   create(input: CreateArtifactInput): Promise<ArtifactRecord>
+  /** Atomically records the final artifact on a pre-existing native research audit. */
+  createWithResearchAudit?(input: CreateArtifactInput, auditId: string): Promise<ArtifactRecord>
   get(artifactId: string): Promise<ArtifactRecord | undefined>
   listForTrip?(tripId: string, limit?: number): Promise<ArtifactRecord[]>
   listForGoal(goalId: string, limit?: number): Promise<ArtifactRecord[]>
@@ -147,6 +149,14 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
     this.records.set(record.id, record)
     const { ownerId: _ownerId, ...publicRecord } = record
     return structuredClone(publicRecord)
+  }
+
+  /** Test double: production uses PostgresArtifactRepository's transaction-backed link. */
+  async createWithResearchAudit(input: CreateArtifactInput, auditId: string): Promise<ArtifactRecord> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(auditId)) {
+      throw new AppError('INVALID_RESEARCH_AUDIT', 'Research audit id is invalid', 400)
+    }
+    return this.create(input)
   }
 
   async get(artifactId: string): Promise<ArtifactRecord | undefined> {

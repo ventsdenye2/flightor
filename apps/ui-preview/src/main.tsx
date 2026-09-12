@@ -7,7 +7,7 @@ import { lisbonTrip } from '../../../src/features/ui-experience/sampleTrips'
 import './style.css'
 
 function Preview() {
-  const [navigation, setNavigation] = useState<{ page: PreviewPage; revision: number }>({ page: 'plan', revision: 0 })
+  const [navigation, setNavigation] = useState<{ page: PreviewPage; revision: number }>({ page: new URLSearchParams(location.search).get('page') === 'trip' ? 'trip' : 'plan', revision: 0 })
   const [sampleId, setSampleId] = useState('lisbon')
   const sample = experienceSamples.find(item => item.id === sampleId) || experienceSamples[0]
   const [daysCompleted, setDaysCompleted] = useState(false)
@@ -38,7 +38,7 @@ function Preview() {
       </div> : null}
       {notice && <p className="notice" role="status">{notice}</p>}
     </aside>
-    <main className="phone-stage"><div className="phone-frame"><AppExperience key={revision} {...sample} trip={trip} requestedPage={navigation.page} navigationVersion={navigation.revision} onOpenSource={(url) => { if (/^https:\/\//i.test(url)) window.open(url, '_blank', 'noopener,noreferrer') }} /></div></main>
+    <main className="phone-stage"><div className="phone-frame"><AppExperience initialTripTab={new URLSearchParams(location.search).get('tab') === 'days' ? 'days' : undefined} key={revision} {...sample} trip={trip} requestedPage={navigation.page} navigationVersion={navigation.revision} onOpenSource={(url) => { if (/^https:\/\//i.test(url)) window.open(url, '_blank', 'noopener,noreferrer') }} /></div></main>
   </div>
 }
 

@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { parseEnv } from '../../config/env.js'
-import { OpenRouterClient } from './client.js'
+import { OpenRouterClient, usdMicrosFromProviderCost } from './client.js'
 
 afterEach(() => vi.unstubAllGlobals())
 
 describe('OpenRouterClient', () => {
+  it('rounds a known fractional USD cost upward and rejects invalid values', () => {
+    expect(usdMicrosFromProviderCost(0.000000001)).toBe(1)
+    expect(usdMicrosFromProviderCost(0.123456789)).toBe(123457)
+    expect(usdMicrosFromProviderCost(-0.1)).toBeUndefined()
+    expect(usdMicrosFromProviderCost(Number.NaN)).toBeUndefined()
+  })
   it('uses the V4 Flash default and translates none to explicit disabled reasoning', async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ choices: [] }), {
       status: 200,

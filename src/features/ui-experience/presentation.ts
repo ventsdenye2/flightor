@@ -1,5 +1,5 @@
 // UI-owned display values. This module has no dependency on providers, stores or model output.
-export interface SourcePresentation { label: string; url?: string; status: 'sample' | 'unverified' | 'verified' }
+export interface SourcePresentation { label: string; url?: string; status: 'sample' | 'unverified' | 'verified' | 'partial' | 'stale' }
 export interface MediaPresentation { src: string | null; description: string; source?: SourcePresentation; atmosphere?: boolean }
 export interface PricePresentation { amount: number | null; currency: string; unit: 'person' | 'total'; status: 'sample' | 'estimate' | 'unknown'; source?: SourcePresentation }
 export interface FlightLegDisplay { from: string; to: string; depart: string | null; arrive: string | null; duration: string | null; carrier: string; nextDay?: boolean; transfer?: string; fromCode?: string; toCode?: string }

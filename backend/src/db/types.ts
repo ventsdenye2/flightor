@@ -381,6 +381,43 @@ export interface PlanningGoalRunsTable {
   completed_at: NullableTimestamp
 }
 
+export interface ResearchBudgetsTable {
+  id: string
+  currency: 'USD'
+  limit_usd_micros: string
+  reserved_usd_micros: string
+  settled_usd_micros: string
+  created_at: Timestamp
+  updated_at: Timestamp
+}
+
+export interface ResearchGenerationAuditsTable {
+  id: Generated<string>
+  public_id: string
+  budget_id: string
+  user_id: string
+  request_id: string
+  generation_id: string
+  trip_id: string
+  conversation_id: string | null
+  goal_id: string | null
+  goal_run_id: string | null
+  trip_context_version: number
+  provider: string
+  model: string
+  status: string
+  reserved_usd_micros: string
+  settled_usd_micros: string | null
+  request_json: JsonColumn
+  receipt_json: JsonColumn | null
+  normalization_json: JsonColumn | null
+  error_json: JsonColumn | null
+  artifact_id: string | null
+  delivered_at: NullableTimestamp
+  created_at: Timestamp
+  updated_at: Timestamp
+}
+
 export interface Database {
   admin_users: {
     id: string; email: string; password_hash: string; role: 'viewer' | 'reviewer' | 'admin'
@@ -435,6 +472,8 @@ export interface Database {
   route_generation_runs: RouteGenerationRunsTable
   planning_goals: PlanningGoalsTable
   planning_goal_runs: PlanningGoalRunsTable
+  research_budgets: ResearchBudgetsTable
+  research_generation_audits: ResearchGenerationAuditsTable
 }
 
 export type Country = Selectable<CountriesTable>

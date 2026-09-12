@@ -40,7 +40,10 @@ function loader(stubs, globals = {}) {
         if (specifier.endsWith('.scss')) return {}
         if (!specifier.startsWith('.')) throw new Error(`Unexpected dependency ${specifier}`)
         const resolved = path.resolve(path.dirname(filename), specifier)
-        return load(fs.existsSync(resolved + '.ts') ? resolved + '.ts' : resolved + '.tsx')
+        const candidates = [resolved + '.ts', resolved + '.tsx', path.join(resolved, 'index.ts'), path.join(resolved, 'index.tsx')]
+        const target = candidates.find(candidate => fs.existsSync(candidate))
+        if (!target) throw new Error(`Cannot resolve dependency ${specifier} from ${filename}`)
+        return load(target)
       }
     }, { filename })
     return module.exports
@@ -203,7 +206,7 @@ await test('public login requests never send the old bearer or renew it', async 
   assert.equal(h.storage.get('access_token'), 'access-old')
 })
 
-function hooks() {
+function hooks(forceFirstBooleanFalse = false) {
   const values = []
   let cursor = 0
   let effects = []
@@ -212,7 +215,7 @@ function hooks() {
     finish() { effects.forEach(run => run()) },
     useState(initial) {
       const index = cursor++
-      if (!(index in values)) values[index] = typeof initial === 'function' ? initial() : initial
+      if (!(index in values)) values[index] = forceFirstBooleanFalse && index === 0 && initial === true ? false : typeof initial === 'function' ? initial() : initial
       return [values[index], next => { values[index] = typeof next === 'function' ? next(values[index]) : next }]
     },
     useRef(initial) {
@@ -235,7 +238,7 @@ function find(node, predicate) {
   return predicate(node) ? node : find(node.props?.children, predicate)
 }
 function uiHarness() {
-  let engine = hooks()
+  let engine = hooks(true)
   const sessionListeners = []
   const chatStore = {
     currentSessionId: 'session', currentSession: undefined, sessions: [], messages: [], timeline: [], artifactRefs: [],
@@ -248,6 +251,7 @@ function uiHarness() {
   const stubs = {
     react: { useState: (...args) => engine.useState(...args), useRef: (...args) => engine.useRef(...args), useEffect: (...args) => engine.useEffect(...args) },
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
+    mobx: { makeAutoObservable() {}, runInAction: run => run() },
     '@tarojs/components': { View: 'View', Text: 'Text', Input: 'Input', ScrollView: 'ScrollView' },
     '@tarojs/taro': { useDidShow() {}, setNavigationBarTitle() {} },
     'mobx-react-lite': { observer: component => component },
@@ -258,7 +262,9 @@ function uiHarness() {
     '../../utils/format': { formatPrice: value => value, formatMonthDay: value => value },
     '../../components/plan/TripContextChipsView': () => null,
     '../../components/artifacts': { ArtifactTimelineItem: () => null },
-    '../../services/artifactService': { artifactService: { setSession() {} } },
+    '../../services/artifactService': { artifactService: { setSession() {}, fetchArtifact: async () => { throw new Error('not used in classic Plan harness') } } },
+    '../../features/ui-experience/PlannerPage': { default: () => null },
+    '../../features/ui-experience/productionPresentation': { artifactToTripPresentation: () => ({}) },
     '../../stores/userStore': { userStore },
     '../../components/common/LoginSheet': LoginSheet,
     '../../components/common/DemoBadge': () => null
@@ -270,7 +276,7 @@ function uiHarness() {
   engine.finish()
   const AgentChat = page.props.children[1].type
   engine = hooks()
-  const render = () => { engine.begin(); const tree = AgentChat(); engine.finish(); return tree }
+  const render = () => { engine.begin(); const tree = AgentChat({ onOpenExperience() {} }); engine.finish(); return tree }
   const input = tree => find(tree, node => node.type === 'Input')
   const login = tree => find(tree, node => node.type === LoginSheet)
   const edit = text => { input(render()).props.onInput({ detail: { value: text } }); return render() }
