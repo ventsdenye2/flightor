@@ -2,7 +2,8 @@
   --ux-ink: #123c4a; --ux-teal: #087f8c; --ux-muted: #6c7f86;
   position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; background: #fff; color: var(--ux-ink);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif; font-size: 14px; line-height: 1.5;
-  &, * { box-sizing: border-box; }
+  // WXSS rejects universal selectors. Include the native and web adapter tags.
+  &, view, text, button, image, input, textarea, map, div, span, img { box-sizing: border-box; }
   button { margin: 0; padding: 0; border: 0; border-radius: 0; background: none; color: inherit; font: inherit; line-height: inherit; text-align: left; cursor: pointer; }
   button::after { border: 0; }
   button:disabled { opacity: .45; cursor: default; }
@@ -70,5 +71,5 @@
 .ux-modal { position: absolute; inset: 0; z-index: 1100; background: #102c4260; display: flex; align-items: flex-end; }.ux-sheet { position: relative; width: 100%; max-height: 90%; overflow-y: auto; border-radius: 22px 22px 0 0; background: #fff; padding: 45px 18px max(25px, env(safe-area-inset-bottom)); box-shadow: 0 -10px 40px #123c4a14; animation: ux-slide .22s ease-out; }.ux-sheet-handle { position: absolute; top: 11px; left: 45%; width: 10%; height: 4px; border-radius: 4px; background: #cbd8dc; }.ux-app .ux-sheet-close { position: absolute; top: 4px; right: 9px; }.ux-detail-photo { width: 100%; height: 217px; border-radius: 10px; }.ux-detail-title { display: block; font-family: 'Songti SC', SimSun, serif; font-size: 26px; line-height: 1.4; font-weight: 600; margin: 17px 0 5px; }.ux-detail-copy { display: block; margin: 18px 0; font-size: 14px; line-height: 1.9; }.ux-app .ux-source { width: 100%; display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 12px; background: #eff6f7; color: #087f8c; font-size: 12px; min-height: 48px; .ux-icon:last-child { margin-left: auto; width: 14px; height: 14px; } }.ux-detail-caveat { margin-top: 11px; }.ux-sheet-actions { display: flex; gap: 12px; margin-top: 20px; }.ux-app .ux-adjust-option { position: relative; display: block; padding: 22px 30px 22px 0; border-bottom: 1px solid #e4edef; width: 100%; .ux-muted { margin-top: 6px; }.ux-icon { position: absolute; right: 0; top: 30px; } }.ux-sheet > .ux-caption:last-child { margin-top: 20px; }.ux-app .ux-credit { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 18px 0; border-bottom: 1px solid #e4edef; }
 @keyframes ux-slide { from { transform: translateY(20px); opacity: .6; } to { transform: translateY(0); opacity: 1; } }
 @keyframes ux-pulse { 50% { opacity: .35; } }
-@media (prefers-reduced-motion: reduce) { .ux-app *, .ux-app *::before { animation: none !important; scroll-behavior: auto !important; } }
+@media (prefers-reduced-motion: reduce) { .ux-app view, .ux-app view::before, .ux-app div, .ux-app div::before { animation: none !important; scroll-behavior: auto !important; } }
 @media (max-width: 360px) { .ux-title { font-size: 26px; }.ux-day-title { font-size: 21px; }.ux-thumbnail { width: 55px; height: 68px; }.ux-activity { gap: 7px; } }

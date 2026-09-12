@@ -27,4 +27,4 @@
 .ux-app .ui-danger { color: #a54635; }
 .ui-helper { display: block; font-size: 12px; color: var(--ux-muted); line-height: 1.8; }
 .ui-inline-notice { margin: 12px 0; padding: 12px; border-radius: 10px; color: var(--ux-teal); background: var(--ux-panel); font-size: 12px; }
-@media (prefers-reduced-motion: reduce) { .ux-app *, .ux-app *::before, .ux-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+@media (prefers-reduced-motion: reduce) { .ux-app view, .ux-app view::before, .ux-app view::after, .ux-app div, .ux-app div::before, .ux-app div::after, .ux-app button { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

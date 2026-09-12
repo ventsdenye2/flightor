@@ -1,6 +1,6 @@
 .pr-identity { display: flex; gap: 16px; align-items: center; padding: 30px 20px 22px; .ui-display { font-size: 25px; }.ux-muted { font-size: 11px; margin-top: 4px; } }
 .pr-avatar { width: 62px; height: 62px; border-radius: 50%; background: #edf6f6; border: 1px solid #d5e7e8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; .ux-icon { width: 27px; height: 27px; } }
-.pr-identity > :last-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.pr-identity > view:last-child, .pr-identity > div:last-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .pr-shortcuts { display: flex; padding: 4px 18px 22px; border-bottom: 6px solid #f6f9f9; > button { display: flex; align-items: center; gap: 7px; flex-direction: column; flex: 1; font-size: 12px; border-right: 1px solid var(--ux-line); &:last-child { border-right: 0; } }.ux-caption { font-size: 10px; } }
 .pr-home-body { padding-top: 0; }.pr-preference-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; background: var(--ux-panel); padding: 20px 16px 10px; border-radius: 14px; margin-bottom: 14px; > .ux-icon { width: 46px; height: 46px; opacity: .4; }.ux-muted { margin-top: 7px; font-size: 11px; } }
 .pr-preferences-actions { margin-top: 30px; .ux-text-button { width: 100%; margin-top: 8px; } }.pr-setting-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }.pr-type-sample { display: block; padding: 18px; margin-top: 14px; background: var(--ux-panel); font-size: 14px; border-radius: 12px; }
