@@ -1,0 +1,412 @@
+TAP version 13
+# Subtest: qwen/qwen3.8-flash: synthetic transport persists real research lineage but unverified evidence cannot complete
+ok 1 - qwen/qwen3.8-flash: synthetic transport persists real research lineage but unverified evidence cannot complete
+  ---
+  duration_ms: 1168.8996
+  type: 'test'
+  ...
+# Subtest: z-ai/glm-5.3-flash: synthetic transport persists real research lineage but unverified evidence cannot complete
+ok 2 - z-ai/glm-5.3-flash: synthetic transport persists real research lineage but unverified evidence cannot complete
+  ---
+  duration_ms: 1083.0846
+  type: 'test'
+  ...
+# Subtest: separate synthetic eligible evidence saves the real authored guide and passes finish_goal
+ok 3 - separate synthetic eligible evidence saves the real authored guide and passes finish_goal
+  ---
+  duration_ms: 1142.9333
+  type: 'test'
+  ...
+# Subtest: malformed provider content remains a tool failure with an audit and no persisted research
+ok 4 - malformed provider content remains a tool failure with an audit and no persisted research
+  ---
+  duration_ms: 1151.1472
+  type: 'test'
+  ...
+# Subtest: parent cancellation prevents an uncooperative late research response from writing
+ok 5 - parent cancellation prevents an uncooperative late research response from writing
+  ---
+  duration_ms: 1076.1964
+  type: 'test'
+  ...
+# Subtest: durable Goal cancellation rejects a late write even without aborting the transport
+ok 6 - durable Goal cancellation rejects a late write even without aborting the transport
+  ---
+  duration_ms: 1159.4559
+  type: 'test'
+  ...
+# Subtest: a Trip change during research rejects late evidence and stale completion
+ok 7 - a Trip change during research rejects late evidence and stale completion
+  ---
+  duration_ms: 1179.5762
+  type: 'test'
+  ...
+# Subtest: resume activates a new run and reuses compatible saved research without another provider call
+ok 8 - resume activates a new run and reuses compatible saved research without another provider call
+  ---
+  duration_ms: 1209.3621
+  type: 'test'
+  ...
+# Subtest: the real repository rejects another owner reading or composing from saved research
+ok 9 - the real repository rejects another owner reading or composing from saved research
+  ---
+  duration_ms: 1199.7352
+  type: 'test'
+  ...
+# Subtest: default fixture has no research transport and cannot accidentally dispatch a provider
+ok 10 - default fixture has no research transport and cannot accidentally dispatch a provider
+  ---
+  duration_ms: 1054.2157
+  type: 'test'
+  ...
+# Subtest: returns a genuine v2 artifact with one configurable request and a separately persisted audit
+ok 11 - returns a genuine v2 artifact with one configurable request and a separately persisted audit
+  ---
+  duration_ms: 7.52
+  type: 'test'
+  ...
+# Subtest: uses injected frozen domain authority/verification without trusting model authority or ever producing verified
+ok 12 - uses injected frozen domain authority/verification without trusting model authority or ever producing verified
+  ---
+  duration_ms: 5.5254
+  type: 'test'
+  ...
+# Subtest: source metadata excerpts are explicit and retain complete annotations and truncation paths in the audit
+ok 13 - source metadata excerpts are explicit and retain complete annotations and truncation paths in the audit
+  ---
+  duration_ms: 2.367
+  type: 'test'
+  ...
+# Subtest: unlinked, empty-snippet and overlong-URL sources exclude the whole affected finding, preserving other candidates as partial
+ok 14 - unlinked, empty-snippet and overlong-URL sources exclude the whole affected finding, preserving other candidates as partial
+  ---
+  duration_ms: 5.9426
+  type: 'test'
+  ...
+# Subtest: clarification and partial responses keep all uncertainties independently with explicit long-text audit references
+ok 15 - clarification and partial responses keep all uncertainties independently with explicit long-text audit references
+  ---
+  duration_ms: 2.2151
+  type: 'test'
+  ...
+# Subtest: maps only the indexed supplied destination and does not invent cross-city coverage
+ok 16 - maps only the indexed supplied destination and does not invent cross-city coverage
+  ---
+  duration_ms: 1.0993
+  type: 'test'
+  ...
+# Subtest: invalid structure, excessive findings and invalid indexes/categories are rejected without repair requests
+ok 17 - invalid structure, excessive findings and invalid indexes/categories are rejected without repair requests
+  ---
+  duration_ms: 3.4428
+  type: 'test'
+  ...
+# Subtest: requires a known consistent search count and preserves incomplete/model-error outcomes
+ok 18 - requires a known consistent search count and preserves incomplete/model-error outcomes
+  ---
+  duration_ms: 5.0965
+  type: 'test'
+  ...
+# Subtest: pre-cancellation prevents dispatch and a late completion cannot return an artifact after cancellation
+ok 19 - pre-cancellation prevents dispatch and a late completion cannot return an artifact after cancellation
+  ---
+  duration_ms: 1.7417
+  type: 'test'
+  ...
+# Subtest: audit persistence is required, and persistence failure never returns an artifact
+ok 20 - audit persistence is required, and persistence failure never returns an artifact
+  ---
+  duration_ms: 1.2571
+  type: 'test'
+  ...
+# Subtest: cancellation during an exclusive audit save rejects delivery without a second write or replacing the cancellation error
+ok 21 - cancellation during an exclusive audit save rejects delivery without a second write or replacing the cancellation error
+  ---
+  duration_ms: 2.1186
+  type: 'test'
+  ...
+# Subtest: deadline is cooperative: it signals the transport and rejects late receipts without claiming an independent hard stop
+ok 22 - deadline is cooperative: it signals the transport and rejects late receipts without claiming an independent hard stop
+  ---
+  duration_ms: 40.1012
+  type: 'test'
+  ...
+# Subtest: unknown billing stops each future search without consuming its count
+ok 23 - unknown billing stops each future search without consuming its count
+  ---
+  duration_ms: 0.5175
+  type: 'test'
+  ...
+# Subtest: search admission observes both active reservations and settled amounts
+ok 24 - search admission observes both active reservations and settled amounts
+  ---
+  duration_ms: 0.2767
+  type: 'test'
+  ...
+# Subtest: reviewed unknown calls retain reservations while permitting affordable searches
+ok 25 - reviewed unknown calls retain reservations while permitting affordable searches
+  ---
+  duration_ms: 0.4486
+  type: 'test'
+  ...
+# Subtest: restore rejects invalid reviewed counters and leaves prior state unchanged
+ok 26 - restore rejects invalid reviewed counters and leaves prior state unchanged
+  ---
+  duration_ms: 0.3746
+  type: 'test'
+  ...
+# Subtest: all counters must be nonnegative safe integers, and amounts finite nonnegative numbers
+ok 27 - all counters must be nonnegative safe integers, and amounts finite nonnegative numbers
+  ---
+  duration_ms: 0.5596
+  type: 'test'
+  ...
+# Subtest: legacy snapshots without reviewed count grant no exception to unknown billing
+ok 28 - legacy snapshots without reviewed count grant no exception to unknown billing
+  ---
+  duration_ms: 0.3085
+  type: 'test'
+  ...
+# Subtest: a valid over-limit receipt restores for inspection but blocks new work
+ok 29 - a valid over-limit receipt restores for inspection but blocks new work
+  ---
+  duration_ms: 0.5463
+  type: 'test'
+  ...
+# Subtest: limit mismatch and restoring over active calls cannot partially mutate the budget
+ok 30 - limit mismatch and restoring over active calls cannot partially mutate the budget
+  ---
+  duration_ms: 0.4065
+  type: 'test'
+  ...
+# Subtest: URL fabricated by model is not silently upgraded to verified evidence
+ok 31 - URL fabricated by model is not silently upgraded to verified evidence
+  ---
+  duration_ms: 0.2888
+  type: 'test'
+  ...
+# Subtest: the advertised API and prompt schema share case category and count constraints
+ok 32 - the advertised API and prompt schema share case category and count constraints
+  ---
+  duration_ms: 0.2714
+  type: 'test'
+  ...
+# Subtest: citation linked is still unverified; unsafe URLs and foreign destination indexes reject
+ok 33 - citation linked is still unverified; unsafe URLs and foreign destination indexes reject
+  ---
+  duration_ms: 0.4003
+  type: 'test'
+  ...
+# Subtest: duplicate, over-limit, missing and extra fields fail; explicit clarification can be empty
+ok 34 - duplicate, over-limit, missing and extra fields fail; explicit clarification can be empty
+  ---
+  duration_ms: 0.611
+  type: 'test'
+  ...
+# Subtest: reservations prevent parallel overspend admission and retain uncertain billing
+ok 35 - reservations prevent parallel overspend admission and retain uncertain billing
+  ---
+  duration_ms: 0.7564
+  type: 'test'
+  ...
+# Subtest: small samples never publish p95 and failures remain in latency denominators
+ok 36 - small samples never publish p95 and failures remain in latency denominators
+  ---
+  duration_ms: 0.7962
+  type: 'test'
+  ...
+# Subtest: loads the real baseline and reserves each search before dispatch
+ok 37 - loads the real baseline and reserves each search before dispatch
+  ---
+  duration_ms: 286.1212
+  type: 'test'
+  ...
+# Subtest: exposes production synthesis fallback and retains search accounting
+ok 38 - exposes production synthesis fallback and retains search accounting
+  ---
+  duration_ms: 4.1102
+  type: 'test'
+  ...
+# Subtest: counts failed dispatched searches without leaking provider exception text
+ok 39 - counts failed dispatched searches without leaking provider exception text
+  ---
+  duration_ms: 2.511
+  type: 'test'
+  ...
+# Subtest: a rejected budget reservation stops the run before a paid search
+ok 40 - a rejected budget reservation stops the run before a paid search
+  ---
+  duration_ms: 1.5851
+  type: 'test'
+  ...
+# Subtest: cancellation retains dispatched calls and drains their accounting
+ok 41 - cancellation retains dispatched calls and drains their accounting
+  ---
+  duration_ms: 2.414
+  type: 'test'
+  ...
+# Subtest: an already cancelled run never dispatches or loads a provider
+ok 42 - an already cancelled run never dispatches or loads a provider
+  ---
+  duration_ms: 0.8744
+  type: 'test'
+  ...
+# Subtest: budget rejection drains a second in-flight search before reporting costs
+ok 43 - budget rejection drains a second in-flight search before reporting costs
+  ---
+  duration_ms: 20.8571
+  type: 'test'
+  ...
+# Subtest: a preexisting runner lock rejects reconciliation without deleting the owner lock
+ok 44 - a preexisting runner lock rejects reconciliation without deleting the owner lock
+  ---
+  duration_ms: 7.6078
+  type: 'test'
+  ...
+# Subtest: lock spans asynchronous accounting work and excludes both runner and second reconciler
+ok 45 - lock spans asynchronous accounting work and excludes both runner and second reconciler
+  ---
+  duration_ms: 15.9773
+  type: 'test'
+  ...
+# Subtest: synchronous and asynchronous operation failures release only the acquired lock
+ok 46 - synchronous and asynchronous operation failures release only the acquired lock
+  ---
+  duration_ms: 10.065
+  type: 'test'
+  ...
+# Subtest: valid direct JSON remains unchanged with original strict validity and timing
+ok 47 - valid direct JSON remains unchanged with original strict validity and timing
+  ---
+  duration_ms: 0.9286
+  type: 'test'
+  ...
+# Subtest: Kimi-like extra type fields are projected with every dropped path recorded
+ok 48 - Kimi-like extra type fields are projected with every dropped path recorded
+  ---
+  duration_ms: 0.8624
+  type: 'test'
+  ...
+# Subtest: Deep-like English prose plus one final JSON fence is extracted without model-specific handling
+ok 49 - Deep-like English prose plus one final JSON fence is extracted without model-specific handling
+  ---
+  duration_ms: 1.1
+  type: 'test'
+  ...
+# Subtest: Qwen-like prose and a single bare JSON suffix preserve raw failure and record extraction
+ok 50 - Qwen-like prose and a single bare JSON suffix preserve raw failure and record extraction
+  ---
+  duration_ms: 0.7881
+  type: 'test'
+  ...
+# Subtest: bare suffix extraction composes with projection and cannot supply missing fields
+ok 51 - bare suffix extraction composes with projection and cannot supply missing fields
+  ---
+  duration_ms: 0.5403
+  type: 'test'
+  ...
+# Subtest: bare suffix extraction rejects delimiters or backticks in prose and never selects a later JSON
+ok 52 - bare suffix extraction rejects delimiters or backticks in prose and never selects a later JSON
+  ---
+  duration_ms: 0.7178
+  type: 'test'
+  ...
+# Subtest: extraction and field projection compose in a recorded order
+ok 53 - extraction and field projection compose in a recorded order
+  ---
+  duration_ms: 0.5468
+  type: 'test'
+  ...
+# Subtest: preserves the existing parser acceptance of a bare fence in the raw result
+ok 54 - preserves the existing parser acceptance of a bare fence in the raw result
+  ---
+  duration_ms: 0.3377
+  type: 'test'
+  ...
+# Subtest: missing known fields and description in place of summary cannot be repaired
+ok 55 - missing known fields and description in place of summary cannot be repaired
+  ---
+  duration_ms: 0.5483
+  type: 'test'
+  ...
+# Subtest: does not truncate counts, coerce indexes, change categories, repair unsafe URLs or alter dates
+ok 56 - does not truncate counts, coerce indexes, change categories, repair unsafe URLs or alter dates
+  ---
+  duration_ms: 1.0333
+  type: 'test'
+  ...
+# Subtest: rejects multiple fences, trailing prose or JSON, and ambiguous earlier JSON
+ok 57 - rejects multiple fences, trailing prose or JSON, and ambiguous earlier JSON
+  ---
+  duration_ms: 0.9932
+  type: 'test'
+  ...
+# Subtest: invalid JSON and nonobject findings are not repaired
+ok 58 - invalid JSON and nonobject findings are not repaired
+  ---
+  duration_ms: 0.9809
+  type: 'test'
+  ...
+# Subtest: current artifact retains unverified evidence, two-city ownership and contextual warnings
+ok 59 - current artifact retains unverified evidence, two-city ownership and contextual warnings
+  ---
+  duration_ms: 0.7362
+  type: 'test'
+  ...
+# Subtest: a finding spanning both cities keeps all destinations and uses the first matching ID as its scalar index
+ok 60 - a finding spanning both cities keeps all destinations and uses the first matching ID as its scalar index
+  ---
+  duration_ms: 0.334
+  type: 'test'
+  ...
+# Subtest: unmatched destination IDs do not silently acquire the first city
+ok 61 - unmatched destination IDs do not silently acquire the first city
+  ---
+  duration_ms: 0.2186
+  type: 'test'
+  ...
+# Subtest: neither populated nor empty artifacts invent a conversational disposition
+ok 62 - neither populated nor empty artifacts invent a conversational disposition
+  ---
+  duration_ms: 0.2789
+  type: 'test'
+  ...
+# Subtest: review uses current raw artifact in preference to an earlier lossy result snapshot
+ok 63 - review uses current raw artifact in preference to an earlier lossy result snapshot
+  ---
+  duration_ms: 0.5891
+  type: 'test'
+  ...
+# Subtest: thin structured review retains unverified, unlinked URLs and evidence limitations without execution metadata
+ok 64 - thin structured review retains unverified, unlinked URLs and evidence limitations without execution metadata
+  ---
+  duration_ms: 0.3959
+  type: 'test'
+  ...
+# Subtest: direct text and failed responses remain text or failures without fabricated findings
+ok 65 - direct text and failed responses remain text or failures without fabricated findings
+  ---
+  duration_ms: 0.2347
+  type: 'test'
+  ...
+# Subtest: truncated or unfinished tool output retains execution status despite valid unlinked JSON
+ok 66 - truncated or unfinished tool output retains execution status despite valid unlinked JSON
+  ---
+  duration_ms: 0.292
+  type: 'test'
+  ...
+# Subtest: continuations reject changed model, search, request code or baseline while allowing filters
+ok 67 - continuations reject changed model, search, request code or baseline while allowing filters
+  ---
+  duration_ms: 0.6817
+  type: 'test'
+  ...
+1..67
+# tests 67
+# suites 0
+# pass 67
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 12802.1141

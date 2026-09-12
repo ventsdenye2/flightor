@@ -1,0 +1,421 @@
+{
+  "sampleId": "candidate-screen-v3/sample-035",
+  "caseId": "activity-08",
+  "model": "z-ai/glm-5.3-flash",
+  "sampleFile": "samples/sample-028.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-035.json",
+  "sourceSha256": "9044814a011ef59de5cc00795f7e1787804d93646ef4b72f10e393fb7e5cac00",
+  "receiptSha256": "ea4114f606a5d51d91f4b805a08ffc4e020983538410dd455d0f74870999614c",
+  "recordedAt": "2026-09-12T18:51:56.154Z",
+  "travelWindow": {
+    "from": "2026-10-27",
+    "to": "2026-10-29"
+  },
+  "recordedStatus": "invalid_output",
+  "recordedRawValid": false,
+  "ownerId": "backend-replay-ee70cbe3-cb37-4ed4-bdce-3777c1cde8b3",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_732d799a-204f-4197-b7ba-6b4779540ced.json"
+  ],
+  "providerStatus": "rejected",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c3e2-7068-9d7a-e9c44750b90b",
+        "departureWindow": {
+          "from": "2026-10-27",
+          "to": "2026-10-27",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-10-29",
+          "to": "2026-10-29",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:TPE",
+              "type": "city",
+              "name": "台北",
+              "countryCode": "TW"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "假设连续下雨的备用方案",
+          "博物馆",
+          "室内市集",
+          "文化体验",
+          "减少户外暴露",
+          "减少跨区移动"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [],
+      "memoryChanged": false,
+      "warnings": [],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c3e9-7203-bd4d-41a35ca33a04",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c3e9-7203-bd4d-41a35ca33a04",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "830328dd-c0de-4353-ab11-7df111926394",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c3e2-7068-9d7a-e9c44750b90b\",\"departureWindow\":{\"from\":\"2026-10-27\",\"to\":\"2026-10-27\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-29\",\"to\":\"2026-10-29\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:TPE\",\"type\":\"city\",\"name\":\"台北\",\"countryCode\":\"TW\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"假设连续下雨的备用方案\",\"博物馆\",\"室内市集\",\"文化体验\",\"减少户外暴露\",\"减少跨区移动\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c3e2-7068-9d7a-e9c44750b90b",
+              "departureWindow": {
+                "from": "2026-10-27",
+                "to": "2026-10-27",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-10-29",
+                "to": "2026-10-29",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:TPE",
+                    "type": "city",
+                    "name": "台北",
+                    "countryCode": "TW"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "假设连续下雨的备用方案",
+                "博物馆",
+                "室内市集",
+                "文化体验",
+                "减少户外暴露",
+                "减少跨区移动"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "按连续下雨的假设研究最多6个室内活动候选，指出区域分布及公共交通站点到入口可能的露天步行，不把假设写成天气预报。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c3e9-7203-bd4d-41a35ca33a04",
+          "runId": "01a0972a-c3ea-7009-b01d-1487a2a8c441",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "864c7e88-2c7f-4f91-a01a-3086f293de3d",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c3e9-7203-bd4d-41a35ca33a04\",\"ownerId\":\"backend-replay-ee70cbe3-cb37-4ed4-bdce-3777c1cde8b3\",\"tripId\":\"01a0972a-c3e2-7068-9d7a-e9c44750b90b\",\"conversationId\":\"01a0972a-c3e2-7068-9d7a-ed682246a2cb\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"按连续下雨的假设研究最多6个室内活动候选，指出区域分布及公共交通站点到入口可能的露天步行，不把假设写成天气预报。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.417Z\",\"updatedAt\":\"2026-09-12T19:49:17.417Z\"},\"run\":{\"id\":\"01a0972a-c3ea-7009-b01d-1487a2a8c441\",\"ownerId\":\"backend-replay-ee70cbe3-cb37-4ed4-bdce-3777c1cde8b3\",\"goalId\":\"01a0972a-c3e9-7203-bd4d-41a35ca33a04\",\"tripId\":\"01a0972a-c3e2-7068-9d7a-e9c44750b90b\",\"generationId\":\"offline-generation-2236dd24-f49e-4992-b0f8-f60ffdbc240e\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c3e2-7068-9d7a-e9c44750b90b\",\"departureWindow\":{\"from\":\"2026-10-27\",\"to\":\"2026-10-27\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-29\",\"to\":\"2026-10-29\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:TPE\",\"type\":\"city\",\"name\":\"台北\",\"countryCode\":\"TW\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"假设连续下雨的备用方案\",\"博物馆\",\"室内市集\",\"文化体验\",\"减少户外暴露\",\"减少跨区移动\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:17.418Z\",\"updatedAt\":\"2026-09-12T19:49:17.418Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c3e9-7203-bd4d-41a35ca33a04",
+              "ownerId": "backend-replay-ee70cbe3-cb37-4ed4-bdce-3777c1cde8b3",
+              "tripId": "01a0972a-c3e2-7068-9d7a-e9c44750b90b",
+              "conversationId": "01a0972a-c3e2-7068-9d7a-ed682246a2cb",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "按连续下雨的假设研究最多6个室内活动候选，指出区域分布及公共交通站点到入口可能的露天步行，不把假设写成天气预报。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.417Z",
+              "updatedAt": "2026-09-12T19:49:17.417Z"
+            },
+            "run": {
+              "id": "01a0972a-c3ea-7009-b01d-1487a2a8c441",
+              "ownerId": "backend-replay-ee70cbe3-cb37-4ed4-bdce-3777c1cde8b3",
+              "goalId": "01a0972a-c3e9-7203-bd4d-41a35ca33a04",
+              "tripId": "01a0972a-c3e2-7068-9d7a-e9c44750b90b",
+              "generationId": "offline-generation-2236dd24-f49e-4992-b0f8-f60ffdbc240e",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c3e2-7068-9d7a-e9c44750b90b",
+                "departureWindow": {
+                  "from": "2026-10-27",
+                  "to": "2026-10-27",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-29",
+                  "to": "2026-10-29",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:TPE",
+                      "type": "city",
+                      "name": "台北",
+                      "countryCode": "TW"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "假设连续下雨的备用方案",
+                  "博物馆",
+                  "室内市集",
+                  "文化体验",
+                  "减少户外暴露",
+                  "减少跨区移动"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:17.418Z",
+              "updatedAt": "2026-09-12T19:49:17.418Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:TPE",
+              "type": "city",
+              "name": "台北",
+              "countryCode": "TW"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-10-27",
+            "to": "2026-10-29"
+          },
+          "interests": [
+            "假设连续下雨的备用方案",
+            "博物馆",
+            "室内市集",
+            "文化体验",
+            "减少户外暴露",
+            "减少跨区移动"
+          ],
+          "questions": [
+            "按连续下雨的假设研究最多6个室内活动候选，指出区域分布及公共交通站点到入口可能的露天步行，不把假设写成天气预报。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c3e9-7203-bd4d-41a35ca33a04",
+          "runId": "01a0972a-c3ea-7009-b01d-1487a2a8c441",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "d48f9c2c-1c74-4e58-8499-be4e991b0d62",
+          "toolName": "web_research",
+          "ok": false,
+          "content": "{\"ok\":false,\"error\":{\"code\":\"TOOL_FAILURE\",\"message\":\"Tool execution failed\"}}",
+          "costUnits": 4,
+          "durationMs": 4,
+          "provider": "research_agent",
+          "errorCode": "TOOL_FAILURE",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": false,
+          "error": {
+            "code": "TOOL_FAILURE",
+            "message": "Tool execution failed"
+          }
+        }
+      }
+    ],
+    "artifacts": [],
+    "goals": [
+      {
+        "id": "01a0972a-c3e9-7203-bd4d-41a35ca33a04",
+        "ownerId": "backend-replay-ee70cbe3-cb37-4ed4-bdce-3777c1cde8b3",
+        "tripId": "01a0972a-c3e2-7068-9d7a-e9c44750b90b",
+        "conversationId": "01a0972a-c3e2-7068-9d7a-ed682246a2cb",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "按连续下雨的假设研究最多6个室内活动候选，指出区域分布及公共交通站点到入口可能的露天步行，不把假设写成天气预报。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:17.417Z",
+        "updatedAt": "2026-09-12T19:49:17.417Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "failed",
+  "providerError": {
+    "name": "ThinResearchError",
+    "code": "THIN_RESEARCH_OUTPUT_INVALID",
+    "statusCode": 502,
+    "details": [
+      "invalid_json"
+    ]
+  },
+  "effectiveDisposition": null,
+  "scriptedPlannerCalls": 4,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": false,
+      "errorCode": "TOOL_FAILURE",
+      "persisted": false,
+      "findingCount": 0,
+      "verificationEligibleFindingCount": 0,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 0,
+        "unverified": 0,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": false,
+      "toolOk": false,
+      "status": null,
+      "errorCode": null,
+      "issues": []
+    },
+    "finishGoal": {
+      "attempted": false,
+      "toolOk": false,
+      "verificationStatus": null,
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

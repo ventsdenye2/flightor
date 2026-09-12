@@ -1,0 +1,2369 @@
+{
+  "manifest": {
+    "schemaVersion": 1,
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "startedAt": "2026-09-12T19:49:14.796Z",
+    "sourceProtocol": "research-v3-aligned-contract-routing",
+    "expectedSamples": 32,
+    "sourceHash": "7148faa3c591ca09773118aaad325358a3a8ffeee362c8225bb750c79e8a5047",
+    "sourceFiles": [
+      {
+        "path": "all-results.json",
+        "sha256": "63c1ec8f9ea578b33a5437fca2f54fc1a5e92e954bcd93521c009f8e4f8590b6"
+      },
+      {
+        "path": "archive-manifest.json",
+        "sha256": "945d154565f4a561efee8f83115469c59e76cbbd2472e018a75bdb670a3bc4c6"
+      },
+      {
+        "path": "inputs/cases.json",
+        "sha256": "e75b03961f2398461fc57ed39222a01628b2eb5cbab7225f1ea8fac67316c7ec"
+      },
+      {
+        "path": "inputs/models.json",
+        "sha256": "c123ac5f0430911960f37d786500ba21ae9d363798a21d72f95ad3c69b2b6e4c"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-002.json",
+        "sha256": "dc7e7a4abe956da48ace1df67fb39b7c5733f0cf82da75a94a1d36aa25946713"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-003.json",
+        "sha256": "21500d47b61feb4580454ebc7922a6dee4e743e1cc36acbcf479040d1ad4fee9"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-004.json",
+        "sha256": "dafde0a67d5f434be17bf1d86cfdadcff7ec75afa164e9cdf5be64e5b2aef9ee"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-005.json",
+        "sha256": "7a301e7c0b41fd810e2f175a86810332d07ac9385bc8ab347410584ef1f20acd"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-006.json",
+        "sha256": "d53d75c3f2db439017511660163154d8e5297c129b68fd2e30a4894fa0b3a109"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-008.json",
+        "sha256": "4d289571dc907f8133c41135ff1d1db8ac8975cfccbd6ee54741224b342c56c7"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-009.json",
+        "sha256": "e10812c18adc6c57291fda2e74b08fec3eeb94a4662843e5d4b83b9002d31d86"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-010.json",
+        "sha256": "3fe0d70596572a2503ab1f1706e56fb8ed6aa0c4c6c217bd19ea41b7213d0530"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-011.json",
+        "sha256": "31577f41245ba49fbf6c043a7fa3e3ae4acb0ef808e3d8f3968586038d490c07"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-012.json",
+        "sha256": "863864db35c9ee7890664bb5dec73191c8e95facfb0b3dcfebec6b41e294955f"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-014.json",
+        "sha256": "299cd793bfd67c9187667261f892d85f302cb8b19ba2f6bc51917ec1120fdece"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-016.json",
+        "sha256": "a6346c55086740ae08dcb5bf3a9ccf02978b5ba6651bae33c0a685dcf0d6df13"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-017.json",
+        "sha256": "f08aa76df15bcc1ab123a8f25b1ed5a5d97d99ac33864dc7b24fad0ae00a20cb"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-020.json",
+        "sha256": "296f0227fafadc4de15e36f50ad9eac4045e9acd86c950c57cf33c4c91303275"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-021.json",
+        "sha256": "01c7725e79a5616c1e6b7865cbb092035041fae07478662a85a1d8f5277af171"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-023.json",
+        "sha256": "a2e3f0c9dcda397d2b6fa1ba1212484046a27cc3c858d7f2fe88d133262dfceb"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-024.json",
+        "sha256": "2248cebb65febe83f10a66da55dd0489a081782298bba21459677bf9e46ea898"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-026.json",
+        "sha256": "7b0b2643b2b3e96fd38b3931aaee7f5f9b11ebb1917cf3fdfa55949f7ce6c29e"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-027.json",
+        "sha256": "2af49e03b17359687d0349abb700dc21e056fdca3515d1eb3068f38963a2e17f"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-028.json",
+        "sha256": "2d129e443c2ee112dd3fe52094f77734e6e8f84cd1833ec034ea402cbc85a83e"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-029.json",
+        "sha256": "f6a0cb89ce6ae4486d2e74a15eae6493793b0bcdbcfe201936d1c8e6e7e5ea19"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-033.json",
+        "sha256": "a322a4796836fc0535fec82e8c863515075a60633bdaf527da9183bd4dfc4b08"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-034.json",
+        "sha256": "b274eb3b1377c609e456c14dfe867435ccbd6dc1129be853817e422aa4ed992b"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-035.json",
+        "sha256": "9044814a011ef59de5cc00795f7e1787804d93646ef4b72f10e393fb7e5cac00"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-036.json",
+        "sha256": "a4aedf043b40351d64913cb4bcc76253ced361781c665723ee12ff86c5f49718"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-039.json",
+        "sha256": "5374859ae3395e36aec34153f10fedae32ddd0bc85123baead53422328563614"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-040.json",
+        "sha256": "d833a14fc5f46a7868354b4740dc2a2c7a99f3f4393bf6ac3c8655afd4c9ce42"
+      },
+      {
+        "path": "runs/candidate-screen-v3/sample-042.json",
+        "sha256": "90150c71f8ce48a6107f391423b80b12f2f1eafaea34459cd944c37415cc0015"
+      },
+      {
+        "path": "runs/research-screen-v3/sample-001.json",
+        "sha256": "af3c673764681c9dbd3637a9b973f9e05bd2ef50b72c87c07c26d8fd614f4c98"
+      },
+      {
+        "path": "runs/research-screen-v3/sample-004.json",
+        "sha256": "8824642453778859453ac4968558ab4cb75db97124262d560d229bdc3104b743"
+      },
+      {
+        "path": "runs/research-screen-v3/sample-007.json",
+        "sha256": "67283d2526d551c6fd6fe7d66f0313175f68e96ccafb7e0964b375503aabc9d6"
+      },
+      {
+        "path": "runs/research-screen-v3/sample-010.json",
+        "sha256": "fe620262c73de552d3ee794042351706961e876194efd707a9fd21b92c46420f"
+      }
+    ],
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "codeHash": "813d35cb6752dd3fca49b8b95702dbf75b7d8e55f662dcfc26ee2cc3eb1e79e3",
+    "files": [
+      {
+        "path": "backend-replay.mjs",
+        "sha256": "3921e8a01e138113b3f33401f60591c0e11f928dbe6ceb69016f6e4d81c20835"
+      },
+      {
+        "path": "planner-integration.mjs",
+        "sha256": "624f631232f5fbcf7309c8cb693c956e67a80f1e24d52563bbbce4983885e217"
+      },
+      {
+        "path": "thin-research.mjs",
+        "sha256": "722f4d7f231cd9fb641780a69dbf2aa68b3c7ca7d1fa4ca43b2586ee2741f44f"
+      },
+      {
+        "path": "baseline.mjs",
+        "sha256": "aa3d5af6c521d10705395c989ccaa21c21b4fddab1b0baed4f56d806e9979aae"
+      },
+      {
+        "path": "../travel-research/contracts.mjs",
+        "sha256": "6db94b97599091fd829941cfed25818f5edb808aba0781cfafd7ef70e0b95b99"
+      },
+      {
+        "path": "../travel-research/normalization.mjs",
+        "sha256": "015c963a2852a3e9e0ec49b49bfcc5a16de9de7d65626685ff7dda79aee31488"
+      }
+    ],
+    "boundaries": {
+      "transport": "Exact archived receipt, cloned once per request. No new model, search or API call.",
+      "planner": "Offline scripted decisions through real CloudPlannerService, AgentRuntime and Planner registry. attemptGuide=true; unchanged fixture selection and domain verification.",
+      "persistence": "Independent owner and in-memory repositories per sample; real Goal/run relation resolver and Trip-version callback. No DB, server or port.",
+      "clock": "Research checkedAt uses the original sample startedAt; backend/runtime clocks retain actual replay time. Trip dates and domain policy are unchanged.",
+      "evidence": "Archived receipts were generated from full user request plus brief; adapter prompts use the brief. This checks recorded-output integration, not fresh model behavior, factual truth, quality ranking, latency or Planner autonomy.",
+      "selection": "The scripted guide distributes findings across days under the first destination. Rejections, including multi-city/date/coverage limitations, are retained without tuning.",
+      "networkGuard": "globalThis.fetch is blocked and restored in finally; no production transport is injected. This is not an OS-level network sandbox.",
+      "dependencies": "Read-only use of installed backend/node_modules junction; lockfile hashed, dependency bytes not frozen"
+    },
+    "finishedAt": "2026-09-12T19:49:17.616Z",
+    "networkAttempts": 0,
+    "newLiveModelCalls": 0,
+    "newApiCostUsd": 0,
+    "completedSamples": 32,
+    "codeUnchanged": true,
+    "sourceUnchanged": true
+  },
+  "groups": [
+    {
+      "model": "qwen/qwen3.8-flash",
+      "samples": 16,
+      "researchPersisted": 15,
+      "nonemptyResearch": 13,
+      "providerRejected": 1,
+      "verificationEligibleFindingSamples": 12,
+      "guideSaved": 0,
+      "satisfied": 0,
+      "replayErrors": 0,
+      "receiptReads": 16,
+      "scriptedPlannerCalls": 94,
+      "newLiveModelCalls": 0
+    },
+    {
+      "model": "z-ai/glm-5.3-flash",
+      "samples": 16,
+      "researchPersisted": 13,
+      "nonemptyResearch": 12,
+      "providerRejected": 3,
+      "verificationEligibleFindingSamples": 11,
+      "guideSaved": 1,
+      "satisfied": 1,
+      "replayErrors": 0,
+      "receiptReads": 16,
+      "scriptedPlannerCalls": 90,
+      "newLiveModelCalls": 0
+    }
+  ],
+  "rows": [
+    {
+      "sampleId": "research-screen-v3/sample-001",
+      "caseId": "activity-07",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-001.json",
+      "sourceFile": "runs/research-screen-v3/sample-001.json",
+      "sourceSha256": "af3c673764681c9dbd3637a9b973f9e05bd2ef50b72c87c07c26d8fd614f4c98",
+      "receiptSha256": "c2ec91901a1a4d4828f5ceb8abd555dfd9f5c756baa7988d90fec424256ae5d7",
+      "recordedAt": "2026-09-12T18:42:24.019Z",
+      "travelWindow": {
+        "from": "2026-11-03",
+        "to": "2026-11-05"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-1596cb10-c8b5-4c87-95dc-31904f606248",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_2b5b9516-6e4c-4f40-8b78-67237542788d.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 5,
+          "verificationEligibleFindingCount": 1,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 1,
+            "unverified": 4,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:event",
+            "guide_research_type:activity"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "research-screen-v3/sample-004",
+      "caseId": "activity-03",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-002.json",
+      "sourceFile": "runs/research-screen-v3/sample-004.json",
+      "sourceSha256": "8824642453778859453ac4968558ab4cb75db97124262d560d229bdc3104b743",
+      "receiptSha256": "e2e0863a92c415fdd4a4a4b517bfd89d7a9e0c3260e48e8e622d5a15aab2ec9e",
+      "recordedAt": "2026-09-12T18:42:57.454Z",
+      "travelWindow": {
+        "from": "2026-11-05",
+        "to": "2026-11-07"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_46910590-f881-40fc-bb23-4289a71778b9.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 4,
+          "verificationEligibleFindingCount": 1,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 1,
+            "unverified": 3,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "research-screen-v3/sample-007",
+      "caseId": "activity-05",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-003.json",
+      "sourceFile": "runs/research-screen-v3/sample-007.json",
+      "sourceSha256": "67283d2526d551c6fd6fe7d66f0313175f68e96ccafb7e0964b375503aabc9d6",
+      "receiptSha256": "21a510efc4e6bed4da51f4b1bf84c47ec4f1d9866ebb8b3df9ae0eceece02dc5",
+      "recordedAt": "2026-09-12T18:43:25.583Z",
+      "travelWindow": {
+        "from": "2026-11-09",
+        "to": "2026-11-10"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-515c7f7e-a07a-4d4e-8f6c-81ba9a746a8c",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_31c91c18-56c3-4131-9261-69529ce59588.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 4,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_research_type:activity"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "research-screen-v3/sample-010",
+      "caseId": "activity-06",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-004.json",
+      "sourceFile": "runs/research-screen-v3/sample-010.json",
+      "sourceSha256": "fe620262c73de552d3ee794042351706961e876194efd707a9fd21b92c46420f",
+      "receiptSha256": "dd5ede377170e454b5d9a771142735d200db52e712e103dec9b958dfe7a2292b",
+      "recordedAt": "2026-09-12T18:44:58.962Z",
+      "travelWindow": {
+        "from": "2026-10-20",
+        "to": "2026-10-22"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-c7a4b51b-285f-4477-a40a-7a6c5a5fe01d",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_1764d17a-16f8-46de-b7c5-c07139ae5280.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "recommend",
+      "providerError": null,
+      "effectiveDisposition": "recommend",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 1,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 1,
+            "unverified": 5,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:event",
+            "guide_research_type:activity"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-002",
+      "caseId": "activity-11",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-005.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-002.json",
+      "sourceSha256": "dc7e7a4abe956da48ace1df67fb39b7c5733f0cf82da75a94a1d36aa25946713",
+      "receiptSha256": "a410f6826350eb3aae250d0c178310c29254350f5e7af27dd4474582c0504f34",
+      "recordedAt": "2026-09-12T18:46:16.092Z",
+      "travelWindow": {
+        "from": "2026-10-15",
+        "to": "2026-10-17"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-ba79e930-6056-4a29-a42f-330575be829f",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_c3523f14-ef32-4bc5-a67a-33aa7beab284.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 0,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 0,
+            "unverified": 6,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:activity",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-003",
+      "caseId": "activity-14",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-006.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-003.json",
+      "sourceSha256": "21500d47b61feb4580454ebc7922a6dee4e743e1cc36acbcf479040d1ad4fee9",
+      "receiptSha256": "60a12ded0d885c05f3ac97cf00f49545966aceb2cb3f605a9bdfa812f07c56a9",
+      "recordedAt": "2026-09-12T18:46:20.218Z",
+      "travelWindow": {
+        "from": "2026-10-10",
+        "to": "2026-10-12"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-eb314fe3-c745-44dc-b802-56b752f7d36a",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_951d77f3-6edb-40b1-820c-6572fce33fb9.json"
+      ],
+      "providerStatus": "rejected",
+      "auditStatus": "failed",
+      "providerError": {
+        "name": "ThinResearchError",
+        "code": "THIN_RESEARCH_SEARCH_COUNT_UNKNOWN",
+        "statusCode": 502,
+        "details": null
+      },
+      "effectiveDisposition": null,
+      "scriptedPlannerCalls": 4,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": false,
+          "errorCode": "TOOL_FAILURE",
+          "persisted": false,
+          "findingCount": 0,
+          "verificationEligibleFindingCount": 0,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 0,
+            "unverified": 0,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": false,
+          "toolOk": false,
+          "status": null,
+          "errorCode": null,
+          "issues": []
+        },
+        "finishGoal": {
+          "attempted": false,
+          "toolOk": false,
+          "verificationStatus": null,
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-004",
+      "caseId": "activity-03",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-007.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-004.json",
+      "sourceSha256": "dafde0a67d5f434be17bf1d86cfdadcff7ec75afa164e9cdf5be64e5b2aef9ee",
+      "receiptSha256": "5c109808c12755ebffdc19640b13181d6009b82d56b3dd708c12bdc2de298619",
+      "recordedAt": "2026-09-12T18:46:22.730Z",
+      "travelWindow": {
+        "from": "2026-11-05",
+        "to": "2026-11-07"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-d0178166-9f14-4b60-8fa9-e1a6536b0a33",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_31876716-e649-4c08-85e1-3df658e83af4.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 2,
+          "verificationEligibleFindingCount": 1,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 1,
+            "unverified": 1,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-005",
+      "caseId": "activity-13",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-008.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-005.json",
+      "sourceSha256": "7a301e7c0b41fd810e2f175a86810332d07ac9385bc8ab347410584ef1f20acd",
+      "receiptSha256": "bc5c5794b7aa1cf320194e625034985e5453e5b10024cb04416316d8af73bc67",
+      "recordedAt": "2026-09-12T18:46:30.768Z",
+      "travelWindow": {
+        "from": "2026-10-10",
+        "to": "2026-10-12"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-1ef440d3-9a29-42a2-bc8c-6ac04f98e86e",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_165d12b7-cfce-47ad-a7fe-2a6871125e93.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "clarify",
+      "providerError": null,
+      "effectiveDisposition": "clarify",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 0,
+          "verificationEligibleFindingCount": 0,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 0,
+            "unverified": 0,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "guide_no_selected_findings"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-006",
+      "caseId": "activity-04",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-009.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-006.json",
+      "sourceSha256": "d53d75c3f2db439017511660163154d8e5297c129b68fd2e30a4894fa0b3a109",
+      "receiptSha256": "88f82996395ec5c23420a42f632ff84099d116fcceb3f8183b0bccac4195bdab",
+      "recordedAt": "2026-09-12T18:46:39.981Z",
+      "travelWindow": {
+        "from": "2026-10-18",
+        "to": "2026-10-18"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-2cae4e86-4b5c-4167-8a1e-62c2b2f37f31",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_875f6970-a0b1-4dbf-a961-0101dc0646db.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "clarify",
+      "providerError": null,
+      "effectiveDisposition": "clarify",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 0,
+          "verificationEligibleFindingCount": 0,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 0,
+            "unverified": 0,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "guide_no_selected_findings"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-008",
+      "caseId": "activity-09",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-010.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-008.json",
+      "sourceSha256": "4d289571dc907f8133c41135ff1d1db8ac8975cfccbd6ee54741224b342c56c7",
+      "receiptSha256": "042ee30b44f5a9736edf9c9a8feee02d6a3bb9f2704dc2a9f7ad7431308fb0c2",
+      "recordedAt": "2026-09-12T18:46:51.651Z",
+      "travelWindow": {
+        "from": "2026-11-12",
+        "to": "2026-11-14"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-881a38e6-ea47-4d0c-b9aa-77a3d99d5321",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_fa157eb5-f137-4282-9675-2fe8665dbbc3.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "recommend",
+      "providerError": null,
+      "effectiveDisposition": "recommend",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 4,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 2,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-009",
+      "caseId": "activity-08",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-011.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-009.json",
+      "sourceSha256": "e10812c18adc6c57291fda2e74b08fec3eeb94a4662843e5d4b83b9002d31d86",
+      "receiptSha256": "efd9620b31bd36b036958e9d51bbd93e90e0d906886ba24208c6ce4516297d8d",
+      "recordedAt": "2026-09-12T18:47:01.326Z",
+      "travelWindow": {
+        "from": "2026-10-27",
+        "to": "2026-10-29"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-02d8c226-b4ea-46a7-b898-df6ad9cc686b",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_94396a96-4e02-46db-975c-37b4ad7fd8db.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 3,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 1,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-010",
+      "caseId": "activity-12",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-012.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-010.json",
+      "sourceSha256": "3fe0d70596572a2503ab1f1706e56fb8ed6aa0c4c6c217bd19ea41b7213d0530",
+      "receiptSha256": "bb42478e17f49b4ab571f7dd96ec6cc0b84154405791351e6aeb743dfbfa9ed6",
+      "recordedAt": "2026-09-12T18:47:08.913Z",
+      "travelWindow": {
+        "from": "2026-11-16",
+        "to": "2026-11-19"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-d97e2668-14cd-4281-9300-e3de2d28bc94",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_72867d6d-8b88-4276-85a2-b32dd4dfd474.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "recommend",
+      "providerError": null,
+      "effectiveDisposition": "recommend",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 4,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 4,
+            "unverified": 2,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "guide_item_evidence_mismatch"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-011",
+      "caseId": "activity-11",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-013.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-011.json",
+      "sourceSha256": "31577f41245ba49fbf6c043a7fa3e3ae4acb0ef808e3d8f3968586038d490c07",
+      "receiptSha256": "539750a0052d9a39b2da074e7bfbb75a70296a9167c24a6e1c7c376707729878",
+      "recordedAt": "2026-09-12T18:47:29.262Z",
+      "travelWindow": {
+        "from": "2026-10-15",
+        "to": "2026-10-17"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_da236d40-ace0-4962-8872-2fc47c3b671b.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 2,
+          "verificationEligibleFindingCount": 1,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 1,
+            "unverified": 1,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-012",
+      "caseId": "activity-13",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-014.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-012.json",
+      "sourceSha256": "863864db35c9ee7890664bb5dec73191c8e95facfb0b3dcfebec6b41e294955f",
+      "receiptSha256": "e345034a8d2694baeb6249c3a2b6a5264edc790e09003b47dff804f1f560c643",
+      "recordedAt": "2026-09-12T18:47:40.234Z",
+      "travelWindow": {
+        "from": "2026-10-10",
+        "to": "2026-10-12"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-315d678b-2a93-4284-bc2e-fc1d044f388d",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_2d75199d-8185-469e-9a88-be3c78bd31ab.json"
+      ],
+      "providerStatus": "rejected",
+      "auditStatus": "failed",
+      "providerError": {
+        "name": "ThinResearchError",
+        "code": "THIN_RESEARCH_SEARCH_COUNT_UNKNOWN",
+        "statusCode": 502,
+        "details": null
+      },
+      "effectiveDisposition": null,
+      "scriptedPlannerCalls": 4,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": false,
+          "errorCode": "TOOL_FAILURE",
+          "persisted": false,
+          "findingCount": 0,
+          "verificationEligibleFindingCount": 0,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 0,
+            "unverified": 0,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": false,
+          "toolOk": false,
+          "status": null,
+          "errorCode": null,
+          "issues": []
+        },
+        "finishGoal": {
+          "attempted": false,
+          "toolOk": false,
+          "verificationStatus": null,
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-014",
+      "caseId": "activity-15",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-015.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-014.json",
+      "sourceSha256": "299cd793bfd67c9187667261f892d85f302cb8b19ba2f6bc51917ec1120fdece",
+      "receiptSha256": "1b1a24e3a2f5a3cc6aa0853835f28f7053dcb5db978b2b03de044ac8af6cc720",
+      "recordedAt": "2026-09-12T18:47:44.392Z",
+      "travelWindow": {
+        "from": "2026-11-20",
+        "to": "2026-11-20"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-4ffb1767-d73f-4b0c-94ed-a3ef9789a53d",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_6f1905e4-8083-4415-8ffe-f07d8b6c6c53.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 4,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-016",
+      "caseId": "activity-06",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-016.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-016.json",
+      "sourceSha256": "a6346c55086740ae08dcb5bf3a9ccf02978b5ba6651bae33c0a685dcf0d6df13",
+      "receiptSha256": "b774bbdbc3bc1c45d3a77dce06cc0152e9254d76a385bee72f7778d750611ead",
+      "recordedAt": "2026-09-12T18:48:09.710Z",
+      "travelWindow": {
+        "from": "2026-10-20",
+        "to": "2026-10-22"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-d098e7b4-883b-4950-99cd-326c394f7b94",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_2be8356c-33b4-484a-b802-7e464e4f7347.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 4,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:activity"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-017",
+      "caseId": "activity-10",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-017.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-017.json",
+      "sourceSha256": "f08aa76df15bcc1ab123a8f25b1ed5a5d97d99ac33864dc7b24fad0ae00a20cb",
+      "receiptSha256": "be775e371c1d602b4c31f143f73cfccce8dcfcf572f3aa76db3127629722124a",
+      "recordedAt": "2026-09-12T18:48:30.659Z",
+      "travelWindow": {
+        "from": "2026-10-24",
+        "to": "2026-10-26"
+      },
+      "recordedStatus": "invalid_output",
+      "recordedRawValid": false,
+      "ownerId": "backend-replay-ca4456be-a06d-4dfe-859e-8929035b517c",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_0104d8c4-ec71-4bcf-9095-d06698c0b8c8.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 4,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-020",
+      "caseId": "activity-01",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-018.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-020.json",
+      "sourceSha256": "296f0227fafadc4de15e36f50ad9eac4045e9acd86c950c57cf33c4c91303275",
+      "receiptSha256": "db234f581be9e8073fa76cbfa7bc65947851c78429e5c1c7f56c35da740ecc51",
+      "recordedAt": "2026-09-12T18:49:00.434Z",
+      "travelWindow": {
+        "from": "2026-10-14",
+        "to": "2026-10-16"
+      },
+      "recordedStatus": "invalid_output",
+      "recordedRawValid": false,
+      "ownerId": "backend-replay-7b340d7f-7bd2-4925-9713-d58035c2900c",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_585bb29a-9363-4d59-a479-833def4cb0cf.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 2,
+          "verificationEligibleFindingCount": 1,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 1,
+            "unverified": 1,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-021",
+      "caseId": "activity-05",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-019.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-021.json",
+      "sourceSha256": "01c7725e79a5616c1e6b7865cbb092035041fae07478662a85a1d8f5277af171",
+      "receiptSha256": "e4f8f219f4a6d5aff1ef79042e0aeccdba6302a1fcc9b36dffcdfcd04e3febf3",
+      "recordedAt": "2026-09-12T18:49:13.313Z",
+      "travelWindow": {
+        "from": "2026-11-09",
+        "to": "2026-11-10"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-59b9fa35-8cd0-4d1c-b332-81270ee50468",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_8718ed03-414a-4a51-bd3e-6456280b48f9.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "recommend",
+      "providerError": null,
+      "effectiveDisposition": "recommend",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 3,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 1,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_research_type:stopover"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-023",
+      "caseId": "activity-16",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-020.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-023.json",
+      "sourceSha256": "a2e3f0c9dcda397d2b6fa1ba1212484046a27cc3c858d7f2fe88d133262dfceb",
+      "receiptSha256": "b25d2dc72d12ae2b325e03072d160f1282b4f590fec1022948e875d75208368d",
+      "recordedAt": "2026-09-12T18:49:34.504Z",
+      "travelWindow": {
+        "from": "2026-11-23",
+        "to": "2026-11-25"
+      },
+      "recordedStatus": "invalid_output",
+      "recordedRawValid": false,
+      "ownerId": "backend-replay-19fd90c7-1911-45d0-a096-4b01b4915922",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_8120cccd-7088-4f0d-b7af-07550d3ae621.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 4,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:event",
+            "guide_research_type:seasonal"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-024",
+      "caseId": "activity-14",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-021.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-024.json",
+      "sourceSha256": "2248cebb65febe83f10a66da55dd0489a081782298bba21459677bf9e46ea898",
+      "receiptSha256": "d34a14728718b55067445eb45f61bec1326621cc188f266846b598ff17bd389d",
+      "recordedAt": "2026-09-12T18:49:40.333Z",
+      "travelWindow": {
+        "from": "2026-10-10",
+        "to": "2026-10-12"
+      },
+      "recordedStatus": "invalid_output",
+      "recordedRawValid": false,
+      "ownerId": "backend-replay-d8264cf7-27a7-4944-a10b-869de0b915cd",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_5c304bb5-0410-448c-bf60-7216d93df2e4.json"
+      ],
+      "providerStatus": "rejected",
+      "auditStatus": "failed",
+      "providerError": {
+        "name": "ThinResearchError",
+        "code": "THIN_RESEARCH_OUTPUT_INVALID",
+        "statusCode": 502,
+        "details": [
+          "invalid_finding:0"
+        ]
+      },
+      "effectiveDisposition": null,
+      "scriptedPlannerCalls": 4,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": false,
+          "errorCode": "TOOL_FAILURE",
+          "persisted": false,
+          "findingCount": 0,
+          "verificationEligibleFindingCount": 0,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 0,
+            "unverified": 0,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": false,
+          "toolOk": false,
+          "status": null,
+          "errorCode": null,
+          "issues": []
+        },
+        "finishGoal": {
+          "attempted": false,
+          "toolOk": false,
+          "verificationStatus": null,
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-026",
+      "caseId": "activity-02",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-022.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-026.json",
+      "sourceSha256": "7b0b2643b2b3e96fd38b3931aaee7f5f9b11ebb1917cf3fdfa55949f7ce6c29e",
+      "receiptSha256": "225b81e74af94283f61d18b55888a8180f2ffd6cfdae86f36a742591b118d401",
+      "recordedAt": "2026-09-12T18:50:18.472Z",
+      "travelWindow": {
+        "from": "2026-10-21",
+        "to": "2026-10-23"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-95f55801-8b24-4235-bd05-11e288db9c44",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_2bf19654-c765-4832-9c3b-17775cb5b4f9.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 3,
+          "verificationEligibleFindingCount": 3,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 3,
+            "unverified": 0,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "saved",
+          "errorCode": null,
+          "issues": []
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "satisfied",
+          "errorCode": null
+        },
+        "deliveryStatus": "satisfied",
+        "stopReason": "completed",
+        "satisfied": true
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-027",
+      "caseId": "activity-10",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-023.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-027.json",
+      "sourceSha256": "2af49e03b17359687d0349abb700dc21e056fdca3515d1eb3068f38963a2e17f",
+      "receiptSha256": "9254f8bc8809facb18ad770d11ea3763900752d8da22e66ddad6b72b382bcf59",
+      "recordedAt": "2026-09-12T18:50:38.547Z",
+      "travelWindow": {
+        "from": "2026-10-24",
+        "to": "2026-10-26"
+      },
+      "recordedStatus": "invalid_output",
+      "recordedRawValid": false,
+      "ownerId": "backend-replay-26b87a89-65a9-4582-8222-c07853aac9bf",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_0f76eb56-60e8-4395-a461-854d4d437771.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 1,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 1,
+            "unverified": 5,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:activity"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-028",
+      "caseId": "activity-04",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-024.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-028.json",
+      "sourceSha256": "2d129e443c2ee112dd3fe52094f77734e6e8f84cd1833ec034ea402cbc85a83e",
+      "receiptSha256": "80bf07b6db6519d83977944108b42470273f53845fdd3560768dae69d1ef68f3",
+      "recordedAt": "2026-09-12T18:50:46.986Z",
+      "travelWindow": {
+        "from": "2026-10-18",
+        "to": "2026-10-18"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-e952649e-d815-421c-81a5-1120faf49558",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_bc3397e5-1cc9-461f-a59e-238410cfba81.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "clarify",
+      "providerError": null,
+      "effectiveDisposition": "clarify",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 0,
+          "verificationEligibleFindingCount": 0,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 0,
+            "unverified": 0,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "guide_no_selected_findings"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-029",
+      "caseId": "activity-12",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-025.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-029.json",
+      "sourceSha256": "f6a0cb89ce6ae4486d2e74a15eae6493793b0bcdbcfe201936d1c8e6e7e5ea19",
+      "receiptSha256": "7a14078b180ce5e99b8cc379c3461cbd1d3b25c352873c9b611502a483785f77",
+      "recordedAt": "2026-09-12T18:50:56.423Z",
+      "travelWindow": {
+        "from": "2026-11-16",
+        "to": "2026-11-19"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-88178484-1f5d-4d10-9802-6e0905b6b61c",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_f5849e2e-30bd-44c3-982a-9989ed1bd713.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 4,
+          "verificationEligibleFindingCount": 3,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 3,
+            "unverified": 1,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "guide_item_evidence_mismatch"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-033",
+      "caseId": "activity-16",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-026.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-033.json",
+      "sourceSha256": "a322a4796836fc0535fec82e8c863515075a60633bdaf527da9183bd4dfc4b08",
+      "receiptSha256": "5cdcdf880c5c6c636e22f3f38f85b069b039c66df6ccb650b299af045a7c7417",
+      "recordedAt": "2026-09-12T18:51:29.163Z",
+      "travelWindow": {
+        "from": "2026-11-23",
+        "to": "2026-11-25"
+      },
+      "recordedStatus": "invalid_output",
+      "recordedRawValid": false,
+      "ownerId": "backend-replay-1f5cf46c-66e6-4f73-9a2e-9f6fdc73f6c4",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_4fc29e98-af95-4629-a994-a88392035f14.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 5,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 3,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:seasonal",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-034",
+      "caseId": "activity-15",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-027.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-034.json",
+      "sourceSha256": "b274eb3b1377c609e456c14dfe867435ccbd6dc1129be853817e422aa4ed992b",
+      "receiptSha256": "a33fc8c5fbb636ba445f30ab30327fa4ddd5242b317b47f968f3c430a35b110c",
+      "recordedAt": "2026-09-12T18:51:44.860Z",
+      "travelWindow": {
+        "from": "2026-11-20",
+        "to": "2026-11-20"
+      },
+      "recordedStatus": "invalid_output",
+      "recordedRawValid": false,
+      "ownerId": "backend-replay-649afb4a-a55c-4867-b710-d0830ba44ad6",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_ca80bf7c-1c38-460c-a243-c168cec5251b.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "recommend",
+      "providerError": null,
+      "effectiveDisposition": "recommend",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 0,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 0,
+            "unverified": 6,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:activity",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-035",
+      "caseId": "activity-08",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-028.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-035.json",
+      "sourceSha256": "9044814a011ef59de5cc00795f7e1787804d93646ef4b72f10e393fb7e5cac00",
+      "receiptSha256": "ea4114f606a5d51d91f4b805a08ffc4e020983538410dd455d0f74870999614c",
+      "recordedAt": "2026-09-12T18:51:56.154Z",
+      "travelWindow": {
+        "from": "2026-10-27",
+        "to": "2026-10-29"
+      },
+      "recordedStatus": "invalid_output",
+      "recordedRawValid": false,
+      "ownerId": "backend-replay-ee70cbe3-cb37-4ed4-bdce-3777c1cde8b3",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_732d799a-204f-4197-b7ba-6b4779540ced.json"
+      ],
+      "providerStatus": "rejected",
+      "auditStatus": "failed",
+      "providerError": {
+        "name": "ThinResearchError",
+        "code": "THIN_RESEARCH_OUTPUT_INVALID",
+        "statusCode": 502,
+        "details": [
+          "invalid_json"
+        ]
+      },
+      "effectiveDisposition": null,
+      "scriptedPlannerCalls": 4,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": false,
+          "errorCode": "TOOL_FAILURE",
+          "persisted": false,
+          "findingCount": 0,
+          "verificationEligibleFindingCount": 0,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 0,
+            "unverified": 0,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": false,
+          "toolOk": false,
+          "status": null,
+          "errorCode": null,
+          "issues": []
+        },
+        "finishGoal": {
+          "attempted": false,
+          "toolOk": false,
+          "verificationStatus": null,
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-036",
+      "caseId": "activity-02",
+      "model": "qwen/qwen3.8-flash",
+      "sampleFile": "samples/sample-029.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-036.json",
+      "sourceSha256": "a4aedf043b40351d64913cb4bcc76253ced361781c665723ee12ff86c5f49718",
+      "receiptSha256": "9734a8c25edfd39f1235820e0d00fbec74b869528c0f7af0377d804b50c976ee",
+      "recordedAt": "2026-09-12T18:52:15.463Z",
+      "travelWindow": {
+        "from": "2026-10-21",
+        "to": "2026-10-23"
+      },
+      "recordedStatus": "invalid_output",
+      "recordedRawValid": false,
+      "ownerId": "backend-replay-782f425c-efd3-4d8a-825c-1bf9cbb10ce3",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_953d317a-f321-4ee9-867f-ee6fd0c979e6.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 5,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 3,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-039",
+      "caseId": "activity-01",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-030.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-039.json",
+      "sourceSha256": "5374859ae3395e36aec34153f10fedae32ddd0bc85123baead53422328563614",
+      "receiptSha256": "721d4ab3b3e9b06673cbd255d1e61b1eecd87724c6a70aedff1aed822416d26b",
+      "recordedAt": "2026-09-12T18:52:45.073Z",
+      "travelWindow": {
+        "from": "2026-10-14",
+        "to": "2026-10-16"
+      },
+      "recordedStatus": "unlinked_evidence",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-fb1cff79-ea4c-4df8-a2b3-ed590cbc7d92",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_9f156658-c40e-4d55-8f2f-e000ac17a3d0.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 2,
+          "verificationEligibleFindingCount": 2,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 2,
+            "unverified": 0,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "guide_daily_activity_coverage"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-040",
+      "caseId": "activity-09",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-031.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-040.json",
+      "sourceSha256": "d833a14fc5f46a7868354b4740dc2a2c7a99f3f4393bf6ac3c8655afd4c9ce42",
+      "receiptSha256": "c565d02143aead329cb13538fb73c41ad756320d348a6622429393cc6ed981fc",
+      "recordedAt": "2026-09-12T18:52:53.308Z",
+      "travelWindow": {
+        "from": "2026-11-12",
+        "to": "2026-11-14"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-9e57fb8a-94a0-425e-b32f-0ff9224e7a20",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_35a13ab5-41e0-460a-851a-2a09cdc7f6bc.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 2,
+          "verificationEligibleFindingCount": 1,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 1,
+            "unverified": 1,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence",
+            "guide_daily_activity_coverage",
+            "guide_research_type:practical"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    },
+    {
+      "sampleId": "candidate-screen-v3/sample-042",
+      "caseId": "activity-07",
+      "model": "z-ai/glm-5.3-flash",
+      "sampleFile": "samples/sample-032.json",
+      "sourceFile": "runs/candidate-screen-v3/sample-042.json",
+      "sourceSha256": "90150c71f8ce48a6107f391423b80b12f2f1eafaea34459cd944c37415cc0015",
+      "receiptSha256": "b638c5e237c26cdcbe456751cd776743115f195a096f34b9a51a3f576679ebe4",
+      "recordedAt": "2026-09-12T18:53:18.915Z",
+      "travelWindow": {
+        "from": "2026-11-03",
+        "to": "2026-11-05"
+      },
+      "recordedStatus": "responded",
+      "recordedRawValid": true,
+      "ownerId": "backend-replay-59894a55-af48-4e71-88f7-106bb3357cbe",
+      "receiptReads": 1,
+      "newLiveModelCalls": 0,
+      "newApiCostUsd": 0,
+      "auditFiles": [
+        "audits/thin_audit_9d928bc9-c74d-437e-ac4a-0dfd9ea888cb.json"
+      ],
+      "providerStatus": "artifact",
+      "auditStatus": "partial",
+      "providerError": null,
+      "effectiveDisposition": "partial",
+      "scriptedPlannerCalls": 6,
+      "researchCalls": 1,
+      "networkAttempts": 0,
+      "observed": {
+        "research": {
+          "attempted": true,
+          "toolOk": true,
+          "errorCode": null,
+          "persisted": true,
+          "findingCount": 6,
+          "verificationEligibleFindingCount": 3,
+          "verificationCounts": {
+            "verified": 0,
+            "partially_verified": 3,
+            "unverified": 3,
+            "stale": 0
+          }
+        },
+        "saveGuide": {
+          "attempted": true,
+          "toolOk": true,
+          "status": "needs_revision",
+          "errorCode": null,
+          "issues": [
+            "eligible_research_evidence"
+          ]
+        },
+        "finishGoal": {
+          "attempted": true,
+          "toolOk": true,
+          "verificationStatus": "pending",
+          "errorCode": null
+        },
+        "deliveryStatus": "pending",
+        "stopReason": "goal_pending",
+        "satisfied": false
+      },
+      "integrityErrors": []
+    }
+  ],
+  "valid": true
+}

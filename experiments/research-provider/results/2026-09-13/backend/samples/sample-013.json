@@ -1,0 +1,886 @@
+{
+  "sampleId": "candidate-screen-v3/sample-011",
+  "caseId": "activity-11",
+  "model": "qwen/qwen3.8-flash",
+  "sampleFile": "samples/sample-013.json",
+  "sourceFile": "runs/candidate-screen-v3/sample-011.json",
+  "sourceSha256": "31577f41245ba49fbf6c043a7fa3e3ae4acb0ef808e3d8f3968586038d490c07",
+  "receiptSha256": "539750a0052d9a39b2da074e7bfbb75a70296a9167c24a6e1c7c376707729878",
+  "recordedAt": "2026-09-12T18:47:29.262Z",
+  "travelWindow": {
+    "from": "2026-10-15",
+    "to": "2026-10-17"
+  },
+  "recordedStatus": "responded",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_da236d40-ace0-4962-8872-2fc47c3b671b.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+        "departureWindow": {
+          "from": "2026-10-15",
+          "to": "2026-10-15",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-10-17",
+          "to": "2026-10-17",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:SJJ",
+              "type": "city",
+              "name": "萨拉热窝",
+              "countryCode": "BA"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "城市历史",
+          "小型博物馆",
+          "传统手工艺",
+          "可使用当地语言来源",
+          "避免同一地点换名重复"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-c184-7189-8902-3865488d0c13",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_da236d40-ace0-4962-8872-2fc47c3b671b",
+        "thin_research_disposition:partial",
+        "research_evidence_is_snippet_only",
+        "由于搜索工具限制，未能获取2026年10月15-17日期间的具体开放时间、门票价格或特殊展览信息。",
+        "未能找到经官方验证的、可预订的“传统手工艺”互动工作坊（如铜匠、地毯编织或银器制作）的具体名单。巴什察尔希亚地区有许多手工艺店铺，但缺乏官方来源确认其是否提供游客参与式体验，因此未列入推荐以避免编造。",
+        "波斯尼亚和黑塞哥维那历史博物馆 (Historijski muzej BiH) 的具体展览详情和2026年状态未通过官方来源确认，故未列入。",
+        "所有推荐景点的无障碍设施信息未确认。"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-c17d-7446-9fce-165ea342d338",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-c17d-7446-9fce-165ea342d338",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "adfa866c-426e-4eed-aa0b-287c32bfc1e8",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-c176-75c4-a5d4-ecf0d39f7069\",\"departureWindow\":{\"from\":\"2026-10-15\",\"to\":\"2026-10-15\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-17\",\"to\":\"2026-10-17\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SJJ\",\"type\":\"city\",\"name\":\"萨拉热窝\",\"countryCode\":\"BA\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"城市历史\",\"小型博物馆\",\"传统手工艺\",\"可使用当地语言来源\",\"避免同一地点换名重复\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 0,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+              "departureWindow": {
+                "from": "2026-10-15",
+                "to": "2026-10-15",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-10-17",
+                "to": "2026-10-17",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:SJJ",
+                    "type": "city",
+                    "name": "萨拉热窝",
+                    "countryCode": "BA"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "城市历史",
+                "小型博物馆",
+                "传统手工艺",
+                "可使用当地语言来源",
+                "避免同一地点换名重复"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "研究萨拉热窝最多6个城市历史、小型博物馆或传统手工艺活动候选，优先可追溯的当地来源并去除同一地点的别名重复。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-c17d-7446-9fce-165ea342d338",
+          "runId": "01a0972a-c17d-7446-9fce-19f91bbd05b1",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "d512ff4a-4301-4179-b315-1bd963ddbcd2",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c17d-7446-9fce-165ea342d338\",\"ownerId\":\"backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1\",\"tripId\":\"01a0972a-c176-75c4-a5d4-ecf0d39f7069\",\"conversationId\":\"01a0972a-c176-75c4-a5d4-f3969d3c18a6\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究萨拉热窝最多6个城市历史、小型博物馆或传统手工艺活动候选，优先可追溯的当地来源并去除同一地点的别名重复。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.797Z\",\"updatedAt\":\"2026-09-12T19:49:16.797Z\"},\"run\":{\"id\":\"01a0972a-c17d-7446-9fce-19f91bbd05b1\",\"ownerId\":\"backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1\",\"goalId\":\"01a0972a-c17d-7446-9fce-165ea342d338\",\"tripId\":\"01a0972a-c176-75c4-a5d4-ecf0d39f7069\",\"generationId\":\"offline-generation-607df8b2-622b-4dd1-8fc5-51b5dc756f2e\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c176-75c4-a5d4-ecf0d39f7069\",\"departureWindow\":{\"from\":\"2026-10-15\",\"to\":\"2026-10-15\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-17\",\"to\":\"2026-10-17\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SJJ\",\"type\":\"city\",\"name\":\"萨拉热窝\",\"countryCode\":\"BA\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"城市历史\",\"小型博物馆\",\"传统手工艺\",\"可使用当地语言来源\",\"避免同一地点换名重复\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.797Z\",\"updatedAt\":\"2026-09-12T19:49:16.797Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c17d-7446-9fce-165ea342d338",
+              "ownerId": "backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1",
+              "tripId": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+              "conversationId": "01a0972a-c176-75c4-a5d4-f3969d3c18a6",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究萨拉热窝最多6个城市历史、小型博物馆或传统手工艺活动候选，优先可追溯的当地来源并去除同一地点的别名重复。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.797Z",
+              "updatedAt": "2026-09-12T19:49:16.797Z"
+            },
+            "run": {
+              "id": "01a0972a-c17d-7446-9fce-19f91bbd05b1",
+              "ownerId": "backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1",
+              "goalId": "01a0972a-c17d-7446-9fce-165ea342d338",
+              "tripId": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+              "generationId": "offline-generation-607df8b2-622b-4dd1-8fc5-51b5dc756f2e",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+                "departureWindow": {
+                  "from": "2026-10-15",
+                  "to": "2026-10-15",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-17",
+                  "to": "2026-10-17",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:SJJ",
+                      "type": "city",
+                      "name": "萨拉热窝",
+                      "countryCode": "BA"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "城市历史",
+                  "小型博物馆",
+                  "传统手工艺",
+                  "可使用当地语言来源",
+                  "避免同一地点换名重复"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.797Z",
+              "updatedAt": "2026-09-12T19:49:16.797Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:SJJ",
+              "type": "city",
+              "name": "萨拉热窝",
+              "countryCode": "BA"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-10-15",
+            "to": "2026-10-17"
+          },
+          "interests": [
+            "城市历史",
+            "小型博物馆",
+            "传统手工艺",
+            "可使用当地语言来源",
+            "避免同一地点换名重复"
+          ],
+          "questions": [
+            "研究萨拉热窝最多6个城市历史、小型博物馆或传统手工艺活动候选，优先可追溯的当地来源并去除同一地点的别名重复。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-c17d-7446-9fce-165ea342d338",
+          "runId": "01a0972a-c17d-7446-9fce-19f91bbd05b1",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "39d0060c-81cb-48d0-bae0-be6603829326",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-c184-7189-8902-3865488d0c13\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":2,\"statusCounts\":{\"verified\":0,\"partially_verified\":1,\"stale\":0,\"unverified\":1},\"createdAt\":\"2026-09-12T18:47:29.262Z\"},\"findings\":[{\"id\":\"finding_ddea814e9346b145a77517c7\",\"title\":\"萨拉热窝博物馆综合体 (Muzej Sarajeva)\",\"summary\":\"这是一个由萨拉热窝博物馆管理的机构，包含多个具有不同历史侧重点的独立展馆，避免了单一景点的重复。核心展馆包括：1) 萨拉热窝1878-1914博物馆（奥匈帝国时期历史）；2) 斯夫尔佐之家 (Svrzina kuća)（奥斯曼时期传统民居）；3) 德斯皮奇之家 (Despića kuća)（19世纪贵族宅邸）；4) 布鲁萨贝齐斯坦 (Brusa Bezistan)（奥斯曼时期集市大厅）；5) 波斯尼亚和黑塞哥维那犹太人博物馆。这些地点虽同属一个博物馆系统，但建筑、时期和展览内容截然不同，符合“城市历史”和“小型博物馆”的需求。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:SJJ\",\"name\":\"萨拉热窝\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_6438aaebb710d5f0d89783a4\",\"title\":\"反人类罪和种族灭绝博物馆 (Museum of Crimes Against Humanity and Genocide)\",\"summary\":\"位于巴什察尔希亚 (Baščaršija) 附近，专注于1992-1995年波斯尼亚战争期间的历史档案和多学科研究。这是一个独立的小型博物馆，提供关于萨拉热窝围城战和现代历史的深入视角，与上述奥斯曼/奥匈帝国时期的历史景点形成鲜明对比。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:SJJ\",\"name\":\"萨拉热窝\"}],\"verificationStatus\":\"partially_verified\"}],\"warnings\":[\"thin_research_audit:thin_audit_da236d40-ace0-4962-8872-2fc47c3b671b\",\"thin_research_disposition:partial\",\"research_evidence_is_snippet_only\",\"由于搜索工具限制，未能获取2026年10月15-17日期间的具体开放时间、门票价格或特殊展览信息。\",\"未能找到经官方验证的、可预订的“传统手工艺”互动工作坊（如铜匠、地毯编织或银器制作）的具体名单。巴什察尔希亚地区有许多手工艺店铺，但缺乏官方来源确认其是否提供游客参与式体验，因此未列入推荐以避免编造。\",\"波斯尼亚和黑塞哥维那历史博物馆 (Historijski muzej BiH) 的具体展览详情和2026年状态未通过官方来源确认，故未列入。\",\"所有推荐景点的无障碍设施信息未确认。\"]}}",
+          "costUnits": 4,
+          "durationMs": 6,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-c184-7189-8902-3865488d0c13"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_da236d40-ace0-4962-8872-2fc47c3b671b",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "由于搜索工具限制，未能获取2026年10月15-17日期间的具体开放时间、门票价格或特殊展览信息。",
+            "未能找到经官方验证的、可预订的“传统手工艺”互动工作坊（如铜匠、地毯编织或银器制作）的具体名单。巴什察尔希亚地区有许多手工艺店铺，但缺乏官方来源确认其是否提供游客参与式体验，因此未列入推荐以避免编造。",
+            "波斯尼亚和黑塞哥维那历史博物馆 (Historijski muzej BiH) 的具体展览详情和2026年状态未通过官方来源确认，故未列入。",
+            "所有推荐景点的无障碍设施信息未确认。"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-c184-7189-8902-3865488d0c13",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 2,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 1,
+                "stale": 0,
+                "unverified": 1
+              },
+              "createdAt": "2026-09-12T18:47:29.262Z"
+            },
+            "findings": [
+              {
+                "id": "finding_ddea814e9346b145a77517c7",
+                "title": "萨拉热窝博物馆综合体 (Muzej Sarajeva)",
+                "summary": "这是一个由萨拉热窝博物馆管理的机构，包含多个具有不同历史侧重点的独立展馆，避免了单一景点的重复。核心展馆包括：1) 萨拉热窝1878-1914博物馆（奥匈帝国时期历史）；2) 斯夫尔佐之家 (Svrzina kuća)（奥斯曼时期传统民居）；3) 德斯皮奇之家 (Despića kuća)（19世纪贵族宅邸）；4) 布鲁萨贝齐斯坦 (Brusa Bezistan)（奥斯曼时期集市大厅）；5) 波斯尼亚和黑塞哥维那犹太人博物馆。这些地点虽同属一个博物馆系统，但建筑、时期和展览内容截然不同，符合“城市历史”和“小型博物馆”的需求。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:SJJ",
+                    "name": "萨拉热窝"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_6438aaebb710d5f0d89783a4",
+                "title": "反人类罪和种族灭绝博物馆 (Museum of Crimes Against Humanity and Genocide)",
+                "summary": "位于巴什察尔希亚 (Baščaršija) 附近，专注于1992-1995年波斯尼亚战争期间的历史档案和多学科研究。这是一个独立的小型博物馆，提供关于萨拉热窝围城战和现代历史的深入视角，与上述奥斯曼/奥匈帝国时期的历史景点形成鲜明对比。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:SJJ",
+                    "name": "萨拉热窝"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_da236d40-ace0-4962-8872-2fc47c3b671b",
+              "thin_research_disposition:partial",
+              "research_evidence_is_snippet_only",
+              "由于搜索工具限制，未能获取2026年10月15-17日期间的具体开放时间、门票价格或特殊展览信息。",
+              "未能找到经官方验证的、可预订的“传统手工艺”互动工作坊（如铜匠、地毯编织或银器制作）的具体名单。巴什察尔希亚地区有许多手工艺店铺，但缺乏官方来源确认其是否提供游客参与式体验，因此未列入推荐以避免编造。",
+              "波斯尼亚和黑塞哥维那历史博物馆 (Historijski muzej BiH) 的具体展览详情和2026年状态未通过官方来源确认，故未列入。",
+              "所有推荐景点的无障碍设施信息未确认。"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-c184-7189-8902-3865488d0c13"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:SJJ",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_ddea814e9346b145a77517c7",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "cityId": "city:SJJ",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_6438aaebb710d5f0d89783a4",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "cityId": "city:SJJ",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": []
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-c17d-7446-9fce-165ea342d338",
+          "runId": "01a0972a-c17d-7446-9fce-19f91bbd05b1",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "6dd213a7-77a5-4733-8b35-0fb56b3f26b3",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"eligible_research_evidence\",\"guide_daily_activity_coverage\",\"guide_research_type:practical\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 1,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "eligible_research_evidence",
+              "guide_daily_activity_coverage",
+              "guide_research_type:practical"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-c17d-7446-9fce-165ea342d338"
+        },
+        "scope": {
+          "goalId": "01a0972a-c17d-7446-9fce-165ea342d338",
+          "runId": "01a0972a-c17d-7446-9fce-19f91bbd05b1",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "52738e0e-993a-4e6e-b32d-1fc8a083b194",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-c17d-7446-9fce-165ea342d338\",\"ownerId\":\"backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1\",\"tripId\":\"01a0972a-c176-75c4-a5d4-ecf0d39f7069\",\"conversationId\":\"01a0972a-c176-75c4-a5d4-f3969d3c18a6\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究萨拉热窝最多6个城市历史、小型博物馆或传统手工艺活动候选，优先可追溯的当地来源并去除同一地点的别名重复。\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.797Z\",\"updatedAt\":\"2026-09-12T19:49:16.797Z\"},\"run\":{\"id\":\"01a0972a-c17d-7446-9fce-19f91bbd05b1\",\"ownerId\":\"backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1\",\"goalId\":\"01a0972a-c17d-7446-9fce-165ea342d338\",\"tripId\":\"01a0972a-c176-75c4-a5d4-ecf0d39f7069\",\"generationId\":\"offline-generation-607df8b2-622b-4dd1-8fc5-51b5dc756f2e\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-c176-75c4-a5d4-ecf0d39f7069\",\"departureWindow\":{\"from\":\"2026-10-15\",\"to\":\"2026-10-15\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-10-17\",\"to\":\"2026-10-17\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SJJ\",\"type\":\"city\",\"name\":\"萨拉热窝\",\"countryCode\":\"BA\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"城市历史\",\"小型博物馆\",\"传统手工艺\",\"可使用当地语言来源\",\"避免同一地点换名重复\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-c184-7189-8902-3865488d0c13\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:16.806Z\"}],\"locationHandles\":[{\"id\":\"city:SJJ\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:16.798Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:16.797Z\",\"updatedAt\":\"2026-09-12T19:49:16.806Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-c17d-7446-9fce-165ea342d338",
+              "ownerId": "backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1",
+              "tripId": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+              "conversationId": "01a0972a-c176-75c4-a5d4-f3969d3c18a6",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究萨拉热窝最多6个城市历史、小型博物馆或传统手工艺活动候选，优先可追溯的当地来源并去除同一地点的别名重复。"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.797Z",
+              "updatedAt": "2026-09-12T19:49:16.797Z"
+            },
+            "run": {
+              "id": "01a0972a-c17d-7446-9fce-19f91bbd05b1",
+              "ownerId": "backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1",
+              "goalId": "01a0972a-c17d-7446-9fce-165ea342d338",
+              "tripId": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+              "generationId": "offline-generation-607df8b2-622b-4dd1-8fc5-51b5dc756f2e",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+                "departureWindow": {
+                  "from": "2026-10-15",
+                  "to": "2026-10-15",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-10-17",
+                  "to": "2026-10-17",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:SJJ",
+                      "type": "city",
+                      "name": "萨拉热窝",
+                      "countryCode": "BA"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "城市历史",
+                  "小型博物馆",
+                  "传统手工艺",
+                  "可使用当地语言来源",
+                  "避免同一地点换名重复"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-c184-7189-8902-3865488d0c13",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:16.806Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:SJJ",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:16.798Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:16.797Z",
+              "updatedAt": "2026-09-12T19:49:16.806Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-c184-7189-8902-3865488d0c13",
+        "tripId": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+        "conversationId": "01a0972a-c176-75c4-a5d4-f3969d3c18a6",
+        "goalId": "01a0972a-c17d-7446-9fce-165ea342d338",
+        "runId": "01a0972a-c17d-7446-9fce-19f91bbd05b1",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-c184-7189-8902-3865488d0c13",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:SJJ",
+                "type": "city",
+                "name": "萨拉热窝",
+                "countryCode": "BA"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-10-15",
+              "to": "2026-10-17"
+            },
+            "interests": [
+              "城市历史",
+              "小型博物馆",
+              "传统手工艺",
+              "可使用当地语言来源",
+              "避免同一地点换名重复"
+            ],
+            "questions": [
+              "研究萨拉热窝最多6个城市历史、小型博物馆或传统手工艺活动候选，优先可追溯的当地来源并去除同一地点的别名重复。"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_ddea814e9346b145a77517c7",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:SJJ",
+                  "type": "city",
+                  "name": "萨拉热窝",
+                  "countryCode": "BA"
+                }
+              ],
+              "title": "萨拉热窝博物馆综合体 (Muzej Sarajeva)",
+              "summary": "这是一个由萨拉热窝博物馆管理的机构，包含多个具有不同历史侧重点的独立展馆，避免了单一景点的重复。核心展馆包括：1) 萨拉热窝1878-1914博物馆（奥匈帝国时期历史）；2) 斯夫尔佐之家 (Svrzina kuća)（奥斯曼时期传统民居）；3) 德斯皮奇之家 (Despića kuća)（19世纪贵族宅邸）；4) 布鲁萨贝齐斯坦 (Brusa Bezistan)（奥斯曼时期集市大厅）；5) 波斯尼亚和黑塞哥维那犹太人博物馆。这些地点虽同属一个博物馆系统，但建筑、时期和展览内容截然不同，符合“城市历史”和“小型博物馆”的需求。",
+              "sources": [
+                {
+                  "title": "Muzej Sarajeva – Istorija i kultura glavnog grada BiH",
+                  "url": "https://www.muzejsarajeva.ba/en/",
+                  "domain": "www.muzejsarajeva.ba",
+                  "snippet": "founded by Sarajevo Canton, Federation of Bosnia and Herzegovina. It now consists of the main building, with depots, and five dependencies: Svrzo’s House, the Despić House, the Jewish Museum, the Brusa Bezistan, and the Museum of Sarajevo 1878-1914.",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Muzej Sarajeva – Historija i kultura glavnog grada BiH",
+                  "url": "https://www.muzejsarajeva.ba/",
+                  "domain": "www.muzejsarajeva.ba",
+                  "snippet": "Muzej Sarajeva je javna ustanova osnovana od strane Kantona Sarajevo, Federacija Bosne i Hercegovine, i danas ga čine centralna zgrada sa depoima i pet depandansa: Svrzina kuća, Despića kuća, Muzej Jevreja BiH, Brusa bezistan i Muzej Sarajevo",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:47:29.262Z",
+                "expiresAt": "2026-12-11T18:47:29.262Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.muzejsarajeva.ba/en/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.muzejsarajeva.ba/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_6438aaebb710d5f0d89783a4",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:SJJ",
+                  "type": "city",
+                  "name": "萨拉热窝",
+                  "countryCode": "BA"
+                }
+              ],
+              "title": "反人类罪和种族灭绝博物馆 (Museum of Crimes Against Humanity and Genocide)",
+              "summary": "位于巴什察尔希亚 (Baščaršija) 附近，专注于1992-1995年波斯尼亚战争期间的历史档案和多学科研究。这是一个独立的小型博物馆，提供关于萨拉热窝围城战和现代历史的深入视角，与上述奥斯曼/奥匈帝国时期的历史景点形成鲜明对比。",
+              "sources": [
+                {
+                  "title": "MUSEUM OF CRIMES AGAINST HUMANITY AND GENOCIDE 1992-1995",
+                  "url": "https://www.visitsarajevo.ba/listings/museum-of-crimes-against-humanity-and-genocide-1992-1995/",
+                  "domain": "www.visitsarajevo.ba",
+                  "snippet": "MUSEUM OF CRIMES AGAINST HUMANITY AND GENOCIDE 1992-1995\n\n...\n\nDalmatinska 2/4 | 71 000 Sarajevo\n\n...\n\n- +387 61 906 942 \n- muzejgenocida19921995@gmail.com \n- www.facebook.com/MuseumOfCrimesAgainstHumanityAndGenocide\n\n...\n\nMuvekita 11/1\n\n...\n\nfacebook.com/MuseumOfCrimesAgainstHumanityAndGenocide/\n\n...\n\nThe Museum of Crimes Against Humanity and Genocide abounds in rich archival material and offers a multidisciplinary approach to learning and researching events in the territory of Bosnia and Herzegovina in the period 1992-1995.",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Museum of Crimes against Humanity and Genocide 1992-1995 - Documentation center in Baščaršija, Sarajevo, Bosnia and Herzegovina",
+                  "url": "https://aroundus.com/p/174809873-museum-of-crimes-against-humanity-and-genocide-1992-1995",
+                  "domain": "aroundus.com",
+                  "snippet": "11/1, Sarajevo 71000, Bosnia and Herzegovina \n\nOpening Hours Monday-Sunday 09:00-21:00 \n\nPhone +38762052058 \n\nWebsite\n\n https://facebook.com/MuseumOfCrimesAgainstHumanityAndGenocide \n\nGPS coordinates 43.85897,18.42635 \n\nLatest update December 6, 2025",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:47:29.262Z",
+                "expiresAt": "2026-12-11T18:47:29.262Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.visitsarajevo.ba/listings/museum-of-crimes-against-humanity-and-genocide-1992-1995/"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://aroundus.com/p/174809873-museum-of-crimes-against-humanity-and-genocide-1992-1995"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified"
+              ]
+            }
+          ],
+          "queryCount": 8,
+          "warnings": [
+            "thin_research_audit:thin_audit_da236d40-ace0-4962-8872-2fc47c3b671b",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "由于搜索工具限制，未能获取2026年10月15-17日期间的具体开放时间、门票价格或特殊展览信息。",
+            "未能找到经官方验证的、可预订的“传统手工艺”互动工作坊（如铜匠、地毯编织或银器制作）的具体名单。巴什察尔希亚地区有许多手工艺店铺，但缺乏官方来源确认其是否提供游客参与式体验，因此未列入推荐以避免编造。",
+            "波斯尼亚和黑塞哥维那历史博物馆 (Historijski muzej BiH) 的具体展览详情和2026年状态未通过官方来源确认，故未列入。",
+            "所有推荐景点的无障碍设施信息未确认。"
+          ],
+          "createdAt": "2026-09-12T18:47:29.262Z"
+        },
+        "verification": {
+          "status": "partially_verified",
+          "checkedAt": "2026-09-12T18:47:29.262Z",
+          "confidence": 0.2,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://www.muzejsarajeva.ba/en/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.muzejsarajeva.ba/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.visitsarajevo.ba/listings/museum-of-crimes-against-humanity-and-genocide-1992-1995/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://aroundus.com/p/174809873-museum-of-crimes-against-humanity-and-genocide-1992-1995"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:16.805Z",
+        "updatedAt": "2026-09-12T19:49:16.805Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-c17d-7446-9fce-165ea342d338",
+        "ownerId": "backend-replay-d10da33f-0df9-4a8b-861b-4b87951804e1",
+        "tripId": "01a0972a-c176-75c4-a5d4-ecf0d39f7069",
+        "conversationId": "01a0972a-c176-75c4-a5d4-f3969d3c18a6",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "研究萨拉热窝最多6个城市历史、小型博物馆或传统手工艺活动候选，优先可追溯的当地来源并去除同一地点的别名重复。"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:16.797Z",
+        "updatedAt": "2026-09-12T19:49:16.797Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "partial",
+  "providerError": null,
+  "effectiveDisposition": "partial",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 2,
+      "verificationEligibleFindingCount": 1,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 1,
+        "unverified": 1,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "eligible_research_evidence",
+        "guide_daily_activity_coverage",
+        "guide_research_type:practical"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}

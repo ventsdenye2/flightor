@@ -1,0 +1,1038 @@
+{
+  "sampleId": "research-screen-v3/sample-004",
+  "caseId": "activity-03",
+  "model": "qwen/qwen3.8-flash",
+  "sampleFile": "samples/sample-002.json",
+  "sourceFile": "runs/research-screen-v3/sample-004.json",
+  "sourceSha256": "8824642453778859453ac4968558ab4cb75db97124262d560d229bdc3104b743",
+  "receiptSha256": "e2e0863a92c415fdd4a4a4b517bfd89d7a9e0c3260e48e8e622d5a15aab2ec9e",
+  "recordedAt": "2026-09-12T18:42:57.454Z",
+  "travelWindow": {
+    "from": "2026-11-05",
+    "to": "2026-11-07"
+  },
+  "recordedStatus": "responded",
+  "recordedRawValid": true,
+  "ownerId": "backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15",
+  "receiptReads": 1,
+  "newLiveModelCalls": 0,
+  "newApiCostUsd": 0,
+  "auditFiles": [
+    "audits/thin_audit_46910590-f881-40fc-bb23-4289a71778b9.json"
+  ],
+  "providerStatus": "artifact",
+  "report": {
+    "scope": "offline-scripted-planner; real domain/tools; in-memory persistence; no live model or DB evidence",
+    "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+    "result": {
+      "reply": "这项任务尚未完成，当前还没有满足全部要求的结果。后台任务的进度会显示在当前行程中，也可以继续对话补齐或调整条件。",
+      "tripVersion": 0,
+      "tripContext": {
+        "id": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+        "departureWindow": {
+          "from": "2026-11-05",
+          "to": "2026-11-05",
+          "precision": "exact"
+        },
+        "returnWindow": {
+          "from": "2026-11-07",
+          "to": "2026-11-07",
+          "precision": "exact"
+        },
+        "travelDays": 3,
+        "destinationIntent": {
+          "mode": "explicit",
+          "required": [
+            {
+              "id": "city:SIN",
+              "type": "city",
+              "name": "新加坡",
+              "countryCode": "SG"
+            }
+          ],
+          "preferred": [],
+          "excluded": []
+        },
+        "interests": [
+          "文化",
+          "自然",
+          "72岁老人",
+          "手动轮椅",
+          "不接受必须走台阶",
+          "空调或遮阴",
+          "可坐下休息"
+        ],
+        "priorities": {},
+        "transferPreferences": {},
+        "locationRoleOverrides": [],
+        "mustIncludeEvents": [],
+        "requiredGroundLegs": [],
+        "notes": [],
+        "version": 0
+      },
+      "artifactRefs": [
+        {
+          "id": "01a0972a-bf98-751d-a7e8-6a2175b32c1b",
+          "type": "research",
+          "schemaVersion": 2
+        }
+      ],
+      "memoryChanged": false,
+      "warnings": [
+        "thin_research_audit:thin_audit_46910590-f881-40fc-bb23-4289a71778b9",
+        "thin_research_disposition:partial",
+        "research_evidence_is_snippet_only",
+        "source_excerpt_truncated",
+        "滨海湾花园花穹内轮椅升降平台的具体操作方式、重量限制及是否需要工作人员协助未确认。",
+        "滨海湾花园穿梭巴士在2026年11月的具体运营时刻表及轮椅优先座位情况未确认。",
+        "国家美术馆在2026年11月5-7日的具体开放时间及是否需要预约未确认。",
+        "滨海湾花园在2026年11月5-7日的具体开放时间及门票价格未确认。",
+        "未搜索到关于新加坡植物园 (Singapore Botanic Gardens) 或艺术科学博物馆 (ArtScience Museum) 的最新详细无障碍指南，因此未列入推荐。",
+        "所有地点的轮椅租赁库存情况（是否充足）未确认，建议提前联系或尽早到达。"
+      ],
+      "stopReason": "goal_pending",
+      "delivery": {
+        "status": "pending",
+        "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+        "kind": "travel_guide",
+        "artifactIds": [],
+        "missing": [
+          "travel_guide_artifact"
+        ],
+        "warnings": [],
+        "goals": [
+          {
+            "status": "pending",
+            "artifactIds": [],
+            "missing": [
+              "travel_guide_artifact"
+            ],
+            "warnings": [],
+            "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+            "kind": "travel_guide"
+          }
+        ]
+      }
+    },
+    "toolOutputs": [
+      {
+        "turn": 1,
+        "name": "get_trip_context",
+        "arguments": {},
+        "scope": {},
+        "outcome": {
+          "toolCallId": "c8c6da87-db43-401b-939a-060e8073f4d6",
+          "toolName": "get_trip_context",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"tripContext\":{\"id\":\"01a0972a-bf86-7612-98bb-3265c37aa8b3\",\"departureWindow\":{\"from\":\"2026-11-05\",\"to\":\"2026-11-05\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-07\",\"to\":\"2026-11-07\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SIN\",\"type\":\"city\",\"name\":\"新加坡\",\"countryCode\":\"SG\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"文化\",\"自然\",\"72岁老人\",\"手动轮椅\",\"不接受必须走台阶\",\"空调或遮阴\",\"可坐下休息\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "tripContext": {
+              "id": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+              "departureWindow": {
+                "from": "2026-11-05",
+                "to": "2026-11-05",
+                "precision": "exact"
+              },
+              "returnWindow": {
+                "from": "2026-11-07",
+                "to": "2026-11-07",
+                "precision": "exact"
+              },
+              "travelDays": 3,
+              "destinationIntent": {
+                "mode": "explicit",
+                "required": [
+                  {
+                    "id": "city:SIN",
+                    "type": "city",
+                    "name": "新加坡",
+                    "countryCode": "SG"
+                  }
+                ],
+                "preferred": [],
+                "excluded": []
+              },
+              "interests": [
+                "文化",
+                "自然",
+                "72岁老人",
+                "手动轮椅",
+                "不接受必须走台阶",
+                "空调或遮阴",
+                "可坐下休息"
+              ],
+              "priorities": {},
+              "transferPreferences": {},
+              "locationRoleOverrides": [],
+              "mustIncludeEvents": [],
+              "requiredGroundLegs": [],
+              "notes": [],
+              "version": 0
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "declare_goal",
+        "arguments": {
+          "kind": "travel_guide",
+          "parameters": {
+            "questions": [
+              "研究适合全程手动轮椅游览的文化或自然活动，逐项给出无障碍入口、电梯或通道的证据及未确认部分。",
+              "哪些候选更便于避热和中途休息？"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6,
+            "maxCities": 1,
+            "allowPartial": true,
+            "allowRestDays": false
+          }
+        },
+        "scope": {
+          "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+          "runId": "01a0972a-bf90-7683-a07c-f72cb8b7156b",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "356013be-f429-47eb-b15d-cb4484e43962",
+          "toolName": "declare_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-bf90-7683-a07c-f12e0137a2ee\",\"ownerId\":\"backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15\",\"tripId\":\"01a0972a-bf86-7612-98bb-3265c37aa8b3\",\"conversationId\":\"01a0972a-bf86-7612-98bb-3765579c81d0\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究适合全程手动轮椅游览的文化或自然活动，逐项给出无障碍入口、电梯或通道的证据及未确认部分。\",\"哪些候选更便于避热和中途休息？\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.304Z\",\"updatedAt\":\"2026-09-12T19:49:16.304Z\"},\"run\":{\"id\":\"01a0972a-bf90-7683-a07c-f72cb8b7156b\",\"ownerId\":\"backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15\",\"goalId\":\"01a0972a-bf90-7683-a07c-f12e0137a2ee\",\"tripId\":\"01a0972a-bf86-7612-98bb-3265c37aa8b3\",\"generationId\":\"offline-generation-a142acd0-7340-4282-9b97-fd386e259c22\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-bf86-7612-98bb-3265c37aa8b3\",\"departureWindow\":{\"from\":\"2026-11-05\",\"to\":\"2026-11-05\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-07\",\"to\":\"2026-11-07\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SIN\",\"type\":\"city\",\"name\":\"新加坡\",\"countryCode\":\"SG\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"文化\",\"自然\",\"72岁老人\",\"手动轮椅\",\"不接受必须走台阶\",\"空调或遮阴\",\"可坐下休息\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[],\"locationHandles\":[]},\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.304Z\",\"updatedAt\":\"2026-09-12T19:49:16.304Z\"}}}",
+          "costUnits": 0,
+          "durationMs": 2,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+              "ownerId": "backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15",
+              "tripId": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+              "conversationId": "01a0972a-bf86-7612-98bb-3765579c81d0",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究适合全程手动轮椅游览的文化或自然活动，逐项给出无障碍入口、电梯或通道的证据及未确认部分。",
+                  "哪些候选更便于避热和中途休息？"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.304Z",
+              "updatedAt": "2026-09-12T19:49:16.304Z"
+            },
+            "run": {
+              "id": "01a0972a-bf90-7683-a07c-f72cb8b7156b",
+              "ownerId": "backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15",
+              "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+              "tripId": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+              "generationId": "offline-generation-a142acd0-7340-4282-9b97-fd386e259c22",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+                "departureWindow": {
+                  "from": "2026-11-05",
+                  "to": "2026-11-05",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-07",
+                  "to": "2026-11-07",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:SIN",
+                      "type": "city",
+                      "name": "新加坡",
+                      "countryCode": "SG"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "文化",
+                  "自然",
+                  "72岁老人",
+                  "手动轮椅",
+                  "不接受必须走台阶",
+                  "空调或遮阴",
+                  "可坐下休息"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [],
+                "locationHandles": []
+              },
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.304Z",
+              "updatedAt": "2026-09-12T19:49:16.304Z"
+            }
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "web_research",
+        "arguments": {
+          "destinations": [
+            {
+              "id": "city:SIN",
+              "type": "city",
+              "name": "新加坡",
+              "countryCode": "SG"
+            }
+          ],
+          "travelWindow": {
+            "from": "2026-11-05",
+            "to": "2026-11-07"
+          },
+          "interests": [
+            "文化",
+            "自然",
+            "72岁老人",
+            "手动轮椅",
+            "不接受必须走台阶",
+            "空调或遮阴",
+            "可坐下休息"
+          ],
+          "questions": [
+            "研究适合全程手动轮椅游览的文化或自然活动，逐项给出无障碍入口、电梯或通道的证据及未确认部分。",
+            "哪些候选更便于避热和中途休息？"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6
+        },
+        "scope": {
+          "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+          "runId": "01a0972a-bf90-7683-a07c-f72cb8b7156b",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "205b4e00-2e21-499b-b0a3-ff65c451ef5d",
+          "toolName": "web_research",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"artifact\":{\"id\":\"01a0972a-bf98-751d-a7e8-6a2175b32c1b\",\"type\":\"research\",\"schemaVersion\":2},\"summary\":{\"findingCount\":4,\"statusCounts\":{\"verified\":0,\"partially_verified\":1,\"stale\":0,\"unverified\":3},\"createdAt\":\"2026-09-12T18:42:57.454Z\"},\"findings\":[{\"id\":\"finding_717a919d6d6307f627d140e8\",\"title\":\"新加坡国家美术馆 (National Gallery Singapore)\",\"summary\":\"室内空调环境，适合避热。所有展览空间均无障碍，各楼层均有电梯可达。入口处有访客服务柜台，可借用免费手动轮椅（先到先得）。注意：通往电梯大堂可能需要推开较重的门。馆内设有休息区。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_654c1cfaa962baf51b012ae6\",\"title\":\"滨海湾花园 - 花穹与云雾林 (Gardens by the Bay - Flower Dome & Cloud Forest)\",\"summary\":\"室内空调温室，气候凉爽。主要路径为无台阶设计，有平缓坡道。花穹内有一处上层区域设有轮椅升降平台（需现场确认操作方式）。提供轮椅租赁服务（约2新币/天）。有免费穿梭巴士服务轮椅使用者（需提前确认具体站点和时刻）。\",\"category\":\"activity\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"partially_verified\"},{\"id\":\"finding_d9e978cbde846be38ca197b1\",\"title\":\"滨海湾花园轮椅租赁与穿梭巴士\",\"summary\":\"轮椅租赁点位于 Arrival Gift Shop, The Canopy Ticketing Counter 和 Floral Fantasy Ticketing Counter。轮椅使用者可免费乘坐园区穿梭巴士，但陪同人员需购票。巴士每20分钟一班，运营时间通常为上午9点至晚上9点（最后乘车时间8:45pm）。\",\"category\":\"practical\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"unverified\"},{\"id\":\"finding_72158ef7f629a96b66dc7542\",\"title\":\"国家美术馆无障碍设施细节\",\"summary\":\"提供手动轮椅免费借用，位于 Coleman Street Entrance, Padang Atrium Entrance 和 B1 Concourse 的访客服务柜台。电梯大堂 A 和 B 位于 City Hall Wing 两端，宽度适合大多数轮椅。注意：馆内不提供电动轮椅充电点。\",\"category\":\"practical\",\"destinations\":[{\"id\":\"city:SIN\",\"name\":\"新加坡\"}],\"verificationStatus\":\"unverified\"}],\"warnings\":[\"thin_research_audit:thin_audit_46910590-f881-40fc-bb23-4289a71778b9\",\"thin_research_disposition:partial\",\"research_evidence_is_snippet_only\",\"source_excerpt_truncated\",\"滨海湾花园花穹内轮椅升降平台的具体操作方式、重量限制及是否需要工作人员协助未确认。\",\"滨海湾花园穿梭巴士在2026年11月的具体运营时刻表及轮椅优先座位情况未确认。\",\"国家美术馆在2026年11月5-7日的具体开放时间及是否需要预约未确认。\",\"滨海湾花园在2026年11月5-7日的具体开放时间及门票价格未确认。\",\"未搜索到关于新加坡植物园 (Singapore Botanic Gardens) 或艺术科学博物馆 (ArtScience Museum) 的最新详细无障碍指南，因此未列入推荐。\",\"所有地点的轮椅租赁库存情况（是否充足）未确认，建议提前联系或尽早到达。\"]}}",
+          "costUnits": 4,
+          "durationMs": 6,
+          "provider": "research_agent",
+          "artifactIds": [
+            "01a0972a-bf98-751d-a7e8-6a2175b32c1b"
+          ],
+          "warnings": [
+            "thin_research_audit:thin_audit_46910590-f881-40fc-bb23-4289a71778b9",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "source_excerpt_truncated",
+            "滨海湾花园花穹内轮椅升降平台的具体操作方式、重量限制及是否需要工作人员协助未确认。",
+            "滨海湾花园穿梭巴士在2026年11月的具体运营时刻表及轮椅优先座位情况未确认。",
+            "国家美术馆在2026年11月5-7日的具体开放时间及是否需要预约未确认。",
+            "滨海湾花园在2026年11月5-7日的具体开放时间及门票价格未确认。",
+            "未搜索到关于新加坡植物园 (Singapore Botanic Gardens) 或艺术科学博物馆 (ArtScience Museum) 的最新详细无障碍指南，因此未列入推荐。",
+            "所有地点的轮椅租赁库存情况（是否充足）未确认，建议提前联系或尽早到达。"
+          ]
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "artifact": {
+              "id": "01a0972a-bf98-751d-a7e8-6a2175b32c1b",
+              "type": "research",
+              "schemaVersion": 2
+            },
+            "summary": {
+              "findingCount": 4,
+              "statusCounts": {
+                "verified": 0,
+                "partially_verified": 1,
+                "stale": 0,
+                "unverified": 3
+              },
+              "createdAt": "2026-09-12T18:42:57.454Z"
+            },
+            "findings": [
+              {
+                "id": "finding_717a919d6d6307f627d140e8",
+                "title": "新加坡国家美术馆 (National Gallery Singapore)",
+                "summary": "室内空调环境，适合避热。所有展览空间均无障碍，各楼层均有电梯可达。入口处有访客服务柜台，可借用免费手动轮椅（先到先得）。注意：通往电梯大堂可能需要推开较重的门。馆内设有休息区。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_654c1cfaa962baf51b012ae6",
+                "title": "滨海湾花园 - 花穹与云雾林 (Gardens by the Bay - Flower Dome & Cloud Forest)",
+                "summary": "室内空调温室，气候凉爽。主要路径为无台阶设计，有平缓坡道。花穹内有一处上层区域设有轮椅升降平台（需现场确认操作方式）。提供轮椅租赁服务（约2新币/天）。有免费穿梭巴士服务轮椅使用者（需提前确认具体站点和时刻）。",
+                "category": "activity",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "partially_verified"
+              },
+              {
+                "id": "finding_d9e978cbde846be38ca197b1",
+                "title": "滨海湾花园轮椅租赁与穿梭巴士",
+                "summary": "轮椅租赁点位于 Arrival Gift Shop, The Canopy Ticketing Counter 和 Floral Fantasy Ticketing Counter。轮椅使用者可免费乘坐园区穿梭巴士，但陪同人员需购票。巴士每20分钟一班，运营时间通常为上午9点至晚上9点（最后乘车时间8:45pm）。",
+                "category": "practical",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              },
+              {
+                "id": "finding_72158ef7f629a96b66dc7542",
+                "title": "国家美术馆无障碍设施细节",
+                "summary": "提供手动轮椅免费借用，位于 Coleman Street Entrance, Padang Atrium Entrance 和 B1 Concourse 的访客服务柜台。电梯大堂 A 和 B 位于 City Hall Wing 两端，宽度适合大多数轮椅。注意：馆内不提供电动轮椅充电点。",
+                "category": "practical",
+                "destinations": [
+                  {
+                    "id": "city:SIN",
+                    "name": "新加坡"
+                  }
+                ],
+                "verificationStatus": "unverified"
+              }
+            ],
+            "warnings": [
+              "thin_research_audit:thin_audit_46910590-f881-40fc-bb23-4289a71778b9",
+              "thin_research_disposition:partial",
+              "research_evidence_is_snippet_only",
+              "source_excerpt_truncated",
+              "滨海湾花园花穹内轮椅升降平台的具体操作方式、重量限制及是否需要工作人员协助未确认。",
+              "滨海湾花园穿梭巴士在2026年11月的具体运营时刻表及轮椅优先座位情况未确认。",
+              "国家美术馆在2026年11月5-7日的具体开放时间及是否需要预约未确认。",
+              "滨海湾花园在2026年11月5-7日的具体开放时间及门票价格未确认。",
+              "未搜索到关于新加坡植物园 (Singapore Botanic Gardens) 或艺术科学博物馆 (ArtScience Museum) 的最新详细无障碍指南，因此未列入推荐。",
+              "所有地点的轮椅租赁库存情况（是否充足）未确认，建议提前联系或尽早到达。"
+            ]
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "save_travel_guide",
+        "arguments": {
+          "researchArtifactIds": [
+            "01a0972a-bf98-751d-a7e8-6a2175b32c1b"
+          ],
+          "days": [
+            {
+              "day": 1,
+              "cityId": "city:SIN",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_717a919d6d6307f627d140e8",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                },
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_72158ef7f629a96b66dc7542",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 2,
+              "cityId": "city:SIN",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_654c1cfaa962baf51b012ae6",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            },
+            {
+              "day": 3,
+              "cityId": "city:SIN",
+              "kind": "visit",
+              "theme": "离线集成测试主题",
+              "items": [
+                {
+                  "researchIndex": 0,
+                  "findingId": "finding_d9e978cbde846be38ca197b1",
+                  "timeOfDay": "flexible",
+                  "planningNote": "测试驱动的选择，不代表真实模型规划。"
+                }
+              ]
+            }
+          ]
+        },
+        "scope": {
+          "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+          "runId": "01a0972a-bf90-7683-a07c-f72cb8b7156b",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "ea2db123-c004-4456-b601-9ef7849d4ffd",
+          "toolName": "save_travel_guide",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"status\":\"needs_revision\",\"issues\":[\"eligible_research_evidence\",\"guide_daily_activity_coverage\",\"guide_research_type:practical\"],\"requirements\":{\"maxCities\":1,\"maxResults\":6,\"researchTypes\":[\"activity\",\"practical\"],\"allowPartial\":true,\"allowRestDays\":false},\"revisionGuidance\":\"Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.\",\"warnings\":[]}}",
+          "costUnits": 1,
+          "durationMs": 2,
+          "provider": "travel_guide",
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "status": "needs_revision",
+            "issues": [
+              "eligible_research_evidence",
+              "guide_daily_activity_coverage",
+              "guide_research_type:practical"
+            ],
+            "requirements": {
+              "maxCities": 1,
+              "maxResults": 6,
+              "researchTypes": [
+                "activity",
+                "practical"
+              ],
+              "allowPartial": true,
+              "allowRestDays": false
+            },
+            "revisionGuidance": "Keep the accepted Goal. Correct the selected days/findings or research the missing evidence indicated by issues, then resubmit. Cancelling or redeclaring does not repair an unmet requirement.",
+            "warnings": []
+          }
+        }
+      },
+      {
+        "turn": 1,
+        "name": "finish_goal",
+        "arguments": {
+          "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee"
+        },
+        "scope": {
+          "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+          "runId": "01a0972a-bf90-7683-a07c-f72cb8b7156b",
+          "tripContextVersion": 0
+        },
+        "outcome": {
+          "toolCallId": "c26c2503-188d-48df-a76f-845be70e5842",
+          "toolName": "finish_goal",
+          "ok": true,
+          "content": "{\"ok\":true,\"data\":{\"goal\":{\"id\":\"01a0972a-bf90-7683-a07c-f12e0137a2ee\",\"ownerId\":\"backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15\",\"tripId\":\"01a0972a-bf86-7612-98bb-3265c37aa8b3\",\"conversationId\":\"01a0972a-bf86-7612-98bb-3765579c81d0\",\"kind\":\"travel_guide\",\"status\":\"pending\",\"parameters\":{\"questions\":[\"研究适合全程手动轮椅游览的文化或自然活动，逐项给出无障碍入口、电梯或通道的证据及未确认部分。\",\"哪些候选更便于避热和中途休息？\"],\"researchTypes\":[\"activity\",\"practical\"],\"maxResults\":6,\"maxCities\":1,\"allowPartial\":true,\"allowRestDays\":false},\"createdContextVersion\":0,\"revision\":0,\"createdAt\":\"2026-09-12T19:49:16.304Z\",\"updatedAt\":\"2026-09-12T19:49:16.304Z\"},\"run\":{\"id\":\"01a0972a-bf90-7683-a07c-f72cb8b7156b\",\"ownerId\":\"backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15\",\"goalId\":\"01a0972a-bf90-7683-a07c-f12e0137a2ee\",\"tripId\":\"01a0972a-bf86-7612-98bb-3265c37aa8b3\",\"generationId\":\"offline-generation-a142acd0-7340-4282-9b97-fd386e259c22\",\"contextVersion\":0,\"contextSnapshot\":{\"id\":\"01a0972a-bf86-7612-98bb-3265c37aa8b3\",\"departureWindow\":{\"from\":\"2026-11-05\",\"to\":\"2026-11-05\",\"precision\":\"exact\"},\"returnWindow\":{\"from\":\"2026-11-07\",\"to\":\"2026-11-07\",\"precision\":\"exact\"},\"travelDays\":3,\"destinationIntent\":{\"mode\":\"explicit\",\"required\":[{\"id\":\"city:SIN\",\"type\":\"city\",\"name\":\"新加坡\",\"countryCode\":\"SG\"}],\"preferred\":[],\"excluded\":[]},\"interests\":[\"文化\",\"自然\",\"72岁老人\",\"手动轮椅\",\"不接受必须走台阶\",\"空调或遮阴\",\"可坐下休息\"],\"priorities\":{},\"transferPreferences\":{},\"locationRoleOverrides\":[],\"mustIncludeEvents\":[],\"requiredGroundLegs\":[],\"notes\":[],\"version\":0},\"status\":\"running\",\"workingSet\":{\"artifactRefs\":[{\"id\":\"01a0972a-bf98-751d-a7e8-6a2175b32c1b\",\"type\":\"research\",\"schemaVersion\":2,\"observedAt\":\"2026-09-12T19:49:16.314Z\"}],\"locationHandles\":[{\"id\":\"city:SIN\",\"kind\":\"city\",\"observedAt\":\"2026-09-12T19:49:16.305Z\"}]},\"revision\":2,\"createdAt\":\"2026-09-12T19:49:16.304Z\",\"updatedAt\":\"2026-09-12T19:49:16.314Z\"},\"verification\":{\"status\":\"pending\",\"artifactIds\":[],\"missing\":[\"travel_guide_artifact\"],\"warnings\":[]}}}",
+          "costUnits": 0,
+          "durationMs": 1,
+          "artifactIds": [],
+          "warnings": []
+        },
+        "output": {
+          "ok": true,
+          "data": {
+            "goal": {
+              "id": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+              "ownerId": "backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15",
+              "tripId": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+              "conversationId": "01a0972a-bf86-7612-98bb-3765579c81d0",
+              "kind": "travel_guide",
+              "status": "pending",
+              "parameters": {
+                "questions": [
+                  "研究适合全程手动轮椅游览的文化或自然活动，逐项给出无障碍入口、电梯或通道的证据及未确认部分。",
+                  "哪些候选更便于避热和中途休息？"
+                ],
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ],
+                "maxResults": 6,
+                "maxCities": 1,
+                "allowPartial": true,
+                "allowRestDays": false
+              },
+              "createdContextVersion": 0,
+              "revision": 0,
+              "createdAt": "2026-09-12T19:49:16.304Z",
+              "updatedAt": "2026-09-12T19:49:16.304Z"
+            },
+            "run": {
+              "id": "01a0972a-bf90-7683-a07c-f72cb8b7156b",
+              "ownerId": "backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15",
+              "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+              "tripId": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+              "generationId": "offline-generation-a142acd0-7340-4282-9b97-fd386e259c22",
+              "contextVersion": 0,
+              "contextSnapshot": {
+                "id": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+                "departureWindow": {
+                  "from": "2026-11-05",
+                  "to": "2026-11-05",
+                  "precision": "exact"
+                },
+                "returnWindow": {
+                  "from": "2026-11-07",
+                  "to": "2026-11-07",
+                  "precision": "exact"
+                },
+                "travelDays": 3,
+                "destinationIntent": {
+                  "mode": "explicit",
+                  "required": [
+                    {
+                      "id": "city:SIN",
+                      "type": "city",
+                      "name": "新加坡",
+                      "countryCode": "SG"
+                    }
+                  ],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [
+                  "文化",
+                  "自然",
+                  "72岁老人",
+                  "手动轮椅",
+                  "不接受必须走台阶",
+                  "空调或遮阴",
+                  "可坐下休息"
+                ],
+                "priorities": {},
+                "transferPreferences": {},
+                "locationRoleOverrides": [],
+                "mustIncludeEvents": [],
+                "requiredGroundLegs": [],
+                "notes": [],
+                "version": 0
+              },
+              "status": "running",
+              "workingSet": {
+                "artifactRefs": [
+                  {
+                    "id": "01a0972a-bf98-751d-a7e8-6a2175b32c1b",
+                    "type": "research",
+                    "schemaVersion": 2,
+                    "observedAt": "2026-09-12T19:49:16.314Z"
+                  }
+                ],
+                "locationHandles": [
+                  {
+                    "id": "city:SIN",
+                    "kind": "city",
+                    "observedAt": "2026-09-12T19:49:16.305Z"
+                  }
+                ]
+              },
+              "revision": 2,
+              "createdAt": "2026-09-12T19:49:16.304Z",
+              "updatedAt": "2026-09-12T19:49:16.314Z"
+            },
+            "verification": {
+              "status": "pending",
+              "artifactIds": [],
+              "missing": [
+                "travel_guide_artifact"
+              ],
+              "warnings": []
+            }
+          }
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "id": "01a0972a-bf98-751d-a7e8-6a2175b32c1b",
+        "tripId": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+        "conversationId": "01a0972a-bf86-7612-98bb-3765579c81d0",
+        "goalId": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+        "runId": "01a0972a-bf90-7683-a07c-f72cb8b7156b",
+        "tripContextVersion": 0,
+        "sourceArtifactIds": [],
+        "type": "research",
+        "schemaVersion": 2,
+        "payload": {
+          "id": "01a0972a-bf98-751d-a7e8-6a2175b32c1b",
+          "type": "research",
+          "schemaVersion": 2,
+          "brief": {
+            "destinations": [
+              {
+                "id": "city:SIN",
+                "type": "city",
+                "name": "新加坡",
+                "countryCode": "SG"
+              }
+            ],
+            "travelWindow": {
+              "from": "2026-11-05",
+              "to": "2026-11-07"
+            },
+            "interests": [
+              "文化",
+              "自然",
+              "72岁老人",
+              "手动轮椅",
+              "不接受必须走台阶",
+              "空调或遮阴",
+              "可坐下休息"
+            ],
+            "questions": [
+              "研究适合全程手动轮椅游览的文化或自然活动，逐项给出无障碍入口、电梯或通道的证据及未确认部分。",
+              "哪些候选更便于避热和中途休息？"
+            ],
+            "researchTypes": [
+              "activity",
+              "practical"
+            ],
+            "maxResults": 6
+          },
+          "findings": [
+            {
+              "id": "finding_717a919d6d6307f627d140e8",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "新加坡国家美术馆 (National Gallery Singapore)",
+              "summary": "室内空调环境，适合避热。所有展览空间均无障碍，各楼层均有电梯可达。入口处有访客服务柜台，可借用免费手动轮椅（先到先得）。注意：通往电梯大堂可能需要推开较重的门。馆内设有休息区。",
+              "sources": [
+                {
+                  "title": "Accessibility | National Gallery Singapore",
+                  "url": "https://www.nationalgallery.sg/sg/en/visit/guides/accessibility.html",
+                  "domain": "www.nationalgallery.sg",
+                  "snippet": "Three accessible parking lots are available in our carpark: one on B2, two on B3.\n\nAll accessible parking lots are located near Lift Lobby B. The lifts are wheelchair accessible, but please note that you will need to open a heavy manual swing door to access the lift lobby.\n\nTake the lift to Level 1. The nearest Visitor Services Counter is at the Padang Atrium.\n\n...\n\nAll exhibition spaces at the Gallery are wheelchair accessible. Lifts also serve all floors of the Gallery.\n\n...\n\nLifts\n\n...\n\nLift Lobbies A and B are located at the two ends of the City Hall Wing. Both lift lobbies are wide enough for most wheelchairs and mobility aids.\n\nManual wheelchair loans\n\nWheelchairs are available for loan at all our Visitor Services Counters. They are free of charge and loaned on a first come, first se",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "ACCESS GUIDE",
+                  "url": "https://www.nationalgallery.sg/content/dam/visit/guides/accessibility/National-Gallery-Singapore-Access-Guide-Sep-2025.pdf",
+                  "domain": "www.nationalgallery.sg",
+                  "snippet": "to the Gallery by Car: The entrance to the Gallery’s carpark is located on St Andrew’s Road. The Gallery’s carpark has three accessible parking lots, one on Level B2 and two on Level B3. The accessible parking lots are located close to Lift Lobby B.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:42:57.454Z",
+                "expiresAt": "2026-12-11T18:42:57.454Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.nationalgallery.sg/sg/en/visit/guides/accessibility.html"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.nationalgallery.sg/content/dam/visit/guides/accessibility/National-Gallery-Singapore-Access-Guide-Sep-2025.pdf"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified",
+                "source_excerpt_truncated"
+              ]
+            },
+            {
+              "id": "finding_654c1cfaa962baf51b012ae6",
+              "category": "activity",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "滨海湾花园 - 花穹与云雾林 (Gardens by the Bay - Flower Dome & Cloud Forest)",
+              "summary": "室内空调温室，气候凉爽。主要路径为无台阶设计，有平缓坡道。花穹内有一处上层区域设有轮椅升降平台（需现场确认操作方式）。提供轮椅租赁服务（约2新币/天）。有免费穿梭巴士服务轮椅使用者（需提前确认具体站点和时刻）。",
+              "sources": [
+                {
+                  "title": "Amenities & Services",
+                  "url": "https://www.gardensbythebay.com.sg/en/plan-your-visit/amenities-and-services.html",
+                  "domain": "www.gardensbythebay.com.sg",
+                  "snippet": "###### Wheelchairs\n\n...\n\n- Wheelchair rental available at S$2 per day at Arrival Gift Shop, The Canopy Ticketing Counter and Floral Fantasy Ticketing Counter.\n- Wheelchairs must be returned by 8.30pm. Kindly approach our friendly staff on ground if you require any assistance.\n\n...\n\nBayfront MRT ←→ Active Garden ←→ Flower Dome 9.00am – 9.00pm Last ride at 8.45pm\n\n- Runs at approximately 20-minute intervals\n- Shuttle Service fee at $3 for two rides (Adult / Child) \n- Tickets can be purchased online or via the Gardens by the Bay Mobile App\n- Free Shuttle Service for every passenger using a wheelchair (ambulant or non-ambulant). Caregivers are required to purchase a ticket. To ensure safety and comfort onboard our vehicles:",
+                  "authority": "unknown"
+                },
+                {
+                  "title": "Is Gardens by the Bay wheelchair friendly?",
+                  "url": "https://hovicare.sg/wheelchair-friendly-singapore/gardens-by-the-bay-with-wheelchair/",
+                  "domain": "hovicare.sg",
+                  "snippet": "Designed within the Cloud Forest’s existing pathways, the experience features wide, step-free routes and gentle slopes,\n...\nYes — wheelchair rental is easy, affordable, and well-supported, making it convenient to explore the Gardens comfortably.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "partially_verified",
+                "checkedAt": "2026-09-12T18:42:57.454Z",
+                "expiresAt": "2026-12-11T18:42:57.454Z",
+                "confidence": 0.48,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.gardensbythebay.com.sg/en/plan-your-visit/amenities-and-services.html"
+                  },
+                  {
+                    "provider": "research-search",
+                    "reference": "https://hovicare.sg/wheelchair-friendly-singapore/gardens-by-the-bay-with-wheelchair/"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_partially_verified"
+              ]
+            },
+            {
+              "id": "finding_d9e978cbde846be38ca197b1",
+              "category": "practical",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "滨海湾花园轮椅租赁与穿梭巴士",
+              "summary": "轮椅租赁点位于 Arrival Gift Shop, The Canopy Ticketing Counter 和 Floral Fantasy Ticketing Counter。轮椅使用者可免费乘坐园区穿梭巴士，但陪同人员需购票。巴士每20分钟一班，运营时间通常为上午9点至晚上9点（最后乘车时间8:45pm）。",
+              "sources": [
+                {
+                  "title": "Amenities & Services",
+                  "url": "https://www.gardensbythebay.com.sg/en/plan-your-visit/amenities-and-services.html",
+                  "domain": "www.gardensbythebay.com.sg",
+                  "snippet": "###### Wheelchairs\n\n...\n\n- Wheelchair rental available at S$2 per day at Arrival Gift Shop, The Canopy Ticketing Counter and Floral Fantasy Ticketing Counter.\n- Wheelchairs must be returned by 8.30pm. Kindly approach our friendly staff on ground if you require any assistance.\n\n...\n\nBayfront MRT ←→ Active Garden ←→ Flower Dome 9.00am – 9.00pm Last ride at 8.45pm\n\n- Runs at approximately 20-minute intervals\n- Shuttle Service fee at $3 for two rides (Adult / Child) \n- Tickets can be purchased online or via the Gardens by the Bay Mobile App\n- Free Shuttle Service for every passenger using a wheelchair (ambulant or non-ambulant). Caregivers are required to purchase a ticket. To ensure safety and comfort onboard our vehicles:",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:42:57.454Z",
+                "expiresAt": "2026-11-11T18:42:57.454Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.gardensbythebay.com.sg/en/plan-your-visit/amenities-and-services.html"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            },
+            {
+              "id": "finding_72158ef7f629a96b66dc7542",
+              "category": "practical",
+              "destinations": [
+                {
+                  "id": "city:SIN",
+                  "type": "city",
+                  "name": "新加坡",
+                  "countryCode": "SG"
+                }
+              ],
+              "title": "国家美术馆无障碍设施细节",
+              "summary": "提供手动轮椅免费借用，位于 Coleman Street Entrance, Padang Atrium Entrance 和 B1 Concourse 的访客服务柜台。电梯大堂 A 和 B 位于 City Hall Wing 两端，宽度适合大多数轮椅。注意：馆内不提供电动轮椅充电点。",
+              "sources": [
+                {
+                  "title": "Visitor Information | National Gallery Singapore",
+                  "url": "https://www.nationalgallery.sg/sg/en/visit/visitor-information.html",
+                  "domain": "www.nationalgallery.sg",
+                  "snippet": "-accessible.\n- Standard-size motorised wheelchairs are permitted in the galleries.\n- Wheelchairs are available for loan free-of-charge at the Visitor Services Counters, located at Coleman Street Entrance, Padang Atrium Entrance, and B1 Concourse.",
+                  "authority": "unknown"
+                }
+              ],
+              "verification": {
+                "status": "unverified",
+                "checkedAt": "2026-09-12T18:42:57.454Z",
+                "expiresAt": "2026-11-11T18:42:57.454Z",
+                "confidence": 0.2,
+                "sources": [
+                  {
+                    "provider": "research-search",
+                    "reference": "https://www.nationalgallery.sg/sg/en/visit/visitor-information.html"
+                  }
+                ]
+              },
+              "warnings": [
+                "research_evidence_is_snippet_only",
+                "evidence_unverified"
+              ]
+            }
+          ],
+          "queryCount": 5,
+          "warnings": [
+            "thin_research_audit:thin_audit_46910590-f881-40fc-bb23-4289a71778b9",
+            "thin_research_disposition:partial",
+            "research_evidence_is_snippet_only",
+            "source_excerpt_truncated",
+            "滨海湾花园花穹内轮椅升降平台的具体操作方式、重量限制及是否需要工作人员协助未确认。",
+            "滨海湾花园穿梭巴士在2026年11月的具体运营时刻表及轮椅优先座位情况未确认。",
+            "国家美术馆在2026年11月5-7日的具体开放时间及是否需要预约未确认。",
+            "滨海湾花园在2026年11月5-7日的具体开放时间及门票价格未确认。",
+            "未搜索到关于新加坡植物园 (Singapore Botanic Gardens) 或艺术科学博物馆 (ArtScience Museum) 的最新详细无障碍指南，因此未列入推荐。",
+            "所有地点的轮椅租赁库存情况（是否充足）未确认，建议提前联系或尽早到达。"
+          ],
+          "createdAt": "2026-09-12T18:42:57.454Z"
+        },
+        "verification": {
+          "status": "partially_verified",
+          "checkedAt": "2026-09-12T18:42:57.454Z",
+          "confidence": 0.2,
+          "sources": [
+            {
+              "provider": "research-search",
+              "reference": "https://www.nationalgallery.sg/sg/en/visit/guides/accessibility.html"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.nationalgallery.sg/content/dam/visit/guides/accessibility/National-Gallery-Singapore-Access-Guide-Sep-2025.pdf"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.gardensbythebay.com.sg/en/plan-your-visit/amenities-and-services.html"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://hovicare.sg/wheelchair-friendly-singapore/gardens-by-the-bay-with-wheelchair/"
+            },
+            {
+              "provider": "research-search",
+              "reference": "https://www.nationalgallery.sg/sg/en/visit/visitor-information.html"
+            }
+          ]
+        },
+        "createdAt": "2026-09-12T19:49:16.313Z",
+        "updatedAt": "2026-09-12T19:49:16.313Z"
+      }
+    ],
+    "goals": [
+      {
+        "id": "01a0972a-bf90-7683-a07c-f12e0137a2ee",
+        "ownerId": "backend-replay-58e8a586-a119-4fb2-9caa-8a1856029b15",
+        "tripId": "01a0972a-bf86-7612-98bb-3265c37aa8b3",
+        "conversationId": "01a0972a-bf86-7612-98bb-3765579c81d0",
+        "kind": "travel_guide",
+        "status": "pending",
+        "parameters": {
+          "questions": [
+            "研究适合全程手动轮椅游览的文化或自然活动，逐项给出无障碍入口、电梯或通道的证据及未确认部分。",
+            "哪些候选更便于避热和中途休息？"
+          ],
+          "researchTypes": [
+            "activity",
+            "practical"
+          ],
+          "maxResults": 6,
+          "maxCities": 1,
+          "allowPartial": true,
+          "allowRestDays": false
+        },
+        "createdContextVersion": 0,
+        "revision": 0,
+        "createdAt": "2026-09-12T19:49:16.304Z",
+        "updatedAt": "2026-09-12T19:49:16.304Z"
+      }
+    ],
+    "researchCalls": 1
+  },
+  "auditStatus": "partial",
+  "providerError": null,
+  "effectiveDisposition": "partial",
+  "scriptedPlannerCalls": 6,
+  "researchCalls": 1,
+  "networkAttempts": 0,
+  "observed": {
+    "research": {
+      "attempted": true,
+      "toolOk": true,
+      "errorCode": null,
+      "persisted": true,
+      "findingCount": 4,
+      "verificationEligibleFindingCount": 1,
+      "verificationCounts": {
+        "verified": 0,
+        "partially_verified": 1,
+        "unverified": 3,
+        "stale": 0
+      }
+    },
+    "saveGuide": {
+      "attempted": true,
+      "toolOk": true,
+      "status": "needs_revision",
+      "errorCode": null,
+      "issues": [
+        "eligible_research_evidence",
+        "guide_daily_activity_coverage",
+        "guide_research_type:practical"
+      ]
+    },
+    "finishGoal": {
+      "attempted": true,
+      "toolOk": true,
+      "verificationStatus": "pending",
+      "errorCode": null
+    },
+    "deliveryStatus": "pending",
+    "stopReason": "goal_pending",
+    "satisfied": false
+  },
+  "integrityErrors": []
+}
