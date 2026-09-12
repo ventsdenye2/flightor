@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { Button, Input, Text, View } from '@tarojs/components'
 import { Icon, Photo } from './VisualMedia'
-import { media } from './media'
+import { formatTripDates, tripDurationLabel, travelerLabel } from './presentation'
+import type { TripPresentation } from './presentation'
 import { DemoNote, EmptyState, PageHeader, Sheet } from './SharedUI'
 import './library.scss'
 
-export interface SavedInspiration { id: string; title: string; subtitle: string; photo: string }
+export interface SavedInspiration { id: string; title: string; subtitle: string; photo?: string | null; photoDescription?: string }
 export interface PriceAlert { id: number; route: string; targetPrice: number; date: string; active: boolean }
 
-export function TripsPage({ onOpenTrip, onPlan, archived, onArchive }: { onOpenTrip: () => void; onPlan: () => void; archived: boolean; onArchive: (value: boolean) => void }) {
+export function TripsPage({ trip, onOpenTrip, onPlan, archived, onArchive }: { trip: TripPresentation; onOpenTrip: () => void; onPlan: () => void; archived: boolean; onArchive: (value: boolean) => void }) {
+  const dateParts = trip.dates.start?.match(/^\d{4}-(\d{2})-(\d{2})$/)
   const [filter, setFilter] = useState('upcoming')
   const [menu, setMenu] = useState(false)
   const visible = filter === 'archived' ? archived : !archived
@@ -17,9 +19,9 @@ export function TripsPage({ onOpenTrip, onPlan, archived, onArchive }: { onOpenT
       <Text className='ui-display'>把期待，排进日历。</Text><Text className='ux-muted'>计划好的远方，随时回来接着安排。</Text>
       <View className='ui-segment'>{[{ id: 'upcoming', text: '待出发' }, { id: 'archived', text: '已归档' }].map(item => <Button key={item.id} aria-pressed={filter === item.id} className={`ui-segment-button ${filter === item.id ? 'is-active' : ''}`} onClick={() => setFilter(item.id)}>{item.text}</Button>)}</View>
       {visible ? <View className='lb-trip'>
-        <Button className='lb-trip-cover' ariaLabel='打开里斯本七日行程' onClick={onOpenTrip}><Photo src={media.hero} description='里斯本城市与河岸' className='lb-trip-photo' retry={false} /><View className='lb-date-stamp'><Text>OCT</Text><Text>12</Text></View></Button>
-        <View className='lb-trip-body'><View className='lb-trip-title'><View><Text className='ui-display'>里斯本，慢一点</Text><Text className='ux-muted'>10.12 – 10.18 · 7 天 · 2 人</Text></View><Button className='ux-icon-button' ariaLabel='管理里斯本行程' onClick={() => setMenu(true)}><Icon name='info' /></Button></View>
-          <View className='lb-trip-route'><Text>上海 PVG</Text><Icon name='plane' /><Text>里斯本 LIS</Text></View>
+        <Button className='lb-trip-cover' ariaLabel={`打开${trip.destination}行程`} onClick={onOpenTrip}><Photo src={trip.cover?.src} description={trip.cover?.description || '图片待补充'} className='lb-trip-photo' retry={false} />{dateParts ? <View className='lb-date-stamp'><Text>{Number(dateParts[1])} 月</Text><Text>{dateParts[2]}</Text></View> : null}</Button>
+        <View className='lb-trip-body'><View className='lb-trip-title'><View><Text className='ui-display'>{trip.title}</Text><Text className='ux-muted'>{formatTripDates(trip)} · {tripDurationLabel(trip)} · {travelerLabel(trip)}</Text></View><Button className='ux-icon-button' ariaLabel={`管理${trip.destination}行程`} onClick={() => setMenu(true)}><Icon name='info' /></Button></View>
+          <View className='lb-trip-route'><Text>{trip.route[0] || '出发地待确认'}</Text><Icon name='plane' /><Text>{trip.destination}</Text></View>
           <View className='lb-trip-footer'><Text className='ux-caption'>示例行程 · 待核验</Text><Button className='ux-text-button' onClick={onOpenTrip}>继续安排<Icon name='arrow-right' /></Button></View>
         </View>
       </View> : <EmptyState icon='calendar' title={filter === 'archived' ? '让回忆慢慢积累' : '下一站，还没写下'} description={filter === 'archived' ? '归档后的行程会留在这里，随时可以恢复。' : '说说想去的地方，从一个旅行念头开始。'} actionLabel={filter === 'archived' ? '查看待出发行程' : '开始规划'} onAction={filter === 'archived' ? () => setFilter('upcoming') : onPlan} />}
@@ -29,7 +31,7 @@ export function TripsPage({ onOpenTrip, onPlan, archived, onArchive }: { onOpenT
   </>
 }
 
-export function CollectionsPage({ savedTrip, items, onBack, onOpenTrip, onOpenItem, onToggleTrip, onToggleItem, onExplore }: { savedTrip: boolean; items: SavedInspiration[]; onBack: () => void; onOpenTrip: () => void; onOpenItem: (id: string) => void; onToggleTrip: () => void; onToggleItem: (id: string) => void; onExplore: () => void }) {
+export function CollectionsPage({ trip, savedTrip, items, onBack, onOpenTrip, onOpenItem, onToggleTrip, onToggleItem, onExplore }: { trip: TripPresentation; savedTrip: boolean; items: SavedInspiration[]; onBack: () => void; onOpenTrip: () => void; onOpenItem: (id: string) => void; onToggleTrip: () => void; onToggleItem: (id: string) => void; onExplore: () => void }) {
   const [tab, setTab] = useState('all')
   const [removed, setRemoved] = useState<string | null>(null)
   const showTrip = savedTrip && tab !== 'inspiration'
@@ -37,8 +39,8 @@ export function CollectionsPage({ savedTrip, items, onBack, onOpenTrip, onOpenIt
   return <><PageHeader title='我的收藏' onBack={onBack} /><View className='ux-scroll ui-page'>
     <Text className='ui-display'>留给下一次出发。</Text><Text className='ux-muted'>喜欢的去处和行程，在这里相遇。</Text>
     <View className='ui-segment'>{[{ id: 'all', label: '全部' }, { id: 'inspiration', label: '灵感' }, { id: 'trips', label: '行程' }].map(item => <Button key={item.id} className={`ui-segment-button ${tab === item.id ? 'is-active' : ''}`} aria-pressed={tab === item.id} onClick={() => setTab(item.id)}>{item.label}</Button>)}</View>
-    {showTrip ? <View className='lb-saved-row'><Button className='lb-saved-open' onClick={onOpenTrip}><Photo src={media.hero} description='里斯本城市与河岸' className='lb-saved-photo' retry={false} /><View><Text className='ux-section-title'>里斯本，慢一点</Text><Text className='ux-muted'>7 天 · 2 人 · 示例行程</Text></View></Button><Button className='ux-icon-button' ariaLabel='取消收藏里斯本行程' onClick={() => { onToggleTrip(); setRemoved('trip') }}><Icon name='bookmark-filled' /></Button></View> : null}
-    {shown.map(item => <View className='lb-saved-row' key={item.id}><Button className='lb-saved-open' onClick={() => onOpenItem(item.id)}><Photo src={item.photo} description={item.title + ' · 氛围参考'} className='lb-saved-photo' retry={false} /><View><Text className='ux-section-title'>{item.title}</Text><Text className='ux-muted'>{item.subtitle}</Text></View></Button><Button className='ux-icon-button' ariaLabel={`取消收藏${item.title}`} onClick={() => { onToggleItem(item.id); setRemoved(item.id) }}><Icon name='bookmark-filled' /></Button></View>)}
+    {showTrip ? <View className='lb-saved-row'><Button className='lb-saved-open' onClick={onOpenTrip}><Photo src={trip.cover?.src} description={trip.cover?.description || '图片待补充'} className='lb-saved-photo' retry={false} /><View><Text className='ux-section-title'>{trip.title}</Text><Text className='ux-muted'>{tripDurationLabel(trip)} · {travelerLabel(trip)} · 示例行程</Text></View></Button><Button className='ux-icon-button' ariaLabel={`取消收藏${trip.destination}行程`} onClick={() => { onToggleTrip(); setRemoved('trip') }}><Icon name='bookmark-filled' /></Button></View> : null}
+    {shown.map(item => <View className='lb-saved-row' key={item.id}><Button className='lb-saved-open' onClick={() => onOpenItem(item.id)}><Photo src={item.photo} description={item.photoDescription || '图片待补充'} className='lb-saved-photo' retry={false} /><View><Text className='ux-section-title'>{item.title}</Text><Text className='ux-muted'>{item.subtitle}</Text></View></Button><Button className='ux-icon-button' ariaLabel={`取消收藏${item.title}`} onClick={() => { onToggleItem(item.id); setRemoved(item.id) }}><Icon name='bookmark-filled' /></Button></View>)}
     {!showTrip && !shown.length ? <EmptyState icon='bookmark' title='还没有收藏' description='在探索或行程详情中点亮书签，把喜欢的地方留在这里。' actionLabel='去探索' onAction={onExplore} /> : null}
     {removed ? <View className='ux-undo'><Text>已取消收藏</Text><Button className='ux-text-button' onClick={() => { if (removed === 'trip') onToggleTrip(); else onToggleItem(removed); setRemoved(null) }}>撤销</Button></View> : null}
     <DemoNote text='收藏仅在本次预览保留，尚未同步到账户。' />

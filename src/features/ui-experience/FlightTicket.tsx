@@ -1,29 +1,36 @@
+import { Fragment } from 'react'
 import { View, Text, Button, Image } from '@tarojs/components'
 import { Icon } from './VisualMedia'
+import { formatPrice, hasKnownPrice, priceStatusLabel } from './presentation'
+import type { MediaPresentation, TripFlightPresentation } from './presentation'
 
-export function FlightTicket({ expanded = false, complex = false, onExpand }: {
-  expanded?: boolean; complex?: boolean; onExpand?: () => void
+export function FlightTicket({ flight, expanded = false, onExpand, onOpenSource }: {
+  flight: TripFlightPresentation; expanded?: boolean; onExpand?: () => void; onOpenSource?: (url: string) => void
 }) {
+  const departure = flight.legs[0]
+  const arrival = flight.legs[flight.legs.length - 1]
   return <View className='ux-ticket'>
-    <View className='ux-section-head'><Text className='ux-section-title'>去程航班</Text>
-      {onExpand ? <Button className='ux-text-button' onClick={onExpand}>查看航班<Icon name='chevron-right' /></Button> : <Text className='ux-muted'>10 月 12 日</Text>}
+    <View className='ux-section-head'><Text className='ux-section-title'>{flight.title}</Text>
+      {onExpand ? <Button className='ux-text-button' onClick={onExpand}>查看航班<Icon name='chevron-right' /></Button> : <Text className='ux-muted'>{flight.dateLabel || '日期待确认'}</Text>}
     </View>
-    <View className='ux-flight-times'>
-      <View><Text className='ux-code'>PVG</Text><Text className='ux-time'>01:50</Text><Text className='ux-muted'>上海浦东</Text></View>
-      <View className='ux-flight-line'><Icon name='plane' /><View className='ux-airline-line' /><Text>{complex ? '2 次转机' : '多哈转机'}</Text><Text>{complex ? '含自行中转' : '2h 20m'}</Text></View>
-      <View className='ux-align-right'><Text className='ux-code'>LIS</Text><Text className='ux-time'>{complex ? '17:40' : '14:00'}</Text><Text className='ux-muted'>里斯本</Text></View>
-    </View>
-    <View className='ux-airline'><View className='ux-airline-logo'>QR</View><Text>{complex ? '卡塔尔航空 + 葡萄牙航空 · 示例' : '卡塔尔航空 · 示例航班'}</Text></View>
+    {departure && arrival ? <View className='ux-flight-times'>
+      <View><Text className='ux-code'>{departure.fromCode || '机场待确认'}</Text><Text className='ux-time'>{departure.depart || '待确认'}</Text><Text className='ux-muted'>{departure.from}</Text></View>
+      <View className='ux-flight-line'><Icon name='plane' /><View className='ux-airline-line' /><Text>{flight.transferLabel || '中转情况待确认'}</Text>{flight.transferDuration ? <Text>{flight.transferDuration}</Text> : null}</View>
+      <View className='ux-align-right'><Text className='ux-code'>{arrival.toCode || '机场待确认'}</Text><Text className='ux-time'>{arrival.arrive || '待确认'}{arrival.nextDay ? <Text className='ux-caption'> +1 天</Text> : null}</Text><Text className='ux-muted'>{arrival.to}</Text></View>
+    </View> : <View className='ux-empty'><Icon name='plane' /><Text className='ux-muted'>航段信息尚未补充</Text></View>}
+    <View className='ux-airline'>{flight.airlineCode ? <View className='ux-airline-logo'>{flight.airlineCode}</View> : <Icon name='plane' />}<Text>{flight.airlineLabel || '航司待确认'}{flight.source.status === 'sample' ? ' · 示例航班' : ''}</Text></View>
     {expanded ? <View className='ux-flight-expanded'>
       <Text className='ux-section-title'>航段与中转</Text>
-      <View className='ux-leg'><Text>01:50　上海浦东 PVG</Text><Text className='ux-muted'>飞行 9h 05m · 示例</Text><Text>05:55　多哈 DOH</Text></View>
-      <View className='ux-transfer'><Icon name='info' /><Text>多哈停留 2h 20m · 中转条件待核验</Text></View>
-      <View className='ux-leg'><Text>08:15　多哈 DOH</Text><Text className='ux-muted'>{complex ? '飞行 7h 00m · 示例' : '飞行 7h 45m · 示例'}</Text><Text>{complex ? '14:15　马德里 MAD' : '14:00　里斯本 LIS'}</Text></View>
-      {complex ? <><View className='ux-transfer'><Icon name='info' /><Text>马德里停留 2h 55m · 自行中转</Text></View><View className='ux-leg'><Text>17:10　马德里 MAD</Text><Text className='ux-muted'>飞行 1h 30m · 葡萄牙航空 · 示例</Text><Text>17:40　里斯本 LIS</Text></View><View className='ux-warning'>分开出票，行李需提取并重新托运。入境资格、航站楼与中转时间待核验。</View></> : null}
-      <Text className='ux-caption'>以上均为当地时间。票价、班次与中转条件是设计样例，不能用于购票。</Text>
+      {flight.legs.map((leg, index) => <Fragment key={`${flight.id}-${index}`}><View className='ux-leg'><Text>{leg.depart || '时间待确认'}　{leg.from}{leg.fromCode ? ` ${leg.fromCode}` : ''}</Text><Text className='ux-muted'>{leg.duration ? `飞行 ${leg.duration}` : '飞行时长待确认'} · {leg.carrier || '航司待确认'}</Text><Text>{leg.arrive || '时间待确认'}{leg.nextDay ? '（次日）' : ''}　{leg.to}{leg.toCode ? ` ${leg.toCode}` : ''}</Text></View>{leg.transfer ? <View className='ux-transfer'><Icon name='info' /><Text>{leg.transfer}</Text></View> : null}</Fragment>)}
+      {flight.warning ? <View className='ux-warning'>{flight.warning}</View> : null}
+      <View className='ux-summary'><View><Text className='ux-summary-label'>{priceStatusLabel(flight.price)}</Text><Text className='ux-price'>{formatPrice(flight.price)}{hasKnownPrice(flight.price) ? <Text className='ux-per'>{flight.price.unit === 'person' ? ' / 人' : ' / 总计'}</Text> : null}</Text></View></View>
+      <Text className='ux-caption'>{flight.price.source?.label || '报价来源待补充'}</Text>
+      {flight.source.url && onOpenSource ? <Button className='ux-text-button' onClick={() => onOpenSource(flight.source.url!)}>{flight.source.label}<Icon name='external' /></Button> : <Text className='ux-caption'>{flight.source.label}</Text>}
+      <Text className='ux-caption'>时刻按当地时间展示；未确认信息保持待确认状态。示例不用于购票。</Text>
     </View> : null}
   </View>
 }
-export function FlightRoute({ complex = false }: { complex?: boolean }) {
-  return <View><Image className='ux-flight-map' src='/assets/ui-experience/flight-route.svg' mode='aspectFit' ariaLabel='航线示意：上海经多哈前往里斯本，非实际飞行轨迹' />{complex ? <Text className='ux-caption'>多哈 → 马德里 → 里斯本（含自行中转）</Text> : null}</View>
+export function FlightRoute({ route, illustration }: { route: string[]; illustration?: MediaPresentation | null }) {
+  if (illustration?.src) return <Image className='ux-flight-map' src={illustration.src} mode='aspectFit' ariaLabel={illustration.description} />
+  return route.length ? <View className='ux-route'>{route.map((place, index) => <Fragment key={`${place}-${index}`}>{index ? <Icon name='arrow-right' /> : null}<Text>{place}</Text></Fragment>)}</View> : <Text className='ux-muted'>出发地与目的地尚未确认</Text>
 }
