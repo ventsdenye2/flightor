@@ -1,0 +1,5 @@
+{
+  "at": "2026-09-12T18:28:32.092Z",
+  "method": "Conservatively charge all current UTC-day key usage to experiment, including any unrelated traffic. Retain both full unknown reservations ($0.50); permits remaining budget without assuming cancelled calls are free.",
+  "keyUsageDaily": 0.043306447
+}

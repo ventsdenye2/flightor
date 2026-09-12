@@ -1,0 +1,256 @@
+{
+  "startedAt": "2026-09-12T18:42:24.003Z",
+  "plan": {
+    "protocol": "research-v3-aligned-contract-routing",
+    "scope": "research-component; no Planner, flight fares, persistence, UI or recovery E2E",
+    "cases": [
+      "activity-01",
+      "activity-02",
+      "activity-03",
+      "activity-04",
+      "activity-05",
+      "activity-06",
+      "activity-07",
+      "activity-08",
+      "activity-09",
+      "activity-10",
+      "activity-11",
+      "activity-12",
+      "activity-13",
+      "activity-14",
+      "activity-15",
+      "activity-16"
+    ],
+    "models": [
+      {
+        "label": "Qwen",
+        "id": "qwen/qwen3.8-flash",
+        "preferredEngine": "exa"
+      },
+      {
+        "label": "GLM",
+        "id": "z-ai/glm-5.3-flash",
+        "preferredEngine": "exa",
+        "reasoning": {
+          "enabled": true,
+          "effort": "low",
+          "exclude": true
+        }
+      },
+      {
+        "label": "Kimi",
+        "id": "moonshotai/kimi-k2.6",
+        "preferredEngine": "exa"
+      },
+      {
+        "label": "DeepSeek",
+        "id": "deepseek/deepseek-v4-flash-0731",
+        "preferredEngine": "exa"
+      }
+    ],
+    "arms": [
+      "direct-web",
+      "thin-web",
+      "current-system"
+    ],
+    "repeats": 1,
+    "engineMode": "exa",
+    "concurrency": 2,
+    "design": "research-screen",
+    "baselineModel": "deepseek/deepseek-v4-flash-0731",
+    "cells": 96,
+    "budgetUsd": 5,
+    "maxSerpApiSearches": 96,
+    "timeoutMs": 95000,
+    "seed": 20260913
+  },
+  "models": [
+    {
+      "id": "qwen/qwen3.8-flash",
+      "created": 1787773060,
+      "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.00000047",
+        "input_cache_read": "0.000000016",
+        "input_cache_write": "0.0000002"
+      },
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    {
+      "id": "z-ai/glm-5.3-flash",
+      "created": 1787752741,
+      "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.0000005",
+        "input_cache_read": "0.00000003"
+      },
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    {
+      "id": "moonshotai/kimi-k2.6",
+      "created": 1776699402,
+      "pricing": {
+        "prompt": "0.00000095",
+        "completion": "0.000004",
+        "input_cache_read": "0.00000016"
+      },
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "parallel_tool_calls",
+        "presence_penalty",
+        "reasoning",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    {
+      "id": "deepseek/deepseek-v4-flash-0731",
+      "created": 1785478908,
+      "pricing": {
+        "prompt": "0.00000004",
+        "completion": "0.00000008",
+        "input_cache_read": "0.000000008"
+      },
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "parallel_tool_calls",
+        "presence_penalty",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_a",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    }
+  ],
+  "casesHash": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6",
+  "modelsHash": "96cf652e07b0ab44395cac6e2145f081ff8eb8638d304b6891466df59e172a5b",
+  "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+  "runnerFiles": [
+    {
+      "path": "budget.mjs",
+      "sha256": "a15123ed70baa75c6da323fd3a56acaee71af1d5a632c83cf3e8a775115fc517"
+    },
+    {
+      "path": "cases.json",
+      "sha256": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6"
+    },
+    {
+      "path": "contracts.mjs",
+      "sha256": "4edd1bf828b79bf1dedc09994a59ff0b74def20701fb97a5dd3122781afb9372"
+    },
+    {
+      "path": "contracts.test.mjs",
+      "sha256": "12640941ae2e9484dcaeaa2553e2113b3e336d17b27262fa94b2e9a11eb2c4ee"
+    },
+    {
+      "path": "current-system.mjs",
+      "sha256": "dc87bb30a20e24e3e8448e8bb89c0426dd1de1f60e266573645c8469aa525b1f"
+    },
+    {
+      "path": "current-system.test.mjs",
+      "sha256": "de2af7bd58531fb01d97c4b7bbdebb934e8e99ac548d24749a33f8c32c4bf592"
+    },
+    {
+      "path": "models.json",
+      "sha256": "96cf652e07b0ab44395cac6e2145f081ff8eb8638d304b6891466df59e172a5b"
+    },
+    {
+      "path": "openrouter.mjs",
+      "sha256": "72885e9890d47f8836c4cd682fc1d5e056688d06b2558642f37198753e24016a"
+    },
+    {
+      "path": "package.json",
+      "sha256": "76961316ff725e4cbbd5f57f250083cfcece42a28453f18e841bdc5ca36e2b73"
+    },
+    {
+      "path": "projection.mjs",
+      "sha256": "3ad13d687c7989b1199738efa4370035ba059e3473dc721fc1e0051ac401d50d"
+    },
+    {
+      "path": "projection.test.mjs",
+      "sha256": "cb7a272b54011c25f0bf8de113ae7ff30fd4a3ba9b9ef6f143939a9d9304b093"
+    },
+    {
+      "path": "reconcile-budget.mjs",
+      "sha256": "82f01ab6fc75f22a3c092019fdd752f73c44b82a153e1ad32cd51ea5d9191a54"
+    },
+    {
+      "path": "report.mjs",
+      "sha256": "ef176fbf8f20a26e5a64b33bdec723a4cf3037d5551ea7ab323e4b1b217dc16f"
+    },
+    {
+      "path": "run.mjs",
+      "sha256": "498fb96e20d3b51a38c15c6566707cc9da88365bdd0dd1c98b0de79bf831c379"
+    }
+  ]
+}

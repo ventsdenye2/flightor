@@ -1,0 +1,39 @@
+{
+  "v3Count": 82,
+  "current-system": {
+    "n": 16,
+    "statuses": {
+      "responded": 5,
+      "partial": 11
+    },
+    "p50Ms": 30015,
+    "knownCost": 0.0006385172,
+    "unknownCalls": 0,
+    "withFindings": 8,
+    "totalFindings": 42,
+    "searchCount": 23,
+    "failedSearches": 11,
+    "synthesisSucceeded": 8,
+    "synthesisMedianMs": 9103,
+    "searchMedianMs": 25825,
+    "budgetAffected": [
+      "architecture-baseline-v3/sample-011"
+    ]
+  },
+  "direct-web": {
+    "n": 16,
+    "statuses": {
+      "responded": 14,
+      "timeout": 2
+    },
+    "p50Ms": 22720,
+    "knownCost": 0.18658981669999997,
+    "unknownCalls": 2,
+    "withFindings": 0,
+    "totalFindings": 0,
+    "searchCount": 0,
+    "failedSearches": 0,
+    "synthesisSucceeded": 0,
+    "budgetAffected": []
+  }
+}

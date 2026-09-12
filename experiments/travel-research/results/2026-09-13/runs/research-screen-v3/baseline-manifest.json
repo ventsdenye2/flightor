@@ -1,0 +1,1157 @@
+{
+  "head": "fb0a2dbf04ea11bff1bd1a7323b061d82ec055eb",
+  "branch": "main",
+  "backendStatus": "M backend/package.json\n M backend/src/agent/cloud/service.ts\n M backend/src/agent/goals/default-verifiers.test.ts\n M backend/src/agent/goals/route-generation-verifier.ts\n M backend/src/agent/goals/travel-guide-verifier.ts\n M backend/src/agent/goals/types.ts\n M backend/src/agent/runtime/registry.ts\n M backend/src/agent/runtime/runtime.test.ts\n M backend/src/agent/runtime/runtime.ts\n M backend/src/agent/tools/core-location-input.test.ts\n M backend/src/agent/tools/core.ts\n M backend/src/agent/tools/fare-confirmation.test.ts\n M backend/src/agent/tools/fare-confirmation.ts\n M backend/src/agent/tools/flexible-flights.ts\n M backend/src/agent/tools/flight-routing.ts\n M backend/src/agent/tools/research.ts\n M backend/src/agent/tools/resolved-locations.ts\n M backend/src/agent/tools/web-research.test.ts\n M backend/src/app.ts\n M backend/src/artifacts/presentation.test.ts\n M backend/src/artifacts/presentation.ts\n M backend/src/auth/service.ts\n M backend/src/auth/tokens.test.ts\n M backend/src/auth/tokens.ts\n M backend/src/config/env.test.ts\n M backend/src/config/env.ts\n M backend/src/fares/providers/serpapi.test.ts\n M backend/src/fares/providers/serpapi.ts\n M backend/src/fares/types.ts\n M backend/src/flight-routing/connection-search.test.ts\n M backend/src/flight-routing/connection-search.ts\n M backend/src/flight-routing/live-connections.test.ts\n M backend/src/flight-routing/live-connections.ts\n M backend/src/flight-routing/optimizer.ts\n M backend/src/flight-routing/planner.test.ts\n M backend/src/flight-routing/planner.ts\n M backend/src/flight-routing/types.ts\n M backend/src/identity/postgres.ts\n M backend/src/identity/repository.test.ts\n M backend/src/identity/repository.ts\n M backend/src/providers/openrouter/research.ts\n M backend/src/research-agent/production.test.ts\n M backend/src/research-agent/production.ts\n M backend/src/research-agent/types.ts\n M backend/src/route-plans/confirm.ts\n M backend/src/routes/agent-cloud.ts\n M backend/src/routes/auth.ts\n M backend/src/routes/flight-searches.ts\n M backend/src/search/serpapi.test.ts\n M backend/src/search/serpapi.ts\n M backend/src/travel-guides/artifact-builder.ts\n M backend/src/travel-guides/artifact.ts\n?? backend/src/agent/cloud/turns.test.ts\n?? backend/src/agent/cloud/turns.ts\n?? backend/src/agent/runtime/activity.ts\n?? backend/src/agent/runtime/cancellation.ts\n?? backend/src/agent/tools/authored-travel-guide.test.ts\n?? backend/src/agent/tools/authored-travel-guide.ts\n?? backend/src/auth/local.test.ts\n?? backend/src/auth/local.ts\n?? backend/src/fares/presentation.ts\n?? backend/src/fares/summary.ts\n?? backend/src/flight-routing/itinerary.ts\n?? backend/src/locations/selector.ts\n?? backend/src/routes/agent-turns.test.ts\n?? backend/src/travel-guides/authored.ts\n?? backend/src/travel-guides/validation.ts",
+  "files": [
+    {
+      "path": "backend/package-lock.json",
+      "sha256": "f5e98cfcff1ddd08a769ccb358dc6b6441a9748a310de46ee474993ae7be0728"
+    },
+    {
+      "path": "backend/package.json",
+      "sha256": "447ca7ae5985dd73bc8b06838ca9467eacee41ab7ced4fa4c3d2b4dd1a04b5f0"
+    },
+    {
+      "path": "backend/src/admin/auth.ts",
+      "sha256": "e54d26e072bb1500da89edd57aaf0c444257e7bcfa9cf1fcd7f2292b0958c80f"
+    },
+    {
+      "path": "backend/src/admin/bootstrap.ts",
+      "sha256": "98c2a8178afca799955edc06b2a794eef4fcfe385e302187f0c1afcedc093eba"
+    },
+    {
+      "path": "backend/src/agent/chat.test.ts",
+      "sha256": "37d1bca4148f7a50e7dd6b1c557ec40ff89aaacdb9fb2441980d308b5d5257a9"
+    },
+    {
+      "path": "backend/src/agent/chat.ts",
+      "sha256": "8ab51969d98eb3d98a9baedbd53a1c556c031a0bb402c0067ffaa4bc5f12e609"
+    },
+    {
+      "path": "backend/src/agent/cloud/route-engine.integration.test.ts",
+      "sha256": "3d44e1014a323e54ae5407c9aa03934d29900d15592c219f7119659d811dc4f1"
+    },
+    {
+      "path": "backend/src/agent/cloud/service.test.ts",
+      "sha256": "d41ebfbb827770727355b5e29874b660c54102c43cd7f420c6990defed41770a"
+    },
+    {
+      "path": "backend/src/agent/cloud/service.ts",
+      "sha256": "371523336347dbcc92340dfd5a58dbf24afa40244a273fdff1a5207a44c44f9d"
+    },
+    {
+      "path": "backend/src/agent/cloud/turns.test.ts",
+      "sha256": "68a64655ad8655ddef5a0576ae75a435e31b5857c30e462694ee69c6b00f4c8d"
+    },
+    {
+      "path": "backend/src/agent/cloud/turns.ts",
+      "sha256": "9a70024a9503e54a1dd623866fb1b51507c4247b8e340c72f62034e2b715fdc4"
+    },
+    {
+      "path": "backend/src/agent/goals/artifact-verification.ts",
+      "sha256": "6658bf8e93e73b6d92c2c7cdae557d11b93aef172da90b5dbe58f4543078d7a6"
+    },
+    {
+      "path": "backend/src/agent/goals/completion-repository.test.ts",
+      "sha256": "9d674ffc434141d2a54cbea626101a8b52c9b34c7912163165b2a4d442a023bd"
+    },
+    {
+      "path": "backend/src/agent/goals/completion.test.ts",
+      "sha256": "05df12470d94b844e847672438f80b1fa3c1e09761b813f8eff5f6b6c1acb94a"
+    },
+    {
+      "path": "backend/src/agent/goals/completion.ts",
+      "sha256": "20834b9ad4345a04c119b6d091b84354ec48cf0fa89dd7f0f9b6e69485511c8b"
+    },
+    {
+      "path": "backend/src/agent/goals/default-verifiers.test.ts",
+      "sha256": "e661c13dbf0ec4c210ee355ebc8ccaaba315187ebf2a55b26356bf036976146e"
+    },
+    {
+      "path": "backend/src/agent/goals/default-verifiers.ts",
+      "sha256": "adab28842f6556fed259e0c05baa62ad34f60a208fd1eed39b4710f6aef0a94c"
+    },
+    {
+      "path": "backend/src/agent/goals/flight-search-verifier.ts",
+      "sha256": "ad566b86145570ea5aba7a454db780e75e8a39575ba5366fe397d89b4fb70239"
+    },
+    {
+      "path": "backend/src/agent/goals/goals.test.ts",
+      "sha256": "5e2b4bf45eabb9a80f55ec8b378ceed083502800d944de8d7c0430db8c742492"
+    },
+    {
+      "path": "backend/src/agent/goals/index.ts",
+      "sha256": "5f6741ce392beb82a98a7328424826c5ae8730100ab646bb26626d667a3c0d19"
+    },
+    {
+      "path": "backend/src/agent/goals/postgres.integration.test.ts",
+      "sha256": "a3f24bc6c64a8ddb5c5e89faf122339ce05e5227a656a0015b40a6b88cab4d24"
+    },
+    {
+      "path": "backend/src/agent/goals/postgres.ts",
+      "sha256": "40ed10a8b3b50afdc7a37a8aa3588bd384f7f7081dad4c30971e48bf4394bdd3"
+    },
+    {
+      "path": "backend/src/agent/goals/repository.ts",
+      "sha256": "d368bbe3c916041fec5718520cbbc547a86b807cd67339d6675ff12c6d7dc482"
+    },
+    {
+      "path": "backend/src/agent/goals/route-generation-verifier.ts",
+      "sha256": "2b295b0d35d4a2bb33bfd7768ec757ee1a856a9e01fc675865471e46fd8bd8be"
+    },
+    {
+      "path": "backend/src/agent/goals/travel-guide-verifier.ts",
+      "sha256": "bab124fc1c7584cedb762d1932c7ef5dd4cc99595d14e1324f5d5d9a4bd5648e"
+    },
+    {
+      "path": "backend/src/agent/goals/types.ts",
+      "sha256": "549593c0fc3b1f359e9db3a90ed7c227c3bb73492589e4aa67a066cdf14f5c7c"
+    },
+    {
+      "path": "backend/src/agent/goals/verifier.ts",
+      "sha256": "3518690835a91c072d4ab88a1ab510cd27be089aafec0ac769af2b8070d72bb7"
+    },
+    {
+      "path": "backend/src/agent/goals/working-set.ts",
+      "sha256": "c77cd6b8a1ef3b34eedd8bc3ee372398b010c803476eef08c940cae6ecaa6e4a"
+    },
+    {
+      "path": "backend/src/agent/runtime/activity.ts",
+      "sha256": "33327477971b493fc7e1229a55d7df2cdbd252b07248da782d1389353061dcaa"
+    },
+    {
+      "path": "backend/src/agent/runtime/cancellation.ts",
+      "sha256": "3f223f610d9b8c3d4326a65ee8704a5d3d7dd22e1166cb851998f1037574c353"
+    },
+    {
+      "path": "backend/src/agent/runtime/index.ts",
+      "sha256": "a2680f223eeed723e9b14519428ba2d249e07183d308973969bda1592411e9e6"
+    },
+    {
+      "path": "backend/src/agent/runtime/model.ts",
+      "sha256": "f99810e5a4a7f4457b1e666435db04325ad66a86ed12dd8b065428faf824e2d2"
+    },
+    {
+      "path": "backend/src/agent/runtime/registry.ts",
+      "sha256": "3fb5c82166d2a975b458a978c6b6315bee0ed4abfd226e9ee0919f966eb0c707"
+    },
+    {
+      "path": "backend/src/agent/runtime/runtime.test.ts",
+      "sha256": "87b7081e2a46be6d331366cd577e543050cdb1186205fec81e4edc0a2ed67d4a"
+    },
+    {
+      "path": "backend/src/agent/runtime/runtime.ts",
+      "sha256": "ebc538ef79ec4e77edafab487bcbc5f39503cac9cff249f121d13ed779642012"
+    },
+    {
+      "path": "backend/src/agent/tools/artifact-reading.ts",
+      "sha256": "f2cfabeb2c135c8e8ad528f0ddd5a8fe5d5292c9a9a6b4dcbeea73a07b61751e"
+    },
+    {
+      "path": "backend/src/agent/tools/authored-travel-guide.test.ts",
+      "sha256": "27b04a1c2405554f4124af768e2c47b0a61337970bdf081e5824c31fcde0bb30"
+    },
+    {
+      "path": "backend/src/agent/tools/authored-travel-guide.ts",
+      "sha256": "cfaaed103bbb5e24cdbfb38722d43ca33b4eaf30380c765afa423f46b6b55c9b"
+    },
+    {
+      "path": "backend/src/agent/tools/core-location-input.test.ts",
+      "sha256": "6ea2bef2c18618516987cd99701137203b7a3370c970019954f310448d7ff08d"
+    },
+    {
+      "path": "backend/src/agent/tools/core.test.ts",
+      "sha256": "ff90401a62ed7b962ab35c2db2ae1578e8b042df8e851d7c8230193221cb8417"
+    },
+    {
+      "path": "backend/src/agent/tools/core.ts",
+      "sha256": "36cd7dca0250136ddc07e8b0243d66551596aa9dfff4f2e6447547faf946609b"
+    },
+    {
+      "path": "backend/src/agent/tools/destinations.test.ts",
+      "sha256": "4feda667d6eaff132cd73176f285e2dcc38c4281001a9f50ad97cd3f45b0b90c"
+    },
+    {
+      "path": "backend/src/agent/tools/destinations.ts",
+      "sha256": "300973512e95745a06656cfb1d25709af8f741b644610d576d02a3aab685b6e7"
+    },
+    {
+      "path": "backend/src/agent/tools/fare-confirmation.test.ts",
+      "sha256": "5de3d3a991cf41b49003b83d1bccb4a9cb8b74093311d88287a97326f644cff5"
+    },
+    {
+      "path": "backend/src/agent/tools/fare-confirmation.ts",
+      "sha256": "07a0662da0f225319b97ab57ab966a40c30eb08b709f83e4bdb0df635bf3e9fd"
+    },
+    {
+      "path": "backend/src/agent/tools/flexible-flights.test.ts",
+      "sha256": "1917c8c1bb00c09c1821f4ea7eca28e6ada4c98c24dc10b329ce9d80aed1fd54"
+    },
+    {
+      "path": "backend/src/agent/tools/flexible-flights.ts",
+      "sha256": "2aef5fe6cd4f7f15e4541b8c874c2edae3ab1d784aab4985c7d82c65665f15a6"
+    },
+    {
+      "path": "backend/src/agent/tools/flight-routing.test.ts",
+      "sha256": "8c15104a90922eacb1d077eddf229ed4f870479ef7ce282205131200fdad0026"
+    },
+    {
+      "path": "backend/src/agent/tools/flight-routing.ts",
+      "sha256": "5b5fa5bcc129290c9ae491c64531e92b7a317f3818565793490d80ecca2ac18f"
+    },
+    {
+      "path": "backend/src/agent/tools/goals.test.ts",
+      "sha256": "eedc65ba28625badf5420164852e7e4be05dc2255f37a3cb21f91fdfc4eb1627"
+    },
+    {
+      "path": "backend/src/agent/tools/goals.ts",
+      "sha256": "724a77c2516e282fee3af32515c3e0c0e3d7f5dc151ecfe0cf4c5666dfe25709"
+    },
+    {
+      "path": "backend/src/agent/tools/index.ts",
+      "sha256": "34f1246beb29df43e3d0890e0b7ee7142423101142b819101c4fd193c1fb64c5"
+    },
+    {
+      "path": "backend/src/agent/tools/research.ts",
+      "sha256": "e53327962ab34e215cc5c01a1c392c58e786c423da2f991e874d5aef991d9c37"
+    },
+    {
+      "path": "backend/src/agent/tools/resolved-locations.ts",
+      "sha256": "1944cecdbdf49c3149c37dd7d2c0f921f534a197d32191ff1d9f469368417d40"
+    },
+    {
+      "path": "backend/src/agent/tools/route-generation.test.ts",
+      "sha256": "7833bcce3203efc7573a50ff30f16c8ed426556234541f39460a2e5f4e5734c9"
+    },
+    {
+      "path": "backend/src/agent/tools/route-generation.ts",
+      "sha256": "920bc29bdd41f98050ed70e21b905ae98d88f2d342b7906304aa22156b5fd0e9"
+    },
+    {
+      "path": "backend/src/agent/tools/travel-guide.test.ts",
+      "sha256": "d744a4fdddb9900c7e8392c5f58046cd5bc35ae448685260020c7abd2ad1403d"
+    },
+    {
+      "path": "backend/src/agent/tools/travel-guide.ts",
+      "sha256": "bd063a29d7175bce46ff7b0e013a6e46c24fa56528091cd21df04b66f1ebff31"
+    },
+    {
+      "path": "backend/src/agent/tools/web-research.test.ts",
+      "sha256": "3094c14702b02f3bc56622c934efded4522332a0a675da910dbf7dcc60988280"
+    },
+    {
+      "path": "backend/src/agent/tools/web-research.ts",
+      "sha256": "2429761b6b66e13e1e096a7614dac9be6b2d2b36babf0ff996e3263c8f9b79ed"
+    },
+    {
+      "path": "backend/src/agent/tools/workspace-scope.ts",
+      "sha256": "3d1d9caf6c1417c6cc20d04020d6d49aa565f7d20717650f94c65fd1b3a9156f"
+    },
+    {
+      "path": "backend/src/app.test.ts",
+      "sha256": "8730823382c7d1e9d2f4941b6e0c0ff6017c8e19908850cc43bf9cea0efd31e8"
+    },
+    {
+      "path": "backend/src/app.ts",
+      "sha256": "de451f709cf5b2aa16abeb3ad4d3614e7040dfe75912e5e3411f888297eda82d"
+    },
+    {
+      "path": "backend/src/app/context.ts",
+      "sha256": "631b23dc8775b2b7d3972cd2bcf6f43c5e4616c1b1a0711b044f49d6a1d98d8e"
+    },
+    {
+      "path": "backend/src/artifacts/postgres.integration.test.ts",
+      "sha256": "de2de9071f23a52038f4280c631e0dc58d9ae875dcd2b4f2e9f65667f35c2001"
+    },
+    {
+      "path": "backend/src/artifacts/postgres.test.ts",
+      "sha256": "ea78092ceab4d38bf726572a2229880558c591e764690bc440ac5309500ceeb2"
+    },
+    {
+      "path": "backend/src/artifacts/postgres.ts",
+      "sha256": "1387956e226f57f3e1c05781a44eb92c7e9bbc0618b63048df944b05f775df71"
+    },
+    {
+      "path": "backend/src/artifacts/presentation.test.ts",
+      "sha256": "2f3915a9dbb64e2ccb5d321d65b14ba815a0f70eaf420c117ca0d5f7879c03e5"
+    },
+    {
+      "path": "backend/src/artifacts/presentation.ts",
+      "sha256": "01a7f68bfe8846a9c10e791d1780baaf1dbf8b503a69b93df145f307eab8359e"
+    },
+    {
+      "path": "backend/src/artifacts/repository.test.ts",
+      "sha256": "199e8a4033c599113c5802e081d5b92592691502fd06b1909dd2d181f5c2c59e"
+    },
+    {
+      "path": "backend/src/artifacts/repository.ts",
+      "sha256": "00bbd377cc747d50d29d556f169e2abd6096f7f558e8023cf60656857075cac1"
+    },
+    {
+      "path": "backend/src/artifacts/workspace.test.ts",
+      "sha256": "e56e4269ef9c978a9692fd7746e8a0c03a231e88d18a220b901994f40ae3051f"
+    },
+    {
+      "path": "backend/src/artifacts/workspace.ts",
+      "sha256": "8a95e4d2543cfe093f40d2b1c738c61195e28c00049a4d050c0e27e994e774f5"
+    },
+    {
+      "path": "backend/src/auth/local.test.ts",
+      "sha256": "b09830ceea9630434862fdf29e6bbe14f37fb7facdfa31b1e2060c69cf4ef4e4"
+    },
+    {
+      "path": "backend/src/auth/local.ts",
+      "sha256": "a616eebbf82a14bb6f564584f189211f4f5a85762341a8688c097abba9c59348"
+    },
+    {
+      "path": "backend/src/auth/service.ts",
+      "sha256": "28eb5e5d998255aec6ea0c17ddf25e90116ad6c9199d6f3ea74e2965f946b5e5"
+    },
+    {
+      "path": "backend/src/auth/tokens.test.ts",
+      "sha256": "ef2be0f0b3c3570430da2f5fe8fa82564c12cdde4371c0d9aacc57f0c69a36ac"
+    },
+    {
+      "path": "backend/src/auth/tokens.ts",
+      "sha256": "3d4164c79113b9a71bb6e3431d30a77b7ea1ccb37b5f7cc91cb90e9f13237ad7"
+    },
+    {
+      "path": "backend/src/auth/wechat.ts",
+      "sha256": "e3549d7307efad66740a61bbbf318a86fe55edc10f6f6437dec78f078dd7b905"
+    },
+    {
+      "path": "backend/src/aviation/airport-time.test.ts",
+      "sha256": "3096dd45289d96583699f4f459c8db9ddfcaf963dad19c7d4f3312c5fa3d44c6"
+    },
+    {
+      "path": "backend/src/aviation/airport-time.ts",
+      "sha256": "c18116d3b84d4bcb5504a493bff593ba229e1f183907a69e83318ce6bb32ef23"
+    },
+    {
+      "path": "backend/src/aviation/location-resolver.ts",
+      "sha256": "4acc74198db49a499fb42ae27e6cdca8b8ea6436c056d09bbdfcfd5e8abf9c4d"
+    },
+    {
+      "path": "backend/src/aviation/providers/aerodatabox.test.ts",
+      "sha256": "e8c395e731d1f44fe9b5d8a75fe1bbf8f6de1136d87c544b5eb75358ced2472b"
+    },
+    {
+      "path": "backend/src/aviation/providers/aerodatabox.ts",
+      "sha256": "c6ad52929e211e6b40c517bc9782e1c70c9f6ff196ec44a817de5ff169257abe"
+    },
+    {
+      "path": "backend/src/aviation/providers/composite.test.ts",
+      "sha256": "1f648e7c359580a4d805ab6b392a579e1a4d6a64261bf37069460cecb0616287"
+    },
+    {
+      "path": "backend/src/aviation/providers/composite.ts",
+      "sha256": "789ac9ece0554d9594c1edf23b35ecf3015d383f992283bc6decbe0aa41861e3"
+    },
+    {
+      "path": "backend/src/aviation/providers/mock.test.ts",
+      "sha256": "2a8aa576dd65f138d7f2e2678b235234bb9282779e8e2aa7d36a707fbbc68574"
+    },
+    {
+      "path": "backend/src/aviation/providers/mock.ts",
+      "sha256": "c696ccd2bbe78399ec13d0fbf1eaf72dd1d7189764c66e8d09c12936cb518a9a"
+    },
+    {
+      "path": "backend/src/aviation/providers/oag.ts",
+      "sha256": "93f1a10f7e635b06ab622efedbcb6ef375b2183da042f4aa24b920e33a18915b"
+    },
+    {
+      "path": "backend/src/aviation/providers/provider.ts",
+      "sha256": "4f9e1b6c5ee33a57f5ba4c7c18ad42c62ef7556dfdd5c6d58d6fcdc8133ac0dd"
+    },
+    {
+      "path": "backend/src/aviation/types.ts",
+      "sha256": "bddc55b478debd6966a519c58c44470025f2423a4ec195ff26197b721392d35e"
+    },
+    {
+      "path": "backend/src/config/env.test.ts",
+      "sha256": "b1bf2aab18c829b7e369a6d6e08bd170da26da235d2e39666d6928dc5c6c5e4e"
+    },
+    {
+      "path": "backend/src/config/env.ts",
+      "sha256": "f869ce47c37a23134b49dcd436894262b4c8dd38f7b43a9b2b1c80a4785ae062"
+    },
+    {
+      "path": "backend/src/conversation-agent/agent-converse.test.ts",
+      "sha256": "6e3f7c6e117779879d387630673f1c74a32871098c02a7a5da247833d1b8a50e"
+    },
+    {
+      "path": "backend/src/conversation-agent/budget.ts",
+      "sha256": "7a9e4b68aa6f4e3c13d89dd537e5e25eb19dd049165f6dc1a6bdd4a71b5b085b"
+    },
+    {
+      "path": "backend/src/conversation-agent/catalog-adapter.ts",
+      "sha256": "86e55986d5a0bf8c946d389ea7cf432e55e5892e164335156eafe556cf5227f1"
+    },
+    {
+      "path": "backend/src/conversation-agent/index.ts",
+      "sha256": "4a1f2596d184e4bd2cc6f9091fb1e21429b72e6b2eca5141d1e877f2bc07338e"
+    },
+    {
+      "path": "backend/src/conversation-agent/llm.ts",
+      "sha256": "07bfead1b8516d2f4a8518d2b966c3f7c1272dd8ba74a6c3098dde8393b22f45"
+    },
+    {
+      "path": "backend/src/conversation-agent/planner-adapter.ts",
+      "sha256": "4a770140a782e3f1341479c9f5684418314e0d25ef21ff105999b209aa754d94"
+    },
+    {
+      "path": "backend/src/conversation-agent/rules.ts",
+      "sha256": "71f3d7842831465dfe1ee4f5476e070f4bef7ea44fffd4d277af7c561dc5b534"
+    },
+    {
+      "path": "backend/src/conversation-agent/schema.ts",
+      "sha256": "b415361d9ec56825dd5bc37792dd3040a6b9415f1ded8fd00cc634fb1534191f"
+    },
+    {
+      "path": "backend/src/conversation-agent/service.test.ts",
+      "sha256": "005e89c9b7f6bce489f1bbc867db17ebf2f0e157ee0a901c383d42f5935645bb"
+    },
+    {
+      "path": "backend/src/conversation-agent/service.ts",
+      "sha256": "17d5783918892b6ed94f427895b6694db20ffbc4765d87ada17346982d9b571d"
+    },
+    {
+      "path": "backend/src/conversation-agent/types.ts",
+      "sha256": "3454ec33b160c22a908e176317760d1ef6d757bd0773c1caae6b95ed0fa23c22"
+    },
+    {
+      "path": "backend/src/conversations/postgres.test.ts",
+      "sha256": "8206a862f60045932539081cb20dd099c46cf27dfae8a96cc732de7c08f413b0"
+    },
+    {
+      "path": "backend/src/conversations/postgres.ts",
+      "sha256": "13004b146e66b3a8aefdc72c3dbac83d2da7be35a608ee436eea6aa1910a84a7"
+    },
+    {
+      "path": "backend/src/conversations/repository.ts",
+      "sha256": "349675b37b59050dec52a44b26c854f8018cee91a2a8c4e12246cf750b1ba342"
+    },
+    {
+      "path": "backend/src/db/cloud-state.integration.test.ts",
+      "sha256": "8fe984b4cffc9ae62654e54568a19e056976de62104d9162a7c2b4250d345235"
+    },
+    {
+      "path": "backend/src/db/index.ts",
+      "sha256": "de91a832d59c053bf30c0e88dfe0c73c594ec090ae45cc07ebb6c3a7afcc66a4"
+    },
+    {
+      "path": "backend/src/db/migrate.ts",
+      "sha256": "8262e487afeae040b439c509952ab58fbcb164b94d7f717e601b50cf2c1bfa70"
+    },
+    {
+      "path": "backend/src/db/migrations/001_initial.ts",
+      "sha256": "21b69ad2365b8bed90466e3673e94c9316eb661fb9dfdd80896b33c5aeabfadb"
+    },
+    {
+      "path": "backend/src/db/migrations/002_seed_countries.ts",
+      "sha256": "25642ce7173660a8945794883b75befbadd8b01c2f0aa542917971e3420f3ae9"
+    },
+    {
+      "path": "backend/src/db/migrations/003_unknown_country.ts",
+      "sha256": "906a33e748e6d1f9dbf3e86ec15d1a5445b7d6b57cc31786dabfe41bf4ae0d5e"
+    },
+    {
+      "path": "backend/src/db/migrations/004_seed_core_airports.ts",
+      "sha256": "fb1e26e372a5309626b1c889005946a8ef2a9020d6ab74f75c7882af295664d3"
+    },
+    {
+      "path": "backend/src/db/migrations/005_seed_mvp_airports.ts",
+      "sha256": "c300b8c1ab50df2db76c1cf9de0fc2275a986323265d139c0233561e163da40b"
+    },
+    {
+      "path": "backend/src/db/migrations/006_cloud_state.ts",
+      "sha256": "88594a889950379a0d224f00ca40a47ee2158775d09987c3956a461ed377115f"
+    },
+    {
+      "path": "backend/src/db/migrations/007_route_generation_runs.ts",
+      "sha256": "12e71396e217767f5a572bef9629dcdb778f39ff0dda35020bea8543a0185741"
+    },
+    {
+      "path": "backend/src/db/migrations/008_trip_workspace.ts",
+      "sha256": "fcbbb8b121f93426effc66329761cd5d7621dc5c09b138dd422530e8b19e227e"
+    },
+    {
+      "path": "backend/src/db/migrations/009_discovery.ts",
+      "sha256": "0ada09fd434bde46c6d95632cc6410a41549d861f1170657286b2aeb661b5402"
+    },
+    {
+      "path": "backend/src/db/migrations/010_planning_goals.ts",
+      "sha256": "19e58950f12060a514eeeaf19e27a4f844c172412c44ce27f46466b06fac034c"
+    },
+    {
+      "path": "backend/src/db/migrations/011_route_generation_goal_lineage.ts",
+      "sha256": "b5992f9118ef193333de2360ae62c21fc62df7e6ab4306ab001bec40074e381a"
+    },
+    {
+      "path": "backend/src/db/seed-data/mvp-airports.ts",
+      "sha256": "5062f94a84c4245134e82b223c30b47584db5f9ae8d968b5b220814638923811"
+    },
+    {
+      "path": "backend/src/db/types.ts",
+      "sha256": "d8119249799f2c9bf53c1ff88fb472231c1c9a8ebacc7f00fad26d768aa7e144"
+    },
+    {
+      "path": "backend/src/destinations/catalog.test.ts",
+      "sha256": "83d4fd294236c923e4a153c76fc70d97949af27812c604eac8e03cc84b6b33c8"
+    },
+    {
+      "path": "backend/src/destinations/catalog.ts",
+      "sha256": "047150c4c96fb7a99c29b077a2dc9efbed90ebd55584ab286ec29990317c7ae9"
+    },
+    {
+      "path": "backend/src/destinations/discovery.test.ts",
+      "sha256": "50c3c7b06b4a123cd530eca28d7df591a88e9dbc8fe9ab4abe8735c0d2aaedce"
+    },
+    {
+      "path": "backend/src/destinations/discovery.ts",
+      "sha256": "2a1824eba91abead7613014f8c3e52ac1126bd9848e28a00d05b6941eac0ae02"
+    },
+    {
+      "path": "backend/src/destinations/index.ts",
+      "sha256": "df3d3341532a6785ed89eebc6cf2d60215a648ed30fb56b4a97f7327cccb7745"
+    },
+    {
+      "path": "backend/src/destinations/trip-input.ts",
+      "sha256": "43d6c63913c69116848fb19090f9ba57adc35b9f3b394c57c94956ee60e2905d"
+    },
+    {
+      "path": "backend/src/destinations/types.ts",
+      "sha256": "9b688a2bdca35af6a83efcda438de45e16428b30d942907472639226efe33e3c"
+    },
+    {
+      "path": "backend/src/discovery/explore.ts",
+      "sha256": "621c84142b06ee2e463e1f9565b5c9474b9e888837f4d8c513c47b783c4aa21c"
+    },
+    {
+      "path": "backend/src/discovery/postgres.integration.test.ts",
+      "sha256": "5322b3890a95cac6dc11e073e347ec5a2258dbeee068d23f2c019420a07077ae"
+    },
+    {
+      "path": "backend/src/discovery/postgres.ts",
+      "sha256": "89e4d38817c10e44b646bdb4f484f106ce54dd7c66e5890d97f0d52ccc8a45e6"
+    },
+    {
+      "path": "backend/src/discovery/service.ts",
+      "sha256": "b74c893f1f54699325e53808b623f0fa621819c6def0af4cad412ac126a19a90"
+    },
+    {
+      "path": "backend/src/discovery/types.ts",
+      "sha256": "64362c783551bae1b9569c69720b68c1db99079a266b2b5b102cb501c39a2e0a"
+    },
+    {
+      "path": "backend/src/fares/airport-resolver.test.ts",
+      "sha256": "ed3d4fd54bd89846a432bb63af8b8325c6b71c83b38a862aa69de1c528e710c1"
+    },
+    {
+      "path": "backend/src/fares/airport-resolver.ts",
+      "sha256": "8428dc3c9448cca5ead7ad20f7595269b8b4d4252a71165b12ec739b874c754f"
+    },
+    {
+      "path": "backend/src/fares/idempotency.ts",
+      "sha256": "04b6e6badce430eabe458b8535127c08919a4f5260f1929361748d30f33f60e9"
+    },
+    {
+      "path": "backend/src/fares/presentation.ts",
+      "sha256": "d751c9758651f48391a0fb58340f46812101327a05d56ab38fb0b0ff74ec92f0"
+    },
+    {
+      "path": "backend/src/fares/providers/mock.ts",
+      "sha256": "ca4c56759fcb61ad8f5bef80a4b290859dba649713330cc93e69488bc44ac735"
+    },
+    {
+      "path": "backend/src/fares/providers/provider.ts",
+      "sha256": "2de77d6762b8c95c6b7f2c43d9f7d633d1ca2cbcf362baec62c4434c1043ce43"
+    },
+    {
+      "path": "backend/src/fares/providers/serpapi.test.ts",
+      "sha256": "47f9307be28efc2da5e8b9bea9a69fff0e72206493163139deae64357daf903e"
+    },
+    {
+      "path": "backend/src/fares/providers/serpapi.ts",
+      "sha256": "90dcb7cbd0b7ffe53212a70c98d5bbccf468f1ddd9b676b6371c6c94f916973c"
+    },
+    {
+      "path": "backend/src/fares/search-service.test.ts",
+      "sha256": "e63730f0048c87124dc65e633c9cbc95f81e5f528012a470045c8479e01b7f50"
+    },
+    {
+      "path": "backend/src/fares/search-service.ts",
+      "sha256": "91b3cbaf3c325ae60b979f2b9cf12287ad4849642a3dc7e6efb5f07eeab87bba"
+    },
+    {
+      "path": "backend/src/fares/summary.ts",
+      "sha256": "da80ae0b8897b3025533fb67d52e9e127c54add6a736b3c2f900d744106cba3c"
+    },
+    {
+      "path": "backend/src/fares/types.ts",
+      "sha256": "0d727d5067f70a11862c83dc3ec1e88d626474a61504e95939529467cd102587"
+    },
+    {
+      "path": "backend/src/flight-routing/connection-search.test.ts",
+      "sha256": "a5faea1957680bc5251083c5a3c465a21ad51bffe54be7ec88d420e3fb7053fe"
+    },
+    {
+      "path": "backend/src/flight-routing/connection-search.ts",
+      "sha256": "20b6179e03d1a5bd9fa4fc30cb3936da1985ad96a4939ea3d34059014f279cb1"
+    },
+    {
+      "path": "backend/src/flight-routing/contract.test.ts",
+      "sha256": "7d716c843165217d02b4848fb8a80725b4dc35f1d7b65ef630e29231216c03b8"
+    },
+    {
+      "path": "backend/src/flight-routing/itinerary.ts",
+      "sha256": "a63689887323fc8bbeec2b8ba46a0cbe3783a71b36d29829dce01109e9eec4da"
+    },
+    {
+      "path": "backend/src/flight-routing/live-connections.test.ts",
+      "sha256": "01c9ed95bdca3e816b1f5a862ef7440abfb6210657c5daa32e08f4d6e3d699f3"
+    },
+    {
+      "path": "backend/src/flight-routing/live-connections.ts",
+      "sha256": "bfab0070e8f1ec2bd87eb573e9fd1c52690e7bc84d20aab7654456f6b4d59793"
+    },
+    {
+      "path": "backend/src/flight-routing/mock.ts",
+      "sha256": "ebb59d42e862c41f5000046145dd237fa0e016c7a1c892a3eee6d03f214d05e6"
+    },
+    {
+      "path": "backend/src/flight-routing/optimizer.test.ts",
+      "sha256": "430fa915f6cda6a46df9077641c587b3476ba511b4f9ccb2bb6c3e6b3cd05faf"
+    },
+    {
+      "path": "backend/src/flight-routing/optimizer.ts",
+      "sha256": "1fcf4af449a268e4c70c86045f0be86bb8e58c3267fdefb449dca3aaa2ca5303"
+    },
+    {
+      "path": "backend/src/flight-routing/planner.test.ts",
+      "sha256": "d66e531e406274a6a6f5884597ae1fd92241113f0407d5e475f5797b0b790be2"
+    },
+    {
+      "path": "backend/src/flight-routing/planner.ts",
+      "sha256": "fa420c3a332650089b311677c86f9f8bf7a5b3d75e636954f093b66a6deb4b61"
+    },
+    {
+      "path": "backend/src/flight-routing/services.ts",
+      "sha256": "b713b6a230d0edfad67ab248785b81e2f74d3f759607eb0f3a80cbd39ba85be9"
+    },
+    {
+      "path": "backend/src/flight-routing/types.ts",
+      "sha256": "6c083de9fb8348fa667d8ab16fadc705df0306b1cbf1ebbc04a64cdaaa7df0e2"
+    },
+    {
+      "path": "backend/src/flight-routing/unavailable.ts",
+      "sha256": "ed0e006576f8351f9981d8acf0666c080b7f649d56ceeae0b17bff57ed1171a9"
+    },
+    {
+      "path": "backend/src/identity/postgres.ts",
+      "sha256": "5923676399757d8c1d9085bee390e78d87785838e2c2312c29f216a215750ca0"
+    },
+    {
+      "path": "backend/src/identity/repository.test.ts",
+      "sha256": "b90fed5d92095585fd783047d5c00e6709d8eafbc0ead308a6fa6b2efc7e40f6"
+    },
+    {
+      "path": "backend/src/identity/repository.ts",
+      "sha256": "2e088ba1f8587d2e7b5a9992af670b6740d524dd4a45d705f0896cb45cad4b2d"
+    },
+    {
+      "path": "backend/src/jobs/handlers.test.ts",
+      "sha256": "2c9327496237fe662c6105db069d7050c91f516e1dd867cb4ee2cb05b64a738f"
+    },
+    {
+      "path": "backend/src/jobs/handlers.ts",
+      "sha256": "06fa9e52f40fe6c36bfaa5f59c6fe59df67f346c056a960f8e154d3f4a3718e3"
+    },
+    {
+      "path": "backend/src/jobs/repository.ts",
+      "sha256": "eb918eab7c3c1930c9875a5eff5a0182bcb7290f4162230548b65d195b55b379"
+    },
+    {
+      "path": "backend/src/lib/crypto.ts",
+      "sha256": "5adb8ec7b235d6cce302d944e801f5797ab567d18e318155451f8df8a14f3697"
+    },
+    {
+      "path": "backend/src/lib/errors.ts",
+      "sha256": "726cb90723f31b204231c3feb07d8953808e756dbada0fc0aedb28fb056a8b70"
+    },
+    {
+      "path": "backend/src/lib/http.test.ts",
+      "sha256": "6f3de1498f61c3e6f647bef6ad2ceab133af0392a0650be411d258dca0cf25f7"
+    },
+    {
+      "path": "backend/src/lib/http.ts",
+      "sha256": "a4a72c94c863909b5bba8ad787c6f099d0143d24df55593e45a2a41bdfcd2e99"
+    },
+    {
+      "path": "backend/src/locations/curated-directory.ts",
+      "sha256": "97c6d8a9ab3788a6baabf2c9130daf651ea42f107469b4ad4db39540b23f9cac"
+    },
+    {
+      "path": "backend/src/locations/identity.test.ts",
+      "sha256": "4d588d96d7c2298ba75c1a72653c6efad9973d7f55893930fecf70abdc554846"
+    },
+    {
+      "path": "backend/src/locations/identity.ts",
+      "sha256": "0a2cef2314e24bd5d66177590aab529b7cf41bd2af1416784105012fdccf4e70"
+    },
+    {
+      "path": "backend/src/locations/selector.ts",
+      "sha256": "ac4eded566b0a5306c72c8dadd1bce1853f571e707eca36edbef870a1ade6466"
+    },
+    {
+      "path": "backend/src/memory/postgres.test.ts",
+      "sha256": "101cf3c1c1e3011703885d43a7881691c9a18e7973c0a7e415cac3fbae774dec"
+    },
+    {
+      "path": "backend/src/memory/postgres.ts",
+      "sha256": "c4cd58a77b032496966ad2dff7880a9879cb1265386cfc544e0c7250c8a6e431"
+    },
+    {
+      "path": "backend/src/memory/repository.test.ts",
+      "sha256": "068487de5772039b8e7d0768d5651086fdc599a6848b5c9af77cbb1ee23c82ef"
+    },
+    {
+      "path": "backend/src/memory/repository.ts",
+      "sha256": "01a656cac87e4b2b8dc312eca6179fadb0f841e912b90979f8c6b34c62cb9612"
+    },
+    {
+      "path": "backend/src/providers/index.ts",
+      "sha256": "a83c0dddd9fc4530a43ae5956c764354ad708b02def7ea89134058c2395b7a81"
+    },
+    {
+      "path": "backend/src/providers/oag/client.test.ts",
+      "sha256": "0cda27fc0a983c1256ed2d5be7614876bb2e42b8c47fd188b74fbcc8d73bc28c"
+    },
+    {
+      "path": "backend/src/providers/oag/client.ts",
+      "sha256": "391e8202c3a5ed6d2b6f8d65d0d78cef41a9c4327c2ff6e5fb33e46e1c55cd2d"
+    },
+    {
+      "path": "backend/src/providers/oag/normalizers.test.ts",
+      "sha256": "be9d385c12eb6f8f16f0d2cbb9f37341eadae07af5580148827bda7c708611ee"
+    },
+    {
+      "path": "backend/src/providers/oag/normalizers.ts",
+      "sha256": "8723e9c471890bc73e8d47242f5f894e29333fc5a0df0f89aaaa71e55c43a205"
+    },
+    {
+      "path": "backend/src/providers/openrouter/client.test.ts",
+      "sha256": "fcacb275c8ad5dedd1ca6a0377ea790bab3207d9e1a1dc8518b4da09c6b2c657"
+    },
+    {
+      "path": "backend/src/providers/openrouter/client.ts",
+      "sha256": "8d4288560a778eb4e76eba70b2a8b93d493863f4a512ac3bf2dd86b0fb9dd9c7"
+    },
+    {
+      "path": "backend/src/providers/openrouter/research-query-planner.test.ts",
+      "sha256": "8a426d0c3d170920e723b988aab431f4ae9e02ed5060ed4eb72170498ca5f795"
+    },
+    {
+      "path": "backend/src/providers/openrouter/research-query-planner.ts",
+      "sha256": "6685dbd5b3af2d7cbb701119cd7cf16506bccc185520c1362555b8fdf6b14120"
+    },
+    {
+      "path": "backend/src/providers/openrouter/research.test.ts",
+      "sha256": "bea562baf0ada2e029f17e8e5a884a852684282b607587538d87c2158cdb1a6a"
+    },
+    {
+      "path": "backend/src/providers/openrouter/research.ts",
+      "sha256": "cd66ea13c56a873b46ae82f5940814b7c40ddc5d3c1ea09f0be8c5d58c47a867"
+    },
+    {
+      "path": "backend/src/providers/serpapi/client.test.ts",
+      "sha256": "69ccfb06566c645f0a499d85073cd0a17a60c95d67c3b44e8e5d2a9d76fbc2b9"
+    },
+    {
+      "path": "backend/src/providers/serpapi/client.ts",
+      "sha256": "7c250033dfd7e4e83c8eb4f7d37b9df7c47a86b001b1c36e2e14cb5b43b8c524"
+    },
+    {
+      "path": "backend/src/research-agent/curated-query-policy.ts",
+      "sha256": "11fd00064cc55f73d758f2c7a7ecbee9b8f16a8a40e3c807616b21e16ea04f98"
+    },
+    {
+      "path": "backend/src/research-agent/mock.test.ts",
+      "sha256": "ba33b63611bc1dd344c0e03e41d9fe208c722077d48fc8c390ae5944ec73c3fe"
+    },
+    {
+      "path": "backend/src/research-agent/mock.ts",
+      "sha256": "caaed1eb3bce87fdcd84ee1a624d6b6e6899d9521cafe2ee5b74564de0c90def"
+    },
+    {
+      "path": "backend/src/research-agent/production-query-planning.test.ts",
+      "sha256": "0976a119fc3e20d0948e5055cb96fc73f2188eee8f8d51f11713116650d5d85c"
+    },
+    {
+      "path": "backend/src/research-agent/production.test.ts",
+      "sha256": "ca67ed768e92fe582cc6e0b31c88d877b16735d1fe131b7ec1f6d0fa8c3b006a"
+    },
+    {
+      "path": "backend/src/research-agent/production.ts",
+      "sha256": "8cb8f812423bd3e74ca8c01d799248189eb0226d30683057a3b7340735866b70"
+    },
+    {
+      "path": "backend/src/research-agent/providers/serpapi.test.ts",
+      "sha256": "9ec19a243c0d6a96bd1988544bf97a466fb239d9b264ac9277cfb48ea3474ad6"
+    },
+    {
+      "path": "backend/src/research-agent/providers/serpapi.ts",
+      "sha256": "27fe74a1cad05e071ae14b7d730e29ae8a5359cd36597387e7d2fb2c74007135"
+    },
+    {
+      "path": "backend/src/research-agent/query-planner.test.ts",
+      "sha256": "282ed5ceb7637eef136036aa9c924ac33d842c259c761289fc9a02c00980aa95"
+    },
+    {
+      "path": "backend/src/research-agent/query-planner.ts",
+      "sha256": "e91fe75a848d744f71caa5931634aadf9ec5f96ec74e4ad9949420696fd3a9e8"
+    },
+    {
+      "path": "backend/src/research-agent/query-policy.ts",
+      "sha256": "4dbfc0fc6bf95dc29ca839fa46eeda0a6a0bc0a9e9ed5323f9f6e9ae6eea48b8"
+    },
+    {
+      "path": "backend/src/research-agent/search-provider.ts",
+      "sha256": "77d686025c7750777783e3dfa1fcbdf1064d874ce2bdbfc27041616a841da0a2"
+    },
+    {
+      "path": "backend/src/research-agent/types.ts",
+      "sha256": "d411b874f1e1efb4e2414da7bf0d209344cca591d86ff3850435d180244b8b42"
+    },
+    {
+      "path": "backend/src/research-agent/unavailable.test.ts",
+      "sha256": "d17356c6ada7209bf696dd1ef70dc55859dd77ff8bd3597d5cb6aa56de5f5d33"
+    },
+    {
+      "path": "backend/src/research-agent/unavailable.ts",
+      "sha256": "a4bcea0cbc2889c150656164a3b5dcf66e5a4848ae2b6df2e5e056b90a7d642b"
+    },
+    {
+      "path": "backend/src/research-agent/verification.test.ts",
+      "sha256": "10690d93fc6a6f1672eeec4f304893537a675c73a057243ad439fe64c9ef7850"
+    },
+    {
+      "path": "backend/src/research-agent/verification.ts",
+      "sha256": "1cd18d5b89cb9b9be939be22b7d73c6991c4945f90c673c7c387e29e6e11205a"
+    },
+    {
+      "path": "backend/src/research-agent/workspace.ts",
+      "sha256": "1a441ecc17da34269a8175e9f7ff5c8f4fc1c22621eca0033da6bc0043f913c6"
+    },
+    {
+      "path": "backend/src/route-generation/composition.ts",
+      "sha256": "2a01a6d76f7a50d227d33e2b93dde23b900cb4f6b098f71dae6de4cab9ecd677"
+    },
+    {
+      "path": "backend/src/route-generation/contracts.ts",
+      "sha256": "6cff74a82133335be66f50da7f5ecd094df5808d043ad2e8e3aaa36bd739a7c0"
+    },
+    {
+      "path": "backend/src/route-generation/index.ts",
+      "sha256": "f97e555b5676d48491830034edccc547ab09a44bc07b7dcaeb452e1e943ee385"
+    },
+    {
+      "path": "backend/src/route-generation/postgres.integration.test.ts",
+      "sha256": "62a62489486c89bcd266f8c31165b1b31b769ed256e02110537aa3f852a96e8a"
+    },
+    {
+      "path": "backend/src/route-generation/repository.test.ts",
+      "sha256": "60b2f3c4e5b599c65f21f5bce52c864aaf67c14319fac333b2173f4a9ab8e064"
+    },
+    {
+      "path": "backend/src/route-generation/repository.ts",
+      "sha256": "317ca413bed752566c1dfff0023965b6130733b634a45566662d812e5904f579"
+    },
+    {
+      "path": "backend/src/route-generation/service.test.ts",
+      "sha256": "f6f8055095d6aff53eb7e6c75ad923d510241b94f660ba2d6486b790f1755c88"
+    },
+    {
+      "path": "backend/src/route-generation/service.ts",
+      "sha256": "d8bc89ac549f2999957c9402feda8b57c8f09c76091776d0435895f8145f6db1"
+    },
+    {
+      "path": "backend/src/route-plans/confirm.test.ts",
+      "sha256": "1b7a69437acb9cbaeebd4c74f29eab43f0db0126c0863b97906afa73c98dcb8d"
+    },
+    {
+      "path": "backend/src/route-plans/confirm.ts",
+      "sha256": "faea30189fd09d282a775b1c6dda34c55dac954bf106e5b70223f9ebd2e14f59"
+    },
+    {
+      "path": "backend/src/route-plans/engine.test.ts",
+      "sha256": "5d059e1f83b8e08885697fd326af3dfeb6e0ee593d09017eed35f35b375a905a"
+    },
+    {
+      "path": "backend/src/route-plans/engine.ts",
+      "sha256": "e9b0ac4c51e83a236c210c9532d35b825216753f4631fe51158ee6353efd1a1a"
+    },
+    {
+      "path": "backend/src/route-plans/index.ts",
+      "sha256": "d0a9baab6be1a3d87163a5dee91048080785c3554db1e60c3c59bf3d65ea81a6"
+    },
+    {
+      "path": "backend/src/route-plans/journey.test.ts",
+      "sha256": "6f8a445386d44a6c0a05e0be1f290f0316c66b969eeea9110b28a4e6099062b5"
+    },
+    {
+      "path": "backend/src/route-plans/journey.ts",
+      "sha256": "f76e8e4584724bde189349cb22893b2ae4f64032411d34169712acb5ea3e6638"
+    },
+    {
+      "path": "backend/src/route-plans/llm.test.ts",
+      "sha256": "ff72b7aba3d8bfd4707f5ab52e8cf47196864f295881b0b4fa99825d894386e5"
+    },
+    {
+      "path": "backend/src/route-plans/llm.ts",
+      "sha256": "135b48f813a976e98d13244b93363f24de6878e6d08b5525cd6db89706861f95"
+    },
+    {
+      "path": "backend/src/route-plans/planner.ts",
+      "sha256": "6cf8409d025ae5239310dec755617afa3231bc5412de5529eea7ac977af98ce1"
+    },
+    {
+      "path": "backend/src/route-plans/schema.test.ts",
+      "sha256": "b3811433f239ae13a13cca619d4438fe2650b7b208378d9e3e517f83d0fd8be4"
+    },
+    {
+      "path": "backend/src/route-plans/schema.ts",
+      "sha256": "3ec5c53e7a4e1f5e263b276a7a33db39bd8f7fa796fcd5294cf0e58f358fdec5"
+    },
+    {
+      "path": "backend/src/routes/admin-sync.ts",
+      "sha256": "04f151037aed8abea724926d2350a3d388067bbf93e44b57dc2d93c959d8ae8e"
+    },
+    {
+      "path": "backend/src/routes/agent-cloud.test.ts",
+      "sha256": "bd4b5c713286a550ae9a3cb8b5d00227566e646834d07e4a7b3b8136376051b1"
+    },
+    {
+      "path": "backend/src/routes/agent-cloud.ts",
+      "sha256": "891d0cbb14738bf0a3f1cd92ce5739ae5a53dd58404f68a88db628cff62dcf23"
+    },
+    {
+      "path": "backend/src/routes/agent-converse.ts",
+      "sha256": "08638758e16eac1ca1a6080c99ca0389e74f98e46acf4fd95896c3cc25bba258"
+    },
+    {
+      "path": "backend/src/routes/agent-turns.test.ts",
+      "sha256": "0caab3e5b0d0803eb7e60e594819d46e6744c4e0690b4175ef3d18844fb1cf72"
+    },
+    {
+      "path": "backend/src/routes/agent.ts",
+      "sha256": "5f9336cd79cb9dde3475016ca7ecd40d158c98861826bf7bc7f4de7eb413e5c5"
+    },
+    {
+      "path": "backend/src/routes/auth.ts",
+      "sha256": "49f36753ca8fae6b2fc7ceda4b610980b51a4a6fc4a9b5bfe5884dd44fcb5fe3"
+    },
+    {
+      "path": "backend/src/routes/cloud-state.test.ts",
+      "sha256": "cbe9d30b3627f99df3a566c6c3dca0458dd4d562069cd01f3648b9eeff082919"
+    },
+    {
+      "path": "backend/src/routes/cloud-state.ts",
+      "sha256": "d9dc44fa2e666e02f08aa659aa1dbf361a91df0462a49ee6bc6c84ac0a41c454"
+    },
+    {
+      "path": "backend/src/routes/editorial.ts",
+      "sha256": "a48c27d2112b28e95e7d31523192e30003c966f635c8589ecac09b1e1f619894"
+    },
+    {
+      "path": "backend/src/routes/explore.ts",
+      "sha256": "76d70bc87570216fa99314e90f0649037f51f6ac99d76db48ccef7c403af34de"
+    },
+    {
+      "path": "backend/src/routes/flight-searches.test.ts",
+      "sha256": "322e7bb8e969d89bea63dd77bfa1cf90d700812917c924b8efad601703df8446"
+    },
+    {
+      "path": "backend/src/routes/flight-searches.ts",
+      "sha256": "ab2a8a4e5aaae56da35e71b661a4a7276ad0f7a8f98e6a8b1d414cf666adc1a9"
+    },
+    {
+      "path": "backend/src/routes/health.ts",
+      "sha256": "663ae906d4838440db22e22079a060fec7e2b53bd9344d1023618753aec72aa1"
+    },
+    {
+      "path": "backend/src/routes/preferences.ts",
+      "sha256": "508449fbda0bb62960820a2a2720d46de3b3970e35fcf8cbae7cba69f8c77227"
+    },
+    {
+      "path": "backend/src/routes/reference-data.ts",
+      "sha256": "1f1f2cfeeb5ce9ec74ab525378b45cda191f3be63e6e449a51bf1bb9246b58da"
+    },
+    {
+      "path": "backend/src/routes/route-generation.test.ts",
+      "sha256": "5715a7347c5c32c1de27104ebca8f779a853c60372505be5ad650f5121068313"
+    },
+    {
+      "path": "backend/src/routes/route-generation.ts",
+      "sha256": "5d73372c23efb78eba96778fd713ae8d0b0d88394f683ebe3e33883099872d32"
+    },
+    {
+      "path": "backend/src/routes/route-plans.ts",
+      "sha256": "1b7c0f967c0ae06905568bcae71ac3aece33ca38f1c63326918428d54bea283b"
+    },
+    {
+      "path": "backend/src/routes/topology.ts",
+      "sha256": "64232d5fbd5a325b78dc79dc49eb0ed2d586c7ae3936f78ef78f5112319e790a"
+    },
+    {
+      "path": "backend/src/routes/travel-guides.test.ts",
+      "sha256": "284084b5b6a79825b60707d71fe6316552b058774440aca3bcdb023356a64552"
+    },
+    {
+      "path": "backend/src/routes/travel-guides.ts",
+      "sha256": "53b1ae4e0bf6214cd25e79f23586669042ca2e0c54e6d2730310835224cd33a3"
+    },
+    {
+      "path": "backend/src/routes/trip-plans.ts",
+      "sha256": "a394d477b3d5e5d4ff5021dd2c81a23987a9212918477d2bf282f9d165d2038d"
+    },
+    {
+      "path": "backend/src/routes/workspaces.ts",
+      "sha256": "b7baeb0fd1ec1bf9bbb59e9043355e96a5d610015a0aa55dd71d91fc0f5431d4"
+    },
+    {
+      "path": "backend/src/search/serpapi.test.ts",
+      "sha256": "badbbc753757ebcb6ea14eb262dfeab1c94273fabd2c5071c5e0f16ad908645d"
+    },
+    {
+      "path": "backend/src/search/serpapi.ts",
+      "sha256": "0aa5e5ccbdb243d8345dd6a50ae6b979ebb884dd90fe089af0ddf55f5bc6a7db"
+    },
+    {
+      "path": "backend/src/server.ts",
+      "sha256": "ea6ead13e2ae4164ed36b2419665882dd1e4c8590f6d2e1b306f988cc0471464"
+    },
+    {
+      "path": "backend/src/topology/mock.ts",
+      "sha256": "99224dc95c93a6544a1fdb951117f2bc1b857b90c9e20fba17f4fa6f04ed9cf8"
+    },
+    {
+      "path": "backend/src/topology/postgres.test.ts",
+      "sha256": "8b413fec14a45f007736f40c780055bb590512e15c6783bb9f7a63d109bb1c11"
+    },
+    {
+      "path": "backend/src/topology/postgres.ts",
+      "sha256": "210e7e1864512e44907ee1d5e08001637cf9b69a834670ee1968dd6db146e0b3"
+    },
+    {
+      "path": "backend/src/topology/repository.ts",
+      "sha256": "1b88a6dc32d689c19c9037b2a3bb9dfe6bb2ac5eed641c252197f7008661bcdd"
+    },
+    {
+      "path": "backend/src/topology/sync.ts",
+      "sha256": "2f385fadd29d09e83117bdcf02b8ed7759a39a2f61e415232871f0dfde97cc90"
+    },
+    {
+      "path": "backend/src/travel-guides/artifact-builder.test.ts",
+      "sha256": "454105c9be0368b7cd69e955a766b3c437f7e8db62cadcf0c0efd1b67a6980a3"
+    },
+    {
+      "path": "backend/src/travel-guides/artifact-builder.ts",
+      "sha256": "c8aa1ec87c5871ecd9d594a666f28295a502750eec52218c1685e9734499d1e8"
+    },
+    {
+      "path": "backend/src/travel-guides/artifact.ts",
+      "sha256": "0170d6a2acd69a4325040fc0682a5ca6bde2795ad04715e28b68fe1c7a19cd47"
+    },
+    {
+      "path": "backend/src/travel-guides/authored.ts",
+      "sha256": "b1cdbac2e04daa98bee15ec6e13e96354ef23c95bf287bbefdf06e0d6ba69f6d"
+    },
+    {
+      "path": "backend/src/travel-guides/index.ts",
+      "sha256": "4a449eedbb5bd5d0bbda019fa0458cfb8b972d52f4f5053a6ca76679de86855f"
+    },
+    {
+      "path": "backend/src/travel-guides/service.test.ts",
+      "sha256": "a61782b0864987e98050f5f5ba84076e2177af0ee44aaf68ff21cbc3c54f1b6f"
+    },
+    {
+      "path": "backend/src/travel-guides/service.ts",
+      "sha256": "9ceb5708b155a665ab69f0ff6b50e9231378eec6e704168ae39d704ce91307c5"
+    },
+    {
+      "path": "backend/src/travel-guides/types.ts",
+      "sha256": "0828540d33d081910c79564eb0926cae0caea5183a5f7e2a4bdfe562392ccb84"
+    },
+    {
+      "path": "backend/src/travel-guides/validation.ts",
+      "sha256": "0870822e7a70394d7faa20dfafcc211c563077ffa7e4433215c08fdfe3363fd6"
+    },
+    {
+      "path": "backend/src/travel-guides/workspace.ts",
+      "sha256": "000337aeb8be81ccc03054a01696929765571020ea4fb9612205e7fece61485a"
+    },
+    {
+      "path": "backend/src/trip-planning/planner.test.ts",
+      "sha256": "7dd1b0f8a2188d899f918731b2c0354ccd6c18f9b6af9767f6329d92fa66473d"
+    },
+    {
+      "path": "backend/src/trip-planning/planner.ts",
+      "sha256": "da3c8f7b1ef8a4083fdcf7449d53169325f38ec549f22083d377e42da14cb415"
+    },
+    {
+      "path": "backend/src/trip-planning/types.ts",
+      "sha256": "13fc5dd4430b12183926da6e17d7c68ddfd303c6a7ed4aee2b52e003d7fb8f99"
+    },
+    {
+      "path": "backend/src/trip-planning/workspace.ts",
+      "sha256": "ce46913c966e0bb4d152435c6c16e93d9aa3f7a260eb1fd6635c26361d5d1b4e"
+    },
+    {
+      "path": "backend/src/trip-plans/planner.test.ts",
+      "sha256": "94471e9de1b45b0431a01c975d8b39837523d2fd4bd50ccbb8286c64eed932ad"
+    },
+    {
+      "path": "backend/src/trip-plans/planner.ts",
+      "sha256": "cfa7ca59dfd2a2fb2041d843ddc3bad61073535ebbc34fe486f950a8e69948f1"
+    },
+    {
+      "path": "backend/src/trips/postgres.test.ts",
+      "sha256": "45ed3616ac2ff493a8f9c985f24340b616b9fadc35f862f5122fdf4b944498ee"
+    },
+    {
+      "path": "backend/src/trips/postgres.ts",
+      "sha256": "199a00fbbed1f73fde0760620dbdb7a1ff11b48c6c47791cb6eddc2d0d6548a1"
+    },
+    {
+      "path": "backend/src/trips/repository.test.ts",
+      "sha256": "b03f1666c37f823b52f6183017c323550dfff2ada325fcceb266e23432bda9b0"
+    },
+    {
+      "path": "backend/src/trips/repository.ts",
+      "sha256": "3c82d211c9644394ee27eaf85476c7e6ea1469cc9795b96ff28b46270d03130b"
+    },
+    {
+      "path": "backend/src/trips/types.ts",
+      "sha256": "e6932e9e3aa906920494ed7ee99e103e5baebc2b80130b303b02f20903edfd3e"
+    },
+    {
+      "path": "backend/src/worker.ts",
+      "sha256": "6e491111d60031924d14d08a4c4e1c25412a53c7a91c248cd1d3c1a37100b17c"
+    },
+    {
+      "path": "backend/src[local-path]",
+      "sha256": "4a068d50439911d6e51f9df2a70f75a1c5381a895a1dac2af425d848f098bcda"
+    },
+    {
+      "path": "backend/src[local-path]",
+      "sha256": "13dfd35d2f18995d6a694cdb5fdc617909cfc8df47519d822d133058d7550a01"
+    },
+    {
+      "path": "backend/tsconfig.json",
+      "sha256": "78c88540f09e99caec25c090fade5d74766e52086b0242175b51b30d106734cc"
+    }
+  ],
+  "dependencies": "shared installed backend/node_modules; package-lock hashed",
+  "sourceHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c"
+}

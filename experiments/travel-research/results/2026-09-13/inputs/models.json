@@ -1,0 +1,27 @@
+[
+  {
+    "label": "Qwen",
+    "id": "qwen/qwen3.8-flash",
+    "preferredEngine": "exa"
+  },
+  {
+    "label": "GLM",
+    "id": "z-ai/glm-5.3-flash",
+    "preferredEngine": "exa",
+    "reasoning": {
+      "enabled": true,
+      "effort": "low",
+      "exclude": true
+    }
+  },
+  {
+    "label": "Kimi",
+    "id": "moonshotai/kimi-k2.6",
+    "preferredEngine": "exa"
+  },
+  {
+    "label": "DeepSeek",
+    "id": "deepseek/deepseek-v4-flash-0731",
+    "preferredEngine": "exa"
+  }
+]

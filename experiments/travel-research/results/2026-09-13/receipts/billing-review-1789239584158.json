@@ -1,0 +1,16 @@
+{
+  "checkedAt": "2026-09-12T18:59:44.158Z",
+  "usageDaily": 1.068212993,
+  "previousLedger": {
+    "limitUsd": 5,
+    "knownOpenRouterUsd": 1.068212993,
+    "reservedUnknownUsd": 2,
+    "unknownCalls": 8,
+    "reviewedRejections": 8,
+    "serpApiRequests": 13,
+    "serpApiCostUsd": null,
+    "maxSerpApiRequests": 96,
+    "capType": "local_admission_reservation_not_provider_hard_cap"
+  },
+  "method": "Count all current UTC-day API-key charges conservatively; keep unknown reservations for possible delayed billing. Does not prove individual failed calls are free."
+}
