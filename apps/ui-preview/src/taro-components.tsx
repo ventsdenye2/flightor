@@ -23,6 +23,13 @@ function DialogView(props: React.HTMLAttributes<HTMLDivElement>) {
 }
 export const View = ({ ariaRole, ariaLabel, ...props }: React.HTMLAttributes<HTMLDivElement> & TaroA11y) => props.role === 'dialog' || ariaRole === 'dialog' ? <DialogView role={ariaRole} aria-label={ariaLabel} {...props} /> : <div role={ariaRole} aria-label={ariaLabel} {...props} />
 export const Text = ({ ariaRole, ariaLabel, ...props }: React.HTMLAttributes<HTMLSpanElement> & TaroA11y) => <span role={ariaRole} aria-label={ariaLabel} {...props} />
+export const Canvas = ({ canvasId, type: _type, ...props }: React.CanvasHTMLAttributes<HTMLCanvasElement> & { canvasId?: string; type?: string }) => <canvas id={canvasId} {...props} />
+export function ScrollView({ scrollY, scrollX, scrollIntoView, scrollWithAnimation: _animate, ...props }: React.HTMLAttributes<HTMLDivElement> & { scrollY?: boolean; scrollX?: boolean; scrollIntoView?: string; scrollWithAnimation?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => { if (scrollIntoView) document.getElementById(scrollIntoView)?.scrollIntoView({ block: 'nearest' }) }, [scrollIntoView])
+  return <div ref={ref} {...props} style={{ overflowY: scrollY ? 'auto' : undefined, overflowX: scrollX ? 'auto' : undefined, ...props.style }} />
+}
+export const Switch = ({ checked, onChange }: { checked?: boolean; onChange?: (event: { detail: { value: boolean } }) => void }) => <input type='checkbox' role='switch' checked={checked} onChange={event => onChange?.({ detail: { value: event.target.checked } })} />
 export const Button = ({ ariaLabel, type = 'button', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & TaroA11y) => <button type={type} aria-label={ariaLabel} {...props} />
 export const Image = ({ mode, src, ariaLabel, style, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { mode?: string; ariaLabel?: string }) => <img src={src?.startsWith('/assets/') ? src.replace(/^\/assets\//, '/') : src} aria-label={ariaLabel} {...props} style={{ objectFit: mode === 'aspectFit' ? 'contain' : 'cover', ...style }} />
 

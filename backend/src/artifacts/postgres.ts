@@ -6,6 +6,7 @@ import type { Database, JsonValue } from '../db/types.js'
 import { TripContextVersionConflict } from '../trips/repository.js'
 
 type ArtifactRow = {
+  internal_id?: string
   id: string
   trip_id: string
   trip_public_id?: string
@@ -104,6 +105,17 @@ export class PostgresArtifactRepository implements ArtifactRepository {
   ) {}
 
   async create(input: CreateArtifactInput): Promise<ArtifactRecord> {
+    return this.createInternal(input)
+  }
+
+  async createWithResearchAudit(input: CreateArtifactInput, auditId: string): Promise<ArtifactRecord> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(auditId)) {
+      throw new AppError('INVALID_RESEARCH_AUDIT', 'Research audit id is invalid', 400)
+    }
+    return this.createInternal(input, auditId)
+  }
+
+  private async createInternal(input: CreateArtifactInput, researchAuditId?: string): Promise<ArtifactRecord> {
     if (!Number.isInteger(input.schemaVersion) || input.schemaVersion < 1) {
       throw new AppError('INVALID_ARTIFACT', 'Artifact schema version must be positive')
     }
@@ -208,10 +220,24 @@ export class PostgresArtifactRepository implements ArtifactRepository {
           verification_json: input.verification === undefined ? null : JSON.stringify(input.verification)
         })
         .returning([
-          'public_id as id', 'trip_id', 'conversation_id', 'type', 'schema_version',
+          'id as internal_id', 'public_id as id', 'trip_id', 'conversation_id', 'type', 'schema_version',
           'payload_json', 'verification_json', 'trip_context_version', 'source_artifact_ids_json', 'created_at', 'updated_at'
         ])
         .executeTakeFirstOrThrow()
+
+      if (researchAuditId) {
+        let link = untyped(trx).updateTable('research_generation_audits')
+          .set({ artifact_id: row.internal_id, delivered_at: new Date(), updated_at: new Date() })
+          .where('public_id', '=', researchAuditId).where('user_id', '=', this.userId)
+          .where('trip_id', '=', trip.id)
+          .where('trip_context_version', '=', input.tripContextVersion ?? null)
+          .where('status', '=', 'succeeded').where('artifact_id', 'is', null)
+        link = conversationId === null ? link.where('conversation_id', 'is', null) : link.where('conversation_id', '=', conversationId)
+        link = goalId === null ? link.where('goal_id', 'is', null) : link.where('goal_id', '=', goalId)
+        link = goalRunId === null ? link.where('goal_run_id', 'is', null) : link.where('goal_run_id', '=', goalRunId)
+        const linked = await link.returning('id').executeTakeFirst()
+        if (!linked) throw new AppError('RESEARCH_AUDIT_LINK_FAILED', 'Research audit could not be linked to the final artifact', 409)
+      }
 
       const artifact = toArtifact(row)
       return {

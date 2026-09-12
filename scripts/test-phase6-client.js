@@ -34,7 +34,7 @@ check('primary tabs are Plan, Explore, Trips, Profile', JSON.stringify(tabPaths)
   'pages/plan/index', 'pages/explore/index', 'pages/trips/index', 'pages/profile/index'
 ]))
 check('Plan renders server Trip Context chips', plan.includes('<TripContextChips') && plan.includes('summary={chatStore.tripContextSummary}'))
-check('Plan has one Agent-backed Trip Workspace authority', plan.includes('<AgentChat />') && !plan.includes('planTrip(') && !/from ['"][^'"]*flightStore/.test(plan))
+check('Plan has one Agent-backed Trip Workspace authority', /<AgentChat(?:\s|\/?>)/.test(plan) && !plan.includes('planTrip(') && !/from ['"][^'"]*flightStore/.test(plan))
 check('legacy UnderstandingPanel is removed', !plan.includes('UnderstandingPanel') && !plan.includes("../../mocks/airports"))
 check('Plan renders per-turn and workspace ArtifactRefs', plan.includes('turn.artifactRefs?.map') && plan.includes('workspaceArtifactRefs.map'))
 check('manual search prepares the same cloud Trip/Conversation', flightStore.includes('chatStore.prepareCloudSession') && flightService.includes('tripId: session.tripId') && flightService.includes('conversationId: session.conversationId'))

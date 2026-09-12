@@ -28,10 +28,20 @@ function verification(artifact: ResearchArtifact): VerificationRecord {
 export async function researchTripDestinations(input: ResearchBrief, research: ResearchAgent, scope: ArtifactWorkspace & { requestId: string }) {
   const brief = researchBriefSchema.parse(input)
   await checkpoint(scope)
-  const result = researchArtifactSchema.parse(await research.research(brief, { requestId: scope.requestId, ...(scope.signal ? { signal: scope.signal } : {}) }))
+  const result = researchArtifactSchema.parse(await research.research(brief, {
+    requestId: scope.requestId,
+    ...(scope.signal ? { signal: scope.signal } : {}),
+    ...(scope.ownerId ? { ownerId: scope.ownerId } : {}),
+    tripId: scope.tripId,
+    ...(scope.conversationId ? { conversationId: scope.conversationId } : {}),
+    ...(scope.goalId ? { goalId: scope.goalId } : {}),
+    ...(scope.runId ? { runId: scope.runId } : {}),
+    tripContextVersion: scope.tripContextVersion
+  }))
   if (JSON.stringify(result.brief) !== JSON.stringify(brief)) throw new Error('Research agent returned a mismatched brief')
   if (result.findings.length > (brief.maxResults ?? 10)) throw new Error('Research agent returned too many findings')
   const payload = researchArtifactSchema.parse({ ...result, id: uuidv7() })
-  const record = await saveWorkspaceArtifact(scope, { id: payload.id, type: 'research', schemaVersion: 2, payload, verification: verification(payload) })
+  const record = await saveWorkspaceArtifact(scope, { id: payload.id, type: 'research', schemaVersion: 2, payload, verification: verification(payload) },
+    payload.generationAuditId ? { researchAuditId: payload.generationAuditId } : undefined)
   return { record, payload }
 }

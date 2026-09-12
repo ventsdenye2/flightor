@@ -23,6 +23,7 @@ export interface AppExperienceProps {
   exploreItems: ExploreItem[]
   imageError?: boolean
   requestedPage?: PreviewPage
+  initialTripTab?: 'overview' | 'days' | 'flights'
   navigationVersion?: number
   onOpenSource?: (url: string) => void
 }
@@ -30,7 +31,7 @@ export default function AppExperience(props: AppExperienceProps) {
   // A different trip identity starts an independent preview session.
   return <ExperienceSession key={props.trip.id} {...props} />
 }
-function ExperienceSession({ trip, searchDataset, exploreItems, imageError = false, requestedPage = 'plan', navigationVersion = 0, onOpenSource }: AppExperienceProps) {
+function ExperienceSession({ trip, searchDataset, exploreItems, imageError = false, requestedPage = 'plan', navigationVersion = 0, onOpenSource, initialTripTab }: AppExperienceProps) {
   const [section, setSection] = useState<MainSection>('plan')
   const [overlayStack, setOverlayStack] = useState<Overlay[]>([])
   const overlay = overlayStack[overlayStack.length - 1] || null
@@ -62,7 +63,7 @@ function ExperienceSession({ trip, searchDataset, exploreItems, imageError = fal
     <View className='ux-screen' style={{ display: visible('explore') ? 'flex' : 'none' }}><ExplorePage items={exploreItems} onPlan={planWith} savedIds={savedIds} onToggleSave={toggleItem} onOpenSource={onOpenSource} /></View>
     <View className='ux-screen' style={{ display: visible('trips') ? 'flex' : 'none' }}><TripsPage trip={trip} onOpenTrip={openTrip} onPlan={() => planWith('')} archived={archived} onArchive={setArchived} /></View>
     <View className='ux-screen' style={{ display: visible('profile') ? 'flex' : 'none' }}><ProfilePage savedCount={savedItems.length + Number(tripSaved)} alertCount={alerts.length} onCollections={() => navigate('collections')} onAlerts={() => navigate('alerts')} onTrips={() => navigate('trips')} onPlan={planWith} largeText={largeText} onTextSizeChange={setLargeText} onClearLibrary={() => { setSavedIds([]); setTripSaved(false) }} /></View>
-    {tripOpened ? <View className='ux-screen' style={{ display: visible('trip') ? 'flex' : 'none' }}><TripExperience trip={trip} imageError={imageError} embedded onBack={closeOverlay} saved={tripSaved} onSavedChange={setTripSaved} onOpenSource={onOpenSource} /></View> : null}
+    {tripOpened ? <View className='ux-screen' style={{ display: visible('trip') ? 'flex' : 'none' }}><TripExperience initialTab={initialTripTab} trip={trip} imageError={imageError} embedded onBack={closeOverlay} saved={tripSaved} onSavedChange={setTripSaved} onOpenSource={onOpenSource} /></View> : null}
     {overlayStack.includes('flights') ? <View className='ux-screen' style={{ display: visible('flights') ? 'flex' : 'none' }}><FlightExplorer searchDataset={searchDataset} onBack={closeOverlay} onOpenTrip={openTrip} onCreateAlert={alert => {
       const id = nextAlertId.current++
       setAlerts(current => {
