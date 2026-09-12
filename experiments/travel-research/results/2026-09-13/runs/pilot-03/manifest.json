@@ -1,0 +1,186 @@
+{
+  "startedAt": "2026-09-12T18:24:24.174Z",
+  "plan": {
+    "scope": "research-component; no Planner, flight fares, persistence, UI or recovery E2E",
+    "cases": [
+      "activity-01"
+    ],
+    "models": [
+      {
+        "label": "Grok",
+        "id": "x-ai/grok-4.6",
+        "preferredEngine": "native"
+      },
+      {
+        "label": "Gemini",
+        "id": "google/gemini-3.8-flash",
+        "preferredEngine": "native"
+      },
+      {
+        "label": "DeepSeek",
+        "id": "deepseek/deepseek-v4-flash-0731",
+        "preferredEngine": "exa"
+      }
+    ],
+    "arms": [
+      "direct-web",
+      "thin-web",
+      "current-system"
+    ],
+    "repeats": 1,
+    "engineMode": "exa",
+    "cells": 9,
+    "budgetUsd": 5,
+    "maxSerpApiSearches": 96,
+    "timeoutMs": 95000,
+    "seed": 20260913
+  },
+  "models": [
+    {
+      "id": "x-ai/grok-4.6",
+      "created": 1786548957,
+      "pricing": {
+        "prompt": "0.000002",
+        "completion": "0.000006",
+        "web_search": "0.005",
+        "input_cache_read": "0.0000005",
+        "overrides": [
+          {
+            "min_prompt_tokens": 200000,
+            "prompt": "0.000004",
+            "completion": "0.000012",
+            "input_cache_read": "0.000001"
+          }
+        ]
+      },
+      "supported_parameters": [
+        "include_reasoning",
+        "logprobs",
+        "max_tokens",
+        "reasoning",
+        "reasoning_effort",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    },
+    {
+      "id": "google/gemini-3.8-flash",
+      "created": 1788362056,
+      "pricing": {
+        "prompt": "0.00000075",
+        "completion": "0.00000375",
+        "image": "0.00000075",
+        "audio": "0.00000075",
+        "input_audio_cache": "0.000000075",
+        "web_search": "0.014",
+        "internal_reasoning": "0.00000375",
+        "input_cache_read": "0.000000075",
+        "input_cache_write": "0.0000000416666666666667"
+      },
+      "supported_parameters": [
+        "include_reasoning",
+        "max_tokens",
+        "reasoning",
+        "reasoning_effort",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_p"
+      ]
+    },
+    {
+      "id": "deepseek/deepseek-v4-flash-0731",
+      "created": 1785478908,
+      "pricing": {
+        "prompt": "0.00000004",
+        "completion": "0.00000008",
+        "input_cache_read": "0.000000008"
+      },
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "parallel_tool_calls",
+        "presence_penalty",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_a",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    }
+  ],
+  "casesHash": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6",
+  "modelsHash": "19978f5e7b0f079e9ef5a1dcc4613f8719f94313b0e3edc7bcea2ec429930a46",
+  "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+  "runnerFiles": [
+    {
+      "path": "budget.mjs",
+      "sha256": "a15123ed70baa75c6da323fd3a56acaee71af1d5a632c83cf3e8a775115fc517"
+    },
+    {
+      "path": "cases.json",
+      "sha256": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6"
+    },
+    {
+      "path": "contracts.mjs",
+      "sha256": "aff4d39c560d471c2b199137a677b11ec8e5a993818c9c0d5f6f74e80b7ddfac"
+    },
+    {
+      "path": "contracts.test.mjs",
+      "sha256": "372ee3707d36ea147b65bb8ee2134e2b56157d7e5dffb19e3fe77de991fb05a8"
+    },
+    {
+      "path": "current-system.mjs",
+      "sha256": "79ad099465e519c8b77ad7082ca1669c9bd57fdc3309f1a5266b1e832ebf3a01"
+    },
+    {
+      "path": "current-system.test.mjs",
+      "sha256": "ef4015beb66761b7b4550d5317f3b60f2ca9529c02d941957a4eb6ebc80ec168"
+    },
+    {
+      "path": "models.json",
+      "sha256": "19978f5e7b0f079e9ef5a1dcc4613f8719f94313b0e3edc7bcea2ec429930a46"
+    },
+    {
+      "path": "openrouter.mjs",
+      "sha256": "ee35614ceaa5006533c3e99ad014a947e695cd04a9a5de6f2ce85eec0b7e8963"
+    },
+    {
+      "path": "package.json",
+      "sha256": "76961316ff725e4cbbd5f57f250083cfcece42a28453f18e841bdc5ca36e2b73"
+    },
+    {
+      "path": "report.mjs",
+      "sha256": "24876c38b19755ca0463caa68f3e756a26ada00f7629785b4bb1d4205ed83886"
+    },
+    {
+      "path": "run.mjs",
+      "sha256": "61a13c5575196f566455488e74737041bd6dd05ea5264e11a5a80fe770aa63d1"
+    }
+  ]
+}

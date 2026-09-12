@@ -1,0 +1,5 @@
+# Preserve evidence digests across Windows checkouts.
+*.json text eol=lf
+*.mjs text eol=lf
+*.md text eol=lf
+.gitignore text eol=lf

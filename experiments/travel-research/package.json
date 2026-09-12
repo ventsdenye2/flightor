@@ -1,0 +1,10 @@
+{
+  "name": "flightor-travel-research-experiment",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --experimental-test-isolation=none *.test.mjs",
+    "preflight": "node run.mjs preflight",
+    "plan": "node run.mjs plan"
+  }
+}

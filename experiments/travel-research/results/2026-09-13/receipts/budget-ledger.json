@@ -1,0 +1,11 @@
+{
+  "limitUsd": 5,
+  "knownOpenRouterUsd": 1.197637138,
+  "reservedUnknownUsd": 2.25,
+  "unknownCalls": 9,
+  "reviewedRejections": 9,
+  "serpApiRequests": 26,
+  "serpApiCostUsd": null,
+  "maxSerpApiRequests": 96,
+  "capType": "local_admission_reservation_not_provider_hard_cap"
+}
