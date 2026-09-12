@@ -264,7 +264,12 @@ export class FlightStore {
     if (this.sortBy === 'recommended') {
       return sortByRecommendation(list, p?.transitCountryPreferences)
     }
-    return list.sort((a, b) => this.sortBy === 'duration' ? a.totalDuration - b.totalDuration : a.totalPrice - b.totalPrice)
+    return list.sort((a, b) => {
+      if (this.sortBy !== 'duration') return a.totalPrice - b.totalPrice
+      if (a.totalDuration === undefined) return b.totalDuration === undefined ? a.totalPrice - b.totalPrice : 1
+      if (b.totalDuration === undefined) return -1
+      return a.totalDuration - b.totalDuration || a.totalPrice - b.totalPrice
+    })
   }
 
   /** 被预算/偏好筛掉的方案数（空态提示用） */

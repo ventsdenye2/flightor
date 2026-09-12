@@ -33,15 +33,36 @@ export const fareSegmentSchema = z.object({
 export const fareOfferSchema = z.object({
   id: z.string().min(1).max(240),
   segments: z.array(fareSegmentSchema).min(1).max(12),
+  layovers: z.array(z.object({
+    afterSegmentIndex: z.number().int().min(0).max(10),
+    airport: z.string().regex(/^[A-Z]{3}$/),
+    departureAirport: z.string().regex(/^[A-Z]{3}$/).optional(),
+    durationMinutes: z.number().int().nonnegative().optional(),
+    overnight: z.boolean().optional(),
+    airportChange: z.boolean().optional()
+  }).strict()).max(11).optional(),
   totalAmount: z.number().finite().nonnegative(),
   currency: z.string().regex(/^[A-Z]{3}$/),
-  totalDurationMinutes: z.number().int().nonnegative(),
+  totalDurationMinutes: z.number().int().nonnegative().optional(),
   airlines: z.array(z.string().min(1).max(160)).max(12),
   transferType: z.enum(['direct', 'airline', 'self']),
   protectedConnection: z.boolean().optional(),
   baggageRecheck: z.boolean().optional(),
   bookingUrl: z.string().url().optional()
-}).strict()
+}).strict().superRefine((offer, context) => {
+  const seen = new Set<number>()
+  for (const [index, layover] of (offer.layovers ?? []).entries()) {
+    const arrival = offer.segments[layover.afterSegmentIndex]
+    const departure = offer.segments[layover.afterSegmentIndex + 1]
+    if (!arrival || !departure || seen.has(layover.afterSegmentIndex)
+      || layover.airport !== arrival.destination
+      || (layover.departureAirport !== undefined && layover.departureAirport !== departure.origin)
+      || (arrival.destination !== departure.origin && layover.airportChange !== true)) {
+      context.addIssue({ code: 'custom', message: 'Layover must describe one distinct adjacent segment connection', path: ['layovers', index] })
+    }
+    seen.add(layover.afterSegmentIndex)
+  }
+})
 
 export type FareOffer = z.infer<typeof fareOfferSchema>
 

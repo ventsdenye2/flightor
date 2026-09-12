@@ -76,7 +76,7 @@ function itemId(finding: NormalizedFinding, day: number): string {
   return `guide_${createHash('sha256').update(`${finding.artifactId}:${finding.id}:${day}`).digest('hex').slice(0, 24)}`
 }
 
-function aggregateVerification(items: Array<{ verification: VerificationRecord }>, now: string): VerificationRecord {
+export function aggregateGuideVerification(items: Array<{ verification: VerificationRecord }>, now: string): VerificationRecord {
   if (items.length === 0) {
     return { status: 'unverified', checkedAt: now, confidence: 0, sources: [] }
   }
@@ -158,7 +158,7 @@ export class DeterministicTravelGuideBuilder implements TravelGuideBuilder {
       routeArtifactId: normalized.routeArtifactId,
       days,
       unassignedActivityRefs: normalized.route.unassignedActivityRefs,
-      verification: aggregateVerification(items, now),
+      verification: aggregateGuideVerification(items, now),
       warnings,
       createdAt: now
     })

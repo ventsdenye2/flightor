@@ -61,6 +61,8 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
             <Text className='route-workspace__heading'>{e.from.iata ?? e.from.name} → {e.to.iata ?? e.to.name}</Text>
             <Text>出发 {e.departureDisplay}</Text><Text>抵达 {e.arrivalDisplay}</Text>
             <Text>{durationLabel(e.durationMinutes)} · {fareLabel(e.fare)}</Text>
+            {e.transferType === 'airline' && <Text>航司联程 · {Math.max(0, e.segments.length - 1)} 次中转 · 全程报价</Text>}
+            {e.transferType === 'airline' && <Text className='route-workspace__muted'>行李与转机保障以出票条款为准</Text>}
             {e.transferType === 'self' && <Text className='route-workspace__warning'>自行中转：需自行确认行李重托运与衔接时间</Text>}
             {e.airportChange && <Text className='route-workspace__warning'>涉及更换机场，请预留地面交通时间</Text>}
           </View>
@@ -69,11 +71,16 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
     </View>
     {edge && <View className='route-workspace__section'>
       <Text className='route-workspace__heading'>航班与费用 · {edge.from.iata ?? edge.from.name} → {edge.to.iata ?? edge.to.name}</Text>
-      {edge.segments.map((s, i) => <View key={`${edge.id}-${i}`} className='route-workspace__flight'>
+      {edge.segments.map((s, i) => {
+        const previous = edge.segments[i - 1]
+        const reported = edge.layovers.find(layover => layover.afterSegmentIndex === i - 1)
+        const wait = previous?.arrivalAt && s.departureAt ? Math.round((Date.parse(s.departureAt) - Date.parse(previous.arrivalAt)) / 60000) : reported?.durationMinutes
+        return <View key={`${edge.id}-${i}`} className='route-workspace__flight'>
+        {previous && <Text className='route-workspace__stopover'>中转 {previous.to.iata ?? previous.to.name}{previous.to.id !== s.from.id ? ` → ${s.from.iata ?? s.from.name}（换机场）` : ''} · {wait !== undefined && wait >= 0 ? durationLabel(wait) : '衔接时长待确认'}{reported?.overnight ? ' · 过夜中转' : ''}</Text>}
         <Text>{s.flightNumber ?? '航班号未提供'} · {s.marketingCarrier ?? '航司未提供'}</Text>
         <Text>{s.from.iata ?? s.from.name} → {s.to.iata ?? s.to.name}</Text>
         <Text>出发 {s.departureDisplay}</Text><Text>抵达 {s.arrivalDisplay}</Text>
-      </View>)}
+      </View>})}
       <Text className='route-workspace__price'>{fareLabel(edge.fare)}</Text>
       {edge.checkedAt && <Text className='route-workspace__muted'>资料核验于 {edge.checkedAt}</Text>}
       {edge.fareArtifactId && <View className='route-workspace__action' onClick={() => Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodeURIComponent(edge.fareArtifactId!)}` })}>查看航班报价</View>}

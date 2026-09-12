@@ -2,19 +2,28 @@ import type { Kysely } from 'kysely'
 import { v7 as uuidv7 } from 'uuid'
 import type { Database } from '../db/types.js'
 import { AppError } from '../lib/errors.js'
-import type { ResolvedUserIdentity, UserIdentityRepository } from './repository.js'
+import type { IdentityProfile, ResolvedUserIdentity, UserIdentityRepository } from './repository.js'
 
 export class PostgresUserIdentityRepository implements UserIdentityRepository {
   constructor(private readonly db: Kysely<Database>) {}
 
   async resolveWechat(input: { providerSubject: string; nickname: string; avatarUrl: string }): Promise<ResolvedUserIdentity> {
+    return this.resolve('wechat', input)
+  }
+
+  /** One stable, separately labelled account per local database. Call only after local-login authorization. */
+  async resolveLocalTest(input: IdentityProfile): Promise<ResolvedUserIdentity> {
+    return this.resolve('local_test', { ...input, providerSubject: 'default' })
+  }
+
+  private async resolve(provider: 'wechat' | 'local_test', input: IdentityProfile & { providerSubject: string }): Promise<ResolvedUserIdentity> {
     const now = new Date()
     return this.db.transaction().execute(async trx => {
       // wechat_openid remains a compatibility/race anchor until a later
       // migration makes every login provider-neutral.
       const user = await trx.insertInto('users').values({
         public_id: uuidv7(),
-        wechat_openid: input.providerSubject,
+        wechat_openid: provider === 'wechat' ? input.providerSubject : '__flightor_local_test__:default',
         nickname: input.nickname,
         avatar_url: input.avatarUrl,
         last_login_at: now
@@ -27,7 +36,7 @@ export class PostgresUserIdentityRepository implements UserIdentityRepository {
 
       const identity = await trx.insertInto('user_identities').values({
         user_id: user.id,
-        provider: 'wechat',
+        provider,
         provider_subject: input.providerSubject,
         last_seen_at: now
       }).onConflict(oc => oc.columns(['provider', 'provider_subject']).doUpdateSet({

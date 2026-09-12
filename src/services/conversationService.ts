@@ -1,6 +1,7 @@
-// 统一旅行对话服务：正式模式只访问自建 `/v1/agent/converse`。
+// 统一旅行对话服务：正式模式提交一次 turn，再用短请求查询真实进度。
 // Mock 模式在本地完成小型、确定性的解析与路线演示，不触发第三方或云函数。
-import { request, USE_MOCK } from '../utils/request'
+import { request, USE_MOCK, ApiRequestError } from '../utils/request'
+import { assertAuthSession, authSnapshot } from '../utils/authSession'
 import { parseBudget } from './budgetParser'
 import type { RoutePick } from './routeService'
 
@@ -180,11 +181,64 @@ export interface ConversationResponse {
   delivery?: ConversationDelivery
 }
 
-/** Exact request shape from the mini-program to POST /v1/agent/converse. */
+/** Exact request shape from the mini-program to POST /v1/agent/turns. */
 export interface ConversationRequest {
   tripId: string
   conversationId: string
   message: string
+}
+
+export type ConversationTurnStage = 'thinking' | 'updating_trip' | 'searching_flights'
+  | 'researching' | 'building_itinerary' | 'finalizing'
+
+/** Transient transport state. Never persisted as messages or business history. */
+export interface ConversationTurnProgress {
+  connection: 'connecting' | 'running' | 'reconnecting' | 'completed'
+  stage?: ConversationTurnStage
+  startedAt: number
+  lastConfirmedAt?: number
+  serverUpdatedAt?: string
+  turnId?: string
+}
+
+interface ConversationTurnView {
+  turnId: string
+  status: 'running' | 'completed' | 'failed'
+  stage: ConversationTurnStage
+  startedAt: string
+  updatedAt: string
+  response?: ConversationResponse
+  error?: { code: string; message: string }
+}
+
+interface ConverseOptions {
+  onProgress?: (progress: ConversationTurnProgress) => void
+  /** Session switches invalidate this poll without needing mini-program AbortController. */
+  isCurrent?: () => boolean
+  startedAt?: number
+}
+
+const TURN_POLL_INTERVAL_MS = 2_000
+const TURN_REQUEST_TIMEOUT_MS = 10_000
+// Covers the server's 300s run limit and final persistence, using short HTTP requests.
+const TURN_WAIT_LIMIT_MS = 330_000
+const TURN_STAGES: readonly string[] = ['thinking', 'updating_trip', 'searching_flights', 'researching', 'building_itinerary', 'finalizing']
+
+function validTimestamp(value: unknown): value is string {
+  return typeof value === 'string' && Number.isFinite(Date.parse(value))
+}
+
+function validTurnView(value: ConversationTurnView, turnId: string): boolean {
+  return Boolean(value && value.turnId === turnId
+    && ['running', 'completed', 'failed'].includes(value.status)
+    && TURN_STAGES.includes(value.stage)
+    && validTimestamp(value.startedAt) && validTimestamp(value.updatedAt))
+}
+
+function validTurnResponse(value: ConversationResponse | undefined, input: ConversationRequest): value is ConversationResponse {
+  return Boolean(value && value.tripId === input.tripId && value.conversationId === input.conversationId
+    && typeof value.reply === 'string' && value.tripContextSummary && Array.isArray(value.artifactRefs)
+    && Array.isArray(value.suggestedActions) && Array.isArray(value.warnings) && typeof value.stopReason === 'string')
 }
 
 export interface CloudSessionBootstrap {
@@ -669,7 +723,7 @@ export async function bootstrapCloudSession(): Promise<CloudSessionBootstrap> {
  * Send exactly one new message to the authenticated Planner. In particular,
  * local history, legacy state, and previous messages never enter this body.
  */
-export async function converse(input: ConversationRequest): Promise<ConversationResponse> {
+export async function converse(input: ConversationRequest, options: ConverseOptions = {}): Promise<ConversationResponse> {
   const message = input.message.trim()
   if (!input.tripId || !input.conversationId || !message) throw new Error('INVALID_CONVERSATION_REQUEST')
   const body: ConversationRequest = {
@@ -678,13 +732,80 @@ export async function converse(input: ConversationRequest): Promise<Conversation
     message
   }
   if (USE_MOCK) return mockConverse(body)
-  return request<ConversationResponse>({
-    url: '/v1/agent/converse',
+  const revision = authSnapshot().revision
+  const startedAt = options.startedAt ?? Date.now()
+  // Preparation time appears in the UI, but the server gets its full run allowance.
+  const deadline = Date.now() + TURN_WAIT_LIMIT_MS
+  let progress: ConversationTurnProgress = { connection: 'connecting', startedAt }
+  const assertCurrent = () => {
+    assertAuthSession(revision)
+    if (options.isCurrent && !options.isCurrent()) throw new Error('STALE_CONVERSATION_TURN')
+  }
+  const assertBeforeRequest = () => {
+    assertCurrent()
+    if (Date.now() >= deadline) throw new Error('CONVERSATION_TURN_TIMEOUT')
+  }
+  const publish = (next: ConversationTurnProgress) => {
+    assertCurrent()
+    progress = next
+    options.onProgress?.({ ...next })
+  }
+  assertBeforeRequest()
+  publish(progress)
+  // A timed-out POST is ambiguous: never retry it or submit a second message.
+  const accepted = await request<{ turnId: string; status: 'running'; startedAt: string }>({
+    url: '/v1/agent/turns',
     method: 'POST',
     data: body as unknown as Record<string, unknown>,
     retry: 0,
-    timeout: 180_000
+    showError: false,
+    timeout: TURN_REQUEST_TIMEOUT_MS
   })
+  assertCurrent()
+  if (!accepted || typeof accepted.turnId !== 'string' || !accepted.turnId || accepted.turnId.length > 200
+    || accepted.status !== 'running' || !validTimestamp(accepted.startedAt)) {
+    throw new Error('INVALID_CONVERSATION_TURN_RESPONSE')
+  }
+  const turnId = accepted.turnId
+  publish({ ...progress, turnId })
+  while (true) {
+    assertBeforeRequest()
+    let view: ConversationTurnView | undefined
+    let received = false
+    try {
+      view = await request<ConversationTurnView>({
+        url: `/v1/agent/turns/${encodeURIComponent(turnId)}`,
+        method: 'GET',
+        retry: 0,
+        showError: false,
+        timeout: Math.min(TURN_REQUEST_TIMEOUT_MS, deadline - Date.now())
+      })
+      received = true
+    } catch (error) {
+      assertCurrent()
+      if (error instanceof ApiRequestError && error.status === 404) throw new Error('CONVERSATION_TURN_NOT_FOUND')
+      if ((error instanceof ApiRequestError && error.status < 500)
+        || (error as Error)?.message === 'AUTH_REQUIRED' || (error as Error)?.message === 'AUTH_SESSION_CHANGED') throw error
+      // The last successful GET remains the only source of server activity and heartbeat.
+      publish({ ...progress, connection: 'reconnecting' })
+    }
+    assertCurrent()
+    if (received) {
+      if (!view || !validTurnView(view, turnId)) throw new Error('INVALID_CONVERSATION_TURN_RESPONSE')
+      if (view.status === 'failed') {
+        const code = typeof view.error?.code === 'string' ? view.error.code : 'CONVERSATION_TURN_FAILED'
+        throw Object.assign(new Error(code), { code })
+      }
+      if (view.status === 'completed') {
+        if (!validTurnResponse(view.response, body)) throw new Error('INVALID_CONVERSATION_TURN_RESPONSE')
+        publish({ ...progress, connection: 'completed', stage: view.stage, lastConfirmedAt: Date.now(), serverUpdatedAt: view.updatedAt })
+        return view.response
+      }
+      publish({ ...progress, connection: 'running', stage: view.stage, lastConfirmedAt: Date.now(), serverUpdatedAt: view.updatedAt })
+    }
+    assertBeforeRequest()
+    await new Promise<void>(resolve => setTimeout(resolve, Math.min(TURN_POLL_INTERVAL_MS, deadline - Date.now())))
+  }
 }
 
 export const converseTurn = converse

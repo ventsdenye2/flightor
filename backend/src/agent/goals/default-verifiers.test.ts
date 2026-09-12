@@ -319,6 +319,37 @@ async function routeData(test: Fixture, patch: Partial<CompleteFlightPath> = {})
 describe('default route-generation goal verifier', () => {
   const intent: GoalIntent = { kind: 'route_generation', parameters: { requestKey: 'route' } }
 
+  it('checks excluded airports inside a complete airline fare instead of looking only at visit nodes', async () => {
+    const hub: LocationRef = { id: 'airport:ICN', type: 'airport', name: 'Incheon', iata: 'ICN', countryCode: 'KR' }
+    const test = await fixture(intent, { destinationIntent: { mode: 'explicit', required: [tokyo], preferred: [], excluded: [hub] } })
+    const seed = await routeData(test)
+    const edge = seed.path.edges[0]!
+    const route = await routeData(test, { edges: [{ ...edge, transferType: 'airline', protectedConnection: true,
+      segments: [
+        { id: 'first', from: pvg, to: hub, verification: verified },
+        { id: 'second', from: hub, to: edge.to, verification: verified }
+      ], layovers: [{ afterSegmentIndex: 0, durationMinutes: 120 }]
+    }], transferCount: 1 })
+    await route.store()
+    expect(await test.verify()).toMatchObject({ status: 'partial', missing: expect.arrayContaining(['route_excluded_location']) })
+  })
+
+  it('requires physical transfer counts and preserves long-stopover consent for an airline edge', async () => {
+    const test = await fixture(intent)
+    const seed = await routeData(test)
+    const edge = seed.path.edges[0]!
+    const hub: LocationRef = { id: 'airport:ICN', type: 'airport', name: 'Incheon', iata: 'ICN', countryCode: 'KR' }
+    const route = await routeData(test, { edges: [{ ...edge, transferType: 'airline',
+      segments: [{ id: 'first', from: pvg, to: hub, verification: verified }, { id: 'second', from: hub, to: edge.to, verification: verified }],
+      layovers: [{ afterSegmentIndex: 0, durationMinutes: 700 }]
+    }], transferCount: 0 })
+    // Simulate an older persisted optimizer result with incorrect transfer metadata.
+    // Current optimization already rejects it; Goal verification must also check it.
+    route.payload.representatives = [{ ...seed.payload.representatives[0]!, path: route.path }]
+    await route.store()
+    expect(await test.verify()).toMatchObject({ status: 'partial', missing: expect.arrayContaining(['route_transfer_count', 'route_long_stopover_policy']) })
+  })
+
   it('requires a nonempty optimized set and does not accept intermediate paths as completion', async () => {
     const test = await fixture(intent)
     const route = await routeData(test)

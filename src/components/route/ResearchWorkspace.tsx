@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import type { ArtifactEnvelope } from '../../services/artifactService'
-import { displayLocation, firstText, record, records, strings } from '../artifacts/payload'
+import { displayGuideTime, displayLocation, firstText, record, records, strings } from '../artifacts/payload'
 
 export function ResearchWorkspace({ artifact }: { artifact: ArtifactEnvelope }) {
   const [selected, setSelected] = useState(0)
@@ -17,18 +17,23 @@ export function ResearchWorkspace({ artifact }: { artifact: ArtifactEnvelope }) 
   const items: Record<string, unknown>[] = isResearch ? records(payload.findings, 50) : days.flatMap(day => records(isGuide ? day.items : day.activityRefs, 32).map(item => ({ ...item, day: day.day, city: day.city })))
   const item = items[selected]
   const verification = record(item?.verification)
-  const sourceUrls = item ? [...strings(item.sourceUrls, 20), ...records(item.sources, 20).flatMap(s => firstText(s.url) ? [String(s.url)] : [])].filter(url => /^https?:\/\//i.test(url)) : []
+  const sourceUrls = item ? [...new Set([...strings(item.sourceUrls, 20), ...records(item.sources, 20).flatMap(s => firstText(s.url) ? [String(s.url)] : []),
+    ...records(verification?.sources, 20).flatMap(source => firstText(source.reference) ? [String(source.reference)] : [])])].filter(url => /^https?:\/\//i.test(url)) : []
   return <View className='route-workspace'>
     <Text className='route-workspace__eyebrow'>TRAVEL NOTES</Text>
     <Text className='route-workspace__title'>{isResearch ? '目的地与活动' : '每日行程'}</Text>
+    {isGuide && payload.composition === 'agent_authored' ? <Text className='route-workspace__muted'>以下时段与玩法为行程建议，营业时间、预约和实际交通耗时仍需确认。</Text> : null}
     {days.map((day, index) => <View key={index} className='route-workspace__section'>
       <Text className='route-workspace__heading'>第 {String(day.day)} 天 · {displayLocation(day.city) ?? '地点待确认'}</Text>
-      {records(isGuide ? day.items : day.activityRefs, 32).length === 0 && <Text className='route-workspace__muted'>自由安排 · 暂未添加活动</Text>}
-      {items.map((activity, i) => activity.day === day.day ? <View key={i} className={`route-workspace__leg ${selected === i ? 'is-active' : ''}`} onClick={() => setSelected(i)}><Text>{firstText(activity.title) ?? '活动'}</Text></View> : null)}
+      {firstText(day.theme) ? <Text>{firstText(day.theme)}</Text> : null}
+      {firstText(day.notes) ? <Text className='route-workspace__muted'>{firstText(day.notes)}</Text> : null}
+      {records(isGuide ? day.items : day.activityRefs, 32).length === 0 && !firstText(day.notes) ? <Text className='route-workspace__muted'>自由安排 · 暂未添加活动</Text> : null}
+      {items.map((activity, i) => activity.day === day.day ? <View key={i} className={`route-workspace__leg ${selected === i ? 'is-active' : ''}`} onClick={() => setSelected(i)}><Text>{displayGuideTime(activity.timeOfDay) ? `${displayGuideTime(activity.timeOfDay)} · ` : ''}{firstText(activity.title) ?? '活动'}</Text></View> : null)}
     </View>)}
     {isResearch && items.map((activity, i) => <View key={i} className={`route-workspace__leg ${selected === i ? 'is-active' : ''}`} onClick={() => setSelected(i)}><Text>{firstText(activity.title) ?? '活动'}</Text></View>)}
     {item ? <View className='route-workspace__section'>
       <Text className='route-workspace__heading'>{firstText(item.title) ?? '活动详情'}</Text>
+      {firstText(item.planningNote) ? <Text>安排建议：{firstText(item.planningNote)}</Text> : null}
       <Text>{firstText(item.summary, item.description) ?? '这是你希望安排的活动，具体内容待进一步核实。'}</Text>
       {verification && <Text className='route-workspace__muted'>核验状态：{firstText(verification.status) ?? '未核验'} · {firstText(verification.checkedAt) ?? ''}</Text>}
       {strings(item.warnings, 20).map(w => <Text key={w} className='route-workspace__warning'>{w}</Text>)}

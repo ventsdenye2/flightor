@@ -4,6 +4,8 @@ import { ToolRegistry } from './registry.js'
 import { AppError } from '../../lib/errors.js'
 import { addArtifactRef, addLocationHandle } from '../goals/working-set.js'
 import { completeGoal, noGoalDelivery, summarizeGoalDelivery, type GoalDelivery, type GoalDeliveryItem } from '../goals/completion.js'
+import { emitActivity, type AgentActivityObserver } from './activity.js'
+import { settleWithSignal } from './cancellation.js'
 
 export interface AgentTrace {
   requestId: string
@@ -40,6 +42,7 @@ export interface AgentRunInput {
   context: ToolExecutionContext
   signal?: AbortSignal
   isGenerationCurrent?: (generationId: string) => boolean
+  onActivity?: AgentActivityObserver
 }
 
 export interface AgentRunResult {
@@ -80,9 +83,11 @@ function toolCalls(message: Extract<ChatMessage, { role: 'assistant' }>): Functi
   return message.tool_calls ?? []
 }
 
-async function syncActiveGoalWorkingSet(context: ToolExecutionContext, outcome: ToolExecutionOutcome): Promise<void> {
+async function syncActiveGoalWorkingSet(context: ToolExecutionContext, outcome: ToolExecutionOutcome, signal: AbortSignal): Promise<void> {
+  signal.throwIfAborted()
   if (!outcome.ok || !context.activeGoalRunId || !context.goalRunRepository) return
   const run = await context.goalRunRepository.get(context.activeGoalRunId)
+  signal.throwIfAborted()
   if (!run || run.status !== 'running') return
   let workingSet = run.workingSet
   const observedAt = new Date().toISOString()
@@ -93,6 +98,7 @@ async function syncActiveGoalWorkingSet(context: ToolExecutionContext, outcome: 
       runId: run.id,
       tripContextVersion: run.contextVersion
     })
+    signal.throwIfAborted()
     if (!artifact) continue
     workingSet = addArtifactRef(workingSet, { id: artifact.id, type: artifact.type, schemaVersion: artifact.schemaVersion, observedAt })
   }
@@ -104,6 +110,7 @@ async function syncActiveGoalWorkingSet(context: ToolExecutionContext, outcome: 
     })
   }
   if (JSON.stringify(workingSet) !== JSON.stringify(run.workingSet)) {
+    signal.throwIfAborted()
     await context.goalRunRepository.update(run.id, run.revision, { status: 'running', workingSet })
   }
 }
@@ -138,7 +145,10 @@ export class AgentRuntime {
   }
 
   async run(input: AgentRunInput): Promise<AgentRunResult> {
-    const controller = controllerFor(input.signal)
+    const controller = new AbortController()
+    const onParentAbort = () => controller.abort(input.signal?.reason)
+    if (input.signal?.aborted) onParentAbort()
+    else input.signal?.addEventListener('abort', onParentAbort, { once: true })
     let turnTimedOut = false
     const turnTimer = setTimeout(() => {
       turnTimedOut = true
@@ -214,7 +224,9 @@ export class AgentRuntime {
     }
 
     const fallback = async (stopReason: AgentRunResult['stopReason'], delivery?: GoalDelivery): Promise<AgentRunResult> => ({
-      reply: this.fallbackReply,
+      reply: stopReason === 'turn_timeout' && this.options.fallbackReply === undefined
+        ? '本轮处理已超时，已保存的结果会保留。你可以继续对话，复用现有结果完成规划。'
+        : this.fallbackReply,
       messages,
       toolSteps,
       toolCalls: executedToolCalls,
@@ -233,18 +245,23 @@ export class AgentRuntime {
         let completion
         const modelStarted = Date.now()
         try {
-          completion = await this.modelClient.complete(messages, this.options.model, {
-            ...this.modelOptions,
-            tools: this.registry.definitions(),
-            toolChoice: 'auto',
-            signal: controller.signal
-          })
+          completion = await settleWithSignal(() => {
+            emitActivity(input.onActivity, { type: 'model_start' })
+            return this.modelClient.complete(messages, this.options.model, {
+              ...this.modelOptions,
+              tools: this.registry.definitions(),
+              toolChoice: 'auto',
+              signal: controller.signal
+            })
+          }, controller.signal)
           this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
             ...(completion.finishReason ? { finishReason: completion.finishReason } : {}) })
         } catch (error) {
           this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
             errorCode: error instanceof AppError ? error.code : 'MODEL_FAILURE' })
           return fallback(controller.signal.aborted ? (turnTimedOut ? 'turn_timeout' : 'cancelled') : 'model_failure')
+        } finally {
+          emitActivity(input.onActivity, { type: 'model_end' })
         }
 
         if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
@@ -256,6 +273,7 @@ export class AgentRuntime {
         if (calls.length === 0) {
           const reply = completion.message.content?.trim()
           if (!reply) return fallback('model_failure')
+          emitActivity(input.onActivity, { type: 'finalizing' })
           const delivery = await readDelivery(true)
           if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled', delivery)
           if (stale(input)) return fallback('stale_generation', delivery)
@@ -285,11 +303,11 @@ export class AgentRuntime {
         })
         const executeOne = async ({ call, allowed }: { call: FunctionToolCall; allowed: boolean }) => {
           const outcome = allowed
-            ? await this.registry.execute(call, executionContext, controller.signal)
+            ? await this.registry.execute(call, executionContext, controller.signal, input.onActivity)
             : this.registry.budgetExceeded(call)
           observeGoal()
           try {
-            await syncActiveGoalWorkingSet(executionContext, outcome)
+            await settleWithSignal(() => syncActiveGoalWorkingSet(executionContext, outcome, controller.signal), controller.signal)
           } catch {
             outcome.warnings = [...new Set([...outcome.warnings, 'goal_working_set_update_failed'])]
           }
@@ -334,6 +352,7 @@ export class AgentRuntime {
       }
     } finally {
       clearTimeout(turnTimer)
+      input.signal?.removeEventListener('abort', onParentAbort)
     }
   }
 }

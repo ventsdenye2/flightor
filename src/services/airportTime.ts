@@ -12,6 +12,8 @@ export interface AirportTimePresentation {
   schemaVersion: 1
   airportTimes: Record<string, AirportTimeView>
   truncated: boolean
+  /** Payload fields whose stored values cannot currently be confirmed by the server. */
+  unconfirmedFields?: string[]
 }
 
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -20,6 +22,8 @@ const text = (value: unknown, max: number): value is string => typeof value === 
 /** Invalid or newer presentation falls back safely without discarding the immutable result. */
 export function readAirportTimePresentation(value: unknown): AirportTimePresentation | undefined {
   if (!record(value) || value.schemaVersion !== 1 || typeof value.truncated !== 'boolean' || !record(value.airportTimes)) return
+  if (value.unconfirmedFields !== undefined && (!Array.isArray(value.unconfirmedFields) || value.unconfirmedFields.length > 8192
+    || !value.unconfirmedFields.every(pointer => text(pointer, 512) && pointer.startsWith('/')))) return
   const entries = Object.entries(value.airportTimes)
   if (entries.length > 8192) return
   const airportTimes: Record<string, AirportTimeView> = {}
@@ -40,7 +44,13 @@ export function readAirportTimePresentation(value: unknown): AirportTimePresenta
       ...(view.airportIata === undefined ? {} : { airportIata: view.airportIata as string })
     }
   }
-  return { schemaVersion: 1, airportTimes, truncated: value.truncated }
+  return { schemaVersion: 1, airportTimes, truncated: value.truncated,
+    ...(Array.isArray(value.unconfirmedFields) ? { unconfirmedFields: [...new Set(value.unconfirmedFields as string[])] } : {}) }
+}
+
+/** Apply server uncertainty by payload pointer, independently of provider or artifact age. */
+export function isUnconfirmedField(presentation: AirportTimePresentation | undefined, pointer: string): boolean {
+  return presentation?.unconfirmedFields?.includes(pointer) === true
 }
 
 /** Never use the device timezone as an airport timezone, including legacy/cached results. */

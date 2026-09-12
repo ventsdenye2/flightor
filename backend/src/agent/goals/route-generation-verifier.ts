@@ -1,5 +1,6 @@
 import type { ArtifactRecord } from '../../artifacts/repository.js'
 import { routeSetPayloadSchema, type CompleteFlightPath } from '../../flight-routing/types.js'
+import { connectionMinimumMinutes, edgeHasAirportChange, edgeLocations, internalTransfers, LONG_STOPOVER_MINUTES, pathHasSelfTransfer, pathTransferCount } from '../../flight-routing/itinerary.js'
 import { locationsOverlap } from '../../locations/identity.js'
 import { CURATED_LOCATION_IDENTITY_POLICY } from '../../locations/curated-directory.js'
 import { canonicalFingerprint } from './repository.js'
@@ -18,16 +19,21 @@ function pathMissing(path: CompleteFlightPath, context: GoalVerificationContext)
   if (required.length === 0 || required.some(location => !path.nodes.some(node => overlaps(node.location, location)))) missing.push('route_required_location_coverage')
   if (required.length > 0 && !required.some(location => overlaps(destination, location))) missing.push('route_destination')
   const excluded = [...trip.destinationIntent.excluded, ...trip.locationRoleOverrides.filter(value => value.role === 'avoid').map(value => value.location)]
-  if (path.nodes.some(node => excluded.some(location => overlaps(node.location, location)))) missing.push('route_excluded_location')
+  if ([...path.nodes.map(node => node.location), ...path.edges.flatMap(edgeLocations)].some(airport => excluded.some(location => overlaps(airport, location)))) missing.push('route_excluded_location')
   const departure = path.edges[0]!.departureDate
   const from = trip.departureWindow?.from ?? trip.departureWindow?.to
   const to = trip.departureWindow?.to ?? trip.departureWindow?.from
   if (!from || !to || departure < from || departure > to) missing.push('route_departure_date')
   if (path.edges.some((edge, index) => index > 0 && edge.departureDate < (path.edges[index - 1]!.arrivalDate ?? path.edges[index - 1]!.departureDate))) missing.push('route_temporal_consistency')
+  if (path.edges.some(edge => internalTransfers(edge).some(transfer => transfer.durationMinutes !== undefined && transfer.durationMinutes < 0))) missing.push('route_temporal_consistency')
+  if (path.edges.some(edge => internalTransfers(edge).some(transfer => transfer.durationMinutes !== undefined
+    && transfer.durationMinutes < connectionMinimumMinutes(edge.transferType === 'self', transfer.arrivalAirport.iata !== transfer.departureAirport.iata)))) missing.push('route_connection_buffer')
+  if (path.transferCount !== pathTransferCount(path.edges)) missing.push('route_transfer_count')
   if (path.edges.some(edge => edge.from.type !== 'airport' || !edge.from.iata || edge.to.type !== 'airport' || !edge.to.iata)) missing.push('route_airport_identity')
   if (trip.returnWindow || trip.requiredGroundLegs.length > 0) missing.push('route_supported_scope')
-  if (trip.transferPreferences.acceptsSelfTransfer !== true && path.edges.some(edge => edge.transferType === 'self')) missing.push('route_self_transfer_policy')
-  if (trip.transferPreferences.acceptsAirportChange !== true && path.edges.some(edge => edge.airportChange)) missing.push('route_airport_change_policy')
+  if (trip.transferPreferences.acceptsSelfTransfer !== true && pathHasSelfTransfer(path.edges)) missing.push('route_self_transfer_policy')
+  if (trip.transferPreferences.acceptsAirportChange !== true && path.edges.some(edgeHasAirportChange)) missing.push('route_airport_change_policy')
+  if (trip.transferPreferences.acceptsLongStopover !== true && path.edges.some(edge => internalTransfers(edge).some(transfer => (transfer.durationMinutes ?? 0) > LONG_STOPOVER_MINUTES))) missing.push('route_long_stopover_policy')
   return missing
 }
 

@@ -1,12 +1,15 @@
 import { z } from 'zod'
 import { locationRefSchema, verificationRecordSchema } from '../aviation/types.js'
 
+export const RESEARCH_TYPE_DESCRIPTION = 'activity: a place to visit, meal or experience; practical: factual logistics such as transport, booking or visitor passes; event: a dated exhibition or festival; seasonal: a seasonal condition; stopover: an airport layover experience. Classify by the evidence, not by which category is easiest to fill.'
+export const researchTypeSchema = z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']).describe(RESEARCH_TYPE_DESCRIPTION)
+
 export const researchBriefSchema = z.object({
   destinations: z.array(locationRefSchema).min(1).max(12),
   travelWindow: z.object({ from: z.iso.date().optional(), to: z.iso.date().optional() }).strict().optional(),
   interests: z.array(z.string().trim().min(1).max(80)).max(32),
   questions: z.array(z.string().trim().min(1).max(500)).min(1).max(24),
-  researchTypes: z.array(z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical'])).min(1).max(5),
+  researchTypes: z.array(researchTypeSchema).min(1).max(5),
   maxResults: z.number().int().min(1).max(50).optional()
 }).strict()
 
@@ -50,7 +53,7 @@ export const researchSourceSchema = z.object({
 
 export const researchFindingSchema = z.object({
   id: z.string().min(1).max(160),
-  category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']),
+  category: researchTypeSchema,
   destinations: z.array(locationRefSchema).min(1).max(12),
   title: z.string().min(1).max(240),
   summary: z.string().min(1).max(1_500),

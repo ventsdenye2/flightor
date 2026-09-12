@@ -48,7 +48,7 @@ function loader(stubs, globals = {}) {
   return load
 }
 
-function authHarness() {
+function authHarness(globals = {}) {
   const storage = new Map([
     ['access_token', 'access-old'], ['refresh_token', 'refresh-old'],
     ['flightor:profile', { uid: 'owner-old', nickname: '', avatarUrl: '' }]
@@ -64,7 +64,7 @@ function authHarness() {
     showLoading() {}, hideLoading() {}, showToast() {}
   }
   const load = loader({ '@tarojs/taro': taro, '../i18n': { t: key => key },
-    mobx: { makeAutoObservable() {}, runInAction: run => run() }, './chatHistory': { clearCloudChatHistory() {} } })
+    mobx: { makeAutoObservable() {}, runInAction: run => run() }, './chatHistory': { clearCloudChatHistory() {} } }, globals)
   const auth = load('src/utils/authSession.ts')
   const { request } = load('src/utils/request.ts')
   const { userStore, registerUserSessionClearHandler } = load('src/stores/userStore.ts')
@@ -384,6 +384,91 @@ await test('delivery labels never equate a model response or pending goal with c
   assert.match(conversationDeliveryLabel({ status: 'pending' }, 'zh'), /尚未完成/)
   assert.match(conversationDeliveryLabel({ status: 'partial' }, 'zh'), /待完成/)
   assert.match(conversationDeliveryLabel({ status: 'satisfied' }, 'zh'), /已完成并保存/)
+})
+
+const localBuild = { FLIGHTOR_API_BASE_URL: 'http://127.0.0.1:3000', FLIGHTOR_LOCAL_LOGIN_KEY: 'local-test-client-key-with-at-least-32-characters' }
+
+await test('explicit local sign-in uses the real API, no WeChat call and no previous bearer', async () => {
+  const h = authHarness(localBuild)
+  let wechatCalls = 0
+  h.taro.login = async () => { wechatCalls += 1; throw new Error('WeChat must not be called') }
+  h.setTransport(async options => {
+    assert.equal(options.url, 'http://127.0.0.1:3000/v1/auth/local')
+    assert.equal(options.header.Authorization, undefined)
+    assert.equal(options.header['x-local-login-key'], localBuild.FLIGHTOR_LOCAL_LOGIN_KEY)
+    return ok({ accessToken: 'local-access', refreshToken: 'local-refresh', user: { id: 'local-owner', nickname: 'Local', avatarUrl: '' } })
+  })
+  assert.equal(await h.userStore.login(undefined, { method: 'local' }), true)
+  assert.equal(wechatCalls, 0)
+  assert.equal(h.userStore.profile.loginMethod, 'local')
+  assert.equal(h.storage.get('access_token'), 'local-access')
+  assert.equal(h.storage.get('refresh_token'), 'local-refresh')
+})
+
+await test('local login is unavailable without opt-in or with a remote API, before any request', async () => {
+  for (const config of [{}, { ...localBuild, FLIGHTOR_API_BASE_URL: 'https://flightor.test' }, { ...localBuild, FLIGHTOR_USE_MOCK: true }]) {
+    const h = authHarness(config)
+    await assert.rejects(h.userStore.login(undefined, { method: 'local' }), /LOCAL_LOGIN_DISABLED/)
+    assert.equal(h.calls.length, 0)
+  }
+})
+
+await test('logout invalidates a pending local login response and clears its credentials', async () => {
+  const h = authHarness(localBuild)
+  const reply = deferred()
+  h.setTransport(() => reply.promise)
+  const login = h.userStore.login(undefined, { method: 'local' })
+  h.userStore.logout()
+  reply.resolve(ok({ accessToken: 'late-local-access', refreshToken: 'late-local-refresh', user: { id: 'local-owner', nickname: '', avatarUrl: '' } }))
+  assert.equal(await login, false)
+  assert.equal(h.userStore.profile, null)
+  assert.equal(h.storage.has('access_token'), false)
+})
+
+await test('WeChat configuration errors remain explicit without fallback or generic network toast', async () => {
+  const h = authHarness(localBuild)
+  let toasts = 0
+  h.taro.showToast = () => { toasts += 1 }
+  h.setTransport(async () => ({ statusCode: 503, data: { error: { code: 'WECHAT_NOT_CONFIGURED', message: 'Missing config' } } }))
+  await assert.rejects(h.userStore.login(), error => error.code === 'WECHAT_NOT_CONFIGURED')
+  assert.equal(h.calls.length, 1)
+  assert.ok(h.calls[0].url.endsWith('/auth/wechat'))
+  assert.equal(toasts, 0)
+})
+
+function loginSheetHarness(login, localAvailable) {
+  const engine = hooks()
+  let resumed = 0
+  const load = loader({
+    react: { useState: (...args) => engine.useState(...args), useRef: (...args) => engine.useRef(...args), useEffect: (...args) => engine.useEffect(...args) },
+    'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
+    '@tarojs/components': { View: 'View', Text: 'Text', Input: 'Input', Button: 'Button', Image: 'Image' },
+    '@tarojs/taro': { showToast() {} }, 'mobx-react-lite': { observer: component => component },
+    '../../stores/userStore': { userStore: { isLoggingIn: false, login } },
+    '../../services/authService': { persistAvatar: async value => value, LOCAL_LOGIN_AVAILABLE: localAvailable },
+    '../../i18n': { t: key => key }
+  })
+  const Sheet = load('src/components/common/LoginSheet.tsx').default
+  return {
+    render() { engine.begin(); const tree = Sheet({ visible: true, onClose() {}, onSuccess() { resumed += 1 } }); engine.finish(); return tree },
+    get resumed() { return resumed }
+  }
+}
+
+await test('the local button appears only when available and resumes the interrupted action', async () => {
+  let method
+  const h = loginSheetHarness(async (_profile, options) => { method = options.method; return true }, true)
+  await find(h.render(), node => node.props.className === 'login-sheet__local-button').props.onClick()
+  assert.equal(method, 'local')
+  assert.equal(h.resumed, 1)
+  assert.equal(find(loginSheetHarness(async () => true, false).render(), node => node.props.className === 'login-sheet__local-button'), undefined)
+})
+
+await test('the login form keeps an actionable configuration error visible', async () => {
+  const h = loginSheetHarness(async () => { throw { code: 'WECHAT_NOT_CONFIGURED' } }, true)
+  await find(h.render(), node => node.props.className === 'login-sheet__confirm ').props.onClick()
+  assert.equal(find(h.render(), node => node.props.className === 'login-sheet__error').props.children, 'login.notConfigured')
+  assert.equal(h.resumed, 0)
 })
 
 console.log(`\nSession recovery: ${passed} passed`)

@@ -195,7 +195,7 @@ function SearchPage() {
             const saving = flightStore.savingsOf(f)
             // 组合徽章：只保留结果排序徽章；请求本身没有候选机场或弹性日期。
             const badges: string[] = []
-            if (idx === 0 && flightStore.visibleOptions.length > 1) {
+            if (idx === 0 && flightStore.visibleOptions.length > 1 && (flightStore.sortBy !== 'duration' || f.totalDuration !== undefined)) {
               badges.push(flightStore.sortBy === 'recommended' ? t('sp.recommended') : flightStore.sortBy === 'price' ? t('sp.best') : t('sp.fastest'))
             }
             return (

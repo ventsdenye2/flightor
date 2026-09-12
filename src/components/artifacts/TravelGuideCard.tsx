@@ -1,7 +1,7 @@
 import { View, Text } from '@tarojs/components'
 import type { ArtifactEnvelope } from '../../services/artifactService'
 import { ArtifactCard } from './ArtifactCard'
-import { displayLocation, firstText, numberValue, record, records } from './payload'
+import { displayGuideTime, displayLocation, firstText, numberValue, record, records } from './payload'
 import './TravelGuideCard.scss'
 
 export interface TravelGuideCardProps {
@@ -37,12 +37,14 @@ export function TravelGuideCard({ artifact, onAction }: TravelGuideCardProps) {
                 <Text className='artifact-guide__day-label'>{dayNumber !== undefined ? `DAY ${dayNumber}` : 'DAY'}</Text>
                 <Text className='artifact-guide__city'>{city ?? 'City not provided'}</Text>
               </View>
+              {firstText(day.theme) ? <Text className='artifact-guide__theme'>{firstText(day.theme)}</Text> : null}
               {items.slice(0, 2).map((item, itemIndex) => (
                 <Text key={firstText(item.id) ?? `${firstText(item.title) ?? 'item'}-${itemIndex}`} className='artifact-guide__item'>
-                  {firstText(item.title) ?? 'Activity title unavailable'}
+                  {displayGuideTime(item.timeOfDay) ? `${displayGuideTime(item.timeOfDay)} · ` : ''}{firstText(item.title) ?? 'Activity title unavailable'}
                 </Text>
               ))}
-              {items.length === 0 && <Text className='artifact-guide__item'>No activity details returned.</Text>}
+              {firstText(day.notes) ? <Text className='artifact-guide__more'>{firstText(day.notes)}</Text> : null}
+              {items.length === 0 && !firstText(day.notes) ? <Text className='artifact-guide__item'>No activity details returned.</Text> : null}
             </View>
           )
         })}

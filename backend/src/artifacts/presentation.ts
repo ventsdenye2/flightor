@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { airportTimeViewSchema, projectAirportTime, type AirportTimeView } from '../aviation/airport-time.js'
+import { projectUnconfirmedFareFields } from '../fares/presentation.js'
 import type { ArtifactRecord } from './repository.js'
 
 export const MAX_AIRPORT_TIME_VIEWS = 8192
@@ -9,6 +10,7 @@ const MAX_PAYLOAD_DEPTH = 32
 export const artifactPresentationSchema = z.object({
   schemaVersion: z.literal(1),
   airportTimes: z.record(z.string().max(MAX_POINTER_LENGTH), airportTimeViewSchema),
+  unconfirmedFields: z.array(z.string().min(1).max(MAX_POINTER_LENGTH).startsWith('/')).max(MAX_AIRPORT_TIME_VIEWS).optional(),
   truncated: z.boolean()
 }).strict().refine(value => Object.keys(value.airportTimes).length <= MAX_AIRPORT_TIME_VIEWS)
 export type ArtifactPresentation = z.infer<typeof artifactPresentationSchema>
@@ -24,7 +26,7 @@ function pointer(parent: string, key: string): string {
   return `${parent}/${key.replace(/~/g, '~0').replace(/\//g, '~1')}`
 }
 
-/** Project only supported temporal domain fields, using their own airport facts.
+/** Project supported display fields, using their own domain evidence.
  * This pure read requires no provider requests and preserves the stored payload. */
 export function projectArtifactPresentation(record: Pick<ArtifactRecord, 'type' | 'schemaVersion' | 'payload'>): ArtifactPresentation | undefined {
   const supported = record.type === 'route_set' ? record.schemaVersion === 1
@@ -62,7 +64,9 @@ export function projectArtifactPresentation(record: Pick<ArtifactRecord, 'type' 
     for (const [key, child] of Object.entries(item)) walk(child, pointer(path, key), depth + 1)
   }
   walk(record.payload, '', 0)
-  return { schemaVersion: 1, airportTimes, truncated }
+  const unconfirmedFields = record.type === 'flight_search'
+    ? projectUnconfirmedFareFields(record.payload, record.schemaVersion) : []
+  return { schemaVersion: 1, airportTimes, ...(unconfirmedFields.length ? { unconfirmedFields } : {}), truncated }
 }
 
 export function presentArtifact(record: ArtifactRecord): PresentedArtifact {
@@ -70,11 +74,13 @@ export function presentArtifact(record: ArtifactRecord): PresentedArtifact {
   return presentation ? { ...record, presentation } : record
 }
 
-/** Agent-readable copies replace each bare timestamp with the same explicit view
- * that the UI receives. UTC remains named `instant`, not an unlabelled clock. */
+/** Agent-readable copies use the same time and unconfirmed-fact projections as
+ * the UI. UTC remains named `instant`, not an unlabelled clock. */
 export function artifactReadingContent(record: ArtifactRecord): string {
   const presentation = projectArtifactPresentation(record)
+  const unconfirmedFields = new Set(presentation?.unconfirmedFields)
   const copy = (value: unknown, path: string, depth: number): unknown => {
+    if (unconfirmedFields.has(path)) return { status: 'unverified', reason: 'legacy_unattributed' }
     const time = presentation?.airportTimes[path]
     if (time) return time
     if (depth > MAX_PAYLOAD_DEPTH || value === null || typeof value !== 'object') return value

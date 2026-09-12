@@ -10,8 +10,9 @@ export interface RouteLeg {
   departureDisplay: string; arrivalDisplay: string
   flightNumber?: string; marketingCarrier?: string
   fare?: { amount: number; currency: string }
-  fareArtifactId?: string; transferType: 'direct' | 'protected' | 'self'
+  fareArtifactId?: string; transferType: 'direct' | 'airline' | 'protected' | 'self'
   airportChange: boolean; warnings: string[]; checkedAt?: string
+  layovers: Array<{ afterSegmentIndex: number; durationMinutes?: number; overnight?: boolean }>
   segments: Array<{ from: RouteLocation; to: RouteLocation; departureAt?: string; arrivalAt?: string; departureDisplay: string; arrivalDisplay: string; flightNumber?: string; marketingCarrier?: string }>
 }
 export interface RouteView {
@@ -46,12 +47,12 @@ function money(value: unknown): RouteView['totalFare'] {
 }
 function leg(value: unknown, presentation?: AirportTimePresentation, pointer = ''): RouteLeg | undefined {
   const v = obj(value), from = location(v?.from), to = location(v?.to)
-  if (!v || !str(v.id, 160) || !from || !to || from.id === to.id || !['direct', 'protected', 'self'].includes(String(v.transferType))) return undefined
+  if (!v || !str(v.id, 160) || !from || !to || from.id === to.id || !['direct', 'airline', 'protected', 'self'].includes(String(v.transferType))) return undefined
   const departureAt = instant(v.departureAt), arrivalAt = instant(v.arrivalAt)
   if (departureAt && arrivalAt && Date.parse(arrivalAt) < Date.parse(departureAt)) return undefined
   const segments: RouteLeg['segments'] = []
-  if (v.segments !== undefined && (!Array.isArray(v.segments) || !v.segments.length || v.segments.length > 4)) return undefined
-  for (const [index, raw] of list(v.segments, 4).entries()) {
+  if (v.segments !== undefined && (!Array.isArray(v.segments) || !v.segments.length || v.segments.length > 12)) return undefined
+  for (const [index, raw] of list(v.segments, 12).entries()) {
     const s = obj(raw), a = location(s?.from), b = location(s?.to)
     if (!s || !a || !b || a.id === b.id) return undefined
     const departure = instant(s.departureAt), arrival = instant(s.arrivalAt)
@@ -63,13 +64,22 @@ function leg(value: unknown, presentation?: AirportTimePresentation, pointer = '
       flightNumber: str(s.flightNumber, 32), marketingCarrier: str(s.marketingCarrier, 80) })
   }
   if (segments.length && (segments[0].from.id !== from.id || segments[segments.length - 1].to.id !== to.id)) return undefined
+  const layovers: RouteLeg['layovers'] = []
+  for (const raw of list(v.layovers, 11)) {
+    const item = obj(raw)
+    const index = item?.afterSegmentIndex
+    if (typeof index !== 'number' || !Number.isInteger(index) || index < 0 || index >= segments.length - 1
+      || layovers.some(value => value.afterSegmentIndex === index)) continue
+    layovers.push({ afterSegmentIndex: index, durationMinutes: num(item?.durationMinutes),
+      ...(typeof item?.overnight === 'boolean' ? { overnight: item.overnight } : {}) })
+  }
   return {
     id: String(v.id), from, to, departureAt, arrivalAt, durationMinutes: num(v.durationMinutes),
     departureDisplay: airportTimeDisplay(departureAt, presentation, `${pointer}/departureAt`),
     arrivalDisplay: airportTimeDisplay(arrivalAt, presentation, `${pointer}/arrivalAt`),
     fare: money(v.fare), fareArtifactId: str(v.fareArtifactId, 160),
     transferType: v.transferType as RouteLeg['transferType'], airportChange: v.airportChange === true,
-    warnings: texts(v.warnings), checkedAt: instant(obj(v.verification)?.checkedAt), segments
+    warnings: texts(v.warnings), checkedAt: instant(obj(v.verification)?.checkedAt), segments, layovers
   }
 }
 function path(value: unknown, scored?: Obj, presentation?: AirportTimePresentation, pointer = ''): RouteView | undefined {

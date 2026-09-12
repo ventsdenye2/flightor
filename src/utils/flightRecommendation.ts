@@ -1,5 +1,6 @@
 import type { FlightOption, TransitCountryPreferences, TransitCountryPreference } from '../types/flight'
 import { countryOfAirport, findCountry, type Country } from '../mocks/countries'
+import { flightConnections } from '../services/flightConnections'
 
 export interface CountryPreferenceMatch {
   country: Country
@@ -45,15 +46,11 @@ export function isExcludedByCountry(flight: FlightOption, preferences: TransitCo
 }
 
 /** 只计算航段之间的等待时间，避免把飞行时间误当作中转体验。 */
-export function totalLayoverMinutes(flight: FlightOption): number {
-  let total = 0
-  for (let index = 1; index < flight.segments.length; index++) {
-    const previousArrival = new Date(flight.segments[index - 1].arriveTime).getTime()
-    const currentDeparture = new Date(flight.segments[index].departTime).getTime()
-    const minutes = Math.round((currentDeparture - previousArrival) / 60000)
-    if (Number.isFinite(minutes) && minutes > 0) total += minutes
-  }
-  return total
+export function totalLayoverMinutes(flight: FlightOption): number | undefined {
+  const connections = flightConnections(flight.segments.map(segment => ({ origin: segment.origin, destination: segment.destination,
+    departureAt: segment.departTime, arrivalAt: segment.arriveTime })), flight.layovers)
+  if (connections.length !== Math.max(0, flight.segments.length - 1) || connections.some(connection => connection.durationMinutes === undefined)) return undefined
+  return connections.reduce((total, connection) => total + connection.durationMinutes!, 0)
 }
 
 /**
@@ -67,28 +64,31 @@ export function sortByRecommendation(
 ): FlightOption[] {
   if (flights.length < 2) return [...flights]
   const prices = flights.map(flight => flight.totalPrice)
-  const durations = flights.map(flight => flight.totalDuration)
-  const layovers = flights.map(totalLayoverMinutes)
+  const durations = flights.flatMap(flight => flight.totalDuration === undefined ? [] : [flight.totalDuration])
+  const flightLayovers = flights.map(totalLayoverMinutes)
+  const layovers = flightLayovers.filter((value): value is number => value !== undefined)
   const minPrice = Math.min(...prices)
   const maxPrice = Math.max(...prices)
   const minDuration = Math.min(...durations)
   const maxDuration = Math.max(...durations)
   const minLayover = Math.min(...layovers)
   const maxLayover = Math.max(...layovers)
-  const normalize = (value: number, min: number, max: number) => (value - min) / (max - min || 1)
+  const normalize = (value: number | undefined, min: number, max: number) => value === undefined ? 1 : (value - min) / (max - min || 1)
 
-  const score = (flight: FlightOption) => {
+  const scored = flights.map((flight, index) => {
     const match = countryPreferenceMatch(flight, preferences)
     const countryAdjustment = match?.preference === 'preferred' ? -0.22 : 0
     const connectionRisk = flight.transferType === 'self' ? 0.1 : flight.transferType === 'airline' ? 0.04 : 0
-    return (
+    const score = (
       normalize(flight.totalPrice, minPrice, maxPrice) * 0.55 +
       normalize(flight.totalDuration, minDuration, maxDuration) * 0.15 +
-      normalize(totalLayoverMinutes(flight), minLayover, maxLayover) * 0.2 +
+      normalize(flightLayovers[index], minLayover, maxLayover) * 0.2 +
       connectionRisk +
       countryAdjustment
     )
-  }
+    return { flight, score }
+  })
 
-  return [...flights].sort((a, b) => score(a) - score(b) || a.totalPrice - b.totalPrice)
+  return scored.sort((a, b) => Number(a.flight.totalDuration === undefined) - Number(b.flight.totalDuration === undefined)
+    || a.score - b.score || a.flight.totalPrice - b.flight.totalPrice).map(item => item.flight)
 }

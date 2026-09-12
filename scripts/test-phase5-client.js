@@ -5,6 +5,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import vm from 'node:vm'
 import ts from 'typescript'
+import * as mobx from 'mobx'
 
 const servicePath = path.resolve(process.cwd(), 'src', 'services', 'conversationService.ts')
 const source = fs.readFileSync(servicePath, 'utf8')
@@ -18,7 +19,8 @@ const requestStub = async options => {
   calls.push(options)
   if (options.url === '/v1/trips') return { trip: { id: 'trip-1' } }
   if (options.url === '/v1/conversations') return { conversation: { id: 'conversation-1' } }
-  return {
+  if (options.url === '/v1/agent/turns') return { turnId: 'cloud-turn-1', status: 'running', startedAt: '2026-09-08T00:00:00.000Z' }
+  return { turnId: 'cloud-turn-1', status: 'completed', stage: 'finalizing', startedAt: '2026-09-08T00:00:00.000Z', updatedAt: '2026-09-08T00:00:01.000Z', response: {
     conversationId: 'conversation-1',
     tripId: 'trip-1',
     reply: 'cloud reply',
@@ -32,7 +34,7 @@ const requestStub = async options => {
     suggestedActions: [{ id: 'continue_planning', label: 'Continue planning', kind: 'message' }],
     warnings: [],
     stopReason: 'needs_user_input'
-  }
+  } }
 }
 
 const module = { exports: {} }
@@ -43,6 +45,7 @@ vm.runInNewContext(compiled, {
   URL,
   require(specifier) {
     if (specifier === '../utils/request') return { request: requestStub, USE_MOCK: false }
+    if (specifier === '../utils/authSession') return { authSnapshot: () => ({ revision: 1 }), assertAuthSession: () => {} }
     if (specifier === './budgetParser') return { parseBudget: () => null }
     throw new Error(`unexpected dependency: ${specifier}`)
   }
@@ -112,7 +115,7 @@ check('bootstrap binds Conversation to returned Trip', JSON.stringify(calls[1]?.
 
 calls.length = 0
 await service.converse({ tripId: 'trip-1', conversationId: 'conversation-1', message: '  latest request  ' })
-check('Planner body contains exactly one new message', calls[0]?.url === '/v1/agent/converse'
+check('Planner body contains exactly one new message', calls[0]?.url === '/v1/agent/turns'
   && JSON.stringify(calls[0]?.data) === JSON.stringify({
     tripId: 'trip-1', conversationId: 'conversation-1', message: 'latest request'
   }))
@@ -241,10 +244,11 @@ const chatHistoryRuntime = {
   }
 }
 const chatStoreModule = { exports: {} }
-vm.runInNewContext(chatStoreCompiled, {
+const chatStoreSandbox = {
   module: chatStoreModule,
   exports: chatStoreModule.exports,
   console,
+  Error,
   URL,
   setTimeout: callback => { callback(); return 0 },
   require(specifier) {
@@ -267,8 +271,27 @@ vm.runInNewContext(chatStoreCompiled, {
     if (specifier === '../services/routeGenerationService') return routeAction
     throw new Error(`unexpected ChatStore dependency: ${specifier}`)
   }
-}, { filename: chatStorePath })
+}
+vm.runInNewContext(chatStoreCompiled, chatStoreSandbox, { filename: chatStorePath })
 const ChatStore = chatStoreModule.exports.ChatStore
+
+// Real MobX catches erased optional fields that a no-op makeAutoObservable stub cannot.
+const observableStoreModule = { exports: {} }
+vm.runInNewContext(chatStoreCompiled, {
+  ...chatStoreSandbox,
+  module: observableStoreModule,
+  exports: observableStoreModule.exports,
+  require: specifier => specifier === 'mobx' ? mobx : chatStoreSandbox.require(specifier)
+}, { filename: chatStorePath })
+const observableStore = new observableStoreModule.exports.ChatStore()
+const observedStages = []
+const disposeProgressReaction = mobx.reaction(() => observableStore.turnProgress?.stage, stage => observedStages.push(stage))
+mobx.runInAction(() => { observableStore.turnProgress = { connection: 'running', stage: 'thinking', startedAt: 1 } })
+mobx.runInAction(() => { observableStore.turnProgress = { connection: 'running', stage: 'researching', startedAt: 1 } })
+mobx.runInAction(() => { observableStore.turnProgress = undefined })
+disposeProgressReaction()
+check('real MobX observes transport stages and their cleanup', mobx.isObservableProp(observableStore, 'turnProgress')
+  && JSON.stringify(observedStages) === JSON.stringify(['thinking', 'researching', undefined]))
 
 function cloneRun(run) {
   return JSON.parse(JSON.stringify(run))
@@ -648,12 +671,14 @@ chatStoreUserStore.profile = { uid: 'user-a' }
 let initialBootstrapResolvers = []
 bootstrapCloudSessionStub = () => new Promise(resolve => initialBootstrapResolvers.push(resolve))
 const firstLoginSend = firstLoginSendStore.send('preserved login draft', 'en')
+check('progress starts before owner bootstrap and never guesses a server stage', firstLoginSendStore.turnProgress?.connection === 'connecting'
+  && firstLoginSendStore.turnProgress?.stage === undefined && firstLoginSendStore.turnProgress.startedAt > 0)
 const duplicateAfterLogin = await firstLoginSendStore.send('preserved login draft', 'en')
 check('first login keeps one send occupied while owner activation initializes the cloud session', firstLoginSendStore.isThinking
   && !duplicateAfterLogin && initialBootstrapResolvers.length === 1)
 initialBootstrapResolvers[0]({ tripId: 'trip-1', conversationId: 'conversation-1' })
 check('the first accepted login send completes once and releases its occupancy', await firstLoginSend === true
-  && !firstLoginSendStore.isThinking && sentRequests.length === 1)
+  && !firstLoginSendStore.isThinking && firstLoginSendStore.turnProgress === undefined && sentRequests.length === 1)
 
 const failedInitializationStore = new ChatStore()
 bootstrapCloudSessionStub = async () => { throw new Error('bootstrap unavailable') }
@@ -697,6 +722,72 @@ check('logout releases the old occupancy and late responses cannot unlock the ne
 initialBootstrapResolvers[1]({ tripId: 'trip-1', conversationId: 'conversation-1' })
 check('a new owner can finish sending after logout without waiting for the old request', await newOwnerSend === true
   && !logoutOccupancyStore.isThinking && logoutOccupancyStore.timeline.at(-1).user.content === 'new owner request')
+
+// Transport progress belongs to this active send only; snapshots stay business-only.
+chatStoreUserStore.profile = { uid: 'user-a' }
+chatStoreUserStore.sessionRevision = 1
+bootstrapCloudSessionStub = async () => ({ tripId: 'trip-1', conversationId: 'conversation-1' })
+let publishProgress
+let finishProgress
+let finishWorkspace
+converseStub = (_request, options) => {
+  publishProgress = options.onProgress
+  return new Promise(resolve => { finishProgress = resolve })
+}
+workspaceStub = () => new Promise(resolve => { finishWorkspace = resolve })
+const progressStore = makeRouteStore()
+const progressSend = progressStore.send('show real progress', 'en')
+await Promise.resolve()
+await Promise.resolve()
+publishProgress({ connection: 'running', stage: 'researching', startedAt: 100, lastConfirmedAt: 200, turnId: 'remote-turn' })
+check('ChatStore exposes the confirmed server stage without adding an assistant message', progressStore.turnProgress?.stage === 'researching'
+  && progressStore.timeline.at(-1).assistant === null)
+publishProgress({ connection: 'reconnecting', stage: 'researching', startedAt: 100, lastConfirmedAt: 200, turnId: 'remote-turn' })
+check('reconnection keeps the previous server heartbeat and stays transient', progressStore.turnProgress?.lastConfirmedAt === 200
+  && progressStore.turnProgress.connection === 'reconnecting'
+  && !JSON.stringify(progressStore.liveSessionSnapshot()).includes('remote-turn')
+  && !JSON.stringify(progressStore.liveSessionSnapshot()).includes('lastConfirmedAt'))
+publishProgress({ connection: 'completed', stage: 'finalizing', startedAt: 100, lastConfirmedAt: 300, turnId: 'remote-turn' })
+finishProgress(response)
+await Promise.resolve()
+await Promise.resolve()
+check('completed transport remains visible while the saved workspace is loading', progressStore.isThinking
+  && progressStore.turnProgress?.connection === 'completed' && typeof finishWorkspace === 'function')
+finishWorkspace({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [], messages: [] })
+check('success clears transient progress after reconciliation', await progressSend === true && progressStore.turnProgress === undefined)
+
+workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: response.tripContextSummary, artifactRefs: [], messages: [] })
+const progressSwitchStore = makeRouteStore()
+const progressSwitchSend = progressSwitchStore.send('old session request', 'en')
+await Promise.resolve()
+await Promise.resolve()
+const latePublish = publishProgress
+const lateFinish = finishProgress
+const progressTargetSession = history.createEmptyChatSession('progress-target-session')
+progressTargetSession.ownerId = 'user-a'
+progressSwitchStore.sessions.push(progressTargetSession)
+progressSwitchStore.switchSession(progressTargetSession.id)
+latePublish({ connection: 'running', stage: 'researching', startedAt: 100, lastConfirmedAt: 200 })
+check('switching workspace clears progress and ignores old callbacks', progressSwitchStore.turnProgress === undefined && !progressSwitchStore.isThinking)
+lateFinish(response)
+check('an obsolete completed turn cannot enter the new workspace', await progressSwitchSend === false && progressSwitchStore.messages.length === 0)
+
+const sameOwnerRevisionStore = makeRouteStore()
+const sameOwnerRevisionSend = sameOwnerRevisionStore.send('superseded login request', 'en')
+await Promise.resolve()
+await Promise.resolve()
+chatStoreUserStore.sessionRevision++
+publishProgress({ connection: 'running', stage: 'researching', startedAt: 100, lastConfirmedAt: 200 })
+check('same-owner re-login invalidates old progress callbacks', sameOwnerRevisionStore.turnProgress?.connection === 'connecting')
+finishProgress(response)
+check('same-owner re-login discards the old response and clears progress', await sameOwnerRevisionSend === false
+  && sameOwnerRevisionStore.turnProgress === undefined && sameOwnerRevisionStore.timeline.at(-1).assistant === null)
+
+converseStub = async () => { throw new Error('AGENT_TURN_TIMEOUT') }
+const progressFailureStore = makeRouteStore()
+check('server timeout clears progress and stays an actionable error instead of an assistant reply', await progressFailureStore.send('slow request', 'en') === false
+  && progressFailureStore.turnProgress === undefined && progressFailureStore.multiError.includes('too long')
+  && progressFailureStore.timeline.at(-1).assistant === null)
 
 console.log(`\n结果：${passed} 通过 / ${failed} 失败`)
 process.exit(failed > 0 ? 1 : 0)

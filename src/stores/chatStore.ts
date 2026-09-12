@@ -10,6 +10,7 @@ import {
   type ConversationMessage,
   type ConversationResponse,
   type ConversationDelivery,
+  type ConversationTurnProgress,
   type CloudArtifactRef,
   type CloudTripContextSummary,
   type DestinationRecommendation,
@@ -191,6 +192,7 @@ export class ChatStore {
   routeGenerationIdempotencyKey = ''
   routeGenerationLoading = false
   routeGenerationError = ''
+  turnProgress: ConversationTurnProgress | undefined = undefined
 
   get isThinking(): boolean { return this.activeSendRequestId !== undefined }
 
@@ -344,6 +346,7 @@ export class ChatStore {
     this.workspaceSyncRequestId += 1
     this.multiConfirmRequestId += 1
     this.activeSendRequestId = undefined
+    this.turnProgress = undefined
     this.plansLoading = false
     this.multiLoading = false
     this.multiConfirming = false
@@ -523,6 +526,12 @@ export class ChatStore {
     if (code === 'INVALID_TRIP_BOOTSTRAP_RESPONSE' || code === 'INVALID_CONVERSATION_BOOTSTRAP_RESPONSE') {
       return locale === 'zh' ? '云端会话初始化失败，请重试。' : 'Cloud session setup failed. Please try again.'
     }
+    if (code === 'CONVERSATION_TURN_NOT_FOUND') {
+      return locale === 'zh' ? '本次处理状态已失效，服务可能已重启。请从行程重新打开，查看已保存的结果后再继续对话。' : 'This request status is no longer available. The service may have restarted. Reopen your trip to check saved results before continuing the conversation.'
+    }
+    if (code === 'CONVERSATION_TURN_TIMEOUT' || code === 'AGENT_TURN_TIMEOUT') {
+      return locale === 'zh' ? '本次处理等待超时。请从行程重新打开，查看已保存的结果后再继续对话。' : 'This request took too long. Reopen your trip to check saved results before continuing the conversation.'
+    }
     return locale === 'zh' ? '规划服务暂时不可用，请重试。' : 'Planning service is unavailable. Please try again.'
   }
 
@@ -546,7 +555,7 @@ export class ChatStore {
     this.persistCurrentSession()
   }
 
-  /** Send every planning turn through the unified converse endpoint. */
+  /** Submit every planning turn once and follow its server-confirmed progress. */
   async send(text: string, locale: 'zh' | 'en'): Promise<boolean> {
     const content = text.trim()
     if (!content || this.isThinking) return false
@@ -563,10 +572,14 @@ export class ChatStore {
     }
 
     this.activeSendRequestId = requestId
+    const sessionRevision = userStore.sessionRevision
+    const startedAt = Date.now()
+    this.turnProgress = { connection: 'connecting', startedAt }
     this.multiLoading = true
     this.plansLoading = false
     let turnId: string | undefined
-    const isCurrent = () => requestId === this.requestGeneration && this.activeSendRequestId === requestId && this.ownerForRequest() === ownerId
+    const isCurrent = () => requestId === this.requestGeneration && this.activeSendRequestId === requestId
+      && this.ownerForRequest() === ownerId && userStore.sessionRevision === sessionRevision
     try {
       await this.ensureCloudSession(ownerId, requestId)
       if (!isCurrent() || !this.tripId || !this.conversationId) return false
@@ -588,7 +601,14 @@ export class ChatStore {
       this.multiActive = true
       this.persistCurrentSession()
 
-      const result = await converse({ tripId: this.tripId, conversationId: this.conversationId, message: content })
+      const result = await converse({ tripId: this.tripId, conversationId: this.conversationId, message: content }, {
+        startedAt,
+        isCurrent,
+        onProgress: progress => {
+          if (!isCurrent()) return
+          runInAction(() => { this.turnProgress = { ...progress } })
+        }
+      })
       if (!isCurrent()) return false
       if (result.tripId !== this.tripId || result.conversationId !== this.conversationId) {
         throw new Error('CONVERSATION_ID_MISMATCH')
@@ -637,6 +657,7 @@ export class ChatStore {
       if (this.activeSendRequestId === requestId) {
         runInAction(() => {
           this.activeSendRequestId = undefined
+          this.turnProgress = undefined
           this.multiLoading = false
           this.plansLoading = false
         })

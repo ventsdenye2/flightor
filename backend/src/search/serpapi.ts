@@ -28,12 +28,22 @@ export interface FlightOption {
   id: string
   segments: FlightSegment[]
   totalPrice: number
-  totalDuration: number
+  totalDuration?: number
   airline: string
   transferType: 'direct' | 'airline'
   departDate: string
   deepLink: string
-  hub?: { iata: string; city: string; layoverMinutes: number; baggageRecheck: boolean } | undefined
+  layovers?: FlightLayover[]
+  hub?: { iata: string; city: string; layoverMinutes?: number; baggageRecheck?: boolean } | undefined
+}
+
+export interface FlightLayover {
+  afterSegmentIndex: number
+  airport: string
+  departureAirport?: string
+  durationMinutes?: number
+  overnight?: boolean
+  airportChange?: boolean
 }
 
 function record(value: unknown): UnknownRecord | undefined {
@@ -57,7 +67,8 @@ function mapSegment(value: unknown): FlightSegment | null {
   const arrival = record(item?.arrival_airport)
   const origin = stringValue(departure?.id).toUpperCase()
   const destination = stringValue(arrival?.id).toUpperCase()
-  if (origin.length !== 3 || destination.length !== 3 || origin === destination) return null
+  if (!/^[A-Z]{3}$/.test(origin) || !/^[A-Z]{3}$/.test(destination) || origin === destination
+    || !stringValue(departure?.time).trim() || !stringValue(arrival?.time).trim()) return null
   const aircraft = stringValue(item?.airplane)
   return {
     flightNo: stringValue(item?.flight_number),
@@ -74,33 +85,58 @@ function mapSegment(value: unknown): FlightSegment | null {
 export function mapSerpItinerary(value: unknown, input: FlightSearchInput, date: string): FlightOption | null {
   const item = record(value)
   const flights = Array.isArray(item?.flights) ? item.flights : []
-  const segments = flights.map(mapSegment).filter((segment): segment is FlightSegment => segment !== null)
+  const mapped = flights.map(mapSegment)
+  // A total fare belongs to the entire itinerary, never a subset of valid legs.
+  if (mapped.length === 0 || mapped.length > 12 || mapped.some(segment => segment === null)) return null
+  const segments = mapped as FlightSegment[]
   const price = numberValue(item?.price)
   if (segments.length === 0 || price <= 0) return null
+  const rawLayovers = Array.isArray(item?.layovers) ? item.layovers : []
+  const layovers: FlightLayover[] = []
   for (let index = 1; index < segments.length; index += 1) {
-    if (segments[index - 1]!.destination !== segments[index]!.origin) return null
+    const airport = segments[index - 1]!.destination
+    const departureAirport = segments[index]!.origin
+    const reported = record(rawLayovers[index - 1])
+    const reportedAirport = stringValue(reported?.id).toUpperCase()
+    const matches = reportedAirport === airport || reportedAirport === departureAirport
+    const airportChange = airport !== departureAirport
+    // Preserve provider-indicated airport changes, but reject disconnected data.
+    if (airportChange && !matches) return null
+    const duration = matches && typeof reported?.duration === 'number' && Number.isFinite(reported.duration) && reported.duration >= 0
+      ? Math.trunc(reported.duration) : undefined
+    layovers.push({
+      afterSegmentIndex: index - 1, airport,
+      ...(airportChange ? { departureAirport, airportChange: true } : {}),
+      ...(duration !== undefined ? { durationMinutes: duration } : {}),
+      ...(matches && typeof reported?.overnight === 'boolean' ? { overnight: reported.overnight } : {})
+    })
   }
-  const totalDuration = numberValue(item?.total_duration)
-    || segments.reduce((sum, segment) => sum + segment.duration, 0)
+  const reportedDuration = typeof item?.total_duration === 'number' && Number.isFinite(item.total_duration) && item.total_duration >= 0
+    ? Math.trunc(item.total_duration) : undefined
+  const completeDurations = flights.every(flight => typeof record(flight)?.duration === 'number'
+    && Number.isFinite(record(flight)!.duration) && Number(record(flight)!.duration) >= 0)
+    && layovers.every(layover => layover.durationMinutes !== undefined)
+  const totalDuration = reportedDuration ?? (completeDurations
+    ? segments.reduce((sum, segment) => sum + segment.duration, 0) + layovers.reduce((sum, layover) => sum + layover.durationMinutes!, 0)
+    : undefined)
   const airlines = [...new Set(segments.map(segment => segment.airline).filter(Boolean))]
   const option: FlightOption = {
     id: `gf-${date}-${segments.map(segment => segment.flightNo || `${segment.origin}${segment.destination}`).join('-')}-${Math.round(price)}`,
     segments,
     totalPrice: Math.round(price),
-    totalDuration,
+    ...(totalDuration !== undefined ? { totalDuration } : {}),
     airline: airlines.join(' + '),
     transferType: segments.length === 1 ? 'direct' : 'airline',
     departDate: date,
     deepLink: `https://www.google.com/travel/flights?q=flights+from+${input.origin}+to+${input.destination}+on+${date}`
   }
-  const layovers = Array.isArray(item?.layovers) ? item.layovers : []
-  const layover = record(layovers[0])
   if (segments.length > 1) {
+    option.layovers = layovers
+    const layover = layovers[0]!
     option.hub = {
-      iata: (stringValue(layover?.id) || segments[0]!.destination).toUpperCase(),
-      city: stringValue(layover?.name),
-      layoverMinutes: numberValue(layover?.duration),
-      baggageRecheck: false
+      iata: layover.airport,
+      city: stringValue(record(rawLayovers[0])?.name),
+      ...(layover.durationMinutes !== undefined ? { layoverMinutes: layover.durationMinutes } : {})
     }
   }
   return option

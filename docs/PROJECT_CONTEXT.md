@@ -81,7 +81,9 @@ compose.yaml         PostgreSQL、Redis、API、Worker 编排
   cloud Agent composition；OAG 仍为可选 ingestion source。
 - Phase 4B/Research：目的地发现与推荐、确定性 trip route、不可变航价/路线确认、
   独立 SerpApi web-search domain、受限 OpenRouter synthesis、逐 finding verification、
-  `research_destination` 与 deterministic `build_travel_guide` 已注册到 cloud Planner。
+  `research_destination` 与 `save_travel_guide` 已注册到 cloud Planner。主 Planner
+  编写逐日顺序、时段、主题和推荐说明，服务端恢复来源事实并在保存前共用 Goal 内容校验。
+  旧 deterministic `build_travel_guide` 保留在完整 Core registry 供兼容调用。
   `PLANNER_MODEL` 与 `RESEARCH_MODEL` 可独立配置；缺少 SerpApi key 时 Research 明确
   unavailable，但路线、目录与 trip-structure 能力继续运行。
 - Agent 是唯一规划编排层，可根据结果自行选择、跳过、重试和调整工具顺序；没有固定的
@@ -97,11 +99,15 @@ compose.yaml         PostgreSQL、Redis、API、Worker 编排
   再次检查当前 Trip 和 Goal/run。相同 owner/Trip/version 的来源可跨 Goal/run 复用；
   旧版本或无版本的历史 Artifact 可读，但不能直接组合成当前版本结果。当前没有跨版本
   兼容策略，必须返回稳定冲突，由 Agent 重新选择证据或规划。
-- Phase 5 backend cutover：唯一公开 Planner 对话入口为经过 JWT 认证的
+- Phase 5 backend cutover：公开 Planner 对话契约为经过 JWT 认证的
   `POST /v1/agent/converse`，使用严格 camelCase `{ tripId, conversationId, message }`
   请求和 compact Trip/Artifact response。Conversation Planner registry 不含最终连接搜索、
   路径规划、优化或路线报价确认工具；它只可在当前用户消息明确要求生成路线时调用零参数
   `start_route_generation`，由该操作创建显式 route-generation run。
+- [ADR 0015](adr/0015-transient-planner-progress.md)：小程序通过
+  `POST /v1/agent/turns` + `GET /v1/agent/turns/:turnId` 短轮询等待同一 Planner
+  工作流，整轮上限为 300 秒。阶段与连接状态只保存在临时 UI/进程缓存，不进入
+  对话上下文或历史；服务重启后临时状态不可恢复，已保存的 workspace 仍可读取。
 - Phase 5 route-generation contract：`POST /v1/trips/:tripId/route-generation-runs`、
   `GET /v1/route-generation-runs/:runId`、`DELETE /v1/route-generation-runs/:runId` 使用
   `Idempotency-Key`、owner-scoped auth、冻结 Trip Context、协作取消和 terminal immutability。
@@ -142,7 +148,8 @@ FlightOR Worker
   -> route-generation run：heartbeat、stale recovery、deterministic Artifact chain
 ```
 
-当前公开 Planner 对话契约是经过 JWT 认证的 `POST /v1/agent/converse`。请求严格为
+当前公开 Planner 对话契约是经过 JWT 认证的 `POST /v1/agent/converse`；小程序按
+ADR 0015 通过 `/v1/agent/turns` 提交和轮询同一工作流。请求严格为
 `{ tripId, conversationId, message }`；用户身份来自 access token，Trip、Conversation、
 Memory 和 Artifact 均按 owner 读取。响应只返回 `conversationId`、`tripId`、compact
 `tripContextSummary`、`reply`、带 `presentationHint` 的 typed `artifactRefs`、
@@ -235,6 +242,7 @@ Artifact cache identity 并使迟到响应失效。
 | GET | `/health/ready` | PostgreSQL、Redis 就绪 |
 | GET | `/health/providers` | 仅检查是否配置，固定标记 `verified=false` |
 | POST | `/v1/auth/wechat` | 微信登录 |
+| POST | `/v1/auth/local` | 显式本地测试登录；默认关闭，非生产环境 + loopback + 本地密钥，独立测试账号；见 [本地登录说明](local-test-login.md) |
 | POST | `/v1/auth/refresh` | 刷新会话 |
 | POST | `/v1/agent/converse` | JWT 认证 Planner 对话；严格 `{tripId,conversationId,message}`，返回 compact Trip Context、typed Artifact refs、suggested actions、warnings、stop reason 与 delivery verdict |
 | GET | `/v1/trips/:id/workspace` | owner-scoped 云端恢复；返回 Conversation、Artifact refs、后台 run 和经服务端刷新后的未完成 delivery |
@@ -487,7 +495,7 @@ authority；完整 Artifact 拉取、typed renderer 和云端 workspace 恢复�
 
 ### P2：完善搜索产品能力
 
-1. 当前 SerpApi 搜索能识别直飞和航司联程，`selfTransfer` 暂为空；后续增加自行拼票 Provider/组合器；
+1. 当前 SerpApi 搜索保留直飞和航司联程，`selfTransfer` 暂为空；联程以完整报价单 edge 接入路线生成/比较/复核，保留全部航段与每次中转信息（[ADR 0014](adr/0014-provider-connecting-fares.md)）。`airline` 不自动证明行李直挂或衔接保障；未知全程时长不填 0。自行拼票仍需要独立 Provider/组合器；
 2. 把同步报价快速路径升级为可持久化、可轮询的异步搜索；
 3. 增加 Provider 调用审计、配额预算、重试/熔断与指标；
 4. 增加行程、提醒、通知和生产部署监控。

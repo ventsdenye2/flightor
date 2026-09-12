@@ -4,6 +4,7 @@ import { AppError } from '../lib/errors.js'
 import { randomToken, sha256 } from '../lib/crypto.js'
 import { issueAccessToken, verifyAccessToken, type AccessIdentity } from './tokens.js'
 import { codeToWechatOpenId } from './wechat.js'
+import { authorizeLocalLogin, isLocalLoginEnabled } from './local.js'
 import { PostgresUserIdentityRepository } from '../identity/postgres.js'
 
 export interface TokenPair {
@@ -16,7 +17,8 @@ export interface TokenPair {
 
 async function createSession(
   context: AppContext,
-  user: { id: string; public_id: string; nickname: string; avatar_url: string }
+  user: { id: string; public_id: string; nickname: string; avatar_url: string },
+  localTest = false
 ): Promise<TokenPair> {
   const refreshToken = randomToken()
   const refreshExpiresAt = new Date(Date.now() + context.env.REFRESH_TOKEN_TTL_DAYS * 86_400_000)
@@ -27,7 +29,7 @@ async function createSession(
     revoked_at: null,
     rotated_at: null
   }).execute()
-  const accessToken = await issueAccessToken({ userId: user.id, publicId: user.public_id }, context.env)
+  const accessToken = await issueAccessToken({ userId: user.id, publicId: user.public_id, ...(localTest ? { localTest: true } : {}) }, context.env)
   return {
     accessToken,
     accessTokenExpiresIn: context.env.ACCESS_TOKEN_TTL_SECONDS,
@@ -55,6 +57,21 @@ export async function loginWithWechat(
   })
 }
 
+export async function loginLocally(
+  context: AppContext,
+  input: { nickname: string; avatarUrl: string },
+  transport: { remoteAddress: string | undefined; key: unknown }
+): Promise<TokenPair> {
+  authorizeLocalLogin(context.env, transport.remoteAddress, transport.key)
+  const user = await new PostgresUserIdentityRepository(context.db).resolveLocalTest(input)
+  return createSession(context, {
+    id: user.userId,
+    public_id: user.publicId,
+    nickname: user.nickname,
+    avatar_url: user.avatarUrl
+  }, true)
+}
+
 export async function rotateRefreshToken(context: AppContext, refreshToken: string): Promise<TokenPair> {
   const tokenHash = sha256(refreshToken)
   return context.db.transaction().execute(async trx => {
@@ -75,6 +92,10 @@ export async function rotateRefreshToken(context: AppContext, refreshToken: stri
       .executeTakeFirst()
     if (!session) throw new AppError('UNAUTHORIZED', 'Refresh token is invalid or expired', 401)
 
+    const localIdentity = await trx.selectFrom('user_identities').select('id')
+      .where('user_id', '=', session.id).where('provider', '=', 'local_test').executeTakeFirst()
+    if (localIdentity && !isLocalLoginEnabled(context.env)) throw new AppError('UNAUTHORIZED', 'Local test sessions are disabled', 401)
+
     const now = new Date()
     await trx.updateTable('user_sessions')
       .set({ revoked_at: now, rotated_at: now })
@@ -90,7 +111,7 @@ export async function rotateRefreshToken(context: AppContext, refreshToken: stri
       revoked_at: null,
       rotated_at: null
     }).execute()
-    const accessToken = await issueAccessToken({ userId: session.id, publicId: session.public_id }, context.env)
+    const accessToken = await issueAccessToken({ userId: session.id, publicId: session.public_id, ...(localIdentity ? { localTest: true } : {}) }, context.env)
     return {
       accessToken,
       accessTokenExpiresIn: context.env.ACCESS_TOKEN_TTL_SECONDS,

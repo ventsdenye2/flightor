@@ -406,6 +406,8 @@ Memory edits must fail with a version conflict rather than silently overwrite a 
 
 One WeChat user currently maps to one FlightOR user account and one Memory.
 
+For local developer-tools testing, an explicitly enabled `local_test` identity can use the same session and owner-scoped repositories. It is a separate account, defaults to disabled, requires a loopback connection and local key, and is prohibited in production. WeChat authentication never silently falls back to it. See [ADR 0013](adr/0013-local-test-authentication.md).
+
 However, identity must be designed for future web login.
 
 Recommended model:
@@ -1062,9 +1064,19 @@ Used for:
 
 Structured destination research.
 
-### `build_travel_guide`
+### `save_travel_guide`
 
-Build a day-level guide from verified research and a route.
+The conversation Planner authors the daily city selection, activity order,
+suggested time blocks, themes and personal planning notes. It submits research
+finding references directly; a prior destination set or route outline is not
+required. The guide domain restores source-owned facts and shares the Goal's
+content validator before persisting the submitted schedule and its derived
+route projection. Revision feedback does not write an invalid guide.
+
+Source facts and suggested planning text remain separate. Existing owner,
+version, cancellation and delivery checks apply. `build_travel_guide` remains a
+deterministic compatibility tool in the full Core registry, outside the public
+Planner registry. See [ADR 0012](adr/0012-agent-authored-itineraries.md).
 
 ---
 
@@ -1134,6 +1146,13 @@ MockFareProvider
 ```
 
 Fare data is time-sensitive and requires `checkedAt`.
+
+Provider connecting fares are complete priced itineraries. Preserve their full
+segment list and reported layovers in FareOffer, and carry each offer into route
+generation as one edge with one total price and immutable fare references.
+`airline` identifies a provider connecting offer without asserting protection or
+baggage handling. Internal transfer counts, airports and time constraints remain
+subject to route validation. See [ADR 0014](adr/0014-provider-connecting-fares.md).
 
 ---
 
@@ -2050,11 +2069,20 @@ The admin app may start under `apps/admin/` immediately because it is new.
 
 # 24. Public API and explicit route generation
 
-FlightOR has one public Planner conversation API. The old client-owned
+FlightOR has one public Planner conversation workflow, with synchronous and
+short-polling transports under [ADR 0015](adr/0015-transient-planner-progress.md). The old client-owned
 rule-first converse protocol and the temporary `agent-v2` seam are not current
 product APIs.
 
 ## 24.1 Planner conversation
+
+The mini-program uses `POST /v1/agent/turns` and owner-scoped
+`GET /v1/agent/turns/:turnId` for temporary execution activity and its eventual
+response. The same Planner service, request and final response remain available
+through the synchronous endpoint below. The Planner has a 300-second turn budget;
+progress never enters Conversation, Memory, Trip or Artifacts. This local MVP
+uses a bounded process-local status cache and cannot resume that status after a
+server restart. See ADR 0015 for connectivity and lifecycle semantics.
 
 ```text
 POST /v1/agent/converse
@@ -2615,7 +2643,7 @@ plan_trip_route
 confirm_flight_price
 confirm_route_price
 research_destination
-build_travel_guide
+save_travel_guide
 ```
 
 ---
@@ -2644,7 +2672,8 @@ Implement:
 
 ## Phase 5 — Agent API and Explicit Route Generation
 
-The accepted public contract is the authenticated `POST /v1/agent/converse`.
+The accepted public contract is the authenticated `POST /v1/agent/converse`,
+also exposed through short-polling `/v1/agent/turns` under ADR 0015.
 The response is compact and Artifact-oriented; user identity is never accepted
 from the body. The conversation Planner registry excludes final connection/path/
 optimizer/route-confirmation tools.
@@ -2756,7 +2785,7 @@ The architecture migration is considered complete when:
 6. User Memory is cloud-backed Markdown and editable.
 7. New conversations inherit Memory when enabled.
 8. Current trip overrides Memory.
-9. The only public Planner conversation API is authenticated `POST /v1/agent/converse`.
+9. Both authenticated Planner transports (`/v1/agent/converse` and `/v1/agent/turns`) share one conversation workflow and final response; temporary progress never enters its context.
 10. The conversation registry cannot invoke final connection/path/optimizer/route-confirmation tools.
 11. User explicitly triggers route generation through the button or an unambiguous current message; both create an idempotent, owner-scoped run with persisted authorization source.
 12. Route runs freeze Trip Context, support cooperative cancellation, and keep terminal results immutable.

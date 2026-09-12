@@ -81,6 +81,9 @@ function timeParts(value: string): { date: string; time: string } | null {
 }
 
 function mapOptionToRouteLeg(option: FlightOption, requested: RouteLeg): RouteLeg | null {
+  // This legacy confirmed-leg contract requires a known duration. The current
+  // FlightSearchArtifact keeps incomplete quotes without fabricating one.
+  if (option.totalDuration === undefined) return null
   const first = option.segments[0]
   const last = option.segments[option.segments.length - 1]
   if (!first || !last) return null

@@ -34,6 +34,19 @@ function context(research: { research: MockResearchAgent['research'] }) {
 }
 
 describe('research Agent tools', () => {
+  it('uses the same trusted lookup for numeric destination selectors', async () => {
+    const numericDestination = { ...destination, id: '8' }
+    const delegate = new MockResearchAgent([{ ...finding, destinations: [numericDestination] }])
+    const research = vi.fn(delegate.research.bind(delegate))
+    const executionContext = context({ research }) as any
+    recordResolvedLocations(executionContext, [numericDestination])
+    const input = { destination: 8, questions: ['Museums'], researchTypes: ['activity' as const], maxResults: 5 }
+    await researchDestinationTool.execute(input, executionContext, new AbortController().signal)
+    expect(research.mock.calls[0]?.[0].destinations).toEqual([numericDestination])
+    await expect(researchDestinationTool.execute({ ...input, destination: 999 }, executionContext, new AbortController().signal)).rejects.toMatchObject({ code: 'LOCATION_NOT_RESOLVED' })
+    expect(research).toHaveBeenCalledOnce()
+  })
+
   it('uses provider facts for a resolved ID and rejects unknown identities before search', async () => {
     const delegate = new MockResearchAgent([finding])
     const research = vi.fn(delegate.research.bind(delegate))
@@ -53,6 +66,7 @@ describe('research Agent tools', () => {
     const executionContext = context({ research }) as any
     const result = await webResearchTool.execute(brief, executionContext, new AbortController().signal)
     expect(result.summary).toMatchObject({ findingCount: 1, statusCounts: { partially_verified: 1 } })
+    expect(result.findings).toEqual([expect.objectContaining({ id: 'finding-1', title: 'A', summary: 'B', verificationStatus: 'partially_verified' })])
     expect(JSON.stringify(result)).not.toContain('https://example.com')
     const stored = await executionContext.artifacts.get(result.artifact.id)
     expect(stored.schemaVersion).toBe(2)

@@ -21,6 +21,19 @@ function result(url: string, title = 'Result'): ResearchSearchResult {
 }
 
 describe('ProductionResearchAgent', () => {
+  it('starts the next query when either worker is free and preserves source ordering', async () => {
+    const pending: Array<(value: ResearchSearchResult) => void> = []
+    const provider: ResearchSearchProvider = { name: 'rolling', search: vi.fn(() => new Promise(resolve => { pending.push(resolve) })) }
+    const run = new ProductionResearchAgent({ searchProvider: provider }).research({ ...brief, questions: ['a', 'b', 'c'], maxResults: 3 }, { requestId: 'rolling' })
+    expect(pending).toHaveLength(2)
+    pending[1]!(result('https://example.com/b'))
+    await Promise.resolve()
+    expect(pending).toHaveLength(3)
+    pending[2]!(result('https://example.com/c'))
+    pending[0]!(result('https://example.com/a'))
+    const artifact = await run
+    expect(artifact.findings.map(finding => finding.sources[0]?.url)).toEqual(['https://example.com/a', 'https://example.com/b', 'https://example.com/c'])
+  })
   it('covers later questions within the same bounded search budget and concurrency', async () => {
     let active = 0
     let peak = 0

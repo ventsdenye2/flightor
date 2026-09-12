@@ -351,3 +351,8 @@
   font-size: var(--font-size-caption);
   color: var(--color-text-placeholder);
 }
+
+.fcc__journey { padding-bottom: 18rpx; }
+.fcc__journey-path { display: block; color: var(--color-text-primary); font-size: 26rpx; line-height: 1.5; overflow-wrap: anywhere; }
+.fcc__journey-type, .fcc__baggage-status { display: block; margin-top: 6rpx; font-size: 22rpx; line-height: 1.5; color: var(--color-text-secondary); }
+.fcc__layover-text { text-align: center; line-height: 1.5; }

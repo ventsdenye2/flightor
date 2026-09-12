@@ -35,7 +35,7 @@ export async function buildApp(context: AppContext) {
           'body.code',
           '*.apiKey',
           '*.token',
-          'req.headers.x-admin-token', 'body.password', 'body.refreshToken'
+          'req.headers.x-admin-token', 'req.headers.x-local-login-key', 'body.password', 'body.refreshToken'
         ],
         censor: '[REDACTED]'
       }

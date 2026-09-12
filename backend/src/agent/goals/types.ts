@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { ARTIFACT_TYPES } from '../../artifacts/repository.js'
+import { researchTypeSchema } from '../../research-agent/types.js'
 import { tripContextSchema, type TripContext } from '../../trips/types.js'
 
 export const goalKindSchema = z.enum([
@@ -26,10 +27,11 @@ export const goalAuthorizationSchema = z.object({
 
 export const travelGuideGoalParametersSchema = z.object({
   questions: z.array(z.string().trim().min(1).max(500)).min(1).max(8),
-  researchTypes: z.array(z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical'])).min(1).max(5),
-  maxResults: z.number().int().min(1).max(20),
+  researchTypes: z.array(researchTypeSchema).min(1).max(5).describe('Required evidence categories in the saved guide. Every selected category must be represented by a sourced finding. Choose only categories needed for the user objective; personal planning tips alone do not require practical research. Missing required categories need evidence, not a replacement or weakened Goal.'),
+  maxResults: z.number().int().min(1).max(20).describe('Maximum total selected findings across all days, not a per-day limit.'),
   maxCities: z.number().int().min(1).max(12),
-  allowPartial: z.boolean()
+  allowPartial: z.boolean().describe('Allows clearly labelled partially verified sources; does not waive daily coverage or required categories.'),
+  allowRestDays: z.boolean().optional().describe('Allow explicitly described rest or travel days without sourced activities only when compatible with the user request; otherwise omit or false.')
 }).strict()
 
 export const flightSearchGoalParametersSchema = z.object({

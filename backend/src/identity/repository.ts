@@ -1,4 +1,6 @@
-export type IdentityProvider = 'wechat' | 'email' | 'google' | 'apple'
+export type IdentityProvider = 'wechat' | 'email' | 'google' | 'apple' | 'local_test'
+
+export interface IdentityProfile { nickname: string; avatarUrl: string }
 
 export interface ResolvedUserIdentity {
   userId: string
@@ -9,6 +11,7 @@ export interface ResolvedUserIdentity {
 
 export interface UserIdentityRepository {
   resolveWechat(input: { providerSubject: string; nickname: string; avatarUrl: string }): Promise<ResolvedUserIdentity>
+  resolveLocalTest(input: IdentityProfile): Promise<ResolvedUserIdentity>
 }
 
 export class InMemoryUserIdentityRepository implements UserIdentityRepository {
@@ -16,7 +19,15 @@ export class InMemoryUserIdentityRepository implements UserIdentityRepository {
   private nextUserId = 1
 
   async resolveWechat(input: { providerSubject: string; nickname: string; avatarUrl: string }): Promise<ResolvedUserIdentity> {
-    const key = `wechat:${input.providerSubject}`
+    return this.resolve('wechat', input)
+  }
+
+  async resolveLocalTest(input: IdentityProfile): Promise<ResolvedUserIdentity> {
+    return this.resolve('local_test', { ...input, providerSubject: 'default' })
+  }
+
+  private async resolve(provider: 'wechat' | 'local_test', input: IdentityProfile & { providerSubject: string }): Promise<ResolvedUserIdentity> {
+    const key = `${provider}:${input.providerSubject}`
     const existing = this.identities.get(key)
     if (existing) {
       if (input.nickname) existing.nickname = input.nickname

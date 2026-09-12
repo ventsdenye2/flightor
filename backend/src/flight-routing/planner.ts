@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { locationRefKey, locationRefsOverlap, type LocationRef } from '../aviation/types.js'
+import { connectionMinimumMinutes, edgeHasAirportChange, edgeLocations, internalTransfers, joinsSeparateOffers, LONG_STOPOVER_MINUTES, pathDurationMinutes, pathHasSelfTransfer, pathTransferCount } from './itinerary.js'
 import {
   connectionEdgeSchema,
   flightRoutePlanInputSchema,
@@ -15,7 +16,6 @@ import {
 /** Stable, provider-independent version identifiers for Phase 4 artifacts. */
 export const FLIGHT_ROUTE_PLANNER_SERVICE_VERSION = 'flight-route-planner-phase4-v1'
 
-const LONG_STOPOVER_MINUTES = 10 * 60
 const MAX_EXPANDED_STATES = 10000
 
 function locationKey(value: LocationRef): string {
@@ -69,15 +69,24 @@ function aggregateVerification(edges: readonly ConnectionEdge[]) {
 
 function edgeHardReason(edge: ConnectionEdge, constraints: RouteConstraints): string | undefined {
   if (edge.transferType === 'self' && !constraints.allowSelfTransfer) return 'self-transfer is not allowed'
-  if (edge.airportChange === true && !constraints.allowAirportChange) return 'airport change is not allowed'
-  if (edge.transferMinutes !== undefined && edge.transferMinutes > 0 && edge.transferMinutes < constraints.minTransferMinutes) return 'minimum transfer time is not met'
+  if (edgeHasAirportChange(edge) && !constraints.allowAirportChange) return 'airport change is not allowed'
+  const edgeMinimum = connectionMinimumMinutes(edge.transferType === 'self', edgeHasAirportChange(edge), constraints.minTransferMinutes, constraints)
+  if (edge.transferMinutes !== undefined && edge.transferMinutes > 0 && edge.transferMinutes < edgeMinimum) return 'minimum transfer time is not met'
   if (edge.transferMinutes !== undefined && edge.transferMinutes > LONG_STOPOVER_MINUTES && !constraints.allowLongStopover) return 'long stopover is not allowed'
+  for (const transfer of internalTransfers(edge)) {
+    const minimum = connectionMinimumMinutes(edge.transferType === 'self', transfer.arrivalAirport.iata !== transfer.departureAirport.iata, constraints.minTransferMinutes, constraints)
+    if (transfer.durationMinutes !== undefined && transfer.durationMinutes < minimum) return 'minimum internal transfer time is not met'
+    if (transfer.durationMinutes !== undefined && transfer.durationMinutes > LONG_STOPOVER_MINUTES && !constraints.allowLongStopover) return 'long internal stopover is not allowed'
+  }
   return undefined
 }
 
 function pathFeasibility(edges: readonly ConnectionEdge[]): CompleteFlightPath['feasibility'] {
   if (edges.some(edge => edge.availability === 'unknown' || edge.verification.status === 'unverified')) return 'unknown'
   if (edges.some((edge, index) => index > 0 && edge.transferMinutes === undefined && !(edges[index - 1]!.arrivalAt !== undefined && edge.departureAt !== undefined))) return 'partial'
+  if (edges.some(edge => internalTransfers(edge).some(transfer => transfer.durationMinutes === undefined)
+    || (edge.transferType === 'airline' && edge.protectedConnection === undefined))) return 'partial'
+  if (edges.some((edge, index) => index > 0 && joinsSeparateOffers(edges[index - 1]!, edge))) return 'partial'
   if (edges.some(edge => edge.availability === 'partial' || edge.verification.status !== 'verified')) return 'partial'
   return 'feasible'
 }
@@ -93,20 +102,17 @@ function makePath(edges: readonly ConnectionEdge[], origin: RouteNode, destinati
   })
   const fareCurrencies = [...new Set(edges.map(edge => edge.fare?.currency).filter((value): value is string => value !== undefined))]
   const allPriced = edges.every(edge => edge.fare !== undefined)
-  const allFaresStronglyBound = allPriced && edges.every(edge => edge.fareArtifactId !== undefined)
+  const allFaresStronglyBound = allPriced && edges.every(edge => edge.fareArtifactId !== undefined && edge.fareOfferId !== undefined)
   const totalFare = allFaresStronglyBound && fareCurrencies.length === 1
     ? { amount: edges.reduce((total, edge) => total + (edge.fare?.amount ?? 0), 0), currency: fareCurrencies[0]! }
     : undefined
-  const hasInstants = edges.every(edge => edge.departureAt !== undefined && edge.arrivalAt !== undefined)
-  const totalDurationMinutes = hasInstants
-    ? Math.round((Date.parse(edges[edges.length - 1]!.arrivalAt!) - Date.parse(edges[0]!.departureAt!)) / 60_000)
-    : edges.every((edge, index) => edge.durationMinutes !== undefined && (edges.length === 1 || index === 0 || edge.transferMinutes !== undefined))
-      ? edges.reduce((total, edge) => total + (edge.durationMinutes ?? 0) + (edge.transferMinutes ?? 0), 0)
-      : undefined
+  const totalDurationMinutes = pathDurationMinutes(edges)
   const warnings = uniqueStrings([
     ...edges.flatMap(edge => [...edge.warnings, ...edge.reasons]),
     ...(edges.some(edge => edge.availability === 'unknown') ? ['One or more route edges have unknown availability.'] : []),
     ...(edges.some((edge, index) => index > 0 && edge.transferMinutes === undefined && !(edges[index - 1]!.arrivalAt !== undefined && edge.departureAt !== undefined)) ? ['One or more connection times are unknown.'] : []),
+    ...(edges.some(edge => internalTransfers(edge).some(transfer => transfer.durationMinutes === undefined)) ? ['One or more internal connection times are unknown.'] : []),
+    ...(pathHasSelfTransfer(edges) ? ['This path includes a self-transfer or joins independently quoted offers; through-ticket protection is not established.'] : []),
     ...(!allPriced ? ['Total fare is unavailable because one or more edges are unpriced.'] : []),
     ...(allPriced && !allFaresStronglyBound ? ['Total fare is unavailable because one or more edge quotes lack an immutable fare artifact binding.'] : []),
     ...(allPriced && fareCurrencies.length !== 1 ? ['Total fare is unavailable because edge currencies differ.'] : [])
@@ -118,7 +124,7 @@ function makePath(edges: readonly ConnectionEdge[], origin: RouteNode, destinati
     edges: [...edges],
     ...(totalFare === undefined ? {} : { totalFare }),
     ...(totalDurationMinutes === undefined || !Number.isFinite(totalDurationMinutes) ? {} : { totalDurationMinutes }),
-    transferCount: Math.max(0, edges.length - 1),
+    transferCount: pathTransferCount(edges),
     feasibility: pathFeasibility(edges),
     warnings
   }
@@ -166,19 +172,24 @@ export class DeterministicFlightRoutePlanner {
       // This is the departure window, not an arrival deadline. Overnight
       // arrivals and onward connections may occur after its last date.
       if (edgeStack.length === 0 && (edge.departureDate < normalized.window.from || edge.departureDate > normalized.window.to)) return false
-      if (excluded.some(location => sameLocation(location, edge.from) || sameLocation(location, edge.to))) return false
+      if (excluded.some(location => edgeLocations(edge).some(candidate => sameLocation(location, candidate)))) return false
       if (edgeHardReason(edge, constraints) !== undefined) return false
-      if (edgeStack.length >= constraints.maxTransfers + 1) return false
-      if (constraints.maxStops !== undefined && edgeStack.length > constraints.maxStops) return false
+      const transferCount = pathTransferCount([...edgeStack, edge])
+      if (transferCount > constraints.maxTransfers) return false
+      if (constraints.maxStops !== undefined && transferCount > constraints.maxStops) return false
       const previous = edgeStack[edgeStack.length - 1]
       if (previous !== undefined) {
+        if (joinsSeparateOffers(previous, edge) && !constraints.allowSelfTransfer) return false
         if (previous.arrivalAt !== undefined && edge.departureAt !== undefined && Date.parse(edge.departureAt) < Date.parse(previous.arrivalAt)) return false
         if (edge.departureDate < (previous.arrivalDate ?? previous.departureDate)) return false
         const knownGapMinutes = previous.arrivalAt !== undefined && edge.departureAt !== undefined
           ? Math.round((Date.parse(edge.departureAt) - Date.parse(previous.arrivalAt)) / 60_000)
           : undefined
-        const connectionMinutes = edge.transferMinutes ?? knownGapMinutes
-        if (connectionMinutes !== undefined && connectionMinutes > 0 && connectionMinutes < constraints.minTransferMinutes) return false
+        const connectionMinutes = knownGapMinutes ?? edge.transferMinutes
+        const minimum = connectionMinimumMinutes(edge.transferType === 'self' || joinsSeparateOffers(previous, edge),
+          previous.to.iata !== edge.from.iata || (edge.segments?.length ?? 1) === 1 && edge.airportChange === true,
+          constraints.minTransferMinutes, constraints)
+        if (connectionMinutes !== undefined && connectionMinutes > 0 && connectionMinutes < minimum) return false
         if (connectionMinutes !== undefined && connectionMinutes > LONG_STOPOVER_MINUTES && !constraints.allowLongStopover) return false
         if (connectionMinutes === undefined && constraints.minTransferMinutes > 0) {
           // An unknown MCT is not rejected; it is retained as a conservative
@@ -213,9 +224,7 @@ export class DeterministicFlightRoutePlanner {
           const visitedLocations = [origin.location, ...edgeStack.map(value => value.to)]
           const hasRequired = required.every(value => visitedLocations.some(location => sameLocation(value, location)))
           const totalDays = daysBetween(edgeStack[0]!.departureDate, edge.arrivalDate ?? edge.departureDate)
-          const duration = edgeStack.every((value, index) => value.durationMinutes !== undefined && (edgeStack.length === 1 || index === 0 || value.transferMinutes !== undefined))
-            ? edgeStack.reduce((sum, value) => sum + (value.durationMinutes ?? 0) + (value.transferMinutes ?? 0), 0)
-            : undefined
+          const duration = pathDurationMinutes(edgeStack)
           if (hasRequired && (constraints.maxTravelDays === undefined || totalDays <= constraints.maxTravelDays) && (constraints.maxTotalDurationMinutes === undefined || (duration !== undefined && duration <= constraints.maxTotalDurationMinutes))) {
             if (paths.length < normalized.maxPaths) paths.push(makePath(edgeStack, origin, destination, constraints))
             else {

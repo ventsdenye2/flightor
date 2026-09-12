@@ -1,4 +1,9 @@
 // FlightOR Taro 编译配置
+const apiBaseUrl = (process.env.FLIGHTOR_API_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
+const localLoginKey = process.env.FLIGHTOR_LOCAL_LOGIN_KEY || ''
+if (localLoginKey && !/^http:\/\/(127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/.test(apiBaseUrl)) {
+  throw new Error('Local test login requires a loopback API URL')
+}
 const config = {
   projectName: 'FlightOR',
   date: '2026-7-23',
@@ -16,8 +21,9 @@ const config = {
     // 第三方密钥只允许存在于自建后端。空常量仅兼容旧的本地降级代码。
     OPENROUTER_KEY: JSON.stringify(''),
     SERPAPI_KEY: JSON.stringify(''),
-    FLIGHTOR_API_BASE_URL: JSON.stringify(process.env.FLIGHTOR_API_BASE_URL || 'http://127.0.0.1:3000'),
-    FLIGHTOR_USE_MOCK: JSON.stringify(process.env.FLIGHTOR_USE_MOCK === 'true')
+    FLIGHTOR_API_BASE_URL: JSON.stringify(apiBaseUrl),
+    FLIGHTOR_USE_MOCK: JSON.stringify(process.env.FLIGHTOR_USE_MOCK === 'true'),
+    FLIGHTOR_LOCAL_LOGIN_KEY: JSON.stringify(localLoginKey)
   },
   copy: {
     patterns: [{ from: 'src/assets/', to: 'dist/assets/' }],

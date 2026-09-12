@@ -2,9 +2,10 @@
 import { View, Text } from '@tarojs/components'
 import { observer } from 'mobx-react-lite'
 import type { FlightOption, FlightSegment } from '../../types/flight'
-import { t, fd } from '../../i18n'
+import { t, fd, localeStore } from '../../i18n'
 import { formatPrice } from '../../utils/format'
 import { airportTimeDisplay } from '../../services/airportTime'
+import { baggageLabel, connectionLabel, flightConnections, flightPath } from '../../services/flightConnections'
 import './FlightCompareCard.scss'
 
 interface FlightCompareCardProps {
@@ -66,9 +67,11 @@ const SegmentRow = observer(({ seg }: { seg: FlightSegment }) => {
 
 function FlightCompareCard(props: FlightCompareCardProps) {
   const { flight, savingsAmount, savingsPercent, badges, recommendationReason, roundtripNote, isExpanded, onToggleExpand, onSelect } = props
-  const hubLabel = flight.hub
-    ? `${flight.hub.city && flight.hub.city !== flight.hub.iata ? `${flight.hub.city} · ` : ''}${flight.hub.iata}`
-    : ''
+  const locale = localeStore?.locale ?? 'zh'
+  const segments = flight.segments.map(segment => ({ origin: segment.origin, destination: segment.destination,
+    departureAt: segment.departTime, arrivalAt: segment.arriveTime }))
+  const connections = flightConnections(segments, flight.layovers)
+  const connectionsBySegment = new Map(connections.map(connection => [connection.afterSegmentIndex, connection]))
 
   return (
     <View className='fcc' hoverClass='tap-dim' onClick={() => onSelect?.(flight)}>
@@ -80,14 +83,18 @@ function FlightCompareCard(props: FlightCompareCardProps) {
           ))}
         </View>
       )}
+      <View className='fcc__journey'>
+        <Text className='fcc__journey-path'>{flightPath(segments)}</Text>
+        <Text className='fcc__journey-type'>{t(`fcc.${flight.transferType}`)}{connections.length > 0 ? ` · ${connections.length} ${locale === 'zh' ? '次中转' : 'connection(s)'}` : ''}</Text>
+      </View>
       {flight.segments.map((seg, i) => (
         <View key={seg.flightNo + i}>
           {/* 中转停留分隔条 */}
-          {i > 0 && flight.hub && (
+          {i > 0 && connectionsBySegment.has(i - 1) && (
             <View className='fcc__layover'>
               <View className='fcc__layover-line' />
               <Text className='fcc__layover-text'>
-                {t('fcc.layoverAt', { city: hubLabel, dur: fd(flight.hub.layoverMinutes) })}
+                {connectionLabel(connectionsBySegment.get(i - 1)!, locale)}
               </Text>
               <View className='fcc__layover-line' />
             </View>
@@ -113,7 +120,9 @@ function FlightCompareCard(props: FlightCompareCardProps) {
       <View className='fcc__price-row'>
         <View className='fcc__price-main'>
           <Text className='font-code fcc__price'>{formatPrice(flight.totalPrice)}</Text>
-          <Text className='fcc__total-duration'>{t('fcc.total', { dur: fd(flight.totalDuration) })}</Text>
+          <Text className='fcc__total-duration'>{flight.totalDuration === undefined
+            ? (locale === 'zh' ? '全程时长待确认' : 'Total duration unconfirmed')
+            : t('fcc.total', { dur: fd(flight.totalDuration) })}</Text>
           {roundtripNote && <Text className='fcc__roundtrip'>{roundtripNote}</Text>}
         </View>
         {savingsAmount > 0 ? (
@@ -138,10 +147,10 @@ function FlightCompareCard(props: FlightCompareCardProps) {
       <View className='fcc__footer'>
         <View className='fcc__footer-left'>
           <Text className='fcc__transfer-type'>{t(`fcc.${flight.transferType}`)}</Text>
-          {flight.hub && (
+          {connections.length > 0 && (
             <Text className='fcc__hub-info'>
               {' · '}
-              {t('fcc.stayShort', { city: hubLabel, dur: fd(flight.hub.layoverMinutes) })}
+              {connections.map(connection => connection.airportChange ? `${connection.airport} → ${connection.departureAirport}` : connection.airport).join(' · ')}
             </Text>
           )}
         </View>
@@ -151,6 +160,8 @@ function FlightCompareCard(props: FlightCompareCardProps) {
           <View className='fcc__barcode' />
         )}
       </View>
+
+      {connections.length > 0 && <Text className='fcc__baggage-status'>{baggageLabel(flight.baggageRecheck ?? flight.hub?.baggageRecheck, locale)}</Text>}
 
       {/* 展开态：停留玩法提示 */}
       {isExpanded && flight.hub && (

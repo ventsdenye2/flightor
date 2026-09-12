@@ -5,3 +5,5 @@ declare const OPENROUTER_KEY: string
 declare const SERPAPI_KEY: string
 declare const FLIGHTOR_API_BASE_URL: string
 declare const FLIGHTOR_USE_MOCK: boolean
+/** Local development transport key; injected only by build:weapp:local. */
+declare const FLIGHTOR_LOCAL_LOGIN_KEY: string

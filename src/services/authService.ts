@@ -1,14 +1,21 @@
 // src/services/authService.ts — 登录服务
-// Mock 模式：本地游客登录（稳定 uid，离线可用）；真实模式：Taro.login 拿 code → cloud/login 换 openid
+// Mock 模式：本地游客登录；真实模式：Taro.login 拿 code → 自建 API 交换微信身份。
 import Taro from '@tarojs/taro'
-import { request, USE_MOCK } from '../utils/request'
+import { BASE_URL, request, USE_MOCK } from '../utils/request'
 import { assertAuthSession, beginAuthSession, clearAuthSession, commitAuthTokens } from '../utils/authSession'
 
 export interface UserProfile {
   uid: string
   nickname: string
   avatarUrl: string
+  loginMethod?: 'wechat' | 'local' | 'mock'
 }
+
+const localLoginKey = typeof FLIGHTOR_LOCAL_LOGIN_KEY === 'string' ? FLIGHTOR_LOCAL_LOGIN_KEY : ''
+export const LOCAL_LOGIN_AVAILABLE = !USE_MOCK && localLoginKey.length >= 32
+  && /^http:\/\/(127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/.test(BASE_URL)
+
+type LoginOptions = { persistTokens?: boolean }
 
 /** Remove bearer credentials without touching unrelated product storage. */
 export function clearAuthTokens(): void {
@@ -25,10 +32,31 @@ interface LoginResponse {
   }
 }
 
+function acceptLogin(res: LoginResponse, revision: number | undefined, method: 'wechat' | 'local'): UserProfile {
+  if (!res.user?.id || typeof res.accessToken !== 'string' || !res.accessToken || typeof res.refreshToken !== 'string' || !res.refreshToken) {
+    throw new Error('INVALID_LOGIN_RESPONSE')
+  }
+  if (revision !== undefined) commitAuthTokens(res, revision)
+  return { uid: res.user.id, nickname: res.user.nickname, avatarUrl: res.user.avatarUrl, loginMethod: method }
+}
+
+/** An explicit local test identity uses the real API/session path; it never calls wx.login. */
+export async function localLogin(profile?: { nickname?: string; avatarUrl?: string }, options: LoginOptions = {}): Promise<UserProfile> {
+  if (!LOCAL_LOGIN_AVAILABLE) throw Object.assign(new Error('LOCAL_LOGIN_DISABLED'), { code: 'LOCAL_LOGIN_DISABLED' })
+  const revision = options.persistTokens !== false ? beginAuthSession() : undefined
+  const res = await request<LoginResponse>({
+    url: '/v1/auth/local', method: 'POST',
+    data: { nickname: profile?.nickname || '', avatar_url: profile?.avatarUrl || '' },
+    header: { 'x-local-login-key': localLoginKey },
+    showLoading: options.persistTokens !== false, showError: false, retry: 0, auth: 'none', timeout: 15000
+  })
+  return acceptLogin(res, revision, 'local')
+}
+
 /** 微信登录：换取用户档案（含服务端建档）。资料同步不得轮换本地登录凭据。 */
 export async function wxLogin(
   profile?: { nickname?: string; avatarUrl?: string },
-  options: { persistTokens?: boolean } = {}
+  options: LoginOptions = {}
 ): Promise<UserProfile> {
   const revision = options.persistTokens !== false ? beginAuthSession() : undefined
   if (USE_MOCK) {
@@ -43,7 +71,8 @@ export async function wxLogin(
     return {
       uid,
       nickname: profile?.nickname || '',
-      avatarUrl: profile?.avatarUrl || ''
+      avatarUrl: profile?.avatarUrl || '',
+      loginMethod: 'mock'
     }
   }
 
@@ -58,17 +87,12 @@ export async function wxLogin(
       avatar_url: profile?.avatarUrl || ''
     },
     showLoading: true,
+    showError: false,
     retry: 0,
     auth: 'none',
     timeout: 15000
   })
-  if (!res.user?.id || typeof res.accessToken !== 'string' || !res.accessToken || typeof res.refreshToken !== 'string' || !res.refreshToken) {
-    throw new Error('INVALID_LOGIN_RESPONSE')
-  }
-  if (options.persistTokens !== false) {
-    commitAuthTokens(res, revision!)
-  }
-  return { uid: res.user.id, nickname: res.user.nickname, avatarUrl: res.user.avatarUrl }
+  return acceptLogin(res, revision, 'wechat')
 }
 
 /** 头像临时文件转持久路径（chooseAvatar 返回的 tmp 路径会过期） */

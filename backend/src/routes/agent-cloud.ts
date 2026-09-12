@@ -1,7 +1,8 @@
 import type { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
-import { CloudPlannerService } from '../agent/cloud/service.js'
+import { CloudPlannerService, type CloudPlannerTurnResult } from '../agent/cloud/service.js'
+import { PLANNER_TURN_TIMEOUT_MS, PlannerTurnStore } from '../agent/cloud/turns.js'
 import { AgentRuntime } from '../agent/runtime/runtime.js'
 import { createPlannerToolRegistry } from '../agent/tools/core.js'
 import type { AppContext } from '../app/context.js'
@@ -25,7 +26,6 @@ import { DeterministicTripRoutePlanner } from '../trip-planning/planner.js'
 import { DeterministicTravelGuideBuilder } from '../travel-guides/artifact-builder.js'
 import { ProductionResearchAgent } from '../research-agent/production.js'
 import { OpenRouterResearchSynthesisModel } from '../providers/openrouter/research.js'
-import { OpenRouterResearchQueryPlanner } from '../providers/openrouter/research-query-planner.js'
 import { ARTIFACT_TYPES, type ArtifactType } from '../artifacts/repository.js'
 import { locationRefSchema } from '../aviation/types.js'
 import type { TripContext } from '../trips/types.js'
@@ -133,7 +133,7 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
     const goalRunRepository = new PostgresGoalRunRepository(context.db, userId)
     const runtime = new AgentRuntime(context.providers.openrouter, createPlannerToolRegistry(), {
       model: context.env.PLANNER_MODEL,
-      turnTimeoutMs: 150_000,
+      turnTimeoutMs: PLANNER_TURN_TIMEOUT_MS,
       maxToolSteps: 10,
       // Product decision: do not let the cost ledger block valid planning in
       // the current function-first milestone. Other execution guards remain.
@@ -156,8 +156,7 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
       research: context.env.SERPAPI_KEY
         ? new ProductionResearchAgent({
           searchProvider: context.providers.researchSearch,
-          synthesisModel: new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL),
-          queryPlanner: new OpenRouterResearchQueryPlanner(context.providers.openrouter, context.env.RESEARCH_MODEL)
+          synthesisModel: new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL)
         })
         : new UnavailableResearchAgent(),
       connectionSearch: new ProductionConnectionSearchService(topology, context.providers.fares),
@@ -175,6 +174,36 @@ export async function registerCloudAgentRoutes(
   context: AppContext,
   serviceForUser: CloudAgentServiceFactory = defaultFactory(context, app.log)
 ): Promise<void> {
+  const turns = new PlannerTurnStore<z.infer<typeof cloudAgentResponseSchema>>({
+    onError: (error, turnId) => app.log.error({ err: error, turnId }, 'Planner turn failed')
+  })
+  app.addHook('onClose', async () => { turns.close() })
+
+  app.post('/v1/agent/turns', {
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
+  }, async (request, reply) => {
+    const identity = await authenticateRequest(request, context)
+    const input = cloudAgentRequestSchema.parse(request.body)
+    const service = serviceForUser(identity.userId)
+    await service.validateTurn(input)
+    const accepted = turns.start(identity.userId, async (signal, onActivity) => {
+      const result = await service.runTurn({ ...input, requestId: request.id, generationId: uuidv7(), signal, onActivity })
+      return buildCloudAgentResponse(input, result)
+    })
+    return reply.code(202).header('Cache-Control', 'no-store').send(accepted)
+  })
+
+  app.get('/v1/agent/turns/:turnId', {
+    config: { rateLimit: { max: 90, timeWindow: '1 minute' } }
+  }, async (request, reply) => {
+    reply.header('Cache-Control', 'no-store')
+    const identity = await authenticateRequest(request, context)
+    const { turnId } = z.object({ turnId: z.string().uuid() }).strict().parse(request.params)
+    const snapshot = turns.get(identity.userId, turnId)
+    if (!snapshot) throw new AppError('RESOURCE_NOT_FOUND', 'Planner turn was not found', 404)
+    return reply.send(snapshot)
+  })
+
   app.post('/v1/agent/converse', {
     config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
   }, async (request, reply) => {
@@ -188,8 +217,13 @@ export async function registerCloudAgentRoutes(
       message: input.message,
       generationId: uuidv7()
     })
+    return reply.header('Cache-Control', 'no-store').send(buildCloudAgentResponse(input, result))
+  })
+}
+
+function buildCloudAgentResponse(input: z.infer<typeof cloudAgentRequestSchema>, result: CloudPlannerTurnResult): z.infer<typeof cloudAgentResponseSchema> {
     const ready = routeGenerationReady(result.tripContext)
-    const response = cloudAgentResponseSchema.parse({
+    return cloudAgentResponseSchema.parse({
       conversationId: input.conversationId,
       tripId: input.tripId,
       reply: result.reply,
@@ -209,6 +243,4 @@ export async function registerCloudAgentRoutes(
       stopReason: result.stopReason,
       delivery: result.delivery
     })
-    return reply.header('Cache-Control', 'no-store').send(response)
-  })
 }

@@ -37,8 +37,14 @@ export const connectionEdgeSchema = z.object({
   departureAt: z.iso.datetime({ offset: true }).optional(), arrivalAt: z.iso.datetime({ offset: true }).optional(),
   durationMinutes: z.number().int().nonnegative().max(100000).optional(),
   transferMinutes: z.number().int().nonnegative().max(100000).optional(),
-  transferType: z.enum(['direct', 'protected', 'self']), airportChange: z.boolean().optional(),
-  segments: z.array(routeSegmentSchema).min(1).max(4).optional(),
+  transferType: z.enum(['direct', 'airline', 'protected', 'self']), airportChange: z.boolean().optional(),
+  protectedConnection: z.boolean().optional(), baggageRecheck: z.boolean().optional(),
+  segments: z.array(routeSegmentSchema).min(1).max(12).optional(),
+  layovers: z.array(z.object({
+    afterSegmentIndex: z.number().int().min(0).max(10),
+    durationMinutes: z.number().int().nonnegative().max(100000).optional(),
+    overnight: z.boolean().optional()
+  }).strict()).max(11).optional(),
   fare: z.object({ amount: z.number().finite().nonnegative(), currency: z.string().regex(/^[A-Z]{3}$/) }).strict().optional(),
   fareArtifactId: boundedString(160).optional(), fareOfferId: boundedString(240).optional(),
   availability: z.enum(['verified', 'partial', 'unknown']),
@@ -48,6 +54,20 @@ export const connectionEdgeSchema = z.object({
   if (v.arrivalDate && v.arrivalDate < v.departureDate) c.addIssue({ code: 'custom', message: 'Arrival must not precede departure', path: ['arrivalDate'] })
   if (v.departureAt && v.arrivalAt && Date.parse(v.arrivalAt) < Date.parse(v.departureAt)) c.addIssue({ code: 'custom', message: 'Arrival instant must not precede departure instant', path: ['arrivalAt'] })
   if (v.transferType === 'protected' && v.availability === 'unknown') c.addIssue({ code: 'custom', message: 'Protected edge must be verified or partial', path: ['transferType'] })
+  if (v.segments) {
+    const first = v.segments[0]!, last = v.segments.at(-1)!
+    if (first.from.iata !== v.from.iata || last.to.iata !== v.to.iata) c.addIssue({ code: 'custom', message: 'Quoted itinerary endpoints must match its edge', path: ['segments'] })
+    if (v.segments.length > 1 && v.transferType === 'direct') c.addIssue({ code: 'custom', message: 'A multi-segment itinerary is not direct', path: ['transferType'] })
+    for (let index = 1; index < v.segments.length; index++) {
+      const previous = v.segments[index - 1]!, next = v.segments[index]!
+      if (previous.arrivalAt && next.departureAt && Date.parse(next.departureAt) < Date.parse(previous.arrivalAt)) c.addIssue({ code: 'custom', message: 'Internal connection departs before arrival', path: ['segments', index] })
+      if (previous.to.iata !== next.from.iata && v.airportChange !== true) c.addIssue({ code: 'custom', message: 'Changing airports must be explicit', path: ['airportChange'] })
+    }
+  }
+  if (v.layovers && (new Set(v.layovers.map(layover => layover.afterSegmentIndex)).size !== v.layovers.length
+    || v.layovers.some(layover => !v.segments || layover.afterSegmentIndex >= v.segments.length - 1))) {
+    c.addIssue({ code: 'custom', message: 'Layovers must identify distinct internal segment connections', path: ['layovers'] })
+  }
 })
 export type ConnectionEdge = z.infer<typeof connectionEdgeSchema>
 
@@ -143,6 +163,8 @@ export const routeConstraintsSchema = z.object({
   allowAirportChange: z.boolean().default(false),
   allowLongStopover: z.boolean().default(true),
   minTransferMinutes: z.number().int().min(0).max(1440).default(45),
+  minSelfTransferMinutes: z.number().int().min(1).max(1440).optional(),
+  minAirportChangeMinutes: z.number().int().min(1).max(1440).optional(),
   maxTotalDurationMinutes: z.number().int().min(1).max(500000).optional(),
   maxTravelDays: z.number().int().min(1).max(365).optional()
 }).strict()

@@ -24,4 +24,14 @@ describe('access tokens', () => {
     const token = await issueAccessToken({ userId: '42', publicId: 'public' }, first)
     await expect(verifyAccessToken(token, second)).rejects.toMatchObject({ code: 'UNAUTHORIZED' })
   })
+
+  it('rejects existing local test tokens after disabling local login or entering production', async () => {
+    const env = { ...testEnv('local-token-test-secret-with-at-least-32-characters'), HOST: '127.0.0.1', LOCAL_LOGIN_ENABLED: true, LOCAL_LOGIN_KEY: 'local-token-test-key-with-at-least-32-characters' }
+    const token = await issueAccessToken({ userId: '42', publicId: 'local-public', localTest: true }, env)
+    await expect(verifyAccessToken(token, env)).resolves.toMatchObject({ userId: '42', localTest: true })
+    for (const override of [{ LOCAL_LOGIN_ENABLED: false }, { NODE_ENV: 'production' as const }]) {
+      await expect(verifyAccessToken(token, { ...env, ...override })).rejects.toMatchObject({ code: 'UNAUTHORIZED' })
+      await expect(issueAccessToken({ userId: '42', publicId: 'local-public', localTest: true }, { ...env, ...override })).rejects.toMatchObject({ code: 'UNAUTHORIZED' })
+    }
+  })
 })

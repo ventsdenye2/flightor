@@ -6,9 +6,13 @@ tests exist. Provider-specific payloads must be normalized before crossing a
 tool boundary.
 
 The public conversation API is the authenticated `POST /v1/agent/converse`.
+The mini-program uses the same workflow via `POST /v1/agent/turns` and
+`GET /v1/agent/turns/:turnId` for temporary execution-stage feedback under
+[ADR 0015](adr/0015-transient-planner-progress.md). This adds no Agent-facing
+tools or context messages; the production turn budget is 300 seconds.
 Its Planner registry is intentionally smaller than the complete deterministic
 Core Tool registry: conversation may gather facts, update Trip/Memory, search
-fares, research, and build an outline. It may queue final route generation only
+fares, research, and author daily travel guides. It may queue final route generation only
 through the zero-argument `start_route_generation` operation after an
 unambiguous current user instruction. Final connection search, complete-path planning, Pareto
 optimization, and route-price confirmation run only behind the explicit,
@@ -167,6 +171,10 @@ route generation. Tools never supply their own duplicate lineage-write policy.
 - Output: `{ artifact: { id, type, schemaVersion }, summary }` for the Planner.
   The repository stores the complete normalized `FlightSearchArtifact`, including
   offers, query parameters, `checkedAt`, provider provenance, and verification.
+  Exact-date and flexible-date summaries include `itineraries.counts` and the
+  cheapest complete itinerary per transfer type (route, segment count, times,
+  duration and total price). Connecting offers retain every segment and reported
+  layover; `airline` does not assert protected ticketing or baggage transfer.
 - Side effects: Creates an Artifact/search record when persistence is enabled;
   it does not book or purchase anything.
 - Cost class: `paid`.
@@ -219,9 +227,10 @@ route generation. Tools never supply their own duplicate lineage-write policy.
 
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
-| `web_research` | Implemented (Phase 4B compatibility vocabulary) | Strict minimal `ResearchBrief` → `research` v2 artifact + compact status counts | Creates artifact | paid | Restricted production `ResearchAgent`; SerpApi research adapter; optional OpenRouter synthesis | Bounded snippets only; provider/model failure degrades conservatively; missing SerpApi key is explicit unavailable |
-| `research_destination` | Implemented (Phase 4B) | Trusted destination + active Trip window/interests/questions → `research` v2 artifact | Creates artifact | paid | Same restricted Research pipeline | Every finding has standard verification/TTL; event snippet evidence is never fully verified |
-| `build_travel_guide` | Implemented (Phase 4B) | Owner-scoped trip-route + research refs → `travel_guide` v1 artifact | Creates artifact | cheap | Deterministic FlightOR composition | Performs no search; stale/unverified findings are omitted and missing days remain empty |
+| `web_research` | Implemented (Phase 4B compatibility vocabulary) | Strict minimal `ResearchBrief` → `research` v2 artifact + compact source-bound findings | Creates artifact | paid | Restricted production `ResearchAgent`; SerpApi research adapter; optional OpenRouter synthesis | Bounded snippets only; provider/model failure degrades conservatively; missing SerpApi key is explicit unavailable |
+| `research_destination` | Implemented (Phase 4B) | Trusted destination + active Trip window/interests/questions → `research` v2 artifact + selectable finding IDs, summaries, locations and verification status | Creates artifact | paid | Same restricted Research pipeline | Every finding has standard verification/TTL; event snippet evidence is never fully verified |
+| `save_travel_guide` | Implemented (ADR 0012 MVP) | Research refs + Planner-authored days, city IDs, selected finding IDs, time blocks and notes → `saved` guide v1 or `needs_revision` issues | Creates derived route and guide artifacts after validation | cheap | Guide domain restores source facts and shares accepted Goal content validation | No provider calls or automatic redistribution; unused research is excluded; dates, evidence, scope and result limits fail before save; cancelled/conflicting second write cannot become completed delivery |
+| `build_travel_guide` | Implemented (Phase 4B; compatibility only) | Owner-scoped trip-route + research refs → `travel_guide` v1 artifact | Creates artifact | cheap | Deterministic FlightOR composition | Excluded from public Planner; retained in complete Core registry; stale/unverified findings are omitted and missing days remain empty |
 
 Both research tools use `executeResearchBrief` to bind the request to one accepted
 Trip/workspace snapshot. When `web_research.travelWindow` is omitted, it inherits
@@ -234,18 +243,31 @@ saved evidence covers the accepted Trip. Defaults are applied before the new
 research call and Artifact write, never to an existing Artifact. A changed Trip
 version rejects the attempt at the workspace boundary.
 
-Production research has an injected `ResearchQueryPlanner` for retrieval wording.
-The domain first selects up to eight destination/question tasks; one bounded
-OpenRouter request returns short terms for exactly those indexed tasks. The
-planner cannot change task coverage, add sources or supply URLs/search operators.
-Original questions remain in the saved brief and synthesis input. The search
-adapter alone adds canonical destination, date-sensitive constraints and the
-server source policy, with at most two search requests in flight. Invalid or
-unavailable query planning falls back to the original sanitized query and adds
-`research_query_planning_unavailable_or_invalid`. Caller cancellation propagates
-through query planning, search and synthesis; the additional model request stays
-inside the research tool's existing deadline. Shorter queries improve retrieval
-intent but do not verify sources or guarantee results.
+Conversation research uses the main Planner's questions directly, without an
+extra query-planning model call. The domain selects up to eight destination/
+question tasks; two rolling workers run searches while preserving result order.
+The search adapter adds canonical destination, date-sensitive constraints and
+server source policy. The synthesis model receives the original brief and
+retrieved sources. All stages share cancellation and the existing deadline.
+
+`ResearchQueryPlanner` remains an optional injected capability for other callers,
+including discovery. It returns short terms for the same indexed tasks and
+cannot change coverage or supply sources/URLs. An unavailable or invalid plan
+falls back to original sanitized queries with an explicit warning. Neither
+wording changes nor source synthesis alone guarantee complete factual coverage.
+
+The authored guide's `theme`, `notes`, `timeOfDay` and `planningNote` are optional
+additions to the existing v1 payload. The Planner selects them while the server
+copies source title/description/category/verification. Empty rest/travel days
+require notes and the accepted Goal's optional `allowRestDays=true`; default
+daily evidence coverage remains unchanged. See [ADR 0012](adr/0012-agent-authored-itineraries.md).
+
+Cloud guide saves require an activated travel-guide Goal/run. `get_active_goal`
+alone does not activate one; revision feedback directs the Planner to resume or
+declare the appropriate objective before any write. Duplicate selections report
+all affected days and finding IDs without changing the Goal's requirements.
+Location selectors share a canonical lookup: safe integer IDs and the same
+string IDs select identical trusted records, while unknown/ambiguous IDs fail.
 
 ## Runtime-wide execution policy
 
@@ -286,7 +308,7 @@ recommend_destinations
 plan_trip_route
 research_destination
 web_research
-build_travel_guide
+save_travel_guide
 get_user_memory
 update_user_memory
 ```

@@ -58,7 +58,10 @@ function edgeAvailability(candidate: TopologyCandidate, segment: TopologyCandida
 function fareMatches(candidate: Pick<TopologyCandidate, 'origin' | 'destination'>, offer: FareOffer): boolean {
   const first = offer.segments[0]
   const last = offer.segments[offer.segments.length - 1]
-  return !!first && !!last && first.origin === candidate.origin.iata && last.destination === candidate.destination.iata
+  // Topology edges represent one physical flight. A complete connecting quote
+  // must enter through LiveFareConnectionSearch, never price a single topology leg.
+  return offer.segments.length === 1 && offer.transferType === 'direct'
+    && !!first && !!last && first.origin === candidate.origin.iata && last.destination === candidate.destination.iata
 }
 
 export class ProductionConnectionSearchService implements ConnectionSearchService {

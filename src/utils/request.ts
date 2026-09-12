@@ -19,6 +19,8 @@ interface RequestOptions<D> {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   data?: D
   showLoading?: boolean
+  /** Let an owning form present an actionable error without a second generic toast. */
+  showError?: boolean
   loadingText?: string
   retry?: number
   /** Additional request headers (for example an idempotency key). */
@@ -30,7 +32,7 @@ interface RequestOptions<D> {
 }
 
 export async function request<T, D = Record<string, unknown>>(options: RequestOptions<D>): Promise<T> {
-  const { url, method = 'GET', data, showLoading = false, loadingText = '加载中…', retry = 2, timeout = 10000, header: extraHeaders, auth = 'session' } = options
+  const { url, method = 'GET', data, showLoading = false, showError = true, loadingText = '加载中…', retry = 2, timeout = 10000, header: extraHeaders, auth = 'session' } = options
   const session = authSnapshot()
   let refreshed = false
   let recoveryFailed = false
@@ -81,7 +83,7 @@ export async function request<T, D = Record<string, unknown>>(options: RequestOp
       if (showLoading) Taro.hideLoading()
 
       if (res.statusCode === 429) {
-        Taro.showToast({ title: t('net.rate'), icon: 'none', duration: 2500 })
+        if (showError) Taro.showToast({ title: t('net.rate'), icon: 'none', duration: 2500 })
         throw new Error('RATE_LIMITED')
       }
       if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -103,6 +105,6 @@ export async function request<T, D = Record<string, unknown>>(options: RequestOp
   }
 
   if (showLoading) Taro.hideLoading()
-  if (!(lastError instanceof AuthSessionChangedError)) Taro.showToast({ title: t('net.error'), icon: 'none' })
+  if (showError && !(lastError instanceof AuthSessionChangedError)) Taro.showToast({ title: t('net.error'), icon: 'none' })
   throw lastError
 }

@@ -38,6 +38,22 @@ await test('invalid embedded segments never render a false direct route', () => 
     assert.throws(() => readRouteArtifact(artifact([{ ...route, edges: [{ ...edge, segments }] }])))
   }
 })
+await test('provider airline connections remain one priced edge with all intermediate airports', () => {
+  const hub = { id: 'H', name: 'Hub', iata: 'CCC' }
+  const connecting = { ...edge, transferType: 'airline', fare: { amount: 800, currency: 'CNY' }, layovers: [{ afterSegmentIndex: 0, durationMinutes: 120, overnight: true }], segments: [
+    { ...edge.segments[0], to: hub },
+    { ...edge.segments[0], from: hub, departureAt: '2026-10-01T14:00:00Z', arrivalAt: '2026-10-01T16:00:00Z', flightNumber: 'QA200' }
+  ] }
+  const [value] = readRouteArtifact(artifact([{ ...route, edges: [connecting], transferCount: 1 }]))
+  assert.equal(value.edges.length, 1)
+  assert.equal(value.edges[0].transferType, 'airline')
+  assert.equal(value.edges[0].fare.amount, 800)
+  assert.equal(value.edges[0].segments[0].to.iata, 'CCC')
+  assert.equal(value.edges[0].segments[1].flightNumber, 'QA200')
+  assert.equal(value.edges[0].layovers[0].durationMinutes, 120)
+  assert.equal(value.edges[0].layovers[0].overnight, true)
+  assert.equal(value.transferCount, 1)
+})
 await test('recommendations show supplied positive reasons and tradeoffs', () => {
   const result = readRouteArtifact({ type: 'route_set', schemaVersion: 1, payload: { schemaVersion: 1, kind: 'optimized_routes', representatives: [{ path: route, badges: ['balanced'], explanation: { scoreBreakdown: [{ direction: 'positive', contribution: 0.3, reason: 'Matches the requested city' }, { direction: 'negative', contribution: -0.1, reason: 'More transfers' }], tradeoffs: ['Costs more than the cheapest option'] } }] } })
   assert.equal(result[0].reasons.length, 1); assert.equal(result[0].reasons[0], 'Matches the requested city')

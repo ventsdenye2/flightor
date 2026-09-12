@@ -15,8 +15,61 @@ const input = (edges: ConnectionEdge[], constraints: FlightRoutePlanInput['const
   constraints,
   maxPaths
 })
+const throughEdge = (overrides: Partial<ConnectionEdge> = {}): ConnectionEdge => edge('PEK', 'CDG', 'one-quoted-itinerary', {
+  transferType: 'airline', fareArtifactId: 'immutable-fare', fareOfferId: 'one-offer', fare: { amount: 1234, currency: 'CNY' },
+  departureAt: '2026-09-10T00:00:00Z', arrivalAt: '2026-09-10T14:00:00Z', durationMinutes: 840,
+  segments: [
+    { id: 'physical-1', from: loc('PEK'), to: loc('NRT', 'TYO'), departureAt: '2026-09-10T00:00:00Z', arrivalAt: '2026-09-10T02:00:00Z', verification },
+    { id: 'physical-2', from: loc('NRT', 'TYO'), to: loc('CDG'), departureAt: '2026-09-10T04:00:00Z', arrivalAt: '2026-09-10T14:00:00Z', verification }
+  ], ...overrides
+})
 
 describe('DeterministicFlightRoutePlanner golden world', () => {
+  it('counts internal flights without turning a connecting airport into a requested visit', async () => {
+    const planner = new DeterministicFlightRoutePlanner()
+    const accepted = await planner.plan(input([throughEdge()], { maxTransfers: 1 }))
+    expect(accepted.paths[0]).toMatchObject({ transferCount: 1, totalFare: { amount: 1234, currency: 'CNY' } })
+    expect(accepted.paths[0]?.edges).toHaveLength(1)
+    expect(accepted.paths[0]?.nodes).toHaveLength(2)
+    expect((await planner.plan(input([throughEdge()], { maxTransfers: 0 }))).paths).toHaveLength(0)
+    expect((await planner.plan(input([throughEdge()], { maxStops: 0 }))).paths).toHaveLength(0)
+    expect((await planner.plan(input([throughEdge()], { excludedLocations: [city('TYO')] }))).paths).toHaveLength(0)
+    expect((await planner.plan(input([throughEdge()], { requiredLocations: [loc('NRT')] }))).paths).toHaveLength(0)
+  })
+  it('uses the same elapsed duration for constraints and totals instead of trusting a shorter provider duration', async () => {
+    const planner = new DeterministicFlightRoutePlanner()
+    const quoted = throughEdge({ durationMinutes: 240 })
+    expect((await planner.plan(input([quoted], { maxTotalDurationMinutes: 300 }))).paths).toHaveLength(0)
+    expect((await planner.plan(input([quoted], { maxTotalDurationMinutes: 900 }))).paths[0]?.totalDurationMinutes).toBe(840)
+    expect((await planner.plan(input([edge('PEK', 'CDG')], { maxTotalDurationMinutes: 900 }))).paths).toHaveLength(0)
+  })
+  it('enforces internal chronology, MCT, long-stopover and airport-change buffers', async () => {
+    const planner = new DeterministicFlightRoutePlanner()
+    const at = (departureAt: string, changedAirport = false) => {
+      const quoted = throughEdge({ airportChange: changedAirport, arrivalAt: '2026-09-11T00:00:00Z' })
+      quoted.segments![1] = { ...quoted.segments![1]!, departureAt, arrivalAt: '2026-09-11T00:00:00Z', ...(changedAirport ? { from: loc('HND', 'TYO') } : {}) }
+      return quoted
+    }
+    await expect(planner.plan(input([at('2026-09-10T01:00:00Z')]))).rejects.toThrow(/connection departs before arrival/)
+    expect((await planner.plan(input([at('2026-09-10T02:20:00Z')]))).paths).toHaveLength(0)
+    expect((await planner.plan(input([at('2026-09-10T15:00:00Z')], { allowLongStopover: false }))).paths).toHaveLength(0)
+    expect((await planner.plan(input([at('2026-09-10T03:00:00Z', true)], { allowAirportChange: true }))).paths).toHaveLength(0)
+    expect((await planner.plan(input([at('2026-09-10T15:00:00Z', true)], { allowAirportChange: false }))).paths).toHaveLength(0)
+    expect((await planner.plan(input([at('2026-09-10T15:00:00Z', true)], { allowAirportChange: true, allowLongStopover: true }))).paths).toHaveLength(1)
+  })
+  it('keeps airline connections distinct from self-transfers and joins of separately priced offers', async () => {
+    const planner = new DeterministicFlightRoutePlanner()
+    expect((await planner.plan(input([throughEdge()], { allowSelfTransfer: false }))).paths).toHaveLength(1)
+    expect((await planner.plan(input([throughEdge({ transferType: 'self' })], { allowSelfTransfer: true }))).paths).toHaveLength(0)
+    const separate = [
+      edge('PEK', 'NRT', 'ticket-a', { fareArtifactId: 'fare-a', fareOfferId: 'offer-a', arrivalAt: '2026-09-10T02:00:00Z' }),
+      edge('NRT', 'CDG', 'ticket-b', { fareArtifactId: 'fare-b', fareOfferId: 'offer-b', departureAt: '2026-09-10T10:00:00Z' })
+    ]
+    expect((await planner.plan(input(separate, { allowSelfTransfer: false }))).paths).toHaveLength(0)
+    expect((await planner.plan(input(separate, { allowSelfTransfer: true }))).paths[0]?.feasibility).toBe('partial')
+    separate[1]!.departureAt = '2026-09-10T09:00:00Z'
+    expect((await planner.plan(input(separate, { allowSelfTransfer: true }))).paths).toHaveLength(0)
+  })
   it('treats an exact departure date as a start window and permits an overnight arrival', async () => {
     const query = input([edge('PEK', 'CDG', 'overnight', { arrivalDate: '2026-09-11', durationMinutes: 600 })])
     query.window.to = query.window.from

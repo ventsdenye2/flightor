@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import { observer } from 'mobx-react-lite'
 import type { TransferOption } from '../../types/flight'
-import { t, fd } from '../../i18n'
+import { t, fd, localeStore } from '../../i18n'
 import { formatPrice } from '../../utils/format'
 import './TransferModeCompare.scss'
 
@@ -63,9 +63,10 @@ function buildDimensions(s: TransferOption, a: TransferOption): DimensionRow[] {
     },
     {
       label: t('tmc.duration'),
-      self: fd(s.totalDuration),
-      airline: fd(a.totalDuration),
-      winner: s.totalDuration <= a.totalDuration ? 'self' : 'airline'
+      self: s.totalDuration === undefined ? (localeStore.locale === 'zh' ? '待确认' : 'Unconfirmed') : fd(s.totalDuration),
+      airline: a.totalDuration === undefined ? (localeStore.locale === 'zh' ? '待确认' : 'Unconfirmed') : fd(a.totalDuration),
+      winner: s.totalDuration === undefined || a.totalDuration === undefined || s.totalDuration === a.totalDuration
+        ? '' : s.totalDuration < a.totalDuration ? 'self' : 'airline'
     },
     {
       label: t('tmc.protection'),
