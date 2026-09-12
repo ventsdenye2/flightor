@@ -1,0 +1,114 @@
+{
+  "startedAt": "2026-09-12T18:31:08.276Z",
+  "plan": {
+    "protocol": "research-v2-explicit-contract",
+    "scope": "model API availability only",
+    "cases": [
+      "activity-01"
+    ],
+    "models": [
+      {
+        "label": "GLM",
+        "id": "z-ai/glm-5.3-flash",
+        "preferredEngine": "exa",
+        "reasoning": {
+          "enabled": true,
+          "effort": "low",
+          "exclude": true
+        }
+      }
+    ],
+    "arms": [
+      "probe"
+    ],
+    "repeats": 1,
+    "engineMode": "exa",
+    "cells": 1,
+    "budgetUsd": 5,
+    "maxSerpApiSearches": 96,
+    "timeoutMs": 95000,
+    "seed": 20260913
+  },
+  "models": [
+    {
+      "id": "z-ai/glm-5.3-flash",
+      "created": 1787752741,
+      "pricing": {
+        "prompt": "0.00000015",
+        "completion": "0.0000005",
+        "input_cache_read": "0.00000003"
+      },
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logit_bias",
+        "logprobs",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ]
+    }
+  ],
+  "casesHash": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6",
+  "modelsHash": "96cf652e07b0ab44395cac6e2145f081ff8eb8638d304b6891466df59e172a5b",
+  "baselineHash": null,
+  "runnerFiles": [
+    {
+      "path": "budget.mjs",
+      "sha256": "a15123ed70baa75c6da323fd3a56acaee71af1d5a632c83cf3e8a775115fc517"
+    },
+    {
+      "path": "cases.json",
+      "sha256": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6"
+    },
+    {
+      "path": "contracts.mjs",
+      "sha256": "72c27589e66067d3d13870810425401575971bdfb16566f5824a93bfe93b4ebd"
+    },
+    {
+      "path": "contracts.test.mjs",
+      "sha256": "372ee3707d36ea147b65bb8ee2134e2b56157d7e5dffb19e3fe77de991fb05a8"
+    },
+    {
+      "path": "current-system.mjs",
+      "sha256": "dc87bb30a20e24e3e8448e8bb89c0426dd1de1f60e266573645c8469aa525b1f"
+    },
+    {
+      "path": "current-system.test.mjs",
+      "sha256": "de2af7bd58531fb01d97c4b7bbdebb934e8e99ac548d24749a33f8c32c4bf592"
+    },
+    {
+      "path": "models.json",
+      "sha256": "96cf652e07b0ab44395cac6e2145f081ff8eb8638d304b6891466df59e172a5b"
+    },
+    {
+      "path": "openrouter.mjs",
+      "sha256": "af73eec559e4dd969ed33b473f977177112ff0571548fe8d12a09a8e7a636525"
+    },
+    {
+      "path": "package.json",
+      "sha256": "76961316ff725e4cbbd5f57f250083cfcece42a28453f18e841bdc5ca36e2b73"
+    },
+    {
+      "path": "report.mjs",
+      "sha256": "24876c38b19755ca0463caa68f3e756a26ada00f7629785b4bb1d4205ed83886"
+    },
+    {
+      "path": "run.mjs",
+      "sha256": "25ec08b278f79e9d00855b0fd260441b36c80f7755b4f242eb20195cc866c07c"
+    }
+  ]
+}

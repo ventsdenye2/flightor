@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "archivedAt": "2026-09-12T19:34:31.025Z",
+  "experimentDate": "2026-09-13",
+  "sampleCount": 106,
+  "v3SampleCount": 82,
+  "batches": [
+    {
+      "run": "pilot-02",
+      "samples": 2,
+      "protocol": "research-v1",
+      "concurrency": 1
+    },
+    {
+      "run": "pilot-03",
+      "samples": 2,
+      "protocol": "research-v1",
+      "concurrency": 1
+    },
+    {
+      "run": "china-model-probe",
+      "samples": 5,
+      "protocol": "research-v2-explicit-contract",
+      "concurrency": 1
+    },
+    {
+      "run": "glm-probe",
+      "samples": 1,
+      "protocol": "research-v2-explicit-contract",
+      "concurrency": 1
+    },
+    {
+      "run": "research-screen-v2",
+      "samples": 9,
+      "protocol": "research-v2-explicit-contract",
+      "concurrency": 2
+    },
+    {
+      "run": "research-screen-v2-cont1",
+      "samples": 5,
+      "protocol": "research-v2-explicit-contract",
+      "concurrency": 1
+    },
+    {
+      "run": "research-screen-v3",
+      "samples": 11,
+      "protocol": "research-v3-aligned-contract-routing",
+      "concurrency": 2
+    },
+    {
+      "run": "candidate-screen-v3",
+      "samples": 42,
+      "protocol": "research-v3-aligned-contract-routing",
+      "concurrency": 2
+    },
+    {
+      "run": "architecture-baseline-v3",
+      "samples": 11,
+      "protocol": "research-v3-aligned-contract-routing",
+      "concurrency": 2
+    },
+    {
+      "run": "architecture-baseline-v3-cont1",
+      "samples": 18,
+      "protocol": "research-v3-aligned-contract-routing",
+      "concurrency": 2
+    }
+  ],
+  "scope": "First-round research-component evidence; includes historical protocols, availability probes, errors and timeouts.",
+  "sourceSelection": "aggregate-final/all-results.json; every selected row checked against its original run/sample JSON",
+  "originalRows": "runs/<run>/<sample>.json",
+  "aggregateRows": "all-results.json",
+  "redactions": [
+    "Authorization and credential fields are omitted.",
+    "Known credential values are redacted without being logged.",
+    "Local absolute paths become relative archive references or [local-path].",
+    "Request messages are omitted; request configuration and raw response messages are retained."
+  ],
+  "evidenceBoundary": [
+    "Source hashes identify pre-redaction source bytes.",
+    "This export does not call providers or rerun the recorded 45 tests.",
+    "The aggregate result projection is separate from each original sample result.",
+    "Model/source hashes identify the executed version; later runner hardening was offline and does not change these live samples."
+  ]
+}

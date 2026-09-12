@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-09-12T19:34:31.025Z",
+  "sampleCount": 106,
+  "uniqueSampleIds": 106,
+  "v3SampleCount": 82,
+  "originalSampleCorrespondence": true,
+  "sourceFilesUnchanged": true,
+  "secretScanHit": false,
+  "localAbsolutePathHit": false,
+  "credentialFieldsRemoved": false,
+  "credentialValuesRedacted": false,
+  "secretScanScope": "Known configured credential values, recognizable key/token patterns and credential field exclusion; no .env file access.",
+  "externalCalls": 0,
+  "recordedOfflineTests": {
+    "passed": 45,
+    "failed": 0
+  },
+  "testsRerunDuringExport": false
+}

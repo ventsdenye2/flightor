@@ -1,0 +1,101 @@
+{
+  "checkedAt": "2026-09-12T19:02:20.393Z",
+  "records": [
+    {
+      "run": "research-screen-v3",
+      "casesHash": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6",
+      "modelsHash": "96cf652e07b0ab44395cac6e2145f081ff8eb8638d304b6891466df59e172a5b",
+      "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+      "requestCodeHashes": [
+        {
+          "path": "contracts.mjs",
+          "sha256": "4edd1bf828b79bf1dedc09994a59ff0b74def20701fb97a5dd3122781afb9372"
+        },
+        {
+          "path": "current-system.mjs",
+          "sha256": "dc87bb30a20e24e3e8448e8bb89c0426dd1de1f60e266573645c8469aa525b1f"
+        },
+        {
+          "path": "openrouter.mjs",
+          "sha256": "72885e9890d47f8836c4cd682fc1d5e056688d06b2558642f37198753e24016a"
+        },
+        {
+          "path": "run.mjs",
+          "sha256": "498fb96e20d3b51a38c15c6566707cc9da88365bdd0dd1c98b0de79bf831c379"
+        }
+      ]
+    },
+    {
+      "run": "candidate-screen-v3",
+      "casesHash": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6",
+      "modelsHash": "96cf652e07b0ab44395cac6e2145f081ff8eb8638d304b6891466df59e172a5b",
+      "baselineHash": null,
+      "requestCodeHashes": [
+        {
+          "path": "contracts.mjs",
+          "sha256": "4edd1bf828b79bf1dedc09994a59ff0b74def20701fb97a5dd3122781afb9372"
+        },
+        {
+          "path": "current-system.mjs",
+          "sha256": "dc87bb30a20e24e3e8448e8bb89c0426dd1de1f60e266573645c8469aa525b1f"
+        },
+        {
+          "path": "openrouter.mjs",
+          "sha256": "72885e9890d47f8836c4cd682fc1d5e056688d06b2558642f37198753e24016a"
+        },
+        {
+          "path": "run.mjs",
+          "sha256": "498fb96e20d3b51a38c15c6566707cc9da88365bdd0dd1c98b0de79bf831c379"
+        }
+      ]
+    },
+    {
+      "run": "architecture-baseline-v3",
+      "casesHash": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6",
+      "modelsHash": "96cf652e07b0ab44395cac6e2145f081ff8eb8638d304b6891466df59e172a5b",
+      "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+      "requestCodeHashes": [
+        {
+          "path": "contracts.mjs",
+          "sha256": "4edd1bf828b79bf1dedc09994a59ff0b74def20701fb97a5dd3122781afb9372"
+        },
+        {
+          "path": "current-system.mjs",
+          "sha256": "dc87bb30a20e24e3e8448e8bb89c0426dd1de1f60e266573645c8469aa525b1f"
+        },
+        {
+          "path": "openrouter.mjs",
+          "sha256": "72885e9890d47f8836c4cd682fc1d5e056688d06b2558642f37198753e24016a"
+        },
+        {
+          "path": "run.mjs",
+          "sha256": "498fb96e20d3b51a38c15c6566707cc9da88365bdd0dd1c98b0de79bf831c379"
+        }
+      ]
+    },
+    {
+      "run": "architecture-baseline-v3-cont1",
+      "casesHash": "183a7579a1da787fc5a3f355577967220871f63c8993447436526b3edfeed0a6",
+      "modelsHash": "96cf652e07b0ab44395cac6e2145f081ff8eb8638d304b6891466df59e172a5b",
+      "baselineHash": "48a972b50c1065098a6b7e60561ae4534178e760c66ee4f0d637e5f84715cc1c",
+      "requestCodeHashes": [
+        {
+          "path": "contracts.mjs",
+          "sha256": "4edd1bf828b79bf1dedc09994a59ff0b74def20701fb97a5dd3122781afb9372"
+        },
+        {
+          "path": "current-system.mjs",
+          "sha256": "dc87bb30a20e24e3e8448e8bb89c0426dd1de1f60e266573645c8469aa525b1f"
+        },
+        {
+          "path": "openrouter.mjs",
+          "sha256": "72885e9890d47f8836c4cd682fc1d5e056688d06b2558642f37198753e24016a"
+        },
+        {
+          "path": "run.mjs",
+          "sha256": "498fb96e20d3b51a38c15c6566707cc9da88365bdd0dd1c98b0de79bf831c379"
+        }
+      ]
+    }
+  ]
+}

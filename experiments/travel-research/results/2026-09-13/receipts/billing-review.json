@@ -1,0 +1,6 @@
+{
+  "at": "2026-09-12T18:24:15.385Z",
+  "sample": "pilot-02/sample-002.json",
+  "reason": "HTTP403 region rejection without generation. Retain full $0.25 reservation; no assumption of zero cost. Exclude unavailable model; permit other samples within remaining cap.",
+  "source": "https://openrouter.ai/blog/insights/reliability-failover/"
+}
