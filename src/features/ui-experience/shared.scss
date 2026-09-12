@@ -1,0 +1,30 @@
+.ux-app {
+  --ux-panel: #f2f7f7; --ux-line: #e2ecee;
+  input, textarea { color: var(--ux-ink); font-family: inherit; min-width: 0; }
+  input:focus-visible, textarea:focus-visible { outline: 2px solid var(--ux-teal); outline-offset: 3px; }
+}
+.ux-screen { display: flex; flex: 1; flex-direction: column; min-height: 0; position: static; overflow: hidden; }
+.ux-app.ux-embedded { position: static; }
+.ux-screen[hidden] { display: none; }
+.ui-header-spacer { width: 44px; flex-shrink: 0; }
+.ui-section-heading { margin: 24px 0 14px; .ux-muted { margin-top: 4px; } }
+.ui-display { display: block; font: 600 28px/1.5 'Songti SC', 'Noto Serif SC', SimSun, serif; letter-spacing: -.5px; }
+.ui-page { padding: 22px 18px 28px; }
+.ui-demo-note { display: block; margin: 22px 0 6px; font-size: 11px; line-height: 1.7; color: var(--ux-muted); }
+.ui-empty { padding: 34px 12px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; .ui-display { font-size: 24px; }.ux-muted { max-width: 280px; }.ux-secondary { margin-top: 10px; max-width: 240px; } }
+.ui-empty-icon { display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: var(--ux-panel); border-radius: 50%; .ux-icon { width: 28px; height: 28px; } }
+.ui-menu-row { display: flex; width: 100%; align-items: center; gap: 12px; min-height: 72px; border-bottom: 1px solid var(--ux-line) !important; .ux-icon:last-child { width: 16px; height: 16px; } }
+.ui-menu-icon { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 12px; background: var(--ux-panel); flex-shrink: 0; .ux-icon { width: 19px !important; height: 19px !important; } }
+.ui-menu-copy { flex: 1; min-width: 0; font-size: 14px; .ux-muted { font-size: 11px; margin-top: 3px; } }
+.ui-menu-value { color: var(--ux-muted); font-size: 12px; white-space: nowrap; }
+.ui-sheet .ux-detail-title { margin-top: 0; }.ui-sheet > .ux-primary { margin-top: 18px; }
+.ui-segment { display: flex; border-bottom: 1px solid var(--ux-line); gap: 24px; margin: 22px 0; }
+.ux-app .ui-segment-button { font-size: 14px; min-height: 44px; border-bottom: 2px solid transparent; color: var(--ux-muted); &.is-active { border-color: var(--ux-teal); color: var(--ux-teal); font-weight: 600; } }
+.ui-pill-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.ux-app .ui-pill { min-height: 44px; padding: 8px 14px; border: 1px solid var(--ux-line); border-radius: 12px; font-size: 13px; &.is-active { color: var(--ux-teal); border-color: var(--ux-teal); background: var(--ux-panel); } }
+.ui-form-field { display: flex; flex-direction: column; gap: 8px; margin: 20px 0; font-size: 13px; input { width: 100%; height: 46px; padding: 9px 12px; border: 1px solid var(--ux-line); border-radius: 10px; background: #fff; } }
+.ui-split-actions { display: flex; gap: 10px; margin-top: 18px; > button { flex: 1; } }
+.ux-app .ui-danger { color: #a54635; }
+.ui-helper { display: block; font-size: 12px; color: var(--ux-muted); line-height: 1.8; }
+.ui-inline-notice { margin: 12px 0; padding: 12px; border-radius: 10px; color: var(--ux-teal); background: var(--ux-panel); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .ux-app *, .ux-app *::before, .ux-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

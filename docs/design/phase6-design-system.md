@@ -1,5 +1,10 @@
 # Phase 6 Plan and Flight Workspace Design System
 
+> Visual direction update (2026-09-13): the user accepted the ocean-teal and white
+> UI Experience v1 direction for subsequent new and redesigned user-facing screens.
+> Use [the shared visual baseline](./ui-experience-v1.md) for that work. The tokens
+> below document the existing Phase 6 appearance; migration is incremental.
+
 This inventory locks the visual and interaction system for Phase 6. Reference
 concepts:
 
