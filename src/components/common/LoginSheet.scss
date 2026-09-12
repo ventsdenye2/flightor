@@ -139,6 +139,33 @@
     }
   }
 
+  &__error {
+    display: block;
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-small);
+    line-height: 1.5;
+    color: #ff9c9c;
+  }
+
+  &__local { margin-top: var(--spacing-md); }
+
+  &__local-button {
+    padding: var(--spacing-sm) 0;
+    text-align: center;
+    border: 1rpx solid var(--color-accent-cyan);
+    border-radius: var(--radius-full);
+    color: var(--color-accent-cyan);
+    font-size: var(--font-size-small);
+  }
+
+  &__local-note {
+    display: block;
+    margin-top: var(--spacing-xs);
+    text-align: center;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-secondary);
+  }
+
   &__privacy {
     display: block;
     text-align: center;

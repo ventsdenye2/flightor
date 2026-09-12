@@ -1,0 +1,60 @@
+.planner-progress {
+  max-width: 100%;
+  padding: 6rpx 0;
+  color: var(--color-text-primary);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 14rpx;
+  }
+
+  &__spinner {
+    flex: 0 0 auto;
+    width: 26rpx;
+    height: 26rpx;
+    box-sizing: border-box;
+    border: 3rpx solid rgba(10, 132, 255, 0.22);
+    border-top-color: var(--color-accent-cyan);
+    border-radius: 50%;
+    animation: planner-progress-spin 0.9s linear infinite;
+  }
+
+  &__title {
+    min-width: 0;
+    font-size: var(--font-size-small);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  &__detail,
+  &__previous,
+  &__elapsed {
+    display: block;
+    margin-top: 10rpx;
+    font-size: var(--font-size-caption);
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
+
+  &__elapsed {
+    font-variant-numeric: tabular-nums;
+  }
+
+  &--reconnecting &__spinner {
+    border-color: rgba(255, 159, 10, 0.22);
+    border-top-color: var(--color-warning);
+  }
+
+  &--reconnecting &__title {
+    color: var(--color-warning);
+  }
+}
+
+@keyframes planner-progress-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planner-progress__spinner { animation: none; }
+}

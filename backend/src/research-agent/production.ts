@@ -312,37 +312,48 @@ export class ProductionResearchAgent implements ResearchAgent {
       }
     }
 
-    // At most two read-only provider requests in flight; consume their output in
-    // planned order so source indexing remains deterministic for synthesis.
-    for (let offset = 0; offset < searches.length; offset += 2) {
-      abortIfNeeded(context.signal)
-      const batch = searches.slice(offset, offset + 2)
-      const outcomes = await Promise.allSettled(batch.map((search, index) => this.searchProvider.search(
-        queryInputs(brief, search.destinationIndex, preferences, search.questionIndex, plannedTerms[offset + index]),
-        { ...(context.signal ? { signal: context.signal } : {}) }
-      )))
-      for (let index = 0; index < batch.length; index += 1) {
-        const { destinationIndex } = batch[index]!
+    // Two rolling workers keep the concurrency bound without making each pair
+    // wait for its slowest member. Consume settled results in request order.
+    const outcomes: Array<PromiseSettledResult<Awaited<ReturnType<ResearchSearchProvider['search']>>>> = new Array(searches.length)
+    let nextSearch = 0
+    await Promise.all(Array.from({ length: Math.min(2, searches.length) }, async () => {
+      while (nextSearch < searches.length) {
+        abortIfNeeded(context.signal)
+        const index = nextSearch++
+        const search = searches[index]!
         try {
-          const outcome = outcomes[index]!
-          if (outcome.status === 'rejected') throw outcome.reason
-          const result = researchSearchResultSchema.parse(outcome.value)
-          abortIfNeeded(context.signal)
-          const candidates = Array.isArray(result.candidates) ? result.candidates : []
-          for (const candidate of candidates) {
-            if (sources.length >= this.sourceLimit) break
-            const normalized = normalizeSource(candidate, destinationIndex)
-            if (!normalized || seenUrls.has(normalized.url)) continue
-            seenUrls.add(normalized.url)
-            sources.push(normalized)
-          }
-          for (const warning of result.warnings ?? []) {
-            if (warnings.length < 40) warnings.push(boundedWarning(warning))
-          }
-        } catch (error) {
-          if (context.signal?.aborted) throw context.signal.reason ?? error
-          warnings.push(boundedWarning(`research_provider_failed:${this.searchProvider.name}:destination_${destinationIndex}`))
+          const value = await this.searchProvider.search(
+            queryInputs(brief, search.destinationIndex, preferences, search.questionIndex, plannedTerms[index]),
+            { ...(context.signal ? { signal: context.signal } : {}) }
+          )
+          outcomes[index] = { status: 'fulfilled', value }
+        } catch (reason) {
+          outcomes[index] = { status: 'rejected', reason }
         }
+      }
+    }))
+    abortIfNeeded(context.signal)
+    for (let index = 0; index < searches.length; index += 1) {
+      const { destinationIndex } = searches[index]!
+      try {
+        const outcome = outcomes[index]!
+        if (outcome.status === 'rejected') throw outcome.reason
+        const result = researchSearchResultSchema.parse(outcome.value)
+        abortIfNeeded(context.signal)
+        const candidates = Array.isArray(result.candidates) ? result.candidates : []
+        for (const candidate of candidates) {
+          if (sources.length >= this.sourceLimit) break
+          const normalized = normalizeSource(candidate, destinationIndex)
+          if (!normalized || seenUrls.has(normalized.url)) continue
+          seenUrls.add(normalized.url)
+          sources.push(normalized)
+        }
+        for (const warning of result.warnings ?? []) {
+          if (warnings.length < 40) warnings.push(boundedWarning(warning))
+        }
+      } catch (error) {
+        if (context.signal?.aborted) throw context.signal.reason ?? error
+        warnings.push(boundedWarning(`research_provider_failed:${this.searchProvider.name}:destination_${destinationIndex}`))
       }
     }
 

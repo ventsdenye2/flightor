@@ -22,6 +22,86 @@ const call = (id: string, name: string, args = {}) => ({ id, type: 'function' as
 const tool = (name: string, execute: AgentTool['execute'], extra: Partial<AgentTool> = {}): AgentTool => ({ name, description: name, inputSchema: z.object({}).strict(), outputSchema: z.object({ ok: z.boolean() }), costClass: 'free', costUnits: 1, sideEffect: 'none', parallelSafe: true, timeoutMs: 30, execute, ...extra })
 
 describe('AgentRuntime and ToolRegistry', () => {
+  it('emits only actual model/tool execution events and isolates observer errors', async () => {
+    const events: unknown[] = []
+    const registry = new ToolRegistry().register(tool('research', async () => ({ ok: true })))
+    const complete = vi.fn()
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('bad', 'missing'), call('good', 'research')] } })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'done' } })
+    const result = await new AgentRuntime({ complete }, registry).run({
+      messages: [{ role: 'user', content: 'plan' }], context: ctx,
+      onActivity: activity => { events.push(activity); throw new Error('observer failed') }
+    })
+    expect(result.reply).toBe('done')
+    expect(events).toEqual([
+      { type: 'model_start' }, { type: 'model_end' },
+      { type: 'tool_start', toolName: 'research', toolCallId: 'good' },
+      { type: 'tool_end', toolName: 'research', toolCallId: 'good' },
+      { type: 'model_start' }, { type: 'model_end' }, { type: 'finalizing' }
+    ])
+    expect(JSON.stringify(result.messages)).not.toContain('model_start')
+  })
+
+  it('cancels an uncooperative model and observes its late rejection', async () => {
+    vi.useFakeTimers()
+    try {
+      let rejectLate!: (error: Error) => void
+      const complete = vi.fn(async () => new Promise<never>((_resolve, reject) => { rejectLate = reject }))
+      const runtime = new AgentRuntime({ complete }, new ToolRegistry(), { turnTimeoutMs: 1_000 })
+      const pending = runtime.run({ messages: [{ role: 'user', content: 'plan' }], context: ctx })
+      await vi.advanceTimersByTimeAsync(1_000)
+      expect(await pending).toMatchObject({ stopReason: 'turn_timeout', fallback: true })
+      rejectLate(new Error('late rejection'))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(vi.getTimerCount()).toBe(0)
+    } finally { vi.useRealTimers() }
+  })
+
+  it('does not start or charge a tool when the parent signal is already cancelled', async () => {
+    const execute = vi.fn(async (_input, _context, signal) => { signal.throwIfAborted(); return { ok: true } })
+    const registry = new ToolRegistry().register(tool('cancelled', execute))
+    const controller = new AbortController()
+    controller.abort(new Error('Agent turn timeout'))
+    const outcome = await registry.execute(call('cancelled', 'cancelled'), ctx, controller.signal)
+    expect(outcome).toMatchObject({ errorCode: 'TOOL_CANCELLED', costUnits: 0 })
+    expect(execute).not.toHaveBeenCalled()
+    await new Promise(resolve => setTimeout(resolve, 0))
+  })
+
+  it('owns late tool rejection after cancellation and a synchronous abort during startup', async () => {
+    const controller = new AbortController()
+    let rejectLate!: (reason: Error) => void
+    const registry = new ToolRegistry().register(tool('late', async () => {
+      controller.abort(new Error('cancelled during startup'))
+      return new Promise((_resolve, reject) => { rejectLate = reject })
+    }))
+    const outcome = await registry.execute(call('late', 'late'), ctx, controller.signal)
+    expect(outcome.errorCode).toBe('TOOL_CANCELLED')
+    rejectLate(new Error('late provider rejection'))
+    await new Promise(resolve => setTimeout(resolve, 0))
+  })
+
+  it('returns a turn timeout without starting later tools in the same sequential batch', async () => {
+    vi.useFakeTimers()
+    try {
+      const later = vi.fn(async (_input, _context, signal) => { signal.throwIfAborted(); return { ok: true } })
+      const registry = new ToolRegistry()
+        .register(tool('research', async (_input, _context, signal) => new Promise((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+        }), { timeoutMs: 10_000, sideEffect: 'state', parallelSafe: false }))
+        .register(tool('later', later))
+      const complete = vi.fn().mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('research', 'research'), call('later', 'later')] } })
+      const pending = new AgentRuntime({ complete }, registry, { turnTimeoutMs: 1_000 }).run({ messages: [{ role: 'user', content: 'plan' }], context: ctx })
+      await vi.advanceTimersByTimeAsync(1_000)
+      const result = await pending
+      expect(result).toMatchObject({ stopReason: 'turn_timeout', fallback: true })
+      expect(result.reply).toContain('超时')
+      expect(later).not.toHaveBeenCalled()
+      expect(complete).toHaveBeenCalledTimes(1)
+      expect(result.traces.map(trace => trace.errorCode)).toEqual(['TOOL_CANCELLED', 'TOOL_CANCELLED'])
+    } finally { vi.useRealTimers() }
+  })
+
   it('preserves safe domain error codes for replanning without exposing internal messages', async () => {
     const registry = new ToolRegistry().register(tool('stale_source', async () => {
       throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'internal credential=must-not-leak', 409, { token: 'must-not-leak' })
@@ -80,7 +160,7 @@ describe('AgentRuntime and ToolRegistry', () => {
       'search_flexible_flights', 'confirm_flight_price', 'search_connection_flights',
       'plan_flight_route', 'optimize_route', 'confirm_route_price', 'search_destinations',
       'recommend_destinations', 'plan_trip_route', 'research_destination', 'web_research',
-      'build_travel_guide', 'get_user_memory', 'update_user_memory'
+      'build_travel_guide', 'save_travel_guide', 'get_user_memory', 'update_user_memory'
     ])
   })
 
@@ -161,6 +241,30 @@ describe('Server-verified turn delivery', () => {
     }
     return { context, goals, runs, goal, run }
   }
+
+  it('bounds a stalled working-set read and prevents writes when that read resumes after cancellation', async () => {
+    const state = await setup({ status: 'pending', artifactIds: [], missing: ['travel_guide_artifact'], warnings: [] })
+    let releaseRead!: (run: typeof state.run) => void
+    vi.spyOn(state.runs, 'get').mockImplementationOnce(async () => new Promise(resolve => { releaseRead = resolve }))
+    const update = vi.spyOn(state.runs, 'update')
+    const registry = new ToolRegistry().register(tool('resolve', async (_input, context) => {
+      context.resolvedLocations?.set('airport-nrt', { id: 'airport-nrt', type: 'airport', name: 'Narita', countryCode: 'JP', iata: 'NRT' })
+      return { ok: true }
+    }))
+    const complete = vi.fn().mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('resolve', 'resolve')] } })
+    vi.useFakeTimers()
+    try {
+      const pending = new AgentRuntime({ complete }, registry, { turnTimeoutMs: 1_000 })
+        .run({ messages: [{ role: 'user', content: 'plan' }], context: state.context })
+      await vi.advanceTimersByTimeAsync(1_000)
+      expect(await pending).toMatchObject({ stopReason: 'turn_timeout', fallback: true })
+      releaseRead(state.run)
+      await vi.advanceTimersByTimeAsync(0)
+      expect(update).not.toHaveBeenCalled()
+      expect(complete).toHaveBeenCalledTimes(1)
+      expect(vi.getTimerCount()).toBe(0)
+    } finally { vi.useRealTimers() }
+  })
 
   it('rejects a premature success claim when the Agent omits finish_goal', async () => {
     const state = await setup({ status: 'pending', artifactIds: [], missing: ['travel_guide_artifact'], warnings: [] })

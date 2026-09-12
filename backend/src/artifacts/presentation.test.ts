@@ -112,3 +112,56 @@ describe('Artifact time presentation', () => {
     expect(artifactPresentationSchema.safeParse(presentation).success).toBe(true)
   })
 })
+
+describe('Artifact fare fact compatibility', () => {
+  it('marks the legacy SerpApi baggage default as unconfirmed without changing its snapshot', () => {
+    const payload = { provider: 'serpapi', offers: [{ baggageRecheck: false }] }
+    const stored = artifact('flight_search', payload)
+    const before = JSON.stringify(stored)
+    const output = presentArtifact(stored)
+    expect(output.payload).toBe(payload)
+    expect(JSON.stringify(stored)).toBe(before)
+    expect(output.presentation?.unconfirmedFields).toEqual(['/offers/0/baggageRecheck'])
+    expect(artifactPresentationSchema.safeParse(output.presentation).success).toBe(true)
+    const reading = JSON.parse(artifactReadingContent(stored))
+    expect(reading.payload.offers[0].baggageRecheck).toEqual({ status: 'unverified', reason: 'legacy_unattributed' })
+    expect(payload.offers[0]!.baggageRecheck).toBe(false)
+  })
+
+  it('applies the same compatibility rule to each flexible-search result using its own provider', () => {
+    const payload = { results: [
+      { provider: 'serpapi', offers: [{ baggageRecheck: false }, { baggageRecheck: true }, {}] },
+      { provider: 'another-provider', offers: [{ baggageRecheck: false }] },
+      { provider: 'serpapi', offers: [{ baggageRecheck: false }] }
+    ] }
+    const stored = artifact('flight_search', payload, 2)
+    const output = presentArtifact(stored)
+    expect(output.payload).toBe(payload)
+    expect(output.presentation?.unconfirmedFields).toEqual([
+      '/results/0/offers/0/baggageRecheck', '/results/2/offers/0/baggageRecheck'
+    ])
+    const reading = JSON.parse(artifactReadingContent(stored))
+    expect(reading.payload.results[0].offers[0].baggageRecheck).toEqual({ status: 'unverified', reason: 'legacy_unattributed' })
+    expect(reading.payload.results[2].offers[0].baggageRecheck).toEqual(reading.payload.results[0].offers[0].baggageRecheck)
+    expect(reading.payload.results[0].offers[1].baggageRecheck).toBe(true)
+    expect(reading.payload.results[0].offers[2]).not.toHaveProperty('baggageRecheck')
+    expect(reading.payload.results[1].offers[0].baggageRecheck).toBe(false)
+  })
+
+  it('preserves current unknown baggage facts and does not reinterpret other providers or schema versions', () => {
+    for (const payload of [
+      { provider: 'serpapi', offers: [{}] },
+      { provider: 'serpapi', offers: [{ baggageRecheck: true }] },
+      { provider: 'another-provider', offers: [{ baggageRecheck: false }] }
+    ]) {
+      const stored = artifact('flight_search', payload)
+      expect(presentArtifact(stored).presentation?.unconfirmedFields).toBeUndefined()
+      expect(JSON.parse(artifactReadingContent(stored)).payload).toEqual(payload)
+    }
+    const payload = { provider: 'serpapi', offers: [{ baggageRecheck: false }] }
+    for (const stored of [artifact('flight_search', payload, 3), artifact('research', payload)]) {
+      expect(presentArtifact(stored).presentation).toBeUndefined()
+      expect(JSON.parse(artifactReadingContent(stored)).payload).toEqual(payload)
+    }
+  })
+})

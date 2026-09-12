@@ -14,6 +14,19 @@ const topology: TopologyQueryResult = {
   ]
 }
 describe('ProductionConnectionSearchService', () => {
+  it('never attaches a complete connecting quote to a single topology flight', async () => {
+    const searchFlights = vi.fn(async (query: Parameters<FareProvider['searchFlights']>[0]) => ({
+      query, offers: [{ id: 'whole-itinerary', segments: [
+        { flightNumber: 'M1', airline: 'Mock', origin: query.origin, destination: 'DDD', departsAt: `${query.departureDate}T00:00:00Z`, arrivesAt: `${query.departureDate}T02:00:00Z`, durationMinutes: 120 },
+        { flightNumber: 'M2', airline: 'Mock', origin: 'DDD', destination: query.destination, departsAt: `${query.departureDate}T04:00:00Z`, arrivesAt: `${query.departureDate}T06:00:00Z`, durationMinutes: 120 }
+      ], totalAmount: 900, currency: 'CNY', totalDurationMinutes: 360, airlines: ['Mock'], transferType: 'airline' }], provider: 'fixture', checkedAt: verification.checkedAt, verification
+    }))
+    const fares = { searchFlights } as unknown as FareProvider
+    const result = await new ProductionConnectionSearchService(new MockTopologyRepository(topology), fares, { maxFareLookups: 1 }).search({ origin: loc('AAA'), destination: loc('CCC'), window: { from: '2026-10-04', to: '2026-10-04' }, preferredLocations: [], excludedLocations: [], acceptsSelfTransfer: false, acceptsLongStopover: false, maxCandidates: 1 })
+    expect(searchFlights).toHaveBeenCalledOnce()
+    expect(result.edges[0]?.fare).toBeUndefined()
+    expect(result.edges[0]?.fareOfferId).toBeUndefined()
+  })
   it('keeps preferred-first ordering while retaining general candidates and caps fare calls', async () => {
     const searchFlights = vi.fn().mockImplementation(async (query: Parameters<FareProvider['searchFlights']>[0]) => ({
       query,

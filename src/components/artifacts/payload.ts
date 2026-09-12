@@ -1,4 +1,6 @@
-import { airportTimeDisplay, type AirportTimePresentation } from '../../services/airportTime'
+import { airportTimeDisplay, isUnconfirmedField, type AirportTimePresentation } from '../../services/airportTime'
+import { flightConnections } from '../../services/flightConnections'
+import type { FlightLayover } from '../../types/flight'
 
 export type UnknownRecord = Record<string, unknown>
 
@@ -28,12 +30,22 @@ export function firstText(...values: unknown[]): string | undefined {
   return values.map(text).find((value): value is string => value !== undefined)
 }
 
+const guideTimeLabels: Record<string, string> = { morning: '上午', afternoon: '下午', evening: '晚上', flexible: '灵活安排' }
+
+export function displayGuideTime(value: unknown): string | undefined {
+  return typeof value === 'string' ? guideTimeLabels[value] : undefined
+}
+
 export interface DisplaySegment {
   origin?: string
   destination?: string
   departure?: string
   arrival?: string
+  departureAt?: string
+  arrivalAt?: string
   flightNumber?: string
+  airline?: string
+  durationMinutes?: number
 }
 
 export interface DisplayOffer {
@@ -44,6 +56,8 @@ export interface DisplayOffer {
   transferType?: string
   airlines: string[]
   segments: DisplaySegment[]
+  layovers: FlightLayover[]
+  baggageRecheck?: boolean
 }
 
 export function displayOffer(value: unknown, presentation?: AirportTimePresentation, pointer = ''): DisplayOffer | undefined {
@@ -57,6 +71,10 @@ export function displayOffer(value: unknown, presentation?: AirportTimePresentat
       ...(firstText(segment.destination) ? { destination: firstText(segment.destination) } : {}),
       departure: airportTimeDisplay(firstText(segment.departsAt, segment.departureAt), presentation, `${pointer}/segments/${index}/${segment.departsAt !== undefined ? 'departsAt' : 'departureAt'}`),
       arrival: airportTimeDisplay(firstText(segment.arrivesAt, segment.arrivalAt), presentation, `${pointer}/segments/${index}/${segment.arrivesAt !== undefined ? 'arrivesAt' : 'arrivalAt'}`),
+      departureAt: firstText(segment.departsAt, segment.departureAt),
+      arrivalAt: firstText(segment.arrivesAt, segment.arrivalAt),
+      airline: firstText(segment.airline, segment.marketingCarrier),
+      durationMinutes: numberValue(segment.durationMinutes),
       ...(firstText(segment.flightNumber, segment.flightNo) ? { flightNumber: firstText(segment.flightNumber, segment.flightNo) } : {})
     }]
   })
@@ -69,7 +87,9 @@ export function displayOffer(value: unknown, presentation?: AirportTimePresentat
     airlines: strings(item.airlines, 12).length > 0
       ? strings(item.airlines, 12)
       : records(item.airlines, 12).map(item => firstText(item.name, item.code)).filter((value): value is string => value !== undefined),
-    segments
+    segments,
+    layovers: flightConnections(segments, item.layovers),
+    ...(typeof item.baggageRecheck === 'boolean' && !isUnconfirmedField(presentation, `${pointer}/baggageRecheck`) ? { baggageRecheck: item.baggageRecheck } : {})
   }
 }
 

@@ -17,10 +17,12 @@ function load(file, dependencies = {}) {
   return module.exports
 }
 const airportTime = load('src/services/airportTime.ts')
+const flightConnections = load('src/services/flightConnections.ts')
 const artifacts = load('src/services/artifactService.ts', { './airportTime': airportTime, '../utils/request': { request: () => { throw new Error('Unexpected network') } } })
 const routes = load('src/services/routeArtifact.ts', { './airportTime': airportTime })
-const payload = load('src/components/artifacts/payload.ts', { '../../services/airportTime': airportTime })
+const payload = load('src/components/artifacts/payload.ts', { '../../services/airportTime': airportTime, '../../services/flightConnections': flightConnections })
 const flights = load('src/services/flightService.ts', {
+  './flightConnections': flightConnections,
   './airportTime': airportTime, '../mocks/airports': {}, '../utils/request': {}, '../utils/format': {},
   '../utils/flightRecommendation': {}, './artifactService': {}, '../../cloud/searchProxy/connectivity': {}
 })
@@ -31,7 +33,8 @@ const ui = {
   'react': { useMemo: fn => fn(), useState: value => [value, () => undefined] },
   'mobx-react-lite': { observer: fn => fn }, '@tarojs/taro': {},
   '../../i18n': { t: key => key, fd: minutes => `${minutes} min` },
-  '../../services/airportTime': airportTime
+  '../../services/airportTime': airportTime,
+  '../../services/flightConnections': flightConnections
 }
 const RouteWorkspace = load('src/components/route/RouteWorkspace.tsx', {
   ...ui, '../map/WorldMap': () => null, '../../services/routeArtifact': routes

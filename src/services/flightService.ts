@@ -1,6 +1,6 @@
 // src/services/flightService.ts — 航班数据服务
 // USE_MOCK=true 时本地生成确定性 Mock 数据；真实模式统一走自建后端。
-import type { SearchParams, FlightOption, FlightSegment, HubInfo } from '../types/flight'
+import type { SearchParams, FlightOption, FlightSegment, HubInfo, FlightLayover } from '../types/flight'
 import type { SearchResponse, PriceTrendResponse } from '../types/api'
 import type { VisaStatus } from '../types/common'
 import { findAirport, distanceKm } from '../mocks/airports'
@@ -9,7 +9,8 @@ import { toDateString } from '../utils/format'
 import { sortByRecommendation } from '../utils/flightRecommendation'
 import { artifactService } from './artifactService'
 import type { CloudArtifactRef } from './conversationService'
-import { airportTimeDisplay, type AirportTimePresentation } from './airportTime'
+import { airportTimeDisplay, isUnconfirmedField, type AirportTimePresentation } from './airportTime'
+import { flightConnections } from './flightConnections'
 
 // 与云端共用同一份可达性规则；Mock 不再凭空假设任意两机场之间有直飞。
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -424,10 +425,11 @@ interface DomainFareOffer {
   segments: DomainFareSegment[]
   totalAmount: number
   currency: string
-  totalDurationMinutes: number
+  totalDurationMinutes?: number
   airlines: string[]
   transferType: 'direct' | 'airline' | 'self'
   baggageRecheck?: boolean
+  layovers?: FlightLayover[]
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -501,8 +503,7 @@ function domainOffers(payload: unknown, presentation?: AirportTimePresentation):
       || value.segments.length > 12
       || !Number.isFinite(value.totalAmount)
       || Number(value.totalAmount) < 0
-      || !Number.isInteger(value.totalDurationMinutes)
-      || Number(value.totalDurationMinutes) < 0
+      || (value.totalDurationMinutes !== undefined && (!Number.isInteger(value.totalDurationMinutes) || Number(value.totalDurationMinutes) < 0))
       || typeof value.currency !== 'string'
       || !/^[A-Z]{3}$/.test(value.currency)
       || !Array.isArray(value.airlines)
@@ -520,10 +521,12 @@ function domainOffers(payload: unknown, presentation?: AirportTimePresentation):
       segments,
       totalAmount: Number(value.totalAmount),
       currency: value.currency,
-      totalDurationMinutes: Number(value.totalDurationMinutes),
+      ...(value.totalDurationMinutes !== undefined ? { totalDurationMinutes: Number(value.totalDurationMinutes) } : {}),
       airlines: value.airlines as string[],
       transferType,
-      ...(typeof value.baggageRecheck === 'boolean' ? { baggageRecheck: value.baggageRecheck } : {})
+      layovers: flightConnections(segments.map(segment => ({ origin: segment.origin, destination: segment.destination,
+        departureAt: segment.departsAt, arrivalAt: segment.arrivesAt })), value.layovers),
+      ...(typeof value.baggageRecheck === 'boolean' && !isUnconfirmedField(presentation, `${pointer}/baggageRecheck`) ? { baggageRecheck: value.baggageRecheck } : {})
     }
   })
 }
@@ -541,24 +544,22 @@ function toFlightOption(offer: DomainFareOffer): FlightOption {
     duration: segment.durationMinutes,
     ...(segment.aircraft ? { aircraft: segment.aircraft } : {})
   }))
-  const connection = segments.length > 1 ? segments[0] : undefined
-  const next = segments.length > 1 ? segments[1] : undefined
-  const layoverMinutes = connection && next
-    ? Math.max(0, Math.round((Date.parse(next.departTime) - Date.parse(connection.arriveTime)) / 60_000))
-    : 0
+  const firstConnection = offer.layovers?.[0]
   return {
     id: offer.id,
     segments,
     totalPrice: offer.totalAmount,
-    totalDuration: offer.totalDurationMinutes,
+    ...(offer.totalDurationMinutes !== undefined ? { totalDuration: offer.totalDurationMinutes } : {}),
     airline: offer.airlines.join(' + ') || segments.map(segment => segment.airline).filter(Boolean).join(' + '),
     transferType: offer.transferType,
-    ...(connection && next ? {
+    layovers: offer.layovers ?? [],
+    ...(offer.baggageRecheck !== undefined ? { baggageRecheck: offer.baggageRecheck } : {}),
+    ...(firstConnection?.durationMinutes !== undefined ? {
       hub: {
-        iata: connection.destination,
+        iata: firstConnection.airport,
         city: '',
-        layoverMinutes,
-        baggageRecheck: offer.baggageRecheck ?? offer.transferType === 'self'
+        layoverMinutes: firstConnection.durationMinutes,
+        ...(offer.baggageRecheck !== undefined ? { baggageRecheck: offer.baggageRecheck } : {})
       }
     } : {})
   }

@@ -15,6 +15,7 @@ import {
 } from '../fares/search-service.js'
 import type { FareProvider } from '../fares/providers/provider.js'
 import type { FlightSearchArtifact } from '../fares/types.js'
+import { summarizeFareItineraries } from '../fares/summary.js'
 import { InMemoryFlightSearchIdempotencyStore } from '../fares/idempotency.js'
 import { AppError } from '../lib/errors.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
@@ -98,6 +99,7 @@ function summary(payload: FlightSearchArtifact | FlexibleFlightSearchArtifact) {
       departureDateFrom: payload.query.departureDate,
       departureDateTo: payload.query.departureDate,
       offerCount: payload.offers.length,
+      itineraries: summarizeFareItineraries(payload.offers),
       ...(lowest ? { lowestFare: { amount: lowest.totalAmount, currency: lowest.currency } } : {}),
       checkedAt: payload.checkedAt,
       provider: payload.provider,
@@ -114,6 +116,7 @@ function summary(payload: FlightSearchArtifact | FlexibleFlightSearchArtifact) {
     departureDateFrom: payload.window.departureDateFrom,
     departureDateTo: payload.window.departureDateTo,
     offerCount: offers.length,
+    itineraries: summarizeFareItineraries(offers),
     ...(lowest ? { lowestFare: { amount: lowest.totalAmount, currency: lowest.currency } } : {}),
     checkedAt: payload.results.map(result => result.checkedAt).sort().at(-1) ?? new Date().toISOString(),
     provider: payload.results[0]?.provider ?? 'fare_provider',

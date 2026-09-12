@@ -22,12 +22,12 @@ function offer(option: FlightOption, currency: string): FareOffer {
       durationMinutes: Math.max(0, Math.trunc(segment.duration)),
       ...(segment.aircraft ? { aircraft: segment.aircraft } : {})
     })),
+    ...(option.layovers ? { layovers: option.layovers } : {}),
     totalAmount: option.totalPrice,
     currency: currency.toUpperCase(),
-    totalDurationMinutes: Math.max(0, Math.trunc(option.totalDuration)),
+    ...(option.totalDuration === undefined ? {} : { totalDurationMinutes: Math.max(0, Math.trunc(option.totalDuration)) }),
     airlines: [...new Set(option.segments.map(segment => segment.airline).filter(Boolean))],
     transferType: option.transferType,
-    ...(option.hub ? { baggageRecheck: option.hub.baggageRecheck } : {}),
     bookingUrl: option.deepLink
   }
 }

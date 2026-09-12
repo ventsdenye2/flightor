@@ -53,7 +53,17 @@ export interface HubInfo {
   layoverMinutes: number
   visaStatus?: VisaStatus
   visaNote?: string
-  baggageRecheck: boolean   // 行李是否需自取重挂
+  baggageRecheck?: boolean   // 缺失表示供应商未确认行李是否需自取重挂
+}
+
+/** A connection between adjacent flight segments, never a promised ticket protection. */
+export interface FlightLayover {
+  afterSegmentIndex: number
+  airport: string
+  departureAirport?: string
+  durationMinutes?: number
+  overnight?: boolean
+  airportChange?: boolean
 }
 
 /** 单条航班方案 */
@@ -61,10 +71,12 @@ export interface FlightOption {
   id: string
   segments: FlightSegment[]
   totalPrice: number
-  totalDuration: number      // 分钟
+  totalDuration?: number      // 分钟；缺失表示全程时长待确认
   airline: string
   transferType: TransferType
   hub?: HubInfo
+  layovers?: FlightLayover[]
+  baggageRecheck?: boolean
 }
 
 /** 中转模式对比项（9 维度） */
@@ -77,7 +89,7 @@ export interface TransferOption {
   visaDetail?: string
   stopoverPlayable: boolean
   minConnectionTime: number  // 分钟
-  totalDuration: number      // 分钟
+  totalDuration?: number      // 分钟；未知时不可判定更快
   protectionLevel: string
   flexibility: string
 }

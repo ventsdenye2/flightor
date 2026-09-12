@@ -32,6 +32,21 @@ function context(locations: LocationRef[] = [origin, destination, city]): ToolEx
 }
 
 describe('update_trip_context canonical location input', () => {
+  it('normalizes numeric JSON selectors through the same trusted identity lookup', async () => {
+    const numericCity = { ...city, id: '8' }
+    const registry = createCoreToolRegistry()
+    const ctx = context([numericCity])
+    await registry.execute(call('resolve_location', { query: 'city' }), ctx, signal())
+    const patch = (id: number) => ({ destinationIntent: { mode: 'explicit', required: [id], preferred: [], excluded: [] } })
+    const accepted = await registry.execute(call('update_trip_context', { patch: patch(8) }), ctx, signal())
+    expect(accepted.ok, accepted.content).toBe(true)
+    expect((await ctx.trips.get('trip'))?.destinationIntent.required).toEqual([numericCity])
+    for (const id of [999, 8.5, -8, Number.MAX_SAFE_INTEGER + 1]) {
+      expect((await registry.execute(call('update_trip_context', { patch: patch(id) }), ctx, signal())).ok).toBe(false)
+      expect((await ctx.trips.get('trip'))?.version).toBe(1)
+    }
+  })
+
   it('resolves ID selectors in every location field without model-copied facts', async () => {
     const registry = createCoreToolRegistry()
     const ctx = context()

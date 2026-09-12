@@ -16,6 +16,8 @@ import type { GoalVerifierRegistry } from '../goals/verifier.js'
 import type { GoalKind } from '../goals/types.js'
 import type { RouteGenerationDependencies } from '../../route-generation/service.js'
 import { isAppError } from '../../lib/errors.js'
+import { emitActivity, type AgentActivityObserver } from './activity.js'
+import { settleWithSignal } from './cancellation.js'
 
 export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
 export type ToolSideEffect = 'none' | 'state'
@@ -151,15 +153,6 @@ function combinedSignal(parent: AbortSignal, timeoutMs: number): { signal: Abort
   }
 }
 
-async function settleWithSignal<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
-  if (signal.aborted) throw signal.reason instanceof Error ? signal.reason : new Error('Aborted')
-  return new Promise<T>((resolve, reject) => {
-    const onAbort = () => reject(signal.reason instanceof Error ? signal.reason : new Error('Aborted'))
-    signal.addEventListener('abort', onAbort, { once: true })
-    promise.then(resolve, reject).finally(() => signal.removeEventListener('abort', onAbort))
-  })
-}
-
 export class ToolRegistry {
   private readonly tools = new Map<string, AgentTool>()
 
@@ -192,7 +185,8 @@ export class ToolRegistry {
   async execute(
     call: FunctionToolCall,
     context: ToolExecutionContext,
-    parentSignal: AbortSignal
+    parentSignal: AbortSignal,
+    onActivity?: AgentActivityObserver
   ): Promise<ToolExecutionOutcome> {
     const started = Date.now()
     const tool = this.tools.get(call.function.name)
@@ -244,8 +238,13 @@ export class ToolRegistry {
     }
 
     const timeout = combinedSignal(parentSignal, tool.timeoutMs)
+    let toolStarted = false
     try {
-      const rawResult = await settleWithSignal(tool.execute(parsed.data, context, timeout.signal), timeout.signal)
+      const rawResult = await settleWithSignal(() => {
+        toolStarted = true
+        emitActivity(onActivity, { type: 'tool_start', toolName: tool.name, toolCallId: call.id })
+        return tool.execute(parsed.data, context, timeout.signal)
+      }, timeout.signal)
       const result = tool.outputSchema.safeParse(rawResult)
       if (!result.success) {
         return {
@@ -287,7 +286,7 @@ export class ToolRegistry {
         ok: false,
         content: errorContent(errorCode, errorCode === 'TOOL_TIMEOUT' ? 'Tool execution timed out' : asSafeMessage(error),
           domainErrorCode ? { domainCode: domainErrorCode } : undefined),
-        costUnits: tool.costUnits,
+        costUnits: toolStarted ? tool.costUnits : 0,
         durationMs: Date.now() - started,
         ...(tool.provider ? { provider: tool.provider } : {}),
         errorCode,
@@ -297,6 +296,7 @@ export class ToolRegistry {
       }
     } finally {
       timeout.cleanup()
+      if (toolStarted) emitActivity(onActivity, { type: 'tool_end', toolName: tool.name, toolCallId: call.id })
     }
   }
 

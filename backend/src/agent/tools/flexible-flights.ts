@@ -4,6 +4,7 @@ import type { FlexibleFareSearchInput } from '../../fares/providers/provider.js'
 import { executeFlexibleFlightSearch, flexibleFlightSearchArtifactSchema } from '../../fares/search-service.js'
 import type { AgentTool } from '../runtime/registry.js'
 import { workspaceScope } from './workspace-scope.js'
+import { fareItinerarySummarySchema, summarizeFareItineraries } from '../../fares/summary.js'
 
 export { flexibleFlightSearchArtifactSchema } from '../../fares/search-service.js'
 
@@ -32,6 +33,7 @@ export const searchFlexibleFlightsOutputSchema = z.object({
     departureDateFrom: z.iso.date(), departureDateTo: z.iso.date(),
     scannedDates: z.array(z.iso.date()).max(31), successfulDates: z.array(z.iso.date()).max(31), failedDates: z.array(z.iso.date()).max(31),
     offerCount: z.number().int().nonnegative(),
+    itineraries: fareItinerarySummarySchema,
     lowestFare: z.object({ amount: z.number().nonnegative(), currency: z.string().regex(/^[A-Z]{3}$/), departureDate: z.iso.date() }).strict().optional(),
     checkedAt: z.iso.datetime(), provider: z.string().min(1),
     verificationStatus: z.enum(['verified', 'partially_verified', 'stale', 'unverified'])
@@ -70,6 +72,6 @@ export const searchFlexibleFlightsTool: AgentTool<z.infer<typeof searchFlexibleF
           : failedDates.length > 0 || statuses.some(status => status !== 'verified')
             ? 'partially_verified'
             : 'verified'
-    return { artifact: { id: stored.id, type: 'flight_search', schemaVersion: 2 }, summary: { origin: query.origin, destination: query.destination, departureDateFrom: query.departureDateFrom, departureDateTo: query.departureDateTo, scannedDates, successfulDates, failedDates, offerCount: offers.length, ...(lowest ? { lowestFare: { amount: lowest.offer.totalAmount, currency: lowest.offer.currency, departureDate: lowest.departureDate } } : {}), checkedAt, provider, verificationStatus } }
+    return { artifact: { id: stored.id, type: 'flight_search', schemaVersion: 2 }, summary: { origin: query.origin, destination: query.destination, departureDateFrom: query.departureDateFrom, departureDateTo: query.departureDateTo, scannedDates, successfulDates, failedDates, offerCount: offers.length, itineraries: summarizeFareItineraries(offers), ...(lowest ? { lowestFare: { amount: lowest.offer.totalAmount, currency: lowest.offer.currency, departureDate: lowest.departureDate } } : {}), checkedAt, provider, verificationStatus } }
   }
 }

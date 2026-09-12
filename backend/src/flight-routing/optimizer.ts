@@ -1,4 +1,5 @@
 import { locationRefKey, locationRefsOverlap, type LocationRef } from '../aviation/types.js'
+import { edgeHasAirportChange, internalTransfers, pathHasSelfTransfer, pathTransferCount } from './itinerary.js'
 import {
   routeOptimizationInputSchema,
   routeOptimizationResultSchema,
@@ -60,7 +61,7 @@ function aggregateVerification(paths: readonly CompleteFlightPath[]) {
 }
 
 function hardValidate(path: CompleteFlightPath): boolean {
-  if (path.feasibility === 'unknown' || path.edges.length !== path.nodes.length - 1 || path.transferCount !== path.edges.length - 1) return false
+  if (path.feasibility === 'unknown' || path.edges.length !== path.nodes.length - 1 || path.transferCount !== pathTransferCount(path.edges)) return false
   if (path.nodes[0]!.role !== 'origin' || path.nodes[path.nodes.length - 1]!.role !== 'destination') return false
   const visited = new Set<string>()
   for (let index = 0; index < path.nodes.length; index++) {
@@ -111,10 +112,13 @@ function scorePath(path: CompleteFlightPath, allPaths: readonly CompleteFlightPa
   const preferredCount = intermediate.filter(location => preferred.some(value => sameLocation(value, location))).length
   const interestCount = intermediate.filter(location => interests.some(value => sameLocation(value, location))).length
   const knownTransfers = path.edges.filter(edge => edge.transferMinutes !== undefined)
+  const internalConnections = path.edges.flatMap(internalTransfers)
   const playableStopovers = knownTransfers.filter(edge => (edge.transferMinutes ?? 0) >= PLAYABLE_STOPOVER_MINUTES).length
   const unknownAvailability = path.edges.some(edge => edge.availability === 'unknown' || edge.verification.status === 'unverified')
   const unknownDuration = path.totalDurationMinutes === undefined
-  const unknownTransfer = path.edges.some(edge => edge.transferMinutes === undefined) && path.edges.length > 1
+  const unknownTransfer = (path.edges.some(edge => edge.transferMinutes === undefined) && path.edges.length > 1)
+    || internalConnections.some(transfer => transfer.durationMinutes === undefined)
+  const unknownProtection = path.edges.some(edge => edge.transferType === 'airline' && edge.protectedConnection === undefined)
   const coords = path.nodes.map(node => [node.location.latitude, node.location.longitude] as const)
   let reverseSegments = 0
   for (let index = 2; index < coords.length; index++) {
@@ -141,16 +145,18 @@ function scorePath(path: CompleteFlightPath, allPaths: readonly CompleteFlightPa
     routeNovelty: intermediate.length === 0 ? 0 : new Set(intermediate.map(locationKey)).size / intermediate.length,
     totalTravelTime: unknownDuration ? 1 : maxDuration === 0 ? 0 : Math.min(1, (path.totalDurationMinutes ?? maxDuration) / maxDuration),
     transferCount: Math.min(1, path.transferCount / maxTransfers),
-    selfTransferRisk: path.edges.some(edge => edge.transferType === 'self') ? 1 : unknownAvailability ? 0.5 : 0,
-    airportChangePenalty: path.edges.some(edge => edge.airportChange === true) ? 1 : unknownAvailability ? 0.5 : 0,
+    selfTransferRisk: pathHasSelfTransfer(path.edges) ? 1 : unknownAvailability || unknownProtection ? 0.5 : 0,
+    airportChangePenalty: path.edges.some(edgeHasAirportChange) ? 1 : unknownAvailability ? 0.5 : 0,
     backtrackingPenalty: coords.every(value => value[0] !== undefined && value[1] !== undefined)
       ? Math.min(1, reverseSegments / Math.max(1, coords.length - 2))
       : path.nodes.length > 2 ? 0.5 : 0,
-    deadTimePenalty: unknownTransfer ? 0.5 : Math.min(1, Math.max(0, ...knownTransfers.map(edge => Math.max(0, (edge.transferMinutes ?? 0) - STRONG_STOPOVER_MINUTES))) / STRONG_STOPOVER_MINUTES),
-    excessiveComplexity: Math.min(1, (path.edges.length - 1) / 4) + (path.feasibility === 'partial' ? 0.05 : 0)
+    deadTimePenalty: unknownTransfer ? 0.5 : Math.min(1, Math.max(0,
+      ...knownTransfers.map(edge => Math.max(0, (edge.transferMinutes ?? 0) - STRONG_STOPOVER_MINUTES)),
+      ...internalConnections.map(transfer => Math.max(0, (transfer.durationMinutes ?? 0) - STRONG_STOPOVER_MINUTES))) / STRONG_STOPOVER_MINUTES),
+    excessiveComplexity: Math.min(1, path.transferCount / 4) + (path.feasibility === 'partial' ? 0.05 : 0)
   }
   values.excessiveComplexity = Math.min(1, values.excessiveComplexity)
-  return { values, unknown: unknownAvailability || unknownDuration || unknownTransfer || !fares.comparable }
+  return { values, unknown: unknownAvailability || unknownDuration || unknownTransfer || unknownProtection || !fares.comparable }
 }
 
 function effectiveWeights(weights: RouteWeights): Record<Dimension, number> {

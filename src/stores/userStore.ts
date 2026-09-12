@@ -2,7 +2,7 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import type { FlightOption, SearchParams } from '../types/flight'
 import { getStorage, setStorage } from '../utils/storage'
-import { clearAuthTokens, wxLogin, UserProfile } from '../services/authService'
+import { clearAuthTokens, localLogin, wxLogin, UserProfile } from '../services/authService'
 import { clearCloudChatHistory } from './chatHistory'
 import { AuthSessionChangedError, onAuthInvalidated } from '../utils/authSession'
 
@@ -65,13 +65,13 @@ export class UserStore {
   get sessionRevision(): number { return this.authGeneration }
 
   /** 登录（可携带头像昵称）；失败抛出由调用方提示 */
-  async login(info?: { nickname?: string; avatarUrl?: string }) {
+  async login(info?: { nickname?: string; avatarUrl?: string }, options: { method?: 'wechat' | 'local' } = {}) {
     if (this.isLoggingIn) return false
     const requestId = ++this.authGeneration
     this.isLoggingIn = true
     try {
       const previousOwnerId = this.profile?.uid
-      const profile = await wxLogin(info)
+      const profile = await (options.method === 'local' ? localLogin(info) : wxLogin(info))
       if (requestId !== this.authGeneration) {
         return false
       }
@@ -104,7 +104,8 @@ export class UserStore {
     this.profile = next
     setStorage('profile', next)
     // 静默同步到服务端（Mock 模式内部直接返回）
-    wxLogin(next, { persistTokens: false }).catch(() => {})
+    const syncLogin = next.loginMethod === 'local' ? localLogin : wxLogin
+    syncLogin(next, { persistTokens: false }).catch(() => {})
   }
 
   logout() {

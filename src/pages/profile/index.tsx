@@ -14,7 +14,7 @@ function ProfilePage() {
   return <View className='profile-page profile-cloud'>
     <View className='profile-page__user' onClick={() => !profile && setShowLogin(true)}>
       {profile?.avatarUrl ? <Image className='profile-page__avatar profile-page__avatar--img' src={profile.avatarUrl} mode='aspectFill' /> : <View className='profile-page__avatar'><Text>✈</Text></View>}
-      <View><Text className='profile-page__name'>{profile ? profile.nickname || '旅行者' : '登录 FlightOR'}</Text><Text className='profile-cloud__muted'>{profile ? '旅行偏好与行程在设备间同步' : '登录后保存行程与旅行偏好'}</Text></View>
+      <View><Text className='profile-page__name'>{profile ? profile.nickname || '旅行者' : '登录 FlightOR'}</Text><Text className='profile-cloud__muted'>{profile?.loginMethod === 'local' ? t('login.localAccount') : profile ? '旅行偏好与行程在设备间同步' : '登录后保存行程与旅行偏好'}</Text></View>
     </View>
     {profile && <MemoryEditor key={`${profile.uid}:${userStore.sessionRevision}`} legacyCities={userStore.togo} />}
     <View className='profile-cloud__section'>

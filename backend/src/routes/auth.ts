@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import type { AppContext } from '../app/context.js'
-import { loginWithWechat, rotateRefreshToken } from '../auth/service.js'
+import { loginLocally, loginWithWechat, rotateRefreshToken } from '../auth/service.js'
+import { authorizeLocalLogin } from '../auth/local.js'
 
 const loginSchema = z.object({
   code: z.string().min(1).max(256),
@@ -10,8 +11,16 @@ const loginSchema = z.object({
 })
 
 const refreshSchema = z.object({ refresh_token: z.string().min(20).max(512) })
+const localLoginSchema = loginSchema.omit({ code: true }).strict()
 
 export async function registerAuthRoutes(app: FastifyInstance, context: AppContext): Promise<void> {
+  app.post('/v1/auth/local', async request => {
+    const transport = { remoteAddress: request.raw.socket.remoteAddress, key: request.headers['x-local-login-key'] }
+    authorizeLocalLogin(context.env, transport.remoteAddress, transport.key)
+    const input = localLoginSchema.parse(request.body)
+    return loginLocally(context, { nickname: input.nickname, avatarUrl: input.avatar_url }, transport)
+  })
+
   app.post('/v1/auth/wechat', async request => {
     const input = loginSchema.parse(request.body)
     return loginWithWechat(context, {

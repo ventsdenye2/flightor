@@ -5,7 +5,8 @@ import { View, Text, Image, Button, Input } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { userStore } from '../../stores/userStore'
-import { persistAvatar } from '../../services/authService'
+import { LOCAL_LOGIN_AVAILABLE, persistAvatar } from '../../services/authService'
+import { loginErrorKey } from '../../utils/authErrors'
 import { t } from '../../i18n'
 import './LoginSheet.scss'
 
@@ -19,8 +20,9 @@ interface LoginSheetProps {
 function LoginSheet({ visible, onClose, onSuccess }: LoginSheetProps) {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [nickname, setNickname] = useState('')
+  const [error, setError] = useState('')
   const attempt = useRef(0)
-  useEffect(() => { if (!visible) attempt.current += 1 }, [visible])
+  useEffect(() => { if (!visible) { attempt.current += 1; setError('') } }, [visible])
 
   if (!visible) return null
 
@@ -32,20 +34,21 @@ function LoginSheet({ visible, onClose, onSuccess }: LoginSheetProps) {
     setAvatarUrl(await persistAvatar(temp))
   }
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (method: 'wechat' | 'local' = 'wechat') => {
     if (userStore.isLoggingIn) return
     const requestId = ++attempt.current
+    setError('')
     try {
       const loggedIn = await userStore.login({
         nickname: nickname.trim(),
         avatarUrl
-      })
+      }, { method })
       if (!loggedIn || requestId !== attempt.current) return
-      Taro.showToast({ title: t('login.success'), icon: 'success' })
+      Taro.showToast({ title: t(method === 'local' ? 'login.localSuccess' : 'login.success'), icon: 'success' })
       onClose()
       onSuccess?.()
-    } catch {
-      if (requestId === attempt.current) Taro.showToast({ title: t('login.fail'), icon: 'none' })
+    } catch (failure) {
+      if (requestId === attempt.current) setError(t(loginErrorKey(failure)))
     }
   }
 
@@ -85,13 +88,20 @@ function LoginSheet({ visible, onClose, onSuccess }: LoginSheetProps) {
           />
         </View>
 
+        {error && <Text className='login-sheet__error'>{error}</Text>}
         <View
           className={`login-sheet__confirm ${userStore.isLoggingIn ? 'is-loading' : ''}`}
           hoverClass='tap-dim'
-          onClick={handleConfirm}
+          onClick={() => handleConfirm()}
         >
           <Text>{userStore.isLoggingIn ? t('login.loading') : t('login.confirm')}</Text>
         </View>
+        {LOCAL_LOGIN_AVAILABLE && <View className='login-sheet__local'>
+          <View className='login-sheet__local-button' hoverClass='tap-dim' onClick={() => handleConfirm('local')}>
+            <Text>{t('login.localConfirm')}</Text>
+          </View>
+          <Text className='login-sheet__local-note'>{t('login.localDesc')}</Text>
+        </View>}
         <Text className='login-sheet__privacy'>{t('login.privacy')}</Text>
       </View>
     </View>

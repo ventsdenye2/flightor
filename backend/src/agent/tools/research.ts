@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { locationRefSchema } from '../../aviation/types.js'
-import { researchBriefSchema, type ResearchBrief } from '../../research-agent/types.js'
+import { researchBriefSchema, researchTypeSchema, type ResearchBrief } from '../../research-agent/types.js'
+import { locationSelectorSchema } from '../../locations/selector.js'
 import { researchTripDestinations, researchStatusCounts, researchTravelWindow } from '../../research-agent/workspace.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
 import { canonicalResolvedLocation } from './resolved-locations.js'
@@ -27,13 +27,21 @@ export const researchToolOutputSchema = z.object({
     statusCounts: statusCountsSchema,
     createdAt: z.iso.datetime()
   }).strict(),
+  findings: z.array(z.object({
+    id: z.string().min(1).max(160),
+    title: z.string().max(240),
+    summary: z.string().max(1500),
+    category: researchTypeSchema,
+    destinations: z.array(z.object({ id: z.string().max(160), name: z.string().max(240) }).strict()).max(12),
+    verificationStatus: z.enum(['verified', 'partially_verified', 'stale', 'unverified'])
+  }).strict()).max(50),
   warnings: z.array(z.string().min(1).max(240)).max(40)
 }).strict()
 
 export const researchDestinationInputSchema = z.object({
-  destination: z.union([z.string().min(1).max(128), locationRefSchema]),
+  destination: locationSelectorSchema,
   questions: z.array(z.string().trim().min(1).max(500)).min(1).max(8),
-  researchTypes: z.array(z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical'])).min(1).max(5),
+  researchTypes: z.array(researchTypeSchema).min(1).max(5),
   maxResults: z.number().int().min(1).max(20).default(10)
 }).strict()
 
@@ -62,6 +70,11 @@ export async function executeResearchBrief(
       statusCounts: researchStatusCounts(artifact),
       createdAt: artifact.createdAt
     },
+    findings: artifact.findings.map(finding => ({
+      id: finding.id, title: finding.title, summary: finding.summary, category: finding.category,
+      destinations: finding.destinations.map(destination => ({ id: destination.id, name: destination.name })),
+      verificationStatus: finding.verification.expiresAt && Date.parse(finding.verification.expiresAt) <= Date.now() ? 'stale' : finding.verification.status
+    })),
     warnings: artifact.warnings
   }
 }
@@ -85,7 +98,7 @@ export const researchDestinationTool: AgentTool<
   z.infer<typeof researchToolOutputSchema>
 > = {
   name: 'research_destination',
-  description: 'Research current activities, events, seasonal or practical questions for one trusted destination. Pass destination as the exact id STRING returned by resolve_location or search_destinations in this turn. The server retrieves all canonical location facts; do not copy or invent coordinates. The active Trip supplies its travel window and interests.',
+  description: 'Research sourced activities for one trusted destination and return the findings directly for itinerary planning. Write concise, focused search questions; request a useful set for the whole visit rather than searching each day. Choose queries freely based on missing evidence. Pass destination as a trusted resolved id STRING; the active Trip supplies dates and interests. Preserve partial/unverified labels; use eligible finding ids in save_travel_guide.',
   inputSchema: researchDestinationInputSchema,
   outputSchema: researchToolOutputSchema,
   costClass: 'paid',

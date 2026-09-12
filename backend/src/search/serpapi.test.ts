@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildFlightSearchResponse, itinerariesFromSerpResponse, returnDateFor, sampleDates, type FlightSearchInput } from './serpapi.js'
+import { buildFlightSearchResponse, itinerariesFromSerpResponse, mapSerpItinerary, returnDateFor, sampleDates, type FlightSearchInput } from './serpapi.js'
 
 const input: FlightSearchInput = {
   origin: 'SIN',
@@ -11,6 +11,33 @@ const input: FlightSearchInput = {
 }
 
 describe('SerpApi flight search normalization', () => {
+  const leg = (origin: string, destination: string) => ({
+    flight_number: `${origin}1`, airline: 'Test Air', duration: 120,
+    departure_airport: { id: origin, time: '2026-09-15 08:00' },
+    arrival_airport: { id: destination, time: '2026-09-15 10:00' }
+  })
+  it('rejects an entire fare if a segment is malformed instead of attaching its price to a partial trip', () => {
+    expect(mapSerpItinerary({ price: 1000, flights: [leg('SIN', 'LHR'), { bad: true }] }, input, input.departDate)).toBeNull()
+    const missingTime = leg('SIN', 'LHR')
+    missingTime.arrival_airport.time = ''
+    expect(mapSerpItinerary({ price: 1000, flights: [missingTime] }, input, input.departDate)).toBeNull()
+  })
+  it('preserves a provider-indicated airport change while rejecting an unlinked itinerary', () => {
+    const itinerary = { price: 1000, total_duration: 500, flights: [leg('SIN', 'NRT'), leg('HND', 'LHR')] }
+    expect(mapSerpItinerary(itinerary, input, input.departDate)).toBeNull()
+    const option = mapSerpItinerary({ ...itinerary, layovers: [{ id: 'NRT', duration: 260 }] }, input, input.departDate)
+    expect(option?.segments).toHaveLength(2)
+    expect(option?.layovers).toEqual([{ afterSegmentIndex: 0, airport: 'NRT', departureAirport: 'HND', airportChange: true, durationMinutes: 260 }])
+  })
+  it('does not invent zero-minute waits or baggage facts when a layover is unreported', () => {
+    const option = mapSerpItinerary({ price: 1000, total_duration: 500, flights: [leg('SIN', 'CDG'), leg('CDG', 'LHR')] }, input, input.departDate)
+    expect(option?.layovers).toEqual([{ afterSegmentIndex: 0, airport: 'CDG' }])
+    expect(option?.hub?.layoverMinutes).toBeUndefined()
+    expect(option?.hub?.baggageRecheck).toBeUndefined()
+    const unknown = mapSerpItinerary({ price: 1000, flights: [leg('SIN', 'CDG'), leg('CDG', 'LHR')] }, input, input.departDate)
+    expect(unknown?.segments).toHaveLength(2)
+    expect(unknown?.totalDuration).toBeUndefined()
+  })
   it('maps direct and connected Google Flights itineraries', () => {
     const options = itinerariesFromSerpResponse({
       best_flights: [{

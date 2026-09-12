@@ -56,6 +56,7 @@ const requestStub = async options => {
 }
 
 const airportTime = loadTypeScript('src/services/airportTime.ts')
+const flightConnections = loadTypeScript('src/services/flightConnections.ts')
 const service = loadTypeScript('src/services/artifactService.ts', {
   './airportTime': airportTime,
   '../utils/request': { request: requestStub }
@@ -65,6 +66,7 @@ const registry = loadTypeScript('src/components/artifacts/registry.ts', {
 })
 const flightService = loadTypeScript('src/services/flightService.ts', {
   './airportTime': airportTime,
+  './flightConnections': flightConnections,
   '../mocks/airports': { findAirport: () => undefined, distanceKm: () => 0 },
   '../utils/request': { USE_MOCK: false, request: async () => { throw new Error('unexpected request') } },
   '../utils/format': { toDateString: () => '2026-09-07' },

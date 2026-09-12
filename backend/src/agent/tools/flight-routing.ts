@@ -55,7 +55,7 @@ const edgeSummarySchema = z.object({
   from: z.string().min(1).max(128),
   to: z.string().min(1).max(128),
   departureDate: z.iso.date(),
-  transferType: z.enum(['direct', 'protected', 'self']),
+  transferType: z.enum(['direct', 'airline', 'protected', 'self']),
   availability: z.enum(['verified', 'partial', 'unknown'])
 }).strict()
 

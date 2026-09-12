@@ -31,6 +31,7 @@ import { artifactService } from '../../services/artifactService'
 import { userStore } from '../../stores/userStore'
 import LoginSheet from '../../components/common/LoginSheet'
 import { conversationDeliveryLabel } from '../../components/plan/conversationDelivery'
+import PlannerProgress from '../../components/plan/PlannerProgress'
 import './index.scss'
 
 const ROUTE_LABEL_KEY: Record<string, string> = {
@@ -426,13 +427,12 @@ function TurnAttachments({
 }
 
 interface ConversationTurnViewProps extends TurnAttachmentsProps {
-  pending: boolean
   ownerId?: string
   sessionId: string
   onArtifactAction: (artifact: ArtifactEnvelope) => void
 }
 
-function ConversationTurnView({ turn, pending, ownerId, sessionId, onArtifactAction, ...attachmentProps }: ConversationTurnViewProps) {
+function ConversationTurnView({ turn, ownerId, sessionId, onArtifactAction, ...attachmentProps }: ConversationTurnViewProps) {
   const deliveryLabel = conversationDeliveryLabel(turn.delivery, attachmentProps.locale)
   return (
     <View className='agent-chat__turn'>
@@ -442,10 +442,6 @@ function ConversationTurnView({ turn, pending, ownerId, sessionId, onArtifactAct
       {turn.assistant ? (
         <View className='agent-chat__msg agent-chat__msg--assistant'>
           <Text>{turn.assistant.content}</Text>
-        </View>
-      ) : pending ? (
-        <View className='agent-chat__msg agent-chat__msg--assistant agent-chat__msg--thinking'>
-          <Text>{t('chat.thinking')}</Text>
         </View>
       ) : null}
       {deliveryLabel && <View className='agent-chat__card'><Text>{deliveryLabel}</Text></View>}
@@ -699,16 +695,15 @@ const AgentChat = observer(() => {
           </View>
         )}
 
-        {chatStore.timeline.map((turn, index, turns) => (
+        {chatStore.timeline.map(turn => (
           <ConversationTurnView
             key={turn.id}
             turn={turn}
             locale={locale}
-            pending={index === turns.length - 1 && (chatStore.isThinking || chatStore.multiLoading)}
             ownerId={ownerId}
             sessionId={chatStore.currentSessionId}
             onArtifactAction={handleArtifactAction}
-            interactive={isConversationTurnInteractive(turns, turn.id, busy)}
+            interactive={isConversationTurnInteractive(chatStore.timeline, turn.id, busy)}
             confirming={chatStore.multiConfirming}
             routeExpanded={routeExpanded}
             guideExpanded={guideExpanded}
@@ -724,6 +719,12 @@ const AgentChat = observer(() => {
             }}
           />
         ))}
+
+        {(chatStore.isThinking || chatStore.multiLoading) && (
+          <View className='agent-chat__msg agent-chat__msg--assistant agent-chat__msg--thinking'>
+            <PlannerProgress progress={chatStore.turnProgress} locale={locale} />
+          </View>
+        )}
 
         {workspaceArtifactRefs.length > 0 && (
           <View className='agent-chat__workspace-artifacts'>

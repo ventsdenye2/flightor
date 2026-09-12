@@ -46,6 +46,17 @@ Phase 6 visual tokens and fidelity constraints are recorded in
 
 ## Domain and operations
 
+- [ADR 0015](./adr/0015-transient-planner-progress.md) — 300-second Planner
+  turns with temporary execution-stage and connection feedback.
+
+- [ADR 0014](./adr/0014-provider-connecting-fares.md) — complete provider connecting
+  fares in search, route comparison, confirmation and multi-transfer display.
+
+- [本地测试登录](./local-test-login.md) — explicit developer-tools sign-in on the real local backend; [ADR 0013](./adr/0013-local-test-authentication.md).
+- [路线研究与攻略生成 MVP](./design/travel-guide-mvp.md) — implemented scope,
+  source-backed Agent-authored daily schedules, local commands and boundaries.
+  [ADR 0012](./adr/0012-agent-authored-itineraries.md) records the scoped decision;
+  [DEMO_STATUS](./DEMO_STATUS.md) separates implementation from live acceptance.
 - [`backend-architecture.md`](./backend-architecture.md) — legacy/current
   backend notes.
 - [`multi-city-plan.md`](./multi-city-plan.md) — multi-city planning notes.

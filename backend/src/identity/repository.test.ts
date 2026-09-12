@@ -17,4 +17,14 @@ describe('User identity contract', () => {
     ]
     expect(acceptedFields).not.toContain('userId')
   })
+
+  it('reuses the local test account and keeps it separate from WeChat identities', async () => {
+    const identities = new InMemoryUserIdentityRepository()
+    const local = await identities.resolveLocalTest({ nickname: 'Local', avatarUrl: '' })
+    const repeated = await identities.resolveLocalTest({ nickname: 'Updated', avatarUrl: '' })
+    const wechat = await identities.resolveWechat({ providerSubject: 'default', nickname: 'WeChat', avatarUrl: '' })
+    expect(repeated.userId).toBe(local.userId)
+    expect(repeated.nickname).toBe('Updated')
+    expect(wechat.userId).not.toBe(local.userId)
+  })
 })

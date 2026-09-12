@@ -20,6 +20,7 @@ import {
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
 import { checkpoint, loadWorkspaceArtifact, saveWorkspaceArtifact, type ArtifactWorkspace } from '../../artifacts/workspace.js'
 import { workspaceScope } from './workspace-scope.js'
+import { airportTimeToIso } from '../../flight-routing/itinerary.js'
 
 const verificationStatusSchema = z.enum(['verified', 'partially_verified', 'stale', 'unverified'])
 const artifactReferenceSchema = z.object({
@@ -87,7 +88,43 @@ function offerEndpointsMatch(offer: FareOffer, query: FareSearchInput): boolean 
   return first?.origin === query.origin && last?.destination === query.destination
 }
 
-function validateRefreshResult(result: unknown, query: FareSearchInput, offerId: string): {
+function timeIdentity(value: string): string {
+  const local = value.trim().replace(' ', 'T')
+  return airportTimeToIso(value) ?? (local.length === 16 ? `${local}:00` : local)
+}
+
+function sameItinerary(left: FareOffer, right: FareOffer): boolean {
+  return left.transferType === right.transferType && left.segments.length === right.segments.length
+    && left.segments.every((segment, index) => {
+      const other = right.segments[index]!
+      return segment.origin === other.origin && segment.destination === other.destination
+        && segment.flightNumber.trim().toUpperCase() === other.flightNumber.trim().toUpperCase()
+        && segment.airline.trim() === other.airline.trim()
+        && timeIdentity(segment.departsAt) === timeIdentity(other.departsAt)
+        && timeIdentity(segment.arrivesAt) === timeIdentity(other.arrivesAt)
+    })
+}
+
+function offerMatchesEdge(offer: FareOffer, edge: ConnectionEdge): boolean {
+  // Legacy direct route snapshots can lack segment detail. An opaque edge can
+  // never establish identity for a connecting itinerary.
+  if (!edge.segments) return offer.segments.length === 1 && offer.transferType === 'direct' && edge.transferType !== 'airline'
+  if (edge.segments.length !== offer.segments.length) return false
+  // Legacy single-segment topology edges label the preceding connection. That
+  // label cannot become evidence of protection for a new quoted itinerary.
+  if (offer.segments.length > 1 && edge.transferType !== offer.transferType
+    && !(edge.transferType === 'protected' && offer.protectedConnection === true)) return false
+  return edge.segments.every((segment, index) => {
+    const quoted = offer.segments[index]!
+    return segment.from.iata === quoted.origin && segment.to.iata === quoted.destination
+      && (segment.flightNumber === undefined || segment.flightNumber.trim().toUpperCase() === quoted.flightNumber.trim().toUpperCase())
+      && (segment.marketingCarrier === undefined || segment.marketingCarrier.trim() === quoted.airline.trim())
+      && (segment.departureAt === undefined || timeIdentity(segment.departureAt) === airportTimeToIso(quoted.departsAt, segment.from.timezone))
+      && (segment.arrivalAt === undefined || timeIdentity(segment.arrivalAt) === airportTimeToIso(quoted.arrivesAt, segment.to.timezone))
+  })
+}
+
+function validateRefreshResult(result: unknown, query: FareSearchInput, offerId: string, sourceOffer?: FareOffer): {
   result: FareSearchResult
   offer: FareOffer
 } {
@@ -98,6 +135,7 @@ function validateRefreshResult(result: unknown, query: FareSearchInput, offerId:
   }
   const offer = parsed.offers.find(item => item.id === offerId)
   if (!offer) throw new Error('The requested fare offer is no longer available')
+  if (sourceOffer && !sameItinerary(sourceOffer, offer)) throw new Error('The refreshed fare has a different itinerary')
   return { result: parsed, offer }
 }
 
@@ -240,6 +278,7 @@ type RefreshCandidate = {
   offerId: string
   query?: FareSearchInput
   sourceArtifactId?: string
+  sourceOffer?: FareOffer
   weak: boolean
   preparation: 'refresh' | 'failed' | 'unconfirmed'
   preparationWarning?: string
@@ -280,7 +319,7 @@ function prepareCandidate(
       }
     }
     const sourceOffer = sourceArtifact.payload.offers.find(item => item.id === offerId)
-    if (sourceOffer === undefined || !offerEndpointsMatch(sourceOffer, sourceArtifact.payload.query)) {
+    if (sourceOffer === undefined || !offerEndpointsMatch(sourceOffer, sourceArtifact.payload.query) || !offerMatchesEdge(sourceOffer, edge)) {
       return {
         edgeIndex, edge, offerId, weak: false, preparation: 'failed',
         preparationWarning: `Fare binding failed for edge ${edge.id}; its source offer is unavailable.`
@@ -294,7 +333,7 @@ function prepareCandidate(
     }
     return {
       edgeIndex, edge, offerId, weak: false, preparation: 'refresh', query: sourceArtifact.payload.query,
-      sourceArtifactId: sourceArtifact.record.id
+      sourceArtifactId: sourceArtifact.record.id, sourceOffer
     }
   }
 
@@ -407,7 +446,8 @@ async function refreshCandidate(
   try {
     const raw = await refreshLimiter.run(signal, () => context.fares.refreshFlight({ offerId: candidate.offerId!, query: candidate.query! }, { signal }))
     assertCurrent(context, signal)
-    const validated = validateRefreshResult(raw, candidate.query, candidate.offerId)
+    const validated = validateRefreshResult(raw, candidate.query, candidate.offerId, candidate.sourceOffer)
+    if (!offerMatchesEdge(validated.offer, candidate.edge)) throw new Error('Refreshed fare does not match the complete route itinerary')
     return {
       edgeIndex: candidate.edgeIndex, edge: candidate.edge, offerId: candidate.offerId,
       weak: candidate.weak, kind: 'confirmed', result: validated.result, offer: validated.offer,
@@ -474,13 +514,18 @@ function applyOutcome(
       outcome.offer.id,
       snapshot.id
     )
-    const availability: ConnectionEdge['availability'] = outcome.weak || verification.status !== 'verified' ? 'partial' : 'verified'
+    const availability: ConnectionEdge['availability'] = outcome.weak || verification.status !== 'verified'
+      || edge.availability !== 'verified' || (edge.transferType === 'airline' && outcome.offer.protectedConnection === undefined)
+      ? 'partial' : 'verified'
     const warnings = uniqueWarnings([
       ...edge.warnings,
       ...(outcome.weak ? [outcome.message] : [])
     ])
+    const { protectedConnection: _previousProtection, baggageRecheck: _previousBaggage, ...withoutBookingFacts } = edge
     return {
-      ...edge,
+      ...withoutBookingFacts,
+      ...(outcome.offer.protectedConnection === undefined ? {} : { protectedConnection: outcome.offer.protectedConnection }),
+      ...(outcome.offer.baggageRecheck === undefined ? {} : { baggageRecheck: outcome.offer.baggageRecheck }),
       fare: { amount: outcome.offer.totalAmount, currency: outcome.offer.currency },
       fareArtifactId: snapshot.id,
       fareOfferId: outcome.offer.id,
@@ -663,7 +708,7 @@ export const confirmFlightPriceTool: AgentTool<
     await checkpoint(scope)
     const raw = await refreshLimiter.run(signal, () => context.fares.refreshFlight({ offerId: input.offerId, query: source.payload.query }, { signal }))
     assertCurrent(context, signal)
-    const validated = validateRefreshResult(raw, source.payload.query, input.offerId)
+    const validated = validateRefreshResult(raw, source.payload.query, input.offerId, sourceOffer)
     assertCurrent(context, signal)
     const stored = await persistFareSnapshot(scope, validated.result, source.record.id, input.offerId, false)
     return {

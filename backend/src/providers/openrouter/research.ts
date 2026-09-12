@@ -1,6 +1,6 @@
 import { AppError } from '../../lib/errors.js'
 import type { AgentModelClient, ChatMessage, ChatOptions } from '../../agent/runtime/model.js'
-import { researchBriefSchema, type ResearchBrief } from '../../research-agent/types.js'
+import { RESEARCH_TYPE_DESCRIPTION, researchBriefSchema, type ResearchBrief } from '../../research-agent/types.js'
 import {
   researchSourceCandidateSchema,
   type ResearchDraftFinding,
@@ -30,6 +30,7 @@ function synthesisPrompt(input: ResearchSynthesisInput): { system: string; user:
       `Return at most ${input.brief.maxResults ?? 10} distinct findings. Keep each summary under 300 characters. Do not use Markdown fences or introductory text.`,
       'sourceIndexes must be integer indexes into the supplied source list; never output URLs, citations, or new sources.',
       'Do not assert facts that are absent from the snippets.',
+      RESEARCH_TYPE_DESCRIPTION,
       'Do not recommend dated exhibitions or events outside the travel window. Historical snippets may support a permanent venue description only; never carry their old event, opening-hour or price claims into the requested trip.',
       'Cover the requested themes when evidence supports them. Prefer distinct places or dining experiences over generic directory pages. Merge references corroborating the same finding; never attach unrelated sources merely to increase the citation count.',
       'Select only findings relevant to the requested destination, interests, questions and travel window. Return [] when none qualify; never relabel unrelated search results to satisfy the brief.'
@@ -105,7 +106,7 @@ export class OpenRouterResearchSynthesisModel implements ResearchSynthesisModel 
     const responseFormat: ChatOptions['responseFormat'] = { type: 'json_schema', json_schema: { name: 'research_findings', strict: true, schema: {
       type: 'object', additionalProperties: false, required: ['findings'], properties: { findings: { type: 'array', items: {
         type: 'object', additionalProperties: false, required: ['category', 'destinationIndex', 'title', 'summary', 'sourceIndexes'],
-        properties: { category: { type: 'string', enum: brief.researchTypes }, destinationIndex: { type: 'integer' },
+        properties: { category: { type: 'string', enum: brief.researchTypes, description: RESEARCH_TYPE_DESCRIPTION }, destinationIndex: { type: 'integer' },
           title: { type: 'string' }, summary: { type: 'string' }, sourceIndexes: { type: 'array', items: { type: 'integer' } } }
       } } }
     } } }

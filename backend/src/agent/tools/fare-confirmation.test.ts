@@ -3,7 +3,7 @@ import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
 import { InMemoryUserMemoryRepository } from '../../memory/repository.js'
 import { InMemoryTripContextRepository } from '../../trips/repository.js'
 import { emptyTripContext } from '../../trips/types.js'
-import type { FareSearchInput, FareSearchResult } from '../../fares/types.js'
+import type { FareOffer, FareSearchInput, FareSearchResult } from '../../fares/types.js'
 import type { FareProvider } from '../../fares/providers/provider.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import {
@@ -114,7 +114,67 @@ async function addRouteArtifact(ctx: ToolExecutionContext, selectedPath = path()
   await ctx.artifacts.create({ id: routeArtifactId, tripId, conversationId: 'conversation-1', type: 'route_set', schemaVersion: 1, tripContextVersion: 0, payload, verification })
 }
 
+function connectingResult(amount = 1200): FareSearchResult {
+  const base = result()
+  const offer: FareOffer = { ...base.offers[0]!, transferType: 'airline', totalAmount: amount, totalDurationMinutes: 360,
+    segments: [
+      { ...base.offers[0]!.segments[0]!, destination: 'ICN', arrivesAt: '2026-10-01T10:00:00Z', durationMinutes: 120 },
+      { ...base.offers[0]!.segments[0]!, flightNumber: 'M2', origin: 'ICN', departsAt: '2026-10-01T12:00:00Z', arrivesAt: '2026-10-01T14:00:00Z', durationMinutes: 120 }
+    ], layovers: [{ afterSegmentIndex: 0, airport: 'ICN', durationMinutes: 120 }] }
+  return { ...base, offers: [offer] }
+}
+
+async function addConnectingArtifacts(ctx: ToolExecutionContext, firstFlightNumber = 'M1'): Promise<void> {
+  const source = connectingResult()
+  await ctx.artifacts.create({ id: flightArtifactId, tripId, type: 'flight_search', schemaVersion: 1, tripContextVersion: 0,
+    payload: { ...source, id: flightArtifactId, type: 'flight_search' }, verification })
+  const hub = { id: 'airport-icn', type: 'airport' as const, name: 'Incheon', countryCode: 'KR', iata: 'ICN' }
+  const segments = source.offers[0]!.segments.map((segment, index) => ({ id: `segment-${index}`, from: index === 0 ? origin : hub,
+    to: index === 0 ? hub : destination, flightNumber: index === 0 ? firstFlightNumber : segment.flightNumber,
+    marketingCarrier: segment.airline, departureAt: segment.departsAt, arrivalAt: segment.arrivesAt, verification }))
+  await addRouteArtifact(ctx, path({ transferCount: 1, feasibility: 'partial', edges: [edge({ transferType: 'airline', segments,
+    departureAt: '2026-10-01T08:00:00Z', arrivalAt: '2026-10-01T14:00:00Z', availability: 'partial' })] }))
+}
+
 describe('fare confirmation tools', () => {
+  it('refreshes one complete connecting quote once and preserves its unknown booking facts', async () => {
+    const refresh = vi.fn(async () => connectingResult(1350))
+    const ctx = context(provider(refresh))
+    await addConnectingArtifacts(ctx)
+    const source = await ctx.artifacts.get(routeArtifactId)
+    const output = await confirmRoutePriceTool.execute({ routeArtifactId, pathId: 'path-1', maxLegs: 1 }, ctx, new AbortController().signal)
+    expect(refresh).toHaveBeenCalledOnce()
+    expect(output.summary).toMatchObject({ confirmed: 1, failed: 0, totalFare: { amount: 1350 }, verificationStatus: 'partially_verified' })
+    const successor = await ctx.artifacts.get(output.artifact.id)
+    const updated = (successor?.payload as { paths: Array<{ edges: Array<Record<string, unknown>>; transferCount: number }> }).paths[0]!
+    expect(updated.transferCount).toBe(1)
+    expect(updated.edges).toHaveLength(1)
+    expect(updated.edges[0]).toMatchObject({ transferType: 'airline', fare: { amount: 1350 }, segments: expect.arrayContaining([expect.objectContaining({ flightNumber: 'M1' }), expect.objectContaining({ flightNumber: 'M2' })]) })
+    expect(updated.edges[0]?.protectedConnection).toBeUndefined()
+    expect(updated.edges[0]?.baggageRecheck).toBeUndefined()
+    expect(await ctx.artifacts.get(routeArtifactId)).toEqual(source)
+  })
+  it('rejects a refreshed offer with the same id and endpoints but a different connecting airport', async () => {
+    const changed = connectingResult()
+    changed.offers[0]!.segments[0]!.destination = 'HKG'
+    changed.offers[0]!.segments[1]!.origin = 'HKG'
+    changed.offers[0]!.layovers = [{ afterSegmentIndex: 0, airport: 'HKG', durationMinutes: 120 }]
+    const ctx = context(provider(async () => changed))
+    await addConnectingArtifacts(ctx)
+    await expect(confirmFlightPriceTool.execute({ artifactId: flightArtifactId, offerId: 'offer-1' }, ctx, new AbortController().signal)).rejects.toThrow(/different itinerary/)
+    const output = await confirmRoutePriceTool.execute({ routeArtifactId, pathId: 'path-1', maxLegs: 1 }, ctx, new AbortController().signal)
+    expect(output.summary).toMatchObject({ confirmed: 0, failed: 1 })
+    expect(output.summary.totalFare).toBeUndefined()
+  })
+  it('rejects a source offer binding whose internal flight number differs from the route before refresh', async () => {
+    const refresh = vi.fn(async () => connectingResult())
+    const ctx = context(provider(refresh))
+    await addConnectingArtifacts(ctx, 'DIFFERENT1')
+    const output = await confirmRoutePriceTool.execute({ routeArtifactId, pathId: 'path-1', maxLegs: 1 }, ctx, new AbortController().signal)
+    expect(refresh).not.toHaveBeenCalled()
+    expect(output.summary).toMatchObject({ confirmed: 0, failed: 1 })
+    expect(output.summary.totalFare).toBeUndefined()
+  })
   it('refreshes one exact flight offer and writes a successor snapshot with provenance', async () => {
     const ctx = context(provider(async input => result(input.query, input.offerId, 1300)))
     await addFlightArtifact(ctx)

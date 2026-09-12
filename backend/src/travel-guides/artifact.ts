@@ -12,13 +12,18 @@ export const travelGuideArtifactItemSchema = z.object({
   reason: z.enum(['user_requested', 'interest_match', 'event', 'seasonal', 'agent_recommended', 'stopover']),
   sourceArtifactId: z.string().min(1).max(160),
   sourceFindingId: z.string().min(1).max(160),
-  verification: verificationRecordSchema
+  verification: verificationRecordSchema,
+  timeOfDay: z.enum(['morning', 'afternoon', 'evening', 'flexible']).optional(),
+  planningNote: z.string().trim().min(1).max(500).optional()
 }).strict()
 
 export const travelGuideArtifactDaySchema = z.object({
   day: z.number().int().min(1).max(60),
   city: locationRefSchema,
-  items: z.array(travelGuideArtifactItemSchema).max(6)
+  items: z.array(travelGuideArtifactItemSchema).max(6),
+  theme: z.string().trim().min(1).max(160).optional(),
+  notes: z.string().trim().min(1).max(500).optional(),
+  kind: z.enum(['visit', 'rest', 'travel']).optional()
 }).strict()
 
 export const travelGuideBuildInputSchema = z.object({
@@ -33,6 +38,7 @@ export const travelGuideArtifactPayloadSchema = z.object({
   kind: z.literal('trip_travel_guide'),
   schemaVersion: z.literal(1),
   builderVersion: z.string().min(1).max(64),
+  composition: z.literal('agent_authored').optional(),
   sourceArtifactIds: z.array(z.string().min(1).max(160)).min(1).max(30),
   routeArtifactId: z.string().min(1).max(160),
   days: z.array(travelGuideArtifactDaySchema).min(1).max(60),

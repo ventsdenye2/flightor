@@ -21,6 +21,8 @@ const envSchema = z.object({
   ADMIN_API_TOKEN: z.string().default(''),
   WX_APPID: z.string().default(''),
   WX_SECRET: z.string().default(''),
+  LOCAL_LOGIN_ENABLED: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),
+  LOCAL_LOGIN_KEY: z.string().default(''),
   AERODATABOX_API_KEY: z.string().default(''),
   AERODATABOX_BASE_URL: optionalUrl.default('https://aerodatabox.p.rapidapi.com'),
   OAG_FLIGHT_INFO_KEY: z.string().default(''),
@@ -50,6 +52,11 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     throw new Error(`Invalid backend environment variables: ${names}`)
   }
   if (result.data.NODE_ENV === 'production' && !result.data.REDIS_ENABLED) throw new Error('Redis cannot be disabled in production')
+  if (result.data.LOCAL_LOGIN_ENABLED) {
+    if (result.data.NODE_ENV === 'production') throw new Error('Local test login cannot be enabled in production')
+    if (!['127.0.0.1', '::1'].includes(result.data.HOST)) throw new Error('Local test login requires a loopback HOST')
+    if (result.data.LOCAL_LOGIN_KEY.length < 32) throw new Error('LOCAL_LOGIN_KEY must contain at least 32 characters')
+  }
   return {
     ...result.data,
     PLANNER_MODEL: result.data.PLANNER_MODEL || result.data.OPENROUTER_MODEL,

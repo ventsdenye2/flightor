@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import { locationRefSchema, locationResolutionSchema, type LocationRef } from '../../aviation/types.js'
+import { locationResolutionSchema, type LocationRef } from '../../aviation/types.js'
 import { fareSearchInputSchema } from '../../fares/types.js'
+import { fareItinerarySummarySchema, summarizeFareItineraries } from '../../fares/summary.js'
 import { executeFlightSearch } from '../../fares/search-service.js'
 import { fareAirportSelectorSchema, resolveFareAirportPair } from '../../fares/airport-resolver.js'
 import { USER_MEMORY_MAX_BYTES } from '../../memory/repository.js'
@@ -12,19 +13,18 @@ import { searchDestinationsTool, recommendDestinationsTool, planTripRouteTool } 
 import { confirmFlightPriceTool, confirmRoutePriceTool } from './fare-confirmation.js'
 import { researchDestinationTool, webResearchTool } from './research.js'
 import { buildTravelGuideTool } from './travel-guide.js'
+import { saveTravelGuideTool } from './authored-travel-guide.js'
 import { getTripArtifactsTool, readArtifactTool } from './artifact-reading.js'
 import { canonicalResolvedLocation, recordResolvedLocations } from './resolved-locations.js'
 import { cancelGoalTool, declareGoalTool, finishGoalTool, getGoalTool, resumeGoalTool } from './goals.js'
 import { startRouteGenerationTool } from './route-generation.js'
 import { workspaceScope } from './workspace-scope.js'
+import { locationSelectorSchema, type LocationSelector } from '../../locations/selector.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
 // Model arguments select identities; canonical Trip persistence still requires full LocationRefs.
-const tripLocationInputSchema = z.union([
-  z.string().min(1).max(128).describe('Exact canonical location id from resolve_location, destination discovery, or the existing Trip. Prefer this string selector.'),
-  locationRefSchema.describe('Legacy compatibility only: id/type select a trusted record; supplied descriptive facts are ignored.')
-])
+const tripLocationInputSchema = locationSelectorSchema
 const groundLegSchema = tripContextSchema.shape.requiredGroundLegs.unwrap().element
 const updateTripContextPatchSchema = tripContextPatchSchema.extend({
   origin: tripLocationInputSchema.nullable().optional(),
@@ -78,6 +78,7 @@ const searchFlightsOutputSchema = z.object({
     destination: z.string().regex(/^[A-Z]{3}$/),
     departureDate: z.iso.date(),
     offerCount: z.number().int().nonnegative(),
+    itineraries: fareItinerarySummarySchema,
     lowestFare: z.object({ amount: z.number().nonnegative(), currency: z.string().regex(/^[A-Z]{3}$/) }).strict().optional(),
     checkedAt: z.iso.datetime(),
     provider: z.string().min(1),
@@ -125,7 +126,7 @@ function canonicalTripPatch(
   // Existing owned Trip facts are valid across turns; fresh server resolutions win for the same identity.
   recordResolvedLocations(authority, tripLocations(current))
   recordResolvedLocations(authority, [...(context.resolvedLocations?.values() ?? [])])
-  const resolve = (location: LocationRef | string) => canonicalResolvedLocation(authority, location)
+  const resolve = (location: LocationSelector) => canonicalResolvedLocation(authority, location)
   return tripContextPatchSchema.parse({
     ...patch,
     ...(patch.origin == null ? {} : { origin: resolve(patch.origin) }),
@@ -262,6 +263,7 @@ const searchFlightsTool: AgentTool<
         destination: artifact.query.destination,
         departureDate: artifact.query.departureDate,
         offerCount: artifact.offers.length,
+        itineraries: summarizeFareItineraries(artifact.offers),
         ...(lowest ? { lowestFare: { amount: lowest.totalAmount, currency: lowest.currency } } : {}),
         checkedAt: artifact.checkedAt,
         provider: artifact.provider,
@@ -326,6 +328,7 @@ export function createCoreToolRegistry(): ToolRegistry {
     .register(researchDestinationTool)
     .register(webResearchTool)
     .register(buildTravelGuideTool)
+    .register(saveTravelGuideTool)
     .register(getUserMemoryTool)
     .register(updateUserMemoryTool)
 }
@@ -356,7 +359,7 @@ export function createPlannerToolRegistry(): ToolRegistry {
     .register(planTripRouteTool)
     .register(researchDestinationTool)
     .register(webResearchTool)
-    .register(buildTravelGuideTool)
+    .register(saveTravelGuideTool)
     .register(getUserMemoryTool)
     .register(updateUserMemoryTool)
 }
