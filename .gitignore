@@ -1,6 +1,8 @@
 dist/
 node_modules/
 .DS_Store
+._*
+.worktrees/
 *.log
 .swc/
 

@@ -4,10 +4,6 @@ const localLoginKey = process.env.FLIGHTOR_LOCAL_LOGIN_KEY || ''
 if (localLoginKey && !/^http:\/\/(127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/.test(apiBaseUrl)) {
   throw new Error('Local test login requires a loopback API URL')
 }
-// The UI experience has a separate source root and output tree. Keep this
-// opt-in so the normal production build continues to use src/ and dist/.
-const useUiExperienceConfig = process.env.FLIGHTOR_UI_EXPERIENCE === 'true'
-
 const config = {
   projectName: 'FlightOR',
   date: '2026-7-23',
@@ -71,4 +67,4 @@ const productionConfig = function (merge) {
   return merge({}, config, require('./prod'))
 }
 
-module.exports = useUiExperienceConfig ? require('./ui-experience') : productionConfig
+module.exports = productionConfig

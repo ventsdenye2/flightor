@@ -27,7 +27,6 @@ interface PlannerPageProps {
   productionDelivery?: ConversationDelivery
   productionWarnings?: string[]
   onCancelProduction?: () => void
-  onExit?: () => void
 }
 
 const suggestions = [
@@ -36,7 +35,7 @@ const suggestions = [
   { title: '只有一个长周末', prompt: '下一个长周末想出去走走，从上海出发，两个人，想要轻松、不赶路的安排。', icon: 'calendar' }
 ]
 
-export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, onExit }: PlannerPageProps) {
+export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction }: PlannerPageProps) {
   const production = Boolean(onSubmitPrompt)
   const hasResult = !production || productionResultAvailable
   const rateLimited = productionWarnings.includes('research_provider_rate_limited')
@@ -105,7 +104,7 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
   }
 
   return <>
-    <PageHeader action={<View>{submitted || draft ? <Button className='ux-text-button' disabled={productionBusy} onClick={() => reset()}>重新输入</Button> : null}{onExit ? <Button className='ux-text-button' onClick={onExit}>经典规划</Button> : null}</View>} />
+    <PageHeader action={submitted || draft ? <Button className='ux-text-button' disabled={productionBusy} onClick={() => reset()}>重新输入</Button> : null} />
     <View className='ux-scroll pl-scroll' key={submitted ? 'conversation' : 'welcome'}>
       {!submitted ? <View className='pl-welcome'>
         <Text className='pl-title'>好旅行，<Text className='pl-title-line'>从一个想法开始。</Text></Text>

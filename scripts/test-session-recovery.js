@@ -237,69 +237,53 @@ function find(node, predicate) {
   if (typeof node !== 'object') return undefined
   return predicate(node) ? node : find(node.props?.children, predicate)
 }
-function uiHarness() {
+function productionPlanHarness() {
   let engine = hooks(true)
-  const sessionListeners = []
   const chatStore = {
-    currentSessionId: 'session', currentSession: undefined, sessions: [], messages: [], timeline: [], artifactRefs: [],
-    suggestedActions: [], requiresLogin: true, isThinking: false, multiLoading: false, multiConfirming: false,
-    multiError: '', routeGenerationError: '', routeGeneration: undefined, tripContextSummary: undefined,
+    currentSessionId: 'session', timeline: [], requiresLogin: true, isThinking: false,
+    multiLoading: false, multiConfirming: false, multiError: '', tripContextSummary: undefined,
     send: async () => true, refreshWorkspace: async () => {}
   }
-  const userStore = { profile: null }
+  const userStore = { profile: null, sessionRevision: 0 }
   function LoginSheet() {}
+  function PlannerPage() {}
   const stubs = {
     react: { useState: (...args) => engine.useState(...args), useRef: (...args) => engine.useRef(...args), useEffect: (...args) => engine.useEffect(...args) },
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
-    mobx: { makeAutoObservable() {}, runInAction: run => run() },
-    '@tarojs/components': { View: 'View', Text: 'Text', Input: 'Input', ScrollView: 'ScrollView' },
-    '@tarojs/taro': { useDidShow() {}, setNavigationBarTitle() {} },
+    '@tarojs/components': { View: 'View' },
+    '@tarojs/taro': { useDidShow() {}, setNavigationBarTitle() {}, navigateTo() {} },
     'mobx-react-lite': { observer: component => component },
-    '../../stores/chatStore': { chatStore, registerChatSessionChangeHandler: handler => { sessionListeners.push(handler); return () => {} }, formatConversationWarning: warning => warning, isConversationTurnInteractive: () => false },
-    '../../services/routeService': { cityByIata: () => '' },
-    '../../services/routeGenerationService': { isRouteGenerationTerminal: status => ['succeeded', 'failed', 'cancelled'].includes(status) },
+    '../../stores/chatStore': { chatStore },
     '../../i18n': { t: key => key, localeStore: { locale: 'zh' } },
-    '../../utils/format': { formatPrice: value => value, formatMonthDay: value => value },
-    '../../components/plan/TripContextChipsView': () => null,
-    '../../components/artifacts': { ArtifactTimelineItem: () => null },
-    '../../services/artifactService': { artifactService: { setSession() {}, fetchArtifact: async () => { throw new Error('not used in classic Plan harness') } } },
-    '../../features/ui-experience/PlannerPage': { default: () => null },
-    '../../features/ui-experience/productionPresentation': { artifactToTripPresentation: () => ({}) },
+    '../../components/navigation/ProductionTabBar': { useProductionTab() {} },
+    '../../features/ui-experience/PlannerPage': { __esModule: true, default: PlannerPage },
+    '../../services/productionTripService': { loadProductionTrip: async () => { throw new Error('not used without an artifact') } },
     '../../stores/userStore': { userStore },
-    '../../components/common/LoginSheet': LoginSheet,
-    '../../components/common/DemoBadge': () => null
+    '../../components/common/LoginSheet': LoginSheet
   }
   const load = loader(stubs)
   const PlanPage = load('src/pages/plan/index.tsx').default
-  engine.begin()
-  const page = PlanPage()
-  engine.finish()
-  const AgentChat = page.props.children[1].type
-  engine = hooks()
-  const render = () => { engine.begin(); const tree = AgentChat({ onOpenExperience() {} }); engine.finish(); return tree }
-  const input = tree => find(tree, node => node.type === 'Input')
+  const render = () => { engine.begin(); const tree = PlanPage(); engine.finish(); return tree }
+  const planner = tree => find(tree, node => node.type === PlannerPage)
   const login = tree => find(tree, node => node.type === LoginSheet)
-  const edit = text => { input(render()).props.onInput({ detail: { value: text } }); return render() }
-  return { chatStore, userStore, render, input, login, edit, sessionListeners, load }
+  return { chatStore, userStore, render, planner, login }
 }
 
-await test('Plan opens login and retains the draft when login is cancelled', async () => {
-  const h = uiHarness()
-  h.input(h.edit('东京五天')).props.onConfirm()
+await test('Plan exposes only the production planner and resumes a login-gated request', async () => {
+  const h = productionPlanHarness()
+  const initial = h.planner(h.render())
+  assert.ok(initial)
+  assert.equal(initial.props.onExit, undefined)
+  initial.props.onSubmitPrompt('东京五天')
   await flush()
   assert.equal(h.login(h.render()).props.visible, true)
-  h.login(h.render()).props.onClose()
-  assert.equal(h.input(h.render()).props.value, '东京五天')
+  let sent = ''
+  h.chatStore.requiresLogin = false
+  h.chatStore.send = async message => { sent = message; return true }
+  h.login(h.render()).props.onSuccess()
+  await flush()
+  assert.equal(sent, '东京五天')
   assert.equal(h.login(h.render()).props.visible, false)
-})
-
-await test('a suggested first message uses the same login and draft path', async () => {
-  const h = uiHarness()
-  const tree = h.render()
-  find(tree, node => node.props.className === 'agent-chat__suggest ').props.onClick()
-  await flush()
-  assert.equal(h.login(h.render()).props.visible, true)
-  assert.equal(h.input(h.render()).props.value, 'chat.eg1')
 })
 
 await test('closing a pending login sheet prevents a late success from resuming the action', async () => {
@@ -326,60 +310,6 @@ await test('closing a pending login sheet prevents a late success from resuming 
   await pending
   assert.equal(closed, 1)
   assert.equal(resumed, 0)
-})
-
-await test('Plan keeps rejected input, shows initialization errors and clears only accepted input', async () => {
-  const h = uiHarness()
-  h.chatStore.requiresLogin = false
-  h.chatStore.send = async () => { h.chatStore.multiError = '云端会话初始化失败，请重试。'; return false }
-  h.input(h.edit('保留这段需求')).props.onConfirm()
-  await flush()
-  let tree = h.render()
-  assert.equal(h.input(tree).props.value, '保留这段需求')
-  assert.ok(find(tree, node => node.type === 'Text' && node.props.children === h.chatStore.multiError))
-  h.chatStore.send = async () => true
-  h.input(tree).props.onConfirm()
-  await flush()
-  assert.equal(h.input(h.render()).props.value, '')
-})
-
-await test('successful login resumes the preserved user request', async () => {
-  const h = uiHarness()
-  let message
-  h.chatStore.send = async text => { message = text; return true }
-  h.input(h.edit('查询真实机票')).props.onConfirm()
-  await flush()
-  h.chatStore.requiresLogin = false
-  h.login(h.render()).props.onSuccess()
-  await flush()
-  assert.equal(message, '查询真实机票')
-  assert.equal(h.input(h.render()).props.value, '')
-})
-
-await test('late acceptance cannot clear a new workspace draft', async () => {
-  const h = uiHarness()
-  h.chatStore.requiresLogin = false
-  const result = deferred()
-  h.chatStore.send = () => result.promise
-  h.input(h.edit('旧需求')).props.onConfirm()
-  h.sessionListeners.forEach(handler => handler('next-session', 'owner'))
-  h.edit('新的需求')
-  result.resolve(true)
-  await flush()
-  assert.equal(h.input(h.render()).props.value, '新的需求')
-})
-
-await test('expiry during submission retains the draft for login', async () => {
-  const h = uiHarness()
-  h.chatStore.requiresLogin = false
-  const result = deferred()
-  h.chatStore.send = () => result.promise
-  h.input(h.edit('续办这个行程')).props.onConfirm()
-  h.chatStore.requiresLogin = true
-  h.sessionListeners.forEach(handler => handler('anonymous-session', undefined))
-  result.resolve(false)
-  await flush()
-  assert.equal(h.input(h.render()).props.value, '续办这个行程')
 })
 
 await test('delivery labels never equate a model response or pending goal with completion', async () => {

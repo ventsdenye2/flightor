@@ -10,7 +10,7 @@
 D:\FunnyProject\flightor-repo\.worktrees\production-integration
 ```
 
-根目录 `project.config.json` 的 `miniprogramRoot` 指向 `dist/`。这是连接真实本地 API 的业务版本；`dist/ui-experience` 是独立固定样稿，不用于本次后端测试。不要把主仓目录、`ui-experience` 工作区或样稿产物当成本次集成项目导入。
+根目录 `project.config.json` 的 `miniprogramRoot` 指向 `dist/`，这是仓库唯一的微信小程序编译目录，连接真实本地 API。请始终从仓库根目录导入项目。
 
 当前 API 为 `http://127.0.0.1:3011`，PostgreSQL 为 `127.0.0.1:15432`，数据库 `flightor_integration_20260913`。现有 API 和数据库继续运行，无须重复启动。网页入口为 `http://127.0.0.1:4179/live.html#/pages/plan/index`。
 
@@ -73,7 +73,6 @@ npm run test:production-presentation
 npm run test:conversation-progress
 # 正式页面和设计组件类型检查
 node node_modules/typescript/bin/tsc --noEmit
-npm run check:ui-experience
 # 构建本地真实 API 版本；之后在微信开发者工具点击编译
 npm run build:weapp:local
 ```
@@ -89,7 +88,7 @@ npm run test:planner-reply
 
 ## 仍看到混合新旧页面时
 
-1. 确认开发工具当前导入的是本页开头的 `production-integration` 目录，项目配置仍指向 `dist/`。独立样稿 `dist/ui-experience` 与主仓的旧构建不能混用。
+1. 确认开发工具当前导入的是仓库根目录，项目配置仍指向 `dist/`。仓库不再保留独立样稿小程序入口。
 2. 在该目录运行 `npm run build:weapp:local`，等待构建成功；避免另一个普通 `build:weapp` 或样稿 watch 任务随后覆盖产物。
 3. 在微信开发者工具「清缓存」菜单中只选择「清除编译缓存」，然后重新「编译」。不要选择「清除全部缓存」或清除 Storage/数据缓存；这些操作会影响本地登录、会话恢复及本机目标价。
 4. 如仍显示旧产物，关闭并重新打开同一个项目，再编译；保留项目数据和既有数据库，不通过清库或退出登录解决样式缓存问题。

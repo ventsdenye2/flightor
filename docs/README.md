@@ -65,16 +65,13 @@ The previous Phase 6 visual tokens and fidelity constraints remain recorded in
   source-backed Agent-authored daily schedules, local commands and boundaries.
   [ADR 0012](./adr/0012-agent-authored-itineraries.md) records the scoped decision;
   [DEMO_STATUS](./DEMO_STATUS.md) separates implementation from live acceptance.
-- [UI Experience v1 交接](./UI_PHASE_HANDOFF.md) — 已认可的手机优先美术方向、独立 UI 样稿、运行命令与未验收边界；[统一美术规范](./design/ui-experience-v1.md)。
-
 - [`backend-architecture.md`](./backend-architecture.md) — legacy/current
   backend notes.
 - [`multi-city-plan.md`](./multi-city-plan.md) — multi-city planning notes.
 - [`oag-integration.md`](./oag-integration.md) — optional OAG integration notes.
 - [`deploy.md`](./deploy.md) — deployment guidance.
 
-AppleDouble `._*` files are retained as-is unless a dedicated cleanup is
-explicitly requested. They are not engineering guidance.
+AppleDouble `._*` files are ignored and should not be retained in the repository.
 
 ## Maintenance rule
 
