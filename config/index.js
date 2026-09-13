@@ -40,11 +40,9 @@ const config = {
     prebundle: { enable: false }
   },
   cache: {
-    // 持久化缓存：二次编译提速
-    enable: true,
-    buildDependencies: {
-      config: [__filename]
-    }
+    // Taro 3.6 entry-cache stores source in process memory. Filesystem cache
+    // hits can skip that producer and make consecutive builds return undefined.
+    enable: false
   },
   mini: {
     postcss: {
