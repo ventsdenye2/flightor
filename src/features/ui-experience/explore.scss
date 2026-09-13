@@ -9,9 +9,23 @@
 .ux-explore-input { flex: 1; width: 0; min-width: 0; min-height: 46px; border: 0; background: transparent; color: #123c4a; font: inherit; font-size: 13px; outline: none; }
 .ux-explore-input::placeholder { color: #7e9299; }
 .ux-app .ux-explore-search .ux-icon-button { margin-right: -10px; width: 44px; height: 44px; .ux-icon { width: 15px; height: 15px; } }
-.ux-explore-themes { display: flex; align-items: center; gap: 7px; padding: 10px 20px 18px; overflow-x: auto; scrollbar-width: none; }
+.ux-explore-themes { box-sizing: border-box; width: 100%; padding: 10px 0 18px; white-space: nowrap; }
+.ux-explore-themes-track { display: inline-flex; align-items: center; gap: 7px; box-sizing: border-box; min-width: 100%; padding: 0 20px; }
 .ux-app .ux-explore-theme { flex-shrink: 0; min-height: 44px; padding: 8px 15px; border: 1px solid #e2ebed; border-radius: 12px; color: #607a83; font-size: 12px; }
 .ux-app .ux-explore-theme.is-active { background: #eaf5f5; color: #087f8c; border-color: #c4e0e3; font-weight: 600; }
+.ux-explore-loading { padding: 0 20px 26px; }
+.ux-explore-loading-label { display: block; margin-bottom: 12px; color: #607a83; font-size: 12px; line-height: 1.6; }
+.ux-explore-loading-spotlight { overflow: hidden; border: 1px solid #e3ecee; border-radius: 16px; }
+.ux-explore-loading-photo { height: 145px; background: #e8f1f2; animation: ux-explore-pulse 1.6s ease-in-out infinite; }
+.ux-explore-loading-spotlight .ux-explore-loading-photo { height: 179px; }
+.ux-explore-loading-copy { display: flex; flex-direction: column; gap: 8px; padding: 15px 14px 17px; }
+.ux-explore-loading-copy > view, .ux-explore-loading-copy > div { height: 9px; border-radius: 5px; background: #e2eeee; animation: ux-explore-pulse 1.6s ease-in-out infinite; }
+.ux-explore-loading-copy > view:first-child, .ux-explore-loading-copy > div:first-child { width: 42%; }
+.ux-explore-loading-copy > view:last-child, .ux-explore-loading-copy > div:last-child { width: 68%; }
+.ux-explore-loading-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.ux-explore-loading-card { min-width: 0; overflow: hidden; border-radius: 12px; background: #fff; }
+.ux-explore-loading-card .ux-explore-loading-copy { padding: 10px 1px 0; }
+@keyframes ux-explore-pulse { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
 .ux-explore-spotlight { position: relative; margin: 0 20px 28px; border: 1px solid #e3ecee; border-radius: 16px; overflow: hidden; }
 .ux-app .ux-explore-spotlight-open { width: 100%; display: block; }
 .ux-explore-spotlight-image { position: relative; }
@@ -29,7 +43,7 @@
 .ux-explore-card-copy { padding: 10px 1px 0; }
 .ux-explore-card-category { display: block; color: #087f8c; font-size: 9px; margin-bottom: 4px; }
 .ux-explore-card-title { display: block; font-family: 'Songti SC', 'Noto Serif SC', SimSun, serif; font-size: 16px; font-weight: 650; line-height: 1.5; margin-bottom: 4px; }
-.ux-explore-card-copy .ux-muted { font-size: 10px; }
+.ux-explore-card-copy .ux-muted { display: -webkit-box; overflow: hidden; font-size: 10px; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .ux-app .ux-explore-card .ux-explore-save { top: 5px; right: 5px; }
 .ux-app .ux-explore-reset { margin: 12px auto 0; display: flex; }
 .ux-explore-detail-photo { width: 100%; height: 220px; }
@@ -61,7 +75,7 @@
   .ux-explore-opening { padding: 23px 17px 16px; }
   .ux-explore-opening .ux-title { font-size: 27px; }
   .ux-explore-search { margin: 0 17px; }
-  .ux-explore-themes { padding-left: 17px; padding-right: 17px; gap: 6px; }
+  .ux-explore-themes-track { padding-left: 17px; padding-right: 17px; gap: 6px; }
   .ux-app .ux-explore-theme { padding: 8px 11px; }
   .ux-explore-spotlight { margin-left: 17px; margin-right: 17px; }
   .ux-explore-featured-title { font-size: 21px; }
@@ -70,6 +84,13 @@
   .ux-explore-card-photo { height: 125px; }
   .ux-explore-card-title { font-size: 15px; }
   .ux-explore-card-category { font-size: 8px; }
+  .ux-explore-loading { padding-left: 17px; padding-right: 17px; }
+  .ux-explore-loading-photo { height: 125px; }
   .ux-explore-detail-body { padding-left: 17px; padding-right: 17px; }
   .ux-explore-detail-title { font-size: 25px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ux-explore-loading-photo,
+  .ux-explore-loading-copy > view,
+  .ux-explore-loading-copy > div { animation: none; }
 }

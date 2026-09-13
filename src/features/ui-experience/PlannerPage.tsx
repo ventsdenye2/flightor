@@ -49,6 +49,8 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
     : productionReply || '本次规划未完成，请按原想法重试，或修改后再次提交。')
   const sampleLabel = `${trip.destination} · ${tripDurationLabel(trip)}`
   const samplePrompt = `从${trip.route[0] || '出发地待定'}出发，去${trip.destination}，${tripDurationLabel(trip)}，${travelerLabel(trip)}，安排轻松一点。`
+  const hasReferenceTrip = Boolean(trip.cover?.src && trip.route[0] && !trip.destination.includes('待确认'))
+  const visibleSuggestions = hasReferenceTrip ? suggestions : suggestions.filter(item => item.prompt)
   const price = trip.flights[0]?.price
   const [draft, setDraft] = useState(initialPrompt)
   const [submitted, setSubmitted] = useState('')
@@ -110,13 +112,13 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
         <Text className='pl-title'>好旅行，<Text className='pl-title-line'>从一个想法开始。</Text></Text>
         <Text className='pl-intro'>想去哪、和谁一起、喜欢什么。<Text className='pl-intro-line'>把想法留在这里，让旅程慢慢成形。</Text></Text>
 
-        <Button className='pl-inspiration' onClick={() => setDraft(samplePrompt)}>
+        {hasReferenceTrip && <Button className='pl-inspiration' onClick={() => setDraft(samplePrompt)}>
           <View className='pl-inspiration-copy'><Text className='pl-card-kicker'>从这里找到灵感</Text><Text className='pl-inspiration-title'>{trip.title}</Text><View className='pl-inspiration-link'><Text>试试这个想法</Text><Icon name='arrow-right' /></View></View>
           <Photo src={trip.cover?.src} description={trip.cover?.description || '图片待补充'} className='pl-inspiration-photo' retry={false} />
-        </Button>
+        </Button>}
 
         <View className='pl-suggestions-head'><Text>还没想好？从一句话开始</Text></View>
-        <View className='pl-suggestions'>{suggestions.map(item => <Button key={item.title} className={`pl-suggestion ${draft === (item.prompt || samplePrompt) ? 'is-selected' : ''}`} onClick={() => setDraft(item.prompt || samplePrompt)}><Icon name={item.icon} /><Text>{item.title}</Text><Icon name='arrow-right' /></Button>)}</View>
+        <View className='pl-suggestions'>{visibleSuggestions.map(item => <Button key={item.title} className={`pl-suggestion ${draft === (item.prompt || samplePrompt) ? 'is-selected' : ''}`} onClick={() => setDraft(item.prompt || samplePrompt)}><Icon name={item.icon} /><Text>{item.title}</Text><Icon name='arrow-right' /></Button>)}</View>
         <Button className='pl-flight-link' onClick={onSearchFlights}><Icon name='plane' /><View><Text className='pl-flight-title'>目的地定了，先看看机票</Text><Text className='ux-muted'>搜索航班，比较时间与中转安排</Text></View><Icon name='chevron-right' /></Button>
       </View> : <View className='pl-conversation'>
         <Text className='pl-conversation-label'>这一次，想这样出发</Text>
@@ -128,7 +130,7 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
             <Text className='ux-muted'>{`先用${sampleLabel}示例，看看旅程会如何展开。`}</Text>
           </>}
           <View className='pl-loading-skeleton'><View /><View /><View /></View>
-          <Button className='ux-text-button' disabled={production && !onCancelProduction} onClick={cancel}>{production ? '取消规划' : '取消查看'}</Button>
+          {(!production || onCancelProduction) && <Button className='ux-text-button' onClick={cancel}>{production ? '取消规划' : '取消查看'}</Button>}
         </View> : phase === 'cancelled' ? <View className='pl-cancelled' role='status'>
           <Text className='ux-section-title'>已暂停，想法还在这里</Text><Text className='ux-muted'>可以继续查看参考，也可以重新写下你的想法。</Text>
           <View className='pl-inline-actions'><Button className='ux-text-button' onClick={() => start(submitted)}>继续查看</Button><Button className='ux-text-button' onClick={() => reset(submitted)}>修改想法</Button></View>

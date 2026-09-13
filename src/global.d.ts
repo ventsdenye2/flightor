@@ -7,3 +7,8 @@ declare const FLIGHTOR_API_BASE_URL: string
 declare const FLIGHTOR_USE_MOCK: boolean
 /** Local development transport key; injected only by build:weapp:local. */
 declare const FLIGHTOR_LOCAL_LOGIN_KEY: string
+declare const FLIGHTOR_BUILD_SHA: string
+declare const FLIGHTOR_BUILD_DIRTY: boolean
+declare const FLIGHTOR_BUILD_FINGERPRINT: string
+declare const FLIGHTOR_BUILD_TIME: string
+declare const FLIGHTOR_BUILD_MODE: string

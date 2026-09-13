@@ -29,9 +29,10 @@ function PlanPage() {
 
   useEffect(() => {
     let active = true
+    setProductionError('')
     if (!ownerId || !productionRef) return () => { active = false }
     loadProductionTrip(productionRef.id, { ownerId, sessionId: chatStore.currentSessionId })
-      .then(value => { if (active) setProductionResult({ key: resultKey, trip: value.presentation }) })
+      .then(value => { if (active) { setProductionResult({ key: resultKey, trip: value.presentation }); setProductionError('') } })
       .catch(error => { if (active) setProductionError(error instanceof Error ? error.message : '行程结果暂不可用') })
     return () => { active = false }
   }, [resultKey])

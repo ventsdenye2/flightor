@@ -72,7 +72,7 @@ function ExplorePage() {
   }
 
   return <View className='ux-app ux-screen production-main-page explore-production'>
-    <ProductionExplorePage items={items} category={category} onCategoryChange={setCategory} loading={loading} error={error} onRetry={() => void load()} hasMore={Boolean(next)} onLoadMore={() => next && !loading && void load(next)} busy={busy} startError={startError} onStart={item => void start(item)} onOpenSource={url => void Taro.setClipboardData({ data: url })} />
+    <ProductionExplorePage items={items} category={category} onCategoryChange={setCategory} loading={loading} error={error} onRetry={() => void load()} hasMore={Boolean(next)} onLoadMore={() => next && !loading && void load(next)} busy={busy} startError={startError} onStart={item => void start(item)} onOpenSource={url => { void Taro.setClipboardData({ data: url }).catch(() => Taro.showToast({ title: '复制来源链接失败，请重试', icon: 'none' })) }} />
     <LoginSheet visible={login} onClose={() => setLogin(false)} onSuccess={() => { const item = pendingStart.current; pendingStart.current = null; if (item) void start(item) }} />
   </View>
 }

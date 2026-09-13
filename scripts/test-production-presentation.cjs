@@ -17,9 +17,15 @@ const displayPayload = {
 }
 vm.runInNewContext(compiled, { module: loadedModule, exports: loadedModule.exports, URL, require: dependency => {
   if (dependency.endsWith('/components/artifacts/payload')) return displayPayload
+  if (dependency.endsWith('/services/routeArtifact')) return { readRouteArtifact: artifact => artifact.__routes ?? [] }
   throw new Error(`Unexpected runtime dependency: ${dependency}`)
 } }, { filename: file })
-const { artifactToTripPresentation, safeSourceUrl } = loadedModule.exports
+const { artifactToTripPresentation, safeSourceUrl, savedRouteFlights } = loadedModule.exports
+const presentationFile = path.join(root, 'src/features/ui-experience/presentation.ts')
+const presentationModule = { exports: {} }
+vm.runInNewContext(ts.transpileModule(fs.readFileSync(presentationFile, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText,
+  { module: presentationModule, exports: presentationModule.exports }, { filename: presentationFile })
+const { priceStatusLabel } = presentationModule.exports
 const location = { id: 'city:TYO', type: 'city', name: 'Tokyo', countryCode: 'JP', latitude: 35.6, longitude: 139.7 }
 const route = { kind: 'trip_route_plan', schemaVersion: 1, tripContextVersion: 4, cities: [{ location, stayDays: 2, role: 'visit', reasons: ['culture'] }], days: [{ day: 1, city: location, activityRefs: [] }, { day: 2, city: location, activityRefs: [] }], warnings: [], landTransfers: [] }
 const routeArtifact = { id: 'route-1', tripId: 'trip-1', type: 'route', schemaVersion: 1, payload: route }
@@ -29,6 +35,7 @@ const guideArtifact = { id: 'guide-1', tripId: 'trip-1', type: 'travel_guide', s
 const workspace = { trip: { id: 'trip-1', title: '东京周末', contextVersion: 4 }, tripContextSummary: { departureWindow: { from: '2026-10-01', to: '2026-10-09', precision: 'exact' }, returnWindow: { from: '2026-10-03', to: '2026-10-03', precision: 'exact' }, travelDays: 3 }, messages: [{ delivery: { status: 'satisfied', artifactIds: ['guide-1'] } }] }
 let passed = 0
 function check(label, fn) { fn(); passed += 1; console.log(`PASS ${label}`) }
+async function checkAsync(label, fn) { await fn(); passed += 1; console.log(`PASS ${label}`) }
 
 check('rejects non-route and wrong route payloads', () => { assert.throws(() => artifactToTripPresentation({ ...routeArtifact, type: 'research' }), /不支持/); assert.throws(() => artifactToTripPresentation({ ...routeArtifact, payload: { ...route, kind: 'wrong' } }), /不支持/) })
 check('rejects guide trip and route identity mismatches', () => { assert.throws(() => artifactToTripPresentation(routeArtifact, { ...guideArtifact, tripId: 'trip-2' }), /不匹配/); assert.throws(() => artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, routeArtifactId: 'route-2' } }), /不匹配/) })
@@ -38,6 +45,57 @@ check('uses exact departure and return windows from matching context', () => { c
 check('delivery satisfaction controls ready status', () => { assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, workspace).status, 'ready'); assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, { ...workspace, messages: [{ delivery: { status: 'partial', artifactIds: ['guide-1'] } }] }).status, 'partial') })
 check('route-only snapshots stay partial with unknown travelers and prices', () => { const trip = artifactToTripPresentation(routeArtifact, undefined, workspace); assert.equal(trip.status, 'partial'); assert.equal(trip.days[0].status, 'pending'); assert.equal(trip.travelers, null); assert.equal(trip.flights.length, 0) })
 check('guide activities preserve identity and unknown time fields', () => { const activity = artifactToTripPresentation(routeArtifact, guideArtifact, workspace).days[0].activities[0]; assert.equal(activity.id, 'activity-1'); assert.equal(activity.time, '上午'); assert.equal(activity.until, null) })
+
+const verifiedFare = { status: 'verified', sources: [{ provider: 'live-fares', reference: 'https://example.com/fare' }] }
+const savedPath = {
+  id: 'saved-route-1',
+  edges: [{ departureDate: '2026-10-01', verification: verifiedFare }]
+}
+const savedRouteArtifact = {
+  id: 'route-set-1', tripId: 'trip-1', type: 'route_set', schemaVersion: 1,
+  payload: { kind: 'optimized_routes', schemaVersion: 1, verification: verifiedFare, representatives: [{ path: savedPath }] },
+  __routes: [{
+    id: 'saved-route-1', nodes: [{ location: { id: 'PEK', name: '北京首都', iata: 'PEK' } }, { location: { id: 'NRT', name: '东京成田', iata: 'NRT' } }],
+    edges: [{
+      id: 'edge-1', from: { id: 'PEK', name: '北京首都', iata: 'PEK' }, to: { id: 'NRT', name: '东京成田', iata: 'NRT' },
+      departureAt: '2026-10-01T00:00:00Z', arrivalAt: '2026-10-01T04:00:00Z', departureDisplay: '2026-10-01 08:00', arrivalDisplay: '2026-10-01 13:00',
+      durationMinutes: 240, marketingCarrier: 'Example Air', flightNumber: 'EA100', fare: { amount: 1880, currency: 'CNY' }, transferType: 'direct', airportChange: false,
+      warnings: [], layovers: [], segments: []
+    }], totalFare: { amount: 1880, currency: 'CNY' }, totalDurationMinutes: 240, transferCount: 0, warnings: [], badges: [], reasons: [], tradeoffs: []
+  }]
+}
+const savedWorkspace = { ...workspace, artifactRefs: [], trip: { ...workspace.trip, savedRoute: { artifactId: 'route-set-1', routeId: 'saved-route-1', contextVersion: 4 } } }
+check('maps only the exact saved route with its verified fare semantics', () => {
+  const trip = artifactToTripPresentation(routeArtifact, guideArtifact, savedWorkspace, savedRouteArtifact)
+  assert.equal(trip.flights.length, 1)
+  assert.equal(trip.flights[0].title, 'PEK → NRT')
+  assert.equal(trip.flights[0].dateLabel, '2026-10-01')
+  assert.equal(trip.flights[0].price.amount, 1880)
+  assert.equal(trip.flights[0].price.status, 'verified')
+  assert.equal(trip.flights[0].source.label, 'live-fares')
+  assert.equal(trip.flights[0].source.url, 'https://example.com/fare')
+  assert.equal(trip.flights[0].legs[0].carrier, 'Example Air · EA100')
+})
+check('keeps flights empty for stale context, wrong artifact identity or wrong route id', () => {
+  const old = { ...savedWorkspace, trip: { ...savedWorkspace.trip, savedRoute: { ...savedWorkspace.trip.savedRoute, contextVersion: 3 } } }
+  assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, old, savedRouteArtifact).flights.length, 0)
+  assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, savedWorkspace, { ...savedRouteArtifact, id: 'another-artifact' }).flights.length, 0)
+  const missing = { ...savedWorkspace, trip: { ...savedWorkspace.trip, savedRoute: { ...savedWorkspace.trip.savedRoute, routeId: 'missing-route' } } }
+  assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, missing, savedRouteArtifact).flights.length, 0)
+})
+check('rejects unsupported route-set shapes and hides unverified totals', () => {
+  assert.equal(savedRouteFlights({ ...savedRouteArtifact, payload: { ...savedRouteArtifact.payload, kind: 'flight_paths' } }, 'saved-route-1').length, 0)
+  const unverified = { ...savedRouteArtifact, payload: { ...savedRouteArtifact.payload, representatives: [{ path: { ...savedPath, edges: [{ ...savedPath.edges[0], verification: { status: 'unverified', sources: [] } }] } }] } }
+  const flights = savedRouteFlights(unverified, 'saved-route-1')
+  assert.equal(flights[0].price.amount, null)
+  assert.equal(flights[0].price.status, 'unknown')
+})
+check('labels verified, partial and stale prices without calling them estimates', () => {
+  const price = { amount: 1880, currency: 'CNY', unit: 'total' }
+  assert.equal(priceStatusLabel({ ...price, status: 'verified' }), '已核验报价')
+  assert.equal(priceStatusLabel({ ...price, status: 'partial' }), '部分核验报价')
+  assert.equal(priceStatusLabel({ ...price, status: 'stale' }), '过期报价')
+})
 
 // Render the actual PlannerPage with a small hook adapter. This exercises the
 // server outcome -> visible state -> retry event without a backend or provider.
@@ -161,4 +219,42 @@ check('active planner receives the latest progress and removes it when finished'
   h.render()
   assert.equal(h.nodes().filter(node => node.type === 'PlannerProgress').length, 0)
 })
-console.log(`Production presentation behavior checks: ${passed} passed.`)
+function productionServiceHarness(artifacts, workspaceValue) {
+  const serviceFile = path.join(root, 'src/services/productionTripService.ts')
+  const output = ts.transpileModule(fs.readFileSync(serviceFile, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText
+  const serviceModule = { exports: {} }
+  const calls = []
+  vm.runInNewContext(output, { module: serviceModule, exports: serviceModule.exports, require: dependency => {
+    if (dependency === './artifactService') return { artifactService: { fetchArtifact: async id => { calls.push(id); const value = artifacts[id]; if (value instanceof Error) throw value; return value } } }
+    if (dependency === './workspaceService') return { getCloudWorkspace: async () => workspaceValue }
+    if (dependency.endsWith('/components/artifacts/payload')) return displayPayload
+    if (dependency.endsWith('/features/ui-experience/productionPresentation')) return { artifactToTripPresentation: (_route, _guide, _workspace, saved) => ({ saved }) }
+    throw new Error(`Unexpected production service dependency: ${dependency}`)
+  } }, { filename: serviceFile })
+  return { load: serviceModule.exports.loadProductionTrip, calls }
+}
+
+;(async () => {
+  const selectedRoute = { ...routeArtifact, payload: { ...route, tripContextVersion: 4 } }
+  const exact = productionServiceHarness({ 'route-1': selectedRoute, 'route-set-1': savedRouteArtifact }, savedWorkspace)
+  const exactResult = await exact.load('route-1', {})
+  assert.deepEqual(exact.calls, ['route-1', 'route-set-1'])
+  assert.equal(exactResult.presentation.saved.id, 'route-set-1')
+  console.log('PASS loads only the explicitly saved route artifact for an exact context')
+  passed += 1
+
+  await checkAsync('does not fetch a saved route from an older context', async () => {
+    const oldWorkspace = { ...savedWorkspace, trip: { ...savedWorkspace.trip, savedRoute: { ...savedWorkspace.trip.savedRoute, contextVersion: 3 } } }
+    const harness = productionServiceHarness({ 'route-1': selectedRoute, 'route-set-1': savedRouteArtifact }, oldWorkspace)
+    const result = await harness.load('route-1', {})
+    assert.deepEqual(harness.calls, ['route-1'])
+    assert.equal(result.presentation.saved, undefined)
+  })
+  await checkAsync('keeps the trip usable when its saved route cannot be loaded', async () => {
+    const harness = productionServiceHarness({ 'route-1': selectedRoute, 'route-set-1': new Error('unavailable') }, savedWorkspace)
+    const result = await harness.load('route-1', {})
+    assert.deepEqual(harness.calls, ['route-1', 'route-set-1'])
+    assert.equal(result.presentation.saved, undefined)
+  })
+  console.log(`Production presentation behavior checks: ${passed} passed.`)
+})().catch(error => { console.error(error); process.exitCode = 1 })

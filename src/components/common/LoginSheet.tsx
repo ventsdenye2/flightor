@@ -8,6 +8,7 @@ import { userStore } from '../../stores/userStore'
 import { LOCAL_LOGIN_AVAILABLE, persistAvatar } from '../../services/authService'
 import { loginErrorKey } from '../../utils/authErrors'
 import { t } from '../../i18n'
+import { Icon } from '../../features/ui-experience/VisualMedia'
 import './LoginSheet.scss'
 
 interface LoginSheetProps {
@@ -23,6 +24,11 @@ function LoginSheet({ visible, onClose, onSuccess }: LoginSheetProps) {
   const [error, setError] = useState('')
   const attempt = useRef(0)
   useEffect(() => { if (!visible) { attempt.current += 1; setError('') } }, [visible])
+  useEffect(() => {
+    if (!visible) return
+    void Taro.hideTabBar({ animation: false }).catch(() => {})
+    return () => { void Taro.showTabBar({ animation: false }).catch(() => {}) }
+  }, [visible])
 
   if (!visible) return null
 
@@ -58,7 +64,7 @@ function LoginSheet({ visible, onClose, onSuccess }: LoginSheetProps) {
       <View className='login-sheet__panel'>
         <View className='login-sheet__header'>
           <Text className='login-sheet__title'>{t('login.title')}</Text>
-          <Text className='login-sheet__close' onClick={handleClose}>✕</Text>
+          <Button className='login-sheet__close' ariaLabel={t('login.close')} onClick={handleClose}><Icon name='close' /></Button>
         </View>
         <Text className='login-sheet__desc'>{t('login.desc')}</Text>
 
@@ -68,7 +74,7 @@ function LoginSheet({ visible, onClose, onSuccess }: LoginSheetProps) {
             <Image className='login-sheet__avatar' src={avatarUrl} mode='aspectFill' />
           ) : (
             <View className='login-sheet__avatar login-sheet__avatar--empty'>
-              <Text>✈</Text>
+              <Icon name='plane' />
             </View>
           )}
           <Text className='login-sheet__avatar-tip'>{t('login.avatar')}</Text>
@@ -89,17 +95,18 @@ function LoginSheet({ visible, onClose, onSuccess }: LoginSheetProps) {
         </View>
 
         {error && <Text className='login-sheet__error'>{error}</Text>}
-        <View
+        <Button
           className={`login-sheet__confirm ${userStore.isLoggingIn ? 'is-loading' : ''}`}
           hoverClass='tap-dim'
+          disabled={userStore.isLoggingIn}
           onClick={() => handleConfirm()}
         >
           <Text>{userStore.isLoggingIn ? t('login.loading') : t('login.confirm')}</Text>
-        </View>
+        </Button>
         {LOCAL_LOGIN_AVAILABLE && <View className='login-sheet__local'>
-          <View className='login-sheet__local-button' hoverClass='tap-dim' onClick={() => handleConfirm('local')}>
+          <Button className='login-sheet__local-button' hoverClass='tap-dim' disabled={userStore.isLoggingIn} onClick={() => handleConfirm('local')}>
             <Text>{t('login.localConfirm')}</Text>
-          </View>
+          </Button>
           <Text className='login-sheet__local-note'>{t('login.localDesc')}</Text>
         </View>}
         <Text className='login-sheet__privacy'>{t('login.privacy')}</Text>

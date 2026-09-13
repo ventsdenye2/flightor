@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { View, Text } from '@tarojs/components'
+import { Button, View, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import WorldMap, { type MapAirportPoint, type MapRoute } from '../map/WorldMap'
 import { badgeLabels, durationLabel, fareLabel, routeLabel, type RouteView } from '../../services/routeArtifact'
+import './RouteWorkspace.scss'
 
 export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: RouteView[]; initialRouteId?: string; onSave?: (id: string) => void }) {
   const [selectedId, setSelectedId] = useState(initialRouteId ?? routes[0]?.id)
@@ -22,28 +23,28 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
     for (const e of route.edges) {
       for (const s of e.segments.length ? e.segments : [e]) {
         if (s.from.latitude === undefined || s.from.longitude === undefined || s.to.latitude === undefined || s.to.longitude === undefined) continue
-        lines.push({ id: e.id, color: e.id === edge?.id ? '#45c6cb' : '#0a84ff', width: e.id === edge?.id ? 3 : 1.5, dotted: e.transferType === 'self', points: [{ latitude: s.from.latitude, longitude: s.from.longitude }, { latitude: s.to.latitude, longitude: s.to.longitude }] })
+        lines.push({ id: e.id, color: e.id === edge?.id ? '#087f8c' : '#7fb8bd', width: e.id === edge?.id ? 3 : 1.5, dotted: e.transferType === 'self', points: [{ latitude: s.from.latitude, longitude: s.from.longitude }, { latitude: s.to.latitude, longitude: s.to.longitude }] })
       }
     }
     return { airports, lines }
   }, [route, edge?.id])
 
   if (routes.length === 0) return <Text>当前条件没有可展示的路线，请回到规划页调整条件。</Text>
-  if (!route) return <View><Text>所选路线不在此结果中。</Text><View className='route-workspace__action' onClick={() => setSelectedId(routes[0].id)}>查看可用路线</View></View>
+  if (!route) return <View><Text>所选路线不在此结果中。</Text><Button className='route-workspace__action' hoverClass='route-workspace__control--pressed' ariaLabel='查看可用路线' onClick={() => setSelectedId(routes[0].id)}>查看可用路线</Button></View>
   return <View className='route-workspace'>
-    <Text className='route-workspace__eyebrow'>YOUR ROUTE / {routes.length} 个方案</Text>
+    <Text className='route-workspace__eyebrow'>你的路线 · {routes.length} 个方案</Text>
     <View className='route-workspace__choices'>
-      {routes.map(r => <View key={r.id} className={`route-workspace__choice ${r.id === route.id ? 'is-active' : ''}`} onClick={() => { setSelectedId(r.id); setEdgeId('') }}>
+      {routes.map(r => <Button key={r.id} className={`route-workspace__choice ${r.id === route.id ? 'is-active' : ''}`} hoverClass='route-workspace__control--pressed' ariaLabel={`选择路线 ${routeLabel(r)}`} aria-pressed={r.id === route.id} onClick={() => { setSelectedId(r.id); setEdgeId('') }}>
         <Text>{r.badges.map(b => badgeLabels[b]).join(' · ') || '路线方案'}</Text>
         <Text className='route-workspace__choice-path'>{routeLabel(r)}</Text><Text>{fareLabel(r.totalFare)}</Text>
-      </View>)}
+      </Button>)}
     </View>
     <View className='route-workspace__hero'>
       <Text className='route-workspace__title'>{routeLabel(route)}</Text>
       <Text className='route-workspace__price'>{fareLabel(route.totalFare)}</Text>
       <Text>{durationLabel(route.totalDurationMinutes)} · {route.transferCount} 次中转</Text>
       <Text className='route-workspace__muted'>航班报价可能变化，不包含未列出的住宿、活动与地面交通费用。</Text>
-      {onSave && <View className='route-workspace__action' onClick={() => onSave(route.id)}>保存此路线</View>}
+      {onSave && <Button className='route-workspace__action' hoverClass='route-workspace__control--pressed' ariaLabel='保存此路线' onClick={() => onSave(route.id)}>保存此路线</Button>}
     </View>
     <View className='route-workspace__section'>
       <Text className='route-workspace__heading'>路线地图</Text>
@@ -57,7 +58,7 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
         const wait = previous?.arrivalAt && e.departureAt ? Math.round((Date.parse(e.departureAt) - Date.parse(previous.arrivalAt)) / 60000) : undefined
         return <View key={e.id}>
           {wait !== undefined && wait >= 0 && <Text className='route-workspace__stopover'>在 {e.from.name} 衔接 {durationLabel(wait)} · 入境与活动安排需另行确认</Text>}
-          <View className={`route-workspace__leg ${edge?.id === e.id ? 'is-active' : ''}`} onClick={() => setEdgeId(e.id)}>
+          <Button className={`route-workspace__leg ${edge?.id === e.id ? 'is-active' : ''}`} hoverClass='route-workspace__control--pressed' ariaLabel={`查看 ${e.from.iata ?? e.from.name} 到 ${e.to.iata ?? e.to.name} 航段`} aria-pressed={edge?.id === e.id} onClick={() => setEdgeId(e.id)}>
             <Text className='route-workspace__heading'>{e.from.iata ?? e.from.name} → {e.to.iata ?? e.to.name}</Text>
             <Text>出发 {e.departureDisplay}</Text><Text>抵达 {e.arrivalDisplay}</Text>
             <Text>{durationLabel(e.durationMinutes)} · {fareLabel(e.fare)}</Text>
@@ -65,7 +66,7 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
             {e.transferType === 'airline' && <Text className='route-workspace__muted'>行李与转机保障以出票条款为准</Text>}
             {e.transferType === 'self' && <Text className='route-workspace__warning'>自行中转：需自行确认行李重托运与衔接时间</Text>}
             {e.airportChange && <Text className='route-workspace__warning'>涉及更换机场，请预留地面交通时间</Text>}
-          </View>
+          </Button>
         </View>
       })}
     </View>
@@ -83,7 +84,7 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
       </View>})}
       <Text className='route-workspace__price'>{fareLabel(edge.fare)}</Text>
       {edge.checkedAt && <Text className='route-workspace__muted'>资料核验于 {edge.checkedAt}</Text>}
-      {edge.fareArtifactId && <View className='route-workspace__action' onClick={() => Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodeURIComponent(edge.fareArtifactId!)}` })}>查看航班报价</View>}
+      {edge.fareArtifactId && <Button className='route-workspace__action' hoverClass='route-workspace__control--pressed' ariaLabel='查看航班报价' onClick={() => Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodeURIComponent(edge.fareArtifactId!)}` })}>查看航班报价</Button>}
     </View>}
     <View className='route-workspace__section'>
       <Text className='route-workspace__heading'>为什么选择这条路线</Text>

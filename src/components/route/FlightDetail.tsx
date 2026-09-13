@@ -10,10 +10,10 @@ export function FlightDetail({ artifact, offerId }: { artifact: ArtifactEnvelope
   if (!offer) return <Text>此报价不在当前搜索结果中，请返回航班搜索重新选择。</Text>
   const connections = new Map(offer.layovers.map(connection => [connection.afterSegmentIndex, connection]))
   return <View className='route-workspace flight-detail'>
-    <Text className='route-workspace__eyebrow'>FLIGHT DETAILS</Text>
-    <Text className='route-workspace__title'>{flightPath(offer.segments)}</Text>
+    <Text className='route-workspace__eyebrow'>航班详情</Text>
+    <Text className='route-workspace__title'>{flightPath(offer.segments) || '航线待确认'}</Text>
     <Text className='route-workspace__price'>{offer.amount === undefined ? '未提供价格' : `${offer.currency || ''} ${offer.amount.toLocaleString()}`}</Text>
-    <Text className='flight-detail__text'>{offer.airlines.join(' · ')}</Text>
+    <Text className='flight-detail__text'>{offer.airlines.join(' · ') || '航空公司待确认'}</Text>
     <Text className='flight-detail__text'>{flightTypeLabel(offer.transferType, offer.segments.length)}{offer.durationMinutes !== undefined ? ` · 全程 ${offer.durationMinutes} 分钟` : ' · 全程时长待确认'}</Text>
     {offer.transferType === 'airline' && <Text className='flight-detail__muted'>供应商返回的联程方案，出票及衔接保障以购票规则为准。</Text>}
     {offer.transferType === 'self' && <Text className='flight-detail__muted'>自行中转 · 请确认行李提取、重新值机及入境要求。</Text>}

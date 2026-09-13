@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Input, Text, View } from '@tarojs/components'
+import { Button, Input, ScrollView, Text, View } from '@tarojs/components'
 import type { ExploreTemplate } from '../../services/exploreService'
 import { EmptyState, PageHeader, SectionHeading } from './SharedUI'
 import { Icon, Photo } from './VisualMedia'
@@ -74,9 +74,13 @@ export default function ProductionExplorePage({ items, category, onCategoryChang
     <View className='ux-scroll ux-explore-page'>
       <View className='ux-explore-opening'><Text className='ux-title'>下一程，去哪里？</Text><Text className='ux-explore-subtitle'>先遇见喜欢的风景，再慢慢计划。</Text></View>
       <View className='ux-explore-search'><Icon name='compass' /><Input className='ux-explore-input' ariaLabel='搜索已加载的旅行灵感' placeholder='搜索目的地、活动或灵感' value={query} onInput={event => setQuery(event.detail.value)} confirmType='search' />{query && <Button className='ux-icon-button' ariaLabel='清空探索搜索' onClick={() => setQuery('')}><Icon name='close' /></Button>}</View>
-      <View className='ux-explore-themes' ariaLabel='探索主题'>{[['', '全部'], ...Object.entries(categories)].map(([id, title]) => <Button key={id} className={`ux-explore-theme ${category === id ? 'is-active' : ''}`} aria-pressed={category === id} onClick={() => { setSelectedId(undefined); onCategoryChange(id) }}>{title}</Button>)}</View>
+      <ScrollView className='ux-explore-themes' scrollX enhanced showScrollbar={false} ariaLabel='探索主题'><View className='ux-explore-themes-track'>{[['', '全部'], ...Object.entries(categories)].map(([id, title]) => <Button key={id} className={`ux-explore-theme ${category === id ? 'is-active' : ''}`} aria-pressed={category === id} onClick={() => { setSelectedId(undefined); onCategoryChange(id) }}>{title}</Button>)}</View></ScrollView>
       {error && <View className='explore-production__notice is-error' role='alert'><Text>{error}</Text><Button className='ux-text-button' onClick={onRetry} disabled={loading}>重新加载<Icon name='arrow-right' /></Button></View>}
-      {loading && <View className='explore-production__notice' role='status'><Text>正在寻找旅行灵感…</Text></View>}
+      {loading && !error && items.length === 0 && <View className='ux-explore-loading' role='status' ariaLabel='正在寻找旅行灵感'>
+        <Text className='ux-explore-loading-label'>正在寻找旅行灵感…</Text>
+        <View className='ux-explore-loading-spotlight'><View className='ux-explore-loading-photo' /><View className='ux-explore-loading-copy'><View /><View /><View /></View></View>
+        <View className='ux-explore-loading-grid'>{[0, 1].map(index => <View className='ux-explore-loading-card' key={index}><View className='ux-explore-loading-photo' /><View className='ux-explore-loading-copy'><View /><View /><View /></View></View>)}</View>
+      </View>}
       {startError && <View className='explore-production__notice is-error' role='alert'><Text>{startError}</Text></View>}
       {featured && <View className='ux-explore-spotlight'><Button className='ux-explore-spotlight-open' onClick={() => setSelectedId(featured.id)}><View className='ux-explore-spotlight-image'><Photo description={`${destinations(featured) || '目的地'} · 图片暂未提供`} className='ux-explore-featured-photo' retry={false} /><Text className='ux-explore-photo-badge'>{categories[featured.template.category] || featured.template.category}</Text></View><View className='ux-explore-spotlight-copy'><Text className='ux-explore-featured-title'>{featured.template.title}</Text><Text className='ux-muted'>{featured.template.summary}</Text><View className='ux-explore-spotlight-link'><Text>看看这份灵感</Text><Icon name='arrow-right' /></View></View></Button></View>}
       <View className='ux-explore-results'>

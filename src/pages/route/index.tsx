@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { View, Text } from '@tarojs/components'
+import { Button, Text, View } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { artifactService, type ArtifactEnvelope } from '../../services/artifactService'
@@ -16,6 +16,9 @@ import { loadProductionTrip } from '../../services/productionTripService'
 import TripExperience from '../../features/ui-experience/TripExperience'
 import type { TripPresentation } from '../../features/ui-experience/presentation'
 import { safeSourceUrl } from '../../features/ui-experience/productionPresentation'
+import { EmptyState, PageHeader } from '../../features/ui-experience/SharedUI'
+import { ROUTE_DETAIL_SHELL_CLASS, resolveRouteDetailView, type RouteDetailView } from './dispatch'
+import '../../features/ui-experience/experience.scss'
 import './index.scss'
 
 type State = { key: string; artifact?: ArtifactEnvelope; presentation?: TripPresentation; routes?: RouteView[]; error?: string }
@@ -38,10 +41,13 @@ function RoutePage() {
     const context = { ownerId, sessionId: chatStore.currentSessionId, force: attempt > 0 }
     artifactService.fetchArtifact(artifactId, context).then(async artifact => {
       if (!active) return
-      if (artifact.type === 'route' || artifact.type === 'travel_guide') {
+      const resolution = resolveArtifactRenderer(artifact)
+      if (!resolution.supported) {
+        setState({ key, artifact })
+      } else if (resolution.key === 'route' || resolution.key === 'travel_guide') {
         const loaded = await loadProductionTrip(artifactId, context)
         if (active) setState({ key, artifact: loaded.route, presentation: loaded.presentation })
-      } else setState({ key, artifact, ...(artifact.type === 'route_set' ? { routes: readRouteArtifact(artifact) } : {}) })
+      } else setState({ key, artifact, ...(resolution.key.startsWith('route_set:') ? { routes: readRouteArtifact(artifact) } : {}) })
     }).catch(error => { if (active) setState({ key, error: error instanceof Error ? error.message : '加载失败，请重试' }) })
     return () => { active = false }
   }, [key, attempt])
@@ -72,14 +78,48 @@ function RoutePage() {
     } catch (error) { void Taro.showToast({ title: error instanceof Error ? error.message : '无法打开规划记录', icon: 'none' }) }
   }
   const openSource = (url: string) => { const safe = safeSourceUrl(url); if (safe) void Taro.setClipboardData({ data: safe }).then(() => Taro.showToast({ title: '来源链接已复制', icon: 'none' })).catch(() => Taro.showToast({ title: '复制失败，请重试', icon: 'none' })) }
-  if (ownerId && current?.presentation) return <View className='production-detail-page'>
-    <TripExperience key={key} trip={current.presentation} production embedded onBack={() => Taro.navigateBack()} onContinuePlanning={() => void continuePlanning()} onOpenSource={openSource} />
+  const view = resolveRouteDetailView({ ownerId, artifactId, error: current?.error, artifact, presentation: current?.presentation, routes: current?.routes, offerId: params.offerId })
+  const goBack = () => { void Taro.navigateBack().catch(() => Taro.switchTab({ url: '/pages/trips/index' })) }
+  if (view.kind === 'trip') return <View className={ROUTE_DETAIL_SHELL_CLASS}>
+    <TripExperience key={key} trip={view.presentation} production embedded onBack={goBack} onContinuePlanning={() => void continuePlanning()} onOpenSource={openSource} />
   </View>
-  return <View className='route-detail-page'>
-    {!ownerId ? <Text>请登录后查看保存的行程。</Text> : !artifactId ? <Text>此旧链接无法恢复行程，请从航班搜索或规划结果重新打开。</Text> : current?.error ? <View><Text>{current.error}</Text><View className='route-workspace__action' onClick={() => setAttempt(x => x + 1)}>重试</View></View> : !artifact ? <Text>正在加载行程…</Text> : current.routes ? <RouteWorkspace key={key} routes={current.routes} initialRouteId={params.routeId} onSave={save} /> : current.presentation ? <TripExperience key={ownerId} trip={current.presentation} production embedded onBack={() => Taro.navigateBack()} onContinuePlanning={() => void continuePlanning()} onOpenSource={openSource} /> : artifact.type === 'flight_search' && resolveArtifactRenderer(artifact).supported ? params.offerId ? <FlightDetail artifact={artifact} offerId={params.offerId} /> : <FlightSearchCard artifact={artifact} onAction={() => Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodeURIComponent(artifact.id)}` })} /> : <ResearchWorkspace key={key} artifact={artifact} />}
-    {(saving || saved) && <Text>{saving ? '正在保存…' : saved}</Text>}
-    <View className='route-workspace__action' onClick={() => Taro.switchTab({ url: '/pages/trips/index' })}>查看我的行程</View>
-    <View className='route-workspace__action' onClick={() => Taro.switchTab({ url: '/pages/plan/index' })}>返回规划</View>
+  return <View className={ROUTE_DETAIL_SHELL_CLASS}>
+    <PageHeader title={viewTitle(view)} onBack={goBack} />
+    <View className='ux-scroll route-production__scroll'>
+      <RouteDetailBody view={view} routeId={params.routeId} saving={saving} saved={saved} onRetry={() => setAttempt(value => value + 1)} onSave={save} />
+      {!['guest', 'missing', 'loading'].includes(view.kind) && <View className='route-production__footer'>
+        <Button className='ux-secondary' onClick={() => Taro.switchTab({ url: '/pages/trips/index' })}>查看我的行程</Button>
+        <Button className='ux-text-button' onClick={() => Taro.switchTab({ url: '/pages/plan/index' })}>返回规划</Button>
+      </View>}
+    </View>
   </View>
+}
+
+function viewTitle(view: RouteDetailView): string {
+  if (view.kind === 'route-set') return '路线方案'
+  if (view.kind === 'flight-list') return '航班搜索'
+  if (view.kind === 'flight-detail') return '航班详情'
+  if (view.kind === 'research') return '目的地资料'
+  if (view.kind === 'destination') return '目的地建议'
+  return '行程详情'
+}
+
+function unavailableCopy(view: Extract<RouteDetailView, { kind: 'unavailable' }>): string {
+  if (view.reason === 'unsupported_version') return '此内容由较新的版本生成，请更新小程序后再查看。'
+  if (view.reason === 'unsupported_payload_kind') return '当前版本还不能展示这种路线结果。'
+  if (view.reason === 'presentation_unavailable') return '行程快照暂时无法组合成完整详情，请从规划记录重新打开。'
+  return '返回的内容不完整，暂时无法安全展示。'
+}
+
+function RouteDetailBody({ view, routeId, saving, saved, onRetry, onSave }: { view: Exclude<RouteDetailView, { kind: 'trip' }>; routeId?: string; saving: boolean; saved: string; onRetry: () => void; onSave: (routeId: string) => void }) {
+  if (view.kind === 'guest') return <EmptyState icon='user' title='登录后查看行程' description='登录后可以读取已保存的路线、攻略与航班结果。' actionLabel='前往我的行程' onAction={() => Taro.switchTab({ url: '/pages/trips/index' })} />
+  if (view.kind === 'missing') return <EmptyState icon='calendar' title='这条行程链接已经失效' description='请从规划结果或“我的行程”重新打开。' actionLabel='查看我的行程' onAction={() => Taro.switchTab({ url: '/pages/trips/index' })} />
+  if (view.kind === 'loading') return <View className='route-production__loading' role='status'><View className='route-production__loading-line' /><Text className='route-production__state-title'>正在整理行程详情</Text><Text className='ux-muted'>路线、时间和已保存的资料会一起显示。</Text></View>
+  if (view.kind === 'error') return <EmptyState icon='calendar' title='行程详情暂时无法加载' description={view.message} actionLabel='重试' onAction={onRetry} />
+  if (view.kind === 'unavailable') return <EmptyState icon='calendar' title='此内容暂时无法展示' description={unavailableCopy(view)} />
+  if (view.kind === 'route-set') return <><RouteWorkspace routes={view.routes} initialRouteId={routeId} onSave={onSave} />{(saving || saved) && <Text className='route-production__save-state'>{saving ? '正在保存…' : saved}</Text>}</>
+  if (view.kind === 'flight-list') return <FlightSearchCard artifact={view.artifact} onAction={() => Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodeURIComponent(view.artifact.id)}` })} />
+  if (view.kind === 'flight-detail') return <FlightDetail artifact={view.artifact} offerId={view.offerId} />
+  return <ResearchWorkspace artifact={view.artifact} />
 }
 export default observer(RoutePage)

@@ -1,18 +1,66 @@
-.route-detail-page { padding: 32rpx 28rpx 80rpx; color: var(--color-text-primary); }
+/* postcss-pxtransform disable */
 .production-detail-page { height: 100vh; min-height: 0; background: #fff; }
-.route-workspace {
-  &__eyebrow { display: block; color: var(--color-accent-teal); font-size: 22rpx; letter-spacing: 3rpx; margin-bottom: 24rpx; }
-  &__title { display: block; font-size: 42rpx; font-weight: 700; line-height: 1.35; margin-bottom: 24rpx; }
-  &__choices { display: flex; flex-wrap: wrap; gap: 16rpx; margin-bottom: 28rpx; }
-  &__choice { flex: 1; min-width: 240rpx; padding: 22rpx; border: 2rpx solid var(--color-bg-border); border-radius: 20rpx; font-size: 24rpx; background: var(--color-bg-card); &.is-active { border-color: var(--color-accent-teal); } }
-  &__choice-path { display: block; font-weight: 700; margin: 12rpx 0; }
-  &__hero, &__section { background: var(--color-bg-card); border-radius: 28rpx; padding: 28rpx; margin-bottom: 24rpx; overflow: hidden; }
-  &__heading { display: block; font-size: 30rpx; font-weight: 600; margin-bottom: 18rpx; }
-  &__price { display: block; color: var(--color-accent-teal); font-size: 38rpx; font-weight: 700; margin: 16rpx 0; }
-  &__muted, &__disclaimer { display: block; font-size: 24rpx; color: var(--color-text-secondary); line-height: 1.7; margin-top: 16rpx; }
-  &__leg { padding: 22rpx; border-left: 4rpx solid var(--color-bg-border); margin: 16rpx 0; background: var(--color-bg-panel); border-radius: 12rpx; &.is-active { border-color: var(--color-accent-teal); } text { display: block; font-size: 25rpx; line-height: 1.65; overflow-wrap: anywhere; } }
-  &__flight { padding: 16rpx 0; border-bottom: 1rpx solid var(--color-bg-border); text { display: block; font-size: 25rpx; line-height: 1.7; } }
-  &__warning, &__stopover { display: block; color: var(--color-warning); font-size: 24rpx; line-height: 1.6; margin: 16rpx 0; }
-  &__reason { display: block; line-height: 1.8; font-size: 27rpx; }
-  &__action { padding: 24rpx; text-align: center; color: var(--color-accent-teal); background: var(--color-bg-panel); border-radius: 18rpx; margin: 20rpx 0; font-size: 28rpx; }
+
+.route-production {
+  --color-bg-primary: #fff;
+  --color-bg-card: #f7fafb;
+  --color-bg-panel: #edf5f6;
+  --color-bg-border: #d9e6e8;
+  --color-text-primary: #123c4a;
+  --color-text-secondary: #6c7f86;
+  --color-text-disabled: #8ba0a5;
+  --color-accent-cyan: #087f8c;
+  --color-accent-teal: #087f8c;
+  --color-warning: #856337;
+
+  &__scroll { padding: 18px 18px max(32px, env(safe-area-inset-bottom)); }
+  &__loading { padding: 64px 12px; text-align: center; }
+  &__loading-line { width: 48px; height: 3px; margin: 0 auto 20px; border-radius: 3px; background: #087f8c; animation: route-loading-pulse 1.2s infinite; }
+  &__state-title { display: block; margin-bottom: 8px; font: 600 21px/1.5 'Songti SC', SimSun, serif; }
+  &__save-state { display: block; padding: 10px 12px; border-radius: 8px; background: #edf7f7; color: #087f8c; font-size: 12px; text-align: center; }
+  &__footer { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 24px; padding-top: 18px; border-top: 1px solid #e2ebed; }
+
+  .ui-empty { min-height: 48vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ui-empty .ux-secondary { margin-top: 20px; }
+
+  .route-workspace {
+    color: #123c4a;
+
+    &__eyebrow { display: block; margin-bottom: 8px; color: #087f8c; font-size: 10px; font-weight: 650; letter-spacing: 0; }
+    &__title { display: block; margin-bottom: 14px; font: 600 25px/1.4 'Songti SC', SimSun, serif; }
+    &__choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-bottom: 24px; }
+    &__choice { min-width: 0; padding: 13px; border: 1px solid #d9e6e8; border-radius: 8px; background: #fff; color: #526a75; font-size: 11px; }
+    &__choice.is-active { border-color: #087f8c; background: #edf7f7; color: #123c4a; box-shadow: inset 0 0 0 1px #087f8c; }
+    &__choice-path { display: block; margin: 7px 0; color: #123c4a; font-size: 13px; font-weight: 650; }
+    &__hero { padding: 4px 0 24px; border-bottom: 1px solid #dce7e9; margin-bottom: 8px; overflow: hidden; }
+    &__section { padding: 24px 0; border-bottom: 1px solid #e2ebed; overflow: hidden; }
+    &__heading { display: block; margin-bottom: 12px; color: #123c4a; font-size: 14px; font-weight: 650; }
+    &__price { display: block; margin: 10px 0; color: #087f8c; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    &__muted, &__disclaimer { display: block; margin-top: 8px; color: #6c7f86; font-size: 12px; line-height: 1.7; }
+    &__leg { padding: 13px 13px 13px 15px; border-left: 2px solid #bfd8dc; margin: 10px 0; background: #f4f8f9; border-radius: 0 6px 6px 0; }
+    &__leg.is-active { border-left-color: #087f8c; background: #eaf6f6; }
+    &__leg text { display: block; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+    &__flight { padding: 13px 0; border-bottom: 1px solid #e2ebed; }
+    &__flight text { display: block; font-size: 12px; line-height: 1.7; }
+    &__warning, &__stopover { display: block; margin: 10px 0; color: #856337; font-size: 11px; line-height: 1.65; }
+    &__reason { display: block; color: #38535d; font-size: 13px; line-height: 1.8; }
+    &__action { display: flex; min-height: 44px; align-items: center; justify-content: center; padding: 10px 14px; border-radius: 8px; margin: 14px 0; background: #edf7f7; color: #087f8c; font-size: 13px; font-weight: 600; text-align: center; }
+  }
+
+  .artifact-card { margin: 4px 0 20px; padding: 16px; border: 1px solid #d9e6e8; border-radius: 8px; background: #fff; box-shadow: 0 4px 14px #123c4a0d; }
+  .artifact-card::before { width: 3px; background: #087f8c; }
+  .artifact-card__label { color: #087f8c; font-size: 10px; letter-spacing: 0; }
+  .artifact-card__title { color: #123c4a; font: 600 21px/1.4 'Songti SC', SimSun, serif; }
+  .artifact-card__version, .artifact-card__summary, .artifact-card__provenance, .artifact-flight__meta, .artifact-flight__more, .artifact-flight__empty { color: #6c7f86; }
+  .artifact-card__action { min-height: 44px; border-radius: 8px; background: #edf7f7; color: #087f8c; }
+  .artifact-flight__offer { border-top-color: #d9e6e8; }
+  .artifact-flight__route, .artifact-flight__price { color: #123c4a; }
+  .artifact-flight__connection { color: #087f8c; }
+
+  .flight-detail__muted { color: #6c7f86; }
+  .flight-detail__connection { border-left-color: #087f8c; background: #edf7f7; color: #087f8c; }
 }
+
+@keyframes route-loading-pulse { 50% { opacity: .35; transform: scaleX(.7); } }
+@media (max-width: 360px) { .route-production .route-workspace__choices { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .route-production__loading-line { animation: none; } }

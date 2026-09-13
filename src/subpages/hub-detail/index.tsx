@@ -50,7 +50,7 @@ function HubDetailPage() {
           className='hub-detail__cta'
           hoverClass='tap-dim'
           onClick={() => {
-            Taro.switchTab({ url: '/pages/index/index' })
+            Taro.navigateTo({ url: '/pages/index/index' })
           }}
         >
           <Text>{t('hd.searchVia', { city: hub.city })}</Text>

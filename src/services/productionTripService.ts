@@ -20,5 +20,11 @@ export async function loadProductionTrip(id: string, context: ArtifactFetchConte
       if (candidate.tripId === route.tripId && record(candidate.payload)?.routeArtifactId === route.id) { guide = candidate; break }
     }
   }
-  return { route, guide, workspace, presentation: artifactToTripPresentation(route, guide, workspace) }
+  const routeContextVersion = record(route.payload)?.tripContextVersion
+  const savedRoute = workspace.trip.savedRoute
+  let savedRouteArtifact
+  if (savedRoute && savedRoute.contextVersion === routeContextVersion) {
+    try { savedRouteArtifact = await artifactService.fetchArtifact(savedRoute.artifactId, context) } catch { /* Keep the itinerary usable with an empty flight state. */ }
+  }
+  return { route, guide, workspace, presentation: artifactToTripPresentation(route, guide, workspace, savedRouteArtifact) }
 }

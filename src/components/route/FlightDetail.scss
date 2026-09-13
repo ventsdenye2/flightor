@@ -1,5 +1,5 @@
 .flight-detail {
   &__text, &__muted { display: block; margin-top: 8rpx; font-size: 25rpx; line-height: 1.6; }
   &__muted { color: var(--color-text-secondary); font-size: 23rpx; }
-  &__connection { margin: 12rpx 0; padding: 16rpx 20rpx; border-left: 3rpx solid var(--color-accent-cyan, #64d2ff); background: rgba(100, 210, 255, .06); color: var(--color-accent-cyan, #64d2ff); font-size: 24rpx; line-height: 1.6; }
+  &__connection { margin: 12rpx 0; padding: 16rpx 20rpx; border-left: 3rpx solid var(--color-accent-cyan, #087f8c); background: #edf7f7; color: var(--color-accent-cyan, #087f8c); font-size: 24rpx; line-height: 1.6; }
 }

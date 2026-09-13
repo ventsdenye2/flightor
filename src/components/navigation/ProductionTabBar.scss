@@ -29,7 +29,8 @@
     &::after { border: 0; }
     &.is-active { color: #087f8c; font-weight: 600; }
     &:focus-visible { outline: 2px solid #087f8c; outline-offset: -2px; }
-    .ux-icon { display: block; width: 20px; height: 20px; }
+    .ux-icon { display: block; width: 20px; height: 20px; opacity: .68; }
+    &.is-active .ux-icon { opacity: 1; }
   }
 
   &--embedded { position: static; flex-shrink: 0; }

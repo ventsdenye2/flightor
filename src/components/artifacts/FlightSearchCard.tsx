@@ -37,10 +37,10 @@ export function FlightSearchCard({ artifact, onAction }: FlightSearchCardProps) 
     <ArtifactCard
       artifact={artifact}
       accent='flight'
-      label='FLIGHT SEARCH'
-      title={routeLabel ?? 'Flight search results'}
-      summary={`${count} offer${count === 1 ? '' : 's'}${dates ? ` · ${dates}` : ''}${provider ? ` · ${provider}` : ''}`}
-      actionLabel={onAction ? 'Open flight explorer' : undefined}
+      label='航班搜索'
+      title={routeLabel ?? '航班搜索结果'}
+      summary={`共 ${count} 个报价${dates ? ` · ${dates}` : ''}${provider ? ` · 数据来源 ${provider}` : ''}`}
+      actionLabel={onAction ? '查看航班搜索' : undefined}
       onAction={onAction}
     >
       {offers.length > 0 ? (
@@ -53,9 +53,9 @@ export function FlightSearchCard({ artifact, onAction }: FlightSearchCardProps) 
             return (
               <View key={offer.id ?? `${routeText ?? 'offer'}-${index}`} className='artifact-flight__offer'>
                 <View className='artifact-flight__offer-main'>
-                  <Text className='artifact-flight__route'>{routeText || 'Route details unavailable'}</Text>
+                  <Text className='artifact-flight__route'>{routeText || '航线详情待补充'}</Text>
                   <Text className='artifact-flight__meta'>
-                    {offer.airlines.join(' · ') || 'Airline not provided'}
+                    {offer.airlines.join(' · ') || '航空公司待确认'}
                     {` · ${flightTypeLabel(offer.transferType, offer.segments.length)}`}
                   </Text>
                   <Text className='artifact-flight__meta'>出发 {first?.departure ?? '时间未提供'}</Text>
@@ -65,15 +65,15 @@ export function FlightSearchCard({ artifact, onAction }: FlightSearchCardProps) 
                 </View>
                 <View className='artifact-flight__offer-side'>
                   {price && <Text className='artifact-flight__price'>{price}</Text>}
-                  <Text className='artifact-flight__meta'>{offer.durationMinutes === undefined ? '全程时长待确认' : `${offer.durationMinutes} min`}</Text>
+                  <Text className='artifact-flight__meta'>{offer.durationMinutes === undefined ? '全程时长待确认' : `${offer.durationMinutes} 分钟`}</Text>
                 </View>
               </View>
             )
           })}
-          {offers.length > 3 && <Text className='artifact-flight__more'>Showing 3 of {offers.length} returned offers</Text>}
+          {offers.length > 3 && <Text className='artifact-flight__more'>已展示前 3 个报价，共 {offers.length} 个</Text>}
         </View>
       ) : (
-        <Text className='artifact-flight__empty'>No offer details were returned.</Text>
+        <Text className='artifact-flight__empty'>当前搜索没有返回可展示的报价。</Text>
       )}
     </ArtifactCard>
   )

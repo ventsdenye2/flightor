@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+import { Button, View, Text } from '@tarojs/components'
 import type { ReactNode } from 'react'
 import type { ArtifactEnvelope } from '../../services/artifactService'
 import './ArtifactCard.scss'
@@ -28,12 +28,12 @@ export function ArtifactCard({ artifact, accent = 'flight', title, label, summar
       {children}
       {actionLabel && onAction && (
         <View className='artifact-card__actions'>
-          <View className='artifact-card__action' hoverClass='tap-dim' onClick={onAction} role='button' aria-label={actionLabel}>
+          <Button className='artifact-card__action' hoverClass='artifact-card__action--pressed' ariaLabel={actionLabel} onClick={onAction}>
             <Text>{actionLabel}</Text>
-          </View>
+          </Button>
         </View>
       )}
-      <Text className='artifact-card__provenance'>Artifact · {artifact.id.slice(0, 12)}</Text>
+      <Text className='artifact-card__provenance'>结果编号 · {artifact.id.slice(0, 12)}</Text>
     </View>
   )
 }

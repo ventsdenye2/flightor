@@ -1,0 +1,34 @@
+/* postcss-pxtransform disable */
+.route-workspace {
+  button {
+    box-sizing: border-box;
+    margin-left: 0;
+    margin-right: 0;
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  button::after {
+    border: 0;
+  }
+
+  &__choice,
+  &__leg {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  &__choice text,
+  &__leg text {
+    pointer-events: none;
+  }
+
+  &__action {
+    width: 100%;
+    text-align: center;
+  }
+
+  &__control--pressed {
+    opacity: .68;
+  }
+}

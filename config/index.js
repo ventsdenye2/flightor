@@ -23,7 +23,12 @@ const config = {
     SERPAPI_KEY: JSON.stringify(''),
     FLIGHTOR_API_BASE_URL: JSON.stringify(apiBaseUrl),
     FLIGHTOR_USE_MOCK: JSON.stringify(process.env.FLIGHTOR_USE_MOCK === 'true'),
-    FLIGHTOR_LOCAL_LOGIN_KEY: JSON.stringify(localLoginKey)
+    FLIGHTOR_LOCAL_LOGIN_KEY: JSON.stringify(localLoginKey),
+    FLIGHTOR_BUILD_SHA: JSON.stringify(process.env.FLIGHTOR_BUILD_SHA || 'unidentified'),
+    FLIGHTOR_BUILD_DIRTY: JSON.stringify(process.env.FLIGHTOR_BUILD_DIRTY === 'true'),
+    FLIGHTOR_BUILD_FINGERPRINT: JSON.stringify(process.env.FLIGHTOR_BUILD_FINGERPRINT || 'unidentified'),
+    FLIGHTOR_BUILD_TIME: JSON.stringify(process.env.FLIGHTOR_BUILD_TIME || ''),
+    FLIGHTOR_BUILD_MODE: JSON.stringify(process.env.FLIGHTOR_BUILD_MODE || 'development')
   },
   copy: {
     patterns: [{ from: 'src/assets/', to: 'dist/assets/' }],

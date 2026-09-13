@@ -8,10 +8,10 @@ import './ProductionTabBar.scss'
 
 export type ProductionSection = 'plan' | 'explore' | 'trips' | 'profile'
 const tabs = [
-  { id: 'plan', icon: 'home', zh: '规划', en: 'Plan' },
-  { id: 'explore', icon: 'compass', zh: '探索', en: 'Explore' },
-  { id: 'trips', icon: 'calendar', zh: '行程', en: 'Trips' },
-  { id: 'profile', icon: 'user', zh: '我的', en: 'Me' }
+  { id: 'plan', icon: 'home', activeIcon: 'home-active', zh: '规划', en: 'Plan' },
+  { id: 'explore', icon: 'compass', activeIcon: 'compass-active', zh: '探索', en: 'Explore' },
+  { id: 'trips', icon: 'calendar', activeIcon: 'calendar-active', zh: '行程', en: 'Trips' },
+  { id: 'profile', icon: 'user', activeIcon: 'user-active', zh: '我的', en: 'Me' }
 ] as const
 const navigation = makeAutoObservable({
   selected: 'plan' as ProductionSection,
@@ -32,7 +32,7 @@ export const ProductionTabBar = observer(function ProductionTabBar({ selected, e
     {tabs.map(tab => <Button key={tab.id} className={`production-nav__item${active === tab.id ? ' is-active' : ''}`}
       aria-pressed={active === tab.id} onClick={() => {
         if (tab.id !== active) void Taro.switchTab({ url: `/pages/${tab.id}/index` }).catch(() => Taro.showToast({ title: '页面暂时未能打开，请重试', icon: 'none' }))
-      }}><Icon name={tab.icon} /><Text>{localeStore.locale === 'en' ? tab.en : tab.zh}</Text></Button>)}
+      }}><Icon name={active === tab.id ? tab.activeIcon : tab.icon} /><Text>{localeStore.locale === 'en' ? tab.en : tab.zh}</Text></Button>)}
   </View>
 })
 

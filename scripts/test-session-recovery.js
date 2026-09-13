@@ -294,7 +294,11 @@ await test('closing a pending login sheet prevents a late success from resuming 
     react: { useState: (...args) => engine.useState(...args), useRef: (...args) => engine.useRef(...args), useEffect: (...args) => engine.useEffect(...args) },
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
     '@tarojs/components': { View: 'View', Text: 'Text', Input: 'Input', Button: 'Button', Image: 'Image' },
-    '@tarojs/taro': { showToast() {} },
+    '@tarojs/taro': {
+      showToast() {},
+      hideTabBar: async () => {},
+      showTabBar: async () => {}
+    },
     'mobx-react-lite': { observer: component => component },
     '../../stores/userStore': { userStore: { isLoggingIn: false, login: () => login.promise } },
     '../../services/authService': { persistAvatar: async value => value },
@@ -379,7 +383,11 @@ function loginSheetHarness(login, localAvailable) {
     react: { useState: (...args) => engine.useState(...args), useRef: (...args) => engine.useRef(...args), useEffect: (...args) => engine.useEffect(...args) },
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
     '@tarojs/components': { View: 'View', Text: 'Text', Input: 'Input', Button: 'Button', Image: 'Image' },
-    '@tarojs/taro': { showToast() {} }, 'mobx-react-lite': { observer: component => component },
+    '@tarojs/taro': {
+      showToast() {},
+      hideTabBar: async () => {},
+      showTabBar: async () => {}
+    }, 'mobx-react-lite': { observer: component => component },
     '../../stores/userStore': { userStore: { isLoggingIn: false, login } },
     '../../services/authService': { persistAvatar: async value => value, LOCAL_LOGIN_AVAILABLE: localAvailable },
     '../../i18n': { t: key => key }

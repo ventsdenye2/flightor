@@ -1,7 +1,7 @@
 // UI-owned display values. This module has no dependency on providers, stores or model output.
 export interface SourcePresentation { label: string; url?: string; status: 'sample' | 'unverified' | 'verified' | 'partial' | 'stale' }
 export interface MediaPresentation { src: string | null; description: string; source?: SourcePresentation; atmosphere?: boolean }
-export interface PricePresentation { amount: number | null; currency: string; unit: 'person' | 'total'; status: 'sample' | 'estimate' | 'unknown'; source?: SourcePresentation }
+export interface PricePresentation { amount: number | null; currency: string; unit: 'person' | 'total'; status: 'sample' | 'estimate' | 'verified' | 'partial' | 'stale' | 'unknown'; source?: SourcePresentation }
 export interface FlightLegDisplay { from: string; to: string; depart: string | null; arrive: string | null; duration: string | null; carrier: string; nextDay?: boolean; transfer?: string; fromCode?: string; toCode?: string }
 export interface TripFlightPresentation {
   id: string; title: string; dateLabel: string; legs: FlightLegDisplay[]; price: PricePresentation
@@ -55,7 +55,12 @@ export function formatPrice(price?: PricePresentation | null): string {
   return symbol ? `${symbol}${amount}` : `${amount} ${price.currency || '币种待确认'}`
 }
 export function priceStatusLabel(price?: PricePresentation | null): string {
-  return !hasKnownPrice(price) ? '尚无报价' : price.status === 'sample' ? '示例价' : '估算价'
+  if (!hasKnownPrice(price)) return '尚无报价'
+  if (price.status === 'sample') return '示例价'
+  if (price.status === 'verified') return '已核验报价'
+  if (price.status === 'partial') return '部分核验报价'
+  if (price.status === 'stale') return '过期报价'
+  return '估算价'
 }
 export function formatTripDates(trip: Pick<TripPresentation, 'dates'>): string {
   if (trip.dates.label) return trip.dates.label
