@@ -1,3 +1,5 @@
+/* postcss-pxtransform disable */
+// Shared with the web preview: dimensions use CSS pixels, not a 750px design canvas.
 .pr-identity { display: flex; gap: 16px; align-items: center; padding: 30px 20px 22px; .ui-display { font-size: 25px; }.ux-muted { font-size: 11px; margin-top: 4px; } }
 .pr-avatar { width: 62px; height: 62px; border-radius: 50%; background: #edf6f6; border: 1px solid #d5e7e8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; .ux-icon { width: 27px; height: 27px; } }
 .pr-identity > view:last-child, .pr-identity > div:last-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }

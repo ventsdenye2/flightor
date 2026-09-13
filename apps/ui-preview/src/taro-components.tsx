@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css'
 
 type TaroA11y = { ariaRole?: string; ariaLabel?: string }
 // Native-only presentation attributes are accepted but never forwarded to the DOM.
-type TaroHover = { hoverClass?: string }
+type TaroHover = { hoverClass?: string; catchMove?: boolean }
 function DialogView(props: React.HTMLAttributes<HTMLDivElement>) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -23,15 +23,41 @@ function DialogView(props: React.HTMLAttributes<HTMLDivElement>) {
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
   }} />
 }
-export const View = ({ ariaRole, ariaLabel, hoverClass: _hoverClass, ...props }: React.HTMLAttributes<HTMLDivElement> & TaroA11y & TaroHover) => props.role === 'dialog' || ariaRole === 'dialog' ? <DialogView role={ariaRole} aria-label={ariaLabel} {...props} /> : <div role={ariaRole} aria-label={ariaLabel} {...props} />
-export const Text = ({ ariaRole, ariaLabel, ...props }: React.HTMLAttributes<HTMLSpanElement> & TaroA11y) => <span role={ariaRole} aria-label={ariaLabel} {...props} />
+export const View = ({ ariaRole, ariaLabel, hoverClass: _hoverClass, catchMove: _catchMove, ...props }: React.HTMLAttributes<HTMLDivElement> & TaroA11y & TaroHover) => props.role === 'dialog' || ariaRole === 'dialog' ? <DialogView role={ariaRole} aria-label={ariaLabel} {...props} /> : <div role={ariaRole} aria-label={ariaLabel} {...props} />
+export const Text = ({ ariaRole, ariaLabel, selectable, style, ...props }: React.HTMLAttributes<HTMLSpanElement> & TaroA11y & { selectable?: boolean }) => <span role={ariaRole} aria-label={ariaLabel} {...props} style={{ ...(selectable ? { userSelect: 'text' } : {}), ...style }} />
 export const Canvas = ({ canvasId, type: _type, ...props }: React.CanvasHTMLAttributes<HTMLCanvasElement> & { canvasId?: string; type?: string }) => <canvas id={canvasId} {...props} />
-export function ScrollView({ scrollY, scrollX, scrollIntoView, scrollWithAnimation: _animate, ...props }: React.HTMLAttributes<HTMLDivElement> & { scrollY?: boolean; scrollX?: boolean; scrollIntoView?: string; scrollWithAnimation?: boolean }) {
+export function ScrollView({ scrollY, scrollX, scrollIntoView, scrollWithAnimation: _animate, enhanced: _enhanced, showScrollbar, ...props }: React.HTMLAttributes<HTMLDivElement> & { scrollY?: boolean; scrollX?: boolean; scrollIntoView?: string; scrollWithAnimation?: boolean; enhanced?: boolean; showScrollbar?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => { if (scrollIntoView) document.getElementById(scrollIntoView)?.scrollIntoView({ block: 'nearest' }) }, [scrollIntoView])
-  return <div ref={ref} {...props} style={{ overflowY: scrollY ? 'auto' : undefined, overflowX: scrollX ? 'auto' : undefined, ...props.style }} />
+  return <div ref={ref} {...props} style={{ overflowY: scrollY ? 'auto' : undefined, overflowX: scrollX ? 'auto' : undefined, scrollbarWidth: showScrollbar === false ? 'none' : undefined, ...props.style }} />
 }
 export const Switch = ({ checked, disabled, onChange }: { checked?: boolean; disabled?: boolean; onChange?: (event: { detail: { value: boolean } }) => void }) => <input type='checkbox' role='switch' checked={checked} disabled={disabled} onChange={event => onChange?.({ detail: { value: event.target.checked } })} />
+type PickerProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> & TaroA11y & {
+  mode?: 'date' | 'time'; value?: string; start?: string; end?: string; disabled?: boolean
+  onChange?: (event: { detail: { value: string } }) => void
+}
+export function Picker({ children, mode = 'date', value, start, end, disabled, onChange, ariaLabel, ariaRole, style, ...props }: PickerProps) {
+  return <div {...props} role={ariaRole} style={{ position: 'relative', ...style }}>{children}<input type={mode} value={value || ''} min={start} max={end} disabled={disabled}
+    aria-label={ariaLabel || (mode === 'date' ? '选择日期' : '选择时间')}
+    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: disabled ? 'default' : 'pointer' }}
+    onClick={event => { try { event.currentTarget.showPicker?.() } catch { /* keyboard entry remains available */ } }}
+    onChange={event => { if (event.currentTarget.value && event.currentTarget.validity.valid) onChange?.({ detail: { value: event.currentTarget.value } }) }} /></div>
+}
+type SliderProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> & {
+  value?: number; activeColor?: string; backgroundColor?: string; blockColor?: string; blockSize?: number
+  onChanging?: (event: { detail: { value: number } }) => void; onChange?: (event: { detail: { value: number } }) => void
+}
+export function Slider({ activeColor, backgroundColor, blockColor: _blockColor, blockSize: _blockSize, onChanging, onChange, style, ...props }: SliderProps) {
+  return <input {...props} type='range' style={{ width: '100%', accentColor: activeColor, backgroundColor, ...style }} onChange={event => {
+    const next = { detail: { value: Number(event.currentTarget.value) } }; onChanging?.(next); onChange?.(next)
+  }} />
+}
+export function CheckboxGroup({ children, onChange, ...props }: Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> & { onChange?: (event: { detail: { value: string[] } }) => void }) {
+  return <div {...props} onChange={event => onChange?.({ detail: { value: Array.from(event.currentTarget.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked')).map(input => input.value) } })}>{children}</div>
+}
+export function Checkbox({ color, ariaLabel, ...props }: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'color'> & TaroA11y & { color?: string }) {
+  return <input {...props} type='checkbox' aria-label={ariaLabel || String(props.value || '选择')} style={{ accentColor: color, ...props.style }} onChange={props.onChange || (() => {})} />
+}
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & TaroA11y & TaroHover & { plain?: boolean; openType?: 'chooseAvatar'; onChooseAvatar?: (event: { detail: { avatarUrl: string } }) => unknown }
 // The browser preview does not expose WeChat's native avatar picker.
 export const Button = ({ ariaRole, ariaLabel, hoverClass: _hoverClass, plain: _plain, openType: _openType, onChooseAvatar: _onChooseAvatar, type = 'button', ...props }: ButtonProps) => <button type={type} role={ariaRole} aria-label={ariaLabel} {...props} />

@@ -1,3 +1,4 @@
+/* postcss-pxtransform disable */
 @import '../../styles/mixins.scss';
 
 .about-page {
@@ -41,4 +42,16 @@
     font-size: var(--font-size-caption);
     color: var(--color-text-disabled);
   }
+}
+
+.about-production.ux-app { height: 100vh; }
+.about-production {
+  &__intro { padding: 12px 0 22px; border-bottom: 1px solid var(--ux-line); }
+  &__intro .ux-wordmark { margin-bottom: 25px; }
+  &__intro .ui-display { max-width: 300px; line-height: 1.65; }
+  &__intro .ux-muted { margin-top: 12px; }
+  &__section { margin-bottom: 20px; }
+  &__section .ui-section-heading { margin-bottom: 10px; }
+  &__copy { display: block; color: #47616c; font-size: 13px; line-height: 1.9; }
+  &__footer { display: flex; justify-content: space-between; margin-top: 28px; padding: 18px 0 4px; border-top: 1px solid var(--ux-line); color: var(--ux-muted); font-size: 10px; }
 }

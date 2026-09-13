@@ -1,4 +1,5 @@
 .route-detail-page { padding: 32rpx 28rpx 80rpx; color: var(--color-text-primary); }
+.production-detail-page { height: 100vh; min-height: 0; background: #fff; }
 .route-workspace {
   &__eyebrow { display: block; color: var(--color-accent-teal); font-size: 22rpx; letter-spacing: 3rpx; margin-bottom: 24rpx; }
   &__title { display: block; font-size: 42rpx; font-weight: 700; line-height: 1.35; margin-bottom: 24rpx; }

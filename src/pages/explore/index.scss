@@ -1,48 +1,5 @@
-.explore-page {
-  min-height: 100vh;
-  box-sizing: border-box;
-  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-2xl);
-
-  &__header {
-    margin-bottom: var(--spacing-lg);
-  }
-
-  &__title {
-    display: block;
-    color: var(--color-text-primary);
-    font-size: var(--font-size-h1);
-    font-weight: bold;
-  }
-
-  &__unavailable {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-lg);
-    border: 2rpx solid var(--color-bg-border);
-    border-radius: var(--radius-lg);
-    background: var(--color-bg-card);
-  }
-
-  &__unavailable-title {
-    color: var(--color-text-primary);
-    font-size: var(--font-size-body);
-    font-weight: 600;
-    line-height: 1.4;
-  }
-
-  &__unavailable-body {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-small);
-    line-height: 1.6;
-  }
-}
-.explore-page__header { display:flex; flex-direction:column; gap:16px; }
-.explore-filters { display:flex; gap:16px; flex-wrap:wrap; margin:28px 0; >view { padding:12px 22px; border-radius:24px; background:#f0f3f5; } .active { color:white; background:#087f83; } }
-.explore-card,.explore-detail { padding:30px; margin:22px 0; border:1px solid #dde4e8; border-radius:20px; background:#fff; display:flex; flex-direction:column; gap:18px; }
-.explore-card__category,.explore-link { color:#087f83; font-size:24px; }
-.explore-card__title { font-size:36px; font-weight:600; color:#172b3a; }
-.explore-card__date { color:#697784; font-size:22px; }
-.explore-fact { border-top:1px solid #dde4e8; padding-top:20px; }
-.explore-start { background:#087f83; color:white; padding:24px; text-align:center; border-radius:12px; }
-.explore-error { color:#a63d30; padding:20px; }
+/* postcss-pxtransform disable */
+.explore-production__notice { margin: 0 20px 20px; padding: 14px; border: 1px solid #dfebed; border-radius: 12px; color: #526f79; font-size: 13px; line-height: 1.7; }
+.explore-production__notice.is-error { color: #9a493a; background: #fff8f5; }
+.ux-explore-detail-body .explore-production__notice { margin: 12px 0; }
+.ux-app .explore-production__source { margin-top: 6px; max-width: 100%; }

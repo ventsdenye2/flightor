@@ -4,6 +4,9 @@ import { View, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { t, localeStore } from '../../i18n'
+import { Icon } from '../../features/ui-experience/VisualMedia'
+import { PageHeader, SectionHeading } from '../../features/ui-experience/SharedUI'
+import '../../features/ui-experience/experience.scss'
 import './index.scss'
 
 const SECTIONS_ZH = [
@@ -30,7 +33,7 @@ const SECTIONS_ZH = [
   {
     title: '数据与隐私',
     content:
-      '搜索历史、收藏与提醒仅存储于你的设备本地缓存及必要的云端订阅记录，不会用于任何商业用途。'
+      '登录后，行程、规划对话、生成结果与旅行偏好会保存到服务端。搜索历史、收藏和目标价保存在当前设备。规划请求会交由所配置的模型与研究服务处理；退出登录不会删除已保存的云端行程。'
   }
 ]
 
@@ -58,33 +61,27 @@ const SECTIONS_EN = [
   {
     title: 'Data & Privacy',
     content:
-      'Search history, saved routes and alerts are stored locally on your device plus minimal cloud subscription records, and are never used commercially.'
+      'After sign-in, trips, planning conversations, generated results and travel preferences are saved on the server. Search history, favorites and target prices are stored on this device. Planning requests are processed by the configured model and research services. Signing out does not delete saved cloud trips.'
   }
 ]
 
 function AboutPage() {
   const locale = localeStore.locale
   const sections = locale === 'zh' ? SECTIONS_ZH : SECTIONS_EN
+  const en = locale === 'en'
+  const back = () => { void Taro.navigateBack().catch(() => Taro.switchTab({ url: '/pages/profile/index' })) }
 
   useEffect(() => {
     Taro.setNavigationBarTitle({ title: t('nav.about') })
   }, [locale])
 
   return (
-    <View className='about-page'>
-      <View className='about-page__logo'>
-        <Text className='about-page__version'>v1.0.0</Text>
-      </View>
-
-      {sections.map(s => (
-        <View key={s.title} className='about-page__section'>
-          <Text className='about-page__section-title'>{s.title}</Text>
-          <Text className='about-page__section-content'>{s.content}</Text>
-        </View>
-      ))}
-
-      <View className='about-page__footer'>
-        <Text>© 2026</Text>
+    <View className='ux-app about-production'>
+      <PageHeader title={t('nav.about')} onBack={back} />
+      <View className='ux-scroll ui-page'>
+        <View className='about-production__intro'><View className='ux-wordmark'><Icon name='plane' /><Text>FlightOR</Text></View><Text className='ui-display'>{en ? 'The world is wide. Travel at your own pace.' : '远方很大，按你的节奏出发。'}</Text><Text className='ux-muted'>{en ? 'From a travel idea to a plan you can keep refining.' : '从一个旅行念头，到能慢慢调整的日程。'}</Text></View>
+        {sections.map(section => <View key={section.title} className='about-production__section'><SectionHeading title={section.title} /><Text className='about-production__copy'>{section.content}</Text></View>)}
+        <View className='about-production__footer'><Text>FlightOR · v1.0.0</Text><Text>© 2026</Text></View>
       </View>
     </View>
   )

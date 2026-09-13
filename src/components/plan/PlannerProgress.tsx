@@ -13,16 +13,25 @@ const STAGES = {
   finalizing: ['正在整理结果', 'Preparing your results']
 } as const
 
-/** Only the active request renders this component; its clock never enters chat state. */
-export default function PlannerProgress({ progress, locale }: {
+/** Displays one current execution stage; neither the text nor clock enters chat state. */
+export default function PlannerProgress({ progress, locale, compact = false, active = true }: {
   progress?: ConversationTurnProgress
   locale: Locale
+  /** Use the lighter layout inside the new planning conversation. */
+  compact?: boolean
+  /** An inactive or completed compact view keeps no running clock or visible status. */
+  active?: boolean
 }) {
+  const visible = active && !(compact && progress?.connection === 'completed')
   const [now, setNow] = useState(Date.now)
   useEffect(() => {
+    if (!visible) return
+    setNow(Date.now())
     const timer = setInterval(() => setNow(Date.now()), 1_000)
     return () => clearInterval(timer)
-  }, [])
+  }, [visible, progress?.startedAt])
+
+  if (!visible) return null
 
   const en = locale === 'en'
   const confirmed = progress?.connection === 'running'
@@ -50,6 +59,29 @@ export default function PlannerProgress({ progress, locale }: {
         : (en ? 'Waiting for a status update…' : '正在等待状态确认…')
   const elapsed = progress ? Math.max(0, Math.floor((now - progress.startedAt) / 1_000)) : undefined
   const elapsedLabel = elapsed === undefined ? '' : en ? `${elapsed}s elapsed` : `已等待 ${elapsed} 秒`
+
+  if (compact) {
+    const connectionLabel = reconnecting
+      ? (en ? 'Reconnecting automatically' : '正在自动重连')
+      : confirmed
+        ? (en ? 'Connected' : '连接正常')
+        : (en ? 'Waiting for confirmation' : '等待连接确认')
+    return (
+      <View className={`planner-progress planner-progress--compact${reconnecting ? ' planner-progress--reconnecting' : ''}`}>
+        <View className='planner-progress__head' role='status' aria-live='polite' aria-atomic>
+          <View className='planner-progress__spinner' aria-hidden />
+          <Text className='planner-progress__title'>{title}</Text>
+        </View>
+        {reconnecting && stage && (
+          <Text className='planner-progress__previous'>{en ? 'Last confirmed: ' : '最近确认：'}{stage}</Text>
+        )}
+        <View className='planner-progress__meta'>
+          <Text>{connectionLabel}</Text>
+          {elapsedLabel && <Text className='planner-progress__elapsed'>{elapsedLabel}</Text>}
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View className={`planner-progress${reconnecting ? ' planner-progress--reconnecting' : ''}`}>

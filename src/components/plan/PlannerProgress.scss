@@ -1,3 +1,5 @@
+/* postcss-pxtransform disable */
+// Shared with the web preview: dimensions use CSS pixels, not a 750px design canvas.
 .planner-progress {
   max-width: 100%;
   padding: 6rpx 0;
@@ -48,6 +50,64 @@
 
   &--reconnecting &__title {
     color: var(--color-warning);
+  }
+
+  &--compact {
+    padding: 4px 0;
+    color: var(--ux-ink, #123c4a);
+  }
+
+  &--compact &__head {
+    gap: 10px;
+    min-height: 24px;
+  }
+
+  &--compact &__spinner {
+    width: 15px;
+    height: 15px;
+    border-width: 2px;
+    border-color: #d5e8ea;
+    border-top-color: var(--ux-teal, #087f8c);
+  }
+
+  &--compact &__title {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  &--compact &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 2px;
+    margin-top: 6px;
+    padding-left: 25px;
+    color: var(--ux-muted, #6c7f86);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  &--compact &__elapsed {
+    margin-top: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  &--compact &__previous {
+    padding-left: 25px;
+    margin-top: 6px;
+    color: var(--ux-muted, #6c7f86);
+    font-size: 12px;
+  }
+
+  &--compact.planner-progress--reconnecting &__spinner {
+    border-color: #f5e3c8;
+    border-top-color: #936318;
+  }
+
+  &--compact.planner-progress--reconnecting &__title {
+    color: #936318;
   }
 }
 

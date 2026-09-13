@@ -19,10 +19,11 @@ export default defineAppConfig({
     }
   ],
   tabBar: {
-    color: '#8e8e93',
-    selectedColor: '#0a84ff',
-    backgroundColor: '#1c1c1e',
-    borderStyle: 'black',
+    custom: true,
+    color: '#6c7f86',
+    selectedColor: '#087f8c',
+    backgroundColor: '#ffffff',
+    borderStyle: 'white',
     list: [
       { pagePath: 'pages/plan/index', text: '规划', iconPath: 'assets/tab-plan.png', selectedIconPath: 'assets/tab-plan-active.png' },
       { pagePath: 'pages/explore/index', text: '探索', iconPath: 'assets/tab-explore.png', selectedIconPath: 'assets/tab-explore-active.png' },
@@ -32,9 +33,9 @@ export default defineAppConfig({
   },
   window: {
     backgroundTextStyle: 'dark',
-    navigationBarBackgroundColor: '#000000',
+    navigationBarBackgroundColor: '#f5faf9',
     navigationBarTitleText: '航线比价',
-    navigationBarTextStyle: 'white',
-    backgroundColor: '#000000'
+    navigationBarTextStyle: 'black',
+    backgroundColor: '#f5faf9'
   }
 })

@@ -1,3 +1,4 @@
+/* postcss-pxtransform disable */
 @import '../../styles/mixins.scss';
 
 .price-alert {
@@ -78,4 +79,29 @@
     text-align: center;
     line-height: 1.7;
   }
+}
+
+.price-alert-production.ux-app {
+  height: 100vh;
+  --color-text-primary: #123c4a;
+  --color-text-secondary: #6c7f86;
+  --color-text-placeholder: #829399;
+  --color-accent-cyan: #087f8c;
+
+  .ui-page > .ux-muted { margin-top: 7px; }
+  .price-alert__form { margin: 24px 0 20px; border: 1px solid var(--ux-line); border-radius: 16px; padding: 0 16px; }
+  .price-alert__field { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 67px; margin: 0; padding: 15px 0; border: 0; border-bottom: 1px solid var(--ux-line); border-radius: 0; background: #fff; }
+  .price-alert__field .ux-icon { width: 14px; height: 14px; }
+  .price-alert__field--column { display: block; padding: 20px 0 16px; border-bottom: 0; }
+  .price-alert__label { color: var(--ux-muted); font-size: 12px; }
+  .price-alert__value { margin-left: auto; color: var(--ux-ink); font-size: 16px; }
+  .price-alert__target-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .price-alert__target { color: var(--ux-teal); font-size: 25px; font-weight: 650; }
+  .price-alert__hint { margin-top: 14px; color: var(--ux-muted); font-size: 11px; line-height: 1.7; }
+  .price-alert__cta { margin-top: 16px; }
+  .price-alert__saved { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--ux-line); }
+  .price-alert__saved .ux-caption { margin-top: 5px; }
+  .airport-selector__sheet { background: #fff; border-radius: 22px 22px 0 0; }
+  .airport-selector__close, .airport-selector__search { background: var(--ux-panel); }
+  .airport-selector__row { border-color: var(--ux-line); }
 }
