@@ -15,8 +15,14 @@ const tabs = [
 ] as const
 const navigation = makeAutoObservable({
   selected: 'plan' as ProductionSection,
-  select(section: ProductionSection) { this.selected = section }
+  hidden: false,
+  select(section: ProductionSection) { this.selected = section },
+  setHidden(hidden: boolean) { this.hidden = hidden }
 })
+
+export function setProductionTabBarHidden(hidden: boolean) {
+  navigation.setHidden(hidden)
+}
 
 /** Each native tab confirms selection when shown, including programmatic navigation. */
 export function useProductionTab(section: ProductionSection) {
@@ -27,6 +33,7 @@ export const ProductionTabBar = observer(function ProductionTabBar({ selected, e
   selected?: ProductionSection
   embedded?: boolean
 }) {
+  if (!embedded && navigation.hidden) return null
   const active = selected ?? navigation.selected
   return <View className={`production-nav${embedded ? ' production-nav--embedded' : ''}`} ariaLabel='主导航'>
     {tabs.map(tab => <Button key={tab.id} className={`production-nav__item${active === tab.id ? ' is-active' : ''}`}

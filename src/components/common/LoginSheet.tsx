@@ -9,6 +9,7 @@ import { LOCAL_LOGIN_AVAILABLE, persistAvatar } from '../../services/authService
 import { loginErrorKey } from '../../utils/authErrors'
 import { t } from '../../i18n'
 import { Icon } from '../../features/ui-experience/VisualMedia'
+import { setProductionTabBarHidden } from '../navigation/ProductionTabBar'
 import './LoginSheet.scss'
 
 interface LoginSheetProps {
@@ -26,8 +27,12 @@ function LoginSheet({ visible, onClose, onSuccess }: LoginSheetProps) {
   useEffect(() => { if (!visible) { attempt.current += 1; setError('') } }, [visible])
   useEffect(() => {
     if (!visible) return
+    setProductionTabBarHidden(true)
     void Taro.hideTabBar({ animation: false }).catch(() => {})
-    return () => { void Taro.showTabBar({ animation: false }).catch(() => {}) }
+    return () => {
+      setProductionTabBarHidden(false)
+      void Taro.showTabBar({ animation: false }).catch(() => {})
+    }
   }, [visible])
 
   if (!visible) return null

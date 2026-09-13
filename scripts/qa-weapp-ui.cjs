@@ -41,6 +41,21 @@ async function screenshot(miniProgram, report, name, page, anchor) {
   }
 }
 
+async function customTabVisible(miniProgram) {
+  return miniProgram.evaluate(() => {
+    const pages = getCurrentPages()
+    const page = pages[pages.length - 1]
+    const tabBar = page && typeof page.getTabBar === 'function' ? page.getTabBar() : null
+    if (!tabBar) return null
+    const hasClass = node => {
+      if (!node || typeof node !== 'object') return false
+      if (String(node.cl || '').split(/\s+/).includes('production-nav')) return true
+      return Array.isArray(node.cn) && node.cn.some(hasClass)
+    }
+    return hasClass(tabBar.data && tabBar.data.root)
+  })
+}
+
 async function run() {
   fs.mkdirSync(output, { recursive: true })
   const params = new URLSearchParams({
@@ -77,15 +92,23 @@ async function run() {
     }
 
     const profile = await ready(miniProgram, 'pages/profile/index')
+    report.assertions.customTabVisibleBeforeLoginSheet = (await customTabVisible(miniProgram)) === true
+    if (!report.assertions.customTabVisibleBeforeLoginSheet) throw new Error('custom tab bar missing before opening the login sheet')
     const loginTrigger = await profile.$('.pr-identity .ux-text-button')
     if (!loginTrigger) throw new Error('profile login trigger not found')
     await loginTrigger.tap()
     await sleep(300)
     const loginSheet = await profile.$('.login-sheet__panel')
     report.assertions.loginSheetUsesProductShell = Boolean(loginSheet)
+    report.assertions.customTabHiddenWithLoginSheet = (await customTabVisible(miniProgram)) === false
+    if (!report.assertions.customTabHiddenWithLoginSheet) throw new Error('custom tab bar remains visible below the login sheet')
     await screenshot(miniProgram, report, 'login-sheet', profile, '.login-sheet__title')
     const close = await profile.$('.login-sheet__close')
     if (close) await close.tap()
+    report.assertions.customTabRestoredAfterLoginSheet = await retry(async () => {
+      if (!(await customTabVisible(miniProgram))) throw new Error('waiting for custom tab bar to return')
+      return true
+    }, 12)
 
     const routePath = 'pages/route/index'
     await retry(() => miniProgram.navigateTo(`/${routePath}?artifactId=qa-guest-artifact`))

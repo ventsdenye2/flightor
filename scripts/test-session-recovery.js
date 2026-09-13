@@ -212,7 +212,7 @@ function hooks(forceFirstBooleanFalse = false) {
   let effects = []
   return {
     begin() { cursor = 0; effects = [] },
-    finish() { effects.forEach(run => run()) },
+    finish() { return effects.map(run => run()) },
     useState(initial) {
       const index = cursor++
       if (!(index in values)) values[index] = forceFirstBooleanFalse && index === 0 && initial === true ? false : typeof initial === 'function' ? initial() : initial
@@ -289,7 +289,7 @@ await test('Plan exposes only the production planner and resumes a login-gated r
 await test('closing a pending login sheet prevents a late success from resuming the action', async () => {
   const engine = hooks()
   const login = deferred()
-  let closed = 0, resumed = 0
+  let closed = 0, resumed = 0, tabHidden = false
   const load = loader({
     react: { useState: (...args) => engine.useState(...args), useRef: (...args) => engine.useRef(...args), useEffect: (...args) => engine.useEffect(...args) },
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
@@ -302,18 +302,41 @@ await test('closing a pending login sheet prevents a late success from resuming 
     'mobx-react-lite': { observer: component => component },
     '../../stores/userStore': { userStore: { isLoggingIn: false, login: () => login.promise } },
     '../../services/authService': { persistAvatar: async value => value },
+    '../navigation/ProductionTabBar': { setProductionTabBarHidden: value => { tabHidden = value } },
     '../../i18n': { t: key => key }
   })
   const Sheet = load('src/components/common/LoginSheet.tsx').default
   engine.begin()
   const tree = Sheet({ visible: true, onClose: () => { closed += 1 }, onSuccess: () => { resumed += 1 } })
-  engine.finish()
+  const effectCleanups = engine.finish()
+  assert.equal(tabHidden, true)
   const pending = find(tree, node => node.props.className === 'login-sheet__confirm ').props.onClick()
   find(tree, node => node.props.className === 'login-sheet__mask').props.onClick()
   login.resolve(true)
   await pending
   assert.equal(closed, 1)
   assert.equal(resumed, 0)
+  effectCleanups.filter(cleanup => typeof cleanup === 'function').forEach(cleanup => cleanup())
+  assert.equal(tabHidden, false)
+})
+
+await test('the custom production tab bar hides for login sheets without suppressing embedded navigation', async () => {
+  const load = loader({
+    'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
+    '@tarojs/components': { View: 'View', Text: 'Text', Button: 'Button' },
+    '@tarojs/taro': { useDidShow() {}, switchTab: async () => {}, showToast() {} },
+    mobx: { makeAutoObservable: value => value },
+    'mobx-react-lite': { observer: component => component },
+    '../../i18n': { localeStore: { locale: 'zh' } },
+    '../../features/ui-experience/VisualMedia': { Icon: () => null }
+  })
+  const tabBar = load('src/components/navigation/ProductionTabBar.tsx')
+  assert.ok(find(tabBar.ProductionTabBar({}), node => node.props.className === 'production-nav'))
+  tabBar.setProductionTabBarHidden(true)
+  assert.equal(tabBar.ProductionTabBar({}), null)
+  assert.ok(find(tabBar.ProductionTabBar({ embedded: true }), node => node.props.className === 'production-nav production-nav--embedded'))
+  tabBar.setProductionTabBarHidden(false)
+  assert.ok(find(tabBar.ProductionTabBar({}), node => node.props.className === 'production-nav'))
 })
 
 await test('delivery labels never equate a model response or pending goal with completion', async () => {
@@ -390,6 +413,7 @@ function loginSheetHarness(login, localAvailable) {
     }, 'mobx-react-lite': { observer: component => component },
     '../../stores/userStore': { userStore: { isLoggingIn: false, login } },
     '../../services/authService': { persistAvatar: async value => value, LOCAL_LOGIN_AVAILABLE: localAvailable },
+    '../navigation/ProductionTabBar': { setProductionTabBarHidden() {} },
     '../../i18n': { t: key => key }
   })
   const Sheet = load('src/components/common/LoginSheet.tsx').default
