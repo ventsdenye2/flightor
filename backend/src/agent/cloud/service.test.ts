@@ -12,12 +12,39 @@ import { createCoreToolRegistry } from '../tools/core.js'
 import { CloudPlannerService } from './service.js'
 import { UnavailableResearchAgent } from '../../research-agent/unavailable.js'
 import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from '../../flight-routing/unavailable.js'
+import { ToolRegistry } from '../runtime/registry.js'
+import { AppError } from '../../lib/errors.js'
+import { z } from 'zod'
 
 const call = (id: string, name: string, args: unknown) => ({
   id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) }
 })
 
 describe('CloudPlannerService vertical slice', () => {
+  it('returns and persists safe research failure diagnostics for workspace recovery', async () => {
+    const trips = new InMemoryTripRepository(), trip = await trips.create({ title: 'Rate limited trip' })
+    const owned = new Set([trip.id]), conversations = new InMemoryConversationRepository('user-limit', owned)
+    const conversation = await conversations.create({ tripId: trip.id })
+    const registry = new ToolRegistry().register({ name: 'research_destination', description: 'Research',
+      inputSchema: z.object({}), outputSchema: z.object({}), costClass: 'paid', costUnits: 1, sideEffect: 'state', parallelSafe: false, timeoutMs: 1000,
+      async execute() { throw new AppError('PROVIDER_RATE_LIMITED', 'private-upstream-body', 429) }
+    })
+    const runtime = new AgentRuntime({ complete: async () => ({ message: { role: 'assistant', content: null, tool_calls: [call('research', 'research_destination', {})] } }) }, registry, { maxToolSteps: 1 })
+    const service = new CloudPlannerService({ trips, conversations, runtime,
+      artifacts: new InMemoryArtifactRepository('user-limit', owned), memory: new InMemoryUserMemoryRepository(),
+      aviation: new MockAviationProvider(), fares: new MockFareProvider(), research: new UnavailableResearchAgent(),
+      connectionSearch: new UnavailableConnectionSearchService(), flightRoutePlanner: new UnavailableFlightRoutePlanner(), routeOptimizer: new UnavailableRouteOptimizer()
+    })
+    const result = await service.runTurn({ requestId: 'rate-limit', tripId: trip.id, conversationId: conversation.id, generationId: 'rate-limit', message: 'Plan Tokyo' })
+    expect(result.warnings).toContain('research_provider_rate_limited')
+    expect(result.reply).toContain('限流')
+    const saved = (await conversations.listMessages(conversation.id))[1]!
+    expect(saved.metadata).toMatchObject({ stop_reason: 'max_tool_steps', warnings: ['research_provider_rate_limited', 'agent_max_tool_steps'],
+      tool_traces: [{ tool: 'research_destination', domain_error_code: 'PROVIDER_RATE_LIMITED' }]
+    })
+    expect(JSON.stringify(saved)).not.toContain('private-upstream-body')
+  })
+
   it('uses cloud-shaped state, persists a fare artifact, and records the conversation without OAG', async () => {
     const trips = new InMemoryTripRepository()
     const trip = await trips.create({ title: 'Tokyo' })

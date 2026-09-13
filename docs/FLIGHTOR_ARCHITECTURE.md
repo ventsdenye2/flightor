@@ -446,6 +446,11 @@ Local storage may remain as a cache/offline convenience, never as authoritative 
 
 `TripContext` is the current trip state.
 
+Calendar semantics and conflict validation are defined in
+[ADR 0017](adr/0017-inclusive-trip-dates.md): exact windows identify one date,
+and travelDays counts the inclusive span. Contradictory snapshots are rejected
+before writes and cannot satisfy guide delivery; historical snapshots stay readable.
+
 Recommended shape:
 
 ```ts
@@ -709,6 +714,19 @@ Trip Context version, authorization source, current status and result Artifact
 references so the Agent can resume or re-plan after a timeout without deriving
 business state from old prose. Partial Artifacts remain saved and auditable;
 they can inform another plan but cannot satisfy a complete goal.
+
+A conversational Goal run belongs to its creating generation's execution
+lifetime. When that turn ends, any still-running attempt owned by that generation
+closes as `failed`, or `cancelled` for cancellation/supersession. This execution
+cleanup preserves the durable Goal's status and working set; it is not a business
+completion verdict. An explicit resume can start a fresh attempt for an unfinished
+Goal. Optimistic revisions preserve concurrent terminal completion. Background
+route runs and other generations retain their independent lifetimes. Cleanup
+is bounded, and storage failure is reported as `goal_attempt_cleanup_failed`.
+`resume_goal` may reuse a running attempt only within its creating generation.
+An attempt still running in another generation returns `GOAL_RUN_ALREADY_RUNNING`,
+even after a Trip version change; it is not activated, closed or taken over.
+Recovery of abandoned historical attempts requires a separate liveness policy.
 
 Goal inspection and acceptance are separate operations. `get_active_goal` is a
 read-only query: it neither creates a run nor binds saved parameters to the

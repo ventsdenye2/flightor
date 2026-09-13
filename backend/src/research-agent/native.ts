@@ -6,6 +6,25 @@ import { checkedUsdMicros, nativeBudgetUnavailable, type NativeResearchLedger } 
 
 const MODELS = new Set(['qwen/qwen3.8-flash', 'z-ai/glm-5.3-flash'])
 const MAX_TIMEOUT_MS = 95_000
+const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 30_000
+
+function rateLimitCooldownMs(headers: Record<string, string>, now: number): number {
+  const value = Object.entries(headers).find(([name]) => name.toLowerCase() === 'retry-after')?.[1].trim()
+  if (!value) return DEFAULT_RATE_LIMIT_COOLDOWN_MS
+  if (/^\d+$/.test(value)) {
+    const milliseconds = Number(value) * 1_000
+    if (Number.isSafeInteger(milliseconds) && Number.isSafeInteger(now + milliseconds)) return milliseconds
+  } else {
+    const retryAt = Date.parse(value)
+    if (Number.isFinite(retryAt) && retryAt > now) return retryAt - now
+  }
+  return DEFAULT_RATE_LIMIT_COOLDOWN_MS
+}
+
+function rateLimitedError(retryAfterMs: number): AppError {
+  return new AppError('PROVIDER_RATE_LIMITED', 'openrouter returned HTTP 429', 429,
+    { provider: 'openrouter', status: 429, retryAfter: Math.max(0, Math.ceil(retryAfterMs / 1_000)) })
+}
 
 function responseSchema(brief: ResearchBrief): Record<string, unknown> {
   return { type: 'object', additionalProperties: false, required: ['disposition', 'uncertainties', 'findings'], properties: {
@@ -27,7 +46,9 @@ export interface NativeResearchReceipt {
   message?: { role?: string; content?: unknown; annotations?: unknown; tool_calls?: unknown }
   usage?: Record<string, unknown>
   searchCalls?: number
-  /** Provider-reported final USD charge, converted by the transport without rounding. */
+  /** Safely bounded/redacted HTTP evidence; error bodies are not proof of a final bill. */
+  http?: { status: number; headers: Record<string, string>; body: string; bodyTruncated: boolean; bodyIncomplete: boolean }
+  /** Provider-reported final USD charge, rounded upward to whole USD micros by the transport. */
   costUsdMicros?: number
 }
 
@@ -161,6 +182,7 @@ function errorDetails(error: unknown): { code: string; message: string } {
 export class NativeResearchAgent implements ResearchAgent {
   private readonly timeoutMs: number
   private readonly maxTokens: number
+  private rateLimitedUntil = 0
   constructor(private readonly options: NativeResearchAgentOptions) {
     if (!MODELS.has(options.model)) throw new AppError('NATIVE_RESEARCH_MODEL_UNSUPPORTED', 'Native research model is not approved', 503)
     if (!options.budgetId.trim() || checkedUsdMicros(options.maxCallUsdMicros, 'maxCallUsdMicros') === 0) throw nativeBudgetUnavailable()
@@ -172,6 +194,10 @@ export class NativeResearchAgent implements ResearchAgent {
     const brief = researchBriefSchema.parse(input)
     if (!context.requestId.trim() || context.requestId.length > 160) throw new AppError('INVALID_RESEARCH_CONTEXT', 'Research request id is invalid', 400)
     if (context.signal?.aborted) throw context.signal.reason ?? new AppError('RESEARCH_CANCELLED', 'Research was cancelled', 499)
+    // Both research tools share this adapter in a turn. A known 429 must not
+    // create another paid reservation or audit until its retry window elapses.
+    const cooldownMs = this.rateLimitedUntil - (this.options.now?.() ?? new Date()).getTime()
+    if (cooldownMs > 0) throw rateLimitedError(cooldownMs)
     const generationId = randomUUID()
     const body = { model: this.options.model, max_tokens: this.maxTokens, temperature: 0,
       reasoning: this.options.model === 'z-ai/glm-5.3-flash' ? { enabled: true, effort: 'low', exclude: true } : { enabled: false, exclude: true },
@@ -188,6 +214,14 @@ export class NativeResearchAgent implements ResearchAgent {
     try {
       receipt = await this.options.transport.complete({ body, signal, timeoutMs: this.timeoutMs })
       if (signal.aborted) throw abortError(signal, context.signal)
+      if (receipt.http?.status === 429) {
+        const now = (this.options.now?.() ?? new Date()).getTime()
+        this.rateLimitedUntil = Math.max(this.rateLimitedUntil, now + rateLimitCooldownMs(receipt.http.headers, now))
+        throw rateLimitedError(this.rateLimitedUntil - now)
+      }
+      if (receipt.http && (receipt.http.status < 200 || receipt.http.status >= 300)) {
+        throw new AppError('PROVIDER_UNAVAILABLE', `openrouter returned HTTP ${receipt.http.status}`, 502, { provider: 'openrouter', status: receipt.http.status })
+      }
       if (receipt.finishReason !== 'stop' || receipt.message?.role !== 'assistant' || typeof receipt.message.content !== 'string' || !receipt.message.content.trim() || hasMeaningfulToolCalls(receipt.message.tool_calls)) {
         throw new AppError('NATIVE_RESEARCH_MODEL_INCOMPLETE', 'Native research response did not complete normally', 502)
       }

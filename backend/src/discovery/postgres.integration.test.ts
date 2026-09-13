@@ -94,10 +94,16 @@ suite('Editorial publishing and cloud workspace PostgreSQL boundaries', () => {
     const c = await conversations.create({ tripId: trip.id })
     await conversations.appendMessage({ conversationId: c.id, role: 'user', content: 'Visible question' })
     await conversations.appendMessage({ conversationId: c.id, role: 'tool', content: 'Internal payload' })
-    await conversations.appendMessage({ conversationId: c.id, role: 'assistant', content: 'Visible answer' })
+    await conversations.appendMessage({ conversationId: c.id, role: 'assistant', content: 'Visible answer', metadata: {
+      stop_reason: 'max_tool_steps', warnings: ['research_provider_rate_limited', { raw: 'private provider response' }, 'Bearer private-token'],
+      tool_traces: [{ raw: 'private tool response' }]
+    } })
     const results = await Promise.allSettled([r.update(trip.id, { expectedVersion: 0, title: 'First' }), r.update(trip.id, { expectedVersion: 0, title: 'Second' })])
     expect(results.filter(v => v.status === 'fulfilled')).toHaveLength(1)
     expect((await r.get(trip.id)).messages.map(m => m.content)).toEqual(['Visible question', 'Visible answer'])
+    const restoredMessage = (await r.get(trip.id)).messages[1]
+    expect(restoredMessage).toMatchObject({ stopReason: 'max_tool_steps', warnings: ['research_provider_rate_limited'] })
+    expect(JSON.stringify(restoredMessage)).not.toContain('private')
     await expect(r.update(trip.id, { expectedVersion: 1, savedRoute: { artifactId: uuidv7(), routeId: 'bad' } })).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' })
   })
   it('deduplicates repeated research and refuses stale regeneration overwrites', async () => {

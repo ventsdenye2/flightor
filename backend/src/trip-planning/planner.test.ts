@@ -38,6 +38,15 @@ const trip = (patch: Partial<TripContext> = {}): TripContext => ({
 })
 
 describe('DeterministicTripRoutePlanner', () => {
+  it('allocates every fixed date when the user did not separately supply a day count', async () => {
+    const fixed = { ...emptyTripContext('trip-fixed'),
+      departureWindow: { from: '2026-10-12', to: '2026-10-12', precision: 'exact' as const },
+      returnWindow: { from: '2026-10-14', to: '2026-10-14', precision: 'exact' as const } }
+    const result = await new DeterministicTripRoutePlanner().plan({ candidates: [candidate('NRT', 1, 0.9)], tripContext: fixed, maxCities: 1 })
+    expect(result.days).toHaveLength(3)
+    expect(fixed).not.toHaveProperty('travelDays')
+  })
+
   it('keeps required visits, excludes avoid locations, and does not allocate stopover_only days', async () => {
     const nrt = location('NRT')
     const result = await new DeterministicTripRoutePlanner().plan({

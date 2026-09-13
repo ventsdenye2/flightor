@@ -1,5 +1,11 @@
 # Native Research backend notes — 2026-09-13
 
+> Follow-up: native HTTP failure receipts are now persisted with bounded,
+> redacted bodies and allowlisted headers; 25 focused unit tests and 5 native
+> PostgreSQL tests passed. The full backend suite and date-correction acceptance
+> are recorded in [the continuation handoff](HANDOFF_2026-09-13_CONTINUATION.md).
+> Earlier gaps below are retained as historical evidence.
+
 This note covers only the backend production integration. The default remains the existing SerpAPI research path; native research is selected only when `NATIVE_RESEARCH_PROVIDER=openrouter_native` is explicitly configured.
 
 ## Implemented boundary

@@ -7,7 +7,7 @@ import { GoalVerifierRegistry } from '../goals/verifier.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import { AgentRuntime } from '../runtime/runtime.js'
 import { createPlannerToolRegistry } from './core.js'
-import { cancelGoalTool, finishGoalTool, getGoalTool, resumeGoalTool } from './goals.js'
+import { cancelGoalTool, declareGoalTool, finishGoalTool, getGoalTool, resumeGoalTool } from './goals.js'
 
 const ownerId = 'owner-goal-tools'
 const tripId = 'trip-goal-tools'
@@ -63,6 +63,38 @@ async function run(runs: InMemoryGoalRunRepository, goalId: string, key: string)
 }
 
 describe('Goal control tools', () => {
+  it('closes a declared attempt whose database creation resolves after turn cancellation', async () => {
+    const goals = new InMemoryGoalRepository(ownerId)
+    const runs = new InMemoryGoalRunRepository(ownerId, goals)
+    const state = context(goals, runs)
+    const create = runs.create.bind(runs)
+    let release!: () => void
+    vi.spyOn(runs, 'create').mockImplementationOnce(async input => {
+      const result = await create(input)
+      await new Promise<void>(resolve => { release = resolve })
+      return result
+    })
+    const complete = vi.fn(async () => ({ message: { role: 'assistant' as const, content: null,
+      tool_calls: [call('declare', 'declare_goal', { kind: 'travel_guide', parameters: {
+        questions: ['museums'], researchTypes: ['activity'], maxResults: 10, maxCities: 1, allowPartial: true
+      } })] } }))
+    vi.useFakeTimers()
+    try {
+      const pending = new AgentRuntime({ complete }, createPlannerToolRegistry(), { turnTimeoutMs: 1_000 })
+        .run({ messages: [{ role: 'user', content: 'Prepare a guide' }], context: state })
+      await vi.advanceTimersByTimeAsync(1_000)
+      expect(await pending).toMatchObject({ stopReason: 'turn_timeout' })
+      release()
+      await vi.advanceTimersByTimeAsync(0)
+      const [savedGoal] = await goals.listForTrip(tripId)
+      expect(savedGoal).toMatchObject({ status: 'pending' })
+      expect(await runs.listForGoal(savedGoal!.id)).toMatchObject([{ status: 'cancelled' }])
+      const resumed = await resumeGoalTool.execute({ goalId: savedGoal!.id }, { ...state, generationId: 'next-turn' }, new AbortController().signal)
+      expect(resumed).toMatchObject({ goal: { status: 'pending' }, run: { status: 'running', generationId: 'next-turn' } })
+      expect(vi.getTimerCount()).toBe(0)
+    } finally { vi.useRealTimers() }
+  })
+
   it('reads a selected Goal and its old run without accepting it or changing durable state', async () => {
     const goals = new InMemoryGoalRepository(ownerId)
     const runs = new InMemoryGoalRunRepository(ownerId, goals)
@@ -120,6 +152,7 @@ describe('Goal control tools', () => {
     const savedGoal = await goal(goals, 'saved-goal')
     const savedRun = await run(runs, savedGoal.id, 'saved-run')
     const state = context(goals, runs)
+    state.generationId = savedRun.generationId
     const current = await state.trips.update(tripId, { notes: ['new context version'] })
     await getGoalTool.execute({ goalId: savedGoal.id }, state, new AbortController().signal)
     expect(await runs.listForGoal(savedGoal.id)).toEqual([savedRun])
@@ -136,6 +169,89 @@ describe('Goal control tools', () => {
     const repeated = await resumeGoalTool.execute({ goalId: savedGoal.id }, state, new AbortController().signal)
     expect(repeated).toEqual(resumed)
     expect(await runs.listForGoal(savedGoal.id)).toHaveLength(2)
+  })
+
+  it.each([false, true])('rejects another generation\'s running attempt before activation or stale-run cleanup (Trip changed: %s)', async changed => {
+    const goals = new InMemoryGoalRepository(ownerId)
+    const runs = new InMemoryGoalRunRepository(ownerId, goals)
+    const savedGoal = await goal(goals, 'busy-goal')
+    const savedRun = await run(runs, savedGoal.id, 'other-generation')
+    const state = context(goals, runs)
+    if (changed) await state.trips.update(tripId, { notes: ['changed'] })
+    const update = vi.spyOn(runs, 'update')
+    const create = vi.spyOn(runs, 'create')
+    await expect(resumeGoalTool.execute({ goalId: savedGoal.id }, state, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'GOAL_RUN_ALREADY_RUNNING', statusCode: 409 })
+    expect(state.activeGoalId).toBeUndefined()
+    expect(state.activeGoalRunId).toBeUndefined()
+    expect(update).not.toHaveBeenCalled()
+    expect(create).not.toHaveBeenCalled()
+    expect(await runs.get(savedRun.id)).toEqual(savedRun)
+  })
+
+  it('preserves same-generation resume idempotency and permits a new generation after termination', async () => {
+    const goals = new InMemoryGoalRepository(ownerId)
+    const runs = new InMemoryGoalRunRepository(ownerId, goals)
+    const savedGoal = await goal(goals, 'resume-goal')
+    const savedRun = await run(runs, savedGoal.id, 'generation-1')
+    const state = context(goals, runs)
+    expect(await resumeGoalTool.execute({ goalId: savedGoal.id }, state, new AbortController().signal))
+      .toEqual({ goal: savedGoal, run: savedRun })
+    expect(await runs.listForGoal(savedGoal.id)).toEqual([savedRun])
+    await runs.update(savedRun.id, savedRun.revision, { status: 'failed' })
+    const next = { ...context(goals, runs), generationId: 'generation-2' }
+    const resumed = await resumeGoalTool.execute({ goalId: savedGoal.id }, next, new AbortController().signal)
+    expect(resumed).toMatchObject({ run: { generationId: 'generation-2', status: 'running' } })
+    expect(next.activeGoalRunId).not.toBe(savedRun.id)
+  })
+
+  it('does not activate another generation through declare idempotency', async () => {
+    const goals = new InMemoryGoalRepository(ownerId)
+    const runs = new InMemoryGoalRunRepository(ownerId, goals)
+    const first = context(goals, runs)
+    const input = { kind: 'travel_guide', parameters: {
+      questions: ['museums'], researchTypes: ['activity'], maxResults: 10, maxCities: 1, allowPartial: true
+    } }
+    await declareGoalTool.execute(input, first, new AbortController().signal)
+    const original = await runs.get(first.activeGoalRunId!)
+    const second = { ...context(goals, runs), generationId: 'generation-2' }
+    await expect(declareGoalTool.execute(input, second, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'GOAL_RUN_ALREADY_RUNNING' })
+    expect(second.activeGoalRunId).toBeUndefined()
+    expect(await runs.get(original!.id)).toEqual(original)
+    expect(await goals.listForTrip(tripId)).toHaveLength(1)
+  })
+
+  it('keeps concurrent turns from sharing an attempt that the creating turn will close', async () => {
+    const goals = new InMemoryGoalRepository(ownerId)
+    const runs = new InMemoryGoalRunRepository(ownerId, goals)
+    const savedGoal = await goal(goals, 'concurrent-goal')
+    const savedRun = await run(runs, savedGoal.id, 'generation-1')
+    const first = context(goals, runs, savedGoal.id, savedRun.id)
+    first.activeGoalKind = savedGoal.kind
+    first.goalVerifiers = new GoalVerifierRegistry().register({ kind: 'travel_guide', async verify() {
+      return { status: 'pending', artifactIds: [], missing: ['travel_guide_artifact'], warnings: [] }
+    } })
+    let release!: () => void
+    let started!: () => void
+    const modelStarted = new Promise<void>(resolve => { started = resolve })
+    const originalTurn = new AgentRuntime({ complete: async () => new Promise(resolve => {
+      release = () => resolve({ message: { role: 'assistant', content: 'Not ready yet.' } })
+      started()
+    }) }, createPlannerToolRegistry()).run({ messages: [{ role: 'user', content: 'Prepare guide' }], context: first })
+    await modelStarted
+    const complete = vi.fn()
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('resume', 'resume_goal', { goalId: savedGoal.id })] } })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'The existing operation is still running.' } })
+    const second = { ...context(goals, runs), generationId: 'generation-2' }
+    const concurrent = await new AgentRuntime({ complete }, createPlannerToolRegistry())
+      .run({ messages: [{ role: 'user', content: 'Continue guide' }], context: second })
+    expect(concurrent).toMatchObject({ delivery: { status: 'not_requested' }, traces: [{ domainErrorCode: 'GOAL_RUN_ALREADY_RUNNING' }] })
+    expect(await runs.get(savedRun.id)).toEqual(savedRun)
+    release()
+    expect(await originalTurn).toMatchObject({ delivery: { status: 'pending' } })
+    expect(await runs.get(savedRun.id)).toMatchObject({ status: 'failed', revision: 1 })
+    expect(await goals.get(savedGoal.id)).toMatchObject({ status: 'pending' })
   })
 
   it.each(['satisfied', 'cancelled'] as const)('does not reactivate a %s Goal', async status => {

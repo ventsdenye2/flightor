@@ -54,7 +54,11 @@ export class PostgresWorkspaceRepository implements WorkspaceRepository {
         if (m.role !== 'user' && m.role !== 'assistant') continue
         const ids = Array.isArray(m.metadata.artifact_refs) ? m.metadata.artifact_refs : []
         const delivery = goalDeliverySchema.safeParse(m.metadata.delivery)
-        messages.push({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt, artifactRefs: ids.flatMap(id => typeof id === 'string' && refsById.has(id) ? [refsById.get(id)!] : []), ...(delivery.success ? { delivery: delivery.data } : {}) })
+        const stopReason = typeof m.metadata.stop_reason === 'string' && /^[a-z][a-z_]{0,79}$/.test(m.metadata.stop_reason) ? m.metadata.stop_reason : undefined
+        const warnings = Array.isArray(m.metadata.warnings)
+          ? m.metadata.warnings.filter((value): value is string => typeof value === 'string' && /^[a-z][a-z0-9_]{0,239}$/.test(value)).slice(0, 40) : undefined
+        messages.push({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt, artifactRefs: ids.flatMap(id => typeof id === 'string' && refsById.has(id) ? [refsById.get(id)!] : []), ...(delivery.success ? { delivery: delivery.data } : {}),
+          ...(m.role === 'assistant' && stopReason ? { stopReason } : {}), ...(m.role === 'assistant' && warnings ? { warnings } : {}) })
       }
     }
     const completionScope = {

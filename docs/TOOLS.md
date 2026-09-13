@@ -41,7 +41,7 @@ results without prescribing an end-to-end tool sequence:
 | --- | --- | --- | --- |
 | `declare_goal` | Implemented | `travel_guide`, `flight_search`, or `trip_context_update` plus bounded user-intent parameters → durable goal/run | Owner, Trip, Conversation, context version, timestamps and idempotency binding come from the server. Final route generation uses its dedicated authorized start operation. |
 | `get_active_goal` | Implemented | `{ goalId?, kind? }` → matching goal/existing run or bounded candidates | Read-only and owner/Trip scoped. Inspection does not accept saved parameters for this turn, activate a Goal, or create/close a run. An existing returned run may belong to an earlier Trip version. |
-| `resume_goal` | Implemented | `{ goalId }` → goal/current-context run | Explicitly activates a saved objective whose parameters match the current request. Reuses a current run or creates one from the server Trip snapshot; satisfied/cancelled Goals cannot resume. Changed parameters require `declare_goal`. |
+| `resume_goal` | Implemented | `{ goalId }` → goal/current-context run | Explicitly activates a saved objective whose parameters match the current request. Reuses only this generation's current run or creates one after earlier attempts end; another generation's running attempt returns `GOAL_RUN_ALREADY_RUNNING` without takeover, including after a Trip change. Satisfied/cancelled Goals cannot resume. Changed parameters require `declare_goal`; abandoned-run recovery needs a separate liveness policy. |
 | `finish_goal` | Implemented | `{ goalId }` → goal/run plus verification status | Returns `pending`, `satisfied`, `partial`, `failed` or `cancelled`. Shares completion with response finalization; domain constraints/coverage and lineage are verified before an atomic Goal/Goal-run status commit. |
 | `cancel_goal` | Implemented | `{ goalId }` → cancelled goal and active run | Owner/Trip scope is server checked; cancellation is persistent and late tool results cannot convert it to success. |
 | `start_route_generation` | Implemented | `{}` → queued route-generation run with durable goal/run lineage | Available to the Planner only for an unambiguous current user instruction. The server records `explicit_user_message`; the authenticated HTTP action records `button`. Internal route-engine tools remain hidden. |
@@ -61,6 +61,12 @@ The existence of an Artifact or verified evidence is insufficient by itself.
 Reading a Goal does not add it to this turn's delivery. The Agent inspects saved
 parameters, then explicitly chooses `resume_goal` or declares a new objective;
 the server does not select that intent from keywords or prior Goal existence.
+
+Turn exit closes any still-running attempt owned by that generation; the durable
+Goal and saved evidence remain resumable. Background route runs and other
+generations retain their own lifetime. Cleanup is bounded and reports
+`goal_attempt_cleanup_failed` when persistence is unavailable; this does not
+claim crash recovery or repair historical abandoned runs.
 
 Every Planner response carries a server-derived `delivery` with aggregate and
 per-Goal status, Artifact IDs, missing requirements and warnings. Only
@@ -114,6 +120,12 @@ route generation. Tools never supply their own duplicate lineage-write policy.
 
 - Status: **Implemented** (Phase 2 PostgreSQL optimistic concurrency + in-memory test seam)
 - Purpose: Apply explicit, trip-local user constraints and preferences.
+- Date contract: `exact` windows identify one date; `approximate` windows may
+  contain possible dates. `travelDays` counts departure and return inclusively.
+  The merged snapshot must admit a matching date pair; otherwise
+  `TRIP_DATES_INCONSISTENT` rejects the write without consuming a version.
+  Correct conflicting fields together; the server never adds a checkout day.
+  See [ADR 0017](adr/0017-inclusive-trip-dates.md).
 - Input: `{ patch, expectedVersion?: number }`. The patch uses the Trip Context
   fields, with canonical location ID strings in `origin`, each
   `destinationIntent.required/preferred/excluded` entry,
@@ -372,4 +384,14 @@ stale enough to reclaim.
 Planner now exposes `get_trip_artifacts` (at most 20 current-trip references) and `read_artifact` (bounded, explicitly truncated JSON excerpts) to answer about persisted routes, research and guides across turns. Reads remain user- and trip-scoped. Saved prices are not fresh confirmation. Destination summaries include the exact canonical location for safe tool handoff; Research still requires a location resolved within the active turn. Neither read tool triggers final route generation.
 
 `research_destination.destination` accepts the exact resolved location ID string; the server retrieves the complete canonical object from its per-turn ledger. Full-object callers remain compatible, but their descriptive fields never override a ledger record. Unknown IDs fail with a recoverable resolution prerequisite. This avoids making model-copied coordinates part of the authority check while preserving the same-turn provider requirement.
+
+Native research HTTP 429 returns `PROVIDER_RATE_LIMITED` and the safe warning
+`research_provider_rate_limited`. The two research tools share the current
+turn's provider cooldown: honor `Retry-After`, defaulting to 30 seconds. Calls
+during cooldown fail before another request or USD reservation. The original
+failure receipt and any unknown charge remain in the audit. This is an
+instance-level guard, not a cross-request rate limiter. The Planner can reuse
+compatible evidence or explain the interruption; changing research questions
+does not remove a provider limit. Workspace messages retain safe stop reasons
+and warning codes for the same failure display after restoring a conversation.
 Route, research, guide and destination Artifacts now have client renderers. Cloud workspace restoration retains Artifact references and generation runs. Discovery runs constrained research through a dedicated Worker job and requires human publication; it adds no autonomous publish tool to the Planner registry. See [ADR 0008](./adr/0008-route-discovery-and-cloud-workspaces.md).

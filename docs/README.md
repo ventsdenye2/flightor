@@ -50,6 +50,10 @@ The previous Phase 6 visual tokens and fidelity constraints remain recorded in
 
 ## Domain and operations
 
+- [2026-09-13 续作交接](./HANDOFF_2026-09-13_CONTINUATION.md) — 日期一致性、
+  attempt 收尾、HTTP 研究回执及本地真实修改验收；最新进度入口。
+- [ADR 0017](./adr/0017-inclusive-trip-dates.md) — 含首尾日期的天数约束。
+
 - [ADR 0015](./adr/0015-transient-planner-progress.md) — 300-second Planner
   turns with temporary execution-stage and connection feedback.
 

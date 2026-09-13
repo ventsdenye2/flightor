@@ -4,7 +4,7 @@ import { locationRefSchema } from '../aviation/types.js'
 const dateWindowSchema = z.object({
   from: z.iso.date().optional(),
   to: z.iso.date().optional(),
-  precision: z.enum(['exact', 'approximate'])
+  precision: z.enum(['exact', 'approximate']).describe('exact identifies one date (equal from/to when both given); approximate permits a range of possible departure or return dates. A departure window is not the whole trip span.')
 }).strict().superRefine((value, context) => {
   if (value.from && value.to && value.to < value.from) {
     context.addIssue({ code: 'custom', message: 'Window end must not precede start', path: ['to'] })
@@ -63,7 +63,7 @@ export const tripContextSchema = z.object({
   origin: locationRefSchema.optional(),
   departureWindow: dateWindowSchema.optional(),
   returnWindow: dateWindowSchema.optional(),
-  travelDays: z.number().int().min(1).max(60).optional(),
+  travelDays: z.number().int().min(1).max(60).optional().describe('Inclusive calendar days from departure through return, not nights. Date windows and duration must admit the same trip span.'),
   budget: budgetSchema.optional(),
   destinationIntent: destinationIntentSchema,
   interests: z.array(z.string().min(1).max(80)).max(32),
@@ -86,7 +86,7 @@ export const tripContextPatchSchema = tripContextSchema
     origin: locationRefSchema.nullable().optional(),
     departureWindow: dateWindowSchema.nullable().optional(),
     returnWindow: dateWindowSchema.nullable().optional(),
-    travelDays: z.number().int().min(1).max(60).nullable().optional(),
+    travelDays: z.number().int().min(1).max(60).nullable().optional().describe('Inclusive calendar days, including departure and return. Correct conflicting dates and duration in the same patch.'),
     budget: budgetSchema.nullable().optional(),
     pace: z.enum(['relaxed', 'balanced', 'intensive']).nullable().optional(),
     // A sparse update must not inherit the full snapshot's [] default.

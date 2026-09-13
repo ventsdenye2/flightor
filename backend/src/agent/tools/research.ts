@@ -58,10 +58,8 @@ export async function executeResearchBrief(
   brief.destinations = brief.destinations.map(destination => canonicalResolvedLocation(context, destination))
   // Both research tools inherit only omitted dates, from the snapshot accepted by this workspace.
   // Explicit windows remain research intent; completion separately checks their coverage.
-  if (brief.travelWindow === undefined) {
-    const travelWindow = researchTravelWindow(trip)
-    if (travelWindow) brief.travelWindow = travelWindow
-  }
+  const travelWindow = researchTravelWindow(trip)
+  if (brief.travelWindow === undefined && travelWindow) brief.travelWindow = travelWindow
   const { record: stored, payload: artifact } = await researchTripDestinations(brief, context.research, scope)
   return {
     artifact: { id: stored.id, type: 'research', schemaVersion: 2 },

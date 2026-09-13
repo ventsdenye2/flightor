@@ -6,6 +6,7 @@ import { addArtifactRef, addLocationHandle } from '../goals/working-set.js'
 import { completeGoal, noGoalDelivery, summarizeGoalDelivery, type GoalDelivery, type GoalDeliveryItem } from '../goals/completion.js'
 import { emitActivity, type AgentActivityObserver } from './activity.js'
 import { settleWithSignal } from './cancellation.js'
+import { closeGoalRunAttempt } from '../goals/attempt.js'
 
 export interface AgentTrace {
   requestId: string
@@ -58,6 +59,11 @@ export interface AgentRunResult {
 }
 
 const DEFAULT_FALLBACK = '本轮处理未完整结束，已保存的结果会保留。你可以继续对话重试。'
+const RESEARCH_RATE_LIMIT_REPLY = '联网研究服务暂时限流，本轮未能完成攻略。已保存的结果会保留，请稍后重试。'
+
+function researchRateLimited(traces: AgentTrace[]): boolean {
+  return traces.some(trace => trace.warnings.includes('research_provider_rate_limited'))
+}
 
 function deliveryReply(delivery: GoalDelivery, modelReply: string): string {
   if (delivery.status === 'not_requested' || delivery.status === 'satisfied') return modelReply
@@ -166,9 +172,12 @@ export class AgentRuntime {
       isGenerationCurrent: () => !stale(input)
     }
     const touchedGoals = new Map<string, { runId: string; kind: ToolExecutionContext['activeGoalKind'] }>()
+    const touchedRuns = new Map<string, string>()
+    let result: AgentRunResult | undefined
     const observeGoal = () => {
       if (executionContext.activeGoalId && executionContext.activeGoalRunId) {
         touchedGoals.set(executionContext.activeGoalId, { runId: executionContext.activeGoalRunId, kind: executionContext.activeGoalKind })
+        touchedRuns.set(executionContext.activeGoalRunId, executionContext.activeGoalId)
       }
     }
     observeGoal()
@@ -223,8 +232,10 @@ export class AgentRuntime {
       finally { clearTimeout(timer) }
     }
 
-    const fallback = async (stopReason: AgentRunResult['stopReason'], delivery?: GoalDelivery): Promise<AgentRunResult> => ({
-      reply: stopReason === 'turn_timeout' && this.options.fallbackReply === undefined
+    const fallback = async (stopReason: AgentRunResult['stopReason'], delivery?: GoalDelivery): Promise<AgentRunResult> => (result = {
+      reply: this.options.fallbackReply === undefined && researchRateLimited(traces) && stopReason !== 'cancelled' && stopReason !== 'stale_generation'
+        ? RESEARCH_RATE_LIMIT_REPLY
+        : stopReason === 'turn_timeout' && this.options.fallbackReply === undefined
         ? '本轮处理已超时，已保存的结果会保留。你可以继续对话，复用现有结果完成规划。'
         : this.fallbackReply,
       messages,
@@ -239,8 +250,8 @@ export class AgentRuntime {
 
     try {
       while (true) {
-        if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
-        if (stale(input)) return fallback('stale_generation')
+        if (controller.signal.aborted) return await fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
+        if (stale(input)) return await fallback('stale_generation')
 
         let completion
         const modelStarted = Date.now()
@@ -259,34 +270,35 @@ export class AgentRuntime {
         } catch (error) {
           this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
             errorCode: error instanceof AppError ? error.code : 'MODEL_FAILURE' })
-          return fallback(controller.signal.aborted ? (turnTimedOut ? 'turn_timeout' : 'cancelled') : 'model_failure')
+          return await fallback(controller.signal.aborted ? (turnTimedOut ? 'turn_timeout' : 'cancelled') : 'model_failure')
         } finally {
           emitActivity(input.onActivity, { type: 'model_end' })
         }
 
-        if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
-        if (stale(input)) return fallback('stale_generation')
+        if (controller.signal.aborted) return await fallback(turnTimedOut ? 'turn_timeout' : 'cancelled')
+        if (stale(input)) return await fallback('stale_generation')
         // Truncated text or tool arguments must never be accepted as a completed turn.
-        if (completion.finishReason === 'length' || completion.finishReason === 'content_filter') return fallback('model_failure')
+        if (completion.finishReason === 'length' || completion.finishReason === 'content_filter') return await fallback('model_failure')
         messages.push(completion.message)
         const calls = toolCalls(completion.message)
         if (calls.length === 0) {
           const reply = completion.message.content?.trim()
-          if (!reply) return fallback('model_failure')
+          if (!reply) return await fallback('model_failure')
           emitActivity(input.onActivity, { type: 'finalizing' })
           const delivery = await readDelivery(true)
-          if (controller.signal.aborted) return fallback(turnTimedOut ? 'turn_timeout' : 'cancelled', delivery)
-          if (stale(input)) return fallback('stale_generation', delivery)
+          if (controller.signal.aborted) return await fallback(turnTimedOut ? 'turn_timeout' : 'cancelled', delivery)
+          if (stale(input)) return await fallback('stale_generation', delivery)
           const stopReason: AgentRunResult['stopReason'] = delivery.status === 'not_requested' ? 'responded'
             : delivery.status === 'satisfied' ? 'completed' : `goal_${delivery.status}`
-          return {
-            reply: deliveryReply(delivery, reply), messages, toolSteps,
+          return result = {
+            reply: researchRateLimited(traces) && (delivery.status === 'pending' || delivery.status === 'partial' || delivery.status === 'failed')
+              ? RESEARCH_RATE_LIMIT_REPLY : deliveryReply(delivery, reply), messages, toolSteps,
             toolCalls: executedToolCalls, costUnits, fallback: false, stopReason, delivery, traces
           }
         }
-        if (toolSteps >= this.maxToolSteps) return fallback('max_tool_steps')
+        if (toolSteps >= this.maxToolSteps) return await fallback('max_tool_steps')
         if (calls.length > this.maxToolCallsPerStep || executedToolCalls + calls.length > this.maxToolCallsPerTurn) {
-          return fallback('tool_call_limit')
+          return await fallback('tool_call_limit')
         }
 
         const executable: Array<{ call: FunctionToolCall; allowed: boolean }> = []
@@ -353,6 +365,25 @@ export class AgentRuntime {
     } finally {
       clearTimeout(turnTimer)
       input.signal?.removeEventListener('abort', onParentAbort)
+      const attemptStatus = input.signal?.aborted || stale(input) ? 'cancelled' : 'failed'
+      controller.abort(new Error('Agent turn ended'))
+      const cleanup = new AbortController()
+      const cleanupTimer = setTimeout(() => cleanup.abort(new Error('Goal attempt cleanup timeout')), 3_000)
+      try {
+        if (executionContext.ownerId && executionContext.goalRunRepository) {
+          await settleWithSignal(async () => {
+            const outcomes = await Promise.allSettled([...touchedRuns].map(([runId, goalId]) =>
+              closeGoalRunAttempt({
+                ownerId: executionContext.ownerId!, tripId: executionContext.tripId,
+                generationId: executionContext.generationId, runs: executionContext.goalRunRepository!,
+                signal: cleanup.signal
+              }, { goalId, runId, status: attemptStatus })))
+            if (outcomes.some(outcome => outcome.status === 'rejected')) throw new Error('Goal attempt cleanup failed')
+          }, cleanup.signal)
+        }
+      } catch {
+        if (result) result.delivery.warnings = [...new Set([...result.delivery.warnings, 'goal_attempt_cleanup_failed'])].slice(0, 40)
+      } finally { clearTimeout(cleanupTimer) }
     }
   }
 }

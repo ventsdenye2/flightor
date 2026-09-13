@@ -4,6 +4,8 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 type TaroA11y = { ariaRole?: string; ariaLabel?: string }
+// Native-only presentation attributes are accepted but never forwarded to the DOM.
+type TaroHover = { hoverClass?: string }
 function DialogView(props: React.HTMLAttributes<HTMLDivElement>) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -21,7 +23,7 @@ function DialogView(props: React.HTMLAttributes<HTMLDivElement>) {
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
   }} />
 }
-export const View = ({ ariaRole, ariaLabel, ...props }: React.HTMLAttributes<HTMLDivElement> & TaroA11y) => props.role === 'dialog' || ariaRole === 'dialog' ? <DialogView role={ariaRole} aria-label={ariaLabel} {...props} /> : <div role={ariaRole} aria-label={ariaLabel} {...props} />
+export const View = ({ ariaRole, ariaLabel, hoverClass: _hoverClass, ...props }: React.HTMLAttributes<HTMLDivElement> & TaroA11y & TaroHover) => props.role === 'dialog' || ariaRole === 'dialog' ? <DialogView role={ariaRole} aria-label={ariaLabel} {...props} /> : <div role={ariaRole} aria-label={ariaLabel} {...props} />
 export const Text = ({ ariaRole, ariaLabel, ...props }: React.HTMLAttributes<HTMLSpanElement> & TaroA11y) => <span role={ariaRole} aria-label={ariaLabel} {...props} />
 export const Canvas = ({ canvasId, type: _type, ...props }: React.CanvasHTMLAttributes<HTMLCanvasElement> & { canvasId?: string; type?: string }) => <canvas id={canvasId} {...props} />
 export function ScrollView({ scrollY, scrollX, scrollIntoView, scrollWithAnimation: _animate, ...props }: React.HTMLAttributes<HTMLDivElement> & { scrollY?: boolean; scrollX?: boolean; scrollIntoView?: string; scrollWithAnimation?: boolean }) {
@@ -29,13 +31,15 @@ export function ScrollView({ scrollY, scrollX, scrollIntoView, scrollWithAnimati
   useEffect(() => { if (scrollIntoView) document.getElementById(scrollIntoView)?.scrollIntoView({ block: 'nearest' }) }, [scrollIntoView])
   return <div ref={ref} {...props} style={{ overflowY: scrollY ? 'auto' : undefined, overflowX: scrollX ? 'auto' : undefined, ...props.style }} />
 }
-export const Switch = ({ checked, onChange }: { checked?: boolean; onChange?: (event: { detail: { value: boolean } }) => void }) => <input type='checkbox' role='switch' checked={checked} onChange={event => onChange?.({ detail: { value: event.target.checked } })} />
-export const Button = ({ ariaLabel, type = 'button', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & TaroA11y) => <button type={type} aria-label={ariaLabel} {...props} />
+export const Switch = ({ checked, disabled, onChange }: { checked?: boolean; disabled?: boolean; onChange?: (event: { detail: { value: boolean } }) => void }) => <input type='checkbox' role='switch' checked={checked} disabled={disabled} onChange={event => onChange?.({ detail: { value: event.target.checked } })} />
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & TaroA11y & TaroHover & { plain?: boolean; openType?: 'chooseAvatar'; onChooseAvatar?: (event: { detail: { avatarUrl: string } }) => unknown }
+// The browser preview does not expose WeChat's native avatar picker.
+export const Button = ({ ariaRole, ariaLabel, hoverClass: _hoverClass, plain: _plain, openType: _openType, onChooseAvatar: _onChooseAvatar, type = 'button', ...props }: ButtonProps) => <button type={type} role={ariaRole} aria-label={ariaLabel} {...props} />
 export const Image = ({ mode, src, ariaLabel, style, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { mode?: string; ariaLabel?: string }) => <img src={src?.startsWith('/assets/') ? src.replace(/^\/assets\//, '/') : src} aria-label={ariaLabel} {...props} style={{ objectFit: mode === 'aspectFit' ? 'contain' : 'cover', ...style }} />
 
 type InputEvent = { detail: { value: string } }
-type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onInput' | 'type'> & TaroA11y & { type?: string; maxlength?: number; onInput?: (event: InputEvent) => unknown; onConfirm?: (event: InputEvent) => unknown; confirmType?: string; focus?: boolean }
-export function Input({ ariaLabel, ariaRole, type = 'text', maxlength, onInput, onConfirm, confirmType: _confirmType, focus, ...props }: InputProps) {
+type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onInput' | 'type'> & TaroA11y & { type?: string; maxlength?: number; placeholderClass?: string; onInput?: (event: InputEvent) => unknown; onConfirm?: (event: InputEvent) => unknown; confirmType?: string; focus?: boolean }
+export function Input({ ariaLabel, ariaRole, type = 'text', maxlength, placeholderClass: _placeholderClass, onInput, onConfirm, confirmType: _confirmType, focus, ...props }: InputProps) {
   return <input {...props} aria-label={ariaLabel} role={ariaRole} type={type === 'digit' ? 'text' : type} inputMode={type === 'digit' ? 'decimal' : undefined} maxLength={maxlength} autoFocus={focus} onChange={event => { onInput?.({ detail: { value: event.target.value } }); props.onChange?.(event) }} onKeyDown={event => { props.onKeyDown?.(event); if (event.key === 'Enter' && !event.nativeEvent.isComposing) onConfirm?.({ detail: { value: event.currentTarget.value } }) }} />
 }
 type TextareaProps = Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onInput'> & TaroA11y & { maxlength?: number; autoHeight?: boolean; showConfirmBar?: boolean; confirmType?: string; focus?: boolean; onInput?: (event: InputEvent) => unknown; onConfirm?: (event: InputEvent) => unknown }

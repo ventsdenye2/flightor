@@ -1,5 +1,8 @@
 # 2026-09-13 生产集成交接（本地验证）
 
+> 后续日期修复、真实修改验收及测试结果见
+> [2026-09-13 续作交接](HANDOFF_2026-09-13_CONTINUATION.md)。下文保留原始阶段证据。
+
 ## 开始工作前先读
 
 权威顺序：`FLIGHTOR_ARCHITECTURE.md` → 已接受 ADR → `TOOLS.md` → `PROJECT_CONTEXT.md` → 本文。此次决策见 `adr/0016-native-research-production-integration.md`；后端细节另见 `HANDOFF_2026-09-13_NATIVE_RESEARCH.md`。

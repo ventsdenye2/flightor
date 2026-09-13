@@ -1,4 +1,5 @@
 import { type LocationRef, type VerificationRecord } from '../aviation/types.js'
+import { tripDurationDays } from '../trips/dates.js'
 import { cityGroupingIdentity } from '../locations/identity.js'
 import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
 import {
@@ -254,6 +255,8 @@ function cityResults(selected: readonly SelectedCandidate[], stays: readonly num
 export class DeterministicTripRoutePlanner implements TripRoutePlanner {
   async plan(input: TripRoutePlanInput, context?: TripRoutePlannerContext): Promise<TripRoutePlanResult> {
     const normalized = tripRoutePlanInputSchema.parse(input)
+    const duration = tripDurationDays(normalized.tripContext)
+    if (duration !== undefined) normalized.tripContext = tripRoutePlanInputSchema.shape.tripContext.parse({ ...normalized.tripContext, travelDays: duration })
     assertNotAborted(context)
     const excluded = excludedLocations(normalized)
     const selection = selectCandidates(normalized, excluded)

@@ -59,6 +59,58 @@ describe('NativeResearchAgent', () => {
     expect(ledger.finishes[0]?.input.settledUsdMicros).toBeUndefined()
   })
 
+  it.each([
+    ['delta seconds', { 'retry-after': '45' }, 45_000],
+    ['HTTP date', { 'Retry-After': 'Sun, 13 Sep 2026 00:00:45 GMT' }, 45_000],
+    ['missing header', {}, 30_000],
+    ['invalid header', { 'retry-after': 'private upstream error; key=secret' }, 30_000],
+    ['expired HTTP date', { 'retry-after': 'Sun, 13 Sep 2026 00:00:00 GMT' }, 30_000]
+  ])('suppresses further reservations and provider calls after 429 with %s, then recovers', async (_label, headers, cooldownMs) => {
+    let now = Date.parse('2026-09-13T00:00:00.000Z')
+    const ledger = new Ledger()
+    const http = { status: 429, headers: headers as Record<string, string>, body: 'raw upstream evidence', bodyTruncated: false, bodyIncomplete: false }
+    const complete = vi.fn().mockResolvedValueOnce({ provider: 'openrouter', http }).mockResolvedValue(receipt({ costUsdMicros: 17 }))
+    const agent = new NativeResearchAgent({ model: 'qwen/qwen3.8-flash', transport: { complete }, ledger, budgetId: 'shared', maxCallUsdMicros: 20, now: () => new Date(now) })
+
+    await expect(agent.research(brief, { requestId: 'destination-research' })).rejects.toMatchObject({
+      code: 'PROVIDER_RATE_LIMITED', statusCode: 429,
+      details: { provider: 'openrouter', status: 429, retryAfter: cooldownMs / 1_000 }
+    })
+    now += 8_000
+    await expect(agent.research({ ...brief, questions: ['Find more detailed walking routes'] }, { requestId: 'web-research' })).rejects.toMatchObject({
+      code: 'PROVIDER_RATE_LIMITED', details: { provider: 'openrouter', status: 429, retryAfter: (cooldownMs - 8_000) / 1_000 }
+    })
+    now += cooldownMs - 8_001
+    await expect(agent.research(brief, { requestId: 'another-retry' })).rejects.toMatchObject({ code: 'PROVIDER_RATE_LIMITED', details: { retryAfter: 1 } })
+    expect(complete).toHaveBeenCalledTimes(1)
+    expect(ledger.starts).toHaveLength(1)
+    expect(ledger.finishes).toEqual([{ auditId: '8f8f5eb8-b4ad-4ef9-8c35-64f44d964022', input: {
+      status: 'failed', receipt: { provider: 'openrouter', http },
+      error: { code: 'PROVIDER_RATE_LIMITED', message: 'openrouter returned HTTP 429' }
+    } }])
+
+    now += 1
+    await expect(agent.research(brief, { requestId: 'after-cooldown' })).resolves.toMatchObject({ disposition: 'recommend' })
+    expect(complete).toHaveBeenCalledTimes(2)
+    expect(ledger.starts).toHaveLength(2)
+    expect(ledger.finishes).toHaveLength(2)
+    expect(ledger.finishes[1]?.input).toMatchObject({ status: 'succeeded', settledUsdMicros: 17 })
+  })
+
+  it('keeps a rate limit local to its provider instance', async () => {
+    const limitedLedger = new Ledger()
+    const limited = new NativeResearchAgent({ model: 'qwen/qwen3.8-flash', transport: { complete: async () => ({
+      http: { status: 429, headers: {}, body: '', bodyTruncated: false, bodyIncomplete: false }
+    }) }, ledger: limitedLedger, budgetId: 'shared', maxCallUsdMicros: 20 })
+    await expect(limited.research(brief, { requestId: 'qwen' })).rejects.toMatchObject({ code: 'PROVIDER_RATE_LIMITED' })
+
+    const otherLedger = new Ledger()
+    const other = new NativeResearchAgent({ model: 'z-ai/glm-5.3-flash', transport: { complete: async () => receipt() }, ledger: otherLedger, budgetId: 'shared', maxCallUsdMicros: 20 })
+    await expect(other.research(brief, { requestId: 'glm' })).resolves.toMatchObject({ disposition: 'recommend' })
+    expect(otherLedger.starts).toHaveLength(1)
+    expect(limitedLedger.finishes[0]?.input).not.toHaveProperty('settledUsdMicros')
+  })
+
   it('uses the evaluated GLM reasoning setting and sends the dynamic finding schema', async () => {
     const complete = vi.fn(async () => receipt())
     const agent = new NativeResearchAgent({ model: 'z-ai/glm-5.3-flash', transport: { complete }, ledger: new Ledger(), budgetId: 'shared', maxCallUsdMicros: 1 })

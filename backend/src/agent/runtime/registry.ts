@@ -98,6 +98,7 @@ export interface ToolExecutionOutcome {
 function asSafeMessage(value: unknown): string {
   if (value !== null && typeof value === 'object' && 'code' in value) {
     if (value.code === 'TRIP_CONTEXT_VERSION_CONFLICT') return 'Trip context version conflict'
+    if (value.code === 'PROVIDER_RATE_LIMITED') return 'The provider is temporarily rate limited. Do not immediately repeat research through another tool. Reuse compatible saved evidence if sufficient, or explain the interruption and ask the user to retry later.'
     if (value.code === 'USER_MEMORY_VERSION_CONFLICT') return 'User Memory version conflict'
     if (value.code === 'USER_MEMORY_DISABLED') return 'User Memory is disabled'
     if (value.code === 'LOCATION_NOT_RESOLVED') return 'Use a canonical location id from resolve_location or destination discovery for this operation. Fare searches accept airport IATA codes and resolve both airports on the server.'
@@ -292,7 +293,8 @@ export class ToolRegistry {
         errorCode,
         ...(domainErrorCode ? { domainErrorCode } : {}),
         artifactIds: [],
-        warnings: []
+        warnings: domainErrorCode === 'PROVIDER_RATE_LIMITED' && (tool.name === 'research_destination' || tool.name === 'web_research')
+          ? ['research_provider_rate_limited'] : []
       }
     } finally {
       timeout.cleanup()

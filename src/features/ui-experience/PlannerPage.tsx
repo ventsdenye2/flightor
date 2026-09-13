@@ -3,6 +3,7 @@ import { View, Text, Button, Textarea } from '@tarojs/components'
 import { Icon, Photo } from './VisualMedia'
 import { formatPrice, priceStatusLabel, tripDurationLabel, travelerLabel } from './presentation'
 import type { TripPresentation } from './presentation'
+import type { ConversationDelivery } from '../../services/conversationService'
 import { DemoNote, PageHeader } from './SharedUI'
 import './experience.scss'
 import './planner.scss'
@@ -18,6 +19,9 @@ interface PlannerPageProps {
   productionReply?: string
   productionPrompt?: string
   productionResultAvailable?: boolean
+  productionStopReason?: string
+  productionDelivery?: ConversationDelivery
+  productionWarnings?: string[]
   onCancelProduction?: () => void
   onExit?: () => void
 }
@@ -28,8 +32,18 @@ const suggestions = [
   { title: '只有一个长周末', prompt: '下一个长周末想出去走走，从上海出发，两个人，想要轻松、不赶路的安排。', icon: 'calendar' }
 ]
 
-export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, onCancelProduction, onExit }: PlannerPageProps) {
+export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, onExit }: PlannerPageProps) {
   const production = Boolean(onSubmitPrompt)
+  const hasResult = !production || productionResultAvailable
+  const rateLimited = productionWarnings.includes('research_provider_rate_limited')
+    || productionDelivery?.warnings.includes('research_provider_rate_limited')
+  const interrupted = production && (Boolean(productionError) || (productionStopReason !== 'completed' && productionDelivery?.status !== 'satisfied' && (
+    ['max_tool_steps', 'tool_call_limit', 'model_failure', 'turn_timeout', 'stale_generation', 'goal_failed', 'goal_partial'].includes(productionStopReason)
+    || productionDelivery?.status === 'failed' || productionDelivery?.status === 'partial'
+    || (rateLimited && (productionStopReason === 'goal_pending' || productionDelivery?.status === 'pending')))))
+  const interruptionMessage = productionError || (rateLimited
+    ? `联网研究服务暂时限流，${productionResultAvailable ? '本次规划尚未完成；已保存的内容仍可查看' : '本次未生成新攻略'}，请稍后重试。`
+    : productionReply || '本次规划未完成，请按原想法重试，或修改后再次提交。')
   const sampleLabel = `${trip.destination} · ${tripDurationLabel(trip)}`
   const samplePrompt = `从${trip.route[0] || '出发地待定'}出发，去${trip.destination}，${tripDurationLabel(trip)}，${travelerLabel(trip)}，安排轻松一点。`
   const price = trip.flights[0]?.price
@@ -49,9 +63,9 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
 
   useEffect(() => {
     if (!production) return
-    if (productionPrompt && receivedPrompt.current !== productionPrompt) { receivedPrompt.current = productionPrompt; setSubmitted(productionPrompt); setPhase(productionError ? 'cancelled' : productionBusy ? 'loading' : 'ready') }
+    if (productionPrompt && receivedPrompt.current !== productionPrompt) { receivedPrompt.current = productionPrompt; setSubmitted(productionPrompt); setPhase(productionBusy ? 'loading' : 'ready') }
     if (productionBusy) { setPhase('loading'); if (productionPrompt) setSubmitted(productionPrompt) }
-    else if (submitted) setPhase(productionError ? 'cancelled' : 'ready')
+    else if (submitted) setPhase('ready')
   }, [production, productionBusy, productionError, submitted, productionPrompt])
 
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current) }, [])
@@ -114,14 +128,19 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
           <Text className='ux-section-title'>已暂停，想法还在这里</Text><Text className='ux-muted'>可以继续查看参考，也可以重新写下你的想法。</Text>
           <View className='pl-inline-actions'><Button className='ux-text-button' onClick={() => start(submitted)}>继续查看</Button><Button className='ux-text-button' onClick={() => reset(submitted)}>修改想法</Button></View>
         </View> : <>
-          {productionError ? <Text className='pl-reply-copy'>{productionError}</Text> : <Text className='pl-reply-copy'>{production ? productionReply || '正在等待规划回复。' : '先看看这份参考。'}<Text className='pl-reply-copy-line'>{trip.description}</Text></Text>}
-          {(!production || productionResultAvailable) && <Button className='pl-result' onClick={onOpenTrip}>
+          {interrupted ? <View className='pl-cancelled pl-interrupted' role='alert'>
+            <Text className='ux-section-title'>本次规划未完成</Text><Text className='ux-muted'>{interruptionMessage}</Text>
+            <View className='pl-inline-actions'><Button className='ux-text-button' disabled={productionBusy} onClick={() => start(submitted)}>重试这次规划</Button><Button className='ux-text-button' onClick={() => reset(submitted)}>修改想法</Button></View>
+          </View> : <Text className='pl-reply-copy'>{production ? productionReply || '正在等待规划回复。' : '先看看这份参考。'}{hasResult && <Text className='pl-reply-copy-line'>{trip.description}</Text>}</Text>}
+          {hasResult && <Button className='pl-result' onClick={onOpenTrip}>
             <Photo src={trip.cover?.src} description={trip.cover?.description || '图片待补充'} className='pl-result-photo' retry={false} />
             <View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {tripDurationLabel(trip)}</Text><Text>{production ? '已保存结果' : '固定示例'}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || '路线待确认'} · {travelerLabel(trip)}</Text><View className='pl-result-bottom'><View><Text className='pl-result-price'>{formatPrice(price)}{price && price.status !== 'unknown' && price.amount !== null ? <Text>{price.unit === 'person' ? ' / 人' : ' / 合计'}</Text> : null}</Text><Text className='ux-caption'>{priceStatusLabel(price)}</Text></View><View className='pl-open-result'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></View>
           </Button>}
-          <View className='pl-result-status'><Icon name='info' /><Text>{trip.days.length ? `已有 ${trip.days.filter(day => day.status === 'ready').length} 天参考安排，可查看和调整` : '每日安排尚未补充，可先查看旅行信息'}</Text></View>
-          <DemoNote text={production ? '结果来自当前登录行程；缺少的日期、价格、坐标与媒体保持待确认。' : `这是固定的${sampleLabel}参考，未按输入内容生成；航班、价格与安排均为示例。`} />
-          <View className='pl-followups'><Button className='pl-followup' onClick={() => reset(submitted)}><Text>修改我的想法</Text><Icon name='arrow-right' /></Button><Button className='pl-followup' onClick={onSearchFlights}><Text>{production ? '查看航班' : '比较航班示例'}</Text><Icon name='plane' /></Button></View>
+          {hasResult && <>
+            <View className='pl-result-status'><Icon name='info' /><Text>{trip.days.length ? `已有 ${trip.days.filter(day => day.status === 'ready').length} 天参考安排，可查看和调整` : '每日安排尚未补充，可先查看旅行信息'}</Text></View>
+            <DemoNote text={production ? '结果来自当前登录行程；缺少的日期、价格、坐标与媒体保持待确认。' : `这是固定的${sampleLabel}参考，未按输入内容生成；航班、价格与安排均为示例。`} />
+          </>}
+          {!interrupted && <View className='pl-followups'><Button className='pl-followup' onClick={() => reset(submitted)}><Text>{production && !hasResult ? '继续补充想法' : '修改我的想法'}</Text><Icon name='arrow-right' /></Button>{hasResult && <Button className='pl-followup' onClick={onSearchFlights}><Text>{production ? '查看航班' : '比较航班示例'}</Text><Icon name='plane' /></Button>}</View>}
         </>}
       </View>}
     </View>
