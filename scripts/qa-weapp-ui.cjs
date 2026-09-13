@@ -70,7 +70,7 @@ async function run() {
       ['trips', 'pages/trips/index', '.ui-display'],
       ['profile', 'pages/profile/index', '.ui-display']
     ]) {
-      await retry(() => miniProgram.callWxMethod('switchTab', { url: `/${route}` }))
+      await retry(() => miniProgram.reLaunch(`/${route}`))
       const page = await ready(miniProgram, route)
       await sleep(900)
       await screenshot(miniProgram, report, name, page, anchor)
