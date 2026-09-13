@@ -1,0 +1,43 @@
+/* postcss-pxtransform disable */
+.production-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  box-sizing: border-box;
+  border-top: 1px solid #e5edef;
+  background: #fff;
+  padding: 6px 12px max(7px, env(safe-area-inset-bottom));
+
+  &__item {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 47px;
+    gap: 3px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: #fff;
+    font: 10px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    color: #6c7f86;
+    &::after { border: 0; }
+    &.is-active { color: #087f8c; font-weight: 600; }
+    &:focus-visible { outline: 2px solid #087f8c; outline-offset: -2px; }
+    .ux-icon { display: block; width: 20px; height: 20px; }
+  }
+
+  &--embedded { position: static; flex-shrink: 0; }
+}
+
+.production-main-page.ux-app,
+.trip-plan.trip-plan--chat.production-main-page {
+  height: var(--production-page-height, calc(100vh - 54px - max(7px, env(safe-area-inset-bottom))));
+  min-height: 0;
+  padding: 0;
+}

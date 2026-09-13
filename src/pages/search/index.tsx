@@ -1,237 +1,93 @@
-// pages/search — 搜索结果（双模式对比列表 + 航线地图）
 import { useEffect, useState } from 'react'
-import { View, Text } from '@tarojs/components'
+import { Button, Text, View } from '@tarojs/components'
 import Taro, { useRouter, useShareAppMessage } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
-import DemoBadge from '../../components/common/DemoBadge'
-import FlightCompareCard from '../../components/flight/FlightCompareCard'
 import RiskWarningModal from '../../components/flight/RiskWarningModal'
-import PriceMatrix from '../../components/matrix/PriceMatrix'
+import { ProductionFlightCard } from '../../features/ui-experience/ProductionFlightCard'
+import { EmptyState, PageHeader } from '../../features/ui-experience/SharedUI'
+import { Icon } from '../../features/ui-experience/VisualMedia'
 import { flightStore } from '../../stores/flightStore'
+import { searchStore } from '../../stores/searchStore'
 import { t, fd, localeStore } from '../../i18n'
-import { formatPrice } from '../../utils/format'
 import type { FlightOption } from '../../types/flight'
 import type { RiskItem } from '../../types/common'
+import '../../features/ui-experience/experience.scss'
 import './index.scss'
 
-const MODE_TABS = [
-  { key: 'all' as const, label: 'sp.all' },
-  { key: 'self' as const, label: 'sp.self' },
-  { key: 'official' as const, label: 'sp.official' }
-]
+const MODES = [{ key: 'all' as const, label: 'sp.all' }, { key: 'self' as const, label: 'sp.self' }, { key: 'official' as const, label: 'sp.official' }]
 
 function buildRisks(flight: FlightOption): RiskItem[] {
   const risks: RiskItem[] = [
     { icon: 'SELF', title: t('risk.i1.title'), description: t('risk.i1.desc'), severity: 'danger' },
     { icon: 'BAG', title: t('risk.i2.title'), description: t('risk.i2.desc'), severity: 'warning' }
   ]
-  if (flight.hub) {
-    risks.push({
-      icon: 'TIME',
-      title: t('risk.i4.title', { dur: fd(flight.hub.layoverMinutes) }),
-      description: t('risk.i4.desc'),
-      severity: 'info'
-    })
-  }
+  if (flight.hub) risks.push({ icon: 'TIME', title: t('risk.i4.title', { dur: fd(flight.hub.layoverMinutes) }), description: t('risk.i4.desc'), severity: 'info' })
   return risks
 }
 
 function SearchPage() {
-  const [showMap, setShowMap] = useState(false)
   const [expandedId, setExpandedId] = useState('')
   const [riskFlight, setRiskFlight] = useState<FlightOption | null>(null)
   const locale = localeStore.locale
+  const copy = (zh: string, en: string) => locale === 'en' ? en : zh
   const router = useRouter()
   const artifactId = typeof router.params.artifactId === 'string' ? router.params.artifactId : ''
-
+  useEffect(() => { Taro.setNavigationBarTitle({ title: t('nav.search') }) }, [locale])
   useEffect(() => {
-    Taro.setNavigationBarTitle({ title: t('nav.search') })
-  }, [locale])
-
-  useEffect(() => {
-    if (artifactId && flightStore.result?.metadata.artifactRef?.id !== artifactId) {
-      void flightStore.loadArtifact(artifactId)
-    }
+    if (artifactId && flightStore.result?.metadata.artifactRef?.id !== artifactId) void flightStore.loadArtifact(artifactId)
   }, [artifactId])
-
-  useShareAppMessage(() => {
-    const p = flightStore.lastParams
-    const best = flightStore.visibleOptions[0]
-    const saving = best ? flightStore.savingsOf(best) : { amount: 0 }
-    return {
-      title: p
-        ? t('share.route', { o: p.origin, d: p.destination, amt: formatPrice(saving.amount) })
-        : t('share.app'),
-      path: '/pages/index/index'
-    }
-  })
-
+  useShareAppMessage(() => ({ title: t('share.app'), path: '/pages/index/index' }))
   const params = flightStore.lastParams
+  const options = flightStore.visibleOptions
+  const editSearch = () => {
+    if (params) {
+      searchStore.setOrigin(params.origin)
+      searchStore.setDestination(params.destination)
+      searchStore.setDepartDate(params.departDate)
+      searchStore.setTripType(params.tripType)
+      if (params.returnDate) searchStore.setReturnDate(params.returnDate)
+      searchStore.setBudget(...params.budgetRange)
+      searchStore.setTransferPref(params.transferPref)
+      for (const interest of [...searchStore.interests]) searchStore.toggleInterest(interest)
+      for (const interest of params.interests) searchStore.toggleInterest(interest)
+      for (const code of [...searchStore.transitCountryPreferences.preferred, ...searchStore.transitCountryPreferences.excluded]) searchStore.setTransitCountryPreference(code, 'neutral')
+      for (const code of params.transitCountryPreferences?.preferred ?? []) searchStore.setTransitCountryPreference(code, 'preferred')
+      for (const code of params.transitCountryPreferences?.excluded ?? []) searchStore.setTransitCountryPreference(code, 'excluded')
+    }
+    void Taro.navigateTo({ url: '/pages/index/index' })
+  }
+  const goBack = () => { void Taro.navigateBack().catch(() => Taro.switchTab({ url: '/pages/plan/index' })) }
   const goDetail = (flight: FlightOption) => {
     flightStore.select(flight)
     const sourceId = flightStore.result?.metadata.artifactRef?.id
-    if (sourceId) Taro.navigateTo({ url: `/pages/route/index?artifactId=${encodeURIComponent(sourceId)}&offerId=${encodeURIComponent(flight.id)}` })
+    if (sourceId) void Taro.navigateTo({ url: '/pages/route/index?artifactId=' + encodeURIComponent(sourceId) + '&offerId=' + encodeURIComponent(flight.id) })
     else setExpandedId(flight.id)
   }
-
-  const handleSelect = (flight: FlightOption) => {
-    // 中转模式选择决策树：自行中转必须先确认风险
-    if (flight.transferType === 'self') {
-      setRiskFlight(flight)
-    } else {
-      goDetail(flight)
-    }
-  }
-
-  return (
-    <View className='search-page'>
-      <DemoBadge />
-      {/* 路线摘要栏 */}
-      <View className='search-page__summary'>
-        <View className='search-page__route'>
-          <Text className='search-page__route-text'>
-            {params ? params.origin : '—'} {' → '} {params ? params.destination : '—'}
-          </Text>
-          <Text className='search-page__route-date'>
-            {params ? `${params.departDate}${params.returnDate ? ` → ${params.returnDate}` : ''}` : ''}
-          </Text>
-        </View>
-        <View className='search-page__map-toggle' hoverClass='tap-dim' onClick={() => setShowMap(!showMap)}>
-          <Text>{showMap ? t('sp.list') : t('sp.map')}</Text>
-        </View>
-      </View>
-
-      {/* 航线地图 */}
-      {showMap && params && (
-        <View className='search-page__map search-page__map--unavailable'>
-          <Text>{locale === 'zh' ? '当前航班 Artifact 未包含已核验机场坐标，地图不会使用本地模拟坐标。' : 'This flight Artifact has no verified airport coordinates, so the map will not use local mock coordinates.'}</Text>
-        </View>
-      )}
-
-      {/* 模式 Tab */}
-      <View className='search-page__tabs'>
-        {MODE_TABS.map(tab => (
-          <View
-            key={tab.key}
-            className={`search-page__tab ${flightStore.viewMode === tab.key ? 'is-active' : ''}`}
-            hoverClass='tap-dim'
-            onClick={() => flightStore.setViewMode(tab.key)}
-          >
-            <Text>{t(tab.label)}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* 排序切换 */}
-      <View className='search-page__sorts'>
-        {(['recommended', 'price', 'duration'] as const).map(sort => (
-          <View
-            key={sort}
-            className={`search-page__sort ${flightStore.sortBy === sort ? 'is-active' : ''}`}
-            hoverClass='tap-dim'
-            onClick={() => flightStore.setSortBy(sort)}
-          >
-            <Text>{sort === 'recommended' ? t('sp.sortRecommended') : sort === 'price' ? t('sp.sortPrice') : t('sp.sortDuration')}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* 价差矩阵（多机场或多日期时展示） */}
-      {flightStore.matrix &&
-        (flightStore.matrix.origins.length > 1 || flightStore.matrix.dates.length > 1) && (
-          <PriceMatrix
-            matrix={flightStore.matrix}
-            picked={flightStore.matrixPick}
-            onPick={(o, d) => flightStore.pickMatrixCell(o, d)}
-          />
-        )}
-
-      {/* 结果列表 */}
-      {flightStore.isLoading ? (
-        <View className='search-page__skeletons'>
-          <Text className='search-page__loading-msg'>
-            {t('search.searching')}
-          </Text>
-          {[0, 1, 2].map(i => (
-            <View key={i} className='search-page__skeleton'>
-              <View className='search-page__sk-line search-page__sk-line--w40' />
-              <View className='search-page__sk-row'>
-                <View className='search-page__sk-block' />
-                <View className='search-page__sk-line search-page__sk-line--grow' />
-                <View className='search-page__sk-block' />
-              </View>
-              <View className='search-page__sk-line search-page__sk-line--w70' />
-            </View>
-          ))}
-        </View>
-      ) : flightStore.error ? (
-        <View className='search-page__error'>
-          <Text>{locale === 'zh' ? '航班搜索暂时不可用。' : 'Flight search is temporarily unavailable.'}</Text>
-          <Text className='search-page__error-detail'>{flightStore.error}</Text>
-          <View className='search-page__retry' hoverClass='tap-dim' onClick={() => void flightStore.retryLastSearch()}>
-            <Text>{locale === 'zh' ? '重试' : 'Retry'}</Text>
-          </View>
-        </View>
-      ) : flightStore.visibleOptions.length === 0 ? (
-        <View className='search-page__empty'>
-          <Text className='search-page__empty-icon'>🛫</Text>
-          <Text>{t('sp.empty')}</Text>
-          {flightStore.filteredOutCount > 0 ? (
-            <>
-              <Text className='search-page__empty-tip'>
-                {t('sp.filtered', { n: flightStore.filteredOutCount })}
-              </Text>
-              <View className='search-page__relax' hoverClass='tap-dim' onClick={() => flightStore.relaxFilters()}>
-                <Text>{t('sp.relax')}</Text>
-              </View>
-            </>
-          ) : (
-            <Text className='search-page__empty-tip'>{t('sp.emptyTip')}</Text>
-          )}
-        </View>
-      ) : (
-        <View className='search-page__list'>
-          {flightStore.visibleOptions.map((f, idx) => {
-            const saving = flightStore.savingsOf(f)
-            // 组合徽章：只保留结果排序徽章；请求本身没有候选机场或弹性日期。
-            const badges: string[] = []
-            if (idx === 0 && flightStore.visibleOptions.length > 1 && (flightStore.sortBy !== 'duration' || f.totalDuration !== undefined)) {
-              badges.push(flightStore.sortBy === 'recommended' ? t('sp.recommended') : flightStore.sortBy === 'price' ? t('sp.best') : t('sp.fastest'))
-            }
-            return (
-              <FlightCompareCard
-                key={f.id}
-                flight={f}
-                savingsAmount={saving.amount}
-                savingsPercent={saving.percent}
-                badges={badges}
-                isExpanded={expandedId === f.id}
-                onToggleExpand={() => setExpandedId(prev => (prev === f.id ? '' : f.id))}
-                onSelect={handleSelect}
-              />
-            )
-          })}
-          <View className='search-page__disclaimer'>
-            <Text>{t('common.priceRef')}</Text>
-          </View>
-        </View>
-      )}
-
-      {/* 风险确认弹窗 */}
-      <RiskWarningModal
-        visible={!!riskFlight}
-        hub={riskFlight?.hub ? `${riskFlight.hub.city || riskFlight.hub.iata} ${riskFlight.hub.iata}` : ''}
-        visaStatus={riskFlight?.hub?.visaStatus}
-        risks={riskFlight ? buildRisks(riskFlight) : []}
-        onCancel={() => setRiskFlight(null)}
-        onConfirm={() => {
-          const f = riskFlight!
-          setRiskFlight(null)
-          goDetail(f)
-        }}
-      />
+  const select = (flight: FlightOption) => { if (flight.transferType === 'self') setRiskFlight(flight); else goDetail(flight) }
+  const retry = () => { if (artifactId) void flightStore.loadArtifact(artifactId); else void flightStore.retryLastSearch() }
+  return <View className='ux-app pf-app production-detail-page'>
+    <PageHeader title={copy('比较航班', 'Compare flights')} onBack={goBack} action={<Button className='ux-text-button' onClick={editSearch}>{copy('修改条件', 'Edit search')}</Button>} />
+    <View className='ux-scroll pf-page pf-results-page'>
+      <View className='pf-results-intro'><Text className='pf-title'>{params ? params.origin + ' → ' + params.destination : copy('出发，有几种可能', 'Find your way there')}</Text><Text className='pf-subtitle'>{params ? params.departDate + (params.returnDate ? ' → ' + params.returnDate : '') + ' · ' + (params.tripType === 'roundtrip' ? t('search.roundtrip') : t('search.oneway')) : copy('查看已保存的航班搜索结果。', 'Review saved flight search results.')}</Text></View>
+      {flightStore.isLoading ? <View className='pf-loading' role='status'><View className='pf-loading-line' /><Text className='pf-state-title'>{copy('正在查找合适的航班', 'Finding flight options')}</Text><Text className='pf-subtitle'>{copy('把报价、时间和中转放在一起。', 'Comparing fares, times and connections.')}</Text></View> : flightStore.error ? <>
+        <EmptyState title={copy('航班结果暂时无法加载', 'Flight results are unavailable')} description={flightStore.error} icon='plane' actionLabel={copy('重试', 'Retry')} onAction={retry} />
+        <Button className='ux-text-button pf-edit-empty' onClick={editSearch}>{copy('返回修改搜索条件', 'Edit search conditions')}</Button>
+      </> : !flightStore.result ? <EmptyState title={copy('先选好去处，再慢慢比较', 'Choose a route to get started')} description={copy('输入机场和日期，开始一次航班搜索。', 'Choose airports and dates to search for flights.')} icon='plane' actionLabel={copy('搜索航班', 'Search flights')} onAction={editSearch} /> : <>
+        <View className='pf-mode-tabs'>{MODES.map(mode => <Button key={mode.key} className={'pf-mode-tab' + (flightStore.viewMode === mode.key ? ' is-active' : '')} onClick={() => flightStore.setViewMode(mode.key)}>{t(mode.label)}</Button>)}</View>
+        <View className='pf-results-toolbar'><View className='pf-result-sorts'>{(['recommended', 'price', 'duration'] as const).map(sort => <Button key={sort} className={'pf-result-sort' + (flightStore.sortBy === sort ? ' is-active' : '')} onClick={() => flightStore.setSortBy(sort)}>{sort === 'recommended' ? t('sp.sortRecommended') : sort === 'price' ? t('sp.sortPrice') : t('sp.sortDuration')}</Button>)}</View><Text className='pf-caption'>{options.length} {copy('个方案', 'options')}</Text></View>
+        {options.length === 0 ? <EmptyState title={copy('暂时没有匹配的航班', 'No matching flights')} description={flightStore.filteredOutCount > 0 ? t('sp.filtered', { n: flightStore.filteredOutCount }) : t('sp.emptyTip')} icon='plane' actionLabel={flightStore.filteredOutCount > 0 ? t('sp.relax') : copy('调整条件', 'Edit search')} onAction={flightStore.filteredOutCount > 0 ? () => flightStore.relaxFilters() : editSearch} />
+          : <View className='pf-results-list'>{options.map((flight, index) => {
+            const badge = index === 0 && options.length > 1 && (flightStore.sortBy !== 'duration' || flight.totalDuration !== undefined)
+              ? flightStore.sortBy === 'recommended' ? t('sp.recommended') : flightStore.sortBy === 'price' ? t('sp.best') : t('sp.fastest') : undefined
+            return <ProductionFlightCard key={flight.id} flight={flight} locale={locale} badge={badge} expanded={expandedId === flight.id} roundtrip={params?.tripType === 'roundtrip'} savings={flightStore.savingsOf(flight).amount}
+              onExpand={() => setExpandedId(expandedId === flight.id ? '' : flight.id)} onSelect={select} />
+          })}</View>}
+        <View className='pf-result-note'><Icon name='info' /><Text>{flightStore.result.metadata.priceDisclaimer || t('common.priceRef')}</Text></View>
+      </>}
     </View>
-  )
+    <RiskWarningModal visible={!!riskFlight} hub={riskFlight?.hub ? (riskFlight.hub.city || riskFlight.hub.iata) + ' ' + riskFlight.hub.iata : ''} visaStatus={riskFlight?.hub?.visaStatus} risks={riskFlight ? buildRisks(riskFlight) : []}
+      onCancel={() => setRiskFlight(null)} onConfirm={() => { if (!riskFlight) return; const flight = riskFlight; setRiskFlight(null); goDetail(flight) }} />
+  </View>
 }
 
 export default observer(SearchPage)

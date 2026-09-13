@@ -32,6 +32,8 @@ import { userStore } from '../../stores/userStore'
 import LoginSheet from '../../components/common/LoginSheet'
 import { conversationDeliveryLabel } from '../../components/plan/conversationDelivery'
 import PlannerProgress from '../../components/plan/PlannerProgress'
+import PlannerReply from '../../components/plan/PlannerReply'
+import { useProductionTab } from '../../components/navigation/ProductionTabBar'
 import PlannerPage from '../../features/ui-experience/PlannerPage'
 import { loadProductionTrip } from '../../services/productionTripService'
 import type { TripPresentation } from '../../features/ui-experience/presentation'
@@ -444,7 +446,7 @@ function ConversationTurnView({ turn, ownerId, sessionId, onArtifactAction, ...a
       </View>
       {turn.assistant ? (
         <View className='agent-chat__msg agent-chat__msg--assistant'>
-          <Text>{turn.assistant.content}</Text>
+          <PlannerReply content={turn.assistant.content} />
         </View>
       ) : null}
       {deliveryLabel && <View className='agent-chat__card'><Text>{deliveryLabel}</Text></View>}
@@ -812,6 +814,7 @@ const AgentChat = observer(({ onOpenExperience }: { onOpenExperience: () => void
 })
 
 function PlanPage() {
+  useProductionTab('plan')
   const locale = localeStore.locale
   const [experienceOpen, setExperienceOpen] = useState(true)
   const [productionResult, setProductionResult] = useState<{ key: string; trip: TripPresentation }>()
@@ -846,8 +849,8 @@ function PlanPage() {
     id: chatStore.tripId || 'production-planning', title: '新的旅行计划', destination: chatStore.tripContextSummary?.destinations.required[0]?.name || '目的地待确认', route: [], dates: { start: null, end: null, label: '日期待确认' }, durationDays: chatStore.tripContextSummary?.travelDays || null, travelers: null, cover: null, description: '继续补充想法，生成后的行程会自动保存。', days: [], status: 'pending', flights: [], alternatives: [], sources: []
   }
   const result = productionResult?.key === resultKey ? productionResult.trip : undefined
-  if (experienceOpen) return <View className='trip-plan trip-plan--chat ux-app'><PlannerPage key={ownerId ?? 'guest'} trip={result ?? fallbackTrip} onExit={() => setExperienceOpen(false)} onOpenTrip={() => productionRef && void Taro.navigateTo({ url: `/pages/route/index?artifactId=${encodeURIComponent(productionRef.id)}` })} onSearchFlights={() => void Taro.navigateTo({ url: '/pages/index/index' })} onSubmitPrompt={message => void submit(message)} productionBusy={busy} productionError={productionError || chatStore.multiError} productionReply={lastTurn?.assistant?.content} productionPrompt={lastTurn?.user.content} productionResultAvailable={Boolean(result)} productionStopReason={lastTurn?.stopReason} productionDelivery={lastTurn?.delivery} productionWarnings={lastTurn?.warnings} /><LoginSheet visible={productionLoginOpen} onClose={() => setProductionLoginOpen(false)} onSuccess={() => { const prompt = pendingPrompt.current; pendingPrompt.current = ''; setProductionLoginOpen(false); if (prompt) void submit(prompt) }} /></View>
-  return <View className='trip-plan trip-plan--chat'><DemoBadge /><AgentChat onOpenExperience={() => setExperienceOpen(true)} /></View>
+  if (experienceOpen) return <View className='trip-plan trip-plan--chat ux-app production-main-page'><PlannerPage key={ownerId ?? 'guest'} trip={result ?? fallbackTrip} onExit={() => setExperienceOpen(false)} onOpenTrip={() => productionRef && void Taro.navigateTo({ url: `/pages/route/index?artifactId=${encodeURIComponent(productionRef.id)}` })} onSearchFlights={() => void Taro.navigateTo({ url: '/pages/index/index' })} onSubmitPrompt={message => void submit(message)} productionBusy={busy} productionProgress={chatStore.turnProgress} locale={locale} productionError={productionError || chatStore.multiError} productionReply={lastTurn?.assistant?.content} productionPrompt={lastTurn?.user.content} productionResultAvailable={Boolean(result)} productionStopReason={lastTurn?.stopReason} productionDelivery={lastTurn?.delivery} productionWarnings={lastTurn?.warnings} /><LoginSheet visible={productionLoginOpen} onClose={() => setProductionLoginOpen(false)} onSuccess={() => { const prompt = pendingPrompt.current; pendingPrompt.current = ''; setProductionLoginOpen(false); if (prompt) void submit(prompt) }} /></View>
+  return <View className='trip-plan trip-plan--chat production-main-page'><DemoBadge /><AgentChat onOpenExperience={() => setExperienceOpen(true)} /></View>
 }
 
 export default observer(PlanPage)

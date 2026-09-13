@@ -1,3 +1,4 @@
+/* postcss-pxtransform disable */
 @import '../../styles/mixins.scss';
 
 .trips-page {
@@ -54,3 +55,35 @@
 .trips-page__filters { display: flex; flex-wrap: wrap; gap: 12rpx; margin-bottom: 28rpx; view { padding: 14rpx 20rpx; border: 1rpx solid var(--color-bg-border); border-radius: 16rpx; font-size: 24rpx; } .is-active { color: var(--color-accent-teal); border-color: var(--color-accent-teal); } }
 .trips-page__actions { display: flex; flex-wrap: wrap; gap: 24rpx; margin-top: 24rpx; color: var(--color-accent-teal); font-size: 26rpx; view { padding: 12rpx 0; } }
 .trips-page__error { color: var(--color-warning); padding: 20rpx; line-height: 1.6; }
+
+.trips-production {
+  .lb-cloud-page > .ux-muted { margin-top: 6px; }
+  .lb-cloud-filters { gap: 22px; overflow-x: auto; scrollbar-width: none; }
+  .lb-cloud-filters .ui-segment-button { flex-shrink: 0; font-size: 12px; }
+  .lb-cloud-list { display: flex; flex-direction: column; gap: 18px; }
+  .lb-cloud-card-top { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 0; }
+  .lb-cloud-trip-mark { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px; background: var(--ux-panel); }
+  .lb-cloud-status { font-size: 11px; color: var(--ux-teal); background: #eff8f7; padding: 5px 9px; border-radius: 7px; }
+  .lb-cloud-status--archived { color: var(--ux-muted); background: #f4f6f6; }
+  .lb-cloud-trip .lb-trip-body { padding-top: 11px; padding-bottom: 7px; }
+  .lb-cloud-open { display: block; width: 100%; margin-bottom: 18px; text-align: left; }
+  .lb-cloud-open .ui-display { font-size: 23px; line-height: 1.5; overflow-wrap: anywhere; }
+  .lb-cloud-open .ux-muted { margin-top: 6px; font-size: 11px; }
+  .lb-cloud-saved { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin-bottom: 12px; padding: 10px; border-radius: 10px; background: var(--ux-panel); color: var(--ux-teal); font-size: 11px; }
+  .lb-cloud-saved .ux-icon { width: 16px; height: 16px; }
+  .lb-cloud-saved .ux-icon:last-child { margin-left: auto; width: 13px; height: 13px; }
+  .lb-trip-footer { gap: 14px; }
+  .lb-trip-footer .ux-text-button { font-size: 11px; }
+  .lb-cloud-archive { color: var(--ux-muted); font-size: 11px; }
+  .lb-cloud-more { margin-top: 22px; }
+  .lb-cloud-note { margin: 22px 0 0; text-align: center; font-size: 10px; }
+  .lb-cloud-error { color: #a54635; line-height: 1.7; }
+  .lb-cloud-error .ux-text-button { display: flex; width: fit-content; }
+  .lb-cloud-loading { display: flex; align-items: center; gap: 9px; padding: 16px 0 24px; color: var(--ux-teal); font-size: 12px; }
+  .lb-cloud-loading-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ux-teal); animation: ux-pulse 1.4s ease-in-out infinite; }
+  .lb-cloud-detail-heading { margin-top: 22px; }
+  .lb-cloud-detail-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 12px 0; border-bottom: 1px solid var(--ux-line); font-size: 13px; text-align: left; }
+  .lb-cloud-detail-row .ux-icon { width: 17px; height: 17px; }
+  .lb-cloud-detail-row .ux-icon:last-child { margin-left: auto; width: 13px; height: 13px; }
+  .lb-cloud-detail-row > text, .lb-cloud-detail-row > span { min-width: 0; overflow-wrap: anywhere; }
+}

@@ -1,3 +1,5 @@
+/* postcss-pxtransform disable */
+// Shared with the web preview: dimensions use CSS pixels, not a 750px design canvas.
 .ux-app {
   --ux-panel: #f2f7f7; --ux-line: #e2ecee;
   input, textarea { color: var(--ux-ink); font-family: inherit; min-width: 0; }

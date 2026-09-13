@@ -62,6 +62,8 @@ function plannerHarness(overrides = {}) {
     if (dependency === '@tarojs/components') return Object.fromEntries(['View', 'Text', 'Button', 'Textarea'].map(name => [name, name]))
     if (dependency === './VisualMedia') return { Icon: 'Icon', Photo: 'Photo' }
     if (dependency === './SharedUI') return { DemoNote: 'DemoNote', PageHeader: 'PageHeader' }
+    if (dependency.endsWith('/PlannerReply')) return { default: 'PlannerReply' }
+    if (dependency.endsWith('/PlannerProgress')) return { default: 'PlannerProgress' }
     if (dependency === './presentation') return { formatPrice: () => '待确认', priceStatusLabel: () => '价格待确认', tripDurationLabel: () => '两天', travelerLabel: () => '人数待确认' }
     if (dependency.endsWith('.scss')) return {}
     throw new Error(`Unexpected planner dependency: ${dependency}`)
@@ -76,7 +78,7 @@ function plannerHarness(overrides = {}) {
     throw new Error('Planner render did not settle')
   }
   function nodes(value = tree) { if (!value || typeof value !== 'object') return []; if (Array.isArray(value)) return value.flatMap(item => nodes(item ?? null)); return [value, ...nodes(value.props?.children ?? null)] }
-  function content(value = tree) { if (value === null || value === undefined || typeof value === 'boolean') return ''; if (typeof value !== 'object') return String(value); if (Array.isArray(value)) return value.map(item => content(item ?? null)).join(''); return value.type === 'DemoNote' ? value.props.text : content(value.props?.children ?? null) }
+  function content(value = tree) { if (value === null || value === undefined || typeof value === 'boolean') return ''; if (typeof value !== 'object') return String(value); if (Array.isArray(value)) return value.map(item => content(item ?? null)).join(''); if (value.type === 'PlannerReply') return value.props.content; return value.type === 'DemoNote' ? value.props.text : content(value.props?.children ?? null) }
   render()
   return { props, sent, render, nodes, content, button: label => nodes().find(node => node.type === 'Button' && content(node) === label) }
 }
@@ -93,7 +95,7 @@ check('an interrupted turn without an artifact shows retry and no empty result c
   h.button('重试这次规划').props.onClick()
   assert.deepEqual(h.sent, [h.props.productionPrompt])
   h.render()
-  assert.ok(h.content().includes('正在规划你的旅程'))
+  assert.ok(h.nodes().some(node => node.props?.className === 'pl-generating'))
 })
 check('rate limiting is explained only when explicitly reported on an unfinished turn', () => {
   const h = plannerHarness({ productionStopReason: 'max_tool_steps', productionWarnings: ['research_provider_rate_limited'] })
@@ -133,5 +135,30 @@ check('clarification without an artifact stays a conversation instead of a resul
   assert.ok(!h.content().includes('本次规划未完成'))
   assert.ok(!h.content().includes('每日安排尚未补充'))
   assert.ok(h.button('继续补充想法'))
+})
+check('saved itinerary appears before the full formatted reply without an empty photo', () => {
+  const h = plannerHarness({ productionStopReason: 'completed', productionResultAvailable: true, productionReply: '**东京两天**\n\n- 浅草寺\n- 上野公园' })
+  const nodes = h.nodes()
+  const resultIndex = nodes.findIndex(node => node.props?.className === 'pl-result')
+  const replyIndex = nodes.findIndex(node => node.type === 'PlannerReply')
+  assert.ok(resultIndex >= 0 && replyIndex > resultIndex)
+  assert.ok(!nodes.some(node => node.props?.className === 'pl-result-photo'))
+  assert.equal(nodes[replyIndex].props.content, h.props.productionReply)
+})
+check('active planner receives the latest progress and removes it when finished', () => {
+  const first = { connection: 'running', stage: 'researching', startedAt: 100, lastConfirmedAt: 200 }
+  const h = plannerHarness({ productionBusy: true, productionProgress: first })
+  assert.equal(h.nodes().filter(node => node.type === 'PlannerProgress').length, 1)
+  assert.equal(h.nodes().find(node => node.type === 'PlannerProgress').props.progress, first)
+  h.props.productionProgress = { ...first, stage: 'building_itinerary' }
+  h.render()
+  const current = h.nodes().filter(node => node.type === 'PlannerProgress')
+  assert.equal(current.length, 1)
+  assert.equal(current[0].props.progress.stage, 'building_itinerary')
+  assert.equal(current[0].props.compact, true)
+  assert.equal(current[0].props.active, true)
+  h.props.productionBusy = false
+  h.render()
+  assert.equal(h.nodes().filter(node => node.type === 'PlannerProgress').length, 0)
 })
 console.log(`Production presentation behavior checks: ${passed} passed.`)

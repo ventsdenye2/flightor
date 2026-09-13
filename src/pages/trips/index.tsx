@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import { Text, View } from '@tarojs/components'
+import { View } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
 import { chatStore } from '../../stores/chatStore'
 import { userStore } from '../../stores/userStore'
 import { ensureWorkspaceConversation, getCloudWorkspace, listCloudTrips, updateCloudTrip, type CloudWorkspace, type WorkspaceTrip } from '../../services/workspaceService'
 import LoginSheet from '../../components/common/LoginSheet'
+import { useProductionTab } from '../../components/navigation/ProductionTabBar'
+import { CloudTripsPage } from '../../features/ui-experience/LibraryPages'
+import { localeStore } from '../../i18n'
+import '../../features/ui-experience/experience.scss'
 import './index.scss'
 
-const statuses = { planning: '正在规划', generated: '已生成', saved: '已保存', archived: '已归档' }
 function TripsPage() {
+  useProductionTab('trips')
   const [filter, setFilter] = useState<WorkspaceTrip['status'] | undefined>()
   const [view, setView] = useState<{ key: string; trips: WorkspaceTrip[]; next: string | null; error?: string }>({ key: '', trips: [], next: null })
   const [workspace, setWorkspace] = useState<{ key: string; value: CloudWorkspace } | null>(null)
@@ -65,27 +69,15 @@ function TripsPage() {
   }
   const trips = view.key === key ? view.trips : []
   const detail = workspace?.key === key ? workspace.value : null
-  return <View className='trips-page'>
-    <View className='trips-page__header'><Text className='trips-page__eyebrow'>FLIGHTOR / TRIPS</Text><Text className='trips-page__title'>我的行程</Text><Text className='trips-page__subtitle'>从任何设备继续规划，保存你选定的路线。</Text></View>
-    {!ownerId ? <View className='trips-page__primary' onClick={() => setShowLogin(true)}>登录查看云端行程</View> : <>
-      <View className='trips-page__filters'>{([undefined, 'planning', 'generated', 'saved', 'archived'] as const).map(s => <View key={s ?? 'all'} className={filter === s ? 'is-active' : ''} onClick={() => { setFilter(s); setWorkspace(null) }}>{s ? statuses[s] : '全部'}</View>)}</View>
-      {view.key === key && view.error && <View className='trips-page__error'><Text>{view.error}</Text><View onClick={() => load()}>重试</View></View>}
-      {loading && <Text>正在加载…</Text>}
-      {!loading && !trips.length && <View className='trips-page__empty'><Text>还没有此类行程</Text></View>}
-      {trips.map(trip => <View key={trip.id} className='trips-page__card'>
-        <Text className='trips-page__status'>{statuses[trip.status]}</Text><Text className='trips-page__card-title'>{trip.title || '未命名行程'}</Text>
-        <Text className='trips-page__summary'>更新于 {new Date(trip.updatedAt).toLocaleDateString()}</Text>
-        {trip.savedRoute && <View className='trips-page__action' onClick={() => Taro.navigateTo({ url: `/pages/route/index?artifactId=${encodeURIComponent(trip.savedRoute!.artifactId)}&routeId=${encodeURIComponent(trip.savedRoute!.routeId)}` })}>查看保存的路线{trip.savedRoute.contextVersion !== trip.contextVersion ? ' · 条件已变更' : ''}</View>}
-        <View className='trips-page__actions'><View onClick={() => !busy && open(trip)}>继续规划</View><View onClick={() => !busy && details(trip)}>对话与结果</View><View onClick={() => !busy && archive(trip)}>{trip.status === 'archived' ? '恢复' : '归档'}</View></View>
-      </View>)}
-      {view.key === key && view.next && !loading && <View className='trips-page__action' onClick={() => load(view.next!)}>加载更多</View>}
-      {detail && <View className='trips-page__card'><Text className='trips-page__card-title'>{detail.trip.title || '行程内容'}</Text>
-        {detail.conversations.map(c => <View className='trips-page__action' key={c.id} onClick={() => open(detail.trip, c.id)}>{c.title || `对话 · ${new Date(c.createdAt).toLocaleDateString()}`}</View>)}
-        {detail.artifactRefs.map(a => <View className='trips-page__action' key={a.id} onClick={() => Taro.navigateTo({ url: `${a.type === 'flight_search' ? '/pages/search/index' : '/pages/route/index'}?artifactId=${encodeURIComponent(a.id)}` })}>{({ route_set: '路线结果', route: '行程大纲', travel_guide: '每日攻略', research: '目的地资料', flight_search: '航班搜索', destination_set: '目的地建议', activity: '活动' } as Record<string, string>)[a.type] || '结果'}</View>)}
-        <View onClick={() => setWorkspace(null)}>收起</View>
-      </View>}
-    </>}
-    <View className='trips-page__primary' onClick={() => { chatStore.reset(); Taro.switchTab({ url: '/pages/plan/index' }) }}>开始新的旅行</View>
+  return <View className='ux-app production-main-page trips-production'>
+    <View className='ux-screen'><CloudTripsPage signedIn={Boolean(ownerId)} trips={trips} filter={filter} loading={loading} busy={busy}
+      error={view.key === key ? view.error : undefined} hasMore={view.key === key && Boolean(view.next)} workspace={detail} locale={localeStore.locale}
+      onLogin={() => setShowLogin(true)} onPlan={() => { chatStore.reset(); void Taro.switchTab({ url: '/pages/plan/index' }) }}
+      onFilter={status => { setFilter(status); setWorkspace(null) }} onRetry={() => void load()} onLoadMore={() => { if (view.key === key && view.next) void load(view.next) }}
+      onOpenTrip={(trip, conversationId) => void open(trip, conversationId)} onDetails={trip => void details(trip)} onArchive={trip => void archive(trip)}
+      onSavedRoute={trip => { if (trip.savedRoute) void Taro.navigateTo({ url: `/pages/route/index?artifactId=${encodeURIComponent(trip.savedRoute.artifactId)}&routeId=${encodeURIComponent(trip.savedRoute.routeId)}` }) }}
+      onArtifact={artifact => void Taro.navigateTo({ url: `${artifact.type === 'flight_search' ? '/pages/search/index' : '/pages/route/index'}?artifactId=${encodeURIComponent(artifact.id)}` })}
+      onCloseWorkspace={() => setWorkspace(null)} /></View>
     <LoginSheet visible={showLogin} onClose={() => setShowLogin(false)} />
   </View>
 }
