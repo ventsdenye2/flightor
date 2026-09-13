@@ -62,7 +62,7 @@
 - 四个正式 tab 使用同一套深墨绿 / 海洋青 SVG 图标，并区分激活态。
 - Plan 不再将 `cover: null` 当成可点击灵感卡，也不展示无实现的生产取消动作。
 - Explore 六分类使用横向滚动，首次加载显示稳定骨架；真实条目无媒体时继续显示明确占位。
-- 登录抽屉使用白色产品样式、44px 控件、正确按钮语义，并在打开时隐藏 tabBar。
+- 登录抽屉使用白色产品样式、44px 控件和正确按钮语义；打开时同时隐藏原生与自定义 tabBar，关闭后恢复自定义 tabBar，隐私说明及底部安全区不再被遮挡。
 - route 详情的英文遗留文案、旧蓝色和点击型 View 已收敛为中文、海洋青和原生 Button。
 - 固定里斯本照片、硬编码航线 SVG、无引用图钉和样例 sources 已退出生产树，只保留在 UI 参考提交。
 
@@ -70,9 +70,12 @@
 
 - 原 UI 参考：`C:\Users\VENTSDENYE5\.codex\visualizations\2026\09\13\01a09a6a-7318-7343-b808-15ccc16b56ce\flightor-reference-qa`
 - 修复前生产基线：`C:\Users\VENTSDENYE5\.codex\visualizations\2026\09\13\01a09a6a-7318-7343-b808-15ccc16b56ce\flightor-parity-qa`
-- 修复后生产截图：`C:\Users\VENTSDENYE5\.codex\visualizations\2026\09\13\01a09a6a-7318-7343-b808-15ccc16b56ce\flightor-parity-after`
+- 首轮修复后生产截图（登录弹层仍露出自定义 tabBar，已被取代）：`C:\Users\VENTSDENYE5\.codex\visualizations\2026\09\13\01a09a6a-7318-7343-b808-15ccc16b56ce\flightor-parity-after`
+- 最终修复后生产截图：`C:\Users\VENTSDENYE5\.codex\visualizations\2026\09\13\01a09a6a-7318-7343-b808-15ccc16b56ce\flightor-parity-final`
 
 参考和生产截图均以微信模拟器证据为准，不能用 H5 预览代替。修复后报告必须同时记录恢复 worktree 路径、`miniprogramRoot: dist/`、构建 manifest 和模拟器信息。
+
+最终微信报告硬性核对自定义 tabBar 在登录弹层打开前可见、打开后从真实 custom-tab-bar 渲染树消失、关闭后恢复；三项均为 true，且 `failures` 为空。登录截图还人工确认隐私说明、面板底部和 iPhone 安全区完整可见。
 
 ## 5. 真实数据边界
 
@@ -86,7 +89,7 @@
 | --- | --- |
 | `node node_modules/typescript/bin/tsc --noEmit` | 通过，退出码 0 |
 | `npm run test:weapp-build-info` | 11 条通过 |
-| `npm run test:session-recovery` | 19 条通过 |
+| `npm run test:session-recovery` | 20 条通过 |
 | `npm run test:route-page-dispatch` | 17 条通过 |
 | `npm run test:route-ui-polish` | 18 条通过 |
 | `npm run test:artifacts` | 19 条通过 |
@@ -94,13 +97,13 @@
 | `npm run test:production-presentation` | 24 + 6 + 7 条通过 |
 | `npm test` | 全套通过，退出码 0 |
 | `git diff --check` | 通过，退出码 0 |
-| `npm run build:weapp` | 通过，正式产物为 `dist/` |
+| `npm run build:weapp` | 连续两次通过，正式产物为 `dist/` |
 
 最终构建身份以 `dist/build-info.json` 及修复后 `production-after-report.json` 为准。manifest 只包含提交 SHA、dirty 状态、源码指纹、构建时间、模式与 API 地址，不记录登录 key、token 或 provider 密钥。
 
 ## 7. 验收结论
 
-通过：冻结 UI 参考复现、正式四主页面、route 全状态统一外壳、真实保存航班适配、固定样例退出生产、TypeScript、全套离线测试、正式微信构建和微信模拟器截图。
+通过：冻结 UI 参考复现、正式四主页面、route 全状态统一外壳、登录弹层完整遮蔽自定义导航并在关闭后恢复、真实保存航班适配、固定样例退出生产、TypeScript、全套离线测试、连续正式微信构建和微信模拟器截图。
 
 未验收：微信真机、真实微信登录、横屏 / 平板 / 最大系统字号 / 屏幕阅读器焦点；新一次付费模型请求；媒体与 POI 新契约；真实航班查询、修改后恢复和失败 / 部分完成的本轮端到端重跑。正式构建仍指向 loopback API，只能证明本机模拟器路径，不能证明手机可访问后端。
 

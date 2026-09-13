@@ -26,7 +26,7 @@
 - productionPresentation 只接入精确保存、精确 context 和精确 routeId 的真实航班；未核验金额不显示。
 - Plan 不再把缺图的生产空壳渲染成样例灵感卡。
 - Explore 增加横向分类和骨架加载，不使用里斯本图片兜底。
-- 登录抽屉、四栏 tab 图标和失败反馈按原 UI 视觉规范收敛。
+- 登录抽屉、四栏 tab 图标和失败反馈按原 UI 视觉规范收敛；弹层打开时自定义 tabBar 从独立渲染树隐藏，关闭后恢复，底部隐私说明和安全区不再被遮挡。
 - 固定里斯本样例资产已退出生产树，在 `060d0de` 参考工作区中仍完整保留。
 - 正式构建增加 `dist/build-info.json`，可识别 SHA、dirty 状态和源码指纹。
 
@@ -40,7 +40,7 @@ backend、experiments、认证、存储、版本校验和审计规则均保留�
 
 完整矩阵、命令退出码和截图路径见 `docs/UI_PARITY_ACCEPTANCE.md`。
 
-已通过 TypeScript、全套 `npm test`、正式微信构建，以及原 UI 参考、修复前生产基线和修复后生产页面的微信模拟器截图。最终查看时必须核对 `production-after-report.json` 中的 project、build、`miniprogramRoot` 和 failures，不能只看开发者工具标题或旧 dist 时间。
+已通过 TypeScript、全套 `npm test`、连续正式微信构建，以及原 UI 参考、修复前生产基线和修复后生产页面的微信模拟器截图。最终证据目录为 `C:\Users\VENTSDENYE5\.codex\visualizations\2026\09\13\01a09a6a-7318-7343-b808-15ccc16b56ce\flightor-parity-final`；首轮 `flightor-parity-after` 的登录截图仍露出自定义 tabBar，只保留作失败证据。最终查看时必须核对 `production-after-report.json` 中的 project、build、`miniprogramRoot`、三项 tabBar 断言和 failures，不能只看开发者工具标题或旧 dist 时间。
 
 仍未完成微信真机、真实微信登录、横屏 / 平板 / 最大字号 / 屏幕阅读器，以及本轮真实付费规划和航班闭环。不要把模拟器通过写成真机通过。
 
