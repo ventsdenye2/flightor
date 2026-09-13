@@ -12,5 +12,5 @@
       "@tarojs/components": ["apps/ui-preview/src/taro-components.tsx"]
     }
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts", "../../types", "../../src/global.d.ts"]
 }

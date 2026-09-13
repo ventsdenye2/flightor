@@ -51,5 +51,6 @@
 .pl-loading-skeleton { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; > view, > div { height: 9px; border-radius: 5px; background: #e2eeee; animation: ux-pulse 1.8s ease-in-out infinite; } > view:last-child, > div:last-child { width: 65%; } }
 .pl-cancelled { padding: 17px 15px 3px; border: 1px solid #dfebed; border-radius: 14px; .ux-muted { margin-top: 6px; font-size: 11px; } }
 .pl-inline-actions { display: flex; gap: 22px; margin-top: 6px; }
+.pl-interrupted { margin-bottom: 17px; }
 @media (max-width: 360px) { .pl-welcome { padding: 20px 18px 10px; }.pl-title { font-size: 28px; }.pl-header-caption { font-size: 9px; }.pl-inspiration-title { font-size: 18px; }.pl-inspiration-copy { padding-left: 12px; }.pl-inspiration-photo { width: 39%; }.pl-result-title { font-size: 22px; }.pl-result-route { font-size: 9px; } }
 @media (max-height: 720px) { .pl-welcome { padding-top: 18px; }.pl-composer { padding-top: 8px; }.pl-textarea { height: 45px; min-height: 45px; }.pl-title { font-size: 28px; }.ux-app .pl-inspiration { margin-top: 18px; } }

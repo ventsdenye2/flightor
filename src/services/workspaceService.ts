@@ -12,7 +12,7 @@ export interface CloudWorkspace {
   trip: WorkspaceTrip; tripContextSummary: CloudTripContextSummary
   conversations: Array<{ id: string; tripId: string; title: string; status: string; createdAt: string; updatedAt: string }>
   conversationId: string | null
-  messages: Array<{ id: string; role: 'user' | 'assistant'; content: string; artifactRefs: CloudArtifactRef[]; createdAt: string; delivery?: ConversationDelivery }>
+  messages: Array<{ id: string; role: 'user' | 'assistant'; content: string; artifactRefs: CloudArtifactRef[]; createdAt: string; delivery?: ConversationDelivery; stopReason?: string; warnings?: string[] }>
   artifactRefs: CloudArtifactRef[]
   routeGeneration?: RouteGenerationRunView
 }

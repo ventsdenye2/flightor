@@ -187,6 +187,29 @@ describe('default flight-search goal verifier', () => {
 })
 
 describe('default travel-guide goal verifier', () => {
+  it('requires all fixed calendar days even when travelDays was not separately supplied', async () => {
+    const test = await fixture()
+    delete test.trip.travelDays
+    delete test.context.run.contextSnapshot.travelDays
+    test.trip.departureWindow = { from: '2026-10-12', to: '2026-10-12', precision: 'exact' }
+    test.trip.returnWindow = { from: '2026-10-14', to: '2026-10-14', precision: 'exact' }
+    test.context.run.contextSnapshot = structuredClone(test.trip)
+    const guide = await guideData(test, { dayCount: 2, mutateResearch: research => { research.brief.travelWindow = { from: '2026-10-12', to: '2026-10-14' } } })
+    await guide.store()
+    expect(await test.verify()).toMatchObject({ status: 'partial', missing: ['guide_day_coverage'] })
+  })
+
+  it('rejects a historical guide whose dates contradict its accepted duration', async () => {
+    const test = await fixture(guideIntent, {
+      travelDays: 2,
+      departureWindow: { from: '2026-10-12', to: '2026-10-13', precision: 'exact' },
+      returnWindow: { from: '2026-10-14', to: '2026-10-14', precision: 'exact' }
+    })
+    const guide = await guideData(test)
+    await guide.store()
+    expect(await test.verify()).toMatchObject({ status: 'failed', missing: ['trip_dates_inconsistent'], artifactIds: [] })
+  })
+
   it('does not equate verified evidence with a complete five-day itinerary', async () => {
     const test = await fixture()
     const guide = await guideData(test, { findingCount: 1 })

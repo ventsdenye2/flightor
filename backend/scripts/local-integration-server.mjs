@@ -23,7 +23,9 @@ globalThis.fetch = async (input, init) => {
   if (!native && body.model !== 'deepseek/deepseek-v4-flash-0731') throw new Error('MODEL_NOT_ADMITTED')
   if (!Number.isInteger(body.max_tokens) || body.max_tokens < 1 || body.max_tokens > 8000 || Buffer.byteLength(JSON.stringify(body)) > 120000) throw new Error('REQUEST_EXCEEDS_VALIDATION_ENVELOPE')
   const reservedUsd = native ? 0.50 : 0.10
-  if (ledger.calls.some(call => call.costUsd > call.reservedUsd) || spend() + reservedUsd > ledger.limitUsd || ledger.calls.length >= 30) throw new Error('INTEGRATION_BUDGET_ADMISSION_STOP')
+  // Calls accumulate across sessions; the authorized dollar limit, not a lifetime
+  // request count, governs admission. Runtime still bounds each Planner turn.
+  if (ledger.calls.some(call => call.costUsd > call.reservedUsd) || spend() + reservedUsd > ledger.limitUsd) throw new Error('INTEGRATION_BUDGET_ADMISSION_STOP')
   const call = { index: ledger.calls.length + 1, model: body.model, reservedUsd, status: 'running', startedAt: new Date().toISOString() }
   ledger.calls.push(call); write()
   try {

@@ -34,6 +34,20 @@ function context(research: { research: MockResearchAgent['research'] }) {
 }
 
 describe('research Agent tools', () => {
+  it('rejects conflicting saved Trip dates before paid research, even with an explicit research window', async () => {
+    const research = vi.fn()
+    const executionContext = context({ research }) as unknown as Parameters<typeof executeResearchBrief>[1]
+    executionContext.trips = new InMemoryTripContextRepository([{
+      ...emptyTripContext('t'), travelDays: 2,
+      departureWindow: { from: '2026-10-12', to: '2026-10-13', precision: 'exact' },
+      returnWindow: { from: '2026-10-14', to: '2026-10-14', precision: 'exact' }
+    }])
+    await expect(executeResearchBrief({ ...brief, travelWindow: { from: '2026-10-12', to: '2026-10-14' } },
+      executionContext, new AbortController().signal)).rejects.toMatchObject({ code: 'TRIP_DATES_INCONSISTENT' })
+    expect(research).not.toHaveBeenCalled()
+    expect(await executionContext.artifacts.listForTrip('t')).toEqual([])
+  })
+
   it('uses the same trusted lookup for numeric destination selectors', async () => {
     const numericDestination = { ...destination, id: '8' }
     const delegate = new MockResearchAgent([{ ...finding, destinations: [numericDestination] }])
@@ -72,7 +86,9 @@ describe('research Agent tools', () => {
     expect(stored.schemaVersion).toBe(2)
     expect(stored.payload.findings).toHaveLength(1)
     expect(research).toHaveBeenCalledOnce()
-    expect(Object.keys(research.mock.calls[0]![1] as object).sort()).toEqual(['requestId', 'signal'])
+    expect(research.mock.calls[0]![1]).toEqual({
+      requestId: 'r', signal: expect.any(AbortSignal), conversationId: 'c', tripId: 't', tripContextVersion: 0
+    })
   })
 
   it('derives research_destination window and interests from the active Trip', async () => {
@@ -83,7 +99,7 @@ describe('research Agent tools', () => {
     }, context({ research }), new AbortController().signal)
     expect(research.mock.calls[0]?.[0]).toMatchObject({
       destinations: [destination], interests: ['food'],
-      travelWindow: { from: '2026-10-01', to: '2026-10-07' }
+      travelWindow: { from: '2026-10-01' }
     })
   })
 
@@ -162,7 +178,7 @@ describe('research Agent tools', () => {
     expect(second.artifact.id).not.toBe(first.artifact.id)
     expect(await executionContext.artifacts.get(first.artifact.id)).toEqual(original)
     expect((await executionContext.artifacts.get(second.artifact.id)).payload.brief.travelWindow)
-      .toEqual({ from: '2026-10-01', to: '2026-10-07' })
+      .toEqual({ from: '2026-10-01' })
   })
 
   it('rejects mismatched output, untrusted destinations, and stale generations', async () => {

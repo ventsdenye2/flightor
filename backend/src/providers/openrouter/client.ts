@@ -9,6 +9,7 @@ import type {
 import { AppError } from '../../lib/errors.js'
 import { fetchJson } from '../../lib/http.js'
 import type { NativeResearchReceipt } from '../../research-agent/native.js'
+import { fetchNativeResearch } from './native-http.js'
 
 export type {
   ChatCompletion,
@@ -138,11 +139,14 @@ export class OpenRouterClient {
   /** Native research needs raw annotations and provider accounting; Planner completion deliberately remains compact. */
   async completeNativeResearch(body: Record<string, unknown>, options: { signal: AbortSignal; timeoutMs: number }): Promise<NativeResearchReceipt> {
     if (!this.config.OPENROUTER_API_KEY) throw new AppError('PROVIDER_NOT_CONFIGURED', 'OpenRouter is not configured', 503)
-    const response = await fetchJson<Record<string, unknown>>(
+    const result = await fetchNativeResearch(
       `${this.config.OPENROUTER_BASE_URL.replace(/\/$/, '')}/chat/completions`,
-      { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${this.config.OPENROUTER_API_KEY}` }, body: JSON.stringify(body) },
-      { provider: 'openrouter', timeoutMs: Math.min(95_000, Math.max(1_000, options.timeoutMs)), signal: options.signal }
+      body, this.config.OPENROUTER_API_KEY,
+      { timeoutMs: Math.min(95_000, Math.max(1_000, options.timeoutMs)), signal: options.signal }
     )
+    if (!result.ok) return { provider: 'openrouter', http: result.http }
+    const response = result.payload
+    if (!isRecord(response)) throw new AppError('PROVIDER_UNAVAILABLE', 'OpenRouter returned no native research completion', 502)
     const choice = Array.isArray(response.choices) ? response.choices[0] : undefined
     if (!isRecord(choice) || !isRecord(choice.message)) throw new AppError('PROVIDER_UNAVAILABLE', 'OpenRouter returned no native research completion', 502)
     const rawUsage = isRecord(response.usage) ? response.usage : undefined

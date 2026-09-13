@@ -3,13 +3,10 @@ import { checkpoint, saveWorkspaceArtifact, type ArtifactWorkspace } from '../ar
 import type { VerificationRecord } from '../aviation/types.js'
 import { researchArtifactSchema, researchBriefSchema, type ResearchAgent, type ResearchArtifact, type ResearchBrief } from './types.js'
 import type { TripContext } from '../trips/types.js'
+import { tripTravelWindow } from '../trips/dates.js'
 
 export function researchTravelWindow(trip: TripContext): ResearchBrief['travelWindow'] {
-  const from = trip.departureWindow?.from
-  const lastDeparture = trip.departureWindow?.to ?? from
-  const inferredEnd = lastDeparture && trip.travelDays ? new Date(Date.parse(`${lastDeparture}T00:00:00Z`) + (trip.travelDays - 1) * 86_400_000).toISOString().slice(0, 10) : lastDeparture
-  const to = trip.returnWindow?.to ?? inferredEnd
-  return from || to ? { ...(from ? { from } : {}), ...(to ? { to } : {}) } : undefined
+  return tripTravelWindow(trip)
 }
 
 export function researchStatusCounts(artifact: ResearchArtifact) {

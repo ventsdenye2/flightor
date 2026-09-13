@@ -101,6 +101,22 @@ suite('PostgreSQL native research budget and audit', () => {
       tripContextVersion: second.trip.context.version, provider: 'openrouter', model: 'qwen/qwen3.8-flash', reservedUsdMicros: 1, request: {} })).rejects.toMatchObject({ code: 'NATIVE_RESEARCH_BUDGET_EXCEEDED' })
   })
 
+  it('persists an HTTP failure receipt while retaining the unknown charge reservation', async () => {
+    await budget('native-http-failure', 40)
+    const { trip, conversation } = await scope()
+    const ledger = new PostgresNativeResearchLedger(db, ownerId)
+    const audit = await ledger.reserve({ budgetId: 'native-http-failure', requestId: 'http-failure', generationId: 'f470af15-7f30-496a-a0c3-dfc3761450bf', ownerId, tripId: trip.id, conversationId: conversation.id,
+      tripContextVersion: trip.context.version, provider: 'openrouter', model: 'qwen/qwen3.8-flash', reservedUsdMicros: 40, request: {} })
+    const receipt = { provider: 'openrouter', http: { status: 429, headers: { 'retry-after': '30' }, body: '{"error":{"message":"rate limited"}}', bodyTruncated: false, bodyIncomplete: false } }
+    await ledger.finish(audit.auditId, { status: 'failed', receipt, error: { code: 'PROVIDER_UNAVAILABLE', message: 'openrouter returned HTTP 429' } })
+    const row = await db.selectFrom('research_generation_audits').select(['status', 'receipt_json', 'settled_usd_micros', 'artifact_id', 'delivered_at']).where('public_id', '=', audit.auditId).executeTakeFirstOrThrow()
+    expect(row).toEqual({ status: 'failed', receipt_json: receipt, settled_usd_micros: null, artifact_id: null, delivered_at: null })
+    const account = await db.selectFrom('research_budgets').select(['reserved_usd_micros', 'settled_usd_micros']).where('id', '=', 'native-http-failure').executeTakeFirstOrThrow()
+    expect(account).toEqual({ reserved_usd_micros: '40', settled_usd_micros: '0' })
+    await expect(ledger.reserve({ budgetId: 'native-http-failure', requestId: 'http-failure-next', generationId: 'ad839792-e1d5-4c50-a70d-05b7801b24fa', ownerId, tripId: trip.id, conversationId: conversation.id,
+      tripContextVersion: trip.context.version, provider: 'openrouter', model: 'qwen/qwen3.8-flash', reservedUsdMicros: 1, request: {} })).rejects.toMatchObject({ code: 'NATIVE_RESEARCH_BUDGET_EXCEEDED' })
+  })
+
   it('does not mark a native audit delivered when a later Trip version or Goal-run cancellation blocks the Artifact write', async () => {
     await budget('native-late', 100)
     const { trip, conversation } = await scope()

@@ -4,6 +4,7 @@ import { TripContextVersionConflict } from '../trips/repository.js'
 import { destinationDiscoveryInputSchema, destinationDiscoveryResultSchema, destinationSetPayloadSchema, type DestinationDiscoveryInput, type DestinationDiscoveryService } from '../destinations/types.js'
 import { tripRoutePlanPayloadSchema, tripRoutePlanResultSchema, type TripRoutePlanner } from './types.js'
 import type { TripContext } from '../trips/types.js'
+import { assertTripDatesConsistent } from '../trips/dates.js'
 
 export async function discoverTripDestinations(input: DestinationDiscoveryInput, service: DestinationDiscoveryService, scope: ArtifactWorkspace, kind: 'destination_candidates' | 'destination_recommendations' = 'destination_candidates') {
   const query = destinationDiscoveryInputSchema.parse(input)
@@ -16,6 +17,7 @@ export async function discoverTripDestinations(input: DestinationDiscoveryInput,
 
 export async function planTripDays(input: { candidateArtifactId: string; trip: TripContext; maxCities: number }, planner: TripRoutePlanner, scope: ArtifactWorkspace) {
   if (input.trip.version !== scope.tripContextVersion) throw new TripContextVersionConflict(scope.tripContextVersion, input.trip.version)
+  assertTripDatesConsistent(input.trip)
   const source = await loadWorkspaceArtifact(scope, input.candidateArtifactId, 'destination_set', [1])
   const candidates = destinationSetPayloadSchema.parse(source.payload).candidates
   const result = tripRoutePlanResultSchema.parse(await planner.plan({ candidates, tripContext: input.trip, maxCities: input.maxCities }, { ...(scope.signal ? { signal: scope.signal } : {}) }))

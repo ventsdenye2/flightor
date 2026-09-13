@@ -1,5 +1,12 @@
 # Phase 7–9 local operation and acceptance
 
+Latest local integration evidence: [2026-09-13 continuation](HANDOFF_2026-09-13_CONTINUATION.md).
+The same Trip was corrected through the real browser/Planner, a new guide was
+saved at context version 2, and API/page refresh restored October 12–13 / two days.
+The old artifact remains immutable. Offline/backend/PG/frontend/build evidence
+and subsequent boundary tests are recorded separately there; this is not WeChat
+login or physical-device acceptance.
+
 ## Implemented scope
 
 - Route details parse immutable Artifacts into selectable paths, map edges, transfer timelines, costs, reasons and source details. Saved selections are version checked and become stale when Trip Context changes.

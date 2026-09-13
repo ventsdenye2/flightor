@@ -38,4 +38,100 @@ check('uses exact departure and return windows from matching context', () => { c
 check('delivery satisfaction controls ready status', () => { assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, workspace).status, 'ready'); assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, { ...workspace, messages: [{ delivery: { status: 'partial', artifactIds: ['guide-1'] } }] }).status, 'partial') })
 check('route-only snapshots stay partial with unknown travelers and prices', () => { const trip = artifactToTripPresentation(routeArtifact, undefined, workspace); assert.equal(trip.status, 'partial'); assert.equal(trip.days[0].status, 'pending'); assert.equal(trip.travelers, null); assert.equal(trip.flights.length, 0) })
 check('guide activities preserve identity and unknown time fields', () => { const activity = artifactToTripPresentation(routeArtifact, guideArtifact, workspace).days[0].activities[0]; assert.equal(activity.id, 'activity-1'); assert.equal(activity.time, '上午'); assert.equal(activity.until, null) })
+
+// Render the actual PlannerPage with a small hook adapter. This exercises the
+// server outcome -> visible state -> retry event without a backend or provider.
+function plannerHarness(overrides = {}) {
+  const slots = [], effects = [], sent = []
+  let cursor = 0, dirty = false, tree
+  const props = { trip: { ...artifactToTripPresentation(routeArtifact, undefined, workspace), description: 'FALLBACK_DESCRIPTION', days: [] },
+    onOpenTrip() {}, onSearchFlights() {}, onSubmitPrompt: message => sent.push(message),
+    productionPrompt: '东京玩两天，文化景点和街区散步。', productionReply: '本轮处理未完整结束。',
+    productionResultAvailable: false, ...overrides }
+  const hooks = {
+    useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], value => { const next = typeof value === 'function' ? value(slots[index]) : value; if (!Object.is(next, slots[index])) { slots[index] = next; dirty = true } }] },
+    useRef(initial) { const index = cursor++; return slots[index] ?? (slots[index] = { current: initial }) },
+    useEffect(effect, dependencies) { const index = cursor++; const previous = slots[index]; if (!previous || dependencies.some((value, i) => !Object.is(value, previous[i]))) { slots[index] = dependencies; effects.push(effect) } }
+  }
+  const componentFile = path.join(root, 'src/features/ui-experience/PlannerPage.tsx')
+  const output = ts.transpileModule(fs.readFileSync(componentFile, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText
+  const componentModule = { exports: {} }
+  vm.runInNewContext(output, { module: componentModule, exports: componentModule.exports, setTimeout, clearTimeout, require: dependency => {
+    if (dependency === 'react') return hooks
+    if (dependency === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }), Fragment: 'Fragment' }
+    if (dependency === '@tarojs/components') return Object.fromEntries(['View', 'Text', 'Button', 'Textarea'].map(name => [name, name]))
+    if (dependency === './VisualMedia') return { Icon: 'Icon', Photo: 'Photo' }
+    if (dependency === './SharedUI') return { DemoNote: 'DemoNote', PageHeader: 'PageHeader' }
+    if (dependency === './presentation') return { formatPrice: () => '待确认', priceStatusLabel: () => '价格待确认', tripDurationLabel: () => '两天', travelerLabel: () => '人数待确认' }
+    if (dependency.endsWith('.scss')) return {}
+    throw new Error(`Unexpected planner dependency: ${dependency}`)
+  } }, { filename: componentFile })
+  function render() {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      dirty = false; cursor = 0
+      tree = componentModule.exports.PlannerPage(props)
+      while (effects.length) effects.shift()()
+      if (!dirty) return tree
+    }
+    throw new Error('Planner render did not settle')
+  }
+  function nodes(value = tree) { if (!value || typeof value !== 'object') return []; if (Array.isArray(value)) return value.flatMap(item => nodes(item ?? null)); return [value, ...nodes(value.props?.children ?? null)] }
+  function content(value = tree) { if (value === null || value === undefined || typeof value === 'boolean') return ''; if (typeof value !== 'object') return String(value); if (Array.isArray(value)) return value.map(item => content(item ?? null)).join(''); return value.type === 'DemoNote' ? value.props.text : content(value.props?.children ?? null) }
+  render()
+  return { props, sent, render, nodes, content, button: label => nodes().find(node => node.type === 'Button' && content(node) === label) }
+}
+
+check('an interrupted turn without an artifact shows retry and no empty result claims', () => {
+  const h = plannerHarness({ productionStopReason: 'max_tool_steps' })
+  assert.ok(h.content().includes('本次规划未完成'))
+  assert.ok(!h.content().includes('每日安排尚未补充'))
+  assert.ok(!h.content().includes('FALLBACK_DESCRIPTION'))
+  assert.ok(!h.content().includes('结果来自当前登录行程'))
+  assert.ok(!h.content().includes('限流'))
+  assert.equal(h.button('查看航班'), undefined)
+  assert.equal(h.nodes().some(node => node.props?.className === 'pl-result'), false)
+  h.button('重试这次规划').props.onClick()
+  assert.deepEqual(h.sent, [h.props.productionPrompt])
+  h.render()
+  assert.ok(h.content().includes('正在规划你的旅程'))
+})
+check('rate limiting is explained only when explicitly reported on an unfinished turn', () => {
+  const h = plannerHarness({ productionStopReason: 'max_tool_steps', productionWarnings: ['research_provider_rate_limited'] })
+  assert.ok(h.content().includes('联网研究服务暂时限流，本次未生成新攻略，请稍后重试。'))
+})
+check('a transport failure is an error with retry instead of a voluntary pause', () => {
+  const h = plannerHarness({ productionError: '规划服务暂时不可用，请重试。' })
+  assert.ok(h.content().includes('规划服务暂时不可用，请重试。'))
+  assert.ok(!h.content().includes('已暂停'))
+  assert.ok(h.button('重试这次规划'))
+})
+check('a finished model turn with pending delivery and rate limiting offers an explicit retry', () => {
+  const h = plannerHarness({ productionStopReason: 'goal_pending', productionWarnings: ['research_provider_rate_limited'],
+    productionDelivery: { status: 'pending', artifactIds: [], missing: ['research'], warnings: [] } })
+  assert.ok(h.content().includes('联网研究服务暂时限流'))
+  assert.ok(h.button('重试这次规划'))
+})
+check('partial delivery retains its saved result alongside the retry action', () => {
+  const h = plannerHarness({ productionStopReason: 'goal_partial', productionResultAvailable: true,
+    productionDelivery: { status: 'partial', artifactIds: ['route-1'], missing: ['travel_guide'], warnings: [] } })
+  assert.ok(h.content().includes('本次规划未完成'))
+  assert.ok(h.nodes().some(node => node.props?.className === 'pl-result'))
+  assert.ok(h.button('重试这次规划'))
+})
+check('a satisfied result stays successful even after a research rate-limit warning', () => {
+  const h = plannerHarness({ productionStopReason: 'completed', productionResultAvailable: true, productionReply: '两天攻略已完成并保存。',
+    productionWarnings: ['research_provider_rate_limited'], productionDelivery: { status: 'satisfied', artifactIds: ['guide-1'], missing: [], warnings: [] } })
+  assert.ok(h.content().includes('两天攻略已完成并保存。'))
+  assert.ok(!h.content().includes('本次规划未完成'))
+  assert.ok(!h.content().includes('限流'))
+  assert.equal(h.button('重试这次规划'), undefined)
+  assert.ok(h.nodes().some(node => node.props?.className === 'pl-result'))
+})
+check('clarification without an artifact stays a conversation instead of a result', () => {
+  const h = plannerHarness({ productionStopReason: 'responded', productionReply: '想从哪里出发？' })
+  assert.ok(h.content().includes('想从哪里出发？'))
+  assert.ok(!h.content().includes('本次规划未完成'))
+  assert.ok(!h.content().includes('每日安排尚未补充'))
+  assert.ok(h.button('继续补充想法'))
+})
 console.log(`Production presentation behavior checks: ${passed} passed.`)

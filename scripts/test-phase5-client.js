@@ -545,13 +545,20 @@ cloudStore.openCloudWorkspace({
   tripContextSummary: cloudStore.tripContextSummary, routeGeneration: makeRun('running'),
   artifactRefs: [cloudRef], messages: [
     { id: 'cloud-user', role: 'user', content: 'my trip', artifactRefs: [] },
-    { id: 'cloud-assistant', role: 'assistant', content: 'saved route', artifactRefs: [cloudRef] }
+    { id: 'cloud-assistant', role: 'assistant', content: 'saved route', artifactRefs: [cloudRef], stopReason: 'max_tool_steps', warnings: ['research_provider_rate_limited'] }
   ]
 }, 'user-a')
 check('Cloud workspace restores conversations, artifact links and active generation',
   cloudStore.currentSessionId === 'cloud-conversation-cloud' && cloudStore.tripId === 'trip-cloud'
   && cloudStore.messages.length === 2 && cloudStore.timeline[0].artifactRefs[0].id === cloudRef.id
   && cloudStore.routeGeneration?.status === 'running')
+check('Cloud workspace restores the reported failure reason and warning without inventing a completed turn',
+  cloudStore.timeline[0].stopReason === 'max_tool_steps'
+  && cloudStore.timeline[0].warnings[0] === 'research_provider_rate_limited')
+const restoredFailure = history.sanitizeHistoryPayload(history.makeChatHistoryPayload(cloudStore.currentSessionId, cloudStore.sessions)).sessions
+  .find(session => session.id === cloudStore.currentSessionId)?.timeline[0]
+check('Restored failure diagnostics survive the next local history refresh', restoredFailure?.stopReason === 'max_tool_steps'
+  && restoredFailure?.warnings[0] === 'research_provider_rate_limited')
 let rejectedOwner = false
 try { cloudStore.openCloudWorkspace({ conversationId: 'foreign' }, 'user-b') } catch { rejectedOwner = true }
 check('Cloud workspace rejects a response for another owner before mutation', rejectedOwner
@@ -640,6 +647,8 @@ restoredCloudDeliveryStore.openCloudWorkspace({
 check('cloud restoration preserves server delivery independently of route run success', restoredCloudDeliveryStore.timeline[0].delivery.status === 'pending'
   && restoredCloudDeliveryStore.timeline[0].delivery.goalId === delivery.goalId
   && restoredCloudDeliveryStore.artifactRefs.some(ref => ref.id === 'cloud-finished-route'))
+check('Historical workspace messages without diagnostics do not acquire an inferred rate-limit warning',
+  restoredCloudDeliveryStore.timeline[0].stopReason === undefined && restoredCloudDeliveryStore.timeline[0].warnings.length === 0)
 
 const multiDelivery = { status: 'pending', artifactIds: [], missing: [], warnings: [], goals: [delivery, { ...delivery, goalId: 'goal-research' }] }
 restoredCloudDeliveryStore.timeline[0].delivery = multiDelivery

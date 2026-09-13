@@ -112,6 +112,19 @@ describe('AgentRuntime and ToolRegistry', () => {
     expect(outcome.content).not.toContain('must-not-leak')
   })
 
+  it('explains research rate limiting when tool steps end, without exposing provider details', async () => {
+    const registry = new ToolRegistry().register(tool('research_destination', async () => {
+      throw new AppError('PROVIDER_RATE_LIMITED', 'private-provider-body', 429, { token: 'private-secret' })
+    }))
+    const complete = vi.fn(async () => ({ message: { role: 'assistant' as const, content: null, tool_calls: [call('research', 'research_destination')] } }))
+    const result = await new AgentRuntime({ complete }, registry, { maxToolSteps: 1 }).run({ messages: [{ role: 'user', content: 'Plan' }], context: ctx })
+    expect(result).toMatchObject({ stopReason: 'max_tool_steps', fallback: true })
+    expect(result.reply).toContain('联网研究服务暂时限流')
+    expect(result.traces[0]).toMatchObject({ domainErrorCode: 'PROVIDER_RATE_LIMITED', warnings: ['research_provider_rate_limited'] })
+    expect(result.messages.find(message => message.role === 'tool')?.content).toContain('Do not immediately repeat research')
+    expect(JSON.stringify(result)).not.toContain('private-')
+  })
+
   it('reads persisted artifacts only from the current trip and bounds large excerpts', async () => {
     const artifacts = new InMemoryArtifactRepository('u', new Set(['t', 'other']))
     const current = await artifacts.create({ tripId: 't', type: 'route_set', schemaVersion: 1, payload: { kind: 'generated_route_set', text: 'x'.repeat(25000) } })
@@ -260,10 +273,21 @@ describe('Server-verified turn delivery', () => {
       expect(await pending).toMatchObject({ stopReason: 'turn_timeout', fallback: true })
       releaseRead(state.run)
       await vi.advanceTimersByTimeAsync(0)
-      expect(update).not.toHaveBeenCalled()
+      expect(update).toHaveBeenCalledExactlyOnceWith(state.run.id, state.run.revision, { status: 'failed' })
       expect(complete).toHaveBeenCalledTimes(1)
       expect(vi.getTimerCount()).toBe(0)
     } finally { vi.useRealTimers() }
+  })
+
+  it.each(['pending', 'satisfied'] as const)('keeps the research failure reason without overriding %s delivery', async status => {
+    const state = await setup({ status, artifactIds: [], missing: status === 'pending' ? ['travel_guide_artifact'] : [], warnings: [] })
+    const registry = new ToolRegistry().register(tool('web_research', async () => { throw new AppError('PROVIDER_RATE_LIMITED', 'private-body', 429) }))
+    const complete = vi.fn()
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: null, tool_calls: [call('research', 'web_research')] } })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Saved from compatible evidence.' } })
+    const result = await new AgentRuntime({ complete }, registry).run({ messages: [{ role: 'user', content: 'Plan' }], context: state.context })
+    expect(result.delivery.status).toBe(status)
+    expect(result.reply).toBe(status === 'satisfied' ? 'Saved from compatible evidence.' : '联网研究服务暂时限流，本轮未能完成攻略。已保存的结果会保留，请稍后重试。')
   })
 
   it('rejects a premature success claim when the Agent omits finish_goal', async () => {
@@ -273,7 +297,84 @@ describe('Server-verified turn delivery', () => {
     expect(result).toMatchObject({ stopReason: 'goal_pending', delivery: { status: 'pending', goalId: state.goal.id } })
     expect(result.reply).not.toContain('Your complete itinerary is saved.')
     expect(complete).toHaveBeenCalledTimes(1)
-    expect((await state.runs.get(state.run.id))?.status).toBe('running')
+    expect((await state.runs.get(state.run.id))?.status).toBe('failed')
+    expect((await state.goals.get(state.goal.id))?.status).toBe('pending')
+  })
+
+  it.each(['model_failure', 'max_tool_steps', 'tool_call_limit', 'cancelled', 'stale_generation'] as const)(
+    'closes its own attempt on %s and permits an explicit fresh run', async reason => {
+      const state = await setup({ status: 'pending', artifactIds: [], missing: ['travel_guide_artifact'], warnings: [] })
+      const controller = new AbortController()
+      if (reason === 'cancelled') controller.abort()
+      const complete = vi.fn(async () => {
+        if (reason === 'model_failure') throw new Error('Provider unavailable')
+        return { message: { role: 'assistant' as const, content: null, tool_calls: [call('a', 'read'), call('b', 'read')] } }
+      })
+      const result = await new AgentRuntime({ complete }, new ToolRegistry(), {
+        ...(reason === 'max_tool_steps' ? { maxToolSteps: 0 } : {}),
+        ...(reason === 'tool_call_limit' ? { maxToolCallsPerStep: 1 } : {})
+      }).run({ messages: [{ role: 'user', content: 'Plan' }], context: state.context,
+        signal: controller.signal, isGenerationCurrent: () => reason !== 'stale_generation' })
+      expect(result).toMatchObject({ stopReason: reason, delivery: { status: 'pending' } })
+      const expectedStatus = reason === 'cancelled' || reason === 'stale_generation' ? 'cancelled' : 'failed'
+      expect(await state.runs.get(state.run.id)).toMatchObject({ status: expectedStatus, workingSet: state.run.workingSet })
+      expect(await state.goals.get(state.goal.id)).toMatchObject({ status: 'pending' })
+      const next = await state.runs.create({ goalId: state.goal.id, tripId: 't', generationId: 'next-turn',
+        contextVersion: 0, contextSnapshot: emptyTripContext('t'), idempotencyKey: 'next-turn' })
+      expect(next.run).toMatchObject({ status: 'running' })
+      expect(next.run.id).not.toBe(state.run.id)
+    }
+  )
+
+  it('does not close a background or other generation attempt when this turn fails', async () => {
+    const state = await setup({ status: 'pending', artifactIds: [], missing: [], warnings: [] })
+    state.context.generationId = 'different-turn'
+    await new AgentRuntime({ complete: async () => { throw new Error('Provider unavailable') } }, new ToolRegistry())
+      .run({ messages: [{ role: 'user', content: 'Plan' }], context: state.context })
+    expect(await state.runs.get(state.run.id)).toMatchObject({ status: 'running', revision: 0 })
+  })
+
+  it('reports cleanup storage failure without claiming the unfinished Goal completed', async () => {
+    const state = await setup({ status: 'pending', artifactIds: [], missing: ['travel_guide_artifact'], warnings: [] })
+    vi.spyOn(state.runs, 'update').mockRejectedValue(new Error('Storage unavailable'))
+    const result = await new AgentRuntime({ complete: async () => { throw new Error('Provider unavailable') } }, new ToolRegistry())
+      .run({ messages: [{ role: 'user', content: 'Plan' }], context: state.context })
+    expect(result).toMatchObject({ stopReason: 'model_failure', delivery: { status: 'pending', warnings: ['goal_attempt_cleanup_failed'] } })
+    expect(await state.goals.get(state.goal.id)).toMatchObject({ status: 'pending' })
+  })
+
+  it('bounds stalled cleanup and prevents a late read from triggering a terminal write', async () => {
+    const state = await setup({ status: 'pending', artifactIds: [], missing: [], warnings: [] })
+    let release!: (run: typeof state.run) => void
+    vi.spyOn(state.runs, 'get').mockResolvedValueOnce(state.run)
+      .mockImplementationOnce(async () => new Promise(resolve => { release = resolve }))
+    const update = vi.spyOn(state.runs, 'update')
+    vi.useFakeTimers()
+    try {
+      const pending = new AgentRuntime({ complete: async () => { throw new Error('Provider unavailable') } }, new ToolRegistry())
+        .run({ messages: [{ role: 'user', content: 'Plan' }], context: state.context })
+      await vi.advanceTimersByTimeAsync(3_001)
+      expect(await pending).toMatchObject({ delivery: { warnings: ['goal_attempt_cleanup_failed'] } })
+      release(state.run)
+      await vi.advanceTimersByTimeAsync(0)
+      expect(update).not.toHaveBeenCalled()
+      expect(vi.getTimerCount()).toBe(0)
+    } finally { vi.useRealTimers() }
+  })
+
+  it('preserves a concurrent terminal completion during attempt cleanup', async () => {
+    const state = await setup({ status: 'pending', artifactIds: [], missing: [], warnings: [] })
+    const update = state.runs.update.bind(state.runs)
+    vi.spyOn(state.runs, 'update').mockImplementationOnce(async (id, revision, patch) => {
+      await state.runs.commitCompletion({ goalId: state.goal.id, runId: id,
+        expectedGoalRevision: 0, expectedRunRevision: revision, goalStatus: 'satisfied', runStatus: 'satisfied', currentTripVersion: 0 })
+      return update(id, revision, patch)
+    })
+    const result = await new AgentRuntime({ complete: async () => { throw new Error('Provider unavailable') } }, new ToolRegistry())
+      .run({ messages: [{ role: 'user', content: 'Plan' }], context: state.context })
+    expect(result.delivery.warnings).not.toContain('goal_attempt_cleanup_failed')
+    expect(await state.runs.get(state.run.id)).toMatchObject({ status: 'satisfied', revision: 1 })
+    expect(await state.goals.get(state.goal.id)).toMatchObject({ status: 'satisfied', revision: 1 })
   })
 
   it('persists a verified result even without an explicit finish_goal call', async () => {
@@ -355,6 +456,7 @@ describe('Server-verified turn delivery', () => {
       .run({ messages: [{ role: 'user', content: 'Save' }], context: state.context })
     expect(result).toMatchObject({ stopReason: 'goal_failed', delivery: { status: 'failed', warnings: ['goal_verification_failed'] } })
     expect((await state.goals.get(state.goal.id))?.status).toBe('pending')
+    expect((await state.runs.get(state.run.id))?.status).toBe('failed')
   })
 
   it('bounds final verification when an evidence store does not respond', async () => {
@@ -369,6 +471,7 @@ describe('Server-verified turn delivery', () => {
       expect(result).toMatchObject({ stopReason: 'goal_pending', delivery: { status: 'pending', warnings: ['goal_verification_interrupted'] } })
       expect(result.delivery.goals).toMatchObject([{ goalId: state.goal.id, kind: 'travel_guide', status: 'pending' }])
       expect((await state.goals.get(state.goal.id))?.status).toBe('pending')
+      expect((await state.runs.get(state.run.id))?.status).toBe('failed')
     } finally { vi.useRealTimers() }
   })
 })

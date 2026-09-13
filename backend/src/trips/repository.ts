@@ -2,6 +2,7 @@ import type { TripContext, TripContextPatch } from './types.js'
 import { emptyTripContext, tripContextSchema } from './types.js'
 import { v7 as uuidv7 } from 'uuid'
 import { AppError } from '../lib/errors.js'
+import { assertTripDatesConsistent } from './dates.js'
 
 export class TripContextVersionConflict extends AppError {
   constructor(readonly expectedVersion: number, readonly actualVersion: number) {
@@ -30,6 +31,7 @@ export function applyTripContextPatch(current: TripContext, patch: TripContextPa
     else (next as Record<string, unknown>)[key] = structuredClone(value)
   }
   next.version = current.version + 1
+  assertTripDatesConsistent(next)
   return next
 }
 

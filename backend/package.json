@@ -19,13 +19,13 @@
     "demo:e2e": "node --env-file=.env.demo scripts/demo-e2e.mjs",
     "demo:guide": "node --env-file=.env.demo scripts/demo-guide-mvp.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "test:db": "vitest run src/db/cloud-state.integration.test.ts --pool=threads --maxWorkers=1",
-    "test:db:phase5": "vitest run src/route-generation/postgres.integration.test.ts --pool=threads --maxWorkers=1",
+    "test": "vitest run --config vitest.config.ts",
+    "test:db": "vitest run --config vitest.db.config.ts",
+    "test:db:phase5": "vitest run --config vitest.db.config.ts src/route-generation/postgres.integration.test.ts",
     "migrate": "tsx src/db/migrate.ts",
     "migrate:down": "tsx src/db/migrate.ts down",
     "admin:create": "tsx src/admin/bootstrap.ts",
-    "test:db:phase789": "vitest run src/discovery/postgres.integration.test.ts --pool=threads --maxWorkers=1"
+    "test:db:phase789": "vitest run --config vitest.db.config.ts src/discovery/postgres.integration.test.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.0.0",

@@ -1050,6 +1050,8 @@ export class ChatStore {
           turn.assistant = { role: 'assistant', content: message.content }
           turn.artifactRefs = message.artifactRefs
           if (message.delivery) turn.delivery = message.delivery
+          if (message.stopReason) turn.stopReason = message.stopReason
+          if (message.warnings) turn.warnings = [...message.warnings]
         }
       }
     }

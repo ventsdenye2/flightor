@@ -2,7 +2,7 @@ import type { LocationRef } from '../aviation/types.js'
 import { cityGroupingIdentity, locationsOverlap } from '../locations/identity.js'
 import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
 import type { ResearchArtifact } from '../research-agent/types.js'
-import { researchTravelWindow } from '../research-agent/workspace.js'
+import { tripDatesConsistent, tripDurationDays, tripTravelWindow } from '../trips/dates.js'
 import type { TripRoutePlanPayload } from '../trip-planning/types.js'
 import type { TripContext } from '../trips/types.js'
 import type { TravelGuideArtifactPayload } from './artifact.js'
@@ -40,9 +40,10 @@ export function validateGuideContent(input: {
   now?: string
 }): GuideContentValidation {
   const { guide, route, research, trip, constraints } = input
+  if (!tripDatesConsistent(trip)) return failed('trip_dates_inconsistent')
   const missing: string[] = []
   const warnings: string[] = []
-  const expectedDays = trip.travelDays ?? route.days.length
+  const expectedDays = tripDurationDays(trip) ?? route.days.length
   const dayNumbers = new Set(guide.days.map(day => day.day))
   if (guide.days.length !== expectedDays || dayNumbers.size !== expectedDays
     || guide.days.some((day, index) => day.day !== index + 1)) missing.push('guide_day_coverage')
@@ -60,7 +61,7 @@ export function validateGuideContent(input: {
   if (guide.unassignedActivityRefs.length > 0 || route.unassignedActivityRefs.length > 0
     || trip.mustIncludeEvents.some(event => !route.days.some(day => day.activityRefs.some(activity => activity.id === event.id)))) missing.push('guide_required_activity_coverage')
 
-  const expectedWindow = researchTravelWindow(trip)
+  const expectedWindow = tripTravelWindow(trip)
   const usedFindings = new Set<string>()
   const duplicates: NonNullable<GuideContentValidation['details']> = []
   const checkedResearch = new Set<string>()

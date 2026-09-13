@@ -20,7 +20,7 @@ export interface WorkspaceTrip {
   contextVersion: number; savedRoute: SavedRoute | null; createdAt: string; updatedAt: string
 }
 export interface WorkspaceArtifactRef { id: string; type: ArtifactType; schemaVersion: number; presentationHint: string }
-export interface WorkspaceMessage { id: string; role: 'user' | 'assistant'; content: string; artifactRefs: WorkspaceArtifactRef[]; createdAt: string; delivery?: GoalDelivery }
+export interface WorkspaceMessage { id: string; role: 'user' | 'assistant'; content: string; artifactRefs: WorkspaceArtifactRef[]; createdAt: string; delivery?: GoalDelivery; stopReason?: string; warnings?: string[] }
 export interface TripWorkspace {
   trip: WorkspaceTrip; tripContextSummary: ReturnType<typeof summarizeTrip>
   conversations: Conversation[]; conversationId: string | null
