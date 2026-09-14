@@ -1,7 +1,9 @@
 /* postcss-pxtransform disable */
 // Production flight pages share the ui-experience visual system; no sample data.
-.pf-app {
+// Keep the viewport height even when experience.scss is emitted later.
+.ux-app.pf-app {
   height: 100vh; min-height: 0;
+  --color-bg-primary: #fff;
   --color-bg-card: #fff; --color-bg-panel: #f1f6f7; --color-bg-border: #dfe9eb; --color-bg-disabled: #dce7ea;
   --color-text-primary: #172f56; --color-text-secondary: #526f78; --color-text-placeholder: #6c7f86; --color-text-disabled: #7b8e92;
   --color-accent-cyan: #2563eb; --color-accent-orange: #856337; --color-warning: #986c27; --color-danger: #a6473c; --color-success: #267b64; --color-info: #2563eb;

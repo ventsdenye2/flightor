@@ -1,4 +1,5 @@
 /* postcss-pxtransform disable */
+page { background: #fff; }
 .pf-history { margin-top: 28px; }
 .ux-app .pf-history-row { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 68px; border-bottom: 1px solid #e5edef; font-size: 13px; }
 .pf-history-row > view:nth-child(2), .pf-history-row > div:nth-child(2) { flex: 1; min-width: 0; }
