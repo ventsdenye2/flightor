@@ -80,8 +80,8 @@ function buildEnvironment(info) {
   }
 }
 
-function writeBuildInfo(root, info) {
-  const target = path.join(root, 'dist/build-info.json')
+function writeBuildInfo(root, info, outputRoot = 'dist') {
+  const target = path.join(root, outputRoot, 'build-info.json')
   fs.mkdirSync(path.dirname(target), { recursive: true })
   fs.writeFileSync(target, `${JSON.stringify(info, null, 2)}\n`, 'utf8')
 }

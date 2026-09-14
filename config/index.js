@@ -1,6 +1,7 @@
 // FlightOR Taro 编译配置
 const apiBaseUrl = (process.env.FLIGHTOR_API_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
 const localLoginKey = process.env.FLIGHTOR_LOCAL_LOGIN_KEY || ''
+const outputRoot = process.env.TARO_ENV === 'h5' ? 'dist-h5' : 'dist'
 if (localLoginKey && !/^http:\/\/(127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/.test(apiBaseUrl)) {
   throw new Error('Local test login requires a loopback API URL')
 }
@@ -15,8 +16,8 @@ const config = {
     828: 1.81 / 2
   },
   sourceRoot: 'src',
-  outputRoot: 'dist',
-  plugins: ['@tarojs/plugin-platform-weapp', '@tarojs/plugin-framework-react'],
+  outputRoot,
+  plugins: ['@tarojs/plugin-platform-weapp', '@tarojs/plugin-platform-h5', '@tarojs/plugin-framework-react'],
   defineConstants: {
     // 第三方密钥只允许存在于自建后端。空常量仅兼容旧的本地降级代码。
     OPENROUTER_KEY: JSON.stringify(''),
@@ -31,7 +32,7 @@ const config = {
     FLIGHTOR_BUILD_MODE: JSON.stringify(process.env.FLIGHTOR_BUILD_MODE || 'development')
   },
   copy: {
-    patterns: [{ from: 'src/assets/', to: 'dist/assets/' }],
+    patterns: [{ from: 'src/assets/', to: `${outputRoot}/assets/` }],
     options: {}
   },
   framework: 'react',
@@ -60,7 +61,11 @@ const config = {
       }
     }
   },
-  h5: {}
+  h5: {
+    publicPath: '/',
+    router: { mode: 'hash' },
+    miniCssExtractPluginOption: { ignoreOrder: true }
+  }
 }
 
 const productionConfig = function (merge) {
