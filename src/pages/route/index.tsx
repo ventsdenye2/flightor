@@ -31,11 +31,12 @@ function RoutePage() {
   const [attempt, setAttempt] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState('')
+  const [layoverPreference, setLayoverPreference] = useState<'airport_only' | 'consider_city'>('airport_only')
   const activeKey = useRef(key); activeKey.current = key
   useEffect(() => {
     void Taro.setNavigationBarTitle({ title: '行程详情' })
     let active = true
-    setSaved(''); setSaving(false)
+    setSaved(''); setSaving(false); setLayoverPreference('airport_only')
     if (!ownerId || !artifactId) return () => { active = false }
     setState({ key })
     const context = { ownerId, sessionId: chatStore.currentSessionId, force: attempt > 0 }
@@ -60,8 +61,16 @@ function RoutePage() {
     try {
       const workspace = await getCloudWorkspace(artifact.tripId)
       if (activeKey.current !== key || userStore.profile?.uid !== ownerId || userStore.sessionRevision !== revision) return
-      await updateCloudTrip(artifact.tripId, { expectedVersion: workspace.trip.version, savedRoute: { artifactId: artifact.id, routeId } })
-      if (activeKey.current === key && userStore.profile?.uid === ownerId && userStore.sessionRevision === revision) setSaved('已保存到「我的行程」')
+      await updateCloudTrip(artifact.tripId, {
+        expectedVersion: workspace.trip.version,
+        selectedFlight: { kind: 'route', artifactId: artifact.id, routeId, layoverPreference }
+      })
+      const updated = await ensureWorkspaceConversation(await getCloudWorkspace(artifact.tripId, artifact.conversationId))
+      if (activeKey.current !== key || userStore.profile?.uid !== ownerId || userStore.sessionRevision !== revision) return
+      chatStore.openCloudWorkspace(updated, ownerId)
+      setSaved('已采用此航线')
+      await Taro.showToast({ title: '航线已保存', icon: 'success' })
+      await Taro.switchTab({ url: '/pages/plan/index' })
     } catch (error) { if (activeKey.current === key) void Taro.showToast({ title: error instanceof Error ? error.message : '保存失败', icon: 'none' }) }
     finally { if (activeKey.current === key) setSaving(false) }
   }
@@ -77,6 +86,27 @@ function RoutePage() {
       await Taro.switchTab({ url: '/pages/plan/index' })
     } catch (error) { void Taro.showToast({ title: error instanceof Error ? error.message : '无法打开规划记录', icon: 'none' }) }
   }
+  async function adoptOffer(source: ArtifactEnvelope, offerId: string) {
+    if (!ownerId || saving) return
+    const revision = userStore.sessionRevision
+    setSaving(true); setSaved('')
+    try {
+      const workspace = await getCloudWorkspace(source.tripId, source.conversationId)
+      if (activeKey.current !== key || userStore.sessionRevision !== revision || userStore.profile?.uid !== ownerId) return
+      await updateCloudTrip(source.tripId, {
+        expectedVersion: workspace.trip.version,
+        selectedFlight: { kind: 'offer', artifactId: source.id, offerId, layoverPreference }
+      })
+      const updated = await ensureWorkspaceConversation(await getCloudWorkspace(source.tripId, source.conversationId))
+      if (activeKey.current !== key || userStore.sessionRevision !== revision || userStore.profile?.uid !== ownerId) return
+      chatStore.openCloudWorkspace(updated, ownerId)
+      setSaved('已采用此航线')
+      await Taro.showToast({ title: '航线已保存', icon: 'success' })
+      await Taro.switchTab({ url: '/pages/plan/index' })
+    } catch (error) {
+      if (activeKey.current === key) void Taro.showToast({ title: error instanceof Error ? error.message : '保存失败，请重试', icon: 'none' })
+    } finally { if (activeKey.current === key) setSaving(false) }
+  }
   const openSource = (url: string) => { const safe = safeSourceUrl(url); if (safe) void Taro.setClipboardData({ data: safe }).then(() => Taro.showToast({ title: '来源链接已复制', icon: 'none' })).catch(() => Taro.showToast({ title: '复制失败，请重试', icon: 'none' })) }
   const view = resolveRouteDetailView({ ownerId, artifactId, error: current?.error, artifact, presentation: current?.presentation, routes: current?.routes, offerId: params.offerId })
   const goBack = () => { void Taro.navigateBack().catch(() => Taro.switchTab({ url: '/pages/trips/index' })) }
@@ -86,7 +116,8 @@ function RoutePage() {
   return <View className={ROUTE_DETAIL_SHELL_CLASS}>
     <PageHeader title={viewTitle(view)} onBack={goBack} />
     <View className='ux-scroll route-production__scroll'>
-      <RouteDetailBody view={view} routeId={params.routeId} saving={saving} saved={saved} onRetry={() => setAttempt(value => value + 1)} onSave={save} />
+      <RouteDetailBody view={view} routeId={params.routeId} saving={saving} saved={saved} layoverPreference={layoverPreference}
+        onLayoverPreference={setLayoverPreference} onAdoptOffer={adoptOffer} onRetry={() => setAttempt(value => value + 1)} onSave={save} />
       {!['guest', 'missing', 'loading'].includes(view.kind) && <View className='route-production__footer'>
         <Button className='ux-secondary' onClick={() => Taro.switchTab({ url: '/pages/trips/index' })}>查看我的行程</Button>
         <Button className='ux-text-button' onClick={() => Taro.switchTab({ url: '/pages/plan/index' })}>返回规划</Button>
@@ -111,15 +142,21 @@ function unavailableCopy(view: Extract<RouteDetailView, { kind: 'unavailable' }>
   return '返回的内容不完整，暂时无法安全展示。'
 }
 
-function RouteDetailBody({ view, routeId, saving, saved, onRetry, onSave }: { view: Exclude<RouteDetailView, { kind: 'trip' }>; routeId?: string; saving: boolean; saved: string; onRetry: () => void; onSave: (routeId: string) => void }) {
+function RouteDetailBody({ view, routeId, saving, saved, layoverPreference, onLayoverPreference, onAdoptOffer, onRetry, onSave }: {
+  view: Exclude<RouteDetailView, { kind: 'trip' }>; routeId?: string; saving: boolean; saved: string
+  layoverPreference: 'airport_only' | 'consider_city'; onLayoverPreference: (value: 'airport_only' | 'consider_city') => void
+  onAdoptOffer: (artifact: ArtifactEnvelope, offerId: string) => void; onRetry: () => void; onSave: (routeId: string) => void
+}) {
   if (view.kind === 'guest') return <EmptyState icon='user' title='登录后查看行程' description='登录后可以读取已保存的路线、攻略与航班结果。' actionLabel='前往我的行程' onAction={() => Taro.switchTab({ url: '/pages/trips/index' })} />
   if (view.kind === 'missing') return <EmptyState icon='calendar' title='这条行程链接已经失效' description='请从规划结果或“我的行程”重新打开。' actionLabel='查看我的行程' onAction={() => Taro.switchTab({ url: '/pages/trips/index' })} />
   if (view.kind === 'loading') return <View className='route-production__loading' role='status'><View className='route-production__loading-line' /><Text className='route-production__state-title'>正在整理行程详情</Text><Text className='ux-muted'>路线、时间和已保存的资料会一起显示。</Text></View>
   if (view.kind === 'error') return <EmptyState icon='calendar' title='行程详情暂时无法加载' description={view.message} actionLabel='重试' onAction={onRetry} />
   if (view.kind === 'unavailable') return <EmptyState icon='calendar' title='此内容暂时无法展示' description={unavailableCopy(view)} />
-  if (view.kind === 'route-set') return <><RouteWorkspace routes={view.routes} initialRouteId={routeId} onSave={onSave} />{(saving || saved) && <Text className='route-production__save-state'>{saving ? '正在保存…' : saved}</Text>}</>
+  if (view.kind === 'route-set') return <><RouteWorkspace routes={view.routes} initialRouteId={routeId} onSave={onSave}
+    saving={saving} layoverPreference={layoverPreference} onLayoverPreference={onLayoverPreference} />{(saving || saved) && <Text className='route-production__save-state'>{saving ? '正在保存…' : saved}</Text>}</>
   if (view.kind === 'flight-list') return <FlightSearchCard artifact={view.artifact} onAction={() => Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodeURIComponent(view.artifact.id)}` })} />
-  if (view.kind === 'flight-detail') return <FlightDetail artifact={view.artifact} offerId={view.offerId} />
+  if (view.kind === 'flight-detail') return <FlightDetail artifact={view.artifact} offerId={view.offerId} adopting={saving}
+    layoverPreference={layoverPreference} onLayoverPreference={onLayoverPreference} onAdopt={() => onAdoptOffer(view.artifact, view.offerId)} />
   return <ResearchWorkspace artifact={view.artifact} />
 }
 export default observer(RoutePage)

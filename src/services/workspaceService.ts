@@ -6,6 +6,9 @@ export interface WorkspaceTrip {
   id: string; title: string; status: 'planning' | 'generated' | 'saved' | 'archived'
   version: number; contextVersion: number
   savedRoute: { artifactId: string; routeId: string; contextVersion: number } | null
+  selectedFlight: ({ kind: 'offer'; artifactId: string; offerId: string } | { kind: 'route'; artifactId: string; routeId: string }) & {
+    contextVersion: number; revision: number; selectedAt: string; layoverPreference: 'airport_only' | 'consider_city'
+  } | null
   createdAt: string; updatedAt: string
 }
 export interface CloudWorkspace {
@@ -28,7 +31,7 @@ export async function getCloudWorkspace(tripId: string, conversationId?: string)
   requireCloud()
   return request({ url: `/v1/trips/${encodeURIComponent(tripId)}/workspace${conversationId ? `?conversationId=${encodeURIComponent(conversationId)}` : ''}`, retry: 1 })
 }
-export async function updateCloudTrip(tripId: string, change: { expectedVersion: number; title?: string; status?: 'planning' | 'archived'; savedRoute?: { artifactId: string; routeId: string } | null }): Promise<WorkspaceTrip> {
+export async function updateCloudTrip(tripId: string, change: { expectedVersion: number; title?: string; status?: 'planning' | 'archived'; savedRoute?: { artifactId: string; routeId: string } | null; selectedFlight?: ({ kind: 'offer'; artifactId: string; offerId: string } | { kind: 'route'; artifactId: string; routeId: string }) & { layoverPreference: 'airport_only' | 'consider_city' } | null }): Promise<WorkspaceTrip> {
   requireCloud()
   const result = await request<{ trip: WorkspaceTrip }>({ url: `/v1/trips/${encodeURIComponent(tripId)}`, method: 'PATCH', data: change, retry: 0 })
   return result.trip

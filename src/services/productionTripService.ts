@@ -12,19 +12,30 @@ export async function loadProductionTrip(id: string, context: ArtifactFetchConte
     getCloudWorkspace(selected.tripId, selected.conversationId)
   ])
   if (route.tripId !== selected.tripId) throw new Error('攻略与行程不匹配')
-  let guide = selected.type === 'travel_guide' ? selected : undefined
+  const selection = workspace.trip.selectedFlight
+  const guideMatchesSelection = (artifact: typeof selected) => {
+    const binding = record(record(artifact.payload)?.flightSelection)
+    if (!selection) return !binding
+    return binding?.kind === selection.kind
+      && binding?.artifactId === selection.artifactId
+      && binding?.choiceId === (selection.kind === 'offer' ? selection.offerId : selection.routeId)
+      && binding?.revision === selection.revision
+  }
+  let guide = selected.type === 'travel_guide' && guideMatchesSelection(selected) ? selected : undefined
+  let staleGuide = selected.type === 'travel_guide' ? selected : undefined
   if (!guide) {
     // API refs are newest first. Only a guide bound to this immutable route is eligible.
     for (const ref of workspace.artifactRefs.filter(ref => ref.type === 'travel_guide').slice(0, 8)) {
       const candidate = await artifactService.fetchArtifact(ref.id, context)
-      if (candidate.tripId === route.tripId && record(candidate.payload)?.routeArtifactId === route.id) { guide = candidate; break }
+      if (candidate.tripId !== route.tripId || record(candidate.payload)?.routeArtifactId !== route.id) continue
+      if (!staleGuide) staleGuide = candidate
+      if (guideMatchesSelection(candidate)) { guide = candidate; break }
     }
   }
   const routeContextVersion = record(route.payload)?.tripContextVersion
-  const savedRoute = workspace.trip.savedRoute
-  let savedRouteArtifact
-  if (savedRoute && savedRoute.contextVersion === routeContextVersion) {
-    try { savedRouteArtifact = await artifactService.fetchArtifact(savedRoute.artifactId, context) } catch { /* Keep the itinerary usable with an empty flight state. */ }
+  let selectedFlightArtifact
+  if (selection && selection.contextVersion === routeContextVersion) {
+    try { selectedFlightArtifact = await artifactService.fetchArtifact(selection.artifactId, context) } catch { /* Keep the itinerary usable with an empty flight state. */ }
   }
-  return { route, guide, workspace, presentation: artifactToTripPresentation(route, guide, workspace, savedRouteArtifact) }
+  return { route, guide: guide ?? staleGuide, workspace, presentation: artifactToTripPresentation(route, guide ?? staleGuide, workspace, selectedFlightArtifact) }
 }

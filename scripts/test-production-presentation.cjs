@@ -43,6 +43,14 @@ check('accepts only safe source URLs and preserves provider/status', () => { ass
 check('does not treat city center as activity coordinates or invent media', () => { const activity = artifactToTripPresentation(routeArtifact, guideArtifact, workspace).days[0].activities[0]; assert.equal(activity.latitude, null); assert.equal(activity.longitude, null); assert.equal(activity.media, null) })
 check('uses exact departure and return windows from matching context', () => { const trip = artifactToTripPresentation(routeArtifact, guideArtifact, workspace); assert.equal(trip.dates.start, '2026-10-01'); assert.equal(trip.dates.end, '2026-10-03'); assert.equal(trip.durationDays, 3); const old = artifactToTripPresentation({ ...routeArtifact, payload: { ...route, tripContextVersion: 3 } }, guideArtifact, workspace); assert.equal(old.dates.start, null); assert.equal(old.dates.end, null) })
 check('delivery satisfaction controls ready status', () => { assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, workspace).status, 'ready'); assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, { ...workspace, messages: [{ delivery: { status: 'partial', artifactIds: ['guide-1'] } }] }).status, 'partial') })
+check('a guide bound to an older flight selection is retained but marked for adjustment', () => {
+  const boundGuide = { ...guideArtifact, payload: { ...guide, flightSelection: { kind: 'offer', artifactId: 'fare-artifact', choiceId: 'offer-old', revision: 1 } } }
+  const changed = { ...workspace, trip: { ...workspace.trip, selectedFlight: { kind: 'offer', artifactId: 'fare-artifact', offerId: 'offer-new', revision: 2, contextVersion: 4, selectedAt: '2026-09-14T00:00:00Z', layoverPreference: 'airport_only' } } }
+  const trip = artifactToTripPresentation(routeArtifact, boundGuide, changed)
+  assert.equal(trip.status, 'partial')
+  assert.equal(trip.days[0].status, 'pending')
+  assert.match(trip.description, /航班已更换/)
+})
 check('route-only snapshots stay partial with unknown travelers and prices', () => { const trip = artifactToTripPresentation(routeArtifact, undefined, workspace); assert.equal(trip.status, 'partial'); assert.equal(trip.days[0].status, 'pending'); assert.equal(trip.travelers, null); assert.equal(trip.flights.length, 0) })
 check('guide activities preserve identity and unknown time fields', () => { const activity = artifactToTripPresentation(routeArtifact, guideArtifact, workspace).days[0].activities[0]; assert.equal(activity.id, 'activity-1'); assert.equal(activity.time, '上午'); assert.equal(activity.until, null) })
 
@@ -64,7 +72,10 @@ const savedRouteArtifact = {
     }], totalFare: { amount: 1880, currency: 'CNY' }, totalDurationMinutes: 240, transferCount: 0, warnings: [], badges: [], reasons: [], tradeoffs: []
   }]
 }
-const savedWorkspace = { ...workspace, artifactRefs: [], trip: { ...workspace.trip, savedRoute: { artifactId: 'route-set-1', routeId: 'saved-route-1', contextVersion: 4 } } }
+const savedWorkspace = { ...workspace, artifactRefs: [], trip: { ...workspace.trip,
+  savedRoute: { artifactId: 'route-set-1', routeId: 'saved-route-1', contextVersion: 4 },
+  selectedFlight: { kind: 'route', artifactId: 'route-set-1', routeId: 'saved-route-1', contextVersion: 4, revision: 1, selectedAt: '2026-09-14T00:00:00Z', layoverPreference: 'airport_only' }
+} }
 check('maps only the exact saved route with its verified fare semantics', () => {
   const trip = artifactToTripPresentation(routeArtifact, guideArtifact, savedWorkspace, savedRouteArtifact)
   assert.equal(trip.flights.length, 1)
@@ -77,10 +88,16 @@ check('maps only the exact saved route with its verified fare semantics', () => 
   assert.equal(trip.flights[0].legs[0].carrier, 'Example Air · EA100')
 })
 check('keeps flights empty for stale context, wrong artifact identity or wrong route id', () => {
-  const old = { ...savedWorkspace, trip: { ...savedWorkspace.trip, savedRoute: { ...savedWorkspace.trip.savedRoute, contextVersion: 3 } } }
+  const old = { ...savedWorkspace, trip: { ...savedWorkspace.trip,
+    savedRoute: { ...savedWorkspace.trip.savedRoute, contextVersion: 3 },
+    selectedFlight: { ...savedWorkspace.trip.selectedFlight, contextVersion: 3 }
+  } }
   assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, old, savedRouteArtifact).flights.length, 0)
   assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, savedWorkspace, { ...savedRouteArtifact, id: 'another-artifact' }).flights.length, 0)
-  const missing = { ...savedWorkspace, trip: { ...savedWorkspace.trip, savedRoute: { ...savedWorkspace.trip.savedRoute, routeId: 'missing-route' } } }
+  const missing = { ...savedWorkspace, trip: { ...savedWorkspace.trip,
+    savedRoute: { ...savedWorkspace.trip.savedRoute, routeId: 'missing-route' },
+    selectedFlight: { ...savedWorkspace.trip.selectedFlight, routeId: 'missing-route' }
+  } }
   assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, missing, savedRouteArtifact).flights.length, 0)
 })
 check('rejects unsupported route-set shapes and hides unverified totals', () => {
@@ -244,7 +261,10 @@ function productionServiceHarness(artifacts, workspaceValue) {
   passed += 1
 
   await checkAsync('does not fetch a saved route from an older context', async () => {
-    const oldWorkspace = { ...savedWorkspace, trip: { ...savedWorkspace.trip, savedRoute: { ...savedWorkspace.trip.savedRoute, contextVersion: 3 } } }
+    const oldWorkspace = { ...savedWorkspace, trip: { ...savedWorkspace.trip,
+      savedRoute: { ...savedWorkspace.trip.savedRoute, contextVersion: 3 },
+      selectedFlight: { ...savedWorkspace.trip.selectedFlight, contextVersion: 3 }
+    } }
     const harness = productionServiceHarness({ 'route-1': selectedRoute, 'route-set-1': savedRouteArtifact }, oldWorkspace)
     const result = await harness.load('route-1', {})
     assert.deepEqual(harness.calls, ['route-1'])

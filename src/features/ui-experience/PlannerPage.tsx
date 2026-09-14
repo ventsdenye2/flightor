@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { View, Text, Button, Textarea } from '@tarojs/components'
 import { Icon, Photo } from './VisualMedia'
 import { formatPrice, priceStatusLabel, tripDurationLabel, travelerLabel } from './presentation'
@@ -27,6 +27,7 @@ interface PlannerPageProps {
   productionDelivery?: ConversationDelivery
   productionWarnings?: string[]
   onCancelProduction?: () => void
+  flightDecision?: ReactNode
 }
 
 const suggestions = [
@@ -35,7 +36,7 @@ const suggestions = [
   { title: '只有一个长周末', prompt: '下一个长周末想出去走走，从上海出发，两个人，想要轻松、不赶路的安排。', icon: 'calendar' }
 ]
 
-export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction }: PlannerPageProps) {
+export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, flightDecision }: PlannerPageProps) {
   const production = Boolean(onSubmitPrompt)
   const hasResult = !production || productionResultAvailable
   const rateLimited = productionWarnings.includes('research_provider_rate_limited')
@@ -110,7 +111,7 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
     <View className='ux-scroll pl-scroll' key={submitted ? 'conversation' : 'welcome'}>
       {!submitted ? <View className='pl-welcome'>
         <Text className='pl-title'>这次，<Text className='pl-title-line'>想去哪？</Text></Text>
-        <Text className='pl-intro'>告诉我们出发地、日期和预算。<Text className='pl-intro-line'>也可以说说喜欢的旅行方式。</Text></Text>
+        <Text className='pl-intro'>告诉我们出发地、日期和预算。<Text className='pl-intro-line'>先比较航班，再安排怎么玩。</Text></Text>
 
         {hasReferenceTrip && <Button className='pl-inspiration' onClick={() => setDraft(samplePrompt)}>
           <View className='pl-inspiration-copy'><Text className='pl-card-kicker'>从这里找到灵感</Text><Text className='pl-inspiration-title'>{trip.title}</Text><View className='pl-inspiration-link'><Text>试试这个想法</Text><Icon name='arrow-right' /></View></View>
@@ -120,6 +121,7 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
         <View className='pl-suggestions-head'><Text>还没想好？从一句话开始</Text></View>
         <View className='pl-suggestions'>{visibleSuggestions.map(item => <Button key={item.title} className={`pl-suggestion ${draft === (item.prompt || samplePrompt) ? 'is-selected' : ''}`} onClick={() => setDraft(item.prompt || samplePrompt)}><Icon name={item.icon} /><Text>{item.title}</Text><Icon name='arrow-right' /></Button>)}</View>
         <Button className='pl-flight-link' onClick={onSearchFlights}><Icon name='plane' /><View><Text className='pl-flight-title'>目的地定了，先看看机票</Text><Text className='ux-muted'>搜索航班，比较时间与中转安排</Text></View><Icon name='chevron-right' /></Button>
+        {flightDecision}
       </View> : <View className='pl-conversation'>
         <Text className='pl-conversation-label'>我的旅行需求</Text>
         <View className='pl-user-message'><Text>{submitted}</Text></View>
@@ -149,6 +151,7 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
             {!production && <DemoNote text={`这是固定的${sampleLabel}参考，未按输入内容生成；航班、价格与安排均为示例。`} />}
           </>}
           {!interrupted && <PlannerReply className='pl-reply-copy' content={production ? productionReply || '正在等待规划回复。' : '先看看这份参考。'} />}
+          {flightDecision}
           {!interrupted && <View className='pl-followups'><Button className='pl-followup' onClick={() => reset(submitted)}><Text>{production && !hasResult ? '继续补充想法' : '修改我的想法'}</Text><Icon name='arrow-right' /></Button>{hasResult && <Button className='pl-followup' onClick={onSearchFlights}><Text>{production ? '查看航班' : '比较航班示例'}</Text><Icon name='plane' /></Button>}</View>}
         </>}
       </View>}
@@ -156,7 +159,7 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
     {!submitted ? <View className='pl-composer'>
       <View className='pl-input-wrap'><Textarea className='pl-textarea' value={draft} maxlength={600} ariaLabel='旅行想法' placeholder='例如：北京出发，东京五天，两个人，安排轻松一点。' onInput={event => setDraft(event.detail.value)} /><View className='pl-composer-actions'><Text className='pl-composer-hint'>{draft ? `${draft.length}/600` : '出发地、日期、人数和预算'}</Text>{draft ? <Button className='ux-icon-button pl-clear' ariaLabel='清空旅行想法' onClick={() => setDraft('')}><Icon name='close' /></Button> : null}</View></View>
       <Button className='ux-primary pl-submit' disabled={!draft.trim() || productionBusy} onClick={() => start(draft)}><Text>{production ? '开始规划' : '查看行程示例'}</Text><Icon name='arrow-right' /></Button>
-      <Text className='pl-composer-note'>{production ? '生成后的行程会自动保存到我的行程' : `演示模式 · 将展示${sampleLabel}固定参考`}</Text>
+      <Text className='pl-composer-note'>{production ? '确认航班后再生成游玩安排，结果会自动保存' : `演示模式 · 将展示${sampleLabel}固定参考`}</Text>
     </View> : null}
   </>
 }

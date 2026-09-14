@@ -3,3 +3,9 @@
   &__muted { color: var(--color-text-secondary); font-size: 23rpx; }
   &__connection { margin: 12rpx 0; padding: 16rpx 20rpx; border-left: 3rpx solid var(--color-accent-cyan, #2563eb); background: #edf7f7; color: var(--color-accent-cyan, #2563eb); font-size: 24rpx; line-height: 1.6; }
 }
+.flight-detail__decision { margin-top: 44rpx; padding-top: 36rpx; border-top: 1rpx solid var(--color-bg-border); }
+.flight-detail__choice { display: flex; gap: 6rpx; margin-top: 24rpx; padding: 6rpx; background: #f1f5fc; border-radius: 20rpx; }
+.ux-app .flight-detail__choice button { flex: 1; min-height: 88rpx; padding: 14rpx 16rpx; border-radius: 16rpx; color: var(--color-text-secondary); font-size: 23rpx; text-align: center; }
+.ux-app .flight-detail__choice button.is-active { color: #2563eb; background: #fff; font-weight: 600; box-shadow: 0 2rpx 8rpx #172f5615; }
+.flight-detail__adopt { margin-top: 44rpx; padding: 36rpx 0 max(20rpx, env(safe-area-inset-bottom)); border-top: 1rpx solid var(--color-bg-border); text-align: center; }
+.flight-detail__adopt .flight-detail__muted { margin-top: 18rpx; }

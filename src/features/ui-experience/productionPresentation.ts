@@ -4,6 +4,7 @@ import type { ConversationDelivery } from '../../services/conversationService'
 import { firstText, numberValue, record, records, text } from '../../components/artifacts/payload'
 import { readRouteArtifact } from '../../services/routeArtifact'
 import type { Activity, PricePresentation, SourcePresentation, TripDay, TripFlightPresentation, TripPresentation } from './presentation'
+import { displayOfferById } from '../../components/artifacts/payload'
 
 type Item = Record<string, unknown>
 const locationName = (value: unknown) => { const item = record(value); return firstText(item?.name, item?.city, item?.iata, item?.cityCode) ?? '地点待确认' }
@@ -84,6 +85,39 @@ export function savedRouteFlights(artifact: ArtifactEnvelope | undefined, routeI
     ...(warnings.length ? { warning: warnings.join('；') } : {}), source
   }]
 }
+export function savedOfferFlights(artifact: ArtifactEnvelope | undefined, offerId: string | undefined): TripFlightPresentation[] {
+  if (!artifact || artifact.type !== 'flight_search' || !offerId) return []
+  const payload = record(artifact.payload)
+  const offer = payload ? displayOfferById(payload, offerId, artifact.presentation) : undefined
+  if (!offer || !offer.segments.length) return []
+  const status = verificationStatus(artifact.verification ?? payload?.verification)
+  const source = sources({ verification: artifact.verification ?? payload?.verification })[0]
+    ?? { label: firstText(payload?.provider) ?? '航班搜索快照', status }
+  const connections = new Map(offer.layovers.map(value => [value.afterSegmentIndex, value]))
+  const legs = offer.segments.map((segment, index) => {
+    const connection = connections.get(index)
+    return {
+      from: segment.origin || '出发机场待确认', to: segment.destination || '到达机场待确认', fromCode: segment.origin, toCode: segment.destination,
+      depart: segment.departure ?? null, arrive: segment.arrival ?? null,
+      duration: duration(segment.durationMinutes),
+      carrier: [segment.airline, segment.flightNumber].filter(Boolean).join(' · ') || '航司待确认',
+      ...(connection ? { transfer: `${connection.airportChange ? `${connection.airport}至${connection.departureAirport ?? '下一机场'}换机场` : `在${connection.airport}中转`}${connection.durationMinutes === undefined ? ' · 衔接时长待确认' : ` · ${duration(connection.durationMinutes)}`}` } : {})
+    }
+  })
+  const totalWait = offer.layovers.length && offer.layovers.every(value => value.durationMinutes !== undefined)
+    ? offer.layovers.reduce((sum, value) => sum + value.durationMinutes!, 0) : undefined
+  return [{
+    id: `${artifact.id}:${offerId}`,
+    title: offer.segments.map((segment, index) => index === 0 ? `${segment.origin} → ${segment.destination}` : `→ ${segment.destination}`).join(' '),
+    dateLabel: offer.segments[0]?.departure?.slice(0, 10) ?? '', legs,
+    price: { amount: offer.amount ?? null, currency: offer.currency ?? '', unit: 'total', status: priceStatus(status), source },
+    airlineLabel: offer.airlines.join(' / ') || '航司待确认',
+    transferLabel: offer.layovers.length ? `${offer.layovers.length} 次中转` : '直飞',
+    transferDuration: duration(totalWait) ?? undefined,
+    ...(offer.transferType === 'self' ? { warning: '自行中转；行李、入境和衔接保障需另行确认。' } : {}),
+    source
+  }]
+}
 function activity(item: Item, index: number): Activity {
   const time = text(item.timeOfDay)
   return { id: text(item.id) ?? `activity-${index}`, name: firstText(item.title, item.name) ?? '活动待补充',
@@ -102,26 +136,37 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
   if (guideArtifact && (guideArtifact.type !== 'travel_guide' || guide?.kind !== 'trip_travel_guide' || guideArtifact.tripId !== routeArtifact.tripId || guide.routeArtifactId !== routeArtifact.id)) throw new Error('攻略与路线快照不匹配')
   const current = workspace?.trip.id === routeArtifact.tripId && workspace.trip.contextVersion === route.tripContextVersion
   const context = current ? workspace?.tripContextSummary : undefined
+  const savedSelection = workspace?.trip.selectedFlight
+  const guideSelection = record(guide?.flightSelection)
+  const guideMatchesSelection = savedSelection
+    ? Boolean(guideSelection
+      && text(guideSelection.kind) === savedSelection.kind
+      && text(guideSelection.artifactId) === savedSelection.artifactId
+      && text(guideSelection.choiceId) === (savedSelection.kind === 'offer' ? savedSelection.offerId : savedSelection.routeId)
+      && numberValue(guideSelection.revision) === savedSelection.revision)
+    : !guideSelection
+  const guideApplicable = Boolean(guide && current && guideMatchesSelection)
   const start = context?.departureWindow?.precision === 'exact' ? context.departureWindow.from : null
   const end = context?.returnWindow?.precision === 'exact' ? context.returnWindow.to ?? context.returnWindow.from : null
   const dayValues = records(guide?.days ?? route.days, 60)
   const days: TripDay[] = dayValues.map((day, index) => ({ id: numberValue(day.day) ?? index + 1, label: `第 ${numberValue(day.day) ?? index + 1} 天`,
-    title: firstText(day.theme) ?? (guide ? day.kind === 'rest' ? '休息与自由活动' : '每日安排' : '每日安排待补充'), subtitle: locationName(day.city), status: guide ? 'ready' : 'pending',
+    title: firstText(day.theme) ?? (guide ? day.kind === 'rest' ? '休息与自由活动' : '每日安排' : '每日安排待补充'), subtitle: locationName(day.city), status: guideApplicable ? 'ready' : 'pending',
     activities: guide ? records(day.items, 6).map((item, itemIndex) => activity(item, index * 6 + itemIndex)) : [] }))
   const routeNames = records(route.cities, 12).map(city => locationName(city.location))
   const allSources = dayValues.flatMap(day => records(day.items, 6).flatMap(sources))
   const warnings = [...(Array.isArray(route.warnings) ? route.warnings : []), ...(Array.isArray(guide?.warnings) ? guide.warnings : [])].filter(value => typeof value === 'string')
-  const satisfied = Boolean(current && guideArtifact && workspace?.messages.some(message => delivered(message.delivery, guideArtifact.id)))
-  const savedSelection = workspace?.trip.savedRoute
+  const satisfied = Boolean(guideApplicable && guideArtifact && workspace?.messages.some(message => delivered(message.delivery, guideArtifact.id)))
   let savedRoute: TripFlightPresentation[] = []
   if (current && savedSelection && savedRouteArtifact && savedSelection.contextVersion === route.tripContextVersion
     && savedSelection.artifactId === savedRouteArtifact.id && savedRouteArtifact.tripId === routeArtifact.tripId) {
-    savedRoute = savedRouteFlights(savedRouteArtifact, savedSelection.routeId)
+    savedRoute = savedSelection.kind === 'offer'
+      ? savedOfferFlights(savedRouteArtifact, savedSelection.offerId)
+      : savedRouteFlights(savedRouteArtifact, savedSelection.routeId)
   }
   return { id: routeArtifact.tripId, title: (workspace?.trip.id === routeArtifact.tripId ? firstText(workspace.trip.title) : undefined) ?? (guide ? '我的旅行安排' : '我的路线草案'),
     destination: routeNames[0] ?? days[0]?.subtitle ?? '目的地待确认', route: routeNames,
     dates: { start: start ?? null, end: end ?? null, label: !start && !end ? '日期待确认' : '' }, durationDays: context?.travelDays ?? (days.length || null),
-    travelers: null, cover: null, description: `${current ? '' : '这是此前保存的行程版本。'}${guide ? '每日安排已保存，活动及开放时间仍需核验。' : '路线草案已保存，每日安排待补充。'}${warnings.length ? '含待确认事项，请查看规划记录。' : ''}`,
+    travelers: null, cover: null, description: `${current ? '' : '这是此前保存的行程版本。'}${guide && !guideMatchesSelection ? '航班已更换，这份安排需要按新航班调整。' : guide ? '每日安排已保存，活动及开放时间仍需核验。' : '路线草案已保存，每日安排待补充。'}${warnings.length ? '含待确认事项，请查看规划记录。' : ''}`,
     days, status: satisfied ? 'ready' : 'partial', flights: savedRoute, alternatives: [],
     sources: [...new Map(allSources.map(source => [`${source.url ?? source.label}:${source.status}`, source])).values()] }
 }

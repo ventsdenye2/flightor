@@ -5,7 +5,11 @@ import WorldMap, { type MapAirportPoint, type MapRoute } from '../map/WorldMap'
 import { badgeLabels, durationLabel, fareLabel, routeLabel, type RouteView } from '../../services/routeArtifact'
 import './RouteWorkspace.scss'
 
-export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: RouteView[]; initialRouteId?: string; onSave?: (id: string) => void }) {
+export function RouteWorkspace({ routes, initialRouteId, onSave, saving = false, layoverPreference = 'airport_only', onLayoverPreference }: {
+  routes: RouteView[]; initialRouteId?: string; onSave?: (id: string) => void; saving?: boolean
+  layoverPreference?: 'airport_only' | 'consider_city'
+  onLayoverPreference?: (value: 'airport_only' | 'consider_city') => void
+}) {
   const [selectedId, setSelectedId] = useState(initialRouteId ?? routes[0]?.id)
   const [edgeId, setEdgeId] = useState('')
   const route = routes.find(r => r.id === selectedId)
@@ -44,7 +48,16 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
       <Text className='route-workspace__price'>{fareLabel(route.totalFare)}</Text>
       <Text>{durationLabel(route.totalDurationMinutes)} · {route.transferCount} 次中转</Text>
       <Text className='route-workspace__muted'>航班报价可能变化，不包含未列出的住宿、活动与地面交通费用。</Text>
-      {onSave && <Button className='route-workspace__action' hoverClass='route-workspace__control--pressed' ariaLabel='保存此路线' onClick={() => onSave(route.id)}>保存此路线</Button>}
+      {route.transferCount > 0 && onLayoverPreference && <View className='route-workspace__decision'>
+        <Text className='route-workspace__heading'>中转时怎么安排</Text>
+        <View className='route-workspace__choice' role='group' ariaLabel='中转安排偏好'>
+          <Button className={layoverPreference === 'airport_only' ? 'is-active' : ''} onClick={() => onLayoverPreference('airport_only')}>留在机场</Button>
+          <Button className={layoverPreference === 'consider_city' ? 'is-active' : ''} onClick={() => onLayoverPreference('consider_city')}>时间合适时考虑进城</Button>
+        </View>
+        <Text className='route-workspace__muted'>只有时间、入境、行李和往返机场条件都合适时，才会给出市区安排。</Text>
+      </View>}
+      {onSave && <Button className='route-workspace__action' disabled={saving} hoverClass='route-workspace__control--pressed' ariaLabel='采用此航线并继续规划' onClick={() => onSave(route.id)}>{saving ? '正在保存…' : '采用此航线，继续规划'}</Button>}
+      {onSave && <Text className='route-workspace__muted'>用于后续行程规划，不代表已购票、锁价或获得转机保障。</Text>}
     </View>
     <View className='route-workspace__section'>
       <Text className='route-workspace__heading'>路线地图</Text>
