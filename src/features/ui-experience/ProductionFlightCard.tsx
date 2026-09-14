@@ -8,6 +8,17 @@ import { baggageLabel, connectionLabel, flightConnections, flightPath } from '..
 import { Icon } from './VisualMedia'
 import './production-flights.scss'
 
+export function compactAirportTime(display: string, locale: Locale): { clock: string; note?: string } {
+  const match = display.match(/^(.*?) \(([^()]*)\)$/)
+  if (!match) return { clock: display }
+  const note = match[2] === 'provider local; timezone unavailable'
+    ? (locale === 'en' ? 'Local time · timezone unconfirmed' : '当地时间 · 时区待确认')
+    : match[2] === 'UTC; airport timezone unavailable'
+      ? (locale === 'en' ? 'UTC · airport timezone unconfirmed' : 'UTC · 机场时区待确认')
+      : match[2]
+  return { clock: match[1], note }
+}
+
 /** Presentation only: every displayed segment and price comes from FlightStore. */
 export function ProductionFlightCard({ flight, locale, badge, expanded, roundtrip, savings, onExpand, onSelect }: {
   flight: FlightOption; locale: Locale; badge?: string; expanded: boolean; roundtrip: boolean; savings: number
@@ -19,19 +30,25 @@ export function ProductionFlightCard({ flight, locale, badge, expanded, roundtri
   const connections = flightConnections(legs, flight.layovers)
   const hasPrice = Number.isFinite(flight.totalPrice) && flight.totalPrice >= 0
   const showLegs = expanded || roundtrip
+  const departure = first ? compactAirportTime(first.departTimeDisplay ?? airportTimeDisplay(first.departTime), locale) : undefined
+  const arrival = last ? compactAirportTime(last.arriveTimeDisplay ?? airportTimeDisplay(last.arriveTime), locale) : undefined
+  const inlineTime = (display: string) => {
+    const value = compactAirportTime(display, locale)
+    return value.note ? `${value.clock} · ${value.note}` : value.clock
+  }
   return <View className='pf-flight-card'>
     <View className='pf-card-heading'><View className='pf-carrier-mark'><Icon name='plane' /></View><Text className='pf-airline'>{flight.airline || copy('航空公司待确认', 'Airline unconfirmed')}</Text>{badge && <Text className='pf-result-badge'>{badge}</Text>}</View>
     <Text className='pf-itinerary-path'>{flightPath(legs) || copy('航线待确认', 'Route unconfirmed')}</Text>
     {first && last && !roundtrip && <View className='pf-flight-times'>
-      <View><Text className='pf-time'>{first.departTimeDisplay ?? airportTimeDisplay(first.departTime)}</Text><Text className='pf-caption'>{first.origin}</Text></View>
+      <View><Text className='pf-time'>{departure?.clock}</Text>{departure?.note && <Text className='pf-time-note'>{departure.note}</Text>}<Text className='pf-caption'>{first.origin}</Text></View>
       <View className='pf-flight-bridge'><Text>{flight.totalDuration === undefined ? copy('时长待确认', 'Duration unconfirmed') : fd(flight.totalDuration)}</Text><View className='pf-flight-line'><View /><Icon name='plane' /></View><Text>{t(`fcc.${flight.transferType}`)}</Text></View>
-      <View className='pf-arrival'><Text className='pf-time'>{last.arriveTimeDisplay ?? airportTimeDisplay(last.arriveTime)}</Text><Text className='pf-caption'>{last.destination}</Text></View>
+      <View className='pf-arrival'><Text className='pf-time'>{arrival?.clock}</Text>{arrival?.note && <Text className='pf-time-note'>{arrival.note}</Text>}<Text className='pf-caption'>{last.destination}</Text></View>
     </View>}
     <View className='pf-flight-meta'><Text>{roundtrip ? copy('往返行程', 'Round trip') : copy('单程行程', 'One way')}</Text><Text>{flight.segments.length} {copy('个航段', 'segments')}</Text>{connections.length > 0 && <Text>{baggageLabel(flight.baggageRecheck ?? flight.hub?.baggageRecheck, locale)}</Text>}</View>
     {showLegs && <View className='pf-leg-list'>
       {flight.segments.map((segment, index) => <View key={`${segment.flightNo}-${index}`} className='pf-leg'>
         <View className='pf-leg-heading'><Text>{segment.flightNo} · {segment.airline}</Text><Text>{fd(segment.duration)}</Text></View>
-        <View className='pf-leg-route'><Text>{segment.departTimeDisplay ?? airportTimeDisplay(segment.departTime)} {segment.origin}</Text><Icon name='arrow-right' /><Text>{segment.arriveTimeDisplay ?? airportTimeDisplay(segment.arriveTime)} {segment.destination}</Text></View>
+        <View className='pf-leg-route'><Text>{inlineTime(segment.departTimeDisplay ?? airportTimeDisplay(segment.departTime))} {segment.origin}</Text><Icon name='arrow-right' /><Text>{inlineTime(segment.arriveTimeDisplay ?? airportTimeDisplay(segment.arriveTime))} {segment.destination}</Text></View>
         {connections.find(connection => connection.afterSegmentIndex === index) && <Text className='pf-connection'>{connectionLabel(connections.find(connection => connection.afterSegmentIndex === index)!, locale)}</Text>}
       </View>)}
       {flight.hub?.visaNote && <Text className='pf-connection'>{flight.hub.visaNote}</Text>}

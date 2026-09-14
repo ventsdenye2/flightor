@@ -47,6 +47,10 @@ const FlightSearchCard = load('src/components/artifacts/FlightSearchCard.tsx', {
   ...ui, './ArtifactCard': { ArtifactCard: props => props.children }, './payload': payload
 }).FlightSearchCard
 const BoardingPassItinerary = load('src/components/itinerary/BoardingPassItinerary.tsx', ui).default
+const ProductionFlightCard = load('src/features/ui-experience/ProductionFlightCard.tsx', {
+  ...ui, '../../utils/format': { formatPrice: amount => String(amount) },
+  './VisualMedia': { Icon: () => null }
+}).ProductionFlightCard
 function renderedText(node) {
   if (node === undefined || node === null || typeof node === 'boolean') return ''
   if (typeof node === 'string' || typeof node === 'number') return String(node)
@@ -131,6 +135,19 @@ test('Airport display projection leaves raw timestamps and transfer duration cal
   assert.equal(result.segments[0].arriveTime, arrival)
   assert.equal(result.hub.layoverMinutes, 60)
   assert.equal(result.totalDuration, 300)
+})
+test('Production flight cards keep unknown timezone diagnostics out of the primary clock', () => {
+  const providerLocal = '2026-10-11 00:30 (provider local; timezone unavailable)'
+  const flight = flights.responseFromFlightSearchArtifact({ ...flightArtifact.payload, offers: [{ ...offer, segments: [{
+    ...offer.segments[0], departsAt: '2026-10-11T00:30:00', arrivesAt: '2026-10-11T04:10:00'
+  }] }] }, ref, departure).direct[0]
+  const view = renderedText(ProductionFlightCard({
+    flight, locale: 'zh', expanded: false, roundtrip: false, savings: 0,
+    onExpand: () => undefined, onSelect: () => undefined
+  }))
+  assert.ok(view.includes('当地时间 · 时区待确认'))
+  assert.ok(!view.includes('provider local; timezone unavailable'))
+  assert.equal(flight.segments[0].departTimeDisplay, providerLocal)
 })
 test('Rendered route, flight cards, detail and itinerary keep the same cross-day airport clocks across device timezones', () => {
   const previous = process.env.TZ
