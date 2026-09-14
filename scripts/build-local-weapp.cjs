@@ -5,7 +5,10 @@ const { parse } = require('../backend/node_modules/dotenv')
 const { buildEnvironment, createBuildInfo, writeBuildInfo } = require('./weapp-build-info.cjs')
 
 const root = path.resolve(__dirname, '..')
-const config = parse(fs.readFileSync(path.join(root, 'backend/.env.demo'), 'utf8'))
+const configPath = process.env.FLIGHTOR_LOCAL_ENV_FILE
+  ? path.resolve(root, process.env.FLIGHTOR_LOCAL_ENV_FILE)
+  : path.join(root, 'backend/.env.demo')
+const config = parse(fs.readFileSync(configPath, 'utf8'))
 if (config.NODE_ENV !== 'development' || config.LOCAL_LOGIN_ENABLED !== 'true'
   || config.HOST !== '127.0.0.1' || !config.LOCAL_LOGIN_KEY || config.LOCAL_LOGIN_KEY.length < 32) {
   throw new Error('Run npm --prefix backend run local-login:setup before building the local test client')
