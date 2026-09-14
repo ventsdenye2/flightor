@@ -70,9 +70,12 @@ for (const [label, input, expected] of cases) {
 }
 
 assert.equal(dispatch.resolveRouteDetailView({ ownerId: 'owner-1', artifactId: 'route-1', artifact: route }).reason, 'presentation_unavailable')
+assert.equal(dispatch.decodeRouteParam('gf-EK%20309-EK%20193'), 'gf-EK 309-EK 193')
+assert.equal(dispatch.decodeRouteParam('route-1'), 'route-1')
+assert.equal(dispatch.decodeRouteParam('offer%ZZ'), 'offer%ZZ')
 assert.equal(dispatch.ROUTE_DETAIL_SHELL_CLASS, 'ux-app production-detail-page route-production')
 const pageSource = fs.readFileSync(path.join(root, 'src/pages/route/index.tsx'), 'utf8')
 assert.equal((pageSource.match(/className=\{ROUTE_DETAIL_SHELL_CLASS\}/g) || []).length, 2, 'trip and non-trip roots use the shared production shell')
 assert.doesNotMatch(pageSource, /route-detail-page/, 'legacy dark route shell is not rendered')
 
-console.log(`Route page dispatch regression: ${cases.length + 3} assertions passed`)
+console.log(`Route page dispatch regression: ${cases.length + 6} assertions passed`)

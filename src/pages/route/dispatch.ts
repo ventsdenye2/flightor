@@ -28,6 +28,11 @@ export interface RouteDetailInput {
   offerId?: string
 }
 
+export function decodeRouteParam(value: string | undefined): string | undefined {
+  if (!value) return value
+  try { return decodeURIComponent(value) } catch { return value }
+}
+
 export function resolveRouteDetailView(input: RouteDetailInput): RouteDetailView {
   if (!input.ownerId) return { kind: 'guest' }
   if (!input.artifactId) return { kind: 'missing' }

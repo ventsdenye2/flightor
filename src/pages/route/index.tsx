@@ -17,7 +17,7 @@ import TripExperience from '../../features/ui-experience/TripExperience'
 import type { TripPresentation } from '../../features/ui-experience/presentation'
 import { safeSourceUrl } from '../../features/ui-experience/productionPresentation'
 import { EmptyState, PageHeader } from '../../features/ui-experience/SharedUI'
-import { ROUTE_DETAIL_SHELL_CLASS, resolveRouteDetailView, type RouteDetailView } from './dispatch'
+import { decodeRouteParam, ROUTE_DETAIL_SHELL_CLASS, resolveRouteDetailView, type RouteDetailView } from './dispatch'
 import '../../features/ui-experience/experience.scss'
 import './index.scss'
 
@@ -25,6 +25,8 @@ type State = { key: string; artifact?: ArtifactEnvelope; presentation?: TripPres
 function RoutePage() {
   const { params } = useRouter()
   const artifactId = params.artifactId ?? ''
+  const offerId = decodeRouteParam(params.offerId)
+  const routeId = decodeRouteParam(params.routeId)
   const ownerId = userStore.profile?.uid
   const key = `${ownerId ?? ''}:${userStore.sessionRevision}:${chatStore.currentSessionId}:${artifactId}`
   const [state, setState] = useState<State>({ key: '' })
@@ -108,7 +110,7 @@ function RoutePage() {
     } finally { if (activeKey.current === key) setSaving(false) }
   }
   const openSource = (url: string) => { const safe = safeSourceUrl(url); if (safe) void Taro.setClipboardData({ data: safe }).then(() => Taro.showToast({ title: '来源链接已复制', icon: 'none' })).catch(() => Taro.showToast({ title: '复制失败，请重试', icon: 'none' })) }
-  const view = resolveRouteDetailView({ ownerId, artifactId, error: current?.error, artifact, presentation: current?.presentation, routes: current?.routes, offerId: params.offerId })
+  const view = resolveRouteDetailView({ ownerId, artifactId, error: current?.error, artifact, presentation: current?.presentation, routes: current?.routes, offerId })
   const goBack = () => { void Taro.navigateBack().catch(() => Taro.switchTab({ url: '/pages/trips/index' })) }
   if (view.kind === 'trip') return <View className={ROUTE_DETAIL_SHELL_CLASS}>
     <TripExperience key={key} trip={view.presentation} production embedded onBack={goBack} onContinuePlanning={() => void continuePlanning()} onOpenSource={openSource} />
@@ -116,7 +118,7 @@ function RoutePage() {
   return <View className={ROUTE_DETAIL_SHELL_CLASS}>
     <PageHeader title={viewTitle(view)} onBack={goBack} />
     <View className='ux-scroll route-production__scroll'>
-      <RouteDetailBody view={view} routeId={params.routeId} saving={saving} saved={saved} layoverPreference={layoverPreference}
+      <RouteDetailBody view={view} routeId={routeId} saving={saving} saved={saved} layoverPreference={layoverPreference}
         onLayoverPreference={setLayoverPreference} onAdoptOffer={adoptOffer} onRetry={() => setAttempt(value => value + 1)} onSave={save} />
       {!['guest', 'missing', 'loading'].includes(view.kind) && <View className='route-production__footer'>
         <Button className='ux-secondary' onClick={() => Taro.switchTab({ url: '/pages/trips/index' })}>查看我的行程</Button>

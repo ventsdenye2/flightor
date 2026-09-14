@@ -39,7 +39,7 @@ export function FlightDecisionPanel({ artifact, selection, busy = false, onOpenC
     </View>
     <Text className='flight-decision__muted'>{offer.airlines.join(' · ') || '航空公司待确认'} · {offer.segments.length} 个航段</Text>
     {offer.layovers.map(value => <Text className='flight-decision__connection' key={value.afterSegmentIndex}>{connectionLabel(value)}</Text>)}
-    <Text className='flight-decision__muted'>{selection.layoverPreference === 'consider_city' ? '长中转可评估进城；仍需核验入境、行李和地面交通。' : '中转按留在机场安排。'}</Text>
+    <Text className='flight-decision__muted'>{selection.layoverPreference === 'consider_city' ? '已记录进城偏好；只有时间和必要条件都合适时才会安排。' : '中转按留在机场安排。'}</Text>
     <View className='flight-decision__actions'><Button className='ux-secondary' disabled={busy} onClick={() => onChange(artifact.id)}>更换航班</Button><Button className='ux-primary' disabled={busy} onClick={onPlan}>{busy ? '正在规划…' : '根据航班安排行程'}</Button></View>
     <Text className='flight-decision__disclaimer'>此选择只用于规划，不代表已购票或锁价。</Text>
   </View>
