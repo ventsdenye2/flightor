@@ -25,6 +25,7 @@ backend/coverage/
 backend/.demo/
 dist-h5-demo/
 dist-h5/
+dist-h5-replay/
 dist-weapp-demo/
 output/playwright/
 tools/demo-video/public/*.wav

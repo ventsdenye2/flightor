@@ -1,7 +1,8 @@
 // FlightOR Taro 编译配置
 const apiBaseUrl = (process.env.FLIGHTOR_API_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
 const localLoginKey = process.env.FLIGHTOR_LOCAL_LOGIN_KEY || ''
-const outputRoot = process.env.TARO_ENV === 'h5' ? 'dist-h5' : 'dist'
+const outputRoot = process.env.FLIGHTOR_OUTPUT_ROOT || (process.env.TARO_ENV === 'h5' ? 'dist-h5' : 'dist')
+if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(outputRoot)) throw new Error('FLIGHTOR_OUTPUT_ROOT must be a directory name inside the repository')
 if (localLoginKey && !/^http:\/\/(127\.0\.0\.1|localhost|\[::1\])(?::\d+)?$/.test(apiBaseUrl)) {
   throw new Error('Local test login requires a loopback API URL')
 }
@@ -29,7 +30,8 @@ const config = {
     FLIGHTOR_BUILD_DIRTY: JSON.stringify(process.env.FLIGHTOR_BUILD_DIRTY === 'true'),
     FLIGHTOR_BUILD_FINGERPRINT: JSON.stringify(process.env.FLIGHTOR_BUILD_FINGERPRINT || 'unidentified'),
     FLIGHTOR_BUILD_TIME: JSON.stringify(process.env.FLIGHTOR_BUILD_TIME || ''),
-    FLIGHTOR_BUILD_MODE: JSON.stringify(process.env.FLIGHTOR_BUILD_MODE || 'development')
+    FLIGHTOR_BUILD_MODE: JSON.stringify(process.env.FLIGHTOR_BUILD_MODE || 'development'),
+    FLIGHTOR_REPLAY_CAPTURED_AT: JSON.stringify(process.env.FLIGHTOR_REPLAY_CAPTURED_AT || '')
   },
   copy: {
     patterns: [{ from: 'src/assets/', to: `${outputRoot}/assets/` }],

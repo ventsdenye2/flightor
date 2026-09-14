@@ -12,3 +12,4 @@ declare const FLIGHTOR_BUILD_DIRTY: boolean
 declare const FLIGHTOR_BUILD_FINGERPRINT: string
 declare const FLIGHTOR_BUILD_TIME: string
 declare const FLIGHTOR_BUILD_MODE: string
+declare const FLIGHTOR_REPLAY_CAPTURED_AT: string

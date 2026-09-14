@@ -9,6 +9,7 @@
 .ux-app.ux-embedded { position: static; }
 .ux-screen[hidden] { display: none; }
 .ui-header-spacer { width: 44px; flex-shrink: 0; }
+.ui-replay-banner { flex-shrink: 0; padding: 6px 18px; border-bottom: 1px solid #d9e5fa; background: #edf3ff; color: #315b9b; font-size: 10px; line-height: 1.6; text-align: center; }
 .ui-section-heading { margin: 24px 0 14px; .ux-muted { margin-top: 4px; } }
 .ui-display { display: block; font: 600 28px/1.5 'Songti SC', 'Noto Serif SC', SimSun, serif; letter-spacing: -.5px; }
 .ui-page { padding: 22px 18px 28px; }

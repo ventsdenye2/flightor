@@ -2,7 +2,9 @@ const fs = require('node:fs')
 const http = require('node:http')
 const path = require('node:path')
 
-const root = path.resolve(__dirname, '../dist-h5')
+const outputRoot = process.env.FLIGHTOR_H5_ROOT || 'dist-h5'
+if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(outputRoot)) throw new Error('FLIGHTOR_H5_ROOT must be a directory name inside the repository')
+const root = path.resolve(__dirname, '..', outputRoot)
 const port = Number(process.env.H5_PORT || 10086)
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid H5_PORT')
 

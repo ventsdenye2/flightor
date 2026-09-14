@@ -4,11 +4,17 @@ import { Icon } from './VisualMedia'
 import './shared.scss'
 
 export function PageHeader({ title, onBack, action }: { title?: string; onBack?: () => void; action?: ReactNode }) {
-  return <View className='ux-header'>
-    {onBack ? <Button className='ux-icon-button' ariaLabel='返回上一页' onClick={onBack}><Icon name='chevron-left' /></Button> : !title ? <View className='ux-wordmark'><Icon name='plane' /><Text>FlightOR</Text></View> : null}
-    {title ? <Text className='ux-header-title'>{title}</Text> : null}
-    {action || (onBack ? <View className='ui-header-spacer' /> : null)}
-  </View>
+  const replayTime = typeof FLIGHTOR_REPLAY_CAPTURED_AT === 'string' && FLIGHTOR_REPLAY_CAPTURED_AT
+    ? FLIGHTOR_REPLAY_CAPTURED_AT.replace('T', ' ').replace(/:\d{2}\.\d{3}Z$/, ' UTC')
+    : ''
+  return <>
+    <View className='ux-header'>
+      {onBack ? <Button className='ux-icon-button' ariaLabel='返回上一页' onClick={onBack}><Icon name='chevron-left' /></Button> : !title ? <View className='ux-wordmark'><Icon name='plane' /><Text>FlightOR</Text></View> : null}
+      {title ? <Text className='ux-header-title'>{title}</Text> : null}
+      {action || (onBack ? <View className='ui-header-spacer' /> : null)}
+    </View>
+    {replayTime ? <View className='ui-replay-banner'><Text>真实查询快照 · 采集于 {replayTime}</Text></View> : null}
+  </>
 }
 
 export function SectionHeading({ title, caption }: { title: string; caption?: string }) {
