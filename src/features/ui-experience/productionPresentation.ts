@@ -121,7 +121,7 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
   return { id: routeArtifact.tripId, title: (workspace?.trip.id === routeArtifact.tripId ? firstText(workspace.trip.title) : undefined) ?? (guide ? '我的旅行安排' : '我的路线草案'),
     destination: routeNames[0] ?? days[0]?.subtitle ?? '目的地待确认', route: routeNames,
     dates: { start: start ?? null, end: end ?? null, label: !start && !end ? '日期待确认' : '' }, durationDays: context?.travelDays ?? (days.length || null),
-    travelers: null, cover: null, description: `${current ? '' : '这是保存的历史快照。'}${guide ? '每日安排已保存，活动及开放时间仍需核验。' : '路线草案已保存，每日安排待补充。'}${warnings.length ? '含待确认事项，请查看规划记录。' : ''}`,
+    travelers: null, cover: null, description: `${current ? '' : '这是此前保存的行程版本。'}${guide ? '每日安排已保存，活动及开放时间仍需核验。' : '路线草案已保存，每日安排待补充。'}${warnings.length ? '含待确认事项，请查看规划记录。' : ''}`,
     days, status: satisfied ? 'ready' : 'partial', flights: savedRoute, alternatives: [],
     sources: [...new Map(allSources.map(source => [`${source.url ?? source.label}:${source.status}`, source])).values()] }
 }

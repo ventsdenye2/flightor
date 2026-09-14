@@ -6,59 +6,59 @@
   --color-bg-card: #f7fafb;
   --color-bg-panel: #edf5f6;
   --color-bg-border: #d9e6e8;
-  --color-text-primary: #123c4a;
+  --color-text-primary: #172f56;
   --color-text-secondary: #6c7f86;
   --color-text-disabled: #8ba0a5;
-  --color-accent-cyan: #087f8c;
-  --color-accent-teal: #087f8c;
+  --color-accent-cyan: #2563eb;
+  --color-accent-teal: #2563eb;
   --color-warning: #856337;
 
   &__scroll { padding: 18px 18px max(32px, env(safe-area-inset-bottom)); }
   &__loading { padding: 64px 12px; text-align: center; }
-  &__loading-line { width: 48px; height: 3px; margin: 0 auto 20px; border-radius: 3px; background: #087f8c; animation: route-loading-pulse 1.2s infinite; }
+  &__loading-line { width: 48px; height: 3px; margin: 0 auto 20px; border-radius: 3px; background: #2563eb; animation: route-loading-pulse 1.2s infinite; }
   &__state-title { display: block; margin-bottom: 8px; font: 600 21px/1.5 'Songti SC', SimSun, serif; }
-  &__save-state { display: block; padding: 10px 12px; border-radius: 8px; background: #edf7f7; color: #087f8c; font-size: 12px; text-align: center; }
+  &__save-state { display: block; padding: 10px 12px; border-radius: 8px; background: #edf7f7; color: #2563eb; font-size: 12px; text-align: center; }
   &__footer { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 24px; padding-top: 18px; border-top: 1px solid #e2ebed; }
 
   .ui-empty { min-height: 48vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .ui-empty .ux-secondary { margin-top: 20px; }
 
   .route-workspace {
-    color: #123c4a;
+    color: #172f56;
 
-    &__eyebrow { display: block; margin-bottom: 8px; color: #087f8c; font-size: 10px; font-weight: 650; letter-spacing: 0; }
+    &__eyebrow { display: block; margin-bottom: 8px; color: #2563eb; font-size: 10px; font-weight: 650; letter-spacing: 0; }
     &__title { display: block; margin-bottom: 14px; font: 600 25px/1.4 'Songti SC', SimSun, serif; }
     &__choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-bottom: 24px; }
     &__choice { min-width: 0; padding: 13px; border: 1px solid #d9e6e8; border-radius: 8px; background: #fff; color: #526a75; font-size: 11px; }
-    &__choice.is-active { border-color: #087f8c; background: #edf7f7; color: #123c4a; box-shadow: inset 0 0 0 1px #087f8c; }
-    &__choice-path { display: block; margin: 7px 0; color: #123c4a; font-size: 13px; font-weight: 650; }
+    &__choice.is-active { border-color: #2563eb; background: #edf7f7; color: #172f56; box-shadow: inset 0 0 0 1px #2563eb; }
+    &__choice-path { display: block; margin: 7px 0; color: #172f56; font-size: 13px; font-weight: 650; }
     &__hero { padding: 4px 0 24px; border-bottom: 1px solid #dce7e9; margin-bottom: 8px; overflow: hidden; }
     &__section { padding: 24px 0; border-bottom: 1px solid #e2ebed; overflow: hidden; }
-    &__heading { display: block; margin-bottom: 12px; color: #123c4a; font-size: 14px; font-weight: 650; }
-    &__price { display: block; margin: 10px 0; color: #087f8c; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    &__heading { display: block; margin-bottom: 12px; color: #172f56; font-size: 14px; font-weight: 650; }
+    &__price { display: block; margin: 10px 0; color: #2563eb; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
     &__muted, &__disclaimer { display: block; margin-top: 8px; color: #6c7f86; font-size: 12px; line-height: 1.7; }
     &__leg { padding: 13px 13px 13px 15px; border-left: 2px solid #bfd8dc; margin: 10px 0; background: #f4f8f9; border-radius: 0 6px 6px 0; }
-    &__leg.is-active { border-left-color: #087f8c; background: #eaf6f6; }
+    &__leg.is-active { border-left-color: #2563eb; background: #eaf6f6; }
     &__leg text { display: block; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
     &__flight { padding: 13px 0; border-bottom: 1px solid #e2ebed; }
     &__flight text { display: block; font-size: 12px; line-height: 1.7; }
     &__warning, &__stopover { display: block; margin: 10px 0; color: #856337; font-size: 11px; line-height: 1.65; }
     &__reason { display: block; color: #38535d; font-size: 13px; line-height: 1.8; }
-    &__action { display: flex; min-height: 44px; align-items: center; justify-content: center; padding: 10px 14px; border-radius: 8px; margin: 14px 0; background: #edf7f7; color: #087f8c; font-size: 13px; font-weight: 600; text-align: center; }
+    &__action { display: flex; min-height: 44px; align-items: center; justify-content: center; padding: 10px 14px; border-radius: 8px; margin: 14px 0; background: #edf7f7; color: #2563eb; font-size: 13px; font-weight: 600; text-align: center; }
   }
 
-  .artifact-card { margin: 4px 0 20px; padding: 16px; border: 1px solid #d9e6e8; border-radius: 8px; background: #fff; box-shadow: 0 4px 14px #123c4a0d; }
-  .artifact-card::before { width: 3px; background: #087f8c; }
-  .artifact-card__label { color: #087f8c; font-size: 10px; letter-spacing: 0; }
-  .artifact-card__title { color: #123c4a; font: 600 21px/1.4 'Songti SC', SimSun, serif; }
+  .artifact-card { margin: 4px 0 20px; padding: 16px; border: 1px solid #d9e6e8; border-radius: 8px; background: #fff; box-shadow: 0 4px 14px #172f560d; }
+  .artifact-card::before { width: 3px; background: #2563eb; }
+  .artifact-card__label { color: #2563eb; font-size: 10px; letter-spacing: 0; }
+  .artifact-card__title { color: #172f56; font: 600 21px/1.4 'Songti SC', SimSun, serif; }
   .artifact-card__version, .artifact-card__summary, .artifact-card__provenance, .artifact-flight__meta, .artifact-flight__more, .artifact-flight__empty { color: #6c7f86; }
-  .artifact-card__action { min-height: 44px; border-radius: 8px; background: #edf7f7; color: #087f8c; }
+  .artifact-card__action { min-height: 44px; border-radius: 8px; background: #edf7f7; color: #2563eb; }
   .artifact-flight__offer { border-top-color: #d9e6e8; }
-  .artifact-flight__route, .artifact-flight__price { color: #123c4a; }
-  .artifact-flight__connection { color: #087f8c; }
+  .artifact-flight__route, .artifact-flight__price { color: #172f56; }
+  .artifact-flight__connection { color: #2563eb; }
 
   .flight-detail__muted { color: #6c7f86; }
-  .flight-detail__connection { border-left-color: #087f8c; background: #edf7f7; color: #087f8c; }
+  .flight-detail__connection { border-left-color: #2563eb; background: #edf7f7; color: #2563eb; }
 }
 
 @keyframes route-loading-pulse { 50% { opacity: .35; transform: scaleX(.7); } }

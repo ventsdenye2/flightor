@@ -80,10 +80,10 @@ export const ProductionFlightForm = observer(function ProductionFlightForm({ onS
       </Button>
       {advanced && <View className='pf-preferences'>
         <View className='pf-budget-label'><Text>{t('search.min')}</Text><Text>¥{searchStore.budgetMin.toLocaleString()}</Text></View>
-        <Slider min={500} max={20000} step={500} value={searchStore.budgetMin} disabled={busy} activeColor='#087f8c' backgroundColor='#dce9eb' blockSize={18}
+        <Slider min={500} max={20000} step={500} value={searchStore.budgetMin} disabled={busy} activeColor='#2563eb' backgroundColor='#dce9eb' blockSize={18}
           onChanging={event => searchStore.setBudget(Math.min(event.detail.value, searchStore.budgetMax - 500), searchStore.budgetMax)} />
         <View className='pf-budget-label'><Text>{t('search.max')}</Text><Text>¥{searchStore.budgetMax.toLocaleString()}</Text></View>
-        <Slider min={500} max={20000} step={500} value={searchStore.budgetMax} disabled={busy} activeColor='#087f8c' backgroundColor='#dce9eb' blockSize={18}
+        <Slider min={500} max={20000} step={500} value={searchStore.budgetMax} disabled={busy} activeColor='#2563eb' backgroundColor='#dce9eb' blockSize={18}
           onChanging={event => searchStore.setBudget(searchStore.budgetMin, Math.max(event.detail.value, searchStore.budgetMin + 500))} />
         <Text className='pf-section-label'>{t('search.transfer')}</Text>
         <View className='pf-chips'>{(['any', 'direct', 'transfer'] as const).map(value => <Button key={value} disabled={busy} className={`pf-chip${searchStore.transferPref === value ? ' is-active' : ''}`} onClick={() => searchStore.setTransferPref(value)}>{value === 'any' ? t('search.any') : value === 'direct' ? t('search.directOnly') : t('search.allowTransfer')}</Button>)}</View>

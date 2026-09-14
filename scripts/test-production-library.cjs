@@ -57,11 +57,11 @@ check('a signed-out library hides stale account records and opens real login', (
 })
 check('empty and failed cloud loads do not invent sample trips or claim an empty account on failure', () => {
   const empty = tripsHarness()
-  assert.ok(text(empty.tree).includes('下一站，还没写下'))
+  assert.ok(text(empty.tree).includes('暂无行程'))
   assert.ok(!text(empty.tree).includes('示例'))
   const failed = tripsHarness({ error: '服务不可用' })
   assert.ok(text(failed.tree).includes('服务不可用'))
-  assert.ok(!text(failed.tree).includes('下一站，还没写下'))
+  assert.ok(!text(failed.tree).includes('暂无行程'))
   button(failed.tree, '重新加载').props.onClick()
   assert.deepEqual(failed.calls, [['onRetry']])
 })

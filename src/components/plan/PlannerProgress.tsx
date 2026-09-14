@@ -55,7 +55,7 @@ export default function PlannerProgress({ progress, locale, compact = false, act
     : completed
       ? (en ? 'The reply is ready. Loading saved results.' : '回复已就绪，正在加载已保存的结果')
       : confirmed
-        ? (en ? 'Connected · Your planner is still working' : '连接正常 · Agent 仍在处理')
+        ? (en ? 'Connected · Your planner is still working' : '连接正常 · 正在处理规划')
         : (en ? 'Waiting for a status update…' : '正在等待状态确认…')
   const elapsed = progress ? Math.max(0, Math.floor((now - progress.startedAt) / 1_000)) : undefined
   const elapsedLabel = elapsed === undefined ? '' : en ? `${elapsed}s elapsed` : `已等待 ${elapsed} 秒`

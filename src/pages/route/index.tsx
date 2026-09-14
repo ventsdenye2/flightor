@@ -107,7 +107,7 @@ function viewTitle(view: RouteDetailView): string {
 function unavailableCopy(view: Extract<RouteDetailView, { kind: 'unavailable' }>): string {
   if (view.reason === 'unsupported_version') return '此内容由较新的版本生成，请更新小程序后再查看。'
   if (view.reason === 'unsupported_payload_kind') return '当前版本还不能展示这种路线结果。'
-  if (view.reason === 'presentation_unavailable') return '行程快照暂时无法组合成完整详情，请从规划记录重新打开。'
+  if (view.reason === 'presentation_unavailable') return '暂时无法显示完整行程，请从规划记录重新打开。'
   return '返回的内容不完整，暂时无法安全展示。'
 }
 

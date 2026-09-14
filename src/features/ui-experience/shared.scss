@@ -1,7 +1,7 @@
 /* postcss-pxtransform disable */
 // Shared with the web preview: dimensions use CSS pixels, not a 750px design canvas.
 .ux-app {
-  --ux-panel: #f2f7f7; --ux-line: #e2ecee;
+  --ux-panel: #f1f5fc; --ux-line: #e2ecee;
   input, textarea { color: var(--ux-ink); font-family: inherit; min-width: 0; }
   input:focus-visible, textarea:focus-visible { outline: 2px solid var(--ux-teal); outline-offset: 3px; }
 }

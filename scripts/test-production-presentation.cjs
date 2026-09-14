@@ -150,7 +150,7 @@ check('an interrupted turn without an artifact shows retry and no empty result c
   assert.ok(!h.content().includes('限流'))
   assert.equal(h.button('查看航班'), undefined)
   assert.equal(h.nodes().some(node => node.props?.className === 'pl-result'), false)
-  h.button('重试这次规划').props.onClick()
+  h.button('重新规划').props.onClick()
   assert.deepEqual(h.sent, [h.props.productionPrompt])
   h.render()
   assert.ok(h.nodes().some(node => node.props?.className === 'pl-generating'))
@@ -163,20 +163,20 @@ check('a transport failure is an error with retry instead of a voluntary pause',
   const h = plannerHarness({ productionError: '规划服务暂时不可用，请重试。' })
   assert.ok(h.content().includes('规划服务暂时不可用，请重试。'))
   assert.ok(!h.content().includes('已暂停'))
-  assert.ok(h.button('重试这次规划'))
+  assert.ok(h.button('重新规划'))
 })
 check('a finished model turn with pending delivery and rate limiting offers an explicit retry', () => {
   const h = plannerHarness({ productionStopReason: 'goal_pending', productionWarnings: ['research_provider_rate_limited'],
     productionDelivery: { status: 'pending', artifactIds: [], missing: ['research'], warnings: [] } })
   assert.ok(h.content().includes('联网研究服务暂时限流'))
-  assert.ok(h.button('重试这次规划'))
+  assert.ok(h.button('重新规划'))
 })
 check('partial delivery retains its saved result alongside the retry action', () => {
   const h = plannerHarness({ productionStopReason: 'goal_partial', productionResultAvailable: true,
     productionDelivery: { status: 'partial', artifactIds: ['route-1'], missing: ['travel_guide'], warnings: [] } })
   assert.ok(h.content().includes('本次规划未完成'))
   assert.ok(h.nodes().some(node => node.props?.className === 'pl-result'))
-  assert.ok(h.button('重试这次规划'))
+  assert.ok(h.button('重新规划'))
 })
 check('a satisfied result stays successful even after a research rate-limit warning', () => {
   const h = plannerHarness({ productionStopReason: 'completed', productionResultAvailable: true, productionReply: '两天攻略已完成并保存。',
@@ -184,7 +184,7 @@ check('a satisfied result stays successful even after a research rate-limit warn
   assert.ok(h.content().includes('两天攻略已完成并保存。'))
   assert.ok(!h.content().includes('本次规划未完成'))
   assert.ok(!h.content().includes('限流'))
-  assert.equal(h.button('重试这次规划'), undefined)
+  assert.equal(h.button('重新规划'), undefined)
   assert.ok(h.nodes().some(node => node.props?.className === 'pl-result'))
 })
 check('clarification without an artifact stays a conversation instead of a result', () => {

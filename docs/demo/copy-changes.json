@@ -1,0 +1,313 @@
+{
+  "changes": [
+    {
+      "file": "src/features/ui-experience/PlannerPage.tsx",
+      "before": "好旅行，<Text className='pl-title-line'>从一个想法开始。</Text>",
+      "after": "这次，<Text className='pl-title-line'>想去哪？</Text>"
+    },
+    {
+      "file": "src/features/ui-experience/PlannerPage.tsx",
+      "before": "想去哪、和谁一起、喜欢什么。<Text className='pl-intro-line'>把想法留在这里，让旅程慢慢成形。</Text>",
+      "after": "告诉我们出发地、日期和预算。<Text className='pl-intro-line'>也可以说说喜欢的旅行方式。</Text>"
+    },
+    {
+      "file": "src/features/ui-experience/PlannerPage.tsx",
+      "before": "这一次，想这样出发",
+      "after": "我的旅行需求"
+    },
+    {
+      "file": "src/features/ui-experience/PlannerPage.tsx",
+      "before": "已暂停，想法还在这里",
+      "after": "{production ? '已取消规划' : '已取消查看'}"
+    },
+    {
+      "file": "src/features/ui-experience/PlannerPage.tsx",
+      "before": "重试这次规划",
+      "after": "重新规划"
+    },
+    {
+      "file": "src/features/ui-experience/PlannerPage.tsx",
+      "before": "目的地、天数、预算，都可以聊聊",
+      "after": "出发地、日期、人数和预算"
+    },
+    {
+      "file": "src/features/ui-experience/PlannerPage.tsx",
+      "before": "例如：从哪里出发、去几天、和谁一起、喜欢什么…",
+      "after": "例如：北京出发，东京五天，两个人，安排轻松一点。"
+    },
+    {
+      "file": "src/features/ui-experience/PlannerPage.tsx",
+      "before": "去海边，慢下来",
+      "after": "海边休闲旅行"
+    },
+    {
+      "file": "src/features/ui-experience/ProductionExplorePage.tsx",
+      "before": "值得留在行程里的",
+      "after": "行程亮点"
+    },
+    {
+      "file": "src/features/ui-experience/ProductionExplorePage.tsx",
+      "before": "caption='让停留有重心，也有余地'",
+      "after": ""
+    },
+    {
+      "file": "src/features/ui-experience/ProductionExplorePage.tsx",
+      "before": "先遇见喜欢的风景，再慢慢计划。",
+      "after": "看看目的地、活动和参考行程。"
+    },
+    {
+      "file": "src/features/ui-experience/ProductionExplorePage.tsx",
+      "before": "有些地方，适合慢慢来",
+      "after": "更多旅行灵感"
+    },
+    {
+      "file": "src/features/ui-experience/ProductionExplorePage.tsx",
+      "before": "从一个喜欢的片刻开始",
+      "after": ""
+    },
+    {
+      "file": "src/features/ui-experience/ProductionExplorePage.tsx",
+      "before": "以这份灵感开始规划",
+      "after": "按此行程规划"
+    },
+    {
+      "file": "src/features/ui-experience/ProductionExplorePage.tsx",
+      "before": "这次还没有找到灵感",
+      "after": "未找到匹配的旅行灵感"
+    },
+    {
+      "file": "src/features/ui-experience/TripExperience.tsx",
+      "before": "已有保存内容，交付状态仍待确认",
+      "after": "部分内容已保存，完整行程仍待确认"
+    },
+    {
+      "file": "src/features/ui-experience/TripExperience.tsx",
+      "before": "当前没有其他可用候选，可以先移出一个停留",
+      "after": "暂无替代地点，可以先移出行程。"
+    },
+    {
+      "file": "src/features/ui-experience/TripExperience.tsx",
+      "before": "每天的安排，慢慢展开",
+      "after": "每日行程"
+    },
+    {
+      "file": "src/features/ui-experience/TripExperience.tsx",
+      "before": "${tripDurationLabel(trip)}，不必把时间填满",
+      "after": "${tripDurationLabel(trip)}每日行程"
+    },
+    {
+      "file": "src/features/ui-experience/TripExperience.tsx",
+      "before": "这一天，按你的节奏",
+      "after": "调整当天安排"
+    },
+    {
+      "file": "src/features/ui-experience/TripExperience.tsx",
+      "before": "加一点风景",
+      "after": "增加一个地点"
+    },
+    {
+      "file": "src/features/ui-experience/TripExperience.tsx",
+      "before": "请让 Planner 为今天安排一个合适的停留。",
+      "after": "为今天增加一个合适的地点。"
+    },
+    {
+      "file": "src/features/ui-experience/TripExperience.tsx",
+      "before": "调整会发送给 Planner，并在新的已保存快照返回后更新。",
+      "after": "提交调整后，行程将在处理完成后更新。"
+    },
+    {
+      "file": "src/features/ui-experience/DayPlan.tsx",
+      "before": "这一天，先留一点空白",
+      "after": "当天暂无活动"
+    },
+    {
+      "file": "src/features/ui-experience/DayPlan.tsx",
+      "before": "喜欢的地方，可以再多待一会儿。",
+      "after": "可以添加想去的地点，或保留自由活动时间。"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "把期待，排进日历。",
+      "after": "查看和继续你的旅行计划"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "Keep your next journey close.",
+      "after": "View and continue your travel plans"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "计划好的远方，随时回来接着安排。",
+      "after": "查看已保存的行程，或继续上次的规划。"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "让旅行计划，跟着你走",
+      "after": "登录后查看行程"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "Your trips travel with you",
+      "after": "Sign in to view your trips"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "让回忆慢慢积累",
+      "after": "暂无归档行程"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "Memories will gather here",
+      "after": "No archived trips yet"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "下一站，还没写下",
+      "after": "暂无行程"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "Your next stop is still unwritten",
+      "after": "No trips yet"
+    },
+    {
+      "file": "src/features/ui-experience/LibraryPages.tsx",
+      "before": "还没有此类行程。说说想去的地方，从一个旅行念头开始。",
+      "after": "还没有此类行程。选择出发地和日期，开始规划。"
+    },
+    {
+      "file": "src/features/ui-experience/ProfilePage.tsx",
+      "before": "把喜欢的旅行方式，留在这里。",
+      "after": "登录后保存行程和旅行偏好。"
+    },
+    {
+      "file": "src/features/ui-experience/ProfilePage.tsx",
+      "before": "Keep your favorite way to travel here.",
+      "after": "Sign in to save trips and travel preferences."
+    },
+    {
+      "file": "src/features/ui-experience/ProfilePage.tsx",
+      "before": "旅行，可以更像你",
+      "after": "旅行偏好"
+    },
+    {
+      "file": "src/features/ui-experience/ProfilePage.tsx",
+      "before": "Travel, your way",
+      "after": "Travel preferences"
+    },
+    {
+      "file": "src/features/ui-experience/ProfilePage.tsx",
+      "before": "按自己的节奏出发",
+      "after": "设置常用偏好"
+    },
+    {
+      "file": "src/features/ui-experience/ProfilePage.tsx",
+      "before": "Set your own pace",
+      "after": "Set your travel preferences"
+    },
+    {
+      "file": "src/features/ui-experience/ProfilePage.tsx",
+      "before": "让每次出发都有自己的节奏",
+      "after": "产品介绍与使用说明"
+    },
+    {
+      "file": "src/features/ui-experience/ProfilePage.tsx",
+      "before": "Every journey at your own pace",
+      "after": "Product information and guidance"
+    },
+    {
+      "file": "src/pages/search/index.tsx",
+      "before": "先选好去处，再慢慢比较",
+      "after": "输入航线，开始比较"
+    },
+    {
+      "file": "src/pages/route/index.tsx",
+      "before": "行程快照暂时无法组合成完整详情，请从规划记录重新打开。",
+      "after": "暂时无法显示完整行程，请从规划记录重新打开。"
+    },
+    {
+      "file": "src/subpages/about/index.tsx",
+      "before": "从一个旅行念头，到能慢慢调整的日程。",
+      "after": "输入旅行需求，查看航班和日程，继续调整安排。"
+    },
+    {
+      "file": "src/subpages/about/index.tsx",
+      "before": "From a travel idea to a plan you can keep refining.",
+      "after": "Describe your trip, review flights and daily plans, and adjust the details."
+    },
+    {
+      "file": "src/features/ui-experience/productionPresentation.ts",
+      "before": "这是保存的历史快照。",
+      "after": "这是此前保存的行程版本。"
+    },
+    {
+      "file": "src/i18n/index.ts",
+      "before": "先在搜索结果中选中一个航班方案，再生成专属行程",
+      "after": "先在搜索结果中选择航班方案，再生成行程"
+    },
+    {
+      "file": "src/i18n/index.ts",
+      "before": "由 Agent 推荐",
+      "after": "推荐目的地"
+    },
+    {
+      "file": "src/i18n/index.ts",
+      "before": "Agent recommendations",
+      "after": "Destination recommendations"
+    },
+    {
+      "file": "src/components/plan/PlannerProgress.tsx",
+      "before": "连接正常 · Agent 仍在处理",
+      "after": "连接正常 · 正在处理规划"
+    }
+  ],
+  "colorFiles": [
+    "src/app.config.ts",
+    "src/assets/ui-experience/icons/arrow-right.svg",
+    "src/assets/ui-experience/icons/bell.svg",
+    "src/assets/ui-experience/icons/bookmark-filled.svg",
+    "src/assets/ui-experience/icons/bookmark.svg",
+    "src/assets/ui-experience/icons/calendar-active.svg",
+    "src/assets/ui-experience/icons/calendar.svg",
+    "src/assets/ui-experience/icons/check.svg",
+    "src/assets/ui-experience/icons/chevron-left.svg",
+    "src/assets/ui-experience/icons/chevron-right.svg",
+    "src/assets/ui-experience/icons/close.svg",
+    "src/assets/ui-experience/icons/compass-active.svg",
+    "src/assets/ui-experience/icons/compass.svg",
+    "src/assets/ui-experience/icons/external.svg",
+    "src/assets/ui-experience/icons/home-active.svg",
+    "src/assets/ui-experience/icons/home.svg",
+    "src/assets/ui-experience/icons/image.svg",
+    "src/assets/ui-experience/icons/info.svg",
+    "src/assets/ui-experience/icons/minus.svg",
+    "src/assets/ui-experience/icons/people.svg",
+    "src/assets/ui-experience/icons/plane.svg",
+    "src/assets/ui-experience/icons/plus.svg",
+    "src/assets/ui-experience/icons/settings.svg",
+    "src/assets/ui-experience/icons/swap.svg",
+    "src/assets/ui-experience/icons/user-active.svg",
+    "src/assets/ui-experience/icons/user.svg",
+    "src/components/artifacts/ArtifactCard.scss",
+    "src/components/artifacts/FlightSearchCard.scss",
+    "src/components/common/LoginSheet.scss",
+    "src/components/navigation/ProductionTabBar.scss",
+    "src/components/plan/PlannerProgress.scss",
+    "src/components/route/FlightDetail.scss",
+    "src/components/route/RouteWorkspace.tsx",
+    "src/features/ui-experience/DayPlan.tsx",
+    "src/features/ui-experience/experience.scss",
+    "src/features/ui-experience/explore.scss",
+    "src/features/ui-experience/flights.scss",
+    "src/features/ui-experience/planner.scss",
+    "src/features/ui-experience/production-flights.scss",
+    "src/features/ui-experience/ProductionFlightForm.tsx",
+    "src/features/ui-experience/profile.scss",
+    "src/features/ui-experience/shared.scss",
+    "src/pages/index/index.scss",
+    "src/pages/route/index.scss",
+    "src/pages/search/index.scss",
+    "src/subpages/price-alert/index.scss",
+    "src/subpages/price-alert/index.tsx"
+  ]
+}

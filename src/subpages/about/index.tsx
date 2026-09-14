@@ -79,7 +79,7 @@ function AboutPage() {
     <View className='ux-app about-production'>
       <PageHeader title={t('nav.about')} onBack={back} />
       <View className='ux-scroll ui-page'>
-        <View className='about-production__intro'><View className='ux-wordmark'><Icon name='plane' /><Text>FlightOR</Text></View><Text className='ui-display'>{en ? 'The world is wide. Travel at your own pace.' : '远方很大，按你的节奏出发。'}</Text><Text className='ux-muted'>{en ? 'From a travel idea to a plan you can keep refining.' : '从一个旅行念头，到能慢慢调整的日程。'}</Text></View>
+        <View className='about-production__intro'><View className='ux-wordmark'><Icon name='plane' /><Text>FlightOR</Text></View><Text className='ui-display'>{en ? 'The world is wide. Travel at your own pace.' : '远方很大，按你的节奏出发。'}</Text><Text className='ux-muted'>{en ? 'Describe your trip, review flights and daily plans, and adjust the details.' : '输入旅行需求，查看航班和日程，继续调整安排。'}</Text></View>
         {sections.map(section => <View key={section.title} className='about-production__section'><SectionHeading title={section.title} /><Text className='about-production__copy'>{section.content}</Text></View>)}
         <View className='about-production__footer'><Text>FlightOR · v1.0.0</Text><Text>© 2026</Text></View>
       </View>

@@ -23,7 +23,7 @@ export function RouteWorkspace({ routes, initialRouteId, onSave }: { routes: Rou
     for (const e of route.edges) {
       for (const s of e.segments.length ? e.segments : [e]) {
         if (s.from.latitude === undefined || s.from.longitude === undefined || s.to.latitude === undefined || s.to.longitude === undefined) continue
-        lines.push({ id: e.id, color: e.id === edge?.id ? '#087f8c' : '#7fb8bd', width: e.id === edge?.id ? 3 : 1.5, dotted: e.transferType === 'self', points: [{ latitude: s.from.latitude, longitude: s.from.longitude }, { latitude: s.to.latitude, longitude: s.to.longitude }] })
+        lines.push({ id: e.id, color: e.id === edge?.id ? '#2563eb' : '#7fb8bd', width: e.id === edge?.id ? 3 : 1.5, dotted: e.transferType === 'self', points: [{ latitude: s.from.latitude, longitude: s.from.longitude }, { latitude: s.to.latitude, longitude: s.to.longitude }] })
       }
     }
     return { airports, lines }

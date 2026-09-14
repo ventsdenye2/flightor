@@ -242,7 +242,7 @@ const zh: Dict = {
   'tp.error': '生成失败，请重试',
   'tp.retry': '重试',
   'tp.disclaimer': '行程由模型生成，仅供参考',
-  'tp.pick': '先在搜索结果中选中一个航班方案，再生成专属行程',
+  'tp.pick': '先在搜索结果中选择航班方案，再生成行程',
   'tp.goSearch': '去搜索航班',
 
   // 需求对话（talk with agent）
@@ -278,7 +278,7 @@ const zh: Dict = {
   'chat.regionJapan': '日本',
   'chat.regionEurope': '欧洲',
   'chat.regionVisaFree': '免签/落地签',
-  'chat.modeRecommend': '由 Agent 推荐',
+  'chat.modeRecommend': '推荐目的地',
   'chat.recommendationsTitle': '目录推荐',
   'chat.addMustVisit': '把它加入必去城市',
   'chat.actionsTitle': '你也可以这样说',
@@ -704,7 +704,7 @@ const en: Dict = {
   'chat.regionJapan': 'Japan',
   'chat.regionEurope': 'Europe',
   'chat.regionVisaFree': 'Visa-free / VOA',
-  'chat.modeRecommend': 'Agent recommendations',
+  'chat.modeRecommend': 'Destination recommendations',
   'chat.recommendationsTitle': 'Directory picks',
   'chat.addMustVisit': 'Add to must-visit cities',
   'chat.actionsTitle': 'Try one of these',

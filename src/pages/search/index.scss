@@ -3,20 +3,20 @@
 .pf-results-intro .pf-title { margin: 0 0 5px; }
 .pf-mode-tabs { display: flex; border-bottom: 1px solid #e0eaec; }
 .ux-app .pf-mode-tab { flex: 1; min-height: 48px; color: #6c7f86; font-size: 12px; text-align: center; border-bottom: 2px solid transparent; }
-.ux-app .pf-mode-tab.is-active { color: #087f8c; border-bottom-color: #087f8c; font-weight: 600; }
+.ux-app .pf-mode-tab.is-active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
 .pf-results-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 9px; margin: 17px 0; }
 .pf-result-sorts { display: flex; flex: 1; max-width: 270px; padding: 3px; border-radius: 10px; background: #f1f6f7; }
 .ux-app .pf-result-sort { flex: 1; min-height: 44px; border-radius: 8px; text-align: center; color: #6c7f86; font-size: 11px; }
-.ux-app .pf-result-sort.is-active { background: #fff; color: #087f8c; font-weight: 600; box-shadow: 0 1px 4px #123c4a08; }
+.ux-app .pf-result-sort.is-active { background: #fff; color: #2563eb; font-weight: 600; box-shadow: 0 1px 4px #172f5608; }
 .pf-results-list { display: flex; flex-direction: column; gap: 14px; }
 .pf-loading { padding: 60px 10px; text-align: center; }
-.pf-loading-line { width: 48px; height: 3px; margin: 0 auto 20px; border-radius: 3px; background: #087f8c; animation: pf-loading-pulse 1.2s infinite; }
+.pf-loading-line { width: 48px; height: 3px; margin: 0 auto 20px; border-radius: 3px; background: #2563eb; animation: pf-loading-pulse 1.2s infinite; }
 .pf-state-title { display: block; font: 600 21px/1.5 'Songti SC', SimSun, serif; margin-bottom: 10px; }
 .pf-result-note { display: flex; gap: 8px; padding: 22px 1px 6px; color: #6c7f86; font-size: 11px; line-height: 1.8; }
 .pf-result-note .ux-icon { width: 15px; height: 15px; margin-top: 3px; }
 .ux-app .pf-edit-empty { width: 100%; justify-content: center; margin-bottom: 15px; }
-.pf-app .risk-modal__sheet { box-shadow: 0 -8px 36px #123c4a18; }
-.pf-app .risk-modal__item { color: #123c4a; border-left-width: 3px; }
+.pf-app .risk-modal__sheet { box-shadow: 0 -8px 36px #172f5618; }
+.pf-app .risk-modal__item { color: #172f56; border-left-width: 3px; }
 .pf-app .risk-modal__item-icon { font-size: 14px; min-width: 38px; }
 .pf-app .risk-modal__disclaimer { background: #fff5e9; color: #856337; }
 @keyframes pf-loading-pulse { 50% { opacity: .35; transform: scaleX(.7); } }

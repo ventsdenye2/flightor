@@ -3,7 +3,7 @@
 .ux-app .pf-history-row { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 68px; border-bottom: 1px solid #e5edef; font-size: 13px; }
 .pf-history-row > view:nth-child(2), .pf-history-row > div:nth-child(2) { flex: 1; min-width: 0; }
 .pf-history-row .pf-caption { margin-top: 4px; }
-.pf-history-icon { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: #edf6f6; border-radius: 50%; }
+.pf-history-icon { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: #edf3ff; border-radius: 50%; }
 .pf-history-icon .ux-icon { width: 17px; height: 17px; }
 .pf-history-row > .ux-icon { width: 13px; height: 13px; }
 .pf-intent-note { display: flex; align-items: flex-start; gap: 8px; padding: 25px 3px 6px; color: #6c7f86; font-size: 11px; line-height: 1.8; }

@@ -21,7 +21,7 @@ export default defineAppConfig({
   tabBar: {
     custom: true,
     color: '#6c7f86',
-    selectedColor: '#087f8c',
+    selectedColor: '#2563eb',
     backgroundColor: '#ffffff',
     borderStyle: 'white',
     list: [
@@ -33,9 +33,9 @@ export default defineAppConfig({
   },
   window: {
     backgroundTextStyle: 'dark',
-    navigationBarBackgroundColor: '#f5faf9',
+    navigationBarBackgroundColor: '#f5f8fd',
     navigationBarTitleText: '航线比价',
     navigationBarTextStyle: 'black',
-    backgroundColor: '#f5faf9'
+    backgroundColor: '#f5f8fd'
   }
 })

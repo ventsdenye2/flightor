@@ -83,10 +83,10 @@ function PriceAlertPage() {
             step={100}
             value={targetPrice}
             disabled={saving}
-            activeColor='#087f8c'
+            activeColor='#2563eb'
             backgroundColor='#dce8e9'
             blockSize={20}
-            blockColor='#087f8c'
+            blockColor='#2563eb'
             onChanging={e => setTargetPrice(e.detail.value)}
             onChange={e => setTargetPrice(e.detail.value)}
           />

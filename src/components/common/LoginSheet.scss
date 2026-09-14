@@ -3,7 +3,7 @@
   position: fixed;
   inset: 0;
   z-index: 1100;
-  color: #123c4a;
+  color: #172f56;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
 
   button::after { border: 0; }
@@ -42,7 +42,7 @@
     padding: 0;
     border: 0;
     border-radius: 50%;
-    background: #f2f7f7;
+    background: #f1f5fc;
     .ux-icon { width: 19px; height: 19px; }
   }
 
@@ -65,10 +65,10 @@
     height: 72px;
     border: 1px solid #d5e7e8;
     border-radius: 50%;
-    background: #edf6f6;
+    background: #edf3ff;
     &--empty { display: flex; align-items: center; justify-content: center; .ux-icon { width: 30px; height: 30px; } }
   }
-  &__avatar-tip { color: #087f8c; font-size: 12px; }
+  &__avatar-tip { color: #2563eb; font-size: 12px; }
   &__field {
     display: flex;
     min-height: 54px;
@@ -82,7 +82,7 @@
     background: #f8fbfb;
   }
   &__label { width: 64px; flex-shrink: 0; color: #6c7f86; font-size: 13px; }
-  &__input { min-width: 0; flex: 1; color: #123c4a; font-size: 15px; }
+  &__input { min-width: 0; flex: 1; color: #172f56; font-size: 15px; }
   &__placeholder { color: #829399; }
   &__confirm, &__local-button {
     display: flex;
@@ -98,10 +98,10 @@
     font-weight: 600;
     line-height: 1.5;
   }
-  &__confirm { border: 1px solid #087f8c; background: #087f8c; color: #fff; &.is-loading { opacity: .6; } }
+  &__confirm { border: 1px solid #2563eb; background: #2563eb; color: #fff; &.is-loading { opacity: .6; } }
   &__error { display: block; margin: 0 0 12px; color: #a54635; font-size: 12px; line-height: 1.65; }
   &__local { margin-top: 12px; }
-  &__local-button { border: 1px solid #087f8c; background: #fff; color: #087f8c; }
+  &__local-button { border: 1px solid #2563eb; background: #fff; color: #2563eb; }
   &__local-note, &__privacy { display: block; color: #6c7f86; text-align: center; font-size: 11px; line-height: 1.65; }
   &__local-note { margin-top: 7px; }
   &__privacy { margin-top: 14px; }
