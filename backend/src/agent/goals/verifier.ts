@@ -2,6 +2,7 @@ import type { ArtifactRepository } from '../../artifacts/repository.js'
 import { z } from 'zod'
 import { goalKindSchema, goalRunRecordSchema, goalStatusSchema, type GoalKind, type GoalRecord, type GoalRunRecord, type GoalStatus, type GoalWorkingSet } from './types.js'
 import type { TripContext } from '../../trips/types.js'
+import type { SelectedFlightContext } from '../../workspaces/flight-selection.js'
 
 export interface GoalVerificationContext {
   ownerId: string
@@ -9,6 +10,7 @@ export interface GoalVerificationContext {
   run: GoalRunRecord
   artifacts: ArtifactRepository
   currentTrip?: TripContext
+  selectedFlight?: SelectedFlightContext
   now?: string
 }
 

@@ -13,6 +13,7 @@ import { emptyTripContext, type TripContext } from '../../trips/types.js'
 import { createDefaultGoalVerifierRegistry } from './default-verifiers.js'
 import { InMemoryGoalRepository, InMemoryGoalRunRepository } from './repository.js'
 import type { GoalIntent } from './types.js'
+import { selectedFlightContext } from '../../workspaces/flight-selection.js'
 
 const now = '2026-09-08T00:00:00.000Z'
 const pvg: LocationRef = { id: 'airport:PVG', type: 'airport', name: 'Pudong', countryCode: 'CN', iata: 'PVG', cityCode: 'SHA' }
@@ -224,6 +225,44 @@ describe('default travel-guide goal verifier', () => {
     const guide = await guideData(test)
     const record = await guide.store()
     expect(await test.verify()).toEqual({ status: 'satisfied', artifactIds: [record.id], missing: [], warnings: [] })
+  })
+
+  it('accepts only the current confirmed offer as an older guide source', async () => {
+    const test = await fixture()
+    const guide = await guideData(test)
+    const flightId = uuidv7()
+    const offer = {
+      id: 'confirmed-offer',
+      segments: [{ flightNumber: 'FX1', airline: 'Fixture Air', origin: 'PVG', destination: 'NRT',
+        departsAt: '2026-10-10T09:00:00+08:00', arrivesAt: '2026-10-10T14:00:00+09:00', durationMinutes: 240 }],
+      totalAmount: 3200, currency: 'CNY', airlines: ['Fixture Air'], transferType: 'direct' as const
+    }
+    const flight = await test.artifacts.create({ id: flightId, tripId: test.trip.id, tripContextVersion: test.trip.version - 1,
+      type: 'flight_search', schemaVersion: 1, payload: {
+        id: flightId, type: 'flight_search', query: { origin: 'PVG', destination: 'NRT', departureDate: '2026-10-10', currency: 'CNY', travelClass: 1 },
+        offers: [offer], provider: 'fixture', checkedAt: now, verification: verified
+      } })
+    const selection = { kind: 'offer' as const, artifactId: flight.id, offerId: offer.id, layoverPreference: 'airport_only' as const,
+      contextVersion: test.trip.version - 1, revision: 1, selectedAt: now }
+    test.context.selectedFlight = selectedFlightContext(selection, flight)
+    const destinationId = (guide.routeRecord.payload as TripRoutePlanPayload).sourceArtifactIds[0]!
+    const routeId = uuidv7()
+    const routePayload = { ...(guide.routeRecord.payload as TripRoutePlanPayload), sourceArtifactIds: [destinationId, flight.id] }
+    const route = await test.artifacts.create({ ...test.lineage, id: routeId, type: 'route', schemaVersion: 1,
+      payload: routePayload, sourceArtifactIds: routePayload.sourceArtifactIds,
+      isSourceContextCompatible: source => source.id === flight.id })
+    const payload: TravelGuideArtifactPayload = {
+      ...guide.payload, routeArtifactId: route.id,
+      sourceArtifactIds: [route.id, destinationId, guide.research.id, flight.id],
+      flightSelection: { kind: 'offer', artifactId: flight.id, choiceId: offer.id, revision: 1, selectedAt: now }
+    }
+    const record = await test.artifacts.create({ ...test.lineage, type: 'travel_guide', schemaVersion: 1,
+      payload, sourceArtifactIds: payload.sourceArtifactIds,
+      isSourceContextCompatible: source => source.id === flight.id })
+    expect(await test.verify()).toMatchObject({ status: 'satisfied', artifactIds: [record.id] })
+
+    test.context.selectedFlight = selectedFlightContext({ ...selection, revision: 2 }, flight)
+    expect(await test.verify()).toMatchObject({ status: 'failed', missing: ['guide_flight_selection_stale'] })
   })
 
   it.each([false, true])('keeps daily coverage mandatory when allowPartial=%s', async allowPartial => {

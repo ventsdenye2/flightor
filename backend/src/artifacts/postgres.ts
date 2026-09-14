@@ -1,6 +1,6 @@
 import { v7 as uuidv7 } from 'uuid'
 import type { Kysely } from 'kysely'
-import { assertArtifactContextVersion, assertArtifactGoalWritable, assertArtifactRunWritable, normalizeSourceArtifactIds, type ArtifactRecord, type ArtifactRepository, type ArtifactScope, type CreateArtifactInput } from './repository.js'
+import { assertArtifactSourceContext, assertArtifactGoalWritable, assertArtifactRunWritable, normalizeSourceArtifactIds, type ArtifactRecord, type ArtifactRepository, type ArtifactScope, type CreateArtifactInput } from './repository.js'
 import { AppError } from '../lib/errors.js'
 import type { Database, JsonValue } from '../db/types.js'
 import { TripContextVersionConflict } from '../trips/repository.js'
@@ -176,17 +176,24 @@ export class PostgresArtifactRepository implements ArtifactRepository {
 
       for (const sourceId of sourceArtifactIds) {
         const source = await untyped(trx).selectFrom('artifacts')
-          .select(['id', 'trip_context_version', 'payload_json'])
+          .select(['public_id', 'type', 'schema_version', 'trip_context_version', 'payload_json', 'source_artifact_ids_json', 'created_at', 'updated_at'])
           .where('public_id', '=', sourceId)
           .where('user_id', '=', this.userId)
           .where('trip_id', '=', trip.id)
           .executeTakeFirst()
         if (!source) throw resourceNotFound('Source artifact was not found')
         if (input.tripContextVersion !== undefined) {
-          assertArtifactContextVersion({
+          assertArtifactSourceContext({
+            id: source.public_id,
+            tripId: input.tripId,
+            type: source.type as ArtifactRecord['type'],
+            schemaVersion: source.schema_version,
             ...(source.trip_context_version === null ? {} : { tripContextVersion: source.trip_context_version }),
-            payload: source.payload_json
-          }, input.tripContextVersion)
+            payload: source.payload_json,
+            sourceArtifactIds: Array.isArray(source.source_artifact_ids_json) ? source.source_artifact_ids_json as string[] : [],
+            createdAt: new Date(source.created_at).toISOString(),
+            updatedAt: new Date(source.updated_at).toISOString()
+          }, input.tripContextVersion, input.isSourceContextCompatible)
         }
       }
 

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { v7 as uuidv7 } from 'uuid'
 import type { ArtifactRecord } from '../artifacts/repository.js'
 import type { FareOffer } from '../fares/types.js'
-import { assertFlightChoice, readSavedFlightSelection, sameFlightChoice, selectedFlightContext } from './flight-selection.js'
+import { emptyTripContext } from '../trips/types.js'
+import { assertFlightChoice, isCompatibleSelectedFlightSource, readSavedFlightSelection, sameFlightChoice, selectedFlightContext } from './flight-selection.js'
 
 const checkedAt = '2026-09-14T00:00:00.000Z'
 const verification = { status: 'verified' as const, checkedAt, confidence: 1, sources: [{ provider: 'fixture' }] }
@@ -75,5 +76,38 @@ describe('confirmed flight selection', () => {
     expect(() => assertFlightChoice(record, choice, 3)).toThrowError(expect.objectContaining({ code: 'STALE_FLIGHT_SELECTION' }))
     expect(() => assertFlightChoice(record, choice, 2)).toThrowError(expect.objectContaining({ code: 'INVALID_FLIGHT_SELECTION' }))
     expect(() => assertFlightChoice({ ...record, type: 'research' }, choice, 2)).toThrowError(expect.objectContaining({ code: 'INVALID_FLIGHT_SELECTION' }))
+  })
+
+  it('reuses only the confirmed offer when flight inputs remain unchanged', () => {
+    const record = exactArtifact(1)
+    const selection = {
+      kind: 'offer' as const, artifactId: record.id, offerId: 'offer-main', layoverPreference: 'airport_only' as const,
+      contextVersion: 1, revision: 1, selectedAt: checkedAt
+    }
+    const selected = selectedFlightContext(selection, record)
+    const trip = {
+      ...emptyTripContext('trip-a'), version: 2, travelDays: 4,
+      origin: { id: 'airport:PEK', type: 'airport' as const, name: 'Beijing Capital', countryCode: 'CN', iata: 'PEK' },
+      departureWindow: { from: '2026-10-02', to: '2026-10-02', precision: 'exact' as const },
+      destinationIntent: {
+        mode: 'explicit' as const,
+        required: [{ id: 'airport:LIS', type: 'airport' as const, name: 'Lisbon', countryCode: 'PT', iata: 'LIS' }],
+        preferred: [], excluded: []
+      },
+      budget: { amount: 9000, currency: 'CNY' as const, scope: 'airfare' as const }
+    }
+    expect(isCompatibleSelectedFlightSource(record, selected, trip)).toBe(true)
+    expect(isCompatibleSelectedFlightSource({ ...record, type: 'route_set' }, selected, trip)).toBe(false)
+
+    const mutations = [
+      { origin: { ...trip.origin, id: 'airport:PKX', iata: 'PKX' } },
+      { destinationIntent: { ...trip.destinationIntent, required: [{ ...trip.destinationIntent.required[0]!, id: 'airport:OPO', iata: 'OPO' }] } },
+      { departureWindow: { from: '2026-10-03', to: '2026-10-03', precision: 'exact' as const } },
+      { returnWindow: { from: '2026-10-09', to: '2026-10-09', precision: 'exact' as const } },
+      { budget: { ...trip.budget, currency: 'EUR' as const } }
+    ]
+    for (const mutation of mutations) {
+      expect(isCompatibleSelectedFlightSource(record, selected, { ...trip, ...mutation })).toBe(false)
+    }
   })
 })

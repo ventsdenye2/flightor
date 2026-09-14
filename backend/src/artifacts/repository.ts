@@ -41,6 +41,8 @@ export interface CreateArtifactInput {
   schemaVersion: number
   payload: unknown
   verification?: unknown
+  /** Server-owned policy for a narrowly validated cross-version source. */
+  isSourceContextCompatible?: (record: ArtifactRecord) => boolean
 }
 
 export interface ArtifactScope {
@@ -68,6 +70,18 @@ export function assertArtifactContextVersion(record: { tripContextVersion?: numb
   if (record.tripContextVersion !== expectedVersion
     || (payloadVersion !== undefined && payloadVersion !== record.tripContextVersion)) {
     throw new AppError('ARTIFACT_CONTEXT_VERSION_MISMATCH', 'Source artifact does not match the accepted Trip Context version; re-plan from current inputs', 409)
+  }
+}
+
+export function assertArtifactSourceContext(
+  record: ArtifactRecord,
+  expectedVersion: number,
+  isCompatible?: (record: ArtifactRecord) => boolean
+): void {
+  try {
+    assertArtifactContextVersion(record, expectedVersion)
+  } catch (error) {
+    if (!isCompatible?.(record)) throw error
   }
 }
 
@@ -130,7 +144,10 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
       if (!source || source.ownerId !== this.ownerId || source.tripId !== input.tripId) {
         throw new AppError('RESOURCE_NOT_FOUND', 'Source artifact was not found', 404)
       }
-      if (input.tripContextVersion !== undefined) assertArtifactContextVersion(source, input.tripContextVersion)
+      if (input.tripContextVersion !== undefined) {
+        const { ownerId: _ownerId, ...publicSource } = source
+        assertArtifactSourceContext(publicSource, input.tripContextVersion, input.isSourceContextCompatible)
+      }
     }
     await this.validateRelationships(input)
     const now = new Date().toISOString()

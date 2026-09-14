@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
 import { InMemoryTripContextRepository } from '../../trips/repository.js'
 import { emptyTripContext } from '../../trips/types.js'
+import { AppError } from '../../lib/errors.js'
 import { completeGoal, refreshGoalDelivery, summarizeGoalDelivery } from './completion.js'
 import { createDefaultGoalVerifierRegistry } from './default-verifiers.js'
 import { InMemoryGoalRepository, InMemoryGoalRunRepository } from './repository.js'
@@ -146,5 +147,18 @@ describe('Goal completion service', () => {
       { goalId: '019c7714-3b77-74d1-9866-e1f484aae2ab', kind: 'travel_guide', status: 'pending', artifactIds: [], missing: ['travel_guide_artifact'], warnings: [] }
     ])
     expect(delivery).toMatchObject({ status: 'pending', missing: ['travel_guide_artifact'] })
+  })
+
+  it('stops completion when the confirmed flight revision changes', async () => {
+    const { scope, goal, run, verify } = await fixture()
+    verify.mockResolvedValue({ status: 'satisfied', artifactIds: [], missing: [], warnings: [] })
+    const assertFlightSelectionCurrent = vi.fn().mockRejectedValue(
+      new AppError('FLIGHT_SELECTION_CHANGED', 'The confirmed flight changed', 409)
+    )
+    await expect(completeGoal({ ...scope, assertFlightSelectionCurrent }, { goalId: goal.id, runId: run.id }))
+      .rejects.toMatchObject({ code: 'FLIGHT_SELECTION_CHANGED' })
+    expect(verify).not.toHaveBeenCalled()
+    expect(await scope.goals.get(goal.id)).toMatchObject({ status: 'pending' })
+    expect(await scope.runs.get(run.id)).toMatchObject({ status: 'running' })
   })
 })

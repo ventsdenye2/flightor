@@ -42,4 +42,17 @@ describe('InMemoryArtifactRepository lineage', () => {
     await expect(repo.create({ tripId: 'trip-a', runId: 'run-a', type: 'route', schemaVersion: 1, payload: {} }))
       .rejects.toMatchObject({ code: 'INVALID_ARTIFACT' })
   })
+
+  it('requires the repository write boundary to approve each stale source', async () => {
+    const repo = new InMemoryArtifactRepository('owner-a', new Set(['trip-a']))
+    const flight = await repo.create({ tripId: 'trip-a', tripContextVersion: 1, type: 'flight_search', schemaVersion: 1, payload: {} })
+    const research = await repo.create({ tripId: 'trip-a', tripContextVersion: 1, type: 'research', schemaVersion: 2, payload: {} })
+    await expect(repo.create({ tripId: 'trip-a', tripContextVersion: 2, type: 'route', schemaVersion: 1,
+      sourceArtifactIds: [flight.id], payload: {} })).rejects.toMatchObject({ code: 'ARTIFACT_CONTEXT_VERSION_MISMATCH' })
+    await expect(repo.create({ tripId: 'trip-a', tripContextVersion: 2, type: 'route', schemaVersion: 1,
+      sourceArtifactIds: [flight.id], payload: {}, isSourceContextCompatible: source => source.id === flight.id })).resolves.toBeTruthy()
+    await expect(repo.create({ tripId: 'trip-a', tripContextVersion: 2, type: 'route', schemaVersion: 1,
+      sourceArtifactIds: [research.id], payload: {}, isSourceContextCompatible: source => source.id === flight.id }))
+      .rejects.toMatchObject({ code: 'ARTIFACT_CONTEXT_VERSION_MISMATCH' })
+  })
 })

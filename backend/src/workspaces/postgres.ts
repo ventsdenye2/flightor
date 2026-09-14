@@ -66,13 +66,24 @@ export class PostgresWorkspaceRepository implements WorkspaceRepository {
           ...(m.role === 'assistant' && stopReason ? { stopReason } : {}), ...(m.role === 'assistant' && warnings ? { warnings } : {}) })
       }
     }
+    const selectedFlight = await this.getSelectedFlight(tripId)
     const completionScope = {
       ownerId: this.userId, tripId,
       trips: new PostgresTripRepository(this.db, this.userId),
       artifacts: new PostgresArtifactRepository(this.db, this.userId),
       goals: new PostgresGoalRepository(this.db, this.userId),
       runs: new PostgresGoalRunRepository(this.db, this.userId),
-      verifiers: createDefaultGoalVerifierRegistry(), signal: AbortSignal.timeout(3_000)
+      verifiers: createDefaultGoalVerifierRegistry(), signal: AbortSignal.timeout(3_000),
+      ...(selectedFlight ? {
+        selectedFlight,
+        assertFlightSelectionCurrent: async () => {
+          const current = await this.getSelectedFlight(tripId)
+          if (!current || current.selection.revision !== selectedFlight.selection.revision
+            || current.selection.artifactId !== selectedFlight.selection.artifactId) {
+            throw new AppError('FLIGHT_SELECTION_CHANGED', 'The confirmed flight changed; refresh this result', 409)
+          }
+        }
+      } : {})
     }
     // Status comes from the server verifier, never from a job's succeeded flag.
     // Bound refresh latency; historical snapshots remain honest if storage is unavailable.

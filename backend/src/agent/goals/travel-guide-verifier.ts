@@ -6,18 +6,33 @@ import { validateGuideContent } from '../../travel-guides/validation.js'
 import { travelGuideGoalParametersSchema, type GoalRecord } from './types.js'
 import type { GoalVerification, GoalVerificationContext, GoalVerifier } from './verifier.js'
 import { currentContextFailure, goalArtifacts, hasCurrentArtifactScope, selectVerification, verificationResult } from './artifact-verification.js'
+import { isCompatibleSelectedFlightSource } from '../../workspaces/flight-selection.js'
 
 async function verifyGuide(record: ArtifactRecord, goal: GoalRecord, context: GoalVerificationContext): Promise<GoalVerification> {
   const parsed = travelGuideArtifactPayloadSchema.safeParse(record.payload)
   if (record.schemaVersion !== 1 || !parsed.success) return verificationResult('failed', ['travel_guide_payload'])
   const guide = parsed.data
+  const selected = context.selectedFlight?.selection
+  if (guide.flightSelection) {
+    const choiceId = selected?.kind === 'offer' ? selected.offerId : selected?.kind === 'route' ? selected.routeId : undefined
+    if (!selected || guide.flightSelection.kind !== selected.kind
+      || guide.flightSelection.artifactId !== selected.artifactId
+      || guide.flightSelection.choiceId !== choiceId
+      || guide.flightSelection.revision !== selected.revision) {
+      return verificationResult('failed', ['guide_flight_selection_stale'])
+    }
+  } else if (selected) return verificationResult('failed', ['guide_flight_selection_missing'])
   const sourceIds = new Set([...guide.sourceArtifactIds, ...(record.sourceArtifactIds ?? [])])
   if (!guide.sourceArtifactIds.includes(guide.routeArtifactId) || !record.sourceArtifactIds?.includes(guide.routeArtifactId)) {
     return verificationResult('failed', ['guide_source_lineage'])
   }
   const sources = new Map<string, ArtifactRecord>()
   const loaded = await Promise.all([...sourceIds].map(id => context.artifacts.get(id)))
-  if (loaded.some(source => !source || !hasCurrentArtifactScope(source, context))) return verificationResult('failed', ['guide_source_scope'])
+  if (loaded.some(source => !source || (!hasCurrentArtifactScope(source, context)
+    && !(context.currentTrip && context.selectedFlight
+      && isCompatibleSelectedFlightSource(source, context.selectedFlight, context.currentTrip))))) {
+    return verificationResult('failed', ['guide_source_scope'])
+  }
   for (const source of loaded) if (source) sources.set(source.id, source)
   const routeRecord = sources.get(guide.routeArtifactId)
   const route = tripRoutePlanPayloadSchema.safeParse(routeRecord?.payload)

@@ -4,6 +4,10 @@ import { routeSetPayloadSchema, type CompleteFlightPath, type ConnectionEdge } f
 import { flexibleFlightSearchArtifactSchema } from '../fares/search-service.js'
 import { flightSearchArtifactSchema, type FareOffer, type FareSearchInput } from '../fares/types.js'
 import { AppError } from '../lib/errors.js'
+import type { TripContext } from '../trips/types.js'
+import type { LocationRef } from '../aviation/types.js'
+import { airportExactIdentity, cityGroupingCode } from '../locations/identity.js'
+import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
 
 export const layoverPreferenceSchema = z.enum(['airport_only', 'consider_city'])
 
@@ -229,5 +233,44 @@ export function selectedFlightContext(selection: SavedFlightSelection, record: A
   return {
     selection, route, segments: route.edges.flatMap(edgeSegments),
     layoverWindows: routeLayoverWindows(route, selection.layoverPreference)
+  }
+}
+
+function locationMatchesAirport(location: LocationRef, airport: string): boolean {
+  return location.type === 'airport'
+    ? airportExactIdentity(location) === `airport:${airport}`
+    : cityGroupingCode(location, CURATED_LOCATION_IDENTITY_POLICY) === cityGroupingCode(airport, CURATED_LOCATION_IDENTITY_POLICY)
+}
+
+function exactWindowMatches(window: TripContext['departureWindow'], date: string): boolean {
+  return window?.precision === 'exact' && window.from === date && (window.to === undefined || window.to === date)
+}
+
+/**
+ * A confirmed fare snapshot may survive preference-only Trip edits. The
+ * exception is intentionally limited to the exact persisted offer and the
+ * flight search inputs that the current Trip can still prove unchanged.
+ */
+export function isCompatibleSelectedFlightSource(
+  record: ArtifactRecord,
+  selectedFlight: SelectedFlightContext,
+  currentTrip: TripContext
+): boolean {
+  const selection = selectedFlight.selection
+  if (selection.kind !== 'offer' || selection.artifactId !== record.id
+    || selection.contextVersion !== record.tripContextVersion) return false
+  try {
+    const restored = selectedFlightContext(selection, record)
+    const query = restored.query
+    if (!query || !currentTrip.origin || !locationMatchesAirport(currentTrip.origin, query.origin)
+      || !exactWindowMatches(currentTrip.departureWindow, query.departureDate)) return false
+    const required = currentTrip.destinationIntent.required
+    if (required.length !== 1 || !locationMatchesAirport(required[0]!, query.destination)) return false
+    if (query.returnDate === undefined ? currentTrip.returnWindow !== undefined
+      : !exactWindowMatches(currentTrip.returnWindow, query.returnDate)) return false
+    if (currentTrip.budget?.currency !== undefined && currentTrip.budget.currency !== query.currency) return false
+    return restored.offer?.id === selection.offerId
+  } catch {
+    return false
   }
 }

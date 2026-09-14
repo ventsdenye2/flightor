@@ -1,8 +1,8 @@
 import { AppError } from '../lib/errors.js'
 import { TripContextVersionConflict, type TripContextRepository } from '../trips/repository.js'
 import type { TripContext } from '../trips/types.js'
-import { assertArtifactContextVersion, type ArtifactRecord, type ArtifactRepository, type ArtifactType, type CreateArtifactInput } from './repository.js'
-import type { SelectedFlightContext } from '../workspaces/flight-selection.js'
+import { assertArtifactContextVersion, assertArtifactSourceContext, type ArtifactRecord, type ArtifactRepository, type ArtifactType, type CreateArtifactInput } from './repository.js'
+import { isCompatibleSelectedFlightSource, type SelectedFlightContext } from '../workspaces/flight-selection.js'
 
 /** Authenticated scope shared by artifact-producing domain services. */
 export interface ArtifactWorkspace {
@@ -15,6 +15,7 @@ export interface ArtifactWorkspace {
   goalId?: string
   runId?: string
   readonly tripContextVersion: number
+  readonly tripContext: TripContext
   signal?: AbortSignal
   isCurrent?: () => boolean
   /** Optional durable-operation cancellation check; Trip version checks remain shared here. */
@@ -25,12 +26,12 @@ export interface ArtifactWorkspace {
 
 /** Freeze the version used to derive this operation's inputs, including work without a Goal. */
 export async function createArtifactWorkspace(
-  input: Omit<ArtifactWorkspace, 'tripContextVersion'> & { tripContextVersion?: number },
+  input: Omit<ArtifactWorkspace, 'tripContextVersion' | 'tripContext'> & { tripContextVersion?: number },
   snapshot?: TripContext
 ): Promise<ArtifactWorkspace> {
   const trip = snapshot ?? await input.trips.get(input.tripId)
   if (!trip || trip.id !== input.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
-  const scope: ArtifactWorkspace = { ...input, tripContextVersion: input.tripContextVersion ?? trip.version }
+  const scope: ArtifactWorkspace = { ...input, tripContextVersion: input.tripContextVersion ?? trip.version, tripContext: trip }
   if (trip.version !== scope.tripContextVersion) throw new TripContextVersionConflict(scope.tripContextVersion, trip.version)
   await checkpoint(scope)
   return scope
@@ -62,7 +63,8 @@ export async function checkpoint(scope: ArtifactWorkspace): Promise<void> {
 
 /** Same-version evidence may be reused across runs; legacy or other-version evidence needs re-planning. */
 export function assertWorkspaceArtifactVersion(scope: ArtifactWorkspace, record: ArtifactRecord): void {
-  assertArtifactContextVersion(record, scope.tripContextVersion)
+  assertArtifactSourceContext(record, scope.tripContextVersion, source => Boolean(scope.selectedFlight
+    && isCompatibleSelectedFlightSource(source, scope.selectedFlight, scope.tripContext)))
 }
 
 export async function loadWorkspaceArtifact(scope: ArtifactWorkspace, id: string, type: ArtifactType, versions: readonly number[]) {
@@ -91,7 +93,10 @@ export async function saveWorkspaceArtifact(
     ...input,
     tripId: scope.tripId,
     ...(scope.conversationId ? { conversationId: scope.conversationId } : {}),
-    ...workspaceLineage(scope, input.sourceArtifactIds)
+    ...workspaceLineage(scope, input.sourceArtifactIds),
+    ...(scope.selectedFlight ? {
+      isSourceContextCompatible: (source: ArtifactRecord) => isCompatibleSelectedFlightSource(source, scope.selectedFlight!, scope.tripContext)
+    } : {})
   }
   if (options?.researchAuditId) {
     if (!scope.artifacts.createWithResearchAudit) throw new AppError('RESEARCH_AUDIT_LINK_UNAVAILABLE', 'Research audit cannot be linked to the workspace artifact', 503)

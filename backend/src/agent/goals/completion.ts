@@ -3,6 +3,7 @@ import type { ArtifactRepository } from '../../artifacts/repository.js'
 import { AppError } from '../../lib/errors.js'
 import type { TripContextRepository } from '../../trips/repository.js'
 import type { GoalRepository, GoalRunRepository } from './repository.js'
+import type { SelectedFlightContext } from '../../workspaces/flight-selection.js'
 import { goalKindSchema, goalRunStatusSchema, goalStatusSchema, type GoalRecord, type GoalRunRecord } from './types.js'
 import { goalVerificationSchema, type GoalVerification, type GoalVerifierRegistry } from './verifier.js'
 
@@ -38,9 +39,14 @@ export interface GoalCompletionScope {
   verifiers: GoalVerifierRegistry
   signal?: AbortSignal
   isCurrent?: () => boolean
+  selectedFlight?: SelectedFlightContext
+  assertFlightSelectionCurrent?: () => Promise<void>
 }
 
-function checkpoint(scope: GoalCompletionScope): void {
+async function checkpoint(scope: GoalCompletionScope): Promise<void> {
+  scope.signal?.throwIfAborted()
+  if (scope.isCurrent?.() === false) throw new AppError('GOAL_RUN_NOT_CURRENT', 'The active operation changed', 409)
+  await scope.assertFlightSelectionCurrent?.()
   scope.signal?.throwIfAborted()
   if (scope.isCurrent?.() === false) throw new AppError('GOAL_RUN_NOT_CURRENT', 'The active operation changed', 409)
 }
@@ -50,17 +56,17 @@ export async function completeGoal(
   scope: GoalCompletionScope,
   input: { goalId: string; runId?: string; persist?: boolean; closePartialRun?: boolean }
 ): Promise<{ goal: GoalRecord; run: GoalRunRecord; verification: GoalVerification }> {
-  checkpoint(scope)
+  await checkpoint(scope)
   const goal = await scope.goals.get(input.goalId)
-  checkpoint(scope)
+  await checkpoint(scope)
   if (!goal || goal.ownerId !== scope.ownerId || goal.tripId !== scope.tripId) {
     throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
   }
   const current = await scope.trips.get(scope.tripId)
-  checkpoint(scope)
+  await checkpoint(scope)
   if (!current) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
   const candidate = input.runId ? await scope.runs.get(input.runId) : undefined
-  checkpoint(scope)
+  await checkpoint(scope)
   const matches = (value: GoalRunRecord | undefined): value is GoalRunRecord => Boolean(value
     && value.ownerId === scope.ownerId && value.goalId === goal.id && value.tripId === scope.tripId)
   let run = matches(candidate) ? candidate
@@ -70,14 +76,14 @@ export async function completeGoal(
         goalId: goal.id, tripId: scope.tripId, contextVersion: current.version,
         statuses: goalRunStatusSchema.options
       })
-  checkpoint(scope)
+  await checkpoint(scope)
   // A terminal failure or cancellation remains observable after the Trip changes.
   // A newer compatible run takes precedence so an explicit retry can still finish.
   if (!run && (goal.status === 'failed' || goal.status === 'cancelled')) {
     run = (await scope.runs.listForGoal(goal.id)).find(value => matches(value)
       && (goal.status === 'cancelled' || value.status === 'failed'))
   }
-  checkpoint(scope)
+  await checkpoint(scope)
   if (!matches(run)) throw new AppError('GOAL_RUN_NOT_FOUND', 'No compatible Goal run exists', 409)
   if (goal.status === 'cancelled' || run.status === 'cancelled') {
     return { goal, run, verification: { status: 'cancelled', artifactIds: [], missing: [], warnings: [] } }
@@ -86,11 +92,12 @@ export async function completeGoal(
     return { goal, run, verification: { status: 'failed', artifactIds: [], missing: ['goal_run_failed'], warnings: [] } }
   }
   const verification = await scope.verifiers.verify(goal, {
-    ownerId: scope.ownerId, tripId: scope.tripId, run, currentTrip: current, artifacts: scope.artifacts
+    ownerId: scope.ownerId, tripId: scope.tripId, run, currentTrip: current, artifacts: scope.artifacts,
+    ...(scope.selectedFlight ? { selectedFlight: scope.selectedFlight } : {})
   })
-  checkpoint(scope)
+  await checkpoint(scope)
   const latest = await scope.trips.get(scope.tripId)
-  checkpoint(scope)
+  await checkpoint(scope)
   if (!latest || latest.version !== current.version) {
     return { goal, run, verification: { status: 'pending', artifactIds: [], missing: ['current_trip_context'], warnings: ['run_context_stale'] } }
   }
@@ -106,7 +113,7 @@ export async function completeGoal(
   // only when the verified result agrees with that run's terminal status.
   if ((run.status !== 'running' && run.status !== runStatus)
     || (goal.status === 'satisfied' && verification.status !== 'satisfied')) return { goal, run, verification }
-  checkpoint(scope)
+  await checkpoint(scope)
   const completed = await scope.runs.commitCompletion({
     goalId: goal.id, runId: run.id,
     expectedGoalRevision: goal.revision, expectedRunRevision: run.revision,

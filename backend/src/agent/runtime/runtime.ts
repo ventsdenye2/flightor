@@ -61,6 +61,21 @@ export interface AgentRunResult {
 const DEFAULT_FALLBACK = '本轮处理未完整结束，已保存的结果会保留。你可以继续对话重试。'
 const RESEARCH_RATE_LIMIT_REPLY = '联网研究服务暂时限流，本轮未能完成攻略。已保存的结果会保留，请稍后重试。'
 
+export function sanitizePlannerReply(value: string): string {
+  const text = value.trim()
+  const separators = [...text.matchAll(/\r?\n\s*---+\s*\r?\n/g)]
+  for (let index = separators.length - 1; index >= 0; index -= 1) {
+    const separator = separators[index]!
+    const prefix = text.slice(0, separator.index).trim()
+    const suffix = text.slice((separator.index ?? 0) + separator[0].length).trim()
+    const prefixLatin = (prefix.match(/[A-Za-z]/g) ?? []).length
+    const prefixHan = (prefix.match(/[\u3400-\u9fff]/g) ?? []).length
+    const suffixHan = (suffix.match(/[\u3400-\u9fff]/g) ?? []).length
+    if (prefixLatin >= 20 && prefixHan === 0 && suffixHan >= 4) return suffix
+  }
+  return text
+}
+
 function researchRateLimited(traces: AgentTrace[]): boolean {
   return traces.some(trace => trace.warnings.includes('research_provider_rate_limited'))
 }
@@ -212,6 +227,8 @@ export class AgentRuntime {
               goals: executionContext.goalRepository, runs: executionContext.goalRunRepository,
               verifiers: executionContext.goalVerifiers,
               signal: finalizationController.signal,
+              ...(executionContext.selectedFlight ? { selectedFlight: executionContext.selectedFlight } : {}),
+              ...(executionContext.assertFlightSelectionCurrent ? { assertFlightSelectionCurrent: executionContext.assertFlightSelectionCurrent } : {}),
               ...(persist && executionContext.isGenerationCurrent ? { isCurrent: executionContext.isGenerationCurrent } : {})
             }, { goalId, runId, persist })
             const item = { goalId, kind: completed.goal.kind, ...completed.verification }
@@ -282,7 +299,7 @@ export class AgentRuntime {
         messages.push(completion.message)
         const calls = toolCalls(completion.message)
         if (calls.length === 0) {
-          const reply = completion.message.content?.trim()
+          const reply = completion.message.content ? sanitizePlannerReply(completion.message.content) : ''
           if (!reply) return await fallback('model_failure')
           emitActivity(input.onActivity, { type: 'finalizing' })
           const delivery = await readDelivery(true)

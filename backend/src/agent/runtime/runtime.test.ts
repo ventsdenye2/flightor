@@ -5,7 +5,7 @@ import { InMemoryTripContextRepository } from '../../trips/repository.js'
 import { emptyTripContext } from '../../trips/types.js'
 import { createCoreToolRegistry } from '../tools/core.js'
 import { ToolRegistry, type AgentTool, type ToolExecutionContext } from './registry.js'
-import { AgentRuntime } from './runtime.js'
+import { AgentRuntime, sanitizePlannerReply } from './runtime.js'
 import type { AgentModelClient } from './model.js'
 import type { ProviderCallOptions, ResolveLocationInput } from '../../aviation/providers/provider.js'
 import { z } from 'zod'
@@ -22,6 +22,13 @@ const call = (id: string, name: string, args = {}) => ({ id, type: 'function' as
 const tool = (name: string, execute: AgentTool['execute'], extra: Partial<AgentTool> = {}): AgentTool => ({ name, description: name, inputSchema: z.object({}).strict(), outputSchema: z.object({ ok: z.boolean() }), costClass: 'free', costUnits: 1, sideEffect: 'none', parallelSafe: true, timeoutMs: 30, execute, ...extra })
 
 describe('AgentRuntime and ToolRegistry', () => {
+  it('removes an English analysis preface only when a Chinese reply follows a divider', () => {
+    expect(sanitizePlannerReply('I need to inspect the selected flight and formulate the final response.\n---\n已采用这条航线，可以继续安排行程。'))
+      .toBe('已采用这条航线，可以继续安排行程。')
+    expect(sanitizePlannerReply('价格比较\n---\n阿联酋航空更省时。')).toBe('价格比较\n---\n阿联酋航空更省时。')
+    expect(sanitizePlannerReply('English heading\n---\nEnglish body')).toBe('English heading\n---\nEnglish body')
+  })
+
   it('emits only actual model/tool execution events and isolates observer errors', async () => {
     const events: unknown[] = []
     const registry = new ToolRegistry().register(tool('research', async () => ({ ok: true })))

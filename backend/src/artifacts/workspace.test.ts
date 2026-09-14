@@ -4,9 +4,18 @@ import { checkpoint, createArtifactWorkspace, loadWorkspaceArtifact, saveWorkspa
 import { AppError } from '../lib/errors.js'
 import { InMemoryTripContextRepository } from '../trips/repository.js'
 import { emptyTripContext } from '../trips/types.js'
+import { v7 as uuidv7 } from 'uuid'
+import { selectedFlightContext } from '../workspaces/flight-selection.js'
 
 function setup() {
-  const trip = { ...emptyTripContext('trip'), version: 2, travelDays: 10 }
+  const trip = {
+    ...emptyTripContext('trip'), version: 2, travelDays: 10,
+    origin: { id: 'airport:PEK', type: 'airport' as const, name: 'Beijing Capital', countryCode: 'CN', iata: 'PEK' },
+    departureWindow: { from: '2026-10-02', to: '2026-10-02', precision: 'exact' as const },
+    destinationIntent: { mode: 'explicit' as const,
+      required: [{ id: 'airport:LIS', type: 'airport' as const, name: 'Lisbon', countryCode: 'PT', iata: 'LIS' }],
+      preferred: [], excluded: [] }
+  }
   const trips = new InMemoryTripContextRepository([trip])
   const artifacts = new InMemoryArtifactRepository('owner', new Set(['trip', 'other-trip']))
   return { trip, trips, artifacts, input: { artifacts, trips, tripId: trip.id } }
@@ -60,5 +69,29 @@ describe('Artifact workspace consistency', () => {
     })
     current = false
     await expect(checkpoint(scope)).rejects.toMatchObject({ code: 'FLIGHT_SELECTION_CHANGED' })
+  })
+
+  it('derives a current artifact from the exact confirmed fare after a preference-only Trip edit', async () => {
+    const { artifacts, input } = setup()
+    const id = uuidv7()
+    const checkedAt = '2026-09-14T00:00:00.000Z'
+    const source = await artifacts.create({ tripId: 'trip', tripContextVersion: 1, id,
+      type: 'flight_search', schemaVersion: 1, payload: {
+        id, type: 'flight_search', query: { origin: 'PEK', destination: 'LIS', departureDate: '2026-10-02', currency: 'CNY', travelClass: 1 },
+        offers: [{ id: 'offer', segments: [{ flightNumber: 'FX1', airline: 'Fixture Air', origin: 'PEK', destination: 'LIS',
+          departsAt: '2026-10-02T10:00:00+08:00', arrivesAt: '2026-10-02T19:00:00+01:00', durationMinutes: 960 }],
+          totalAmount: 6250, currency: 'CNY', airlines: ['Fixture Air'], transferType: 'direct' }],
+        provider: 'fixture', checkedAt,
+        verification: { status: 'verified', checkedAt, confidence: 1, sources: [{ provider: 'fixture' }] }
+      } })
+    const selection = { kind: 'offer' as const, artifactId: source.id, offerId: 'offer', layoverPreference: 'airport_only' as const,
+      contextVersion: 1, revision: 1, selectedAt: checkedAt }
+    const scope = await createArtifactWorkspace({ ...input, selectedFlight: selectedFlightContext(selection, source) })
+    await expect(saveWorkspaceArtifact(scope, { type: 'route', schemaVersion: 1, payload: { tripContextVersion: 2 },
+      sourceArtifactIds: [source.id] })).resolves.toMatchObject({ tripContextVersion: 2, sourceArtifactIds: [source.id] })
+
+    const oldResearch = await artifacts.create({ tripId: 'trip', tripContextVersion: 1, type: 'research', schemaVersion: 2, payload: {} })
+    await expect(saveWorkspaceArtifact(scope, { type: 'route', schemaVersion: 1, payload: { tripContextVersion: 2 },
+      sourceArtifactIds: [oldResearch.id] })).rejects.toMatchObject({ code: 'ARTIFACT_CONTEXT_VERSION_MISMATCH' })
   })
 })

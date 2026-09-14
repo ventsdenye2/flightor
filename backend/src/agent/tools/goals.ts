@@ -210,6 +210,8 @@ export const finishGoalTool: AgentTool = {
     return completeGoal({
       ownerId: owner(context), tripId: context.tripId, trips: context.trips,
       artifacts: context.artifacts, goals, runs, verifiers, signal,
+      ...(context.selectedFlight ? { selectedFlight: context.selectedFlight } : {}),
+      ...(context.assertFlightSelectionCurrent ? { assertFlightSelectionCurrent: context.assertFlightSelectionCurrent } : {}),
       ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
     }, { goalId, ...(context.activeGoalRunId ? { runId: context.activeGoalRunId } : {}), closePartialRun: false })
   }

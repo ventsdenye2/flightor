@@ -112,7 +112,15 @@ suite('PostgreSQL atomic Artifact writes', () => {
     await expect(artifacts.create({ ...successor, sourceArtifactIds: [legacy.id] })).rejects.toMatchObject({ code: 'ARTIFACT_CONTEXT_VERSION_MISSING' })
     await expect(artifacts.create({ ...successor, sourceArtifactIds: [prior.id] })).rejects.toMatchObject({ code: 'ARTIFACT_CONTEXT_VERSION_MISMATCH' })
     expect(await artifacts.get(prior.id)).toMatchObject({ tripContextVersion: 0 })
-    const current = await artifacts.create({ tripId: trip.id, tripContextVersion: 1, type: 'research', schemaVersion: 2, payload: {} })
-    await expect(artifacts.create({ ...successor, sourceArtifactIds: [current.id] })).resolves.toMatchObject({ tripContextVersion: 1, sourceArtifactIds: [current.id] })
+    const confirmedFlight = await artifacts.create({ tripId: trip.id, tripContextVersion: 1,
+      type: 'flight_search', schemaVersion: 1, payload: { captured: true } })
+    await trips.update(trip.id, { notes: ['preference-only change'] }, 1)
+    await expect(artifacts.create({ tripId: trip.id, tripContextVersion: 2, type: 'route', schemaVersion: 1,
+      payload: { tripContextVersion: 2 }, sourceArtifactIds: [confirmedFlight.id],
+      isSourceContextCompatible: source => source.id === confirmedFlight.id && source.type === 'flight_search'
+    })).resolves.toMatchObject({ tripContextVersion: 2, sourceArtifactIds: [confirmedFlight.id] })
+    const current = await artifacts.create({ tripId: trip.id, tripContextVersion: 2, type: 'research', schemaVersion: 2, payload: {} })
+    await expect(artifacts.create({ ...successor, tripContextVersion: 2, sourceArtifactIds: [current.id] }))
+      .resolves.toMatchObject({ tripContextVersion: 2, sourceArtifactIds: [current.id] })
   })
 })
