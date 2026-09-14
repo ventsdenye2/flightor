@@ -47,7 +47,7 @@ function pseudonym(value) {
 
 const droppedKeys = /^(authorization|cookie|accessToken|refreshToken|token|secret|apiKey|bookingUrl)$/i
 function sanitize(value) {
-  if (typeof value === 'string') return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  if (typeof value === 'string') return /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value)
     ? pseudonym(value) : value
   if (Array.isArray(value)) return value.map(sanitize)
   if (!value || typeof value !== 'object') return value
