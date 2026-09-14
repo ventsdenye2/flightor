@@ -2,6 +2,7 @@ import { AppError } from '../lib/errors.js'
 import { TripContextVersionConflict, type TripContextRepository } from '../trips/repository.js'
 import type { TripContext } from '../trips/types.js'
 import { assertArtifactContextVersion, type ArtifactRecord, type ArtifactRepository, type ArtifactType, type CreateArtifactInput } from './repository.js'
+import type { SelectedFlightContext } from '../workspaces/flight-selection.js'
 
 /** Authenticated scope shared by artifact-producing domain services. */
 export interface ArtifactWorkspace {
@@ -18,6 +19,8 @@ export interface ArtifactWorkspace {
   isCurrent?: () => boolean
   /** Optional durable-operation cancellation check; Trip version checks remain shared here. */
   assertActive?: () => Promise<void>
+  selectedFlight?: SelectedFlightContext
+  assertFlightSelectionCurrent?: () => Promise<void>
 }
 
 /** Freeze the version used to derive this operation's inputs, including work without a Goal. */
@@ -49,6 +52,7 @@ export async function checkpoint(scope: ArtifactWorkspace): Promise<void> {
   scope.signal?.throwIfAborted()
   if (scope.isCurrent?.() === false) throw new AppError('WORKFLOW_CANCELLED', 'The active operation changed; workflow was cancelled', 409)
   await scope.assertActive?.()
+  await scope.assertFlightSelectionCurrent?.()
   const current = await scope.trips.get(scope.tripId)
   if (!current) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
   if (current.version !== scope.tripContextVersion) throw new TripContextVersionConflict(scope.tripContextVersion, current.version)

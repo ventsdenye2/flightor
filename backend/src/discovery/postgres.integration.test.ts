@@ -121,7 +121,7 @@ suite('Editorial publishing and cloud workspace PostgreSQL boundaries', () => {
     const from = { id: 'PEK', type: 'airport' as const, name: 'Beijing', countryCode: 'CN', iata: 'PEK' }, to = template.anchorDestinations[0]!
     const path = { id: 'saved-route', nodes: [{ location: from, role: 'origin' as const }, { location: to, role: 'destination' as const }], edges: [{ id: 'route-edge', from, to, departureDate: today, transferType: 'direct' as const, availability: 'verified' as const, verification: { ...verification, status: 'verified' as const, confidence: 1 }, warnings: [], reasons: [], fare: { amount: 100, currency: 'CNY' } }], totalFare: { amount: 100, currency: 'CNY' }, transferCount: 0, feasibility: 'feasible' as const, warnings: [] }
     const optimized = await new ParetoRouteOptimizer().optimize({ paths: [path], weights: {}, preferredLocations: [], interestLocations: [], maxRepresentatives: 3 })
-    const artifact = await new PostgresArtifactRepository(db, userId).create({ tripId: trip.id, type: 'route_set', schemaVersion: 1, payload: { schemaVersion: 1, kind: 'optimized_routes', serviceVersion: 'qa', algorithmVersion: 'qa', sourceArtifactIds: [], verification, warnings: [], truncated: false, exhausted: false, representatives: optimized.representatives, paretoFrontierCount: 1, rejectedCandidateCount: 0 } })
+    const artifact = await new PostgresArtifactRepository(db, userId).create({ tripId: trip.id, type: 'route_set', schemaVersion: 1, tripContextVersion: 0, payload: { schemaVersion: 1, kind: 'optimized_routes', serviceVersion: 'qa', algorithmVersion: 'qa', sourceArtifactIds: [], verification, warnings: [], truncated: false, exhausted: false, representatives: optimized.representatives, paretoFrontierCount: 1, rejectedCandidateCount: 0 } })
     await expect(workspaces.update(trip.id, { expectedVersion: 0, savedRoute: { artifactId: artifact.id, routeId: path.id } })).rejects.toMatchObject({ code: 'STALE_ROUTE_SELECTION' })
     const created = await runs.createOrGet({ ownerId: userId, tripId: trip.id, idempotencyKey: 'save-route-qa', requestHash: 'a'.repeat(64), contextVersion: 0, contextSnapshot: trip.context })
     await runs.claim(created.run.id)
@@ -129,12 +129,42 @@ suite('Editorial publishing and cloud workspace PostgreSQL boundaries', () => {
     expect((await workspaces.get(trip.id)).trip.status).toBe('generated')
     const saved = await workspaces.update(trip.id, { expectedVersion: 0, savedRoute: { artifactId: artifact.id, routeId: path.id } })
     expect(saved.status).toBe('saved'); expect(saved.savedRoute?.routeId).toBe(path.id)
+    const retry = await workspaces.update(trip.id, { expectedVersion: 0, savedRoute: { artifactId: artifact.id, routeId: path.id } })
+    expect(retry).toMatchObject({ version: 1, selectedFlight: { revision: 1, routeId: path.id } })
     const restored = await workspaces.get(trip.id)
     expect(restored.routeGeneration?.id).toBe(created.run.id)
     expect(restored.routeGeneration?.resultArtifactId).toBe(artifact.id)
     await trips.update(trip.id, { notes: ['Changed conditions'] }, 0)
     expect((await workspaces.get(trip.id)).routeGeneration?.stale).toBe(true)
     await expect(workspaces.update(trip.id, { expectedVersion: 1, savedRoute: { artifactId: artifact.id, routeId: path.id } })).rejects.toMatchObject({ code: 'STALE_ROUTE_SELECTION' })
+  })
+  it('persists an exact fare choice idempotently and increments its revision only when the choice changes', async () => {
+    const trips = new PostgresTripRepository(db, userId), trip = await trips.create({ title: 'Fare selection' })
+    const workspaces = new PostgresWorkspaceRepository(db, userId)
+    const artifactId = uuidv7()
+    const offer = {
+      id: 'offer-live-shaped',
+      segments: [
+        { flightNumber: 'QA1', airline: 'QA Air', origin: 'PEK', destination: 'DOH', departsAt: '2026-10-02T08:00:00+08:00', arrivesAt: '2026-10-02T13:00:00+03:00', durationMinutes: 600 },
+        { flightNumber: 'QA2', airline: 'QA Air', origin: 'DOH', destination: 'LIS', departsAt: '2026-10-02T23:00:00+03:00', arrivesAt: '2026-10-03T06:00:00+01:00', durationMinutes: 540 }
+      ],
+      layovers: [{ afterSegmentIndex: 0, airport: 'DOH', durationMinutes: 600 }],
+      totalAmount: 4500, currency: 'CNY', totalDurationMinutes: 1740, airlines: ['QA Air'], transferType: 'airline' as const
+    }
+    const artifact = await new PostgresArtifactRepository(db, userId).create({
+      id: artifactId, tripId: trip.id, type: 'flight_search', schemaVersion: 1, tripContextVersion: 0,
+      payload: { id: artifactId, type: 'flight_search', query: { origin: 'PEK', destination: 'LIS', departureDate: '2026-10-02', currency: 'CNY', travelClass: 1 }, offers: [offer], provider: 'fixture', checkedAt: new Date().toISOString(), verification }
+    })
+    const choice = { kind: 'offer' as const, artifactId: artifact.id, offerId: offer.id, layoverPreference: 'airport_only' as const }
+    const first = await workspaces.update(trip.id, { expectedVersion: 0, selectedFlight: choice })
+    expect(first).toMatchObject({ version: 1, selectedFlight: { ...choice, revision: 1, contextVersion: 0 } })
+    const retry = await workspaces.update(trip.id, { expectedVersion: 0, selectedFlight: choice })
+    expect(retry).toMatchObject({ version: 1, selectedFlight: { revision: 1 } })
+    const changed = await workspaces.update(trip.id, { expectedVersion: 1, selectedFlight: { ...choice, layoverPreference: 'consider_city' } })
+    expect(changed).toMatchObject({ version: 2, selectedFlight: { revision: 2, layoverPreference: 'consider_city' } })
+    expect((await workspaces.getSelectedFlight(trip.id))?.layoverWindows[0]).toMatchObject({ arrivalAirport: 'DOH', selectedMode: 'conditional_city' })
+    await expect(new PostgresWorkspaceRepository(db, otherId).update(trip.id, { expectedVersion: 2, selectedFlight: choice })).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' })
+    await expect(workspaces.update(trip.id, { expectedVersion: 2, selectedFlight: { ...choice, offerId: 'missing' } })).rejects.toMatchObject({ code: 'INVALID_FLIGHT_SELECTION' })
   })
   it('separates consumer/editorial tokens, enforces role checks, and revokes logout tokens', async () => {
     const env = parseEnv({ NODE_ENV: 'test', LOG_LEVEL: 'silent', DATABASE_URL: databaseUrl, REDIS_URL: 'redis://test', JWT_SECRET: 'editorial-integration-test-secret-at-least-32-characters' })

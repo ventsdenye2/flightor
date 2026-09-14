@@ -4,7 +4,6 @@ import { AppError } from '../lib/errors.js'
 import { ARTIFACT_TYPES, type ArtifactType } from '../artifacts/repository.js'
 import { PostgresConversationRepository } from '../conversations/postgres.js'
 import { tripContextSchema } from '../trips/types.js'
-import { routeSetPayloadSchema } from '../flight-routing/types.js'
 import { presentationHint, summarizeTrip } from '../routes/agent-cloud.js'
 import { PostgresRouteGenerationRunRepository } from '../route-generation/repository.js'
 import { toRouteGenerationRunView } from '../route-generation/contracts.js'
@@ -13,13 +12,19 @@ import { PostgresGoalRepository, PostgresGoalRunRepository } from '../agent/goal
 import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifiers.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
 import { PostgresArtifactRepository } from '../artifacts/postgres.js'
-import { savedRouteSchema, type WorkspacePatch, type WorkspaceRepository, type WorkspaceTrip, type TripWorkspace, type WorkspaceMessage } from './types.js'
+import { type WorkspacePatch, type WorkspaceRepository, type WorkspaceTrip, type TripWorkspace, type WorkspaceMessage } from './types.js'
+import {
+  assertFlightChoice, legacySavedRoute, readSavedFlightSelection, sameFlightChoice,
+  selectedFlightContext, type FlightSelectionChoice, type SelectedFlightContext
+} from './flight-selection.js'
 
 const notFound = () => new AppError('RESOURCE_NOT_FOUND', 'Trip or resource was not found', 404)
 const iso = (v: Date | string) => new Date(v).toISOString()
 const json = (v: JsonValue | string) => typeof v === 'string' ? JSON.parse(v) : v
 function tripView(row: Selectable<TripsTable>): WorkspaceTrip {
-  return { id: row.public_id, title: row.title, status: row.status, version: row.workspace_version, contextVersion: row.current_context_version, savedRoute: row.saved_route_json === null ? null : savedRouteSchema.parse(json(row.saved_route_json)), createdAt: iso(row.created_at), updatedAt: iso(row.updated_at) }
+  const selectedFlight = row.saved_route_json === null ? null : readSavedFlightSelection(json(row.saved_route_json))
+  return { id: row.public_id, title: row.title, status: row.status, version: row.workspace_version, contextVersion: row.current_context_version,
+    savedRoute: legacySavedRoute(selectedFlight), selectedFlight, createdAt: iso(row.created_at), updatedAt: iso(row.updated_at) }
 }
 
 export class PostgresWorkspaceRepository implements WorkspaceRepository {
@@ -85,22 +90,60 @@ export class PostgresWorkspaceRepository implements WorkspaceRepository {
     return { trip: tripView(trip), tripContextSummary: summarizeTrip(tripContextSchema.parse(json(contextRow.context_json))), conversations, conversationId: selected?.id ?? null, messages, artifactRefs, ...(run ? { routeGeneration: toRouteGenerationRunView(run, { stale: run.contextVersion !== trip.current_context_version }) } : {}) }
   }
 
+  async getSelectedFlight(tripId: string): Promise<SelectedFlightContext | null> {
+    const trip = await this.db.selectFrom('trips').selectAll().where('public_id', '=', tripId).where('user_id', '=', this.userId).executeTakeFirst()
+    if (!trip) throw notFound()
+    const selection = trip.saved_route_json === null ? null : readSavedFlightSelection(json(trip.saved_route_json))
+    if (!selection) return null
+    const artifact = await new PostgresArtifactRepository(this.db, this.userId).get(selection.artifactId)
+    if (!artifact || artifact.tripId !== tripId) throw notFound()
+    return selectedFlightContext(selection, artifact)
+  }
+
   async update(tripId: string, input: WorkspacePatch): Promise<WorkspaceTrip> {
     return this.db.transaction().execute(async trx => {
       const trip = await trx.selectFrom('trips').selectAll().where('public_id', '=', tripId).where('user_id', '=', this.userId).forUpdate().executeTakeFirst()
       if (!trip) throw notFound()
-      if (trip.workspace_version !== input.expectedVersion) throw new AppError('WORKSPACE_VERSION_CONFLICT', 'Trip changed on another device; reload before saving', 409)
+      const currentSelection = trip.saved_route_json === null ? null : readSavedFlightSelection(json(trip.saved_route_json))
+      const requestedChoice: FlightSelectionChoice | null | undefined = input.selectedFlight !== undefined
+        ? input.selectedFlight
+        : input.savedRoute !== undefined
+          ? input.savedRoute === null ? null : { kind: 'route', ...input.savedRoute, layoverPreference: 'airport_only' }
+          : undefined
+      const sameRequestedChoice = requestedChoice !== undefined && sameFlightChoice(currentSelection, requestedChoice)
+      const onlySelectionMutation = input.title === undefined && input.status === undefined
+        && ((input.selectedFlight !== undefined && input.savedRoute === undefined)
+          || (input.savedRoute !== undefined && input.selectedFlight === undefined))
+      if (trip.workspace_version !== input.expectedVersion) {
+        const adoptionRetry = sameRequestedChoice && onlySelectionMutation
+        if (!adoptionRetry) {
+          throw new AppError('WORKSPACE_VERSION_CONFLICT', 'Trip changed on another device; reload before saving', 409)
+        }
+        return tripView(trip)
+      }
+      if (sameRequestedChoice && onlySelectionMutation) return tripView(trip)
       let savedRoute = trip.saved_route_json, status = input.status ?? trip.status
-      if (input.savedRoute) {
-        const artifact = await trx.selectFrom('artifacts').selectAll().where('public_id', '=', input.savedRoute.artifactId).where('trip_id', '=', trip.id).where('user_id', '=', this.userId).executeTakeFirst()
-        if (!artifact || artifact.type !== 'route_set' || artifact.schema_version !== 1) throw notFound()
-        const parsed = routeSetPayloadSchema.safeParse(json(artifact.payload_json))
-        if (!parsed.success || parsed.data.kind !== 'optimized_routes' || !parsed.data.representatives.some(r => r.path.id === input.savedRoute!.routeId)) throw new AppError('INVALID_ROUTE_SELECTION', 'Choose a generated route from this trip', 400)
-        const run = await trx.selectFrom('route_generation_runs').select('context_version').where('result_artifact_id', '=', artifact.id).where('trip_id', '=', trip.id).where('user_id', '=', this.userId).where('status', '=', 'succeeded').executeTakeFirst()
-        if (!run || run.context_version !== trip.current_context_version) throw new AppError('STALE_ROUTE_SELECTION', 'Trip constraints changed; generate a new route before saving', 409)
-        savedRoute = { ...input.savedRoute, contextVersion: run.context_version }
+      if (requestedChoice && !sameRequestedChoice) {
+        const artifact = await trx.selectFrom('artifacts').selectAll().where('public_id', '=', requestedChoice.artifactId).where('trip_id', '=', trip.id).where('user_id', '=', this.userId).executeTakeFirst()
+        if (!artifact) throw notFound()
+        const artifactRecord = {
+          id: artifact.public_id, tripId, type: artifact.type as ArtifactType, schemaVersion: artifact.schema_version,
+          payload: json(artifact.payload_json),
+          ...(artifact.trip_context_version === null ? {} : { tripContextVersion: artifact.trip_context_version }),
+          sourceArtifactIds: Array.isArray(json(artifact.source_artifact_ids_json)) ? json(artifact.source_artifact_ids_json) as string[] : [],
+          createdAt: iso(artifact.created_at), updatedAt: iso(artifact.updated_at)
+        }
+        assertFlightChoice(artifactRecord, requestedChoice, trip.current_context_version)
+        if (requestedChoice.kind === 'route') {
+          const run = await trx.selectFrom('route_generation_runs').select('context_version').where('result_artifact_id', '=', artifact.id).where('trip_id', '=', trip.id).where('user_id', '=', this.userId).where('status', '=', 'succeeded').executeTakeFirst()
+          if (!run || run.context_version !== trip.current_context_version) throw new AppError('STALE_ROUTE_SELECTION', 'Trip constraints changed; generate a new route before saving', 409)
+        }
+        savedRoute = {
+          ...requestedChoice, contextVersion: trip.current_context_version,
+          revision: (currentSelection?.revision ?? 0) + 1, selectedAt: new Date().toISOString()
+        }
         status = input.status === 'archived' ? 'archived' : 'saved'
-      } else if (input.savedRoute === null) {
+      } else if (requestedChoice === null && !sameRequestedChoice) {
         savedRoute = null
         if (status === 'saved') status = 'generated'
       }

@@ -183,4 +183,37 @@ describe('Agent-authored travel guide', () => {
     await expect(test.save()).rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
     expect((await test.artifacts.listForTrip(test.trip.id)).map(record => record.type)).not.toContain('travel_guide')
   })
+
+  it('binds the guide to the confirmed flight and rejects activity before its real arrival', async () => {
+    const test = await fixture({ allowRestDays: true })
+    const flightArtifactId = uuidv7()
+    await test.artifacts.create({
+      id: flightArtifactId, tripId: test.trip.id, tripContextVersion: 1,
+      type: 'flight_search', schemaVersion: 1, payload: {}
+    })
+    test.context.selectedFlight = {
+      selection: {
+        kind: 'offer', artifactId: flightArtifactId, offerId: 'offer-1', contextVersion: 1,
+        revision: 3, selectedAt: '2026-09-14T00:00:00.000Z', layoverPreference: 'airport_only'
+      },
+      query: { origin: 'PEK', destination: 'NRT', departureDate: '2026-10-10', currency: 'CNY', travelClass: 1 },
+      segments: [{
+        flightNumber: 'QA1', airline: 'QA Air', origin: 'PEK', destination: 'NRT',
+        departsAt: '2026-10-10T20:00:00+08:00', arrivesAt: '2026-10-11T16:00:00+09:00', durationMinutes: 1140
+      }],
+      layoverWindows: []
+    }
+    expect(await test.save()).toMatchObject({
+      status: 'needs_revision',
+      issues: expect.arrayContaining(['guide_before_flight_arrival', 'guide_arrival_day_time_conflict'])
+    })
+
+    test.input.days[0] = { day: 1, cityId: tokyo.id, kind: 'travel', theme: '飞行与抵达', notes: '当天在飞行途中，不安排游玩。', items: [] }
+    test.input.days[1]!.items[0]!.timeOfDay = 'evening'
+    const result = await test.save()
+    expect(result).toMatchObject({ status: 'saved' })
+    const stored = travelGuideArtifactPayloadSchema.parse((await test.artifacts.get(result.artifact!.id))?.payload)
+    expect(stored.flightSelection).toMatchObject({ artifactId: flightArtifactId, choiceId: 'offer-1', revision: 3, destinationArrivalAt: '2026-10-11T16:00:00+09:00' })
+    expect(stored.sourceArtifactIds).toContain(flightArtifactId)
+  })
 })

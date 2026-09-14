@@ -102,12 +102,14 @@ export async function saveAuthoredTravelGuide(
   })
   if (issues.length) return revisionNeeded(issues)
   const verification = aggregateGuideVerification(days.flatMap(day => day.items), now)
-  const sourceArtifactIds = [...research.keys()]
+  const selectedFlight = scope.selectedFlight
+  const sourceArtifactIds = [...research.keys(), ...(selectedFlight ? [selectedFlight.selection.artifactId] : [])]
   const warnings = [...new Set([
     'guide_schedule_is_suggested_not_time_verified',
     ...[...research.values()].flatMap(source => source.warnings),
     ...(verification.status === 'partially_verified' ? ['guide_contains_partially_verified_research'] : []),
-    ...(new Set(days.map(day => cityKey(day.city))).size > 1 ? ['land_transfers_unresolved'] : [])
+    ...(new Set(days.map(day => cityKey(day.city))).size > 1 ? ['land_transfers_unresolved'] : []),
+    ...(selectedFlight ? ['guide_bound_to_confirmed_flight'] : [])
   ])].slice(0, 40)
   const cities = [...new Map(days.map(day => [cityKey(day.city), day.city])).values()].map(location => ({
     location, stayDays: days.filter(day => cityKey(day.city) === cityKey(location)).length,
@@ -129,6 +131,33 @@ export async function saveAuthoredTravelGuide(
   const guide = travelGuideArtifactPayloadSchema.parse({
     kind: 'trip_travel_guide', schemaVersion: 1, builderVersion: 'agent-authored-guide-v1', composition: 'agent_authored',
     sourceArtifactIds: [routeId, ...sourceArtifactIds], routeArtifactId: routeId,
+    ...(selectedFlight ? {
+      flightSelection: {
+        kind: selectedFlight.selection.kind,
+        artifactId: selectedFlight.selection.artifactId,
+        choiceId: selectedFlight.selection.kind === 'offer' ? selectedFlight.selection.offerId : selectedFlight.selection.routeId,
+        revision: selectedFlight.selection.revision,
+        selectedAt: selectedFlight.selection.selectedAt,
+        ...(selectedFlight.segments[0]?.departsAt ? { originDepartureAt: selectedFlight.segments[0].departsAt } : {}),
+        ...(() => {
+          const destination = selectedFlight.query?.destination ?? selectedFlight.segments.at(-1)?.destination
+          const arrivalIndex = destination ? selectedFlight.segments.findIndex(segment => segment.destination === destination) : -1
+          const arrival = arrivalIndex >= 0 ? selectedFlight.segments[arrivalIndex]?.arrivesAt : undefined
+          const departure = arrivalIndex >= 0 ? selectedFlight.segments.slice(arrivalIndex + 1).find(segment => segment.origin === destination)?.departsAt : undefined
+          return { ...(arrival ? { destinationArrivalAt: arrival } : {}), ...(departure ? { destinationDepartureAt: departure } : {}) }
+        })()
+      },
+      layoverPlans: selectedFlight.layoverWindows.map(window => ({
+        afterSegmentIndex: window.afterSegmentIndex, arrivalAirport: window.arrivalAirport, departureAirport: window.departureAirport,
+        ...(window.arrivesAt ? { arrivesAt: window.arrivesAt } : {}),
+        ...(window.departsAt ? { departsAt: window.departsAt } : {}),
+        ...(window.durationMinutes === undefined ? {} : { durationMinutes: window.durationMinutes }),
+        ...(window.availableMinutes === undefined ? {} : { availableMinutes: window.availableMinutes }),
+        mode: window.selectedMode,
+        status: window.selectedMode === 'conditional_city' ? 'conditional' as const : 'planned' as const,
+        assumptions: window.assumptions
+      }))
+    } : {}),
     days, unassignedActivityRefs, verification, warnings, createdAt: now
   })
   const validation = validateGuideContent({ guide, route, research, trip, constraints, now })

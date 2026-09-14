@@ -51,6 +51,31 @@ export function validateGuideContent(input: {
     const routeDay = route.days.find(candidate => candidate.day === day.day)
     return !routeDay || !overlaps(day.city, routeDay.city)
   })) missing.push('guide_route_day_mismatch')
+  if (guide.flightSelection) {
+    if (!guide.sourceArtifactIds.includes(guide.flightSelection.artifactId)) missing.push('guide_flight_selection_lineage')
+    const start = trip.departureWindow?.from
+    const arrival = guide.flightSelection.destinationArrivalAt
+    if (start && arrival && /^\d{4}-\d{2}-\d{2}/.test(arrival)) {
+      const arrivalDay = Math.floor((Date.parse(`${arrival.slice(0, 10)}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86_400_000) + 1
+      for (const day of guide.days) {
+        if (day.day < arrivalDay && (day.kind !== 'travel' || day.items.length > 0)) missing.push('guide_before_flight_arrival')
+        if (day.day === arrivalDay) {
+          const hour = Number(arrival.slice(11, 13))
+          const blocked = hour >= 15 ? ['morning', 'afternoon'] : hour >= 10 ? ['morning'] : []
+          if (day.items.some(item => item.timeOfDay && blocked.includes(item.timeOfDay))) missing.push('guide_arrival_day_time_conflict')
+        }
+      }
+    }
+    const departure = guide.flightSelection.destinationDepartureAt
+    if (start && departure && /^\d{4}-\d{2}-\d{2}/.test(departure)) {
+      const departureDay = Math.floor((Date.parse(`${departure.slice(0, 10)}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86_400_000) + 1
+      const hour = Number(departure.slice(11, 13))
+      const blocked = hour < 12 ? ['morning', 'afternoon', 'evening'] : hour < 18 ? ['afternoon', 'evening'] : ['evening']
+      const day = guide.days.find(value => value.day === departureDay)
+      if (day?.items.some(item => item.timeOfDay && blocked.includes(item.timeOfDay))) missing.push('guide_departure_day_time_conflict')
+    }
+    warnings.push('flight_schedule_uses_coarse_time_slots')
+  }
 
   const cities = guide.days.map(day => day.city)
   const required = [...trip.destinationIntent.required, ...trip.locationRoleOverrides.filter(value => value.role === 'visit').map(value => value.location)]

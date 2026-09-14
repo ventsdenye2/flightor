@@ -18,6 +18,7 @@ import type { RouteGenerationDependencies } from '../../route-generation/service
 import { isAppError } from '../../lib/errors.js'
 import { emitActivity, type AgentActivityObserver } from './activity.js'
 import { settleWithSignal } from './cancellation.js'
+import type { SelectedFlightContext } from '../../workspaces/flight-selection.js'
 
 export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
 export type ToolSideEffect = 'none' | 'state'
@@ -51,6 +52,8 @@ export interface ToolExecutionContext {
   goalVerifiers?: GoalVerifierRegistry
   /** Explicit conversational route generation uses the same domain service as the button. */
   routeGeneration?: RouteGenerationDependencies
+  selectedFlight?: SelectedFlightContext
+  assertFlightSelectionCurrent?: () => Promise<void>
   activeGoalId?: string
   activeGoalKind?: GoalKind
   activeGoalRunId?: string

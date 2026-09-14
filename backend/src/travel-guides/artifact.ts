@@ -41,6 +41,20 @@ export const travelGuideArtifactPayloadSchema = z.object({
   composition: z.literal('agent_authored').optional(),
   sourceArtifactIds: z.array(z.string().min(1).max(160)).min(1).max(30),
   routeArtifactId: z.string().min(1).max(160),
+  flightSelection: z.object({
+    kind: z.enum(['offer', 'route']), artifactId: z.string().uuid(), choiceId: z.string().min(1).max(240),
+    revision: z.number().int().positive(), selectedAt: z.iso.datetime(),
+    originDepartureAt: z.string().min(1).max(64).optional(),
+    destinationArrivalAt: z.string().min(1).max(64).optional(),
+    destinationDepartureAt: z.string().min(1).max(64).optional()
+  }).strict().optional(),
+  layoverPlans: z.array(z.object({
+    afterSegmentIndex: z.number().int().nonnegative(), arrivalAirport: z.string().regex(/^[A-Z]{3}$/),
+    departureAirport: z.string().regex(/^[A-Z]{3}$/), arrivesAt: z.string().min(1).max(64).optional(), departsAt: z.string().min(1).max(64).optional(),
+    durationMinutes: z.number().int().nonnegative().optional(), availableMinutes: z.number().int().nonnegative().optional(),
+    mode: z.enum(['airport', 'conditional_city']), status: z.enum(['planned', 'conditional']),
+    assumptions: z.array(z.string().min(1).max(240)).max(8)
+  }).strict()).max(11).optional(),
   days: z.array(travelGuideArtifactDaySchema).min(1).max(60),
   unassignedActivityRefs: z.array(z.object({
     id: z.string().min(1).max(160),

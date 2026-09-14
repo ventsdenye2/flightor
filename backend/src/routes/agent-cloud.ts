@@ -37,6 +37,7 @@ import { createRouteGenerationDependencies } from '../route-generation/compositi
 import { PostgresGoalRepository, PostgresGoalRunRepository } from '../agent/goals/postgres.js'
 import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifiers.js'
 import { goalDeliverySchema } from '../agent/goals/completion.js'
+import { PostgresWorkspaceRepository } from '../workspaces/postgres.js'
 
 export const cloudAgentRequestSchema = z.object({
   tripId: z.string().uuid(),
@@ -147,8 +148,9 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
     })
     const topology = new PostgresTopologyRepository(context.db)
     const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))
+    const flightSelections = new PostgresWorkspaceRepository(context.db, userId)
     return new CloudPlannerService({
-      trips, conversations, artifacts, memory, runtime,
+      trips, conversations, artifacts, memory, runtime, flightSelections,
       ownerId: userId,
       goalRepository,
       goalRunRepository,

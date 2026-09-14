@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { InMemoryArtifactRepository } from './repository.js'
-import { createArtifactWorkspace, loadWorkspaceArtifact, saveWorkspaceArtifact } from './workspace.js'
+import { checkpoint, createArtifactWorkspace, loadWorkspaceArtifact, saveWorkspaceArtifact } from './workspace.js'
+import { AppError } from '../lib/errors.js'
 import { InMemoryTripContextRepository } from '../trips/repository.js'
 import { emptyTripContext } from '../trips/types.js'
 
@@ -46,5 +47,18 @@ describe('Artifact workspace consistency', () => {
     trips.get = async id => { const value = await get(id); controller.abort(); return value }
     await expect(saveWorkspaceArtifact(scope, { type: 'research', schemaVersion: 2, payload: {} })).rejects.toThrow()
     expect(await artifacts.listForTrip('trip')).toEqual([])
+  })
+
+  it('checks the confirmed flight revision before provider work and artifact writes', async () => {
+    const { input } = setup()
+    let current = true
+    const scope = await createArtifactWorkspace({
+      ...input,
+      assertFlightSelectionCurrent: async () => {
+        if (!current) throw new AppError('FLIGHT_SELECTION_CHANGED', 'Selection changed', 409)
+      }
+    })
+    current = false
+    await expect(checkpoint(scope)).rejects.toMatchObject({ code: 'FLIGHT_SELECTION_CHANGED' })
   })
 })
