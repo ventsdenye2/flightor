@@ -43,8 +43,7 @@ async function verifyGuide(record: ArtifactRecord, goal: GoalRecord, context: Go
   }
 
   const research = new Map<string, ResearchArtifact>()
-  for (const day of guide.days) {
-    for (const item of day.items) {
+  for (const item of [...guide.days.flatMap(day => day.items), ...(guide.supportingEvidence ?? [])]) {
       if (!guide.sourceArtifactIds.includes(item.sourceArtifactId) || !record.sourceArtifactIds?.includes(item.sourceArtifactId)) {
         return verificationResult('failed', ['guide_item_lineage'])
       }
@@ -55,7 +54,6 @@ async function verifyGuide(record: ArtifactRecord, goal: GoalRecord, context: Go
         return verificationResult('failed', ['guide_research_payload'])
       }
       research.set(sourceRecord.id, source.data)
-    }
   }
   const result = validateGuideContent({
     guide, route: route.data, research, trip: context.run.contextSnapshot,

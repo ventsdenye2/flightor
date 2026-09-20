@@ -34,6 +34,17 @@ export const travelGuideBuildInputSchema = z.object({
 
 export type TravelGuideBuildInput = z.infer<typeof travelGuideBuildInputSchema>
 
+/** Evidence used to support the trip, without pretending it is a scheduled visit. */
+export const travelGuideSupportingEvidenceSchema = z.object({
+  sourceArtifactId: z.string().uuid(),
+  sourceFindingId: z.string().min(1).max(160),
+  title: z.string().min(1).max(240),
+  description: z.string().min(1).max(1_500),
+  category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']),
+  destinations: z.array(locationRefSchema).min(1).max(12),
+  verification: verificationRecordSchema
+}).strict()
+
 export const travelGuideArtifactPayloadSchema = z.object({
   kind: z.literal('trip_travel_guide'),
   schemaVersion: z.literal(1),
@@ -56,6 +67,14 @@ export const travelGuideArtifactPayloadSchema = z.object({
     assumptions: z.array(z.string().min(1).max(240)).max(8)
   }).strict()).max(11).optional(),
   days: z.array(travelGuideArtifactDaySchema).min(1).max(60),
+  supportingEvidence: z.array(travelGuideSupportingEvidenceSchema).max(50).optional(),
+  budget: z.object({
+    amount: z.number().finite().nonnegative().max(100_000_000),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    scope: z.enum(['airfare', 'transport', 'trip']),
+    partyBasis: z.literal('unspecified'),
+    period: z.literal('trip_total')
+  }).strict().optional(),
   unassignedActivityRefs: z.array(z.object({
     id: z.string().min(1).max(160),
     title: z.string().min(1).max(240),

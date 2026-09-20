@@ -1,7 +1,7 @@
 import type { ArtifactEnvelope } from '../../services/artifactService'
 import type { CloudWorkspace } from '../../services/workspaceService'
 import type { ConversationDelivery } from '../../services/conversationService'
-import { firstText, numberValue, record, records, text } from '../../components/artifacts/payload'
+import { displaySupportingEvidence, displayTravelGuideBudget, firstText, numberValue, record, records, text } from '../../components/artifacts/payload'
 import { readRouteArtifact } from '../../services/routeArtifact'
 import type { Activity, PricePresentation, SourcePresentation, TripDay, TripFlightPresentation, TripPresentation } from './presentation'
 import { displayOfferById } from '../../components/artifacts/payload'
@@ -155,6 +155,8 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
   const routeNames = records(route.cities, 12).map(city => locationName(city.location))
   const allSources = dayValues.flatMap(day => records(day.items, 6).flatMap(sources))
   const warnings = [...(Array.isArray(route.warnings) ? route.warnings : []), ...(Array.isArray(guide?.warnings) ? guide.warnings : [])].filter(value => typeof value === 'string')
+  const budget = displayTravelGuideBudget(guide?.budget)
+  const supportingEvidence = displaySupportingEvidence(guide?.supportingEvidence)
   const satisfied = Boolean(guideApplicable && guideArtifact && workspace?.messages.some(message => delivered(message.delivery, guideArtifact.id)))
   let savedRoute: TripFlightPresentation[] = []
   if (current && savedSelection && savedRouteArtifact && savedSelection.contextVersion === route.tripContextVersion
@@ -168,5 +170,5 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
     dates: { start: start ?? null, end: end ?? null, label: !start && !end ? '日期待确认' : '' }, durationDays: context?.travelDays ?? (days.length || null),
     travelers: null, cover: null, description: `${current ? '' : '这是此前保存的行程版本。'}${guide && !guideMatchesSelection ? '航班已更换，这份安排需要按新航班调整。' : guide ? '每日安排已保存，活动及开放时间仍需核验。' : '路线草案已保存，每日安排待补充。'}${warnings.length ? '含待确认事项，请查看规划记录。' : ''}`,
     days, status: satisfied ? 'ready' : 'partial', flights: savedRoute, alternatives: [],
-    sources: [...new Map(allSources.map(source => [`${source.url ?? source.label}:${source.status}`, source])).values()] }
+     sources: [...new Map(allSources.map(source => [`${source.url ?? source.label}:${source.status}`, source])).values()], ...(budget ? { budget } : {}), ...(supportingEvidence.length ? { supportingEvidence } : {}) }
 }

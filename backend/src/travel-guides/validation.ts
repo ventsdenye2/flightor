@@ -19,11 +19,13 @@ export interface GuideContentValidation {
   status: 'satisfied' | 'partial' | 'failed'
   missing: string[]
   warnings: string[]
-  details?: Array<{ code: string; day: number; sourceFindingId: string }>
+  details?: Array<{
+    code: string; day?: number; sourceFindingId?: string; fieldPath?: string; affectedDays?: number[];
+    category?: string; location?: string; date?: string; blockedChecks?: string[]
+  }>
 }
 
 const overlaps = (left: LocationRef, right: LocationRef) => locationsOverlap(left, right, CURATED_LOCATION_IDENTITY_POLICY)
-const failed = (code: string): GuideContentValidation => ({ status: 'failed', missing: [code], warnings: [] })
 
 function coversWindow(actual: ResearchArtifact['brief']['travelWindow'], expected: ResearchArtifact['brief']['travelWindow']): boolean {
   return (!expected?.from || (actual?.from !== undefined && actual.from <= expected.from))
@@ -40,10 +42,26 @@ export function validateGuideContent(input: {
   now?: string
 }): GuideContentValidation {
   const { guide, route, research, trip, constraints } = input
-  if (!tripDatesConsistent(trip)) return failed('trip_dates_inconsistent')
   const missing: string[] = []
   const warnings: string[] = []
-  const expectedDays = tripDurationDays(trip) ?? route.days.length
+  const details: NonNullable<GuideContentValidation['details']> = []
+  let invalid = false
+  const reject = (code: string, detail?: Omit<NonNullable<GuideContentValidation['details']>[number], 'code'>) => {
+    invalid = true
+    missing.push(code)
+    if (detail) details.push({ code, ...detail })
+  }
+  const datesConsistent = tripDatesConsistent(trip)
+  if (!datesConsistent) reject('trip_dates_inconsistent', { fieldPath: 'trip.dates', blockedChecks: ['research_travel_window', 'guide_day_coverage'] })
+  // Old persisted v1 guides remain readable. New authored guides must carry the server budget snapshot.
+  if (guide.budget || (guide.builderVersion === 'agent-authored-guide-v2' && trip.budget)) {
+    if (!trip.budget || !guide.budget || guide.budget.amount !== trip.budget.amount
+      || guide.budget.currency !== trip.budget.currency || guide.budget.scope !== trip.budget.scope
+      || guide.budget.partyBasis !== 'unspecified' || guide.budget.period !== 'trip_total') {
+      reject('guide_budget_mismatch', { fieldPath: 'budget' })
+    }
+  }
+  const expectedDays = (datesConsistent ? tripDurationDays(trip) : undefined) ?? route.days.length
   const dayNumbers = new Set(guide.days.map(day => day.day))
   if (guide.days.length !== expectedDays || dayNumbers.size !== expectedDays
     || guide.days.some((day, index) => day.day !== index + 1)) missing.push('guide_day_coverage')
@@ -86,60 +104,92 @@ export function validateGuideContent(input: {
   if (guide.unassignedActivityRefs.length > 0 || route.unassignedActivityRefs.length > 0
     || trip.mustIncludeEvents.some(event => !route.days.some(day => day.activityRefs.some(activity => activity.id === event.id)))) missing.push('guide_required_activity_coverage')
 
-  const expectedWindow = tripTravelWindow(trip)
+  const expectedWindow = datesConsistent ? tripTravelWindow(trip) : undefined
   const usedFindings = new Set<string>()
-  const duplicates: NonNullable<GuideContentValidation['details']> = []
   const checkedResearch = new Set<string>()
   const coveredTypes = new Set<string>()
   let partialEvidence = false
   const now = Date.parse(input.now ?? new Date().toISOString())
-  for (const day of guide.days) {
-    let eligibleItems = 0
-    for (const item of day.items) {
-      if (!overlaps(item.city, day.city) || !guide.sourceArtifactIds.includes(item.sourceArtifactId)) return failed('guide_item_lineage')
+  type Evidence = TravelGuideArtifactPayload['days'][number]['items'][number]
+    | NonNullable<TravelGuideArtifactPayload['supportingEvidence']>[number]
+  const checkEvidence = (item: Evidence, destinations: LocationRef[], fieldPath: string, day?: number): boolean => {
+      const detail = { fieldPath, sourceFindingId: item.sourceFindingId, ...(day === undefined ? {} : { day, affectedDays: [day] }) }
+      if (!guide.sourceArtifactIds.includes(item.sourceArtifactId)) reject('guide_item_lineage', detail)
       const source = research.get(item.sourceArtifactId)
-      if (!source || source.id !== item.sourceArtifactId) return failed('guide_research_payload')
+      if (!source || source.id !== item.sourceArtifactId) {
+        reject('guide_research_payload', { ...detail, blockedChecks: ['guide_item_evidence_mismatch', 'guide_evidence_source_mismatch', 'eligible_research_evidence'] })
+        return false
+      }
       if (!checkedResearch.has(source.id)) {
         checkedResearch.add(source.id)
-        if (!coversWindow(source.brief.travelWindow, expectedWindow)) missing.push('research_travel_window')
+        if (datesConsistent && !coversWindow(source.brief.travelWindow, expectedWindow)) {
+          missing.push('research_travel_window')
+          details.push({ code: 'research_travel_window', ...detail, ...(expectedWindow?.from ? { date: expectedWindow.from } : {}) })
+        }
       }
-      const finding = source.findings.find(candidate => candidate.id === item.sourceFindingId)
+      const matchingFindings = source.findings.filter(candidate => candidate.id === item.sourceFindingId)
+      if (matchingFindings.length > 1) {
+        reject('guide_ambiguous_finding', { ...detail, blockedChecks: ['guide_item_evidence_mismatch', 'eligible_research_evidence'] })
+        return false
+      }
+      const finding = matchingFindings[0]
       // Facts remain source-owned. The separate planningNote/theme fields are recommendations.
       if (!finding || finding.title !== item.title || finding.summary !== item.description || finding.category !== item.category
         || !source.brief.researchTypes.includes(finding.category)
-        || !finding.destinations.some(destination => overlaps(destination, day.city))
-        || !source.brief.destinations.some(destination => overlaps(destination, day.city))
-        || JSON.stringify(finding.verification) !== JSON.stringify(item.verification)) return failed('guide_item_evidence_mismatch')
+        || !destinations.some(city => finding.destinations.some(destination => overlaps(destination, city))
+          && source.brief.destinations.some(destination => overlaps(destination, city)))
+        || ('destinations' in item && JSON.stringify(item.destinations) !== JSON.stringify(finding.destinations))
+        || JSON.stringify(finding.verification) !== JSON.stringify(item.verification)) {
+        reject('guide_item_evidence_mismatch', detail)
+        return false
+      }
       const reference = `${item.sourceArtifactId}:${item.sourceFindingId}`
       if (usedFindings.has(reference)) {
-        duplicates.push({ code: 'guide_duplicate_evidence', day: day.day, sourceFindingId: item.sourceFindingId })
-        continue
+        reject('guide_duplicate_evidence', detail)
+        // It is selected content, though invalid duplication. Avoid a misleading empty-day diagnosis.
+        return true
       }
       usedFindings.add(reference)
       const status = finding.verification.expiresAt && Date.parse(finding.verification.expiresAt) <= now ? 'stale' : finding.verification.status
       const evidenceReferences = finding.verification.sources.map(value => value.reference)
       if (evidenceReferences.length === 0 || evidenceReferences.some(value => !value || !finding.sources.some(candidate => candidate.url === value))) {
-        return failed('guide_evidence_source_mismatch')
+        reject('guide_evidence_source_mismatch', detail)
+        return false
       }
       if (status === 'unverified' || status === 'stale') {
         missing.push('eligible_research_evidence')
-        continue
+        details.push({ code: 'eligible_research_evidence', ...detail, category: finding.category,
+          ...(finding.destinations[0] ? { location: finding.destinations[0].id } : {}) })
+        return false
       }
-      eligibleItems += 1
       coveredTypes.add(finding.category)
       partialEvidence ||= status === 'partially_verified'
+      return true
+  }
+  for (const [dayIndex, day] of guide.days.entries()) {
+    let eligibleItems = 0
+    for (const [itemIndex, item] of day.items.entries()) {
+      const fieldPath = `days.${dayIndex}.items.${itemIndex}`
+      if (!overlaps(item.city, day.city)) reject('guide_item_lineage', { day: day.day, sourceFindingId: item.sourceFindingId, fieldPath })
+      if (checkEvidence(item, [day.city], fieldPath, day.day)) eligibleItems += 1
     }
     // Existing guides retain their coverage contract. An authored non-visit day needs an explicit plan.
     const intentionalBreak = constraints.allowRestDays === true && guide.composition === 'agent_authored'
       && (day.kind === 'rest' || day.kind === 'travel') && Boolean(day.notes?.trim())
     if (eligibleItems === 0 && !intentionalBreak) missing.push('guide_daily_activity_coverage')
   }
-  if (duplicates.length > 0) return { ...failed('guide_duplicate_evidence'), details: duplicates }
+  for (const [index, evidence] of (guide.supportingEvidence ?? []).entries()) {
+    checkEvidence(evidence, cities, `supportingEvidence.${index}`)
+  }
   if (usedFindings.size > constraints.maxResults) missing.push('guide_result_limit')
-  for (const category of constraints.researchTypes) if (!coveredTypes.has(category)) missing.push(`guide_research_type:${category}`)
+  for (const category of constraints.researchTypes) if (!coveredTypes.has(category)) {
+    missing.push(`guide_research_type:${category}`)
+    details.push({ code: `guide_research_type:${category}`, category })
+  }
   if (partialEvidence) {
     warnings.push('evidence_partially_verified')
     if (!constraints.allowPartial) missing.push('verified_evidence')
   }
-  return { status: missing.length === 0 ? 'satisfied' : 'partial', missing: [...new Set(missing)], warnings }
+  return { status: invalid ? 'failed' : missing.length === 0 ? 'satisfied' : 'partial', missing: [...new Set(missing)], warnings,
+    ...(details.length ? { details } : {}) }
 }

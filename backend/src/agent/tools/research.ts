@@ -6,6 +6,7 @@ import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
 import { canonicalResolvedLocation } from './resolved-locations.js'
 import { workspaceScope } from './workspace-scope.js'
 import type { TripContext } from '../../trips/types.js'
+import { guideCandidateRef, candidateRefSchema } from '../../travel-guides/candidates.js'
 
 const artifactReferenceSchema = z.object({
   id: z.string().uuid(),
@@ -28,6 +29,7 @@ export const researchToolOutputSchema = z.object({
     createdAt: z.iso.datetime()
   }).strict(),
   findings: z.array(z.object({
+    candidateRef: candidateRefSchema,
     id: z.string().min(1).max(160),
     title: z.string().max(240),
     summary: z.string().max(1500),
@@ -69,6 +71,7 @@ export async function executeResearchBrief(
       createdAt: artifact.createdAt
     },
     findings: artifact.findings.map(finding => ({
+      candidateRef: guideCandidateRef(scope, artifact, finding.id),
       id: finding.id, title: finding.title, summary: finding.summary, category: finding.category,
       destinations: finding.destinations.map(destination => ({ id: destination.id, name: destination.name })),
       verificationStatus: finding.verification.expiresAt && Date.parse(finding.verification.expiresAt) <= Date.now() ? 'stale' : finding.verification.status

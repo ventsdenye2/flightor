@@ -188,8 +188,45 @@ describe('AgentRuntime and ToolRegistry', () => {
     const reg = createCoreToolRegistry()
     const signal = new AbortController().signal
     expect((await reg.execute(call('x', 'no_such_tool'), ctx, signal)).errorCode).toBe('UNKNOWN_TOOL')
-    expect((await reg.execute({ ...call('x', 'resolve_location'), function: { name: 'resolve_location', arguments: '{' } }, ctx, signal)).errorCode).toBe('MALFORMED_ARGUMENTS')
-    expect((await reg.execute(call('x', 'resolve_location', { query: '' }), ctx, signal)).errorCode).toBe('INVALID_ARGUMENTS')
+    const malformed = await reg.execute({ ...call('x', 'resolve_location'), function: { name: 'resolve_location', arguments: '{' } }, ctx, signal)
+    expect(malformed.errorCode).toBe('MALFORMED_ARGUMENTS')
+    expect(JSON.parse(malformed.content).error.classification).toBe('draft_invalid')
+    const invalid = await reg.execute(call('x', 'resolve_location', { query: '' }), ctx, signal)
+    expect(invalid.errorCode).toBe('INVALID_ARGUMENTS')
+    expect(JSON.parse(invalid.content).error).toMatchObject({ classification: 'draft_invalid', details: expect.any(Array) })
+  })
+
+  it('classifies provider and context failures with safe structured details', async () => {
+    const signal = new AbortController().signal
+    const cases: Array<[string, string, string, unknown, string]> = [
+      ['rate', 'PROVIDER_RATE_LIMITED', 'provider_unavailable', { provider: 'openrouter', retryAfter: 30, token: 'secret' }, 'research_agent'],
+      ['unavailable', 'PROVIDER_UNAVAILABLE', 'provider_unavailable', { provider: 'serpapi', token: 'secret' }, 'research_agent'],
+      ['timeout', 'PROVIDER_TIMEOUT', 'provider_unavailable', { provider: 'aerodatabox', retryAfter: '30', token: 'secret' }, 'research_agent'],
+      ['trip', 'TRIP_CONTEXT_VERSION_CONFLICT', 'context_conflict', { token: 'secret' }, 'research_agent'],
+      ['artifact', 'ARTIFACT_CONTEXT_VERSION_MISMATCH', 'context_conflict', { token: 'secret' }, 'research_agent'],
+      ['flight', 'FLIGHT_SELECTION_CHANGED', 'context_conflict', { token: 'secret' }, 'research_agent']
+    ]
+    for (const [id, code, classification, details, provider] of cases) {
+      const registry = new ToolRegistry().register(tool('research_destination', async () => {
+        throw new AppError(code, 'private provider body', 409, details)
+      }, { provider }))
+      const outcome = await registry.execute(call(id, 'research_destination'), ctx, signal)
+      const envelope = JSON.parse(outcome.content).error
+      expect(envelope.classification).toBe(classification)
+      expect(envelope.details).toMatchObject({ domainCode: code })
+      expect(JSON.stringify(envelope)).not.toContain('secret')
+      if (classification === 'provider_unavailable') expect(envelope.details.provider).toBe(provider === 'research_agent' ? details && typeof details === 'object' && 'provider' in details ? (details as { provider?: string }).provider : provider : provider)
+      if (code === 'PROVIDER_RATE_LIMITED') expect(envelope.details.retryAfter).toBe(30)
+      if (code === 'PROVIDER_TIMEOUT') expect(envelope.details.retryAfter).toBeUndefined()
+    }
+    const timeoutRegistry = new ToolRegistry().register(tool('web_research', async () => new Promise(() => undefined), { timeoutMs: 5, provider: 'research_agent' }))
+    const timeout = await timeoutRegistry.execute(call('tool-timeout', 'web_research'), ctx, signal)
+    expect(JSON.parse(timeout.content).error).toMatchObject({ classification: 'provider_unavailable', details: { provider: 'research_agent' } })
+
+    const cancelledController = new AbortController()
+    cancelledController.abort()
+    const cancelled = await new ToolRegistry().register(tool('research_destination', async (_input, _context, innerSignal) => { innerSignal.throwIfAborted(); return { ok: true } }, { provider: 'research_agent' })).execute(call('cancelled', 'research_destination'), ctx, cancelledController.signal)
+    expect(JSON.parse(cancelled.content).error.classification).toBeUndefined()
   })
 
   it('handles timeout, tool failures, and runtime cost/max-step cutoffs', async () => {

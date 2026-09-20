@@ -13,7 +13,12 @@ const displayPayload = {
   records: (value, max) => Array.isArray(value) ? value.slice(0, max).filter(item => item && typeof item === 'object' && !Array.isArray(item)) : [],
   text: value => typeof value === 'string' && value.trim() ? value : undefined,
   numberValue: value => typeof value === 'number' && Number.isFinite(value) ? value : undefined,
-  firstText: (...values) => values.find(value => typeof value === 'string' && value.trim())
+  firstText: (...values) => values.find(value => typeof value === 'string' && value.trim()),
+  displayTravelGuideBudget: value => {
+    if (!value || typeof value !== 'object' || !Number.isFinite(value.amount) || value.amount < 0 || !/^[A-Z]{3}$/.test(value.currency) || !['airfare', 'transport', 'trip'].includes(value.scope) || value.partyBasis !== 'unspecified' || value.period !== 'trip_total') return undefined
+    return { amount: value.amount, currency: value.currency, scope: value.scope, label: ({ airfare: '机票', transport: '交通', trip: '全程' })[value.scope] }
+  },
+  displaySupportingEvidence: value => Array.isArray(value) ? value.slice(0, 8).filter(item => item && typeof item === 'object' && item.sourceArtifactId && item.sourceArtifactId.length <= 160 && item.sourceFindingId && item.sourceFindingId.length <= 160 && item.title && item.title.length <= 240 && item.description && item.description.length <= 1500 && item.category).map(item => ({ sourceArtifactId: item.sourceArtifactId, sourceFindingId: item.sourceFindingId, title: item.title, description: item.description, category: ({ event: '活动', seasonal: '季节信息', activity: '活动', stopover: '中转建议', practical: '实用信息' })[item.category], destinations: [], verification: item.verification?.expiresAt && Date.parse(item.verification.expiresAt) <= Date.now() ? 'stale' : item.verification?.status === 'verified' ? 'verified' : item.verification?.status === 'partially_verified' ? 'partial' : item.verification?.status === 'stale' ? 'stale' : 'unverified' })).filter(item => item.category) : []
 }
 vm.runInNewContext(compiled, { module: loadedModule, exports: loadedModule.exports, URL, require: dependency => {
   if (dependency.endsWith('/components/artifacts/payload')) return displayPayload
@@ -30,7 +35,7 @@ const location = { id: 'city:TYO', type: 'city', name: 'Tokyo', countryCode: 'JP
 const route = { kind: 'trip_route_plan', schemaVersion: 1, tripContextVersion: 4, cities: [{ location, stayDays: 2, role: 'visit', reasons: ['culture'] }], days: [{ day: 1, city: location, activityRefs: [] }, { day: 2, city: location, activityRefs: [] }], warnings: [], landTransfers: [] }
 const routeArtifact = { id: 'route-1', tripId: 'trip-1', type: 'route', schemaVersion: 1, payload: route }
 const guideItem = { id: 'activity-1', title: '浅草', description: '寺院与街区', city: location, category: 'activity', verification: { status: 'partially_verified', sources: [{ provider: 'provider-x', reference: 'https://example.com/a' }, { provider: 'bad', reference: 'https://user:pass@example.com/private' }, { provider: 'ftp', reference: 'ftp://example.com/a' }] }, timeOfDay: 'morning' }
-const guide = { kind: 'trip_travel_guide', schemaVersion: 1, routeArtifactId: 'route-1', days: [{ day: 1, city: location, theme: '慢慢走', items: [guideItem] }], warnings: [] }
+const guide = { kind: 'trip_travel_guide', schemaVersion: 1, routeArtifactId: 'route-1', budget: { amount: 8000, currency: 'CNY', scope: 'trip', partyBasis: 'unspecified', period: 'trip_total' }, supportingEvidence: [{ sourceArtifactId: 'research-1', sourceFindingId: 'finding-1', title: '交通提示', description: '机场到市区的交通信息。', category: 'practical', destinations: [location], verification: { status: 'partially_verified', expiresAt: '2020-01-01T00:00:00Z' } }], days: [{ day: 1, city: location, theme: '慢慢走', items: [guideItem] }], warnings: [] }
 const guideArtifact = { id: 'guide-1', tripId: 'trip-1', type: 'travel_guide', schemaVersion: 1, payload: guide }
 const workspace = { trip: { id: 'trip-1', title: '东京周末', contextVersion: 4 }, tripContextSummary: { departureWindow: { from: '2026-10-01', to: '2026-10-09', precision: 'exact' }, returnWindow: { from: '2026-10-03', to: '2026-10-03', precision: 'exact' }, travelDays: 3 }, messages: [{ delivery: { status: 'satisfied', artifactIds: ['guide-1'] } }] }
 let passed = 0
@@ -53,6 +58,7 @@ check('a guide bound to an older flight selection is retained but marked for adj
 })
 check('route-only snapshots stay partial with unknown travelers and prices', () => { const trip = artifactToTripPresentation(routeArtifact, undefined, workspace); assert.equal(trip.status, 'partial'); assert.equal(trip.days[0].status, 'pending'); assert.equal(trip.travelers, null); assert.equal(trip.flights.length, 0) })
 check('guide activities preserve identity and unknown time fields', () => { const activity = artifactToTripPresentation(routeArtifact, guideArtifact, workspace).days[0].activities[0]; assert.equal(activity.id, 'activity-1'); assert.equal(activity.time, '上午'); assert.equal(activity.until, null) })
+check('restores bounded guide budget and supporting evidence semantics', () => { const trip = artifactToTripPresentation(routeArtifact, guideArtifact, workspace); assert.deepEqual(trip.budget, { amount: 8000, currency: 'CNY', scope: 'trip', label: '全程' }); assert.equal(trip.supportingEvidence.length, 1); assert.equal(trip.supportingEvidence[0].verification, 'stale'); assert.equal(trip.supportingEvidence[0].category, '实用信息'); const invalid = artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, budget: { amount: 8000, currency: 'CNY', scope: 'trip', partyBasis: 'per_person', period: 'trip_total' } } }, workspace); assert.equal(invalid.budget, undefined) })
 
 const verifiedFare = { status: 'verified', sources: [{ provider: 'live-fares', reference: 'https://example.com/fare' }] }
 const savedPath = {

@@ -12,6 +12,10 @@ import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repo
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import { createPlannerToolRegistry } from './core.js'
 import { saveTravelGuideTool } from './authored-travel-guide.js'
+import { guideCandidateRef } from '../../travel-guides/candidates.js'
+import type { SaveGuideInput } from './guide-draft.js'
+import { readArtifactTool } from './artifact-reading.js'
+import { preparePlanningContext } from '../cloud/planning-context.js'
 
 const tokyo: LocationRef = { id: 'city:TYO', type: 'city', name: 'Tokyo', countryCode: 'JP', cityCode: 'TYO' }
 const osaka: LocationRef = { ...tokyo, id: 'city:OSA', name: 'Osaka', cityCode: 'OSA' }
@@ -180,7 +184,7 @@ describe('Agent-authored travel guide', () => {
       if (value.type === 'route') await test.trips.update(test.trip.id, { travelDays: 10 }, 1)
       return record
     })
-    await expect(test.save()).rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', repair: { issues: [{ code: 'TRIP_CONTEXT_VERSION_CONFLICT', classification: 'context_conflict' }] } })
     expect((await test.artifacts.listForTrip(test.trip.id)).map(record => record.type)).not.toContain('travel_guide')
   })
 
@@ -215,5 +219,143 @@ describe('Agent-authored travel guide', () => {
     const stored = travelGuideArtifactPayloadSchema.parse((await test.artifacts.get(result.artifact!.id))?.payload)
     expect(stored.flightSelection).toMatchObject({ artifactId: flightArtifactId, choiceId: 'offer-1', revision: 3, destinationArrivalAt: '2026-10-11T16:00:00+09:00' })
     expect(stored.sourceArtifactIds).toContain(flightArtifactId)
+  })
+})
+
+function compact(test: Awaited<ReturnType<typeof fixture>>): SaveGuideInput {
+  return { days: test.input.days.map(day => ({ ...day, items: day.items.map(({ researchIndex: _index, findingId, ...item }) => ({ ...item,
+    candidateRef: guideCandidateRef({ ownerId: test.context.ownerId, tripId: test.trip.id, tripContextVersion: test.trip.version }, test.source, findingId) })) })) }
+}
+
+describe('stable guide decisions and local repair', () => {
+  it('reconstructs the same usable refs from preloaded context and artifact reads without a candidate cache', async () => {
+    const test = await fixture()
+    const prepared = await preparePlanningContext({ trip: test.trip, ownerId: test.context.ownerId, artifacts: test.artifacts })
+    const preloaded = JSON.parse(prepared.content).research[0].findings
+    const read = await readArtifactTool.execute({ artifactId: test.source.id }, test.context, new AbortController().signal)
+    expect(readArtifactTool.outputSchema.safeParse(read).success).toBe(true)
+    const full = compact(test)
+    for (const day of full.days!) for (const item of day.items) {
+      expect(preloaded.some((finding: { candidateRef: string }) => finding.candidateRef === item.candidateRef)).toBe(true)
+      expect(read.candidates?.some(finding => finding.candidateRef === item.candidateRef)).toBe(true)
+    }
+    expect(await saveTravelGuideTool.execute(full, { ...test.context }, new AbortController().signal)).toMatchObject({ status: 'saved' })
+  })
+
+  it('saves a full compact draft without positional research indices and preserves authoritative days', async () => {
+    const test = await fixture()
+    const result = await saveTravelGuideTool.execute(compact(test), test.context, new AbortController().signal)
+    expect(result).toMatchObject({ status: 'saved', days: [{ items: [{ sourceFindingId: 'finding-6' }, { sourceFindingId: 'finding-2' }, { sourceFindingId: 'finding-0' }] }, {}, {}, {}, {}] })
+    expect(saveTravelGuideTool.outputSchema.safeParse(result).success).toBe(true)
+    expect(await test.verify()).toMatchObject({ status: 'satisfied' })
+    expect(test.context.guideDraft).toBeUndefined()
+  })
+
+  it('round-trips a maximum-length Unicode finding id through bounded candidate refs', async () => {
+    const unicodeId = '研'.repeat(160)
+    const test = await fixture({ mutateResearch: source => { source.findings[6]!.id = unicodeId } })
+    test.input.days[0]!.items[0]!.findingId = unicodeId
+    const full = compact(test)
+    expect(full.days![0]!.items[0]!.candidateRef!.length).toBeLessThan(160)
+    expect(saveTravelGuideTool.inputSchema.safeParse(full).success).toBe(true)
+    expect(await saveTravelGuideTool.execute(full, test.context, new AbortController().signal)).toMatchObject({ status: 'saved' })
+  })
+
+  it('reports all bad refs and repairs only one day without changing other decisions', async () => {
+    const test = await fixture()
+    const full = compact(test)
+    const goodDay = structuredClone(full.days![0]!)
+    full.days![0]!.items[0]!.candidateRef = 'missing-a'
+    full.days![0]!.items[1]!.candidateRef = 'missing-b'
+    const failed = await saveTravelGuideTool.execute(full, test.context, new AbortController().signal)
+    expect(failed.status).toBe('needs_revision')
+    expect(failed.repair?.issues).toHaveLength(2)
+    expect(failed.repair?.issues[0]).toMatchObject({ classification: 'draft_invalid', fieldPath: 'days[0].items[0].candidateRef', blockedChecks: expect.arrayContaining(['evidence_identity']) })
+    expect(failed.repair?.availableCandidates).toHaveLength(7)
+    const saved = await saveTravelGuideTool.execute({ draftRef: failed.repair!.draftRef!, expectedRevision: failed.repair!.revision!, replacementDays: [goodDay] }, test.context, new AbortController().signal)
+    expect(saved.status).toBe('saved')
+    expect(saved.days?.[1]?.items[0]?.planningNote).toBe(test.input.days[1]!.items[0]!.planningNote)
+  })
+
+  it('offers existing practical evidence and accepts it through supportingRefs without another scheduled item', async () => {
+    const test = await fixture({ researchTypes: ['activity', 'practical'], mutateResearch: source => {
+      source.brief.researchTypes.push('practical')
+      source.findings.push({ ...source.findings[0]!, id: 'transport-info', category: 'practical', title: 'Public transport', summary: 'Use local transit.' })
+    } })
+    const failed = await saveTravelGuideTool.execute(compact(test), test.context, new AbortController().signal)
+    expect(failed.repair?.issues).toContainEqual({ code: 'guide_research_type:practical', classification: 'evidence_missing' })
+    const support = failed.repair!.availableCandidates.find(value => value.findingId === 'transport-info')!
+    const saved = await saveTravelGuideTool.execute({ draftRef: failed.repair!.draftRef!, expectedRevision: failed.repair!.revision!, supportingRefs: [support.candidateRef] }, test.context, new AbortController().signal)
+    expect(saved).toMatchObject({ status: 'saved', summary: { itemCount: 7 }, supportingEvidence: [{ sourceFindingId: 'transport-info' }] })
+    expect(await test.verify()).toMatchObject({ status: 'satisfied' })
+  })
+
+  it('rejects stale revisions and cross-generation patches without replacing the stored draft', async () => {
+    const test = await fixture()
+    const full = compact(test)
+    full.days![0]!.items[0]!.candidateRef = 'missing'
+    const failed = await saveTravelGuideTool.execute(full, test.context, new AbortController().signal)
+    const patch = { draftRef: failed.repair!.draftRef!, expectedRevision: failed.repair!.revision! + 1, supportingRefs: [] }
+    expect(await saveTravelGuideTool.execute(patch, test.context, new AbortController().signal)).toMatchObject({ status: 'needs_revision', issues: ['guide_draft_conflict'] })
+    test.context.generationId = 'other-generation'
+    expect(await saveTravelGuideTool.execute({ ...patch, expectedRevision: 1 }, test.context, new AbortController().signal)).toMatchObject({ issues: ['guide_draft_conflict'] })
+    expect(test.context.guideDraft?.revision).toBe(1)
+    expect((await test.artifacts.listForTrip(test.trip.id)).map(record => record.type)).toEqual(['research'])
+  })
+
+  it('binds candidate refs to owner, context and evidence content while surviving source object key order', async () => {
+    const test = await fixture()
+    const scope = { ownerId: test.context.ownerId, tripId: test.trip.id, tripContextVersion: test.trip.version }
+    const ref = guideCandidateRef(scope, test.source, 'finding-0')
+    const reordered = Object.fromEntries(Object.entries(test.source).reverse()) as ResearchArtifact
+    expect(guideCandidateRef(scope, reordered, 'finding-0')).toBe(ref)
+    expect(guideCandidateRef({ ...scope, ownerId: 'another-owner' }, test.source, 'finding-0')).not.toBe(ref)
+    expect(guideCandidateRef({ ...scope, tripContextVersion: 2 }, test.source, 'finding-0')).not.toBe(ref)
+    const changed = structuredClone(test.source); changed.findings[0]!.summary = 'Changed source facts'
+    expect(guideCandidateRef(scope, changed, 'finding-0')).not.toBe(ref)
+    const full = compact(test); full.days![0]!.items[0]!.candidateRef = guideCandidateRef({ ...scope, ownerId: 'another-owner' }, test.source, 'finding-6')
+    expect(await saveTravelGuideTool.execute(full, test.context, new AbortController().signal)).toMatchObject({ status: 'needs_revision', issues: ['guide_candidate_invalid'] })
+  })
+
+  it('does not accept invented source fields or a patch that creates an extra day', async () => {
+    const test = await fixture()
+    const full = compact(test)
+    expect(saveTravelGuideTool.inputSchema.safeParse({ ...full, budget: { amount: 100 } }).success).toBe(false)
+    full.days![0]!.items[0]!.candidateRef = 'missing'
+    const failed = await saveTravelGuideTool.execute(full, test.context, new AbortController().signal)
+    expect(await saveTravelGuideTool.execute({ draftRef: failed.repair!.draftRef!, expectedRevision: 1, replacementDays: [{ ...full.days![0]!, day: 6 }] }, test.context, new AbortController().signal)).toMatchObject({ issues: ['guide_patch_unknown_or_duplicate_day'] })
+  })
+
+  it('keeps feedback valid for long IDs and maximum-sized invalid drafts', async () => {
+    const test = await fixture()
+    const unknown = 'x'.repeat(160)
+    test.input.days[0]!.items[0]!.findingId = unknown
+    const long = await test.save()
+    expect(long).toMatchObject({ status: 'needs_revision', details: expect.arrayContaining([expect.objectContaining({ sourceFindingId: unknown })]) })
+    const days = Array.from({ length: 60 }, (_, index) => ({ ...test.input.days[0]!, day: index + 1, cityId: 'unknown-city',
+      items: Array.from({ length: 6 }, () => ({ ...test.input.days[0]!.items[0]!, findingId: unknown })) }))
+    const many = await saveTravelGuideTool.execute({ researchArtifactIds: test.input.researchArtifactIds, days }, test.context, new AbortController().signal)
+    expect(many).toMatchObject({ status: 'needs_revision', feedbackTruncated: true })
+    expect(many.details).toHaveLength(400)
+    expect(saveTravelGuideTool.outputSchema.safeParse(many).success).toBe(true)
+    const badCompact = { days: days.map(day => ({ ...day, items: day.items.map(({ researchIndex: _index, findingId: _id, ...item }) => ({ ...item, candidateRef: 'bad-ref' })) })), supportingRefs: Array.from({ length: 50 }, () => 'bad-ref') }
+    const compactFeedback = await saveTravelGuideTool.execute(badCompact, test.context, new AbortController().signal)
+    expect(compactFeedback.feedbackTruncated).toBe(true)
+    expect(compactFeedback.repair?.issues).toHaveLength(400)
+    expect(saveTravelGuideTool.outputSchema.safeParse(compactFeedback).success).toBe(true)
+  })
+
+  it('keeps historical date conflicts as structured repair feedback', async () => {
+    const test = await fixture()
+    vi.spyOn(test.trips, 'get').mockResolvedValue({ ...test.trip, returnWindow: { from: '2026-10-20', to: '2026-10-20', precision: 'exact' } })
+    const result = await test.save()
+    expect(result).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['trip_dates_inconsistent']), repair: { availableCandidates: [] } })
+    expect(result.details).toContainEqual(expect.objectContaining({ code: 'trip_dates_inconsistent', blockedChecks: expect.arrayContaining(['research_travel_window']) }))
+  })
+
+  it('reports an empty compact itinerary as a draft error without throwing a schema exception', async () => {
+    const test = await fixture()
+    const full = compact(test); full.days!.forEach(day => { day.items = [] })
+    expect(await saveTravelGuideTool.execute(full, test.context, new AbortController().signal)).toMatchObject({ status: 'needs_revision', issues: ['guide_no_selected_findings'] })
   })
 })

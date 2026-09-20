@@ -15,6 +15,9 @@ import { validateGuideContent, type TravelGuideConstraints, type GuideContentVal
 
 export const authoredGuideInputSchema = z.object({
   researchArtifactIds: z.array(z.string().uuid()).min(1).max(20),
+  supportingRefs: z.array(z.object({
+    researchArtifactId: z.string().uuid(), findingId: z.string().min(1).max(160)
+  }).strict()).max(50).optional(),
   days: z.array(z.object({
     day: z.number().int().min(1).max(60),
     cityId: locationIdSelectorSchema,
@@ -49,19 +52,34 @@ export async function saveAuthoredTravelGuide(
   await checkpoint(scope)
   const trip = await scope.trips.get(scope.tripId)
   if (!trip) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
+  const issues: string[] = []
+  const details: NonNullable<GuideContentValidation['details']> = []
+  const referenceIssue = (code: string, fieldPath: string, day?: number, findingId?: string) => {
+    issues.push(code)
+    details.push({ code, fieldPath, ...(day === undefined ? {} : { day, affectedDays: [day] }),
+      ...(findingId === undefined ? {} : { sourceFindingId: findingId }),
+      blockedChecks: ['guide_item_evidence_mismatch', 'eligible_research_evidence', 'guide_research_type'] })
+  }
   const selectedItems = draft.days.flatMap(day => day.items)
-  if (selectedItems.length === 0) return revisionNeeded(['guide_no_selected_findings'])
+  if (selectedItems.length === 0) referenceIssue('guide_no_selected_findings', 'days')
 
   // Unselected old research must not enter the new guide's lineage or coverage checks.
   const selectedIndexes = [...new Set(selectedItems.map(item => item.researchIndex))]
-  if (selectedIndexes.some(index => draft.researchArtifactIds[index] === undefined)) return revisionNeeded(['guide_research_index'])
   const research = new Map<string, ResearchArtifact>()
-  for (const index of selectedIndexes) {
-    const id = draft.researchArtifactIds[index]!
+  const selectedSourceIds = [...selectedIndexes.flatMap(index => draft.researchArtifactIds[index] ? [draft.researchArtifactIds[index]!] : []),
+    ...(draft.supportingRefs ?? []).map(reference => reference.researchArtifactId)]
+  if (new Set(selectedSourceIds).size > 20) return revisionNeeded(['guide_research_source_limit'])
+  for (const id of selectedSourceIds) {
     if (research.has(id)) continue
     const record = await loadWorkspaceArtifact(scope, id, 'research', [2])
     const source = researchArtifactSchema.parse(record.payload)
-    if (source.id !== record.id) return revisionNeeded(['guide_research_identity'])
+    if (source.id !== record.id) {
+      const researchIndex = draft.researchArtifactIds.indexOf(id)
+      const fieldPath = researchIndex >= 0 ? `researchArtifactIds.${researchIndex}`
+        : `supportingRefs.${draft.supportingRefs!.findIndex(reference => reference.researchArtifactId === id)}.researchArtifactId`
+      referenceIssue('guide_research_identity', fieldPath)
+      continue
+    }
     research.set(id, source)
   }
   const locations = new Map([
@@ -70,26 +88,37 @@ export async function saveAuthoredTravelGuide(
     ...trip.locationRoleOverrides.map(value => value.location),
     ...[...research.values()].flatMap(source => [...source.brief.destinations, ...source.findings.flatMap(finding => finding.destinations)])
   ].map(location => [location.id, location] as const))
-  const unknownCities = draft.days.filter(day => !locations.has(String(day.cityId)))
-  if (unknownCities.length) return revisionNeeded(unknownCities.map(day => `guide_unknown_city:day_${day.day}`))
-
   const now = new Date().toISOString()
   const selectedActivityIds = new Set<string>()
   const userActivities = new Map(trip.mustIncludeEvents.map(activity => [activity.id, activity]))
-  const issues: string[] = []
+  for (const [dayIndex, day] of draft.days.entries()) {
+    if (!locations.has(String(day.cityId))) referenceIssue(`guide_unknown_city:day_${day.day}`, `days.${dayIndex}.cityId`, day.day)
+    for (const [itemIndex, choice] of day.items.entries()) {
+      const fieldPath = `days.${dayIndex}.items.${itemIndex}`
+      const sourceId = draft.researchArtifactIds[choice.researchIndex]
+      if (!sourceId) referenceIssue('guide_research_index', `${fieldPath}.researchIndex`, day.day, choice.findingId)
+      else {
+        const matches = research.get(sourceId)?.findings.filter(finding => finding.id === choice.findingId) ?? []
+        if (matches.length === 0) referenceIssue(`guide_unknown_finding:day_${day.day}:${choice.findingId}`, `${fieldPath}.findingId`, day.day, choice.findingId)
+        else if (matches.length > 1) referenceIssue('guide_ambiguous_finding', `${fieldPath}.findingId`, day.day, choice.findingId)
+      }
+      for (const id of choice.requestedActivityIds ?? []) {
+        if (!userActivities.has(id)) referenceIssue(`guide_unknown_requested_activity:${id}`, `${fieldPath}.requestedActivityIds`, day.day)
+        else selectedActivityIds.add(id)
+      }
+    }
+  }
+  for (const [index, reference] of (draft.supportingRefs ?? []).entries()) {
+    const matches = research.get(reference.researchArtifactId)?.findings.filter(finding => finding.id === reference.findingId) ?? []
+    if (matches.length === 0) referenceIssue(`guide_unknown_supporting_finding:${reference.findingId}`, `supportingRefs.${index}`, undefined, reference.findingId)
+    else if (matches.length > 1) referenceIssue('guide_ambiguous_finding', `supportingRefs.${index}`, undefined, reference.findingId)
+  }
+  if (issues.length) return revisionNeeded(issues, details)
   const days = draft.days.map(day => {
     const city = locations.get(String(day.cityId))!
     const items = day.items.flatMap(choice => {
       const sourceId = draft.researchArtifactIds[choice.researchIndex]!
-      const finding = research.get(sourceId)?.findings.find(value => value.id === choice.findingId)
-      if (!finding) {
-        issues.push(`guide_unknown_finding:day_${day.day}:${choice.findingId}`)
-        return []
-      }
-      for (const id of choice.requestedActivityIds ?? []) {
-        if (!userActivities.has(id)) issues.push(`guide_unknown_requested_activity:${id}`)
-        else selectedActivityIds.add(id)
-      }
+      const finding = research.get(sourceId)!.findings.find(value => value.id === choice.findingId)!
       return [{
         id: `guide_${createHash('sha256').update(`${sourceId}:${finding.id}:${day.day}`).digest('hex').slice(0, 24)}`,
         title: finding.title, description: finding.summary, city, category: finding.category,
@@ -100,8 +129,13 @@ export async function saveAuthoredTravelGuide(
     })
     return { day: day.day, city, kind: day.kind, theme: day.theme, ...(day.notes ? { notes: day.notes } : {}), items }
   })
-  if (issues.length) return revisionNeeded(issues)
-  const verification = aggregateGuideVerification(days.flatMap(day => day.items), now)
+  const supportingEvidence = (draft.supportingRefs ?? []).flatMap(reference => {
+    const finding = research.get(reference.researchArtifactId)!.findings.find(value => value.id === reference.findingId)!
+    return [{ sourceArtifactId: reference.researchArtifactId, sourceFindingId: finding.id,
+      title: finding.title, description: finding.summary, category: finding.category,
+      destinations: finding.destinations, verification: finding.verification }]
+  })
+  const verification = aggregateGuideVerification([...days.flatMap(day => day.items), ...supportingEvidence], now)
   const selectedFlight = scope.selectedFlight
   const sourceArtifactIds = [...research.keys(), ...(selectedFlight ? [selectedFlight.selection.artifactId] : [])]
   const warnings = [...new Set([
@@ -129,7 +163,7 @@ export async function saveAuthoredTravelGuide(
     stopoverOnly: [], landTransfers: [], unassignedActivityRefs, verification, warnings
   })
   const guide = travelGuideArtifactPayloadSchema.parse({
-    kind: 'trip_travel_guide', schemaVersion: 1, builderVersion: 'agent-authored-guide-v1', composition: 'agent_authored',
+    kind: 'trip_travel_guide', schemaVersion: 1, builderVersion: 'agent-authored-guide-v2', composition: 'agent_authored',
     sourceArtifactIds: [routeId, ...sourceArtifactIds], routeArtifactId: routeId,
     ...(selectedFlight ? {
       flightSelection: {
@@ -158,7 +192,9 @@ export async function saveAuthoredTravelGuide(
         assumptions: window.assumptions
       }))
     } : {}),
-    days, unassignedActivityRefs, verification, warnings, createdAt: now
+    days, ...(supportingEvidence.length ? { supportingEvidence } : {}),
+    ...(trip.budget ? { budget: { ...trip.budget, partyBasis: 'unspecified', period: 'trip_total' } } : {}),
+    unassignedActivityRefs, verification, warnings, createdAt: now
   })
   const validation = validateGuideContent({ guide, route, research, trip, constraints, now })
   if (validation.status !== 'satisfied') return revisionNeeded(validation.missing, validation.details)

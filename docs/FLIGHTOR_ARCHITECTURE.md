@@ -1,6 +1,6 @@
 # FlightOR Agent Architecture v1
 
-> **Current checkpoint — 2026-09-20, B0/B1 committed at cabbf51:** B1 preloads bounded read-only research/Goal/guide context. B2 adds opt-in business-tool Goal acceptance with atomic Goal/Run persistence, a fixed per-turn objective, generation/version isolation and shared completion; `PLANNER_LEAN_GOALS_ENABLED` defaults to false. Saved results survive bounded automatic-verification timeouts, and terminal results enter the working set before completion. The new PostgreSQL acceptance transaction still awaits DB integration execution; stable save references and early card publication remain B3/B4 work. [RUNTIME_PLAN sections 2.1/2.2](design/budget-travel-agent/RUNTIME_PLAN.md) own limits and contracts. Offline checks do not replace [dated live acceptance](FLIGHT_FIRST_ACCEPTANCE.md). Follow [documentation maintenance](DOCS_MAINTENANCE.md) in every change batch.
+> **Current checkpoint — 2026-09-20:** B0/B1 are committed at cabbf51 and B2 at d895d0e. B3 adds stable guide candidate references, separate supporting evidence, server-owned budget snapshots and bounded same-generation repair. B2 business-tool Goal acceptance remains disabled by default (`PLANNER_LEAN_GOALS_ENABLED=false`) and its PostgreSQL transaction still awaits DB integration execution. B3 works with either Goal protocol. Early committed-card publication remains B4. [RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) owns exact limits and compatibility; offline checks do not replace [dated live acceptance](FLIGHT_FIRST_ACCEPTANCE.md). Follow [documentation maintenance](DOCS_MAINTENANCE.md) in every change batch.
 
 > Status: **Product + engineering baseline**
 >
@@ -1092,6 +1092,24 @@ finding references directly; a prior destination set or route outline is not
 required. The guide domain restores source-owned facts and shares the Goal's
 content validator before persisting the submitted schedule and its derived
 route projection. Revision feedback does not write an invalid guide.
+
+B3 adds stateless candidate locators bound to owner/Trip/version and canonical
+research content. Every resolution re-reads scoped evidence; locators are not
+capabilities. The tool maps compact selections to the existing domain contract,
+which restores source facts and persists optional supportingEvidence and budget
+in guide schema v1 (new authored builderVersion agent-authored-guide-v2).
+Support facts satisfy evidence categories without becoming scheduled visits;
+the completion verifier loads their lineage too. Budget is copied from Trip
+with total-period and unspecified party basis, never inferred from model prose.
+
+One in-memory draft per execution context enables revision-checked replacement
+of selected existing days/supports. Its binding includes generation, Goal/Run
+and flight selection; any stale binding requires full current input. All source
+and whole-guide constraints rerun on repair. Errors are classified, feedback is
+bounded and blocked checks explicit. No new durable workflow/table or automatic
+research retry is introduced. Old v1 payloads remain readable; new optional
+fields require compatible readers. Turning B2 off changes only Goal control,
+not B3 persisted fields. See [runtime contract sections 3–4](design/budget-travel-agent/RUNTIME_PLAN.md).
 
 Source facts and suggested planning text remain separate. Existing owner,
 version, cancellation and delivery checks apply. `build_travel_guide` remains a

@@ -1,6 +1,6 @@
 # 当前修改方案：先精简 FlightOR，再以实测决定 Harness
 
-日期：2026-09-20。状态：**分步实施中：B0/B1 已落地，B2 在默认关闭的兼容开关后实施；B3 起待实现**。B2 PostgreSQL 新事务尚缺实际数据库验证；未跑真实模型评测或安装 DSH。逐项证据见 [progress](progress.md)。
+日期：2026-09-20。状态：**分步实施中：B0–B3 已实施，B2 仍默认关闭；B4 起待实现**。B2 PostgreSQL 新事务尚缺实际数据库验证；未跑真实模型评测或安装 DSH。B3 契约见 §3/4，逐项证据见 [progress](progress.md)。
 
 这是本轮后端修改的唯一范围入口：[DPS](DPS.md) 定义执行顺序，[EVALUATION](EVALUATION.md) 定义案例与决策门槛。[RAS](RAS.md) 保留产品需求，[RDS](RDS.md) 是后续完整能力设计，不是首轮全部施工清单。
 
@@ -36,7 +36,7 @@
 
 新增 JSON 上下文上限 24,000 个 JavaScript 字符，按完整条目裁剪并给出省略原因，保留按需读取工具；这不是 tokenizer 精确计量，也不包括已有 Trip/航班/Memory/对话历史。已保存攻略最多 2 份，每份前 8 天摘要并标记航班选择是否匹配；摘要不重新认证 delivery。预算原样保留 amount/currency/scope，当前 Trip 无 party basis，明确为 `unspecified`，不擅自拆成每日预算。禁用 Memory 不注入，已启用 Memory 沿用既有 8 KiB 限制。
 
-`planning_context` 对话元数据只记准备耗时、字符数、条目数和省略原因，不存研究正文/Memory；它是 B5 的准备阶段局部埋点，不是模型 usage、费用或端到端计时。未改公开工具 schema；`save_travel_guide` 仍使用现有索引输入。以下列表保留方向，未实施的紧凑引用等见 B3。
+`planning_context` 对话元数据只记准备耗时、字符数、条目数和省略原因，不存研究正文/Memory；它是 B5 的准备阶段局部埋点，不是模型 usage、费用或端到端计时。B3 已在保留的 finding 上附加稳定 candidateRef，仍遵守 24k 字符总界限；保存输入兼容旧索引，具体见 §3。
 
 在 `agent/cloud/service.ts` 组装有界 PlanningContext，复用 `agent/goals/working-set.ts` 和 `artifacts/presentation.ts`，必要时拟建 `agent/cloud/planning-context.ts`：
 
@@ -60,38 +60,39 @@
 
 ## 3. 紧凑的行程决策接口
 
-保持 `save_travel_guide` 业务职责，拟议新版输入使用稳定候选引用，不要求模型抄写 `researchArtifactIds[] + researchIndex + findingId` 的双层位置关系。
+**B3 当前实现**：`save_travel_guide` 支持稳定候选引用，保留旧 `researchArtifactIds[] + researchIndex + findingId`。以下为实际字段示意，candidateRef/cityId 必须来自服务端结果。
 
 ```json
 {
-  "candidateSetRef": "server-issued-set",
   "days": [{
     "day": 1,
-    "cityRef": "server-issued-city",
+    "cityId": "city:TYO",
+    "kind": "visit",
     "theme": "街区与小吃",
-    "items": [{"candidateRef": "candidate-17", "slot": "afternoon", "reason": "符合慢节奏和美食偏好"}]
-  }]
+    "items": [{"candidateRef": "<服务端返回的引用>", "timeOfDay": "afternoon", "planningNote": "符合慢节奏和美食偏好"}]
+  }],
+  "supportingRefs": ["<实用资料候选引用>"]
 }
 ```
 
-这是拟议契约示意，不是当前可调用格式。候选 ID 为服务端集合内唯一、不依赖数组位置的引用，绑定 owner、Trip、contextVersion、证据版本与有效期；缓存/重启后可重建同一映射。不得信任模型自报来源、标题、票价或坐标。候选只表达可选择的资料，不代表证据已完全核实。
+引用格式为 `gc1.<Artifact UUID>.<32位摘要>`，完整规范化研究 payload（含证据有效期）、owner、Trip、contextVersion 和 finding ID 参与摘要。不采用 candidateSetRef 或持久映射表；每个引用自带 Artifact 定位信息，重新读取同一资料即可重建，Unicode ID 不放大引用长度。引用是定位符，不是授权凭证；解析继续经过 owner-scoped repository、Trip/version/type/schema/id 校验，重复 finding ID 拒绝，过期证据由共享 validator 拒绝。研究输出、B1 上下文、read_artifact 均提供引用；后两者只对当前版本资料发出引用。不得信任模型自报标题、验证状态、预算或坐标。
 
-领域层完成 `candidateRef → Artifact/finding → 原有持久 payload` 映射。优先在现有 guide v1 可表达范围内落盘，**不以完整 visits v2 为首轮前置**。practical 可以在紧凑输入里单列 `supportingRefs`；映射保留独立资料语义，不能把交通提示硬塞为景点，也不能删掉该类覆盖要求。若 v1 reader 无法表达，采用最小可选字段扩展并测试旧数据，而非启动全量 schema 重写。
+工具适配器完成 `candidateRef → Artifact/finding`，领域层恢复事实并落盘 v1，新增可选 `supportingEvidence` 与 `budget`，新版 authored builder 标记 `agent-authored-guide-v2`。supportingRefs 也兼容 `{researchArtifactId,findingId}`；最多 50 条，与日程合计最多 20 份选中研究。支撑证据不占日程 item、不满足空白日活动要求，但参与来源/城市/日期/类别/有效期、重复资料和 Goal maxResults 检查。保存与完成复用同一校验，未选资料不进入 lineage。旧 v1 缺少新字段仍可读取，无数据库迁移。攻略卡和正式行程概览分别展示“实用与补充信息”。
 
-预算以结构化 amount/currency/scope/party basis 为权威；展示总预算不从模型散文抽取。发现“两天总预算变成每天预算”等语义偏差必须在质量评估中判错，即使 schema/Goal 通过。
+预算由服务端复制 Trip 的 amount/currency/scope，附 `period:trip_total`、`partyBasis:unspecified`。输入不允许模型提交预算；新 authored guide 缺失或篡改已知预算会失败。UI 明确整次行程预算约束及机票/交通/全程范围、人数口径未指定，不换算每天或每人，不宣称支出估价。没有新增自由文本预算语义识别器；“两天总预算变成每天预算”等模型文字偏差仍须在 G1/M2 质量评估判错，即使结构化保存通过。
 
 ## 4. 错误必须指向正确的修复动作
 
-共享校验一次报告所有**当前可判定**问题；缺少引用导致不能判断的检查标为 blocked，不能声称已完成全部验证。
+**B3 当前实现**：引用预检和共享内容校验批量返回各阶段可判定的问题，缺少引用时附 blockedChecks，修复后再做完整内容验收。`needs_revision` 保留 issues/details，新增 repair（分类、可用候选、draftRef/revision）。最多返回 400 条 issues/details，超过时 `feedbackTruncated:true`；候选从当前 Trip 最近 20 份记录及最多 20 份输入来源补充，最多 50 条，practical 优先，`candidateSearchComplete:false` 明确非穷尽。历史日期冲突不枚举候选。无保存修复代码会自动联网。
 
 | 类别 | 返回内容 | 执行策略 |
 | --- | --- | --- |
 | `draft_invalid` | 字段路径、有效候选、受影响天数 | 使用已有材料修正对应字段/天；本错误不能触发自动联网 |
 | `evidence_missing` | 缺少类别/地点/日期及现有可用引用 | 已有未选中的 practical 直接补选；仅真正缺证据时研究缺口 |
-| `provider_unavailable` | Provider 身份、冷却/超时与可用成果 | 相同适配器跨工具共享冷却；允许部分交付或停止；不得换工具名绕过 |
+| `provider_unavailable` | 工具错误 envelope 中安全的 Provider/retryAfter（若有）或超时 | 沿用同一 Research 实例现有的跨别名冷却；复用已预装或已保存成果，不得换工具名绕过；本批不新增调度器 |
 | `context_conflict` | 过期版本/选择 revision | 终止旧写入、重新加载当前状态，不修补为假兼容 |
 
-局部修订拟用 `draftRef + expectedRevision + replacementDays/supportingRefs`；只替换指定天，服务端重验整份受影响不变量。保留未修改日程和航班。先实现最小同轮 draft，不为了局部修复建立新工作流引擎；跨轮恢复仍以落盘 Artifact 为准。
+局部修订已实现 `draftRef + expectedRevision + replacementDays/supportingRefs`。每个执行上下文仅保存最后一份有界完整草稿，绑定 owner/Trip/version/generation/Goal/Run/flight selection；revision 采用比较后递增。replacementDays 只能替换已有且不重复的 day，supportingRefs 若出现则整体替换，否则保留；其余天保持原决策。每次重新恢复来源并校验全稿，成功后清除草稿。跨轮/重启/上下文改变或旧 revision 返回 context_conflict，需要当前完整输入；跨轮恢复继续读取落盘 Artifact，不声称草稿持久化。B3 在旧/lean Goal 模式均可用；关闭 B2 开关只回退目标协议，新字段依赖兼容 reader，不能把旧二进制部署当成无条件数据回滚。
 
 ## 5. 首个可操作结果与交互
 

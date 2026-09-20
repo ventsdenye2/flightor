@@ -1,4 +1,11 @@
 .artifact-guide {
+  &__budget, &__evidence { margin-top: 18rpx; padding: 16rpx; border-radius: 12rpx; background: rgba(37, 99, 235, .08); }
+  &__section-title { display: block; color: var(--color-text-primary, #fff); font-size: 24rpx; font-weight: 600; }
+  &__budget-value { display: block; margin-top: 6rpx; color: var(--color-text-primary, #fff); font-size: 29rpx; }
+  &__caption { display: block; margin-top: 5rpx; color: var(--color-text-secondary, rgba(235, 235, 245, .62)); font-size: 21rpx; }
+  &__evidence-item { margin-top: 12rpx; padding-top: 12rpx; border-top: 1rpx solid var(--color-bg-border); }
+  &__evidence-title, &__evidence-copy { display: block; margin-top: 5rpx; color: var(--color-text-secondary, rgba(235, 235, 245, .68)); font-size: 23rpx; line-height: 1.45; }
+  &__evidence-title { color: var(--color-text-primary, #fff); font-weight: 600; }
   &__days { margin-top: 18rpx; }
   &__day { padding: 18rpx 0; border-top: 1rpx solid var(--color-bg-border); }
   &__day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16rpx; }

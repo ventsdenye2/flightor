@@ -36,6 +36,43 @@ export function displayGuideTime(value: unknown): string | undefined {
   return typeof value === 'string' ? guideTimeLabels[value] : undefined
 }
 
+export interface DisplayTravelGuideBudget { amount: number; currency: string; scope: 'airfare' | 'transport' | 'trip'; label: string }
+export interface DisplaySupportingEvidence { sourceArtifactId: string; sourceFindingId: string; title: string; description: string; category: string; destinations: string[]; verification: 'verified' | 'partial' | 'stale' | 'unverified' }
+const guideBudgetScopes: Record<DisplayTravelGuideBudget['scope'], string> = { airfare: '机票', transport: '交通', trip: '全程' }
+
+export function displayTravelGuideBudget(value: unknown): DisplayTravelGuideBudget | undefined {
+  const item = record(value)
+  if (!item || typeof item.amount !== 'number' || !Number.isFinite(item.amount) || item.amount < 0 || item.amount > 100_000_000 || typeof item.currency !== 'string' || !/^[A-Z]{3}$/.test(item.currency) || (item.scope !== 'airfare' && item.scope !== 'transport' && item.scope !== 'trip') || item.partyBasis !== 'unspecified' || item.period !== 'trip_total') return undefined
+  const scope = item.scope as DisplayTravelGuideBudget['scope']
+  return { amount: item.amount, currency: item.currency, scope, label: guideBudgetScopes[scope] }
+}
+
+function boundedEvidenceText(value: unknown, max: number): string | undefined {
+  const result = text(value)
+  return result && result.length <= max ? result : undefined
+}
+
+function evidenceVerification(value: unknown): DisplaySupportingEvidence['verification'] {
+  const verification = record(value)
+  const expiresAt = text(verification?.expiresAt)
+  if (expiresAt && Number.isFinite(Date.parse(expiresAt)) && Date.parse(expiresAt) <= Date.now()) return 'stale'
+  const status = text(verification?.status)
+  return status === 'verified' ? 'verified' : status === 'partially_verified' ? 'partial' : status === 'stale' ? 'stale' : 'unverified'
+}
+
+export function displaySupportingEvidence(value: unknown): DisplaySupportingEvidence[] {
+  if (!Array.isArray(value)) return []
+  return value.slice(0, 8).flatMap(raw => {
+    const item = record(raw); const sourceArtifactId = boundedEvidenceText(item?.sourceArtifactId, 160); const sourceFindingId = boundedEvidenceText(item?.sourceFindingId, 160)
+    const title = boundedEvidenceText(item?.title, 240); const description = boundedEvidenceText(item?.description, 1_500)
+    const categoryValue = boundedEvidenceText(item?.category, 32)
+    const category = categoryValue && ({ event: '活动', seasonal: '季节信息', activity: '活动', stopover: '中转建议', practical: '实用信息' } as Record<string, string>)[categoryValue]
+    if (!sourceArtifactId || !sourceFindingId || !title || !description || !category) return []
+    const destinations = records(item?.destinations, 8).map(destination => firstText(destination.name, destination.city, destination.iata)).filter((value): value is string => value !== undefined)
+    return [{ sourceArtifactId, sourceFindingId, title, description, category, destinations, verification: evidenceVerification(item?.verification) }]
+  })
+}
+
 export interface DisplaySegment {
   origin?: string
   destination?: string

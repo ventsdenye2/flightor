@@ -1,6 +1,30 @@
 # 当前进度与验证
 
-更新：2026-09-20。B0/B1 与已有文档治理已提交 main `cabbf51`。当前阶段：B2 已实现，默认关闭开关；新 PG 事务待实际数据库验证。保留用户原有未跟踪 `docs/demo/DEMO_MASTER.md`，不纳入提交。未修改运行模型/Provider/依赖或现有环境文件。
+更新：2026-09-20。B0/B1 已提交 main `cabbf51`，B2 已提交 `d895d0e`。当前阶段：B3 已实施并完成离线回归；B2 仍默认关闭，新 PG 事务待实际数据库验证。保留用户原有未跟踪 `docs/demo/DEMO_MASTER.md`，不纳入提交。未修改运行模型/Provider/依赖或现有环境文件。
+
+## B3 本批完成情况
+
+- 新增固定长度 candidateRef，无数组位置依赖；研究返回、B1 上下文和 read_artifact 产出相同引用。无候选表/缓存依赖，绑定 owner/Trip/version/完整证据内容，重新解析仍检查权限、来源身份和有效期；旧索引输入保留。
+- supportingRefs 单独选实用或其它支撑资料，保存为 v1 可选 supportingEvidence；共享验收包含其来源、城市、日期、类别、过期与重复检查。交通提示无需伪装成日程景点，空白日不能靠 supportingEvidence 满足活动覆盖。Goal 上限和要求不降低。
+- 新版 authored guide 从 Trip 保存结构化 budget，总额/币种/范围保持一致，人数口径未指定。攻略卡和正式概览分别展示预算约束与补充信息，资料过期时显示过期。未实现模型散文预算语义自动评分，真实文字质量仍属 G1/M2。
+- 分类反馈、字段路径和 blockedChecks；既有 practical 候选优先返回；反馈和查询数量有界、非穷尽明确。Provider 故障保留安全冷却字段和共享适配器冷却，不新增自动重试。取消仍维持原边界。
+- 同 generation 最后一份失败草稿支持 draftRef/revision + replacementDays/supportingRefs；仅替换指定已有日期，整稿重验，保存成功后清除。换上下文或重启要重新提交完整输入，跨轮从持久 Artifact 恢复。
+- 用户授权下按难度分派：Luna 实现 UI 适配/错误 envelope，沿用当前主模型的 agent 负责领域验证和独立审查；主 agent 完成引用/草稿协议、集成和文档/Git。审查发现的 Unicode 引用长度、反馈上限、历史日期冲突和过期资料展示已修复并有回归覆盖。
+- TOOLS、架构、ADR 0019、RUNTIME_PLAN、DPS、PROJECT_CONTEXT、README 与 UI 所有者文档同步。没有更改研究 v2 schema，也没有实现 visits v2、B4 提前发布、B5 完整计时或 DSH。
+
+## B3 验证证据
+
+| 检查 | 本批结果与边界 |
+| --- | --- |
+| Backend TypeScript | `npm --prefix backend run check` 通过 |
+| 完整离线后端 | `npm test`：93 文件、694 tests 全部通过；包括来源/取消/版本、lean 与旧协议、原 Research 限流回归；未改测试超时配置 |
+| 最后定向补验 | 完整回归之后新增预装/read_artifact/重新执行上下文同引用测试，并对超过 400 个紧凑引用错误补 feedbackTruncated；`npm test -- src/agent/tools/authored-travel-guide.test.ts` 28/28 通过，不将其冒称又跑了一轮完整 suite |
+| Frontend | `test:artifacts` 19/19；`test:production-presentation` 26 项及附带 planner/library 检查通过；根 `npx tsc --noEmit` 通过；含过期资料和错误预算格式回归 |
+| 微信小程序编译 | `npm run build:weapp` exit 0，生成本批 app 与页面产物；构建输出含 CSS 顺序冲突及 common.js 253 KiB 体积警告，未进行设备或可视交互验收 |
+| 文档 | `node scripts/check-docs.cjs`：71 份 Markdown、269 个本地相对链接及同批文档检查通过；暂存检查在提交前执行 |
+| 独立审查 | 来源与修订不变量交叉审查完成；发现并修复的边界见上；不等同实际数据库或端上交互验收 |
+| PostgreSQL/模型/端上 | 本批未运行 PG 集成、真实模型/Provider、H5 可视交互或微信真机。B2 缺少 TEST_DATABASE_URL 的原缺口仍在，flag 仍 false；无新的付费调用 |
+| 已知边界 | 草稿不持久化；可用候选窗口非穷尽；旧字段保持兼容但旧二进制严格 reader 不保证读取新增字段；自由文本质量仍需评估 |
 
 ## B2 本批完成情况
 
@@ -70,7 +94,7 @@
 
 ## 下一步
 
-按 DPS 继续 **B3：稳定保存引用、独立 supportingRefs、分类修复与局部修订**，保留现有 v1 持久数据边界；B4 实现已提交结果展示，B5 随之补齐观测。同时保留 B2 的 `TEST_DATABASE_URL` 实际事务验证缺口，在启用新协议与 G1 前补齐。不要把本批局部准备计时称为 B5 完成。
+按 DPS 继续 **B4：将已提交 Artifact 提前发布到现有轮询与正式 UI，保留取消/账号/generation 隔离**；B5 随之补齐观测。同时保留 B2 的 `TEST_DATABASE_URL` 实际事务验证缺口，在启用新协议与 G1 前补齐。不要把本批局部准备计时或 B3 展示字段适配称为 B4/B5 完成。
 
 G1 两条真实链路跑通后才启动正式时间测量与多案例批次。当前没有新的付费调用额度记录，旧演示额度不可沿用；尚未进入实际运行阶段，也没有据此阻止本批离线推进。
 

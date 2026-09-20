@@ -19,6 +19,7 @@ import { isAppError } from '../../lib/errors.js'
 import { emitActivity, type AgentActivityObserver } from './activity.js'
 import { settleWithSignal } from './cancellation.js'
 import type { SelectedFlightContext } from '../../workspaces/flight-selection.js'
+import type { GuideDraft } from '../tools/guide-draft.js'
 
 export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
 export type ToolSideEffect = 'none' | 'state'
@@ -60,6 +61,8 @@ export interface ToolExecutionContext {
   activeGoalContextVersion?: number
   /** Server-owned semantic acceptance lock for the opt-in lean protocol. */
   acceptedGoalIntent?: { goalId: string; runId: string; kind: GoalKind; contextVersion: number; fingerprint: string }
+  /** One bounded, same-generation invalid guide draft. Never model-authored context. */
+  guideDraft?: GuideDraft
 }
 
 export interface AgentTool<Input = unknown, Output = unknown> {
@@ -86,6 +89,8 @@ export type ToolErrorCode =
   | 'TOOL_RESULT_INVALID'
   | 'COST_BUDGET_EXCEEDED'
 
+export type ToolErrorClassification = 'draft_invalid' | 'provider_unavailable' | 'context_conflict'
+
 export interface ToolExecutionOutcome {
   toolCallId: string
   toolName: string
@@ -98,6 +103,10 @@ export interface ToolExecutionOutcome {
   domainErrorCode?: string
   artifactIds: string[]
   warnings: string[]
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 function asSafeMessage(value: unknown): string {
@@ -116,15 +125,37 @@ function asSafeMessage(value: unknown): string {
   return 'Tool execution failed'
 }
 
-function errorContent(code: ToolErrorCode, message: string, details?: unknown): string {
+function errorContent(code: ToolErrorCode, message: string, details?: unknown, classification?: ToolErrorClassification): string {
   return JSON.stringify({
     ok: false,
     error: {
       code,
       message: message.slice(0, 240),
+      ...(classification === undefined ? {} : { classification }),
       ...(details === undefined ? {} : { details })
     }
   })
+}
+
+function classifyDomainError(domainCode: string | undefined, tool: AgentTool, errorCode: ToolErrorCode): ToolErrorClassification | undefined {
+  if (errorCode === 'INVALID_ARGUMENTS' || errorCode === 'MALFORMED_ARGUMENTS') return 'draft_invalid'
+  if (errorCode === 'TOOL_TIMEOUT' && (tool.name === 'research_destination' || tool.name === 'web_research')) return 'provider_unavailable'
+  if (domainCode === 'PROVIDER_RATE_LIMITED' || domainCode === 'PROVIDER_UNAVAILABLE' || domainCode === 'PROVIDER_TIMEOUT') return 'provider_unavailable'
+  if (domainCode === 'TRIP_CONTEXT_VERSION_CONFLICT' || domainCode === 'FLIGHT_SELECTION_CHANGED' || domainCode?.startsWith('ARTIFACT_CONTEXT_VERSION_')) return 'context_conflict'
+  return undefined
+}
+
+function safeProviderDetails(error: unknown, tool: AgentTool, classification: ToolErrorClassification | undefined): Record<string, unknown> | undefined {
+  if (classification !== 'provider_unavailable') return undefined
+  const details: Record<string, unknown> = {}
+  if (tool.provider) details.provider = tool.provider
+  if (isAppError(error) && isRecord(error.details)) {
+    if (typeof error.details.provider === 'string' && error.details.provider.length <= 64) details.provider = error.details.provider
+    if (typeof error.details.retryAfter === 'number' && Number.isFinite(error.details.retryAfter) && error.details.retryAfter >= 0) {
+      details.retryAfter = error.details.retryAfter
+    }
+  }
+  return Object.keys(details).length ? details : undefined
 }
 
 function resultMetadata(value: unknown): { artifactIds: string[]; warnings: string[] } {
@@ -223,7 +254,7 @@ export class ToolRegistry {
         toolCallId: call.id,
         toolName: tool.name,
         ok: false,
-        content: errorContent('MALFORMED_ARGUMENTS', 'Tool arguments are not valid JSON'),
+        content: errorContent('MALFORMED_ARGUMENTS', 'Tool arguments are not valid JSON', undefined, 'draft_invalid'),
         costUnits: 0,
         durationMs: Date.now() - started,
         ...(tool.provider ? { provider: tool.provider } : {}),
@@ -238,7 +269,7 @@ export class ToolRegistry {
         toolCallId: call.id,
         toolName: tool.name,
         ok: false,
-        content: errorContent('INVALID_ARGUMENTS', 'Tool arguments failed validation', parsed.error.issues),
+        content: errorContent('INVALID_ARGUMENTS', 'Tool arguments failed validation', parsed.error.issues, 'draft_invalid'),
         costUnits: 0,
         durationMs: Date.now() - started,
         ...(tool.provider ? { provider: tool.provider } : {}),
@@ -291,12 +322,17 @@ export class ToolRegistry {
           : 'TOOL_FAILURE'
       const domainErrorCode = errorCode === 'TOOL_FAILURE' && isAppError(error) && /^[A-Z][A-Z0-9_]{0,79}$/.test(error.code)
         ? error.code : undefined
+      const classification = classifyDomainError(domainErrorCode, tool, errorCode)
+      const safeDetails = safeProviderDetails(error, tool, classification)
+      const errorDetails = domainErrorCode
+        ? { domainCode: domainErrorCode, ...(safeDetails ?? {}) }
+        : safeDetails
       return {
         toolCallId: call.id,
         toolName: tool.name,
         ok: false,
         content: errorContent(errorCode, errorCode === 'TOOL_TIMEOUT' ? 'Tool execution timed out' : asSafeMessage(error),
-          domainErrorCode ? { domainCode: domainErrorCode } : undefined),
+          errorDetails, classification),
         costUnits: toolStarted ? tool.costUnits : 0,
         durationMs: Date.now() - started,
         ...(tool.provider ? { provider: tool.provider } : {}),

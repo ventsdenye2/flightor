@@ -1,6 +1,6 @@
 # FlightOR Agent Tool Registry
 
-> 2026-09-20: B1 read-only context and opt-in B2 business-tool Goal acceptance are implemented. B2 is disabled by default and its new PostgreSQL acceptance transaction awaits live DB validation. Stable candidate references remain proposed under [ADR 0019](adr/0019-lean-planner-evaluation.md). Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
+> 2026-09-20: B1 context, opt-in B2 Goal acceptance and B3 stable guide decisions/repair are implemented. B2 is disabled by default and its new PostgreSQL acceptance transaction awaits live DB validation. B3 works in both Goal modes; contracts and compatibility are recorded under [ADR 0019](adr/0019-lean-planner-evaluation.md). Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
 
 This file is the source-of-truth inventory for Agent-facing tools. It follows
 `docs/FLIGHTOR_ARCHITECTURE.md`; implementation status means both code and contract
@@ -80,8 +80,52 @@ Automatic completion first records the Artifact in the Run working set. Its
 with `goal_verification_timeout` rather than discarding an already saved result;
 parent cancellation still applies. Lean tools allow an extra 5 seconds within
 the registry's 120-second cap; the whole-turn deadline is unchanged.
-This does not publish cards before the final reply (B4) or replace the existing
-`researchArtifactIds/researchIndex/findingId` input (B3).
+This does not publish cards before the final reply (B4). B3 now offers stable
+candidateRef decisions alongside the legacy positional input below.
+
+### Stable guide decisions and repair (B3)
+
+`research_destination`/`web_research` findings and retained planning-context
+findings include `candidateRef`. `read_artifact` adds up to 50 candidate summaries
+for supported current-version research. These locators are derived from stored
+evidence and authenticated context, are stable across process restarts, and do
+not grant access or certify freshness. Duplicate finding IDs cannot be selected.
+
+`save_travel_guide` accepts full `days` with cityId/kind/theme/notes and items
+with candidateRef/timeOfDay/planningNote/requestedActivityIds. Legacy item
+researchIndex/findingId plus top-level researchArtifactIds remains valid; do not
+mix both forms on one item. Optional `supportingRefs` accepts candidate strings
+or `{researchArtifactId,findingId}` objects, independently of day activities.
+The service restores `supportingEvidence` in the v1 Artifact and counts its
+eligible categories and sources toward the same Goal constraints, including
+maxResults. It never schedules a practical note as a fabricated attraction.
+
+On `needs_revision`, `repair.issues[].classification` is draft_invalid,
+evidence_missing or context_conflict; `details` supplies paths, affected days,
+category/location/date and blocked checks where determinable. repair includes
+up to 50 existing candidate summaries and `candidateSearchComplete:false`.
+Check these and other saved evidence before new research. At most 400 feedback
+items are returned per field; `feedbackTruncated:true` marks excess results.
+
+Repair the latest same-generation draft with `draftRef`, `expectedRevision`,
+`replacementDays` and/or `supportingRefs`. Only specified existing days change;
+supportingRefs replaces the complete support selection. Unspecified days and
+supports remain. Conflicting version/generation/flight/Goal/Run/revision requires
+a fresh full draft. Successful save clears it; drafts do not survive restarts.
+Every attempt reruns full source and content checks before persistence.
+
+Saved results also return optional server-owned `budget` and supportingEvidence.
+Budget copies Trip amount/currency/scope with period=trip_total and
+partyBasis=unspecified; neither the model nor display converts it to daily or
+per-person amounts. Old persisted v1 payloads remain readable. No new database
+migration or provider call is introduced. See [exact limits](design/budget-travel-agent/RUNTIME_PLAN.md).
+
+Tool failure envelopes retain existing code/message/details and add
+`error.classification` for malformed/invalid input (draft_invalid), provider
+failures and research deadlines (provider_unavailable), and version/selection
+conflicts (context_conflict). Provider details allow only provider/retryAfter
+alongside domainCode; no raw response is exposed. Parent cancellation remains
+cancellation. Research aliases retain their shared adapter cooldown.
 
 Trip changes must precede research/guide/flight acceptance; changing the version
 afterward requires a new turn. A durable Trip-update intent submits its requested
@@ -298,7 +342,7 @@ route generation. Tools never supply their own duplicate lineage-write policy.
 | --- | --- | --- | --- | --- | --- | --- |
 | `web_research` | Implemented (Phase 4B compatibility vocabulary) | Strict minimal `ResearchBrief` → `research` v2 artifact + compact source-bound findings | Creates artifact | paid | Restricted production `ResearchAgent`; SerpApi research adapter; optional OpenRouter synthesis | Bounded snippets only; provider/model failure degrades conservatively; missing SerpApi key is explicit unavailable |
 | `research_destination` | Implemented (Phase 4B) | Trusted destination + active Trip window/interests/questions → `research` v2 artifact + selectable finding IDs, summaries, locations and verification status | Creates artifact | paid | Same restricted Research pipeline | Every finding has standard verification/TTL; event snippet evidence is never fully verified |
-| `save_travel_guide` | Implemented (ADR 0012 MVP) | Research refs + Planner-authored days, city IDs, selected finding IDs, time blocks and notes → `saved` guide v1 or `needs_revision` issues | Creates derived route and guide artifacts after validation | cheap | Guide domain restores source facts and shares accepted Goal content validation | No provider calls or automatic redistribution; unused research is excluded; dates, evidence, scope and result limits fail before save; cancelled/conflicting second write cannot become completed delivery |
+| `save_travel_guide` | Implemented (ADR 0012 + B3) | Stable candidate refs or legacy indices + authored days + optional supportingRefs; same-turn draft patches → saved v1 or classified repair | Creates derived route and guide artifacts after validation | cheap | Server restores evidence and Trip budget; shared Goal validator | No provider calls or automatic redistribution; unused research excluded; source/date/version/cancellation checks and bounded feedback; draft patches do not persist across turns |
 | `build_travel_guide` | Implemented (Phase 4B; compatibility only) | Owner-scoped trip-route + research refs → `travel_guide` v1 artifact | Creates artifact | cheap | Deterministic FlightOR composition | Excluded from public Planner; retained in complete Core registry; stale/unverified findings are omitted and missing days remain empty |
 
 Both research tools use `executeResearchBrief` to bind the request to one accepted

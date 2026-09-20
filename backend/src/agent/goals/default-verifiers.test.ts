@@ -326,7 +326,7 @@ describe('default travel-guide goal verifier', () => {
     const guide = await guideData(test)
     guide.payload.days[0]!.items[0]!.description = 'Unsupported claim.'
     await guide.store()
-    expect(await test.verify()).toMatchObject({ status: 'failed', missing: ['guide_item_evidence_mismatch'] })
+    expect(await test.verify()).toMatchObject({ status: 'failed', missing: expect.arrayContaining(['guide_item_evidence_mismatch']) })
   })
 
   it('rejects a missing or inaccessible source without accepting its copied evidence', async () => {
