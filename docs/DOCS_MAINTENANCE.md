@@ -34,6 +34,12 @@ node scripts/check-docs.cjs --staged
 
 ## 当前清理决策
 
+### G1 单次验收辅助脚本
+
+`backend/scripts/verify-g1-live.mjs` 默认只打印 dry-run 固定案例；`node --test backend/scripts/g1-budget.test.mjs` 使用假的网络响应验证付费准入边界。真实执行需先构建 backend、准备 loopback 专用 `flightor_g1_live` PostgreSQL，在 backend 目录给该进程传 `G1_DATABASE_URL` 与本批已确认的 `G1_AUTHORIZED_USD=2` 后运行 `node scripts/verify-g1-live.mjs --execute`。变量是执行围栏，不替代用户对新批次的授权。
+
+脚本使用当前 `.env` 凭证但不修改文件，所有迁移/测试身份只进入专用数据库；输出留在忽略的 `backend/.demo/g1-live-*`。账本必须在请求前持久预留，不能删除账本或启动新目录来重置本批额度。实际结果与未知费用在 [EVALUATION](design/budget-travel-agent/EVALUATION.md) 和 [progress](design/budget-travel-agent/progress.md) 维护；当前脚本不承担正式 A/B 或真实平台绘制验收。
+
 “清理”优先移出有效入口并纠正错误，不销毁有价值的来源/验收证据。不因为旧文档存在就恢复旧功能或执行旧任务。
 
 | 文档/类别 | 处理 | 原因 |

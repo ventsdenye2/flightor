@@ -1,0 +1,1976 @@
+{
+  "version": 1,
+  "runId": "g1-live-2026-09-20T12-12-39-743Z",
+  "startedAt": "2026-09-20T12:12:43.050Z",
+  "finishedAt": "2026-09-20T12:20:34.789Z",
+  "codeSha": "ee631a4c024336ded3b0b283970dc5e1b474f196",
+  "runnerHash": "6dc41648903650f44cd7092a8f7f80ca45836693bfcbebb00e6ef85435ad30fa",
+  "meterHash": "5fe1e25285879d632ad4843bff3fc885d1eade91ce0a72e191bfaab9eb873b37",
+  "model": "deepseek/deepseek-v4-flash-0731",
+  "leanProtocol": true,
+  "evidenceLayer": "real providers + real PostgreSQL + authenticated Fastify inject",
+  "uiPaintMeasured": false,
+  "statusScope": "persistence_contract_only; content quality is reviewed in the Markdown report",
+  "ledgerDurationScope": "response headers only; full model and HTTP spans are in each observation",
+  "budget": {
+    "knownCostUsd": 0.017287,
+    "heldUsd": 0.5,
+    "totalCostUsd": 0.517287,
+    "calls": [
+      {
+        "index": 1,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906365262,
+        "statusCode": 200,
+        "durationMs": 5747,
+        "costUsd": 0.00103892,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 2,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906374170,
+        "statusCode": 200,
+        "durationMs": 2153,
+        "costUsd": 0.000426104,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 3,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906377124,
+        "statusCode": 200,
+        "durationMs": 1866,
+        "costUsd": 0.0004474,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 4,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906381404,
+        "statusCode": 200,
+        "durationMs": 6744
+      },
+      {
+        "index": 5,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906381414,
+        "statusCode": 200,
+        "durationMs": 1497
+      },
+      {
+        "index": 6,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906382927,
+        "statusCode": 200,
+        "durationMs": 1493
+      },
+      {
+        "index": 7,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906384432,
+        "statusCode": 200,
+        "durationMs": 779
+      },
+      {
+        "index": 8,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906388168,
+        "statusCode": 200,
+        "durationMs": 3625,
+        "costUsd": 0.0005712312,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 9,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906416472,
+        "statusCode": 200,
+        "durationMs": 4668,
+        "costUsd": 0.00133852,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 10,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906490051,
+        "statusCode": 200,
+        "durationMs": 2506,
+        "costUsd": 0.0006634,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 11,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906499679,
+        "statusCode": 200,
+        "durationMs": 11113
+      },
+      {
+        "index": 12,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906499688,
+        "statusCode": 200,
+        "durationMs": 831
+      },
+      {
+        "index": 13,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906510802,
+        "statusCode": 200,
+        "durationMs": 1451,
+        "costUsd": 0.00027875,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 14,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906514202,
+        "statusCode": 200,
+        "durationMs": 1649,
+        "costUsd": 0.000680072,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 15,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906555795,
+        "statusCode": 200,
+        "durationMs": 1286,
+        "costUsd": 0.000791976,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 16,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906600074,
+        "statusCode": 200,
+        "durationMs": 2268,
+        "costUsd": 0.0008456,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 17,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906618937,
+        "statusCode": 200,
+        "durationMs": 1769
+      },
+      {
+        "index": 18,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906620824,
+        "statusCode": 200,
+        "durationMs": 2814,
+        "costUsd": 0.00103256,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 19,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906628852,
+        "statusCode": 200,
+        "durationMs": 1492,
+        "costUsd": 0.00044292,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 20,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906641097,
+        "statusCode": 200,
+        "durationMs": 2938,
+        "costUsd": 0.0010558,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 21,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906645217,
+        "statusCode": 200,
+        "durationMs": 1870,
+        "costUsd": 0.000472536,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 22,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906660587,
+        "statusCode": 200,
+        "durationMs": 2484,
+        "costUsd": 0.0011118,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 23,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906675684,
+        "statusCode": 200,
+        "durationMs": 1310
+      },
+      {
+        "index": 24,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906675699,
+        "statusCode": 200,
+        "durationMs": 1307
+      },
+      {
+        "index": 25,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906677013,
+        "statusCode": 200,
+        "durationMs": 791
+      },
+      {
+        "index": 26,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906677815,
+        "statusCode": 200,
+        "durationMs": 1619,
+        "costUsd": 0.0009016,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 27,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906693962,
+        "statusCode": 200,
+        "durationMs": 1356,
+        "costUsd": 0.000636576,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 28,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906751260,
+        "statusCode": 200,
+        "durationMs": 3080,
+        "costUsd": 0.00136684,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 29,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906805025,
+        "statusCode": 200,
+        "durationMs": 5034,
+        "costUsd": 0.0014276,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 30,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906813071,
+        "statusCode": 200,
+        "durationMs": 2884,
+        "costUsd": 0.001748736,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "caseId": "self-ticket",
+      "prompt": "我的机票已自备，不查航班。请为2026年10月20日至21日东京两日游研究具体去处并保存攻略。本次两天游玩总预算1500元人民币，喜欢文化与小吃，节奏轻松，每天一个有来源的主景点，并提供实用交通或饮食信息。优先官方资料；未核实的价格、开放时间和交通耗时要明确说明。",
+      "contractStatus": "passed",
+      "restored": true,
+      "stages": {
+        "setupMs": 126.52139999999963,
+        "apiAcceptedMs": 21.38720000000012,
+        "finalResponseMs": 253694.413,
+        "workspaceRestoreMs": 20.3579000000027,
+        "totalCaseMs": 253843.4424
+      },
+      "firstArtifacts": {
+        "travel_guide": {
+          "artifactId": "01a0bebf-3ed3-775c-b763-3f035a1fdb16",
+          "apiReadElapsedMs": 235380.4019
+        }
+      },
+      "delivery": {
+        "status": "satisfied",
+        "goalId": "01a0bebb-cddb-76bf-a03c-6f9acb816521",
+        "kind": "travel_guide",
+        "artifactIds": [
+          "01a0bebf-3ed3-775c-b763-3f035a1fdb16"
+        ],
+        "missing": [],
+        "warnings": [
+          "evidence_partially_verified"
+        ],
+        "goals": [
+          {
+            "status": "satisfied",
+            "artifactIds": [
+              "01a0bebf-3ed3-775c-b763-3f035a1fdb16"
+            ],
+            "missing": [],
+            "warnings": [
+              "evidence_partially_verified"
+            ],
+            "goalId": "01a0bebb-cddb-76bf-a03c-6f9acb816521",
+            "kind": "travel_guide"
+          }
+        ]
+      },
+      "observation": {
+        "version": 1,
+        "requestId": "req-3",
+        "tripId": "01a0bebb-aac1-7171-a476-5df3f2b3ebf5",
+        "conversationId": "01a0bebb-aae0-708d-b593-899bcdfa1cb2",
+        "generationId": "01a0bebb-aaf8-75ae-afa6-ef025e424029",
+        "startedAt": "2026-09-20T12:12:45.178Z",
+        "clock": "server_monotonic",
+        "durationMs": 253152.64860000001,
+        "outcome": "completed",
+        "spans": [
+          {
+            "id": 1,
+            "parentId": null,
+            "kind": "phase",
+            "name": "planning_context",
+            "startMs": 24.29790000000048,
+            "errorCode": null,
+            "endMs": 40.19510000000082,
+            "status": "ok",
+            "durationMs": 15.897200000000339,
+            "exclusiveMs": 15.897200000000339
+          },
+          {
+            "id": 2,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 56.621900000000096,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 25203,
+                "completionTokens": 385,
+                "totalTokens": 25588,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1039,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 8904.831699999999,
+            "status": "ok",
+            "durationMs": 8848.209799999999,
+            "exclusiveMs": 31.365599999999176
+          },
+          {
+            "id": 3,
+            "parentId": 2,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 82.37900000000081,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 8899.2232,
+            "status": "ok",
+            "durationMs": 8816.8442,
+            "exclusiveMs": 8816.8442
+          },
+          {
+            "id": 4,
+            "parentId": null,
+            "kind": "tool",
+            "name": "research_destination",
+            "startMs": 8905.3831,
+            "errorCode": "LOCATION_NOT_RESOLVED",
+            "status": "error",
+            "endMs": 8979.520700000001,
+            "durationMs": 74.13760000000184,
+            "exclusiveMs": 74.13760000000184
+          },
+          {
+            "id": 5,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 8979.7159,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 25659,
+                "completionTokens": 100,
+                "totalTokens": 25759,
+                "reasoningTokens": 0,
+                "cachedTokens": 25344
+              },
+              "costUsdMicros": 427,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 11901.384399999999,
+            "status": "ok",
+            "durationMs": 2921.6684999999998,
+            "exclusiveMs": 14.310600000000704
+          },
+          {
+            "id": 6,
+            "parentId": 5,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 8990.114099999999,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 11897.471999999998,
+            "status": "ok",
+            "durationMs": 2907.357899999999,
+            "exclusiveMs": 2907.357899999999
+          },
+          {
+            "id": 7,
+            "parentId": null,
+            "kind": "tool",
+            "name": "resolve_location",
+            "startMs": 11901.5268,
+            "errorCode": null,
+            "endMs": 11935.1711,
+            "status": "ok",
+            "durationMs": 33.64429999999993,
+            "exclusiveMs": 33.64429999999993
+          },
+          {
+            "id": 8,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 11935.389299999999,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 25867,
+                "completionTokens": 339,
+                "totalTokens": 26206,
+                "reasoningTokens": 0,
+                "cachedTokens": 25600
+              },
+              "costUsdMicros": 448,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 16195.434000000001,
+            "status": "ok",
+            "durationMs": 4260.044700000002,
+            "exclusiveMs": 14.042800000002899
+          },
+          {
+            "id": 9,
+            "parentId": 8,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 11945.2712,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 16191.273099999999,
+            "status": "ok",
+            "durationMs": 4246.001899999999,
+            "exclusiveMs": 4246.001899999999
+          },
+          {
+            "id": 10,
+            "parentId": null,
+            "kind": "tool",
+            "name": "research_destination",
+            "startMs": 16195.608100000001,
+            "errorCode": null,
+            "endMs": 51274.441399999996,
+            "status": "ok",
+            "durationMs": 35078.8333,
+            "exclusiveMs": 197.9588999999978
+          },
+          {
+            "id": 11,
+            "parentId": 10,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 16225.463199999998,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 22979.3574,
+            "status": "ok",
+            "durationMs": 6753.8942000000025,
+            "exclusiveMs": 6753.8942000000025
+          },
+          {
+            "id": 12,
+            "parentId": 10,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 16236.281200000001,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 17742.6154,
+            "status": "ok",
+            "durationMs": 1506.3341999999975,
+            "exclusiveMs": 1506.3341999999975
+          },
+          {
+            "id": 13,
+            "parentId": 10,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 17748.7036,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 19252.0929,
+            "status": "ok",
+            "durationMs": 1503.389299999999,
+            "exclusiveMs": 1503.389299999999
+          },
+          {
+            "id": 14,
+            "parentId": 10,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 19254.272,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 20262.7219,
+            "status": "ok",
+            "durationMs": 1008.4498999999996,
+            "exclusiveMs": 1008.4498999999996
+          },
+          {
+            "id": 15,
+            "parentId": 10,
+            "kind": "model",
+            "name": "openrouter",
+            "startMs": 22988.8283,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": null,
+              "gateway": "openrouter",
+              "finishReason": "stop",
+              "usage": {
+                "promptTokens": 4012,
+                "completionTokens": 801,
+                "totalTokens": 4813,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 572,
+              "configFingerprint": "815417300e1743ac381db6d812ee51bc2892a82865e0b1be21d600118084647a",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4000,
+              "temperature": 0,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": null,
+              "timeoutMs": 60000
+            },
+            "endMs": 51115.8085,
+            "status": "ok",
+            "durationMs": 28126.980199999998,
+            "exclusiveMs": 4.335699999995995
+          },
+          {
+            "id": 16,
+            "parentId": 15,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 22989.553,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 51112.1975,
+            "status": "ok",
+            "durationMs": 28122.644500000002,
+            "exclusiveMs": 28122.644500000002
+          },
+          {
+            "id": 17,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 51274.6325,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 28203,
+                "completionTokens": 2630,
+                "totalTokens": 30833,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1339,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 124703.5571,
+            "status": "ok",
+            "durationMs": 73428.9246,
+            "exclusiveMs": 24.103799999982584
+          },
+          {
+            "id": 18,
+            "parentId": 17,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 51293.0973,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 124697.91810000001,
+            "status": "ok",
+            "durationMs": 73404.82080000002,
+            "exclusiveMs": 73404.82080000002
+          },
+          {
+            "id": 19,
+            "parentId": null,
+            "kind": "tool",
+            "name": "save_travel_guide",
+            "startMs": 124703.7341,
+            "errorCode": null,
+            "endMs": 124859.97839999999,
+            "status": "ok",
+            "durationMs": 156.2442999999912,
+            "exclusiveMs": 148.52609999998822
+          },
+          {
+            "id": 20,
+            "parentId": 19,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 124830.9846,
+            "errorCode": null,
+            "endMs": 124838.7028,
+            "status": "ok",
+            "durationMs": 7.71820000000298,
+            "exclusiveMs": 7.71820000000298
+          },
+          {
+            "id": 21,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 124860.06600000002,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 32747,
+                "completionTokens": 367,
+                "totalTokens": 33114,
+                "reasoningTokens": 0,
+                "cachedTokens": 28160
+              },
+              "costUsdMicros": 664,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 134472.58680000002,
+            "status": "ok",
+            "durationMs": 9612.520799999998,
+            "exclusiveMs": 18.339299999992363
+          },
+          {
+            "id": 22,
+            "parentId": 21,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 124872.7377,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 134466.9192,
+            "status": "ok",
+            "durationMs": 9594.181500000006,
+            "exclusiveMs": 9594.181500000006
+          },
+          {
+            "id": 23,
+            "parentId": null,
+            "kind": "tool",
+            "name": "web_research",
+            "startMs": 134472.8647,
+            "errorCode": null,
+            "endMs": 149012.5289,
+            "status": "ok",
+            "durationMs": 14539.6642,
+            "exclusiveMs": 85.34000000002561
+          },
+          {
+            "id": 24,
+            "parentId": 23,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 134501.249,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 145621.5637,
+            "status": "ok",
+            "durationMs": 11120.314699999988,
+            "exclusiveMs": 11120.314699999988
+          },
+          {
+            "id": 25,
+            "parentId": 23,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 134510.2428,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 135362.5356,
+            "status": "ok",
+            "durationMs": 852.2927999999956,
+            "exclusiveMs": 852.2927999999956
+          },
+          {
+            "id": 26,
+            "parentId": 23,
+            "kind": "model",
+            "name": "openrouter",
+            "startMs": 145623.8715,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Wafer",
+              "gateway": "openrouter",
+              "finishReason": "stop",
+              "usage": {
+                "promptTokens": 2075,
+                "completionTokens": 285,
+                "totalTokens": 2360,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 279,
+              "configFingerprint": "c305a92e991e49ac881b8ec0ec9d943c8e4f41c927b49b2fa1e4c343654e79f9",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4000,
+              "temperature": 0,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": null,
+              "timeoutMs": 60000
+            },
+            "endMs": 148957.881,
+            "status": "ok",
+            "durationMs": 3334.0094999999856,
+            "exclusiveMs": 2.6695999999938067
+          },
+          {
+            "id": 27,
+            "parentId": 26,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 145624.10700000002,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 148955.4469,
+            "status": "ok",
+            "durationMs": 3331.3398999999918,
+            "exclusiveMs": 3331.3398999999918
+          },
+          {
+            "id": 28,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 149012.8011,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 33777,
+                "completionTokens": 1366,
+                "totalTokens": 35143,
+                "reasoningTokens": 4,
+                "cachedTokens": 32512
+              },
+              "costUsdMicros": 681,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 190546.5644,
+            "status": "ok",
+            "durationMs": 41533.76329999999,
+            "exclusiveMs": 15.304899999988265
+          },
+          {
+            "id": 29,
+            "parentId": 28,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 149023.66640000002,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 190542.12480000002,
+            "status": "ok",
+            "durationMs": 41518.4584,
+            "exclusiveMs": 41518.4584
+          },
+          {
+            "id": 30,
+            "parentId": null,
+            "kind": "tool",
+            "name": "save_travel_guide",
+            "startMs": 190546.6648,
+            "errorCode": null,
+            "endMs": 190604.74120000002,
+            "status": "ok",
+            "durationMs": 58.07640000001993,
+            "exclusiveMs": 53.56570000003558
+          },
+          {
+            "id": 31,
+            "parentId": 30,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 190592.1307,
+            "errorCode": null,
+            "endMs": 190596.6414,
+            "status": "ok",
+            "durationMs": 4.510699999984354,
+            "exclusiveMs": 4.510699999984354
+          },
+          {
+            "id": 32,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 190604.8268,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 37335,
+                "completionTokens": 1293,
+                "totalTokens": 38628,
+                "reasoningTokens": 0,
+                "cachedTokens": 33536
+              },
+              "costUsdMicros": 792,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 233731.2423,
+            "status": "ok",
+            "durationMs": 43126.4155,
+            "exclusiveMs": 13.96950000000652
+          },
+          {
+            "id": 33,
+            "parentId": 32,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 190616.44580000002,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 233728.8918,
+            "status": "ok",
+            "durationMs": 43112.445999999996,
+            "exclusiveMs": 43112.445999999996
+          },
+          {
+            "id": 34,
+            "parentId": null,
+            "kind": "tool",
+            "name": "save_travel_guide",
+            "startMs": 233731.3189,
+            "errorCode": null,
+            "endMs": 234887.7643,
+            "status": "ok",
+            "durationMs": 1156.4453999999969,
+            "exclusiveMs": 1005.2818999999727
+          },
+          {
+            "id": 35,
+            "parentId": 34,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 234668.4852,
+            "errorCode": null,
+            "endMs": 234819.64870000002,
+            "status": "ok",
+            "durationMs": 151.16350000002421,
+            "exclusiveMs": 151.16350000002421
+          },
+          {
+            "id": 36,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 234887.8556,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "stop",
+              "usage": {
+                "promptTokens": 42112,
+                "completionTokens": 650,
+                "totalTokens": 42762,
+                "reasoningTokens": 0,
+                "cachedTokens": 37120
+              },
+              "costUsdMicros": 846,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 252549.78160000002,
+            "status": "ok",
+            "durationMs": 17661.926000000007,
+            "exclusiveMs": 10.603900000016438
+          },
+          {
+            "id": 37,
+            "parentId": 36,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 234895.8948,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 252547.2169,
+            "status": "ok",
+            "durationMs": 17651.32209999999,
+            "exclusiveMs": 17651.32209999999
+          },
+          {
+            "id": 38,
+            "parentId": null,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 252943.6326,
+            "errorCode": null,
+            "endMs": 253021.51940000002,
+            "status": "ok",
+            "durationMs": 77.8868000000075,
+            "exclusiveMs": 77.8868000000075
+          }
+        ],
+        "spansTruncated": false,
+        "counts": {
+          "modelCalls": 10,
+          "toolCalls": 7,
+          "httpAttempts": 16,
+          "guideSaveAttempts": 3,
+          "guideRevisionAttempts": 1,
+          "guideRepairResponses": 2
+        },
+        "milestones": {
+          "firstFlightSavedMs": null,
+          "firstGuideSavedMs": 234628.81220000001,
+          "firstVerifiedMs": 234880.5755
+        },
+        "repairClasses": {
+          "evidence_missing": 1,
+          "draft_invalid": 1
+        },
+        "providerReportedSearches": null,
+        "modelUsage": {
+          "promptTokens": 256990,
+          "completionTokens": 8216,
+          "totalTokens": 265206,
+          "reasoningTokens": 4,
+          "cachedTokens": 182272
+        },
+        "modelCostUsdMicros": 7087,
+        "knownModelCostUsdMicros": 7087,
+        "unknownModelCostCalls": 0
+      }
+    },
+    {
+      "caseId": "selected-flight",
+      "prompt": "请根据我已采用的北京至东京直飞航班及全部航段时刻，安排2026年10月20日至21日东京两日攻略并保存。全程预算约束4000元人民币，喜欢文化与小吃、节奏轻松；抵达前不要安排活动，每天一个有来源的主景点，并补充实用信息。不要重新查票或更换航班，不需要演出展览；未知费用、开放时间和交通耗时保持未知。",
+      "contractStatus": "passed",
+      "restored": true,
+      "selection": {
+        "kind": "offer",
+        "artifactId": "01a0bebf-9130-721d-9123-d0d8c193059e",
+        "offerId": "gf-2026-10-20-HU 439-2557",
+        "layoverPreference": "airport_only",
+        "contextVersion": 0,
+        "revision": 1,
+        "selectedAt": "2026-09-20T12:17:00.767Z"
+      },
+      "stages": {
+        "setupMs": 44.84219999998459,
+        "fareSearchAndAdoptionMs": 1846.2795999999798,
+        "apiAcceptedMs": 9.848300000012387,
+        "finalResponseMs": 213957.98320000002,
+        "workspaceRestoreMs": 53.8015000000014,
+        "totalCaseMs": 215904.77219999998
+      },
+      "firstArtifacts": {
+        "travel_guide": {
+          "artifactId": "01a0bec2-6026-7015-8444-0c0087e4ce02",
+          "apiReadElapsedMs": 184468.2661
+        }
+      },
+      "delivery": {
+        "status": "satisfied",
+        "goalId": "01a0bebf-e06b-7448-810a-3b3dabace09e",
+        "kind": "travel_guide",
+        "artifactIds": [
+          "01a0bec2-6026-7015-8444-0c0087e4ce02"
+        ],
+        "missing": [],
+        "warnings": [
+          "flight_schedule_uses_coarse_time_slots",
+          "evidence_partially_verified"
+        ],
+        "goals": [
+          {
+            "status": "satisfied",
+            "artifactIds": [
+              "01a0bec2-6026-7015-8444-0c0087e4ce02"
+            ],
+            "missing": [],
+            "warnings": [
+              "flight_schedule_uses_coarse_time_slots",
+              "evidence_partially_verified"
+            ],
+            "goalId": "01a0bebf-e06b-7448-810a-3b3dabace09e",
+            "kind": "travel_guide"
+          }
+        ]
+      },
+      "observation": {
+        "version": 1,
+        "requestId": "req-8p",
+        "tripId": "01a0bebf-8a1d-7394-953e-692d96c59830",
+        "conversationId": "01a0bebf-8a2a-7649-b195-a2b0ac75ad5d",
+        "generationId": "01a0bebf-916d-70d6-a36b-80f30c88772c",
+        "startedAt": "2026-09-20T12:17:00.782Z",
+        "clock": "server_monotonic",
+        "durationMs": 213688.70100000003,
+        "outcome": "completed",
+        "spans": [
+          {
+            "id": 1,
+            "parentId": null,
+            "kind": "phase",
+            "name": "planning_context",
+            "startMs": 23.151500000007218,
+            "errorCode": null,
+            "endMs": 28.637400000006892,
+            "status": "ok",
+            "durationMs": 5.485899999999674,
+            "exclusiveMs": 5.485899999999674
+          },
+          {
+            "id": 2,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 35.30840000000899,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 25526,
+                "completionTokens": 144,
+                "totalTokens": 25670,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1033,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 7988.196199999977,
+            "status": "ok",
+            "durationMs": 7952.887799999968,
+            "exclusiveMs": 9.273699999961536
+          },
+          {
+            "id": 3,
+            "parentId": 2,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 41.86559999999008,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 7985.479699999996,
+            "status": "ok",
+            "durationMs": 7943.614100000006,
+            "exclusiveMs": 7943.614100000006
+          },
+          {
+            "id": 4,
+            "parentId": null,
+            "kind": "tool",
+            "name": "get_active_goal",
+            "startMs": 7988.291999999987,
+            "errorCode": null,
+            "endMs": 8061.624299999996,
+            "status": "ok",
+            "durationMs": 73.33230000000913,
+            "exclusiveMs": 73.33230000000913
+          },
+          {
+            "id": 5,
+            "parentId": null,
+            "kind": "tool",
+            "name": "get_user_memory",
+            "startMs": 7988.771399999998,
+            "errorCode": null,
+            "endMs": 8064.183099999995,
+            "status": "ok",
+            "durationMs": 75.41169999999693,
+            "exclusiveMs": 75.41169999999693
+          },
+          {
+            "id": 6,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 8064.397599999997,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 25719,
+                "completionTokens": 357,
+                "totalTokens": 26076,
+                "reasoningTokens": 0,
+                "cachedTokens": 25600
+              },
+              "costUsdMicros": 443,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 20201.55250000002,
+            "status": "ok",
+            "durationMs": 12137.154900000023,
+            "exclusiveMs": 7.752500000002328
+          },
+          {
+            "id": 7,
+            "parentId": 6,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 8069.946199999977,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 20199.348599999998,
+            "status": "ok",
+            "durationMs": 12129.40240000002,
+            "exclusiveMs": 12129.40240000002
+          },
+          {
+            "id": 8,
+            "parentId": null,
+            "kind": "tool",
+            "name": "research_destination",
+            "startMs": 20201.691100000025,
+            "errorCode": "LOCATION_NOT_RESOLVED",
+            "status": "error",
+            "endMs": 20304.861799999984,
+            "durationMs": 103.17069999995874,
+            "exclusiveMs": 103.17069999995874
+          },
+          {
+            "id": 9,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 20304.946800000005,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 26147,
+                "completionTokens": 124,
+                "totalTokens": 26271,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1056,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 24376.596700000024,
+            "status": "ok",
+            "durationMs": 4071.6499000000185,
+            "exclusiveMs": 12.204200000036508
+          },
+          {
+            "id": 10,
+            "parentId": 9,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 20314.018100000016,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 24373.463799999998,
+            "status": "ok",
+            "durationMs": 4059.445699999982,
+            "exclusiveMs": 4059.445699999982
+          },
+          {
+            "id": 11,
+            "parentId": null,
+            "kind": "tool",
+            "name": "resolve_location",
+            "startMs": 24376.680399999983,
+            "errorCode": null,
+            "endMs": 24426.82720000003,
+            "status": "ok",
+            "durationMs": 50.146800000045914,
+            "exclusiveMs": 50.146800000045914
+          },
+          {
+            "id": 12,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 24426.93340000001,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 26379,
+                "completionTokens": 474,
+                "totalTokens": 26853,
+                "reasoningTokens": 0,
+                "cachedTokens": 25856
+              },
+              "costUsdMicros": 473,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 39797.61280000003,
+            "status": "ok",
+            "durationMs": 15370.679400000023,
+            "exclusiveMs": 10.863900000054855
+          },
+          {
+            "id": 13,
+            "parentId": 12,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 24434.806300000026,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 39794.62179999999,
+            "status": "ok",
+            "durationMs": 15359.815499999968,
+            "exclusiveMs": 15359.815499999968
+          },
+          {
+            "id": 14,
+            "parentId": null,
+            "kind": "tool",
+            "name": "research_destination",
+            "startMs": 39797.65640000001,
+            "errorCode": "GOAL_INTENT_CONFLICT",
+            "status": "error",
+            "endMs": 39798.32460000002,
+            "durationMs": 0.6682000000146218,
+            "exclusiveMs": 0.6682000000146218
+          },
+          {
+            "id": 15,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 39798.35380000001,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 26919,
+                "completionTokens": 438,
+                "totalTokens": 27357,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1112,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 54505.70489999998,
+            "status": "ok",
+            "durationMs": 14707.35109999997,
+            "exclusiveMs": 8.95409999997355
+          },
+          {
+            "id": 16,
+            "parentId": 15,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 39804.96320000003,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 54503.360200000025,
+            "status": "ok",
+            "durationMs": 14698.396999999997,
+            "exclusiveMs": 14698.396999999997
+          },
+          {
+            "id": 17,
+            "parentId": null,
+            "kind": "tool",
+            "name": "research_destination",
+            "startMs": 54505.74730000002,
+            "errorCode": null,
+            "endMs": 73173.15890000001,
+            "status": "ok",
+            "durationMs": 18667.411599999992,
+            "exclusiveMs": 1808.9717000000528
+          },
+          {
+            "id": 18,
+            "parentId": 17,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 54902.90200000003,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 56277.79880000002,
+            "status": "ok",
+            "durationMs": 1374.8967999999877,
+            "exclusiveMs": 1374.8967999999877
+          },
+          {
+            "id": 19,
+            "parentId": 17,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 54917.30529999998,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 56231.00649999999,
+            "status": "ok",
+            "durationMs": 1313.7012000000104,
+            "exclusiveMs": 1313.7012000000104
+          },
+          {
+            "id": 20,
+            "parentId": 17,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 56231.7236,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 57031.79189999998,
+            "status": "ok",
+            "durationMs": 800.0682999999844,
+            "exclusiveMs": 800.0682999999844
+          },
+          {
+            "id": 21,
+            "parentId": 17,
+            "kind": "model",
+            "name": "openrouter",
+            "startMs": 57033.55270000003,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Venice",
+              "gateway": "openrouter",
+              "finishReason": "stop",
+              "usage": {
+                "promptTokens": 3604,
+                "completionTokens": 774,
+                "totalTokens": 4378,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 902,
+              "configFingerprint": "81a4322be9cbcc58d296712d29e57448ee3174aba8bc25ed548fbb773c2b88c5",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4000,
+              "temperature": 0,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": null,
+              "timeoutMs": 60000
+            },
+            "endMs": 71763.10270000002,
+            "status": "ok",
+            "durationMs": 14729.549999999988,
+            "exclusiveMs": 1.9578000000328757
+          },
+          {
+            "id": 22,
+            "parentId": 21,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 57033.730300000025,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 71761.32249999998,
+            "status": "ok",
+            "durationMs": 14727.592199999955,
+            "exclusiveMs": 14727.592199999955
+          },
+          {
+            "id": 23,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 73173.2726,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 29322,
+                "completionTokens": 1437,
+                "totalTokens": 30759,
+                "reasoningTokens": 0,
+                "cachedTokens": 27136
+              },
+              "costUsdMicros": 637,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 130352.27119999999,
+            "status": "ok",
+            "durationMs": 57178.99859999999,
+            "exclusiveMs": 12.442899999965448
+          },
+          {
+            "id": 24,
+            "parentId": 23,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 73179.7556,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 130346.31130000003,
+            "status": "ok",
+            "durationMs": 57166.555700000026,
+            "exclusiveMs": 57166.555700000026
+          },
+          {
+            "id": 25,
+            "parentId": null,
+            "kind": "tool",
+            "name": "save_travel_guide",
+            "startMs": 130352.33340000003,
+            "errorCode": null,
+            "endMs": 130471.44399999999,
+            "status": "ok",
+            "durationMs": 119.11059999995632,
+            "exclusiveMs": 115.76259999995818
+          },
+          {
+            "id": 26,
+            "parentId": 25,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 130449.1661,
+            "errorCode": null,
+            "endMs": 130452.5141,
+            "status": "ok",
+            "durationMs": 3.3479999999981374,
+            "exclusiveMs": 3.3479999999981374
+          },
+          {
+            "id": 27,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 130471.47780000002,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 32745,
+                "completionTokens": 713,
+                "totalTokens": 33458,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1367,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 183267.3046,
+            "status": "ok",
+            "durationMs": 52795.82679999998,
+            "exclusiveMs": 9.213099999993574
+          },
+          {
+            "id": 28,
+            "parentId": 27,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 130478.37870000003,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 183264.99240000002,
+            "status": "ok",
+            "durationMs": 52786.61369999999,
+            "exclusiveMs": 52786.61369999999
+          },
+          {
+            "id": 29,
+            "parentId": null,
+            "kind": "tool",
+            "name": "save_travel_guide",
+            "startMs": 183267.3511,
+            "errorCode": null,
+            "endMs": 184237.4102,
+            "status": "ok",
+            "durationMs": 970.0591000000131,
+            "exclusiveMs": 945.4017999999924
+          },
+          {
+            "id": 30,
+            "parentId": 29,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 184071.7898,
+            "errorCode": null,
+            "endMs": 184096.44710000002,
+            "status": "ok",
+            "durationMs": 24.65730000002077,
+            "exclusiveMs": 24.65730000002077
+          },
+          {
+            "id": 31,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 184237.4392,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 35382,
+                "completionTokens": 154,
+                "totalTokens": 35536,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1428,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 192272.17780000003,
+            "status": "ok",
+            "durationMs": 8034.738600000041,
+            "exclusiveMs": 10.602600000042003
+          },
+          {
+            "id": 32,
+            "parentId": 31,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 184243.4908,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 192267.6268,
+            "status": "ok",
+            "durationMs": 8024.135999999999,
+            "exclusiveMs": 8024.135999999999
+          },
+          {
+            "id": 33,
+            "parentId": null,
+            "kind": "tool",
+            "name": "read_artifact",
+            "startMs": 192272.26230000003,
+            "errorCode": null,
+            "endMs": 192282.2569,
+            "status": "ok",
+            "durationMs": 9.994599999976344,
+            "exclusiveMs": 9.994599999976344
+          },
+          {
+            "id": 34,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 192282.32820000002,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "StreamLake",
+              "gateway": "openrouter",
+              "finishReason": "stop",
+              "usage": {
+                "promptTokens": 38433,
+                "completionTokens": 437,
+                "totalTokens": 38870,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1749,
+              "configFingerprint": "f41274c6374993f0a143a9cd26551742beec8647b97f0f4cf44aff8ded03495f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 212772.6487,
+            "status": "ok",
+            "durationMs": 20490.320499999973,
+            "exclusiveMs": 7.592599999974482
+          },
+          {
+            "id": 35,
+            "parentId": 34,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 192286.8069,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 212769.5348,
+            "status": "ok",
+            "durationMs": 20482.727899999998,
+            "exclusiveMs": 20482.727899999998
+          },
+          {
+            "id": 36,
+            "parentId": null,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 213156.4862,
+            "errorCode": null,
+            "endMs": 213377.1574,
+            "status": "ok",
+            "durationMs": 220.6711999999825,
+            "exclusiveMs": 220.6711999999825
+          }
+        ],
+        "spansTruncated": false,
+        "counts": {
+          "modelCalls": 10,
+          "toolCalls": 9,
+          "httpAttempts": 13,
+          "guideSaveAttempts": 2,
+          "guideRevisionAttempts": 1,
+          "guideRepairResponses": 1
+        },
+        "milestones": {
+          "firstFlightSavedMs": null,
+          "firstGuideSavedMs": 184025.36539999998,
+          "firstVerifiedMs": 184234.4688
+        },
+        "repairClasses": {
+          "draft_invalid": 1
+        },
+        "providerReportedSearches": null,
+        "modelUsage": {
+          "promptTokens": 270176,
+          "completionTokens": 5052,
+          "totalTokens": 275228,
+          "reasoningTokens": 0,
+          "cachedTokens": 78592
+        },
+        "modelCostUsdMicros": 10200,
+        "knownModelCostUsdMicros": 10200,
+        "unknownModelCostCalls": 0
+      }
+    }
+  ]
+}
