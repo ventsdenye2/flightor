@@ -1,6 +1,6 @@
 # 当前修改方案：先精简 FlightOR，再以实测决定 Harness
 
-日期：2026-09-20。状态：**分步实施中：B0–B3 已实施，B2 仍默认关闭；B4 起待实现**。B2 PostgreSQL 新事务尚缺实际数据库验证；未跑真实模型评测或安装 DSH。B3 契约见 §3/4，逐项证据见 [progress](progress.md)。
+日期：2026-09-20。状态：**分步实施中：B0–B4 已实施，B2 仍默认关闭；B5 完整观测待实现**。B2 PostgreSQL 新事务尚缺实际数据库验证；未跑真实模型评测或安装 DSH。B3/B4 契约见 §3–5，逐项证据见 [progress](progress.md)。
 
 这是本轮后端修改的唯一范围入口：[DPS](DPS.md) 定义执行顺序，[EVALUATION](EVALUATION.md) 定义案例与决策门槛。[RAS](RAS.md) 保留产品需求，[RDS](RDS.md) 是后续完整能力设计，不是首轮全部施工清单。
 
@@ -56,7 +56,7 @@
 - `save_travel_guide`、航班搜索/确认及持久 Trip 更新操作返回既有结果并附 `acceptedGoal`；在关闭尝试前复用工作集同步记录产物，再通过同一个 `completeGoal` 附上 `completion`，不依赖模型调用 finish。未满足要求时保持可修复的 running 尝试；保存已提交而完成存储暂不可用时保留 Artifact 引用并标记 pending。lean 工具总 timeout 在原值上增加 5 秒（上限 120 秒），自动工作集同步/验收最多 2.5 秒且预留距工具外层 deadline 至少 0.5 秒；子期限到返回 `goal_verification_timeout`，其它验收故障为 `goal_verification_unavailable`，父取消仍终止。整轮 timeout 不变；已开始的数据库事务仍依赖既有事务版本/终态保护。运行时最终答复共用同一 verifier/completion，不能依据工具名或模型文本认定成功。
 - lean 注册表隐藏 `declare_goal/resume_goal/finish_goal`，保留只读 `get_active_goal` 与取消；旧注册表和持久数据读取不变。`start_route_generation` 仍是单独明确授权领域操作，不能借 intent 启动或在本轮已接受其它目标后接管。
 
-精确公开面见 [TOOLS](../../TOOLS.md)，启用/回退见 [deploy](../../deploy.md)。本批没有新增客户端“操作类型”传参协议；现有自由文本入口由 Planner 判断意图。**卡片先于最终文本发布仍属于 B4**，不能把 B2 工具完成反馈视为前端已实现渐进展示。
+精确公开面见 [TOOLS](../../TOOLS.md)，启用/回退见 [deploy](../../deploy.md)。没有新增客户端“操作类型”传参协议；现有自由文本入口由 Planner 判断意图。B2 的工具完成反馈与 B4 的提前卡片发布分属不同契约，后者见 §5。
 
 ## 3. 紧凑的行程决策接口
 
@@ -96,11 +96,17 @@
 
 ## 5. 首个可操作结果与交互
 
-扩展现有 `AgentActivity`/短轮询以传输已提交 Artifact 引用与真实阶段计数。事件不得先于事务提交，不携带思维链、工具参数、用户私密原文。轮询结果去重、owner/session/generation 失效保护继续生效。
+**B4 当前实现**：领域 `saveWorkspaceArtifact` 等待仓库提交，再复核取消/Trip 版本/航班选择后回调 runtime。仅 `flight_search` 和 `travel_guide` 转为 `artifact_committed`；工具返回值中的自报引用、research、derived route 和未保存草稿不能触发提前发布。通知失败不能回滚或谎报已提交写入；取消也不撤销已经完成的事务。事件只含紧凑引用及作用域，不携带 payload、思维链、工具参数或用户原文。
+
+接单与轮询绑定 `tripId/conversationId/generationId`。快照新增单调 `artifactRevision` 与最多 24 个引用（id/type/schemaVersion/tripContextVersion/presentationHint）；每次是当前完整集合，不是 append 指令。提交按 ID 去重；引用增删均递增 revision。阶段来自真实 runtime 活动，引用数量仅代表已提交结果数，不是完成率。GET 在认证后重新读取当前 Trip/航班选择，只保留匹配版本的引用；并发更新期间不得用较旧上下文破坏性过滤较新发布。最终回复也过滤过期结果，已失效引用不能被迟到最终回复恢复。
+
+新增 owner-scoped `POST /v1/agent/turns/:turnId/cancel`，幂等终止运行中 turn 并传递 AbortSignal；保留已提交引用，忽略迟到事件与完成回调。同 owner/Trip/conversation 的新 generation 替代运行中的旧 turn。客户端须收到取消终态确认才释放提交占用；网络失败仍保持占用，若取消时已完成则继续读取最终响应。取消不等于取消持久 Goal，不提供事务回滚或跨进程恢复。
+
+客户端验证 owner/auth revision/session/request/turn/generation，单调合并快照并持久保存已发布引用；只有结果、尚无 assistant 文本的记录也可恢复。取消或后续失败保留已保存结果，临时进度不进入对话模型上下文。旧后端无新增字段时仍按原最终响应工作；新旧客户端混用不提供实时回退功能保证。无需数据迁移，原有 300/315/330 秒期限、单进程缓存和终态保留 10 分钟不变。
 
 先显示真实航班或已保存日程，再生成必要的短解释。骨架、草稿、部分和合格交付分别标记；不能用“显示研究卡”充当“首份可操作攻略”。首轮先交付完整的小范围 v1 攻略，逐日草稿若无最小可靠契约就不伪造渐进完成。
 
-保留蓝色 UI；允许浏览已有结果、展开航段、编辑未提交草稿。影响当前执行的提交必须有取消/替代及版本策略，不能仅移除 disabled。地图/照片按已有数据展示，缺失不阻塞文字结果，不借此次优化重做视觉或引入新地图服务。
+保留蓝色 UI；等待时展示已保存结果并标注“已保存，仍在整理/核验”，允许浏览已有结果、展开只读航段、编辑未提交草稿，完成后保留未发送草稿。采用、更换航班和再次提交仍等待完成/取消确认。地图/照片按已有数据展示，缺失不阻塞文字结果，不借此次优化重做视觉或引入新地图服务。离线协议/组件测试与小程序构建不等于 H5/真机或真实 Provider 验收。
 
 ## 6. 测量位置与边界
 

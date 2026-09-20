@@ -372,7 +372,8 @@ function sanitizeArtifactRef(value: unknown): CloudArtifactRef | null {
   const hints = ['flight_cards', 'research_cards', 'activity_cards', 'destination_cards', 'route_preview', 'itinerary_outline', 'travel_guide'] as const
   const presentationHint = hints.includes(value.presentationHint as typeof hints[number]) ? value.presentationHint as typeof hints[number] : null
   if (!id || !type || schemaVersion === null || !presentationHint) return null
-  return { id, type, schemaVersion, presentationHint }
+  const tripContextVersion = integerNumber(value.tripContextVersion, 0, Number.MAX_SAFE_INTEGER)
+  return { id, type, schemaVersion, presentationHint, ...(tripContextVersion !== null ? { tripContextVersion } : {}) }
 }
 
 const ROUTE_GENERATION_STATUSES: readonly RouteGenerationRunView['status'][] = ['queued', 'running', 'succeeded', 'failed', 'cancelled']
@@ -820,7 +821,8 @@ function removePendingTurn(messages: ConversationMessage[], timeline: Conversati
 } {
   const nextTimeline = [...timeline]
   const pending = nextTimeline[nextTimeline.length - 1]
-  if (!pending || pending.assistant !== null) return { messages, timeline }
+  // A missing final reply does not invalidate already committed business results.
+  if (!pending || pending.assistant !== null || pending.artifactRefs?.length) return { messages, timeline }
   nextTimeline.pop()
   const nextMessages = [...messages]
   const lastMessage = nextMessages[nextMessages.length - 1]

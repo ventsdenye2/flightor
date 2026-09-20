@@ -1,8 +1,32 @@
 # 当前进度与验证
 
-更新：2026-09-20。B0/B1 已提交 main `cabbf51`，B2 已提交 `d895d0e`。当前阶段：B3 已实施并完成离线回归；B2 仍默认关闭，新 PG 事务待实际数据库验证。保留用户原有未跟踪 `docs/demo/DEMO_MASTER.md`，不纳入提交。未修改运行模型/Provider/依赖或现有环境文件。
+更新：2026-09-20。B0/B1 已提交 main `cabbf51`，B2 已提交 `d895d0e`，B3 已提交 `6649644`。当前阶段：B4 已实施并通过本批离线回归与构建，下一步 B5；B2 仍默认关闭，新 PG 事务待实际数据库验证。保留用户原有未跟踪 `docs/demo/DEMO_MASTER.md`，不纳入提交。未修改运行模型/Provider/依赖或现有环境文件。
 
-## B3 本批完成情况
+## B4 本批完成情况
+
+- 领域提交后通知 runtime，再投影到现有 turn 短轮询；仅真实保存的航班/攻略引用可以早于最终模型文本出现。新增作用域及单调 artifactRevision、最多 24 引用，模型返回值与研究卡不能冒充已保存成果。
+- GET 重新验证 Trip/选择版本；并发读取期间若发布 revision 或终态发生变化，最多重读 3 次，持续变化返回可重试 503 而不破坏引用。过期结果与迟到最终文本不能复活已失效引用。取消/版本变化发生在提交后时，不发布迟到引用，也不宣称撤销已完成事务。
+- 新增 owner-scoped 取消端点，传递 abort、忽略迟到事件并保留已保存结果；同作用域新 generation 替代旧执行。客户端等待取消确认，失败仍占用提交入口；完成已抢先发生则继续读取真实最终响应。
+- 客户端按账号/auth revision/会话/request/turn/generation 隔离合并，失败与取消保留引用；无 assistant 文本但已有保存结果的历史也能恢复。正式 UI 在等待阶段显示已保存攻略与航班，允许只读航段浏览与编辑未发送草稿，完成后保留草稿；采用、更换、再提交仍受当前执行约束。
+- runtime/transport/repository 权威分工不变；没有持久队列、visits v2、模型/Provider 替换、新地图或视觉重做。精确接口及兼容归属 [RUNTIME_PLAN §5](RUNTIME_PLAN.md)、TOOLS、架构、ADR 0015/0019 与 UI 文档。
+- 按用户要求分工：Luna 处理有界 UI 和接口测试，客户端 agent 接入 transport/store 并交叉审查后端，主 agent 负责领域提交/投影、集成、docs 与 Git。审查发现的异步 reconcile 竞态和等待分支漏卡片均纳入修复。
+
+### B4 验证（2026-09-20）
+
+| 检查 | 本批结果与边界 |
+| --- | --- |
+| 完整离线后端 | `npm --prefix backend test`：93 文件、708 tests 全部通过；覆盖提交门槛、错误/伪造引用、取消/替代、版本移除、异步读取竞态与有界重试 |
+| 前端 transport/store/history | `test:phase5-client` 78、`test:conversation-progress` 22 + progress component 6、`test:chat-history` 17 通过；包括提前引用持久化、失败/取消保留、乱序去重、失效移除和账号/会话切换 |
+| B4 组件与页面 | `npm run test:planner-publication`：7 项真实组件 hook 检查 + 11 项 Plan 页面 hook 集成通过；覆盖已选 A 与新候选 B 共存、身份切换、旧提交错误、首次 bootstrap、草稿与取消反馈。已接入默认 `npm test`；不是浏览器/真实 React renderer/设备验收 |
+| 既有测试维护 | 修复 session-recovery 的 i18n/MobX stub 和空 Artifact fixture，20 项通过；Phase 6 旧“最终响应独占引用”源码断言更新为 B4 当轮发布与最终响应合并，运行语义由 phase5 回归承担 |
+| 类型检查 | 根 `npx tsc --noEmit --pretty false` 与 `npm --prefix backend run check` 通过 |
+| 完整前端与构建 | 最终串行 `npm test` 全部通过（exit 0）；最终源码 `npm run build:weapp` exit 0，生成 app/Plan 页面产物。保留既有 CSS 顺序与 common.js 260 KiB 警告；不等于平台视觉/输入验收 |
+| 文档与 Git | `node scripts/check-docs.cjs --staged`：71 Markdown、275 相对链接及同批 docs 检查通过，`git diff --cached --check` 通过；暂存 36 个 B4 文件，用户未跟踪演示文档保持不动 |
+| 未运行 | PostgreSQL 新事务、付费 Provider、G1、H5/微信真机和正式性能测量。B2 仍默认关闭，不将构建/离线结果视为生产链路验收 |
+
+完整前端初次执行暴露旧 harness 漏 stub 和前 B4 断言，均已修复。并发构建期间一次测试临时目录清理遇到 Windows EBUSY；改为串行并清理本次遗留目录，没有修改业务重试逻辑或放宽测试要求。
+
+## B3 已提交完成情况
 
 - 新增固定长度 candidateRef，无数组位置依赖；研究返回、B1 上下文和 read_artifact 产出相同引用。无候选表/缓存依赖，绑定 owner/Trip/version/完整证据内容，重新解析仍检查权限、来源身份和有效期；旧索引输入保留。
 - supportingRefs 单独选实用或其它支撑资料，保存为 v1 可选 supportingEvidence；共享验收包含其来源、城市、日期、类别、过期与重复检查。交通提示无需伪装成日程景点，空白日不能靠 supportingEvidence 满足活动覆盖。Goal 上限和要求不降低。
@@ -94,7 +118,7 @@
 
 ## 下一步
 
-按 DPS 继续 **B4：将已提交 Artifact 提前发布到现有轮询与正式 UI，保留取消/账号/generation 隔离**；B5 随之补齐观测。同时保留 B2 的 `TEST_DATABASE_URL` 实际事务验证缺口，在启用新协议与 G1 前补齐。不要把本批局部准备计时或 B3 展示字段适配称为 B4/B5 完成。
+按 DPS 继续 **B5：完整模型/工具/嵌套 span 与客户端首结果/最终结果观测**，不改变模型或路由。同时保留 B2 的 `TEST_DATABASE_URL` 实际事务验证缺口，在启用新协议与 G1 前补齐。B4 提前发布不等于已完成 B5 计时，也不能从离线样本宣称速度提升。
 
 G1 两条真实链路跑通后才启动正式时间测量与多案例批次。当前没有新的付费调用额度记录，旧演示额度不可沿用；尚未进入实际运行阶段，也没有据此阻止本批离线推进。
 

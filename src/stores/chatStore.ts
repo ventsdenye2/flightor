@@ -5,12 +5,14 @@ import { makeAutoObservable, runInAction } from 'mobx'
 import { confirmPicks, type RoutePick } from '../services/routeService'
 import {
   converse,
+  cancelConversationTurn,
   bootstrapCloudSession,
   emptyTripState,
   type ConversationMessage,
   type ConversationResponse,
   type ConversationDelivery,
   type ConversationTurnProgress,
+  type ConversationArtifactPublication,
   type CloudArtifactRef,
   type CloudTripContextSummary,
   type DestinationRecommendation,
@@ -193,6 +195,7 @@ export class ChatStore {
   routeGenerationLoading = false
   routeGenerationError = ''
   turnProgress: ConversationTurnProgress | undefined = undefined
+  turnCancelling = false
 
   get isThinking(): boolean { return this.activeSendRequestId !== undefined }
 
@@ -216,6 +219,7 @@ export class ChatStore {
   private requestGeneration = 0
   /** Send occupancy spans owner/session preparation and is independent of restored UI state. */
   private activeSendRequestId: number | undefined = undefined
+  private activeArtifactPublication: ((publication: ConversationArtifactPublication) => void) | undefined = undefined
   private multiConfirmRequestId = 0
   private activeOwnerId = ''
   private routeGenerationRequestId = 0
@@ -346,6 +350,8 @@ export class ChatStore {
     this.workspaceSyncRequestId += 1
     this.multiConfirmRequestId += 1
     this.activeSendRequestId = undefined
+    this.activeArtifactPublication = undefined
+    this.turnCancelling = false
     this.turnProgress = undefined
     this.plansLoading = false
     this.multiLoading = false
@@ -371,7 +377,7 @@ export class ChatStore {
     const messages = this.messages.map(message => ({ ...message }))
     if (dropPending) {
       const pending = timeline[timeline.length - 1]
-      if (pending && pending.assistant === null) {
+      if (pending && pending.assistant === null && !pending.artifactRefs?.length) {
         timeline.pop()
         const lastMessage = messages[messages.length - 1]
         if (lastMessage?.role === 'user' && lastMessage.content === pending.user.content) messages.pop()
@@ -522,6 +528,7 @@ export class ChatStore {
 
   private transportError(error: unknown, locale: 'zh' | 'en'): string {
     const code = error instanceof Error ? error.message : ''
+    if (code === 'AGENT_TURN_CANCELLED') return locale === 'zh' ? '已停止本次处理，已保存的结果仍可查看。' : 'Processing stopped. Saved results remain available.'
     if (code === 'AUTH_REQUIRED' || code === 'AUTH_SESSION_CHANGED' || (error instanceof ApiRequestError && error.status === 401)) return locale === 'zh' ? '请登录后继续规划，输入内容已保留。' : 'Sign in to continue planning. Your message is preserved.'
     if (code === 'INVALID_TRIP_BOOTSTRAP_RESPONSE' || code === 'INVALID_CONVERSATION_BOOTSTRAP_RESPONSE') {
       return locale === 'zh' ? '云端会话初始化失败，请重试。' : 'Cloud session setup failed. Please try again.'
@@ -578,6 +585,9 @@ export class ChatStore {
     this.multiLoading = true
     this.plansLoading = false
     let turnId: string | undefined
+    let publishedRevision = -1
+    let publishedRefs = new Map<string, CloudArtifactRef>()
+    const invalidatedPublishedIds = new Set<string>()
     const isCurrent = () => requestId === this.requestGeneration && this.activeSendRequestId === requestId
       && this.ownerForRequest() === ownerId && userStore.sessionRevision === sessionRevision
     try {
@@ -601,9 +611,28 @@ export class ChatStore {
       this.multiActive = true
       this.persistCurrentSession()
 
+      const publishArtifacts = (publication: ConversationArtifactPublication) => {
+        if (!isCurrent() || publication.turnId !== this.turnProgress?.turnId
+          || publication.tripId !== this.tripId || publication.conversationId !== this.conversationId
+          || publication.generationId !== this.turnProgress.generationId || publication.artifactRevision <= publishedRevision) return
+        publishedRevision = publication.artifactRevision
+        const nextRefs = new Map(publication.artifactRefs.map(ref => [ref.id, { ...ref }]))
+        for (const id of publishedRefs.keys()) if (!nextRefs.has(id)) invalidatedPublishedIds.add(id)
+        for (const id of nextRefs.keys()) invalidatedPublishedIds.delete(id)
+        runInAction(() => {
+          const refs = new Map(this.artifactRefs.filter(ref => !invalidatedPublishedIds.has(ref.id)).map(ref => [ref.id, ref]))
+          for (const [id, ref] of nextRefs) refs.set(id, ref)
+          this.artifactRefs = [...refs.values()].slice(-100)
+          this.timeline = this.timeline.map(turn => turn.id === turnId ? { ...turn, artifactRefs: [...nextRefs.values()] } : turn)
+          publishedRefs = nextRefs
+        })
+        this.persistCurrentSession()
+      }
+      this.activeArtifactPublication = publishArtifacts
       const result = await converse({ tripId: this.tripId, conversationId: this.conversationId, message: content }, {
         startedAt,
         isCurrent,
+        onArtifacts: publishArtifacts,
         onProgress: progress => {
           if (!isCurrent()) return
           runInAction(() => { this.turnProgress = { ...progress } })
@@ -615,9 +644,10 @@ export class ChatStore {
       }
       runInAction(() => {
         const assistant: ConversationMessage = { role: 'assistant', content: result.reply }
-        const turnArtifactRefs = result.artifactRefs.map(ref => ({ ...ref }))
+        const turnArtifactRefs = [...new Map([...publishedRefs.values(), ...result.artifactRefs]
+          .filter(ref => !invalidatedPublishedIds.has(ref.id)).map(ref => [ref.id, { ...ref }])).values()]
         this.messages = appendAssistant(this.messages, assistant.content)
-        this.syncConversation(result, locale)
+        this.syncConversation({ ...result, artifactRefs: turnArtifactRefs }, locale)
         this.timeline = this.timeline.map(turn => turn.id === turnId ? {
           ...turn,
           assistant,
@@ -657,11 +687,57 @@ export class ChatStore {
       if (this.activeSendRequestId === requestId) {
         runInAction(() => {
           this.activeSendRequestId = undefined
+          this.activeArtifactPublication = undefined
+          this.turnCancelling = false
           this.turnProgress = undefined
           this.multiLoading = false
           this.plansLoading = false
         })
       }
+    }
+  }
+
+  /** Keep send occupancy until the server has acknowledged cancellation. */
+  async cancelTurn(locale: 'zh' | 'en' = 'zh'): Promise<void> {
+    const progress = this.turnProgress
+    const requestId = this.activeSendRequestId
+    if (requestId === undefined || !progress?.turnId || this.turnCancelling) return
+    const ownerId = this.ownerForRequest()
+    const sessionRevision = userStore.sessionRevision
+    const sessionId = this.currentSessionId
+    const isCurrent = () => requestId === this.activeSendRequestId && requestId === this.requestGeneration
+      && this.ownerForRequest() === ownerId && userStore.sessionRevision === sessionRevision
+      && this.currentSessionId === sessionId && this.turnProgress?.turnId === progress.turnId
+    this.turnCancelling = true
+    try {
+      const view = await cancelConversationTurn(progress.turnId, {
+        tripId: this.tripId, conversationId: this.conversationId, generationId: progress.generationId
+      })
+      if (!isCurrent()) return
+      if (view.artifactRevision !== undefined && view.artifactRefs) this.activeArtifactPublication?.(view as ConversationArtifactPublication)
+      // An already completed request still delivers its real reply through the original poll.
+      if (view.status === 'completed') return
+      runInAction(() => {
+        const message = this.transportError(new Error(view.error?.code ?? 'AGENT_TURN_CANCELLED'), locale)
+        this.timeline = this.timeline.map((turn, index) => index === this.timeline.length - 1 ? { ...turn, error: message } : turn)
+        this.multiError = message
+        this.plansError = message
+        this.requestGeneration += 1
+        this.activeSendRequestId = undefined
+        this.activeArtifactPublication = undefined
+        this.turnProgress = undefined
+        this.multiLoading = false
+        this.plansLoading = false
+        this.turnCancelling = false
+      })
+      this.persistCurrentSession()
+    } catch {
+      if (isCurrent()) runInAction(() => {
+        this.multiError = locale === 'zh' ? '未能确认停止，仍在等待服务端结果，请重试停止。' : 'Stopping could not be confirmed. Still waiting for the server; try stopping again.'
+        this.plansError = this.multiError
+      })
+    } finally {
+      if (isCurrent()) runInAction(() => { this.turnCancelling = false })
     }
   }
 

@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { Button, Text, View } from '@tarojs/components'
 import { FlightSearchCard } from '../../components/artifacts/FlightSearchCard'
-import { displayOfferById, record } from '../../components/artifacts/payload'
+import { displayOfferById, displayOffers, record } from '../../components/artifacts/payload'
 import type { ArtifactEnvelope } from '../../services/artifactService'
 import type { WorkspaceTrip } from '../../services/workspaceService'
 import { connectionLabel, flightPath } from '../../services/flightConnections'
@@ -14,11 +15,18 @@ export function FlightDecisionPanel({ artifact, selection, busy = false, onOpenC
   onChange: (artifactId: string) => void
   onPlan: () => void
 }) {
+  const [expanded, setExpanded] = useState(false)
   if (!selection) {
     if (!artifact) return null
-    return <View className='flight-decision'>
+    const payload = record(artifact.payload)
+    const offers = payload ? displayOffers(payload, artifact.presentation) : []
+    return <View className={`flight-decision ${busy ? 'flight-decision--locked' : ''}`}>
       <View className='flight-decision__head'><Text>先选航班</Text><Text>比较后再安排行程</Text></View>
-      <FlightSearchCard artifact={artifact} onAction={() => onOpenCandidates(artifact.id)} />
+      <FlightSearchCard artifact={artifact} onAction={busy ? undefined : () => onOpenCandidates(artifact.id)} />
+      {busy && offers.length > 0 && <>
+        <Button className='flight-decision__details-toggle' onClick={() => setExpanded(value => !value)}>{expanded ? '收起航段详情' : '展开只读航段详情'}</Button>
+        {expanded && <View className='flight-decision__readonly-details'>{offers.map((offer, index) => <View className='flight-decision__readonly-offer' key={offer.id ?? index}><Text className='flight-decision__muted'>{flightPath(offer.segments) || '航线详情待补充'} · {offer.segments.length} 个航段</Text>{offer.segments.map((segment, segmentIndex) => <Text className='flight-decision__segment' key={`${index}-${segmentIndex}`}>{segment.departure ?? '出发时间待确认'} → {segment.arrival ?? '抵达时间待确认'} · {segment.flightNumber ?? '航班号待确认'}</Text>)}</View>)}</View>}
+      </>}
     </View>
   }
   if (selection.kind !== 'offer') return <View className='flight-decision flight-decision--selected'>
@@ -40,6 +48,8 @@ export function FlightDecisionPanel({ artifact, selection, busy = false, onOpenC
     <Text className='flight-decision__muted'>{offer.airlines.join(' · ') || '航空公司待确认'} · {offer.segments.length} 个航段</Text>
     {offer.layovers.map(value => <Text className='flight-decision__connection' key={value.afterSegmentIndex}>{connectionLabel(value)}</Text>)}
     <Text className='flight-decision__muted'>{selection.layoverPreference === 'consider_city' ? '已记录进城偏好；只有时间和必要条件都合适时才会安排。' : '中转按留在机场安排。'}</Text>
+    <Button className='flight-decision__details-toggle' onClick={() => setExpanded(value => !value)}>{expanded ? '收起航段详情' : '展开只读航段详情'}</Button>
+    {expanded && <View className='flight-decision__readonly-details'>{offer.segments.map((segment, index) => <Text className='flight-decision__segment' key={index}>{segment.departure ?? '出发时间待确认'} → {segment.arrival ?? '抵达时间待确认'} · {segment.flightNumber ?? '航班号待确认'}</Text>)}</View>}
     <View className='flight-decision__actions'><Button className='ux-secondary' disabled={busy} onClick={() => onChange(artifact.id)}>更换航班</Button><Button className='ux-primary' disabled={busy} onClick={onPlan}>{busy ? '正在规划…' : '根据航班安排行程'}</Button></View>
     <Text className='flight-decision__disclaimer'>此选择只用于规划，不代表已购票或锁价。</Text>
   </View>

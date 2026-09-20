@@ -54,7 +54,9 @@ check('Hub detail opens the non-tab flight search with navigateTo', hubDetail.in
 check('late flight responses and logout state are invalidated', flightStore.includes('requestGeneration') && flightStore.includes('isCurrent(') && flightStore.includes('registerUserSessionClearHandler') && userStore.includes('clearUserSessionState(ownerId)'))
 check('late login cannot restore credentials after logout', userStore.includes('authGeneration') && userStore.includes('requestId !== this.authGeneration') && userStore.includes('clearAuthTokens()') && authService.includes('persistTokens !== false'))
 check('Flight Explorer consults the renderer registry before adapting payloads', flightStore.includes('resolveArtifactRenderer(artifact)'))
-check('conversation turns keep only refs created by that response', chatStore.includes('const turnArtifactRefs = result.artifactRefs.map') && chatStore.includes('artifactRefs: turnArtifactRefs'))
+// B4 allows the current turn's committed publications to precede/augment its final response.
+// Executable union/invalidation/isolation regressions live in test-phase5-client.js.
+check('conversation turns merge current publications and response refs with invalidation', chatStore.includes('[...publishedRefs.values(), ...result.artifactRefs]') && chatStore.includes('!invalidatedPublishedIds.has(ref.id)') && chatStore.includes('artifactRefs: turnArtifactRefs'))
 check('manual production search uses one exact airport pair and optional exact return date', !/mocks\/airports/.test(searchStore) && searchStore.includes('returnDate') && !searchStore.includes('stayRange:') && !searchStore.includes('originExtras'))
 check('Phase 6 production entry points do not import mock catalogs', [plan, explorer, discovery, home, searchStore].every(source => !/from ['"][^'"]*mocks\//.test(source)))
 

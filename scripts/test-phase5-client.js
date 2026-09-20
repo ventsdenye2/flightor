@@ -211,6 +211,7 @@ let lastCreatedRouteKey = ''
 const chatStoreUserStore = { profile: { uid: 'user-a' } }
 let bootstrapCloudSessionStub = async () => ({ tripId: 'trip-1', conversationId: 'conversation-1' })
 let converseStub = async () => { throw new Error('conversation stub not configured') }
+let cancelConversationStub = async () => { throw new Error('cancel stub not configured') }
 let workspaceStub = async () => ({ trip: { id: 'trip-1' }, conversationId: 'conversation-1', tripContextSummary: { version: 7, destinations: { mode: 'explicit', required: [], preferred: [], excluded: [] }, interests: [], readyForRouteGeneration: true }, artifactRefs: [], messages: [] })
 class ApiRequestError extends Error { constructor(status, code, message) { super(message); this.status = status; this.code = code } }
 const routeAction = {
@@ -257,6 +258,7 @@ const chatStoreSandbox = {
     if (specifier === '../services/conversationService') return {
       emptyTripState: service.emptyTripState,
       converse: (...args) => converseStub(...args),
+      cancelConversationTurn: (...args) => cancelConversationStub(...args),
       bootstrapCloudSession: (...args) => bootstrapCloudSessionStub(...args)
     }
     if (specifier === './flightStore') return { flightStore: { select: () => {} } }
@@ -797,6 +799,127 @@ const progressFailureStore = makeRouteStore()
 check('server timeout clears progress and stays an actionable error instead of an assistant reply', await progressFailureStore.send('slow request', 'en') === false
   && progressFailureStore.turnProgress === undefined && progressFailureStore.multiError.includes('too long')
   && progressFailureStore.timeline.at(-1).assistant === null)
+
+// Publication snapshots are business refs; transport progress and cancel occupancy remain transient.
+const savedGuideRef = { id: '00000000-0000-4000-8000-000000000001', type: 'travel_guide', schemaVersion: 1, tripContextVersion: 7, presentationHint: 'travel_guide' }
+const savedFlightRef = { ...savedGuideRef, id: '00000000-0000-4000-8000-000000000002', type: 'flight_search', presentationHint: 'flight_cards' }
+const artifactScope = { turnId: 'artifact-turn', tripId: 'trip-1', conversationId: 'conversation-1', generationId: 'generation-1' }
+let publishArtifacts, finishArtifacts, rejectArtifacts
+function prepareArtifactSend(store) {
+  converseStub = (_request, options) => {
+    options.onProgress({ connection: 'running', stage: 'finalizing', startedAt: 100, ...artifactScope })
+    publishArtifacts = options.onArtifacts
+    return new Promise((resolve, reject) => { finishArtifacts = resolve; rejectArtifacts = reject })
+  }
+  return store.send('save a useful result', 'en')
+}
+async function flushArtifacts() { for (let count = 0; count < 5; count++) await Promise.resolve() }
+const publication = (artifactRevision, artifactRefs = [savedGuideRef], extra = {}) => ({ ...artifactScope, artifactRevision, artifactRefs, ...extra })
+
+const earlyStore = makeRouteStore()
+earlyStore.addArtifactRef(savedFlightRef)
+const earlySend = prepareArtifactSend(earlyStore)
+await flushArtifacts()
+check('sending a follow-up keeps earlier browseable artifacts', earlyStore.artifactRefs.some(ref => ref.id === savedFlightRef.id))
+publishArtifacts(publication(1))
+check('committed guide enters current turn before any assistant response', earlyStore.isThinking && earlyStore.timeline.at(-1).assistant === null
+  && earlyStore.timeline.at(-1).artifactRefs[0].id === savedGuideRef.id)
+const earlyRestored = history.sanitizeHistoryPayload(history.makeChatHistoryPayload(earlyStore.currentSessionId, [earlyStore.liveSessionSnapshot()])).sessions[0]
+check('early artifact ref and version persist without transient generation or progress', earlyRestored.timeline.at(-1).artifactRefs[0].tripContextVersion === 7
+  && !JSON.stringify(earlyRestored).includes('generation-1') && !JSON.stringify(earlyRestored).includes('finalizing'))
+publishArtifacts(publication(1, []))
+publishArtifacts(publication(0, []))
+publishArtifacts(publication(2, [], { generationId: 'wrong' }))
+check('duplicate older and wrong-scope publications cannot overwrite visible refs', earlyStore.timeline.at(-1).artifactRefs.length === 1)
+finishArtifacts(response)
+check('a final response omitting published refs retains the committed guide', await earlySend === true
+  && earlyStore.timeline.at(-1).artifactRefs.some(ref => ref.id === savedGuideRef.id))
+
+const invalidatedStore = makeRouteStore()
+invalidatedStore.addArtifactRef(savedFlightRef)
+const invalidatedSend = prepareArtifactSend(invalidatedStore)
+await flushArtifacts()
+publishArtifacts(publication(1))
+publishArtifacts(publication(2, []))
+finishArtifacts({ ...response, artifactRefs: [savedGuideRef] })
+await invalidatedSend
+check('new revision removes stale guide and final merge cannot resurrect it, preserving other refs', invalidatedStore.timeline.at(-1).artifactRefs.length === 0
+  && invalidatedStore.artifactRefs.length === 1 && invalidatedStore.artifactRefs[0].id === savedFlightRef.id)
+
+const tailFailureStore = makeRouteStore()
+const tailFailureSend = prepareArtifactSend(tailFailureStore)
+await flushArtifacts()
+publishArtifacts(publication(1))
+rejectArtifacts(new Error('AGENT_TURN_TIMEOUT'))
+check('failed model tail preserves committed refs and never fabricates a reply', await tailFailureSend === false
+  && tailFailureStore.timeline.at(-1).artifactRefs[0].id === savedGuideRef.id && tailFailureStore.timeline.at(-1).assistant === null)
+
+const cancelledTurnStore = makeRouteStore()
+const cancelledTurnSend = prepareArtifactSend(cancelledTurnStore)
+await flushArtifacts()
+publishArtifacts(publication(1))
+let acknowledgeCancel
+cancelConversationStub = () => new Promise(resolve => { acknowledgeCancel = resolve })
+const cancelPending = cancelledTurnStore.cancelTurn('en')
+check('cancel request retains occupancy until server acknowledgement', cancelledTurnStore.isThinking && cancelledTurnStore.turnCancelling
+  && await cancelledTurnStore.send('competing request', 'en') === false)
+acknowledgeCancel({ ...publication(2), status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' } })
+await cancelPending
+check('acknowledged cancellation releases send and retains committed refs without completion', !cancelledTurnStore.isThinking && !cancelledTurnStore.turnCancelling
+  && cancelledTurnStore.timeline.at(-1).assistant === null && cancelledTurnStore.artifactRefs[0].id === savedGuideRef.id
+  && cancelledTurnStore.multiError.includes('stopped'))
+finishArtifacts(response)
+check('late final response after cancellation cannot overwrite the cancelled turn', await cancelledTurnSend === false && cancelledTurnStore.timeline.at(-1).assistant === null)
+
+const cancelFailureStore = makeRouteStore()
+const cancelFailureSend = prepareArtifactSend(cancelFailureStore)
+await flushArtifacts()
+cancelConversationStub = async () => { throw new Error('network') }
+await cancelFailureStore.cancelTurn('en')
+check('failed cancellation stays occupied with retryable visible feedback', cancelFailureStore.isThinking && !cancelFailureStore.turnCancelling
+  && cancelFailureStore.multiError.includes('could not be confirmed') && await cancelFailureStore.send('competing request', 'en') === false)
+rejectArtifacts(new Error('AGENT_TURN_CANCELLED'))
+await cancelFailureSend
+check('terminal polling cancellation releases occupancy after failed cancel request', !cancelFailureStore.isThinking && cancelFailureStore.multiError.includes('stopped'))
+
+const completedCancelStore = makeRouteStore()
+const completedCancelSend = prepareArtifactSend(completedCancelStore)
+await flushArtifacts()
+cancelConversationStub = async () => ({ ...publication(1), status: 'completed', response })
+await completedCancelStore.cancelTurn('en')
+check('already-completed cancellation acknowledgement waits for the actual final reply without inventing cancellation', completedCancelStore.isThinking
+  && !completedCancelStore.turnCancelling && completedCancelStore.timeline.at(-1).assistant === null)
+finishArtifacts(response)
+check('completion wins a late cancellation request and preserves published refs', await completedCancelSend === true
+  && completedCancelStore.timeline.at(-1).assistant.content === response.reply && completedCancelStore.artifactRefs[0].id === savedGuideRef.id)
+
+const switchedCancelStore = makeRouteStore()
+const switchedCancelSend = prepareArtifactSend(switchedCancelStore)
+await flushArtifacts()
+cancelConversationStub = () => new Promise(resolve => { acknowledgeCancel = resolve })
+const switchedCancelPending = switchedCancelStore.cancelTurn('en')
+const switchedFinish = finishArtifacts
+const switchedPublication = publishArtifacts
+const cancelTarget = history.createEmptyChatSession('cancel-target-session')
+cancelTarget.ownerId = 'user-a'
+switchedCancelStore.sessions.push(cancelTarget)
+switchedCancelStore.switchSession(cancelTarget.id)
+acknowledgeCancel({ ...publication(1), status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' } })
+await switchedCancelPending
+switchedPublication(publication(1))
+switchedFinish(response)
+check('session switch ignores late cancellation ack and publication together', await switchedCancelSend === false
+  && switchedCancelStore.currentSessionId === cancelTarget.id && switchedCancelStore.artifactRefs.length === 0
+  && switchedCancelStore.multiError === '' && !switchedCancelStore.isThinking)
+
+const artifactOwnerStore = makeRouteStore()
+const artifactOwnerSend = prepareArtifactSend(artifactOwnerStore)
+await flushArtifacts()
+chatStoreUserStore.sessionRevision++
+publishArtifacts(publication(1))
+finishArtifacts(response)
+check('same-owner login change rejects late artifact callbacks and final response', await artifactOwnerSend === false
+  && artifactOwnerStore.artifactRefs.length === 0 && !artifactOwnerStore.timeline.at(-1).artifactRefs)
 
 console.log(`\n结果：${passed} 通过 / ${failed} 失败`)
 process.exit(failed > 0 ? 1 : 0)

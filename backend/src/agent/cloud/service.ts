@@ -110,6 +110,13 @@ export class CloudPlannerService {
     return trip
   }
 
+  /** Publication remains scoped to current domain versions, including later user edits. */
+  async publicationContext(input: Pick<CloudPlannerTurnInput, 'tripId' | 'conversationId'>) {
+    const trip = await this.validateTurn(input)
+    const selected = await this.dependencies.flightSelections?.getSelectedFlight(input.tripId)
+    return { tripContextVersion: trip.context.version, selectedFlightRevision: selected?.selection.revision }
+  }
+
   async runTurn(input: CloudPlannerTurnInput): Promise<CloudPlannerTurnResult> {
     const trip = await this.validateTurn(input)
     const selectedFlight = await this.dependencies.flightSelections?.getSelectedFlight(input.tripId) ?? null
@@ -190,8 +197,18 @@ export class CloudPlannerService {
     input.signal?.throwIfAborted()
     emitActivity(input.onActivity, { type: 'finalizing' })
     const artifactIds = [...new Set(result.traces.flatMap(trace => trace.artifactIds))]
+    const publication = await this.publicationContext(input)
     const artifactRefs = (await Promise.all(artifactIds.map(id => this.dependencies.artifacts.get(id))))
-      .filter((artifact): artifact is NonNullable<typeof artifact> => artifact !== undefined)
+      .filter((artifact): artifact is NonNullable<typeof artifact> => {
+        if (!artifact || artifact.tripId !== input.tripId) return false
+        if (artifact.type !== 'flight_search' && artifact.type !== 'travel_guide') return true
+        if (artifact.tripContextVersion !== publication.tripContextVersion) return false
+        if (artifact.type === 'travel_guide') {
+          const payload = artifact.payload as { flightSelection?: { revision?: number } } | null
+          return payload?.flightSelection?.revision === publication.selectedFlightRevision
+        }
+        return true
+      })
       .map(artifact => ({ id: artifact.id, type: artifact.type, schemaVersion: artifact.schemaVersion }))
     input.signal?.throwIfAborted()
     const warnings = [...new Set([

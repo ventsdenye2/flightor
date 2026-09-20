@@ -10,6 +10,7 @@ export async function workspaceScope(context: ToolExecutionContext, signal: Abor
     ...(context.activeGoalContextVersion === undefined ? {} : { tripContextVersion: context.activeGoalContextVersion }),
     ...(context.selectedFlight ? { selectedFlight: context.selectedFlight } : {}),
     ...(context.assertFlightSelectionCurrent ? { assertFlightSelectionCurrent: context.assertFlightSelectionCurrent } : {}),
+    ...(context.onArtifactCommitted ? { onArtifactCommitted: context.onArtifactCommitted } : {}),
     ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {}) }, snapshot)
   return { ...scope, requestId: context.requestId }
 }

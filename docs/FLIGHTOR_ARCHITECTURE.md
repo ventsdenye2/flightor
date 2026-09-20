@@ -1,6 +1,6 @@
 # FlightOR Agent Architecture v1
 
-> **Current checkpoint — 2026-09-20:** B0/B1 are committed at cabbf51 and B2 at d895d0e. B3 adds stable guide candidate references, separate supporting evidence, server-owned budget snapshots and bounded same-generation repair. B2 business-tool Goal acceptance remains disabled by default (`PLANNER_LEAN_GOALS_ENABLED=false`) and its PostgreSQL transaction still awaits DB integration execution. B3 works with either Goal protocol. Early committed-card publication remains B4. [RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) owns exact limits and compatibility; offline checks do not replace [dated live acceptance](FLIGHT_FIRST_ACCEPTANCE.md). Follow [documentation maintenance](DOCS_MAINTENANCE.md) in every change batch.
+> **Current checkpoint — 2026-09-20:** B0/B1 are committed at cabbf51, B2 at d895d0e and B3 at 6649644. B4 adds early committed flight/guide references, acknowledged cancellation and browsing/draft editing during execution. B2 business-tool Goal acceptance remains disabled by default (`PLANNER_LEAN_GOALS_ENABLED=false`) and its PostgreSQL transaction still awaits DB integration execution. B3/B4 work with either Goal protocol; complete observability remains B5. [RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) owns exact limits and compatibility; offline checks do not replace [dated live acceptance](FLIGHT_FIRST_ACCEPTANCE.md). Follow [documentation maintenance](DOCS_MAINTENANCE.md) in every change batch.
 
 > Status: **Product + engineering baseline**
 >
@@ -2121,6 +2121,20 @@ through the synchronous endpoint below. The Planner has a 300-second turn budget
 progress never enters Conversation, Memory, Trip or Artifacts. This local MVP
 uses a bounded process-local status cache and cannot resume that status after a
 server restart. See ADR 0015 for connectivity and lifecycle semantics.
+
+B4 publishes compact flight/guide references from the workspace commit observer,
+after repository completion and a fresh scope checkpoint. Tool-return metadata
+cannot publish an unsaved card. Temporary snapshots carry Trip/conversation/generation
+and an artifact revision; current version/flight selection reconciliation removes
+outdated refs, and guards asynchronous context reads against newer publications.
+The client merges scoped revision snapshots and retains committed refs even without
+final assistant prose. This is saved output, not proof of Goal satisfaction.
+
+Owner-scoped `POST /v1/agent/turns/:turnId/cancel` terminates execution, preserves
+committed refs and rejects late events. It does not undo transactions or cancel a
+persisted Goal. Same-scope new generations supersede running predecessors; client
+mutations wait for terminal acknowledgement while browsing/draft editing remain
+available. Exact bounds and compatibility are in [RUNTIME_PLAN §5](design/budget-travel-agent/RUNTIME_PLAN.md).
 
 ```text
 POST /v1/agent/converse

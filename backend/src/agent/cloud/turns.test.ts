@@ -1,11 +1,64 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PLANNER_JOB_TIMEOUT_MS, PLANNER_TURN_TIMEOUT_MS, PlannerTurnStore } from './turns.js'
 import type { AgentActivityObserver } from '../runtime/activity.js'
+import { v7 as uuidv7 } from 'uuid'
 
 const flush = async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve() }
 
 describe('temporary Planner turn store', () => {
   afterEach(() => { vi.useRealTimers() })
+
+  it('publishes a bounded deduplicated scoped snapshot and removes outdated Trip/flight refs', async () => {
+    const store = new PlannerTurnStore<number>()
+    const scope = { tripId: uuidv7(), conversationId: uuidv7(), generationId: uuidv7() }
+    let observe!: AgentActivityObserver
+    const turn = store.start('owner', async (_signal, observer) => { observe = observer; return new Promise(() => {}) }, scope)
+    await flush()
+    const event = { type: 'artifact_committed' as const, ...scope, selectedFlightRevision: 2,
+      artifact: { id: uuidv7(), type: 'travel_guide' as const, schemaVersion: 1, tripContextVersion: 3, presentationHint: 'travel_guide' as const } }
+    observe({ ...event, generationId: 'other' }); observe({ ...event, tripId: 'other' }); observe({ ...event, conversationId: 'other' })
+    expect(store.get('owner', turn.turnId)?.artifactRevision).toBe(0)
+    observe(event); observe(event)
+    expect(store.get('owner', turn.turnId)).toMatchObject({ artifactRevision: 1, artifactRefs: [event.artifact] })
+    expect(store.get('other', turn.turnId)).toBeUndefined()
+    expect(store.reconcile('owner', turn.turnId, 3, 2)?.artifactRefs).toHaveLength(1)
+    expect(store.reconcile('owner', turn.turnId, 3, 3)).toMatchObject({ artifactRevision: 2, artifactRefs: [] })
+    for (let i = 0; i < 30; i++) observe({ ...event, artifact: { ...event.artifact, id: uuidv7() } })
+    expect(store.get('owner', turn.turnId)?.artifactRefs).toHaveLength(24)
+    expect(store.reconcile('owner', turn.turnId, 4, 2)?.artifactRefs).toEqual([])
+    store.close()
+  })
+
+  it('cancels only the owned turn, retains commits and ignores late publications/settlement', async () => {
+    const store = new PlannerTurnStore<number>()
+    const scope = { tripId: uuidv7(), conversationId: uuidv7(), generationId: uuidv7() }
+    let observe!: AgentActivityObserver, signal!: AbortSignal, finish!: (result: number) => void
+    const turn = store.start('owner', async (abort, observer) => { signal = abort; observe = observer; return new Promise(resolve => { finish = resolve }) }, scope)
+    await flush()
+    const event = { type: 'artifact_committed' as const, ...scope,
+      artifact: { id: uuidv7(), type: 'flight_search' as const, schemaVersion: 1, tripContextVersion: 0, presentationHint: 'flight_cards' as const } }
+    observe(event)
+    expect(store.cancel('other', turn.turnId)).toBeUndefined()
+    expect(signal.aborted).toBe(false)
+    expect(store.cancel('owner', turn.turnId)).toMatchObject({ status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' }, artifactRefs: [event.artifact] })
+    expect(signal.aborted).toBe(true)
+    observe({ ...event, artifact: { ...event.artifact, id: uuidv7() } }); finish(3)
+    await flush()
+    expect(store.get('owner', turn.turnId)).toMatchObject({ status: 'failed', artifactRevision: 1, artifactRefs: [event.artifact] })
+    expect(store.cancel('owner', turn.turnId)?.status).toBe('failed')
+    store.close()
+  })
+
+  it('supersedes the same owned conversation while leaving unrelated turns running', async () => {
+    const store = new PlannerTurnStore<number>()
+    const scope = { tripId: uuidv7(), conversationId: uuidv7(), generationId: uuidv7() }
+    const first = store.start('owner', async () => new Promise(() => {}), scope)
+    const other = store.start('other', async () => new Promise(() => {}), scope)
+    store.start('owner', async () => new Promise(() => {}), { ...scope, generationId: uuidv7() })
+    expect(store.get('owner', first.turnId)?.status).toBe('failed')
+    expect(store.get('other', other.turnId)?.status).toBe('running')
+    store.close()
+  })
 
   it('reports execution activity, keeps parallel work visible, isolates owners and expires results', async () => {
     vi.useFakeTimers()

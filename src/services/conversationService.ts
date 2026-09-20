@@ -151,6 +151,7 @@ export interface CloudArtifactRef {
   id: string
   type: string
   schemaVersion: number
+  tripContextVersion?: number
   presentationHint: 'flight_cards' | 'research_cards' | 'activity_cards' | 'destination_cards' | 'route_preview' | 'itinerary_outline' | 'travel_guide'
 }
 
@@ -199,9 +200,21 @@ export interface ConversationTurnProgress {
   lastConfirmedAt?: number
   serverUpdatedAt?: string
   turnId?: string
+  tripId?: string
+  conversationId?: string
+  generationId?: string
 }
 
-interface ConversationTurnView {
+export interface ConversationArtifactPublication {
+  turnId: string
+  tripId: string
+  conversationId: string
+  generationId: string
+  artifactRevision: number
+  artifactRefs: CloudArtifactRef[]
+}
+
+export interface ConversationTurnView {
   turnId: string
   status: 'running' | 'completed' | 'failed'
   stage: ConversationTurnStage
@@ -209,10 +222,16 @@ interface ConversationTurnView {
   updatedAt: string
   response?: ConversationResponse
   error?: { code: string; message: string }
+  tripId?: string
+  conversationId?: string
+  generationId?: string
+  artifactRevision?: number
+  artifactRefs?: CloudArtifactRef[]
 }
 
 interface ConverseOptions {
   onProgress?: (progress: ConversationTurnProgress) => void
+  onArtifacts?: (publication: ConversationArtifactPublication) => void
   /** Session switches invalidate this poll without needing mini-program AbortController. */
   isCurrent?: () => boolean
   startedAt?: number
@@ -233,6 +252,48 @@ function validTurnView(value: ConversationTurnView, turnId: string): boolean {
     && ['running', 'completed', 'failed'].includes(value.status)
     && TURN_STAGES.includes(value.stage)
     && validTimestamp(value.startedAt) && validTimestamp(value.updatedAt))
+}
+
+type TurnScope = { tripId: string; conversationId: string; generationId?: string }
+
+function validPublication(value: ConversationTurnView, scope: TurnScope): boolean {
+  if ((value.tripId !== undefined || value.conversationId !== undefined || value.generationId !== undefined)
+    && (value.tripId !== scope.tripId || value.conversationId !== scope.conversationId || value.generationId !== scope.generationId)) return false
+  if (value.artifactRevision === undefined && value.artifactRefs === undefined) return true
+  return Boolean(scope.generationId && value.tripId === scope.tripId && value.conversationId === scope.conversationId
+    && value.generationId === scope.generationId && Number.isSafeInteger(value.artifactRevision) && value.artifactRevision! >= 0
+    && Array.isArray(value.artifactRefs) && value.artifactRefs.length <= 24 && value.artifactRefs.every(ref => ref
+      && typeof ref.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref.id)
+      && Number.isSafeInteger(ref.schemaVersion) && ref.schemaVersion > 0
+      && Number.isSafeInteger(ref.tripContextVersion) && ref.tripContextVersion! >= 0
+      && ((ref.type === 'flight_search' && ref.presentationHint === 'flight_cards')
+        || (ref.type === 'travel_guide' && ref.presentationHint === 'travel_guide'))))
+}
+
+function compactPublication(view: ConversationTurnView): ConversationArtifactPublication {
+  return {
+    turnId: view.turnId, tripId: view.tripId!, conversationId: view.conversationId!, generationId: view.generationId!,
+    artifactRevision: view.artifactRevision!,
+    artifactRefs: [...new Map(view.artifactRefs!.map(ref => [ref.id, {
+      id: ref.id, type: ref.type, schemaVersion: ref.schemaVersion,
+      tripContextVersion: ref.tripContextVersion, presentationHint: ref.presentationHint
+    }])).values()]
+  }
+}
+
+/** Cancellation is acknowledged by the server; it never invents a successful reply. */
+export async function cancelConversationTurn(turnId: string, scope: TurnScope): Promise<ConversationTurnView> {
+  const revision = authSnapshot().revision
+  const view = await request<ConversationTurnView>({
+    url: `/v1/agent/turns/${encodeURIComponent(turnId)}/cancel`, method: 'POST',
+    retry: 0, showError: false, timeout: TURN_REQUEST_TIMEOUT_MS
+  })
+  assertAuthSession(revision)
+  if (!validTurnView(view, turnId) || view.status === 'running' || !validPublication(view, scope)
+    || (view.status === 'completed' && !validTurnResponse(view.response, { ...scope, message: '' }))) {
+    throw new Error('INVALID_CONVERSATION_TURN_RESPONSE')
+  }
+  return view.artifactRefs ? { ...view, artifactRefs: compactPublication(view).artifactRefs } : view
 }
 
 function validTurnResponse(value: ConversationResponse | undefined, input: ConversationRequest): value is ConversationResponse {
@@ -753,7 +814,7 @@ export async function converse(input: ConversationRequest, options: ConverseOpti
   assertBeforeRequest()
   publish(progress)
   // A timed-out POST is ambiguous: never retry it or submit a second message.
-  const accepted = await request<{ turnId: string; status: 'running'; startedAt: string }>({
+  const accepted = await request<{ turnId: string; status: 'running'; startedAt: string; tripId?: string; conversationId?: string; generationId?: string }>({
     url: '/v1/agent/turns',
     method: 'POST',
     data: body as unknown as Record<string, unknown>,
@@ -763,11 +824,17 @@ export async function converse(input: ConversationRequest, options: ConverseOpti
   })
   assertCurrent()
   if (!accepted || typeof accepted.turnId !== 'string' || !accepted.turnId || accepted.turnId.length > 200
-    || accepted.status !== 'running' || !validTimestamp(accepted.startedAt)) {
+    || accepted.status !== 'running' || !validTimestamp(accepted.startedAt)
+    || ((accepted.tripId !== undefined || accepted.conversationId !== undefined || accepted.generationId !== undefined)
+      && (accepted.tripId !== body.tripId || accepted.conversationId !== body.conversationId
+        || typeof accepted.generationId !== 'string' || !accepted.generationId || accepted.generationId.length > 200))) {
     throw new Error('INVALID_CONVERSATION_TURN_RESPONSE')
   }
   const turnId = accepted.turnId
-  publish({ ...progress, turnId })
+  const scope = { tripId: body.tripId, conversationId: body.conversationId, generationId: accepted.generationId }
+  let artifactRevision = -1
+  let latestServerUpdatedAt = ''
+  publish({ ...progress, turnId, ...scope })
   while (true) {
     assertBeforeRequest()
     let view: ConversationTurnView | undefined
@@ -791,7 +858,26 @@ export async function converse(input: ConversationRequest, options: ConverseOpti
     }
     assertCurrent()
     if (received) {
-      if (!view || !validTurnView(view, turnId)) throw new Error('INVALID_CONVERSATION_TURN_RESPONSE')
+      if (!view || !validTurnView(view, turnId) || !validPublication(view, scope)
+        || ((view.tripId !== undefined || view.conversationId !== undefined || view.generationId !== undefined)
+          && (view.tripId !== scope.tripId || view.conversationId !== scope.conversationId || view.generationId !== scope.generationId))) {
+        throw new Error('INVALID_CONVERSATION_TURN_RESPONSE')
+      }
+      // Revisions are authoritative snapshots, including removals after a Trip change.
+      if (view.artifactRevision !== undefined && view.artifactRevision < artifactRevision) {
+        await new Promise<void>(resolve => setTimeout(resolve, Math.max(0, Math.min(TURN_POLL_INTERVAL_MS, deadline - Date.now()))))
+        continue
+      }
+      if (view.artifactRevision !== undefined && view.artifactRevision > artifactRevision) {
+        artifactRevision = view.artifactRevision
+        assertCurrent()
+        options.onArtifacts?.(compactPublication(view))
+      }
+      if (view.updatedAt < latestServerUpdatedAt) {
+        await new Promise<void>(resolve => setTimeout(resolve, Math.min(TURN_POLL_INTERVAL_MS, deadline - Date.now())))
+        continue
+      }
+      latestServerUpdatedAt = view.updatedAt
       if (view.status === 'failed') {
         const code = typeof view.error?.code === 'string' ? view.error.code : 'CONVERSATION_TURN_FAILED'
         throw Object.assign(new Error(code), { code })

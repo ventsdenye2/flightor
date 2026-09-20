@@ -1,6 +1,6 @@
 # DPS：精简流程 → 跑通 → 测量 → 案例评估 → DSH 决策
 
-2026-09-20。**当前唯一实施顺序**，替代此前 T00–T12/M0–M4 和 UX_REVIEW 中的阶段顺序。B0–B2 已提交，B2 仍默认关闭/待 PG 集成验证；B3 已实施，B4 起待推进。验证及未运行边界见 [progress](progress.md)。
+2026-09-20。**当前唯一实施顺序**，替代此前 T00–T12/M0–M4 和 UX_REVIEW 中的阶段顺序。B0–B3 已提交，B2 仍默认关闭/待 PG 集成验证；B4 已实施，下一步 B5。验证及未运行边界见 [progress](progress.md)。
 
 架构：[RUNTIME_PLAN](RUNTIME_PLAN.md)。产品需求：[RAS](RAS.md)。测试协议：[EVALUATION](EVALUATION.md)。
 
@@ -10,7 +10,7 @@
 | B1 | R01 R05 R09 | `backend/src/agent/cloud/service.ts`；`agent/cloud/planning-context.ts` | B0；预装有界有效研究、目标摘要、预算和选择；不自动激活旧目标 | 无重复 list/read 才能规划的前置；Memory 禁用及 owner/version 测试通过 | 已实现、离线验证通过；真实模型收益未测 |
 | B2 | R01 R03 R08 R09 | `backend/src/agent/tools/goal-intent.ts`、`core.ts`、`agent/goals/repository.ts`/`postgres.ts`、`completion.ts`、`agent/cloud/service.ts` | B1；业务操作携带紧凑意图，领域边界接受目标和管理 Run；省去机械 finish 往返 | 目标不偷换、跨 generation 不接管、保存与完成同一权威；兼容 flag 可回退 | 已实现，默认关闭；离线回归与PG缺口见 progress |
 | B3 | R04 R05 R09 | `backend/src/agent/tools/authored-travel-guide.ts`、`guide-draft.ts`、`travel-guides/candidates.ts`、`authored.ts`、`validation.ts`、正式 UI adapters | B1/B2；稳定候选引用、supportingRefs、错误分类、局部修订；沿用可表达的 v1 | 现有 practical 可直接补选；无自动研究修复；结构化预算守恒；取消/来源/版本校验保留 | 已实施，离线验证见 progress；真实模型文字质量留 G1/M2 |
-| B4 | R06 R07 R08 | `backend/src/agent/runtime/activity.ts`、`agent/cloud/turns.ts`、`src/services/conversationService.ts`、`src/stores/chatStore.ts`、正式 UI adapter | B3；已提交结果立即进入现有轮询，浏览与输入草稿不全局锁死 | 卡片先于最终复述可见；不发布未提交结果；切账号/修改无迟到污染 | 待做 |
+| B4 | R06 R07 R08 | `backend/src/agent/runtime/activity.ts`、`agent/cloud/turns.ts`、`src/services/conversationService.ts`、`src/stores/chatStore.ts`、正式 UI adapter | B3；已提交结果立即进入现有轮询，浏览与输入草稿不全局锁死 | 卡片先于最终复述可见；不发布未提交结果；切账号/修改无迟到污染 | 已实施；离线证据与真实 UI 验收边界见 progress |
 | B5 | R06 R09 | `backend/src/agent/runtime/model.ts`、`runtime.ts`、`providers/openrouter/client.ts`、客户端渲染点 | 随 B1–B4 增量实现基本测量；不改变模型/路由 | 关联 usage/模型/配置/阶段时间；嵌套 span 不重复计时；未知费用 null | 未完成；B1 仅增加上下文准备耗时/大小/数量 |
 | G1 跑通 | R03 R09 | 既有 backend tests、PG suites、UI tests；`progress.md` | B1–B5；先离线，再两条有界真实链路 | 已选航班攻略及自备机票攻略保存、领域验收、刷新恢复；真实费用/失败明确 | 待做 |
 | M1 运行测量 | R06 | 拟建 `backend/benchmarks/planner/runner.ts`、manifest/results | G1；实现 EVALUATION 的计时与固定输入 | 端到端与后端耗时区分；A/B 相同配置；先单请求，不混负载 | 待做 |

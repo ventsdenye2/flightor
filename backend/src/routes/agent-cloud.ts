@@ -189,6 +189,30 @@ export async function registerCloudAgentRoutes(
   })
   app.addHook('onClose', async () => { turns.close() })
 
+  const currentSnapshot = async (ownerId: string, turnId: string) => {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const snapshot = turns.get(ownerId, turnId)
+      if (!snapshot) throw new AppError('RESOURCE_NOT_FOUND', 'Planner turn was not found', 404)
+      const current = await serviceForUser(ownerId).publicationContext({ tripId: snapshot.tripId!, conversationId: snapshot.conversationId! })
+      const latest = turns.get(ownerId, turnId)
+      if (!latest) throw new AppError('RESOURCE_NOT_FOUND', 'Planner turn was not found', 404)
+      // Domain reads await I/O. Never invalidate a newer publication or terminal
+      // response with context fetched before it existed. No await separates this
+      // check from reconciliation, so they observe the same in-process revision.
+      if (latest.artifactRevision !== snapshot.artifactRevision || latest.status !== snapshot.status) continue
+      const reconciled = turns.reconcile(ownerId, turnId, current.tripContextVersion, current.selectedFlightRevision)
+      if (!reconciled) throw new AppError('RESOURCE_NOT_FOUND', 'Planner turn was not found', 404)
+      if (reconciled.status === 'completed' && (reconciled.response.tripContextSummary.version !== current.tripContextVersion
+        || turns.hasInvalidatedArtifacts(ownerId, turnId, reconciled.response.artifactRefs.map(ref => ref.id)))) {
+        const { response: _response, ...base } = reconciled
+        return { ...base, status: 'failed' as const, error: { code: 'PLANNER_CONTEXT_CHANGED', message: '行程或航班已变化，请按当前条件继续规划。' } }
+      }
+      return reconciled
+    }
+    // Leave the snapshot untouched and let the bounded client poll retry.
+    throw new AppError('PLANNER_SNAPSHOT_CHANGED', 'Planner results changed while checking their context; retry shortly', 503)
+  }
+
   app.post('/v1/agent/turns', {
     config: { rateLimit: { max: 10, timeWindow: '1 minute' } }
   }, async (request, reply) => {
@@ -196,10 +220,11 @@ export async function registerCloudAgentRoutes(
     const input = cloudAgentRequestSchema.parse(request.body)
     const service = serviceForUser(identity.userId)
     await service.validateTurn(input)
+    const generationId = uuidv7()
     const accepted = turns.start(identity.userId, async (signal, onActivity) => {
-      const result = await service.runTurn({ ...input, requestId: request.id, generationId: uuidv7(), signal, onActivity })
+      const result = await service.runTurn({ ...input, requestId: request.id, generationId, signal, onActivity })
       return buildCloudAgentResponse(input, result)
-    })
+    }, { tripId: input.tripId, conversationId: input.conversationId, generationId })
     return reply.code(202).header('Cache-Control', 'no-store').send(accepted)
   })
 
@@ -209,9 +234,18 @@ export async function registerCloudAgentRoutes(
     reply.header('Cache-Control', 'no-store')
     const identity = await authenticateRequest(request, context)
     const { turnId } = z.object({ turnId: z.string().uuid() }).strict().parse(request.params)
-    const snapshot = turns.get(identity.userId, turnId)
+    return reply.send(await currentSnapshot(identity.userId, turnId))
+  })
+
+  app.post('/v1/agent/turns/:turnId/cancel', {
+    config: { rateLimit: { max: 20, timeWindow: '1 minute' } }
+  }, async (request, reply) => {
+    reply.header('Cache-Control', 'no-store')
+    const identity = await authenticateRequest(request, context)
+    const { turnId } = z.object({ turnId: z.string().uuid() }).strict().parse(request.params)
+    const snapshot = turns.cancel(identity.userId, turnId)
     if (!snapshot) throw new AppError('RESOURCE_NOT_FOUND', 'Planner turn was not found', 404)
-    return reply.send(snapshot)
+    return reply.send(await currentSnapshot(identity.userId, turnId))
   })
 
   app.post('/v1/agent/converse', {

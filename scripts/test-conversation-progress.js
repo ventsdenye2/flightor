@@ -26,7 +26,7 @@ const view = (status = 'running', stage = 'thinking', extra = {}) => ({
 })
 
 function harness(steps) {
-  const state = { now: 1_000, revision: 1, current: true, calls: [], progress: [], sleeps: [], active: 0, maxActive: 0 }
+  const state = { now: 1_000, revision: 1, current: true, calls: [], progress: [], artifacts: [], sleeps: [], active: 0, maxActive: 0 }
   class Clock extends Date { static now() { return state.now } }
   const module = { exports: {} }
   vm.runInNewContext(compiled, {
@@ -61,8 +61,10 @@ function harness(steps) {
     startedAt: 500,
     isCurrent: () => state.current,
     onProgress: value => { state.progress.push(value); state.onProgress?.(value) },
+    onArtifacts: value => { state.artifacts.push(value); state.onArtifacts?.(value) },
     ...options
   })
+  state.cancel = (scope = publicationScope) => module.exports.cancelConversationTurn(accepted.turnId, scope)
   return state
 }
 
@@ -181,6 +183,84 @@ await test('malformed successful GET and unknown stage terminate instead of inve
     await assert.rejects(h.run(), /INVALID_CONVERSATION_TURN_RESPONSE/)
     assert.equal(h.calls.length, 2)
   }
+})
+
+const publicationScope = { tripId: input.tripId, conversationId: input.conversationId, generationId: 'generation-1' }
+const scopedAccepted = { ...accepted, ...publicationScope }
+const savedRef = { id: '00000000-0000-4000-8000-000000000001', type: 'travel_guide', schemaVersion: 1, tripContextVersion: 4, presentationHint: 'travel_guide' }
+const published = (revision, refs = [savedRef], extra = {}) => view('running', 'finalizing', {
+  ...publicationScope, artifactRevision: revision, artifactRefs: refs, ...extra
+})
+
+await test('committed refs arrive before final response, are compact and deduplicated', async () => {
+  const h = harness([scopedAccepted, published(1, [{ ...savedRef, payload: 'must not enter history' }, savedRef]), view('completed')])
+  h.onArtifacts = value => {
+    assert.equal(h.progress.some(progress => progress.connection === 'completed'), false)
+    assert.equal(value.artifactRefs.length, 1)
+    assert.equal(value.artifactRefs[0].payload, undefined)
+  }
+  await h.run()
+  assert.equal(h.artifacts.length, 1)
+})
+
+await test('repeat and older revisions cannot re-add invalidated refs', async () => {
+  const h = harness([scopedAccepted, published(2), published(2), published(1), published(3, []), view('completed')])
+  await h.run()
+  assert.deepEqual(h.artifacts.map(value => value.artifactRevision), [2, 3])
+  assert.equal(h.artifacts.at(-1).artifactRefs.length, 0)
+})
+
+await test('failed model tail publishes committed refs without inventing completion', async () => {
+  const h = harness([scopedAccepted, published(1, [savedRef], { status: 'failed', error: { code: 'AGENT_TURN_TIMEOUT' } })])
+  await assert.rejects(h.run(), /AGENT_TURN_TIMEOUT/)
+  assert.equal(h.artifacts[0].artifactRefs[0].id, savedRef.id)
+  assert.equal(h.progress.some(value => value.connection === 'completed'), false)
+})
+
+await test('publication requires accepted generation and exact Trip/conversation/generation scope', async () => {
+  for (const bad of [{ tripId: 'other' }, { conversationId: 'other' }, { generationId: 'other' }]) {
+    const h = harness([scopedAccepted, published(1, [savedRef], bad)])
+    await assert.rejects(h.run(), /INVALID_CONVERSATION_TURN_RESPONSE/)
+    assert.equal(h.artifacts.length, 0)
+  }
+  const legacy = harness([accepted, published(1)])
+  await assert.rejects(legacy.run(), /INVALID_CONVERSATION_TURN_RESPONSE/)
+})
+
+await test('malformed publication bounds, type, version and presentation are rejected', async () => {
+  for (const extra of [
+    { artifactRevision: -1 }, { artifactRefs: undefined }, { artifactRefs: Array(25).fill(savedRef) },
+    { artifactRefs: [{ ...savedRef, id: 'invalid' }] }, { artifactRefs: [{ ...savedRef, tripContextVersion: -1 }] },
+    { artifactRefs: [{ ...savedRef, type: 'research' }] }, { artifactRefs: [{ ...savedRef, presentationHint: 'flight_cards' }] }
+  ]) {
+    const h = harness([scopedAccepted, published(1, [savedRef], extra)])
+    await assert.rejects(h.run(), /INVALID_CONVERSATION_TURN_RESPONSE/)
+    assert.equal(h.artifacts.length, 0)
+  }
+})
+
+await test('account switch during publication fetch suppresses all artifacts', async () => {
+  const h = harness([scopedAccepted, (_options, state) => { state.revision++; return published(1) }])
+  await assert.rejects(h.run(), /AUTH_SESSION_CHANGED/)
+  assert.equal(h.artifacts.length, 0)
+})
+
+await test('cancel uses one authenticated POST and returns committed refs on acknowledgement', async () => {
+  const h = harness([published(1, [savedRef], { status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' } })])
+  const cancelled = await h.cancel()
+  assert.equal(cancelled.error.code, 'AGENT_TURN_CANCELLED')
+  assert.equal(cancelled.artifactRefs[0].id, savedRef.id)
+  assert.equal(h.calls[0].method, 'POST')
+  assert.equal(h.calls[0].url, '/v1/agent/turns/turn-1/cancel')
+  assert.equal(h.calls[0].retry, 0)
+})
+
+await test('cancel rejects running or foreign-scope acknowledgements and auth changes', async () => {
+  for (const bad of [published(1), published(1, [], { status: 'failed', generationId: 'other' })]) {
+    await assert.rejects(harness([bad]).cancel(), /INVALID_CONVERSATION_TURN_RESPONSE/)
+  }
+  const h = harness([(_options, state) => { state.revision++; return published(1, [], { status: 'failed' }) }])
+  await assert.rejects(h.cancel(), /AUTH_SESSION_CHANGED/)
 })
 
 console.log(`\n${passed} conversation progress checks passed (offline; no live Provider or WeChat device).`)

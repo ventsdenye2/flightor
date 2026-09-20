@@ -22,6 +22,8 @@ export interface ArtifactWorkspace {
   assertActive?: () => Promise<void>
   selectedFlight?: SelectedFlightContext
   assertFlightSelectionCurrent?: () => Promise<void>
+  /** Best-effort transport notification, only after repository commit and a fresh checkpoint. */
+  onArtifactCommitted?: (record: ArtifactRecord) => void
 }
 
 /** Freeze the version used to derive this operation's inputs, including work without a Goal. */
@@ -98,9 +100,18 @@ export async function saveWorkspaceArtifact(
       isSourceContextCompatible: (source: ArtifactRecord) => isCompatibleSelectedFlightSource(source, scope.selectedFlight!, scope.tripContext)
     } : {})
   }
+  let record: ArtifactRecord
   if (options?.researchAuditId) {
     if (!scope.artifacts.createWithResearchAudit) throw new AppError('RESEARCH_AUDIT_LINK_UNAVAILABLE', 'Research audit cannot be linked to the workspace artifact', 503)
-    return scope.artifacts.createWithResearchAudit(create, options.researchAuditId)
+    record = await scope.artifacts.createWithResearchAudit(create, options.researchAuditId)
+  } else {
+    record = await scope.artifacts.create(create)
   }
-  return scope.artifacts.create(create)
+  if (scope.onArtifactCommitted) {
+    try {
+      await checkpoint(scope)
+      scope.onArtifactCommitted(record)
+    } catch { /* Publication must not undo or misreport a committed Artifact. */ }
+  }
+  return record
 }

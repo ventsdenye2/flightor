@@ -52,6 +52,14 @@
 
 既有 `index`、`search`、`route`、`hub-detail` 等注册页面的展示任务在独立应用中有对应界面，早期样稿与后续接入须分开看；生产接入记录见 [UI 清理交接](../HANDOFF_2026-09-13_MAIN_UI_CLEANUP.md)，较新实际能力见 [航班优先验收](../FLIGHT_FIRST_ACCEPTANCE.md)。
 
+## B4 规划中结果展示（当前实现）
+
+正式 Plan 页在等待阶段显示已提交的航班/攻略，攻略标注“已保存，仍在整理/核验”，不暗示 Goal 已满足。已有采用航班与新发布的候选航班分别展示，不能让旧选择遮挡新结果。未选与已选 offer 都可展开只读航段详情。
+
+空草稿在执行期间也可编辑，完成后保留尚未发送的草稿；新的提交、采用和更换航班保持禁用。取消显示等待确认，取消请求失败时继续显示进度与停止未确认提示，确认后才释放提交占用。取消/中断保留已保存成果。账号、auth revision、会话和 Trip 同时约束异步加载和错误回写；被替代的提交不得给新轮写入旧错误。
+
+`node scripts/test-planner-publication.cjs` 运行真实组件代码，通过确定性 hooks 与 Taro host stubs 验证等待分支卡片、草稿输入/保留、取消反馈和航段展开。它不启动浏览器、真实 React renderer 或微信设备；平台滚动、样式、输入法与真实网络表现仍待验收。当前所有验证命令和结果见 [progress](budget-travel-agent/progress.md)。
+
 ## 信息结构
 
 生产攻略 v1 的可选 `budget` 在行程概览和攻略卡单独显示为“全程预算约束”：只接受服务端同时提供的 `amount`、三位大写 `currency`、`scope`、`partyBasis: unspecified`、`period: trip_total`，明确标注为行程总额与同行人数口径未指定，不换算为每日或人均金额。可选 `supportingEvidence` 单独归入“实用与补充信息”，显示服务端恢复的标题、说明、类别、目的地和核验状态；过期的核验记录按 `expiresAt` 显示为资料已过期。它是补充资料，不作为景点安排或用户已选择活动。

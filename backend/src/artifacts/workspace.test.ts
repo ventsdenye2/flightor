@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { InMemoryArtifactRepository } from './repository.js'
 import { checkpoint, createArtifactWorkspace, loadWorkspaceArtifact, saveWorkspaceArtifact } from './workspace.js'
 import { AppError } from '../lib/errors.js'
@@ -22,6 +22,43 @@ function setup() {
 }
 
 describe('Artifact workspace consistency', () => {
+  it('notifies only after commit, and observer failure does not change a saved result', async () => {
+    const { artifacts, input } = setup()
+    let release!: () => void
+    const committed = new Promise<void>(resolve => { release = resolve })
+    const create = artifacts.create.bind(artifacts)
+    vi.spyOn(artifacts, 'create').mockImplementation(async value => { await committed; return create(value) })
+    const observed: string[] = []
+    const scope = await createArtifactWorkspace({ ...input, onArtifactCommitted: record => { observed.push(record.id); throw new Error('observer failed') } })
+    const save = saveWorkspaceArtifact(scope, { type: 'travel_guide', schemaVersion: 1, payload: {}, sourceArtifactIds: [] })
+    await vi.waitFor(() => expect(artifacts.create).toHaveBeenCalledOnce())
+    expect(observed).toEqual([])
+    release()
+    const record = await save
+    expect(observed).toEqual([record.id])
+    expect(await artifacts.get(record.id)).toMatchObject({ id: record.id })
+  })
+
+  it.each(['cancel', 'version', 'selection'] as const)('suppresses late publication after %s without claiming to roll back the commit', async reason => {
+    const { artifacts, input, trips } = setup()
+    const controller = new AbortController()
+    let selectionCurrent = true
+    const published = vi.fn()
+    const create = artifacts.create.bind(artifacts)
+    vi.spyOn(artifacts, 'create').mockImplementation(async value => {
+      const record = await create(value)
+      if (reason === 'cancel') controller.abort()
+      if (reason === 'version') await trips.update('trip', { interests: ['food'] }, 2)
+      if (reason === 'selection') selectionCurrent = false
+      return record
+    })
+    const scope = await createArtifactWorkspace({ ...input, signal: controller.signal, onArtifactCommitted: published,
+      assertFlightSelectionCurrent: async () => { if (!selectionCurrent) throw new AppError('FLIGHT_SELECTION_CHANGED', 'changed', 409) } })
+    const record = await saveWorkspaceArtifact(scope, { type: 'travel_guide', schemaVersion: 1, payload: {}, sourceArtifactIds: [] })
+    expect(published).not.toHaveBeenCalled()
+    expect(await artifacts.get(record.id)).toBeDefined()
+  })
+
   it('permits same-version research from a different run while rejecting legacy and stale sources', async () => {
     const { artifacts, input } = setup()
     const scope = await createArtifactWorkspace({ ...input, goalId: 'current-goal', runId: 'current-run' })

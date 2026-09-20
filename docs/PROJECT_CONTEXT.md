@@ -1,6 +1,6 @@
 # FlightOR 当前项目上下文
 
-更新：2026-09-20。B0/B1 已提交 `cabbf51`，B2 已提交 `d895d0e`、仍默认关闭；当前 B3 已实施稳定引用、独立支撑证据与局部修复。性能数字与已运行结果必须引用具体日期证据，离线与数据库/live 的验证边界见当前 progress。
+更新：2026-09-20。B0/B1 已提交 `cabbf51`，B2 已提交 `d895d0e`、仍默认关闭，B3 已提交 `6649644`；B4 已实施保存结果提前展示、确认式取消与等待期间的浏览/草稿编辑。性能数字与已运行结果必须引用具体日期证据，离线与数据库/live 的验证边界见当前 progress。
 
 ## 当前主链
 
@@ -18,7 +18,7 @@
 | 攻略 | Planner 用 candidateRef 编写每日内容，兼容 researchIndex/findingId；supportingRefs 独立保存实用资料；save_travel_guide 返回分类反馈和同轮 draft 修订引用。预算原样来自 Trip，v1 可选扩展字段及正式 UI 展示已实现 |
 | 研究 | 配置为原生联网时走 NativeResearchAgent，否则按配置用 SerpApi + synthesis；缺少配置显式不可用，不伪造结果 |
 | 航线引擎 | 当前最终生成只支持单出发机场、单最终目的地、单程、有界出发日期；不支持完整往返、多目的地或必需地面段组合 |
-| 进度 | 临时内存 turn，300 秒整轮/315 秒外层、前端 330 秒等待；短轮询阶段反馈，未实现通用持久 Planner 续跑 |
+| 进度 | 临时内存 turn，300 秒整轮/315 秒外层、前端 330 秒等待；短轮询阶段反馈与提交后航班/攻略引用，owner-scoped 取消确认；未实现通用持久 Planner 续跑 |
 | UI | 蓝色正式页面已有部分真实接入；航班采用恢复已具历史证据；活动展示转换仍缺景点坐标与素材 |
 | 测试 | 默认离线与 PostgreSQL suites 分离；`test:db` 缺少 TEST_DATABASE_URL 明确失败；build 不等于真机验收 |
 
@@ -41,7 +41,7 @@
 
 9 月 13 日 HANDOFF 中“仍在集成工作区、未合并”描述的是当时状态，不能作为今天 main 的事实。旧演示额度、端口、服务状态也不自动延续。
 
-当前任务顺序唯一依据：[DPS](design/budget-travel-agent/DPS.md)。下一步 B4 已提交结果提前展示，随后 B5 完整观测；保留 PG 集成验证缺口，不能据离线结果宣布生产路径跑通。[RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) 分别标记 B1–B3 当前实现与其它拟议契约。B3 草稿仅同 generation 有效，重启或换轮仍需从 Artifact 恢复；未实现散文预算语义自动判分。
+当前任务顺序唯一依据：[DPS](design/budget-travel-agent/DPS.md)。B4 在现有短轮询上提前展示已保存结果，按作用域与 revision 合并，取消确认后再释放提交，保留浏览与未发送草稿。下一步 B5 完整观测；保留 PG 集成验证缺口，不能据离线结果宣布生产路径跑通。[RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) 分别标记 B1–B4 当前实现与其它拟议契约。B3 草稿仅同 generation 有效，重启或换轮仍需从 Artifact 恢复；未实现散文预算语义自动判分。
 
 ## 续作入口
 

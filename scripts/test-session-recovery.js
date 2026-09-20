@@ -66,7 +66,8 @@ function authHarness(globals = {}) {
     login: async () => ({ code: 'local-login-code' }),
     showLoading() {}, hideLoading() {}, showToast() {}
   }
-  const load = loader({ '@tarojs/taro': taro, '../i18n': { t: key => key },
+  const i18nStub = { t: key => key }
+  const load = loader({ '@tarojs/taro': taro, '../i18n': i18nStub, '../i18n/index': i18nStub, '../i18n/index.ts': i18nStub, '../i18n/index.js': i18nStub,
     mobx: { makeAutoObservable() {}, runInAction: run => run() }, './chatHistory': { clearCloudChatHistory() {} } }, globals)
   const auth = load('src/utils/authSession.ts')
   const { request } = load('src/utils/request.ts')
@@ -240,7 +241,7 @@ function find(node, predicate) {
 function productionPlanHarness() {
   let engine = hooks(true)
   const chatStore = {
-    currentSessionId: 'session', timeline: [], requiresLogin: true, isThinking: false,
+    currentSessionId: 'session', timeline: [], artifactRefs: [], requiresLogin: true, isThinking: false,
     multiLoading: false, multiConfirming: false, multiError: '', tripContextSummary: undefined,
     send: async () => true, refreshWorkspace: async () => {}
   }
@@ -252,9 +253,11 @@ function productionPlanHarness() {
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
     '@tarojs/components': { View: 'View' },
     '@tarojs/taro': { useDidShow() {}, setNavigationBarTitle() {}, navigateTo() {} },
+    mobx: { makeAutoObservable() {}, runInAction: run => run() },
     'mobx-react-lite': { observer: component => component },
     '../../stores/chatStore': { chatStore },
     '../../i18n': { t: key => key, localeStore: { locale: 'zh' } },
+    '../../i18n/index': { t: key => key, localeStore: { locale: 'zh' } },
     '../../components/navigation/ProductionTabBar': { useProductionTab() {} },
     '../../features/ui-experience/PlannerPage': { __esModule: true, default: PlannerPage },
     '../../services/productionTripService': { loadProductionTrip: async () => { throw new Error('not used without an artifact') } },
@@ -303,7 +306,8 @@ await test('closing a pending login sheet prevents a late success from resuming 
     '../../stores/userStore': { userStore: { isLoggingIn: false, login: () => login.promise } },
     '../../services/authService': { persistAvatar: async value => value },
     '../navigation/ProductionTabBar': { setProductionTabBarHidden: value => { tabHidden = value } },
-    '../../i18n': { t: key => key }
+    '../../i18n': { t: key => key },
+    '../../i18n/index': { t: key => key }
   })
   const Sheet = load('src/components/common/LoginSheet.tsx').default
   engine.begin()
@@ -328,6 +332,7 @@ await test('the custom production tab bar hides for login sheets without suppres
     mobx: { makeAutoObservable: value => value },
     'mobx-react-lite': { observer: component => component },
     '../../i18n': { localeStore: { locale: 'zh' } },
+    '../../i18n/index': { localeStore: { locale: 'zh' } },
     '../../features/ui-experience/VisualMedia': { Icon: () => null }
   })
   const tabBar = load('src/components/navigation/ProductionTabBar.tsx')
@@ -414,7 +419,8 @@ function loginSheetHarness(login, localAvailable) {
     '../../stores/userStore': { userStore: { isLoggingIn: false, login } },
     '../../services/authService': { persistAvatar: async value => value, LOCAL_LOGIN_AVAILABLE: localAvailable },
     '../navigation/ProductionTabBar': { setProductionTabBarHidden() {} },
-    '../../i18n': { t: key => key }
+    '../../i18n': { t: key => key },
+    '../../i18n/index': { t: key => key }
   })
   const Sheet = load('src/components/common/LoginSheet.tsx').default
   return {

@@ -1,6 +1,6 @@
 # FlightOR Agent Tool Registry
 
-> 2026-09-20: B1 context, opt-in B2 Goal acceptance and B3 stable guide decisions/repair are implemented. B2 is disabled by default and its new PostgreSQL acceptance transaction awaits live DB validation. B3 works in both Goal modes; contracts and compatibility are recorded under [ADR 0019](adr/0019-lean-planner-evaluation.md). Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
+> 2026-09-20: B1 context, opt-in B2 Goal acceptance, B3 stable guide decisions/repair and B4 early committed-result publication are implemented. B2 is disabled by default and its new PostgreSQL acceptance transaction awaits live DB validation. B3/B4 work in both Goal modes; contracts and compatibility are recorded under [ADR 0019](adr/0019-lean-planner-evaluation.md). Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
 
 This file is the source-of-truth inventory for Agent-facing tools. It follows
 `docs/FLIGHTOR_ARCHITECTURE.md`; implementation status means both code and contract
@@ -9,9 +9,17 @@ tool boundary.
 
 The public conversation API is the authenticated `POST /v1/agent/converse`.
 The mini-program uses the same workflow via `POST /v1/agent/turns` and
-`GET /v1/agent/turns/:turnId` for temporary execution-stage feedback under
+`GET /v1/agent/turns/:turnId` for temporary execution-stage feedback and committed Artifact references under
 [ADR 0015](adr/0015-transient-planner-progress.md). This adds no Agent-facing
 tools or context messages; the production turn budget is 300 seconds.
+Accepted turns carry Trip/conversation/generation scope. Snapshots include monotonic
+`artifactRevision` and at most 24 compact, current-version `flight_search`/`travel_guide`
+refs. Only a successful workspace commit can publish them; a tool's returned refs
+cannot. `POST /v1/agent/turns/:turnId/cancel` is owner-scoped and idempotent,
+aborts active execution and retains committed refs. It does not cancel a persisted
+Goal or undo a committed transaction. The client waits for acknowledgement before
+unlocking submissions. Scope, version reconciliation, compatibility and concurrency
+semantics are specified in [RUNTIME_PLAN §5](design/budget-travel-agent/RUNTIME_PLAN.md).
 Its Planner registry is intentionally smaller than the complete deterministic
 Core Tool registry: conversation may gather facts, update Trip/Memory, search
 fares, research, and author daily travel guides. It may queue final route generation only
@@ -80,7 +88,7 @@ Automatic completion first records the Artifact in the Run working set. Its
 with `goal_verification_timeout` rather than discarding an already saved result;
 parent cancellation still applies. Lean tools allow an extra 5 seconds within
 the registry's 120-second cap; the whole-turn deadline is unchanged.
-This does not publish cards before the final reply (B4). B3 now offers stable
+Early card publication is independently provided by B4's workspace commit observer. B3 offers stable
 candidateRef decisions alongside the legacy positional input below.
 
 ### Stable guide decisions and repair (B3)

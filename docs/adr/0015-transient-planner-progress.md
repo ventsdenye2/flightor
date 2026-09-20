@@ -48,6 +48,30 @@ owner/session/request identity. A component-local clock updates elapsed time.
 
 ## Validation
 
+### 2026-09-20 amendment: committed results and cancellation (B4)
+
+The existing single-process resource now carries Trip/conversation/generation
+scope, a monotonic artifact revision and a bounded current set of compact committed
+flight/guide references. Runtime receives notifications only after workspace
+repository commit and a cancellation/version/selection checkpoint. Polling
+reconciles current domain versions without invalidating newer publications using
+an older asynchronous context read. No payload or reasoning enters progress.
+
+Authenticated `POST /v1/agent/turns/:turnId/cancel` aborts a running turn and returns
+its terminal snapshot with saved refs; repeated cancellation is safe. New turns in
+the same owned Trip/conversation supersede the prior running generation. Late
+events and settlement are ignored. This is execution cancellation, not persisted
+Goal cancellation or transaction rollback. The client unlocks mutations only after
+terminal acknowledgement, keeps committed results on failure/cancel, and can
+restore ref-only history. Draft editing and read-only flight details remain usable.
+
+These additions do not change the 300/315/330-second deadlines, ten-minute terminal
+retention or restart limitations. Exact protocol and compatibility are owned by
+[RUNTIME_PLAN §5](../design/budget-travel-agent/RUNTIME_PLAN.md); current offline
+evidence and runtime gaps are in [progress](../design/budget-travel-agent/progress.md).
+
+### Checks
+
 Check owner isolation, visible running stages before completion, terminal
 success/error, deadline/cancellation cleanup and late-response isolation.
 Client checks cover transient state, polling recovery and truthful stale

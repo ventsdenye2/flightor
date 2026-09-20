@@ -27,6 +27,7 @@ interface PlannerPageProps {
   productionDelivery?: ConversationDelivery
   productionWarnings?: string[]
   onCancelProduction?: () => void
+  productionCancelling?: boolean
   flightDecision?: ReactNode
 }
 
@@ -36,7 +37,7 @@ const suggestions = [
   { title: '只有一个长周末', prompt: '下一个长周末想出去走走，从上海出发，两个人，想要轻松、不赶路的安排。', icon: 'calendar' }
 ]
 
-export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, flightDecision }: PlannerPageProps) {
+export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, productionCancelling = false, flightDecision }: PlannerPageProps) {
   const production = Boolean(onSubmitPrompt)
   const hasResult = !production || productionResultAvailable
   const rateLimited = productionWarnings.includes('research_provider_rate_limited')
@@ -52,7 +53,6 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
   const samplePrompt = `从${trip.route[0] || '出发地待定'}出发，去${trip.destination}，${tripDurationLabel(trip)}，${travelerLabel(trip)}，安排轻松一点。`
   const hasReferenceTrip = Boolean(trip.cover?.src && trip.route[0] && !trip.destination.includes('待确认'))
   const visibleSuggestions = hasReferenceTrip ? suggestions : suggestions.filter(item => item.prompt)
-  const price = trip.flights[0]?.price
   const [draft, setDraft] = useState(initialPrompt)
   const [submitted, setSubmitted] = useState('')
   const [phase, setPhase] = useState<'idle' | 'loading' | 'ready' | 'cancelled'>('idle')
@@ -91,7 +91,6 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
   const cancel = () => {
     if (onCancelProduction) {
       onCancelProduction()
-      setPhase('cancelled')
       return
     }
     if (pending.current) clearTimeout(pending.current)
@@ -132,7 +131,10 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
             <Text className='ux-muted'>{`先用${sampleLabel}示例，看看旅程会如何展开。`}</Text>
           </>}
           <View className='pl-loading-skeleton'><View /><View /><View /></View>
-          {(!production || onCancelProduction) && <Button className='ux-text-button' onClick={cancel}>{production ? '取消规划' : '取消查看'}</Button>}
+          {productionError && <View role='alert'><Text>{productionError}</Text></View>}
+          {(!production || onCancelProduction) && <Button className='ux-text-button' disabled={productionCancelling} onClick={cancel}>{productionCancelling ? '正在取消…' : production ? '取消规划' : '取消查看'}</Button>}
+          {hasResult && <View className='pl-saved-while-running'><Text className='pl-saved-while-running__label'>已保存，仍在整理/核验</Text><Button className='pl-result' onClick={onOpenTrip}><View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {tripDurationLabel(trip)}</Text><Text>{production ? '已保存结果' : '固定示例'}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || '路线待确认'} · {travelerLabel(trip)}</Text><View className='pl-open-result'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></Button></View>}
+          {flightDecision}
         </View> : phase === 'cancelled' ? <View className='pl-cancelled' role='status'>
           <Text className='ux-section-title'>{production ? '已取消规划' : '已取消查看'}</Text><Text className='ux-muted'>可以继续查看参考，也可以重新写下你的想法。</Text>
           <View className='pl-inline-actions'><Button className='ux-text-button' onClick={() => start(submitted)}>继续查看</Button><Button className='ux-text-button' onClick={() => reset(submitted)}>修改想法</Button></View>
@@ -141,11 +143,11 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
             <Text className='ux-section-title'>本次规划未完成</Text><PlannerReply className='ux-muted' content={interruptionMessage} />
             <View className='pl-inline-actions'><Button className='ux-text-button' disabled={productionBusy} onClick={() => start(submitted)}>重新规划</Button><Button className='ux-text-button' onClick={() => reset(submitted)}>修改想法</Button></View>
           </View> : null}
-          {hasResult && <Button className='pl-result' onClick={onOpenTrip}>
-            {trip.cover && <Photo src={trip.cover.src} description={trip.cover.description} className='pl-result-photo' retry={false} />}
-            <View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {tripDurationLabel(trip)}</Text><Text>{production ? '已保存结果' : '固定示例'}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || '路线待确认'} · {travelerLabel(trip)}</Text><View className='pl-result-bottom'><View><Text className='pl-result-price'>{formatPrice(price)}{price && price.status !== 'unknown' && price.amount !== null ? <Text>{price.unit === 'person' ? ' / 人' : ' / 合计'}</Text> : null}</Text><Text className='ux-caption'>{priceStatusLabel(price)}</Text></View><View className='pl-open-result'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></View>
-          </Button>}
           {hasResult && <>
+            <Button className='pl-result' onClick={onOpenTrip}>
+              {trip.cover && <Photo src={trip.cover.src} description={trip.cover.description} className='pl-result-photo' retry={false} />}
+              <View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {tripDurationLabel(trip)}</Text><Text>{production ? '已保存结果' : '固定示例'}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || '路线待确认'} · {travelerLabel(trip)}</Text><View className='pl-result-bottom'><View><Text className='pl-result-price'>{formatPrice(trip.flights[0]?.price)}{trip.flights[0]?.price && trip.flights[0].price.status !== 'unknown' && trip.flights[0].price.amount !== null ? <Text>{trip.flights[0].price.unit === 'person' ? ' / 人' : ' / 合计'}</Text> : null}</Text><Text className='ux-caption'>{priceStatusLabel(trip.flights[0]?.price)}</Text></View><View className='pl-open-result'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></View>
+            </Button>
             <View className='pl-result-status'><Icon name='info' /><Text>{trip.days.length ? `已有 ${trip.days.filter(day => day.status === 'ready').length} 天参考安排，可查看和调整` : '每日安排尚未补充，可先查看旅行信息'}</Text></View>
             <Text className='pl-result-description'>{trip.description}</Text>
             {!production && <DemoNote text={`这是固定的${sampleLabel}参考，未按输入内容生成；航班、价格与安排均为示例。`} />}
@@ -156,10 +158,10 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
         </>}
       </View>}
     </View>
-    {!submitted ? <View className='pl-composer'>
+    {(!submitted || productionBusy || Boolean(draft)) ? <View className='pl-composer'>
       <View className='pl-input-wrap'><Textarea className='pl-textarea' value={draft} maxlength={600} ariaLabel='旅行想法' placeholder='例如：北京出发，东京五天，两个人，安排轻松一点。' onInput={event => setDraft(event.detail.value)} /><View className='pl-composer-actions'><Text className='pl-composer-hint'>{draft ? `${draft.length}/600` : '出发地、日期、人数和预算'}</Text>{draft ? <Button className='ux-icon-button pl-clear' ariaLabel='清空旅行想法' onClick={() => setDraft('')}><Icon name='close' /></Button> : null}</View></View>
       <Button className='ux-primary pl-submit' disabled={!draft.trim() || productionBusy} onClick={() => start(draft)}><Text>{production ? '开始规划' : '查看行程示例'}</Text><Icon name='arrow-right' /></Button>
-      <Text className='pl-composer-note'>{production ? '确认航班后再生成游玩安排，结果会自动保存' : `演示模式 · 将展示${sampleLabel}固定参考`}</Text>
+      <Text className='pl-composer-note'>{productionBusy ? '规划进行中：草稿会保留，当前提交入口将在本轮结束后恢复' : production ? '确认航班后再生成游玩安排，结果会自动保存' : `演示模式 · 将展示${sampleLabel}固定参考`}</Text>
     </View> : null}
   </>
 }

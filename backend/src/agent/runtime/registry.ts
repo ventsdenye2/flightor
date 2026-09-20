@@ -2,7 +2,7 @@ import { z, type ZodType } from 'zod'
 import type { AviationProvider } from '../../aviation/providers/provider.js'
 import type { FareProvider } from '../../fares/providers/provider.js'
 import type { TripContextRepository } from '../../trips/repository.js'
-import type { ArtifactRepository } from '../../artifacts/repository.js'
+import type { ArtifactRepository, ArtifactRecord } from '../../artifacts/repository.js'
 import type { UserMemoryRepository } from '../../memory/repository.js'
 import type { ResearchAgent } from '../../research-agent/types.js'
 import type { ConnectionSearchService, FlightRoutePlanner, RouteOptimizer } from '../../flight-routing/types.js'
@@ -63,6 +63,7 @@ export interface ToolExecutionContext {
   acceptedGoalIntent?: { goalId: string; runId: string; kind: GoalKind; contextVersion: number; fingerprint: string }
   /** One bounded, same-generation invalid guide draft. Never model-authored context. */
   guideDraft?: GuideDraft
+  onArtifactCommitted?: (record: ArtifactRecord) => void
 }
 
 export interface AgentTool<Input = unknown, Output = unknown> {

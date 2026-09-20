@@ -152,7 +152,19 @@ export class AgentRuntime {
       ...input.context,
       resolvedLocationKeys: new Set<string>(),
       resolvedLocations: new Map(),
-      isGenerationCurrent: () => !stale(input)
+      isGenerationCurrent: () => !stale(input),
+      onArtifactCommitted: record => {
+        if (controller.signal.aborted || stale(input) || record.tripId !== input.context.tripId
+          || record.conversationId !== input.context.conversationId || record.tripContextVersion === undefined
+          || (record.type !== 'flight_search' && record.type !== 'travel_guide')) return
+        emitActivity(input.onActivity, { type: 'artifact_committed', tripId: record.tripId,
+          conversationId: input.context.conversationId, generationId: input.context.generationId,
+          artifact: { id: record.id, type: record.type, schemaVersion: record.schemaVersion,
+            tripContextVersion: record.tripContextVersion,
+            presentationHint: record.type === 'flight_search' ? 'flight_cards' : 'travel_guide' },
+          ...(record.type === 'travel_guide' && input.context.selectedFlight
+            ? { selectedFlightRevision: input.context.selectedFlight.selection.revision } : {}) })
+      }
     }
     const touchedGoals = new Map<string, { runId: string; kind: ToolExecutionContext['activeGoalKind'] }>()
     const touchedRuns = new Map<string, string>()
