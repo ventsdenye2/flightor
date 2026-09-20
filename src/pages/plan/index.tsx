@@ -13,6 +13,8 @@ import type { TripPresentation } from '../../features/ui-experience/presentation
 import { artifactService, type ArtifactEnvelope } from '../../services/artifactService'
 import { getCloudWorkspace, type WorkspaceTrip } from '../../services/workspaceService'
 import { FlightDecisionPanel } from '../../features/ui-experience/FlightDecisionPanel'
+import { displayOffers, displayOfferById, record } from '../../components/artifacts/payload'
+import { plannerTelemetry } from '../../services/plannerTelemetry'
 import './index.scss'
 
 type SubmitScope = { ownerId: string | undefined; authRevision: number; sessionId: string; tripId: string }
@@ -40,7 +42,7 @@ function useScopedFlightArtifact(id: string | undefined, ownerId: string | undef
 function PlanPage() {
   useProductionTab('plan')
   const locale = localeStore.locale
-  const [productionResult, setProductionResult] = useState<{ key: string; trip: TripPresentation }>()
+  const [productionResult, setProductionResult] = useState<{ key: string; trip: TripPresentation; guideId?: string; verificationStatus: string | null }>()
   const [productionError, setProductionError] = useState('')
   const [productionLoginOpen, setProductionLoginOpen] = useState(false)
   const [workspaceTrip, setWorkspaceTrip] = useState<{ key: string; trip: WorkspaceTrip }>()
@@ -72,7 +74,8 @@ function PlanPage() {
     const tripId = chatStore.tripId
     const authRevision = userStore.sessionRevision
     loadProductionTrip(productionRef.id, { ownerId, sessionId })
-      .then(value => { if (active && authRevision === userStore.sessionRevision && ownerId === userStore.profile?.uid && sessionId === chatStore.currentSessionId && tripId === chatStore.tripId) { setProductionResult({ key: resultKey, trip: value.presentation }); setProductionError('') } })
+      .then(value => { if (active && authRevision === userStore.sessionRevision && ownerId === userStore.profile?.uid && sessionId === chatStore.currentSessionId && tripId === chatStore.tripId) { setProductionResult({ key: resultKey, trip: value.presentation, guideId: value.guide?.id,
+        verificationStatus: artifactVerificationStatus(value.guide) }); setProductionError('') } })
       .catch(error => { if (active && authRevision === userStore.sessionRevision && ownerId === userStore.profile?.uid && sessionId === chatStore.currentSessionId && tripId === chatStore.tripId) setProductionError(error instanceof Error ? error.message : '行程结果暂不可用') })
     return () => { active = false }
   }, [resultKey])
@@ -97,7 +100,7 @@ function PlanPage() {
   }, [ownerId, userStore.sessionRevision, chatStore.currentSessionId, chatStore.tripId])
   useEffect(() => () => { activeSubmit.current = undefined }, [])
 
-  async function submit(message: string) {
+  async function submit(message: string, clickedAtMs: number | null = null) {
     if (busy || chatStore.isThinking) return
     if (chatStore.requiresLogin) {
       pendingPrompt.current = message
@@ -108,7 +111,7 @@ function PlanPage() {
     const revision = userStore.sessionRevision
     const submitOwnerId = userStore.profile?.uid
     setProductionError('')
-    const sending = chatStore.send(message, locale)
+    const sending = chatStore.send(message, locale, { clickedAtMs })
     // Owner activation and legacy-session migration run synchronously before
     // send's first await; capture their resulting scope, allowing fresh Trip bootstrap.
     const scope = { ownerId: submitOwnerId, authRevision: revision, sessionId: chatStore.currentSessionId, tripId: chatStore.tripId }
@@ -139,7 +142,7 @@ function PlanPage() {
   const openFlightCandidates = (artifactId: string) => void Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodeURIComponent(artifactId)}` })
   const planSelectedFlight = () => void submit(selectedFlight?.layoverPreference === 'consider_city'
     ? '请根据我刚刚采用的全部航段和时间安排游玩。长中转只有在入境、行李、地面交通和安全余量都合适时才考虑进城；先安排真实抵达后的目的地行程。'
-    : '请根据我刚刚采用的全部航段和时间安排游玩。中转期间留在机场，先安排真实抵达后的目的地行程。')
+    : '请根据我刚刚采用的全部航段和时间安排游玩。中转期间留在机场，先安排真实抵达后的目的地行程。', plannerTelemetry.now())
   const flightDecision = <>
     {currentFlightArtifact && <FlightDecisionPanel key={currentFlightArtifact.id} artifact={currentFlightArtifact} selection={selectedFlight} busy={busy}
       onOpenCandidates={openFlightCandidates} onChange={openFlightCandidates} onPlan={planSelectedFlight} />}
@@ -153,7 +156,7 @@ function PlanPage() {
       trip={result ?? fallbackTrip}
       onOpenTrip={() => productionRef && void Taro.navigateTo({ url: `/pages/route/index?artifactId=${encodeURIComponent(productionRef.id)}` })}
       onSearchFlights={() => void Taro.navigateTo({ url: '/pages/index/index' })}
-      onSubmitPrompt={message => void submit(message)}
+      onSubmitPrompt={message => void submit(message, plannerTelemetry.now())}
       productionBusy={busy}
       productionProgress={chatStore.turnProgress}
       productionCancelling={chatStore.turnCancelling}
@@ -167,6 +170,17 @@ function PlanPage() {
       productionWarnings={lastTurn?.warnings}
       onCancelProduction={() => { activeSubmit.current = undefined; void chatStore.cancelTurn(locale) }}
       flightDecision={flightDecision}
+      productionTelemetry={chatStore.turnTelemetryId ? {
+        id: chatStore.turnTelemetryId, finalReady: chatStore.turnTelemetryFinalReady,
+        flights: [currentFlightArtifact, alternativeFlightArtifact].flatMap(artifact => {
+          const payload = artifact && record(artifact.payload)
+          const usable = payload && (artifact?.id === selectedFlight?.artifactId && selectedFlight?.kind === 'offer'
+            ? displayOfferById(payload, selectedFlight.offerId, artifact?.presentation) : displayOffers(payload, artifact?.presentation).length > 0)
+          return artifact?.type === 'flight_search' && usable ? [{ id: artifact.id, verificationStatus: artifactVerificationStatus(artifact) }] : []
+        }),
+        ...(result && productionResult?.guideId ? { guide: { id: productionResult.guideId, verificationStatus: productionResult.verificationStatus } } : {})
+      } : undefined}
+      onProductionCommit={(id, event) => chatStore.recordTurnUiCommit(id, event)}
     />
     <LoginSheet
       visible={productionLoginOpen}
@@ -182,3 +196,8 @@ function PlanPage() {
 }
 
 export default observer(PlanPage)
+
+function artifactVerificationStatus(artifact: ArtifactEnvelope | undefined): string | null {
+  const status = record(artifact?.verification)?.status ?? record(record(artifact?.payload)?.verification)?.status
+  return typeof status === 'string' ? status : null
+}

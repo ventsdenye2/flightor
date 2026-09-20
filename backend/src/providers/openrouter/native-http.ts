@@ -1,4 +1,5 @@
 import { AppError } from '../../lib/errors.js'
+import { observeSpan, recordHttpStatus } from '../../lib/planner-observation.js'
 import type { NativeResearchReceipt } from '../../research-agent/native.js'
 
 const MAX_ERROR_BODY_BYTES = 16_384
@@ -70,6 +71,11 @@ export async function fetchNativeResearch(
   url: string, body: Record<string, unknown>, apiKey: string,
   options: { signal: AbortSignal; timeoutMs: number }
 ): Promise<{ ok: true; payload: unknown } | { ok: false; http: HttpReceipt }> {
+  return observeSpan('http', 'openrouter.native', () => fetchNativeAttempt(url, body, apiKey, options))
+}
+
+async function fetchNativeAttempt(url: string, body: Record<string, unknown>, apiKey: string,
+  options: { signal: AbortSignal; timeoutMs: number }): Promise<{ ok: true; payload: unknown } | { ok: false; http: HttpReceipt }> {
   const timeout = AbortSignal.timeout(options.timeoutMs)
   const signal = AbortSignal.any([options.signal, timeout])
   try {
@@ -77,6 +83,7 @@ export async function fetchNativeResearch(
       method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify(body), signal
     })
+    recordHttpStatus(response.status)
     if (!response.ok) return { ok: false, http: await errorReceipt(response, apiKey) }
     return { ok: true, payload: await response.json() }
   } catch {

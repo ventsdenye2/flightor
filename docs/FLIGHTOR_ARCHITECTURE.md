@@ -1,6 +1,34 @@
 # FlightOR Agent Architecture v1
 
-> **Current checkpoint — 2026-09-20:** B0/B1 are committed at cabbf51, B2 at d895d0e and B3 at 6649644. B4 adds early committed flight/guide references, acknowledged cancellation and browsing/draft editing during execution. B2 business-tool Goal acceptance remains disabled by default (`PLANNER_LEAN_GOALS_ENABLED=false`) and its PostgreSQL transaction still awaits DB integration execution. B3/B4 work with either Goal protocol; complete observability remains B5. [RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) owns exact limits and compatibility; offline checks do not replace [dated live acceptance](FLIGHT_FIRST_ACCEPTANCE.md). Follow [documentation maintenance](DOCS_MAINTENANCE.md) in every change batch.
+> **Current checkpoint — 2026-09-20:** B0/B1 are committed at cabbf51, B2 at d895d0e, B3 at 6649644 and B4 at 1ce177b. B5 adds bounded per-turn model/tool/HTTP diagnostics and client result-commit timing. B2 business-tool Goal acceptance remains disabled by default (`PLANNER_LEAN_GOALS_ENABLED=false`) and its PostgreSQL transaction still awaits DB integration execution. B3–B5 work with either Goal protocol; G1 and formal performance measurements have not run. [RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) owns exact limits and compatibility; offline checks do not replace [dated live acceptance](FLIGHT_FIRST_ACCEPTANCE.md). Follow [documentation maintenance](DOCS_MAINTENANCE.md) in every change batch.
+
+### B5 observation ownership
+
+`backend/src/lib/planner-observation.ts` owns an AsyncLocalStorage recorder per
+CloudPlanner turn. Runtime and shared OpenRouter/HTTP adapters attach nested
+spans; model adapter wrappers reuse an existing model span. The default route
+logs one bounded `plannerObservation` summary, outside model context and public
+turn responses. No diagnostic database, queue, extra model request or provider
+configuration change is introduced. Span exclusive time subtracts the union
+of child intervals, while wall duration uses one server monotonic clock.
+Unknown tokens/costs stay null; known model cost is not total external billing.
+Outbound config is normalized before hashing, and a hash of the credential-free
+gateway origin/path distinguishes routes without emitting URLs or prompt data.
+
+The Artifact workspace records saves only after repository commit; Goal
+completion records firstVerified only after durable satisfied commit. Native
+research records valid reported search counts even when content validation
+fails, independently from tool and HTTP attempt counts. Closed observations
+ignore late callbacks and retain interrupted spans. Limits and exact accounting
+semantics are owned by [RUNTIME_PLAN §6](design/budget-travel-agent/RUNTIME_PLAN.md).
+
+Client `plannerTelemetry` keeps bounded in-memory measurements associated with
+the accepted turn/generation and current account/session/workspace. Plan loads
+eligible current-turn references; PlannerPage records actual result branch
+effect commits. This is explicitly commit evidence, not browser/device paint.
+Server and client elapsed times must not be subtracted across devices. Extraction
+and the unrun benchmark boundary are in
+[EVALUATION §4.1](design/budget-travel-agent/EVALUATION.md).
 
 > Status: **Product + engineering baseline**
 >

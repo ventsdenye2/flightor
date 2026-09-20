@@ -1,4 +1,5 @@
 import { AppError } from './errors.js'
+import { observeSpan, recordHttpStatus } from './planner-observation.js'
 
 export interface FetchJsonOptions {
   timeoutMs?: number
@@ -11,6 +12,10 @@ export async function fetchJson<T>(
   init: RequestInit,
   options: FetchJsonOptions
 ): Promise<T> {
+  return observeSpan('http', options.provider, () => fetchJsonAttempt<T>(url, init, options))
+}
+
+async function fetchJsonAttempt<T>(url: string, init: RequestInit, options: FetchJsonOptions): Promise<T> {
   const timeoutMs = options.timeoutMs ?? 10_000
   const controller = new AbortController()
   let timedOut = false
@@ -26,6 +31,7 @@ export async function fetchJson<T>(
   }
   try {
     const response = await fetch(url, { ...init, signal: controller.signal })
+    recordHttpStatus(response.status)
     const payload = await response.json() as T & { error?: unknown; message?: unknown }
     if (!response.ok) {
       throw new AppError(

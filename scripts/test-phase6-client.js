@@ -38,8 +38,11 @@ check('primary tabs are Plan, Explore, Trips, Profile', JSON.stringify(tabPaths)
 ]))
 check('custom tab bar maps exactly to the four production tabs and swaps active icons', ['plan', 'explore', 'trips', 'profile'].every(id => productionNav.includes(`{ id: '${id}'`)) && productionNav.includes('activeIcon') && productionNav.includes('active === tab.id ? tab.activeIcon : tab.icon') && productionNav.includes('Taro.switchTab'))
 check('Plan derives its pending trip from server Trip Context', plan.includes('chatStore.tripContextSummary?.destinations.required') && plan.includes('chatStore.tripContextSummary?.travelDays'))
-check('Plan has one Agent-backed Planner authority', plan.includes('<PlannerPage') && plan.includes('onSubmitPrompt=') && plan.includes('chatStore.send(message, locale)') && !plan.includes('AgentChat') && !plan.includes('planTrip(') && !/from ['"][^'"]*flightStore/.test(plan))
-check('Plan clears a stale load error before accepting a new Artifact result', plan.indexOf("setProductionError('')") < plan.indexOf('loadProductionTrip(productionRef.id') && plan.includes("setProductionResult({ key: resultKey, trip: value.presentation }); setProductionError('')"))
+check('Plan has one Agent-backed Planner authority', plan.includes('<PlannerPage') && plan.includes('onSubmitPrompt=') && /chatStore\.send\(message,\s*locale,\s*\{\s*clickedAtMs\s*\}\)/.test(plan) && !plan.includes('AgentChat') && !plan.includes('planTrip(') && !/from ['"][^'"]*flightStore/.test(plan))
+// B5 adds guide identity/verification metadata; the accepted presentation must still
+// retain its result key and clear a previous load error in the same success branch.
+const acceptedProductionResult = /setProductionResult\(\{([^}]+)\}\);\s*setProductionError\(''\)/.exec(plan)?.[1] ?? ''
+check('Plan clears a stale load error before accepting a new Artifact result', plan.indexOf("setProductionError('')") < plan.indexOf('loadProductionTrip(productionRef.id') && /key:\s*resultKey(?:,|$)/.test(acceptedProductionResult) && /trip:\s*value\.presentation(?:,|$)/.test(acceptedProductionResult))
 check('Planner hides placeholder samples and unsupported cancellation', planner.includes('const hasReferenceTrip = Boolean(') && planner.includes('const visibleSuggestions = hasReferenceTrip ? suggestions : suggestions.filter(item => item.prompt)') && planner.includes('(!production || onCancelProduction)'))
 check('legacy UnderstandingPanel is removed', !plan.includes('UnderstandingPanel') && !plan.includes("../../mocks/airports"))
 check('Plan opens the latest route or travel guide ArtifactRef', plan.includes('lastTurn?.artifactRefs') && plan.includes("ref.type === 'travel_guide'") && plan.includes("ref.type === 'route'") && plan.includes('loadProductionTrip(productionRef.id'))

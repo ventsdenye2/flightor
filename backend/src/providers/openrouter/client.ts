@@ -1,15 +1,18 @@
 import type { AppEnv } from '../../config/env.js'
 import type {
   ChatCompletion,
+  ChatCompletionObservation,
   ChatMessage,
   ChatOptions,
   ChatReasoning,
   FunctionToolCall
 } from '../../agent/runtime/model.js'
+import { createHash } from 'node:crypto'
 import { AppError } from '../../lib/errors.js'
 import { fetchJson } from '../../lib/http.js'
 import type { NativeResearchReceipt } from '../../research-agent/native.js'
 import { fetchNativeResearch } from './native-http.js'
+import { observeModelCall, recordModelObservation, recordSpanError } from '../../lib/planner-observation.js'
 
 export type {
   ChatCompletion,
@@ -20,6 +23,7 @@ export type {
   ChatToolChoice,
   ChatToolDefinition as ChatTool
 } from '../../agent/runtime/model.js'
+export type { ChatCompletionObservation } from '../../agent/runtime/model.js'
 export type ChatToolCall = FunctionToolCall
 
 const DEEPSEEK_CHAT_MODEL = 'deepseek/deepseek-chat'
@@ -84,7 +88,9 @@ export class OpenRouterClient {
       // callers can keep sending their model-agnostic reasoning preference.
       ...reasoningBody(model, options?.reasoning)
     }
-    return fetchJson<Record<string, unknown>>(
+    return observeModelCall('openrouter', async () => {
+      recordModelObservation(normalizeCompletionObservation({}, model, options, body, undefined, this.config.OPENROUTER_BASE_URL))
+      const response = await fetchJson<Record<string, unknown>>(
       `${this.config.OPENROUTER_BASE_URL.replace(/\/$/, '')}/chat/completions`,
       {
         method: 'POST',
@@ -96,7 +102,10 @@ export class OpenRouterClient {
         body: JSON.stringify(body)
       },
       { provider: 'openrouter', timeoutMs: Math.min(90_000, Math.max(1_000, options?.timeoutMs ?? 35_000)), ...(options?.signal ? { signal: options.signal } : {}) }
-    )
+      )
+      recordModelObservation(normalizeCompletionObservation(response, model, options, body, undefined, this.config.OPENROUTER_BASE_URL))
+      return response
+    })
   }
 
   async complete(
@@ -104,6 +113,10 @@ export class OpenRouterClient {
     model = this.config.OPENROUTER_MODEL,
     options?: ChatOptions
   ): Promise<ChatCompletion> {
+    return observeModelCall('openrouter', () => this.completeObserved(messages, model, options))
+  }
+
+  private async completeObserved(messages: ChatMessage[], model: string, options?: ChatOptions): Promise<ChatCompletion> {
     const response = await this.chat(messages, model, options)
     const choices = response.choices
     if (!Array.isArray(choices) || choices.length === 0) {
@@ -133,17 +146,26 @@ export class OpenRouterClient {
     if (finishReason !== undefined && finishReason !== null && typeof finishReason !== 'string') {
       throw new AppError('PROVIDER_UNAVAILABLE', 'OpenRouter returned malformed finish reason', 502)
     }
-    return { message, ...(typeof finishReason === 'string' ? { finishReason } : {}) }
+    const observation = normalizeCompletionObservation(response, model, options, undefined, undefined, this.config.OPENROUTER_BASE_URL)
+    recordModelObservation(observation)
+    return { message, ...(typeof finishReason === 'string' ? { finishReason } : {}), observation }
   }
 
   /** Native research needs raw annotations and provider accounting; Planner completion deliberately remains compact. */
   async completeNativeResearch(body: Record<string, unknown>, options: { signal: AbortSignal; timeoutMs: number }): Promise<NativeResearchReceipt> {
+    return observeModelCall('openrouter.native', () => this.nativeObserved(body, options))
+  }
+
+  private async nativeObserved(body: Record<string, unknown>, options: { signal: AbortSignal; timeoutMs: number }): Promise<NativeResearchReceipt> {
     if (!this.config.OPENROUTER_API_KEY) throw new AppError('PROVIDER_NOT_CONFIGURED', 'OpenRouter is not configured', 503)
-    const result = await fetchNativeResearch(
-      `${this.config.OPENROUTER_BASE_URL.replace(/\/$/, '')}/chat/completions`,
-      body, this.config.OPENROUTER_API_KEY,
-      { timeoutMs: Math.min(95_000, Math.max(1_000, options.timeoutMs)), signal: options.signal }
-    )
+    const result = await observeModelCall('openrouter', async () => {
+      const actualTimeout = Math.min(95_000, Math.max(1_000, options.timeoutMs))
+      recordModelObservation(normalizeCompletionObservation({}, typeof body.model === 'string' ? body.model : this.config.OPENROUTER_MODEL, undefined, body, actualTimeout, this.config.OPENROUTER_BASE_URL))
+      const nativeResult = await fetchNativeResearch(`${this.config.OPENROUTER_BASE_URL.replace(/\/$/, '')}/chat/completions`, body, this.config.OPENROUTER_API_KEY, { timeoutMs: Math.min(95_000, Math.max(1_000, options.timeoutMs)), signal: options.signal })
+      if (nativeResult.ok && isRecord(nativeResult.payload)) recordModelObservation(normalizeCompletionObservation(nativeResult.payload, typeof body.model === 'string' ? body.model : this.config.OPENROUTER_MODEL, undefined, body, actualTimeout, this.config.OPENROUTER_BASE_URL))
+      if (!nativeResult.ok) recordSpanError(`HTTP_${nativeResult.http.status}`)
+      return nativeResult
+    })
     if (!result.ok) return { provider: 'openrouter', http: result.http }
     const response = result.payload
     if (!isRecord(response)) throw new AppError('PROVIDER_UNAVAILABLE', 'OpenRouter returned no native research completion', 502)
@@ -165,6 +187,56 @@ export function usdMicrosFromProviderCost(value: unknown): number | undefined {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return undefined
   const micros = Math.ceil(value * 1_000_000)
   return Number.isSafeInteger(micros) ? micros : undefined
+}
+
+export function normalizeCompletionObservation(response: Record<string, unknown>, requestModel: string, options?: ChatOptions, actualBody?: Record<string, unknown>, effectiveTimeoutMs?: number, baseUrl?: string): ChatCompletionObservation {
+  const usage = isRecord(response.usage) ? response.usage : {}
+  const n = (value: unknown, _field: string): number | null => {
+    if (value === undefined || value === null) return null
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || !Number.isSafeInteger(value)) return null
+    return value
+  }
+  const choice = Array.isArray(response.choices) && isRecord(response.choices[0]) ? response.choices[0] : undefined
+  const body = actualBody ?? {
+    ...(options?.maxTokens === undefined ? {} : { max_tokens: options.maxTokens }),
+    ...(options?.temperature === undefined ? {} : { temperature: options.temperature }),
+    ...reasoningBody(requestModel, options?.reasoning),
+    ...(options?.toolChoice === undefined ? {} : { tool_choice: options.toolChoice }),
+    ...(options?.tools === undefined ? {} : { tools: options.tools }),
+    ...(options?.responseFormat ? { response_format: options.responseFormat, provider: { require_parameters: true } } : {})
+  }
+  const identifier = (value: unknown): string | null => typeof value === 'string' && /^[a-zA-Z0-9_.:/-]{1,160}$/.test(value) ? value : null
+  const rawReasoning = isRecord(body.reasoning) ? body.reasoning : undefined
+  const reasoning: ChatReasoning | null = rawReasoning ? {
+    ...(typeof rawReasoning.enabled === 'boolean' ? { enabled: rawReasoning.enabled } : {}),
+    ...(typeof rawReasoning.exclude === 'boolean' ? { exclude: rawReasoning.exclude } : {}),
+    ...(['none', 'minimal', 'low', 'medium', 'high', 'xhigh'].includes(String(rawReasoning.effort)) ? { effort: rawReasoning.effort as NonNullable<ChatReasoning['effort']> } : {})
+  } : null
+  const rawChoice = body.tool_choice
+  const toolChoice = ['auto', 'none', 'required'].includes(String(rawChoice)) ? rawChoice as 'auto' | 'none' | 'required'
+    : isRecord(rawChoice) && rawChoice.type === 'function' && isRecord(rawChoice.function) && identifier(rawChoice.function.name)
+      ? { type: 'function' as const, function: { name: identifier(rawChoice.function.name)! } } : null
+  const config = { maxTokens: n(body.max_tokens, 'max_tokens'),
+    temperature: typeof body.temperature === 'number' && Number.isFinite(body.temperature) ? body.temperature : null,
+    reasoning, toolChoice, timeoutMs: effectiveTimeoutMs ?? Math.min(90_000, Math.max(1_000, options?.timeoutMs ?? 35_000)) }
+  let routeFingerprint: string | null = null
+  if (baseUrl) {
+    try {
+      const url = new URL(baseUrl)
+      // Route identity excludes credentials, query and fragment; even the path is emitted only as a hash.
+      routeFingerprint = createHash('sha256').update(url.origin + url.pathname.replace(/\/$/, '')).digest('hex')
+    } catch { /* Invalid or unavailable route metadata remains unknown. */ }
+  }
+  // Hash the exact tool/schema/routing configuration; never emit its descriptions or message bodies.
+  const fingerprint = createHash('sha256').update(JSON.stringify({ model: requestModel, routeFingerprint, config,
+    tools: body.tools ?? null, responseFormat: body.response_format ?? null, routing: body.provider ?? null,
+    maxToolCalls: body.max_tool_calls ?? null })).digest('hex')
+  return { requestModel: identifier(requestModel) ?? 'unknown', responseModel: identifier(response.model), provider: identifier(response.provider), gateway: 'openrouter',
+    finishReason: identifier(choice?.finish_reason),
+    usage: { promptTokens: n(usage.prompt_tokens, 'prompt token usage'), completionTokens: n(usage.completion_tokens, 'completion token usage'),
+      totalTokens: n(usage.total_tokens, 'total token usage'), reasoningTokens: n(isRecord(usage.completion_tokens_details) ? usage.completion_tokens_details.reasoning_tokens : undefined, 'reasoning token usage'),
+      cachedTokens: n(isRecord(usage.prompt_tokens_details) ? usage.prompt_tokens_details.cached_tokens : undefined, 'cached token usage') },
+    costUsdMicros: usdMicrosFromProviderCost(usage.cost) ?? null, configFingerprint: fingerprint, routeFingerprint, ...config }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

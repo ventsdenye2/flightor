@@ -1,6 +1,6 @@
 # FlightOR Agent Tool Registry
 
-> 2026-09-20: B1 context, opt-in B2 Goal acceptance, B3 stable guide decisions/repair and B4 early committed-result publication are implemented. B2 is disabled by default and its new PostgreSQL acceptance transaction awaits live DB validation. B3/B4 work in both Goal modes; contracts and compatibility are recorded under [ADR 0019](adr/0019-lean-planner-evaluation.md). Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
+> 2026-09-20: B1 context, opt-in B2 Goal acceptance, B3 stable guide decisions/repair, B4 early committed-result publication and B5 bounded observability are implemented. B2 is disabled by default and its new PostgreSQL acceptance transaction awaits live DB validation. B3–B5 work in both Goal modes; contracts and compatibility are recorded under [ADR 0019](adr/0019-lean-planner-evaluation.md). Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
 
 This file is the source-of-truth inventory for Agent-facing tools. It follows
 `docs/FLIGHTOR_ARCHITECTURE.md`; implementation status means both code and contract
@@ -90,6 +90,24 @@ parent cancellation still applies. Lean tools allow an extra 5 seconds within
 the registry's 120-second cap; the whole-turn deadline is unchanged.
 Early card publication is independently provided by B4's workspace commit observer. B3 offers stable
 candidateRef decisions alongside the legacy positional input below.
+
+### Runtime diagnostics (B5; no new public tool)
+
+Server-only `plannerObservation` logs correlate model/tool/HTTP spans and
+committed save/Goal milestones by request, Trip, conversation and generation.
+Tool attempts (including rejected calls), actual HTTP adapter attempts and
+provider-reported native searches are distinct counters. Research model spans
+are children of their tool span; durations must not be added across levels.
+Save/revision attempts and classified repair responses are counted without
+logging tool arguments, model messages or research content. A saved Artifact
+and committed satisfied Goal have separate timestamps. Unknown token/cost
+values remain null; existing costUnits remain budget units, not USD.
+OpenRouter metadata describes normalized outbound config, returned model/provider
+and a hashed, credential-free route identity. Public tool schemas, results,
+turn responses and model context are unchanged by these diagnostics. Limits,
+client commit evidence and extraction are owned by
+[RUNTIME_PLAN §6](design/budget-travel-agent/RUNTIME_PLAN.md) and
+[EVALUATION §4](design/budget-travel-agent/EVALUATION.md).
 
 ### Stable guide decisions and repair (B3)
 

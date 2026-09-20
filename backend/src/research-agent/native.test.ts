@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { NativeResearchAgent, type NativeResearchReceipt } from './native.js'
 import type { NativeResearchAuditFinish, NativeResearchAuditStart, NativeResearchLedger } from './native-infrastructure.js'
 import type { ResearchBrief } from './types.js'
+import { observePlannerTurn } from '../lib/planner-observation.js'
 
 const brief: ResearchBrief = {
   destinations: [{ id: 'city-tyo', type: 'city', name: 'Tokyo', countryCode: 'JP' }],
@@ -57,6 +58,56 @@ describe('NativeResearchAgent', () => {
     expect(complete).toHaveBeenCalledTimes(1)
     expect(ledger.finishes[0]?.input).toMatchObject({ status: 'failed', error: { code: 'NATIVE_RESEARCH_SEARCH_COUNT_UNKNOWN' } })
     expect(ledger.finishes[0]?.input.settledUsdMicros).toBeUndefined()
+  })
+
+  it.each([
+    ['incomplete finish reason', receipt({ finishReason: 'length', usage: { server_tool_use: { web_search_requests: 3 } } }), 'NATIVE_RESEARCH_MODEL_INCOMPLETE'],
+    ['malformed output', receipt({ usage: { server_tool_use: { web_search_requests: 3 } }, message: {
+      role: 'assistant', content: '{malformed', annotations: []
+    } }), 'NATIVE_RESEARCH_OUTPUT_INVALID']
+  ])('records valid provider search count before %s while preserving the original error', async (_label, failedReceipt, code) => {
+    const ledger = new Ledger()
+    const complete = vi.fn(async () => failedReceipt)
+    const agent = new NativeResearchAgent({ model: 'qwen/qwen3.8-flash', transport: { complete }, ledger, budgetId: 'shared', maxCallUsdMicros: 1 })
+    let observation: any
+    await expect(observePlannerTurn({ requestId: 'observed-failure', tripId: 'trip', conversationId: 'conversation', generationId: 'generation' },
+      () => agent.research(brief, { requestId: 'observed-failure', tripId: 'trip', conversationId: 'conversation' }), value => { observation = value }))
+      .rejects.toMatchObject({ code })
+    expect(observation.providerReportedSearches).toBe(3)
+    expect(observation.spans.find((span: any) => span.name === 'native_research')).toMatchObject({
+      search: { requestedLimit: 2, reportedCount: 3, exceedsLimit: true }
+    })
+  })
+
+  it('keeps missing search accounting unknown without overwriting the original output error', async () => {
+    const ledger = new Ledger()
+    const complete = vi.fn(async () => receipt({ usage: {} }))
+    const agent = new NativeResearchAgent({ model: 'qwen/qwen3.8-flash', transport: { complete }, ledger, budgetId: 'shared', maxCallUsdMicros: 1 })
+    let observation: any
+    await expect(observePlannerTurn({ requestId: 'missing-search', tripId: 'trip', conversationId: 'conversation', generationId: 'generation' },
+      () => agent.research(brief, { requestId: 'missing-search' }), value => { observation = value }))
+      .rejects.toMatchObject({ code: 'NATIVE_RESEARCH_SEARCH_COUNT_UNKNOWN' })
+    expect(observation.providerReportedSearches).toBeNull()
+    expect(observation.spans.find((span: any) => span.name === 'native_research')).toMatchObject({
+      search: { requestedLimit: 2, reportedCount: null, exceedsLimit: null }
+    })
+  })
+
+  it.each([
+    ['reserve rejected', async () => { throw Object.assign(new Error('budget denied'), { code: 'BUDGET_REJECTED' }) }],
+    ['invalid request context', undefined]
+  ])('does not record a search request before %s', async (_label, reserve) => {
+    const ledger = new Ledger()
+    if (reserve) ledger.reserve = reserve as Ledger['reserve']
+    const complete = vi.fn(async () => receipt({ usage: { server_tool_use: { web_search_requests: 3 } } }))
+    const agent = new NativeResearchAgent({ model: 'qwen/qwen3.8-flash', transport: { complete }, ledger, budgetId: 'shared', maxCallUsdMicros: 1 })
+    let observation: any
+    const requestId = reserve ? 'reserve-rejected' : ''
+    await expect(observePlannerTurn({ requestId: requestId || 'invalid-context', tripId: 'trip', conversationId: 'conversation', generationId: 'generation' },
+      () => agent.research(brief, { requestId }), value => { observation = value })).rejects.toBeTruthy()
+    expect(observation.providerReportedSearches).toBeNull()
+    expect(observation.spans.find((span: any) => span.name === 'native_research')).not.toHaveProperty('search')
+    expect(complete).not.toHaveBeenCalled()
   })
 
   it.each([

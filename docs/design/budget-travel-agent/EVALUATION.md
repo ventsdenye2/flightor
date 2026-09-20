@@ -1,6 +1,6 @@
 # 运行测量、多用户案例与 DSH 决策协议
 
-2026-09-20，**计划，尚未执行**。实现入口：[RUNTIME_PLAN](RUNTIME_PLAN.md)。执行编排指测试场景和调用顺序，不要求新增多个旅行 Agent 或 Codex 子代理。
+2026-09-20，**B5 埋点已实施；G1 与正式评测批次尚未执行**。实现入口：[RUNTIME_PLAN](RUNTIME_PLAN.md)。执行编排指测试场景和调用顺序，不要求新增多个旅行 Agent 或 Codex 子代理。
 
 ## 1. 顺序与对照组
 
@@ -64,6 +64,16 @@
 质量由同一 rubric 对 A/B 匿名结果评审：四项软指标各 0–2 分，给具体理由；AI 审查与用户/人工复核单列，AI 自评分不能代替独立验收。硬错误（跨 owner、假来源/票价、预算范围反转、航班时间冲突、越权采用）直接失败，不被速度分抵消。
 
 所有失败、取消、超时计入分母；超时记录 time-to-failure/截尾状态，不用 timeout 值冒充完成时间。缺测不算通过。报告逐案例、同类型中位数与范围；同一可比层样本不足 100 时不报告稳定 P95，绝不混合所有案例制造漂亮分位数。
+
+### 4.1 当前 B5 取数与证据限制
+
+服务端从默认 CloudPlanner 的 `plannerObservation` 结构化日志取每轮摘要（实现与字段见 [RUNTIME_PLAN §6](RUNTIME_PLAN.md)）。客户端从 `src/services/plannerTelemetry.ts` 导出的 `getPlannerTelemetrySnapshot()` 取当前进程有界快照；尚无产品导出入口或自动上传。用 accepted 的 generationId 加 Trip/conversation 关联两端，不能以两端时间戳相减。客户端 requestId 是本地序号，不等同后端请求 UUID。
+
+T_ack 对应 clickToAckMs；T_first_flight/guide 当前代理值为 firstFlightCommitMs/firstGuideCommitMs，T_final_ui 为 finalUiCommitMs，均明确标记 effect commit 而非 paint。首结果必须来自本轮已发布且加载成功的可用卡片，保留验证状态；无点击的自动恢复不补造点击起点。时钟缺失、未出现该 UI 或终止前未提交均保留 null。timeToFailureMs 从 sendStartedAtMs 开始，不能混入点击延迟指标。组件 harness 测试不证明 H5/微信实际像素时间。
+
+服务端 firstVerifiedMs 从 CloudPlanner runTurn 开始，止于 satisfied 持久提交，排除客户端网络/接单前等待；它与 firstGuideSavedMs 分开。modelUsage/modelCostUsdMicros 仅汇总模型调用，有任一未知则相应总计 null；knownModelCostUsdMicros 是已知小计，不能用作完整总费用。Provider 报告搜索数是有效 native 回执的小计，HTTP 数是适配器尝试数（不是工具数或供应商内部重试数）；失败正文也保留已知 native 计数。gateway 是适配器名，routeFingerprint 区分去敏后的入口，provider 只相信实际响应，没有响应不猜测。指纹不含消息正文，不能替代 manifest 的 prompt/fixture hash。
+
+B5 不生成正式 manifest、案例 runner、缓存标签或分位数报告；这些仍属 G1 后的 M1/M2。后续批次必须收齐失败、取消、截断与未知样本，不能从当前离线回归推导提速比例。
 
 ## 5. 预注册评估门槛（目标，不是当前成绩）
 

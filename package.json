@@ -28,7 +28,7 @@
     "test:chat-history": "node scripts/test-chat-history.js",
     "test:phase5-client": "node scripts/test-phase5-client.js",
     "test:conversation-progress": "node scripts/test-conversation-progress.js && node src/components/plan/PlannerProgress.test.cjs && npm run test:planner-publication",
-    "test:planner-publication": "node scripts/test-planner-publication.cjs && node scripts/test-plan-flight-publication.cjs",
+    "test:planner-publication": "node scripts/test-planner-publication.cjs && node scripts/test-plan-flight-publication.cjs && node scripts/test-planner-telemetry.cjs",
     "test:planner-reply": "node scripts/test-planner-reply.cjs",
     "test:session-recovery": "node scripts/test-session-recovery.js",
     "test:artifacts": "node scripts/test-artifacts.js",

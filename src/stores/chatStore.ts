@@ -38,6 +38,7 @@ import {
   type ConversationTurnSnapshot
 } from './chatHistory'
 import { USE_MOCK, ApiRequestError } from '../utils/request'
+import { plannerTelemetry, type PlannerTelemetryScope, type PlannerUiCommit } from '../services/plannerTelemetry'
 import { registerUserSessionClearHandler, userStore } from './userStore'
 import {
   cancelRouteGenerationRun,
@@ -196,6 +197,8 @@ export class ChatStore {
   routeGenerationError = ''
   turnProgress: ConversationTurnProgress | undefined = undefined
   turnCancelling = false
+  turnTelemetryId: string | undefined = undefined
+  turnTelemetryFinalReady = false
 
   get isThinking(): boolean { return this.activeSendRequestId !== undefined }
 
@@ -220,6 +223,7 @@ export class ChatStore {
   /** Send occupancy spans owner/session preparation and is independent of restored UI state. */
   private activeSendRequestId: number | undefined = undefined
   private activeArtifactPublication: ((publication: ConversationArtifactPublication) => void) | undefined = undefined
+  private turnTelemetryScope: PlannerTelemetryScope | undefined = undefined
   private multiConfirmRequestId = 0
   private activeOwnerId = ''
   private routeGenerationRequestId = 0
@@ -345,6 +349,10 @@ export class ChatStore {
   }
 
   private invalidateInFlight() {
+    if (this.turnTelemetryId && this.turnTelemetryScope) plannerTelemetry.terminal(this.turnTelemetryId, this.turnTelemetryScope, 'abandoned')
+    this.turnTelemetryId = undefined
+    this.turnTelemetryScope = undefined
+    this.turnTelemetryFinalReady = false
     this.requestGeneration += 1
     this.routeGenerationRequestId += 1
     this.workspaceSyncRequestId += 1
@@ -563,7 +571,7 @@ export class ChatStore {
   }
 
   /** Submit every planning turn once and follow its server-confirmed progress. */
-  async send(text: string, locale: 'zh' | 'en'): Promise<boolean> {
+  async send(text: string, locale: 'zh' | 'en', measurement: { clickedAtMs?: number | null } = {}): Promise<boolean> {
     const content = text.trim()
     if (!content || this.isThinking) return false
 
@@ -580,6 +588,12 @@ export class ChatStore {
 
     this.activeSendRequestId = requestId
     const sessionRevision = userStore.sessionRevision
+    let telemetryScope: PlannerTelemetryScope = { ownerId, authRevision: sessionRevision, sessionId: this.currentSessionId,
+      requestId, tripId: this.tripId, conversationId: this.conversationId }
+    const telemetryId = plannerTelemetry.begin(telemetryScope, measurement.clickedAtMs ?? null)
+    this.turnTelemetryId = telemetryId
+    this.turnTelemetryScope = telemetryScope
+    this.turnTelemetryFinalReady = false
     const startedAt = Date.now()
     this.turnProgress = { connection: 'connecting', startedAt }
     this.multiLoading = true
@@ -595,6 +609,9 @@ export class ChatStore {
       if (!isCurrent() || !this.tripId || !this.conversationId) return false
 
       const userMessage: ConversationMessage = { role: 'user', content }
+      telemetryScope = { ...telemetryScope, sessionId: this.currentSessionId, tripId: this.tripId, conversationId: this.conversationId }
+      plannerTelemetry.bindWorkspace(telemetryId, telemetryScope)
+      this.turnTelemetryScope = telemetryScope
       this.messages = [...this.messages, userMessage].slice(-MAX_CHAT_MESSAGES)
       turnId = `turn-${requestId}`
       this.timeline = [...this.timeline, {
@@ -616,6 +633,7 @@ export class ChatStore {
           || publication.tripId !== this.tripId || publication.conversationId !== this.conversationId
           || publication.generationId !== this.turnProgress.generationId || publication.artifactRevision <= publishedRevision) return
         publishedRevision = publication.artifactRevision
+        plannerTelemetry.published(telemetryId, telemetryScope, publication.turnId, publication.generationId, publication.artifactRefs)
         const nextRefs = new Map(publication.artifactRefs.map(ref => [ref.id, { ...ref }]))
         for (const id of publishedRefs.keys()) if (!nextRefs.has(id)) invalidatedPublishedIds.add(id)
         for (const id of nextRefs.keys()) invalidatedPublishedIds.delete(id)
@@ -633,6 +651,11 @@ export class ChatStore {
         startedAt,
         isCurrent,
         onArtifacts: publishArtifacts,
+        onAccepted: accepted => {
+          if (isCurrent() && accepted.tripId === this.tripId && accepted.conversationId === this.conversationId) {
+            plannerTelemetry.accepted(telemetryId, telemetryScope, accepted.turnId, accepted.generationId)
+          }
+        },
         onProgress: progress => {
           if (!isCurrent()) return
           runInAction(() => { this.turnProgress = { ...progress } })
@@ -661,6 +684,8 @@ export class ChatStore {
           ...(result.delivery ? { delivery: result.delivery } : {}),
           error: undefined
         } : turn)
+        plannerTelemetry.terminal(telemetryId, telemetryScope, 'completed', { deliveryStatus: result.delivery?.status })
+        this.turnTelemetryFinalReady = true
       })
       this.persistCurrentSession()
       // The server may have queued work through an Agent tool. Reconcile by ID,
@@ -670,6 +695,8 @@ export class ChatStore {
     } catch (error) {
       if (!isCurrent()) return false
       runInAction(() => {
+        const code = error instanceof Error ? error.message : ''
+        plannerTelemetry.terminal(telemetryId, telemetryScope, code === 'AGENT_TURN_CANCELLED' ? 'cancelled' : 'failed', { code })
         // Keep failures visible as an error state. Never synthesize an
         // assistant message that could be mistaken for a cloud reply.
         const message = this.transportError(error, locale)
@@ -685,6 +712,7 @@ export class ChatStore {
       return false
     } finally {
       if (this.activeSendRequestId === requestId) {
+        if (!isCurrent()) plannerTelemetry.terminal(telemetryId, telemetryScope, 'abandoned')
         runInAction(() => {
           this.activeSendRequestId = undefined
           this.activeArtifactPublication = undefined
@@ -695,6 +723,15 @@ export class ChatStore {
         })
       }
     }
+  }
+
+  /** Record only the currently scoped production component commit, never a poll receipt. */
+  recordTurnUiCommit(id: string, event: PlannerUiCommit): void {
+    const scope = this.turnTelemetryScope
+    if (!scope || id !== this.turnTelemetryId || scope.ownerId !== this.ownerForRequest()
+      || scope.authRevision !== userStore.sessionRevision || scope.sessionId !== this.currentSessionId
+      || scope.requestId !== this.requestGeneration || scope.tripId !== this.tripId || scope.conversationId !== this.conversationId) return
+    plannerTelemetry.commit(id, scope, event)
   }
 
   /** Keep send occupancy until the server has acknowledged cancellation. */
@@ -717,6 +754,8 @@ export class ChatStore {
       if (view.artifactRevision !== undefined && view.artifactRefs) this.activeArtifactPublication?.(view as ConversationArtifactPublication)
       // An already completed request still delivers its real reply through the original poll.
       if (view.status === 'completed') return
+      if (this.turnTelemetryId && this.turnTelemetryScope) plannerTelemetry.terminal(this.turnTelemetryId, this.turnTelemetryScope,
+        view.error?.code === 'AGENT_TURN_CANCELLED' ? 'cancelled' : 'failed', { code: view.error?.code })
       runInAction(() => {
         const message = this.transportError(new Error(view.error?.code ?? 'AGENT_TURN_CANCELLED'), locale)
         this.timeline = this.timeline.map((turn, index) => index === this.timeline.length - 1 ? { ...turn, error: message } : turn)

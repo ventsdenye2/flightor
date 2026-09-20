@@ -1,6 +1,6 @@
 # ADR 0019：精简 Planner 协议后再评估 Harness
 
-日期：2026-09-20。状态：**分阶段采用：B1/B3/B4 已实施；B2 在默认关闭的开关后实施；B5 起待实施**。B2 离线验证通过，新 PG 原子接受事务待实际数据库验证，未开启生产。精确契约见 [RUNTIME_PLAN §2–5](../design/budget-travel-agent/RUNTIME_PLAN.md) 与 [验证进度](../design/budget-travel-agent/progress.md)。
+日期：2026-09-20。状态：**分阶段采用：B1/B3–B5 已实施；B2 在默认关闭的开关后实施；G1 待跑通**。B2 离线验证通过，新 PG 原子接受事务待实际数据库验证，未开启生产。精确契约见 [RUNTIME_PLAN §2–6](../design/budget-travel-agent/RUNTIME_PLAN.md) 与 [验证进度](../design/budget-travel-agent/progress.md)。
 
 ## 决策方向
 
@@ -18,4 +18,6 @@
 
 DSH 只可能替换通用 runtime 层，不接管 FlightOR 业务状态、用户采用授权或验收权威。未完成同口径评估前不安装生产依赖、不宣布迁移。
 
-B4 扩展 ADR 0015 的临时 transport：领域提交回调发布紧凑引用，GET 投影负责当前版本过滤，客户端按作用域/revision 合并；取消等待服务端确认，已保存结果可浏览与恢复。保存和 Goal 验收仍分开标识，不能把提前可见称为 satisfied。保持原模型/Provider、数据库结构和 UI 视觉，无持久队列重构；B5 完整计时与真实体验验收仍待执行。
+B4 扩展 ADR 0015 的临时 transport：领域提交回调发布紧凑引用，GET 投影负责当前版本过滤，客户端按作用域/revision 合并；取消等待服务端确认，已保存结果可浏览与恢复。保存和 Goal 验收仍分开标识，不能把提前可见称为 satisfied。保持原模型/Provider、数据库结构和 UI 视觉，无持久队列重构。
+
+B5 采用服务端每轮 AsyncLocalStorage 诊断与客户端本地有界计时；观测不进入模型上下文、公共 turn 响应或聊天历史。模型/工具/HTTP 保留父子 span 并按区间并集去重；最终出站配置和去敏网关指纹支持后续同口径比较，未知账单不填零。客户端测 effect commit，服务端分别测保存与 satisfied 提交；不跨设备直接相减。失败输出的已知 native 搜索次数也保留，取消/替代后迟到事件不回写。无需新数据库/SDK 或额外模型调用。正式性能、真实 Provider 与 H5/真机体验仍待 G1 及后续批次验证。

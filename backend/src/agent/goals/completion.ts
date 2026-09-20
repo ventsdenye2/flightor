@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { observeSpan, recordMilestone } from '../../lib/planner-observation.js'
 import type { ArtifactRepository } from '../../artifacts/repository.js'
 import { AppError } from '../../lib/errors.js'
 import type { TripContextRepository } from '../../trips/repository.js'
@@ -91,10 +92,10 @@ export async function completeGoal(
   if (run.status === 'failed') {
     return { goal, run, verification: { status: 'failed', artifactIds: [], missing: ['goal_run_failed'], warnings: [] } }
   }
-  const verification = await scope.verifiers.verify(goal, {
+  const verification = await observeSpan('phase', 'goal_verify', () => scope.verifiers.verify(goal, {
     ownerId: scope.ownerId, tripId: scope.tripId, run, currentTrip: current, artifacts: scope.artifacts,
     ...(scope.selectedFlight ? { selectedFlight: scope.selectedFlight } : {})
-  })
+  }))
   await checkpoint(scope)
   const latest = await scope.trips.get(scope.tripId)
   await checkpoint(scope)
@@ -119,6 +120,7 @@ export async function completeGoal(
     expectedGoalRevision: goal.revision, expectedRunRevision: run.revision,
     goalStatus: verification.status, runStatus, currentTripVersion: current.version
   })
+  if (verification.status === 'satisfied') recordMilestone('firstVerifiedMs')
   return { ...completed, verification }
 }
 

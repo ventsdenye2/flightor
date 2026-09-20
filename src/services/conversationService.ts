@@ -230,6 +230,7 @@ export interface ConversationTurnView {
 }
 
 interface ConverseOptions {
+  onAccepted?: (accepted: { turnId: string; tripId: string; conversationId: string; generationId?: string }) => void
   onProgress?: (progress: ConversationTurnProgress) => void
   onArtifacts?: (publication: ConversationArtifactPublication) => void
   /** Session switches invalidate this poll without needing mini-program AbortController. */
@@ -832,6 +833,7 @@ export async function converse(input: ConversationRequest, options: ConverseOpti
   }
   const turnId = accepted.turnId
   const scope = { tripId: body.tripId, conversationId: body.conversationId, generationId: accepted.generationId }
+  options.onAccepted?.({ turnId, ...scope })
   let artifactRevision = -1
   let latestServerUpdatedAt = ''
   publish({ ...progress, turnId, ...scope })

@@ -7,6 +7,9 @@ import { completeGoal, noGoalDelivery, summarizeGoalDelivery, type GoalDelivery,
 import { emitActivity, type AgentActivityObserver } from './activity.js'
 import { settleWithSignal } from './cancellation.js'
 import { closeGoalRunAttempt } from '../goals/attempt.js'
+import { performance } from 'node:perf_hooks'
+import { hasPlannerObservation, observePlannerTurn, observeModelCall, observeSpan, recordModelObservation, recordSpanError,
+  recordGuideRepair, recordGuideRevisionAttempt, recordTurnOutcome, type PlannerObservation } from '../../lib/planner-observation.js'
 
 export interface AgentTrace {
   requestId: string
@@ -26,6 +29,7 @@ export interface AgentTrace {
 }
 
 export interface AgentRuntimeOptions {
+  observation?: (value: PlannerObservation) => void
   maxToolSteps?: number
   maxToolCallsPerStep?: number
   maxToolCallsPerTurn?: number
@@ -134,6 +138,11 @@ export class AgentRuntime {
   }
 
   async run(input: AgentRunInput): Promise<AgentRunResult> {
+    if (hasPlannerObservation()) return this.runObserved(input)
+    return observePlannerTurn(input.context, () => this.runObserved(input), this.options.observation)
+  }
+
+  private async runObserved(input: AgentRunInput): Promise<AgentRunResult> {
     const controller = new AbortController()
     const onParentAbort = () => controller.abort(input.signal?.reason)
     if (input.signal?.aborted) onParentAbort()
@@ -251,21 +260,23 @@ export class AgentRuntime {
         if (stale(input)) return await fallback('stale_generation')
 
         let completion
-        const modelStarted = Date.now()
+        const modelStarted = performance.now()
         try {
-          completion = await settleWithSignal(() => {
+          completion = await observeModelCall('planner', () => settleWithSignal(async () => {
             emitActivity(input.onActivity, { type: 'model_start' })
-            return this.modelClient.complete(messages, this.options.model, {
+            const response = await this.modelClient.complete(messages, this.options.model, {
               ...this.modelOptions,
               tools: this.registry.definitions(),
               toolChoice: 'auto',
               signal: controller.signal
             })
-          }, controller.signal)
-          this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
+            if (response.observation) recordModelObservation(response.observation)
+            return response
+          }, controller.signal))
+          this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: performance.now() - modelStarted,
             ...(completion.finishReason ? { finishReason: completion.finishReason } : {}) })
         } catch (error) {
-          this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: Date.now() - modelStarted,
+          this.options.modelTrace?.({ requestId: input.context.requestId, step: toolSteps + 1, durationMs: performance.now() - modelStarted,
             errorCode: error instanceof AppError ? error.code : 'MODEL_FAILURE' })
           return await fallback(controller.signal.aborted ? (turnTimedOut ? 'turn_timeout' : 'cancelled') : 'model_failure')
         } finally {
@@ -310,10 +321,24 @@ export class AgentRuntime {
           const tool = this.registry.get(call.function.name)
           return !allowed || (tool !== undefined && tool.parallelSafe && tool.sideEffect === 'none')
         })
-        const executeOne = async ({ call, allowed }: { call: FunctionToolCall; allowed: boolean }) => {
+        const executeOne = async ({ call, allowed }: { call: FunctionToolCall; allowed: boolean }) => observeSpan('tool', call.function.name, async () => {
+          if (call.function.name === 'save_travel_guide') {
+            try {
+              const args = JSON.parse(call.function.arguments)
+              if (typeof args.draftRef === 'string' && Number.isInteger(args.expectedRevision)) recordGuideRevisionAttempt()
+            } catch { /* Invalid input remains a registry-owned failure. */ }
+          }
           const outcome = allowed
             ? await this.registry.execute(call, executionContext, controller.signal, input.onActivity)
             : this.registry.budgetExceeded(call)
+          if (!outcome.ok) recordSpanError(outcome.domainErrorCode ?? outcome.errorCode ?? 'TOOL_FAILURE')
+          if (call.function.name === 'save_travel_guide' && outcome.ok) {
+            try {
+              const value = JSON.parse(outcome.content).data
+              if (value.status === 'needs_revision') recordGuideRepair(Array.isArray(value.repair?.issues)
+                ? value.repair.issues.map((issue: { classification?: string }) => issue.classification) : [])
+            } catch { /* Tool schema validation remains authoritative. */ }
+          }
           observeGoal()
           try {
             await settleWithSignal(() => syncActiveGoalWorkingSet(executionContext, outcome, controller.signal), controller.signal)
@@ -321,7 +346,7 @@ export class AgentRuntime {
             outcome.warnings = [...new Set([...outcome.warnings, 'goal_working_set_update_failed'])]
           }
           return outcome
-        }
+        })
         const outcomes: ToolExecutionOutcome[] = []
         if (canRunInParallel) outcomes.push(...await Promise.all(executable.map(executeOne)))
         else {
@@ -380,7 +405,10 @@ export class AgentRuntime {
         }
       } catch {
         if (result) result.delivery.warnings = [...new Set([...result.delivery.warnings, 'goal_attempt_cleanup_failed'])].slice(0, 40)
-      } finally { clearTimeout(cleanupTimer) }
+      } finally {
+        clearTimeout(cleanupTimer)
+        if (result) recordTurnOutcome(result.stopReason)
+      }
     }
   }
 }

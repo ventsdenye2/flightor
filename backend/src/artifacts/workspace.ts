@@ -107,6 +107,8 @@ export async function saveWorkspaceArtifact(
   } else {
     record = await scope.artifacts.create(create)
   }
+  if (record.type === 'flight_search') recordMilestone('firstFlightSavedMs')
+  if (record.type === 'travel_guide') recordMilestone('firstGuideSavedMs')
   if (scope.onArtifactCommitted) {
     try {
       await checkpoint(scope)
@@ -115,3 +117,4 @@ export async function saveWorkspaceArtifact(
   }
   return record
 }
+import { recordMilestone } from '../lib/planner-observation.js'

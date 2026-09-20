@@ -263,4 +263,15 @@ await test('cancel rejects running or foreign-scope acknowledgements and auth ch
   await assert.rejects(h.cancel(), /AUTH_SESSION_CHANGED/)
 })
 
+await test('acceptance callback fires once only after a valid scope-bound acknowledgement', async () => {
+  const values = []
+  const h = harness([scopedAccepted, view('completed')])
+  await h.run({ onAccepted: value => values.push(value) })
+  assert.equal(values.length, 1)
+  assert.equal(values[0].generationId, publicationScope.generationId)
+  const bad = harness([{ ...scopedAccepted, conversationId: 'other' }])
+  await assert.rejects(bad.run({ onAccepted: value => values.push(value) }), /INVALID_CONVERSATION_TURN_RESPONSE/)
+  assert.equal(values.length, 1)
+})
+
 console.log(`\n${passed} conversation progress checks passed (offline; no live Provider or WeChat device).`)

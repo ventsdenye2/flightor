@@ -63,6 +63,9 @@ function harness() {
     '../../features/ui-experience/PlannerPage': { __esModule: true, default: 'PlannerPage' },
     '../../features/ui-experience/FlightDecisionPanel': { FlightDecisionPanel: 'FlightDecisionPanel' },
     '../../services/productionTripService': { loadProductionTrip: async () => { throw new Error('Unexpected guide load') } },
+    '../../services/plannerTelemetry': { plannerTelemetry: { now: () => 100 } },
+    '../../components/artifacts/payload': { record: value => value && typeof value === 'object' ? value : undefined,
+      displayOffers: payload => payload.offers ?? [], displayOfferById: (payload, id) => payload.offers?.find(offer => offer.id === id) },
     '../../services/artifactService': { artifactService: { fetchArtifact: (id, scope) => { requests.push({ id, scope }); return transport(id, scope) } } },
     '../../services/workspaceService': { getCloudWorkspace: () => workspace() }, './index.scss': {}
   }
@@ -188,6 +191,19 @@ async function main() {
     h.planner(h.render()).props.onSubmitPrompt('retry')
     await flush()
     assert.equal(h.planner(h.render()).props.productionError, '')
+  })
+  await test('render telemetry excludes empty flight snapshots until usable offers load', async () => {
+    const h = await selectedHarness()
+    h.chatStore.turnTelemetryId = 'measurement'
+    h.chatStore.turnTelemetryFinalReady = false
+    assert.equal(h.planner(h.render()).props.productionTelemetry.flights.length, 0)
+    h.setTransport(async id => ({ ...artifact(id), payload: { offers: [{ id: 'offer-B' }] }, verification: { status: 'partial' } }))
+    h.chatStore.artifactRefs.push(ref('B')); h.render(); await flush()
+    const measurement = h.planner(h.render()).props.productionTelemetry
+    assert.equal(measurement.flights.length, 1)
+    assert.equal(measurement.flights[0].id, 'B')
+    assert.equal(measurement.flights[0].verificationStatus, 'partial')
+    assert.equal(measurement.finalReady, false)
   })
   console.log(`${passed} Plan flight publication checks passed (offline hook integration).`)
 }

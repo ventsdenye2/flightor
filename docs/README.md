@@ -21,7 +21,7 @@ Proposed ADR 和本轮方案描述目标，不代表当前代码已生效。ADR 
 | 产品目标 | [RAS](design/budget-travel-agent/RAS.md) |
 | 后续能力全景 | [RDS](design/budget-travel-agent/RDS.md)，非本轮全部施工范围 |
 | 交互复审 | [UX_REVIEW](design/budget-travel-agent/UX_REVIEW.md)，执行顺序以 DPS 为准 |
-| 首轮运行优化决策 | [ADR 0019](adr/0019-lean-planner-evaluation.md)，B1/B3/B4 已实施，B2 默认关闭/待 PG 集成验证，下一步 B5 |
+| 首轮运行优化决策 | [ADR 0019](adr/0019-lean-planner-evaluation.md)，B1/B3–B5 已实施，B2 默认关闭/待 PG 集成验证，下一步 G1 跑通 |
 | 完整旅行能力方向 | [ADR 0018](adr/0018-budget-travel-agent-evolution.md)，Proposed、后续方向 |
 | 当前后端地图 | [backend-architecture](backend-architecture.md) |
 | 部署与本地联调 | [deploy](deploy.md)、[本地登录](local-test-login.md)、[微信接入记录](local-wechat-integration.md) |

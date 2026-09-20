@@ -1,6 +1,28 @@
 # 当前进度与验证
 
-更新：2026-09-20。B0/B1 已提交 main `cabbf51`，B2 已提交 `d895d0e`，B3 已提交 `6649644`。当前阶段：B4 已实施并通过本批离线回归与构建，下一步 B5；B2 仍默认关闭，新 PG 事务待实际数据库验证。保留用户原有未跟踪 `docs/demo/DEMO_MASTER.md`，不纳入提交。未修改运行模型/Provider/依赖或现有环境文件。
+更新：2026-09-20。B0/B1 已提交 main `cabbf51`，B2 已提交 `d895d0e`，B3 已提交 `6649644`，B4 已提交 `1ce177b`。当前阶段：B5 已实施，下一步 G1；B2 仍默认关闭，新 PG 事务待实际数据库验证。保留用户原有未跟踪 `docs/demo/DEMO_MASTER.md`，不纳入提交。未修改运行模型/Provider 路由/依赖或现有环境文件。
+
+## B5 本批完成情况
+
+- 新增每轮有界服务端 recorder：上下文准备、Planner/研究模型、工具、实际 HTTP 和 Goal 验证 span，保留父子关系、并发区间去重及取消后 interrupted/迟到冻结。默认每轮只输出一条结构化日志，不向模型或公共 API 增加诊断内容。
+- OpenRouter 记录实际出站配置、请求/返回模型、响应 Provider、tokens/费用、去敏入口指纹。未知账单保持 null，显式零保留；工具、HTTP 和 native 搜索分别计数。审查发现并修复了失败正文漏记已知搜索数，以及不同网关配置指纹碰撞的问题。
+- 仓库提交后才记录航班/攻略首次保存，satisfied 持久提交后才记录 firstVerified。只读验证、失败保存/完成提交不会提前宣称交付；攻略保存/局部修订和分类修复反馈独立计数。
+- 客户端保留默认 32 轮内存诊断：点击、有效 accepted、本轮可用结果分支的 effect commit 与最终 commit。旧选择、空结果、引用刚到达均不能冒充首结果；账号/会话/轮次变化拦截迟到污染，失败与取消保留已有首结果。缺失时钟或没有点击时相应指标 null，不以墙钟或终止时间填补完成时间。
+- 同步架构、TOOLS、ADR 0019、RUNTIME_PLAN §6、EVALUATION §4.1、UI 所有者文档及入口；明确 effect commit 非 paint、模型费用非全部外部账单、埋点非性能成绩。未建设 M1 runner、自动上传、持久队列或 DSH。
+- 继续按用户要求分工：Luna 负责 recorder/native 回归和适配器初稿，客户端 agent 完成 UI 计时与跨端只读审查；主 agent 整合模型适配器、领域埋点、修复审查问题、docs 和 Git。最终配置仍沿用原模型与路由。
+
+### B5 验证（2026-09-20）
+
+| 检查 | 本批结果与边界 |
+| --- | --- |
+| 完整离线后端 | 最终 `npm --prefix backend test`：94 文件、729 项通过；包含并发区间、迟到回调、未知账单、网关指纹、失败搜索回执及持久里程碑。离线 postgres 文件不等于实际数据库集成 |
+| 类型检查 | 根 `npx tsc --noEmit --pretty false` 与 `npm --prefix backend run check` 均通过；修复 exactOptionalPropertyTypes 下 reasoning effort 类型后复验 |
+| 定向客户端 | phase5 86、conversation progress 23、组件提交 9、Plan 页面 12、telemetry sink 8、session recovery 20 通过；使用确定性 hooks/stubs，不是平台 paint 验收 |
+| 完整前端与构建 | 最终串行 `npm test` 全部通过（exit 0）；随后 `npm run build:weapp` exit 0，确认 app 与 Plan 页面产物。仍有既有 CSS 顺序警告，common.js 为 266 KiB，不能以构建代替真机体验验收 |
+| 文档与 Git | 工作区 docs 检查：71 Markdown、281 相对链接及同批更新通过，`git diff --check` 通过；提交前另执行暂存门禁。仅暂存本批 39 文件，不纳入已有演示文档 |
+| 未运行 | B2 PostgreSQL 新事务、G1 两条真实链路、付费 Provider、H5/微信真机、正式计时与 A/B。当前没有新付费额度记录；没有从离线回归推断提速比例 |
+
+前端完整回归首轮在 Phase6 的两项精确源码字符串断言失败：send 增加点击元数据第三参，结果对象增加 guideId/verificationStatus。核实单 ChatStore 权威与成功分支清错未变后更新断言，定向 22/22 通过；没有放宽业务断言或修改运行行为来迁就测试。
 
 ## B4 本批完成情况
 
@@ -118,7 +140,7 @@
 
 ## 下一步
 
-按 DPS 继续 **B5：完整模型/工具/嵌套 span 与客户端首结果/最终结果观测**，不改变模型或路由。同时保留 B2 的 `TEST_DATABASE_URL` 实际事务验证缺口，在启用新协议与 G1 前补齐。B4 提前发布不等于已完成 B5 计时，也不能从离线样本宣称速度提升。
+按 DPS 继续 **G1：补齐 B2 PostgreSQL 原子事务验证，再验证已选航班与自备机票两条真实攻略链路的保存、验收和刷新恢复**。B5 已提供基本观测；B2 的 `TEST_DATABASE_URL` 实际事务验证缺口仍须在启用新协议前补齐。B4 提前发布与 B5 埋点不能替代平台体验或性能成绩，不从离线样本宣称速度提升。
 
 G1 两条真实链路跑通后才启动正式时间测量与多案例批次。当前没有新的付费调用额度记录，旧演示额度不可沿用；尚未进入实际运行阶段，也没有据此阻止本批离线推进。
 

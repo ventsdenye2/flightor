@@ -4,6 +4,7 @@ import { Icon, Photo } from './VisualMedia'
 import { formatPrice, priceStatusLabel, tripDurationLabel, travelerLabel } from './presentation'
 import type { TripPresentation } from './presentation'
 import type { ConversationDelivery, ConversationTurnProgress } from '../../services/conversationService'
+import type { PlannerRenderMeasurement, PlannerUiCommit } from '../../services/plannerTelemetry'
 import PlannerProgress from '../../components/plan/PlannerProgress'
 import PlannerReply from '../../components/plan/PlannerReply'
 import { DemoNote, PageHeader } from './SharedUI'
@@ -29,6 +30,8 @@ interface PlannerPageProps {
   onCancelProduction?: () => void
   productionCancelling?: boolean
   flightDecision?: ReactNode
+  productionTelemetry?: PlannerRenderMeasurement
+  onProductionCommit?: (id: string, event: PlannerUiCommit) => void
 }
 
 const suggestions = [
@@ -37,7 +40,7 @@ const suggestions = [
   { title: '只有一个长周末', prompt: '下一个长周末想出去走走，从上海出发，两个人，想要轻松、不赶路的安排。', icon: 'calendar' }
 ]
 
-export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, productionCancelling = false, flightDecision }: PlannerPageProps) {
+export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, productionCancelling = false, flightDecision, productionTelemetry, onProductionCommit }: PlannerPageProps) {
   const production = Boolean(onSubmitPrompt)
   const hasResult = !production || productionResultAvailable
   const rateLimited = productionWarnings.includes('research_provider_rate_limited')
@@ -75,6 +78,22 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
   }, [production, productionBusy, productionError, submitted, productionPrompt])
 
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current) }, [])
+
+  // A passive effect confirms this tree committed. It does not prove native paint,
+  // and only the active turn's server-published IDs are eligible in the sink.
+  useEffect(() => {
+    if (!production || !productionTelemetry || !onProductionCommit) return
+    const { id, flights, guide, finalReady } = productionTelemetry
+    if ((!submitted || phase !== 'cancelled') && flightDecision) for (const flight of flights) {
+      onProductionCommit(id, { kind: 'flight', artifactId: flight.id, verificationStatus: flight.verificationStatus })
+    }
+    if (submitted && phase !== 'cancelled' && hasResult && (phase !== 'loading' || productionBusy) && guide) {
+      onProductionCommit(id, { kind: 'guide', artifactId: guide.id, verificationStatus: guide.verificationStatus })
+    }
+    if (submitted && phase === 'ready' && !productionBusy && finalReady && (productionReply || hasResult || productionDelivery)) {
+      onProductionCommit(id, { kind: 'final' })
+    }
+  }, [production, productionTelemetry, onProductionCommit, submitted, phase, hasResult, productionBusy, productionReply, productionDelivery, flightDecision])
 
   const start = (message: string) => {
     if (!message.trim() || phase === 'loading') return

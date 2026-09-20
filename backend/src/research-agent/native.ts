@@ -191,6 +191,10 @@ export class NativeResearchAgent implements ResearchAgent {
   }
 
   async research(input: ResearchBrief, context: ResearchExecutionContext): Promise<ResearchArtifact> {
+    return observeSpan('phase', 'native_research', () => this.researchObserved(input, context))
+  }
+
+  private async researchObserved(input: ResearchBrief, context: ResearchExecutionContext): Promise<ResearchArtifact> {
     const brief = researchBriefSchema.parse(input)
     if (!context.requestId.trim() || context.requestId.length > 160) throw new AppError('INVALID_RESEARCH_CONTEXT', 'Research request id is invalid', 400)
     if (context.signal?.aborted) throw context.signal.reason ?? new AppError('RESEARCH_CANCELLED', 'Research was cancelled', 499)
@@ -212,7 +216,16 @@ export class NativeResearchAgent implements ResearchAgent {
     const signal = context.signal ? AbortSignal.any([context.signal, timeout]) : timeout
     let receipt: NativeResearchReceipt | undefined
     try {
+      recordSearchStatistics(2, null)
       receipt = await this.options.transport.complete({ body, signal, timeoutMs: this.timeoutMs })
+      // Account for valid receipts even when cancellation or output validation rejects the result.
+      if (!receipt.http || (receipt.http.status >= 200 && receipt.http.status < 300)) {
+        try {
+          const reportedCount = countSearches(receipt)
+          recordProviderSearches(reportedCount)
+          recordSearchStatistics(2, reportedCount)
+        } catch { /* Preserve the domain's existing validation order and error. */ }
+      }
       if (signal.aborted) throw abortError(signal, context.signal)
       if (receipt.http?.status === 429) {
         const now = (this.options.now?.() ?? new Date()).getTime()
@@ -255,3 +268,4 @@ export class NativeResearchAgent implements ResearchAgent {
     }
   }
 }
+import { observeSpan, recordProviderSearches, recordSearchStatistics } from '../lib/planner-observation.js'

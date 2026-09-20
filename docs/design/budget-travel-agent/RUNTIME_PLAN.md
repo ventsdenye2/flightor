@@ -1,6 +1,6 @@
 # 当前修改方案：先精简 FlightOR，再以实测决定 Harness
 
-日期：2026-09-20。状态：**分步实施中：B0–B4 已实施，B2 仍默认关闭；B5 完整观测待实现**。B2 PostgreSQL 新事务尚缺实际数据库验证；未跑真实模型评测或安装 DSH。B3/B4 契约见 §3–5，逐项证据见 [progress](progress.md)。
+日期：2026-09-20。状态：**B0–B5 已实施，B2 仍默认关闭；下一步 G1 跑通验证**。B2 PostgreSQL 新事务尚缺实际数据库验证；未跑真实模型评测或安装 DSH。B3–B5 契约见 §3–6，逐项证据见 [progress](progress.md)。
 
 这是本轮后端修改的唯一范围入口：[DPS](DPS.md) 定义执行顺序，[EVALUATION](EVALUATION.md) 定义案例与决策门槛。[RAS](RAS.md) 保留产品需求，[RDS](RDS.md) 是后续完整能力设计，不是首轮全部施工清单。
 
@@ -110,15 +110,17 @@
 
 ## 6. 测量位置与边界
 
-修改时加入必要埋点；**正式测量在精简路径跑通后执行**，不先做新一轮大量付费基准。
+**B5 当前实现**：观测不改变请求模型、路由、领域权威或公开 turn 响应。正式测量仍在 G1 跑通后执行；加入埋点不等于取得性能成绩。
 
-- `runtime/model.ts`、`providers/openrouter/client.ts`：保留 request/response model、finish reason、可用 usage/费用、网关/路由标识、请求配置指纹、起止时间；未知记 null。reasoning 记录最终出站配置，敏感输入不进普通日志。
-- `runtime/runtime.ts`：每次模型与工具的独立 span；研究子 span 不与父工具时长重复相加；不为每个字段再造模型审计调用。
-- `travel-guides/authored.ts` / completion：首个保存、首次验证通过、修订次数和错误类别。
-- 客户端：点击、接单、首份可操作航班/攻略渲染、最终渲染。端到端用同一客户端单调时钟；服务端 spans 用服务端时钟，不直接减两个设备的时间。
-- 工具调用与内部 HTTP/搜索次数分开计数。供应商报告的搜索数与请求上限不一致时显式记录，不假设参数一定被执行。
+- `backend/src/lib/planner-observation.ts` 用 AsyncLocalStorage 隔离每轮 request/Trip/conversation/generation；CloudPlanner 进入 `runTurn` 时启动服务端单调时钟，结束时输出一条 `plannerObservation` 结构化日志。`startedAt` 仅用于查找日志，不用于计算耗时。上下文准备、模型、工具、HTTP 和 Goal 验证为独立 span，最多保留 512 个；超出标记 `spansTruncated`，计数继续，无法完整汇总的模型 usage/费用为 null。结束时未闭合 span 标记 interrupted，迟到回调不能改写已输出快照；日志 sink 异常不改变业务结果。
+- span 保存相对起止、inclusive duration 和 `exclusiveMs`；后者扣除直接子 span 时间区间的并集，不重复扣并发重叠。研究模型是工具的子 span，runtime 与共享模型适配器复用同一模型 span；不能把父子或并发 span 相加当墙钟时间。`modelCalls` 包含 Planner 与研究模型，按 span 名称/父子关系区分；`toolCalls` 包含被拒绝的调用尝试，`httpAttempts` 只计实际进入共享 HTTP 适配器的尝试。
+- OpenRouter 元数据记录 request/response model、返回的 provider、finish reason、tokens、USD micros 及最终出站 reasoning/maxTokens/temperature/toolChoice/timeout。`gateway=openrouter` 表示适配器；规范化 base URL 的 origin/path 仅以 `routeFingerprint` 哈希记录（去除凭据/query/fragment），并纳入配置指纹；工具/schema/routing 配置也只进入哈希，不输出原文。缺失、非法或未知值记 null，显式 0 保留；模型费用只在所有调用均已知时汇总为总额，已知小计与未知调用数另列。模型费用不是全部外部服务账单，既有 costUnits 也不是美元。
+- workspace 仓库成功提交后记录 `firstFlightSavedMs`/`firstGuideSavedMs`；保存后取消不撤销这个事实。`firstVerifiedMs` 只在 `commitCompletion` 成功持久化 satisfied 后记录，代表可恢复验收，不是仅 verifier 返回通过；只读验收、失败提交和 pending 不计。另记攻略保存/局部修订尝试数，以及 needs_revision 的 draft_invalid/evidence_missing/context_conflict 类别次数，不记录草稿或错误原文。
+- native research 在实际调用 transport 前记录请求搜索上限；正常 HTTP 回执中合法的供应商搜索计数独立于内容验收，失败正文也保留已知数及 `exceedsLimit`。缺失/非法计数保持 null；前置校验、冷却或预算预留拒绝不假装已发起搜索。`providerReportedSearches` 是已取得有效回执的 native 搜索数小计，不是所有搜索供应商的完整账单。
+- `src/services/plannerTelemetry.ts` 保存默认 32 轮、最大 128 轮的本地内存诊断，导出 `getPlannerTelemetrySnapshot()`；不写聊天历史、不上传。采集点击、有效 accepted、当前轮引用加载后在实际 UI 分支的 effect commit、最终 UI commit，保留 saved card 的 verificationStatus 与独立 deliveryStatus。账号/auth revision/session/request/Trip/conversation/turn/generation 校验阻止迟到污染，旧采用航班不能成为本轮首结果。时钟不可用或没有用户点击时相应耗时为 null；不回退 Date.now，不跨设备相减。
+- 客户端标记 `react_effect_commit_not_paint`：它是组件提交证据，不证明浏览器或微信像素已绘制。失败/取消/替代保留终态与已有首结果，不能伪造最终成功渲染；timeToFailure 从 sendStarted 计算，点击指标从 clickedAt 计算。H5/真机显示时间仍需平台验收。
 
-详细协议和空结果表见 [EVALUATION](EVALUATION.md)。不因超时就少算失败样本，不用几次成功估计稳定 P95。
+取数与完整测量协议见 [EVALUATION §4](EVALUATION.md)。当前没有正式批次 runner、自动导出/上传或持久诊断队列；不因超时少算失败，不用几次成功估计稳定 P95。
 
 ## 7. 何时考虑 DSH
 

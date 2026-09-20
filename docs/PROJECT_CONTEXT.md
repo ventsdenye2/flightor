@@ -1,6 +1,6 @@
 # FlightOR 当前项目上下文
 
-更新：2026-09-20。B0/B1 已提交 `cabbf51`，B2 已提交 `d895d0e`、仍默认关闭，B3 已提交 `6649644`；B4 已实施保存结果提前展示、确认式取消与等待期间的浏览/草稿编辑。性能数字与已运行结果必须引用具体日期证据，离线与数据库/live 的验证边界见当前 progress。
+更新：2026-09-20。B0/B1 已提交 `cabbf51`，B2 已提交 `d895d0e`、仍默认关闭，B3 已提交 `6649644`，B4 已提交 `1ce177b`；B5 已实施服务端模型/工具/HTTP 观测与客户端 UI commit 计时。性能数字与已运行结果必须引用具体日期证据，离线与数据库/live 的验证边界见当前 progress。
 
 ## 当前主链
 
@@ -41,7 +41,7 @@
 
 9 月 13 日 HANDOFF 中“仍在集成工作区、未合并”描述的是当时状态，不能作为今天 main 的事实。旧演示额度、端口、服务状态也不自动延续。
 
-当前任务顺序唯一依据：[DPS](design/budget-travel-agent/DPS.md)。B4 在现有短轮询上提前展示已保存结果，按作用域与 revision 合并，取消确认后再释放提交，保留浏览与未发送草稿。下一步 B5 完整观测；保留 PG 集成验证缺口，不能据离线结果宣布生产路径跑通。[RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) 分别标记 B1–B4 当前实现与其它拟议契约。B3 草稿仅同 generation 有效，重启或换轮仍需从 Artifact 恢复；未实现散文预算语义自动判分。
+当前任务顺序唯一依据：[DPS](design/budget-travel-agent/DPS.md)。B4 在现有短轮询上提前展示已保存结果，按作用域与 revision 合并，取消确认后再释放提交，保留浏览与未发送草稿。B5 已输出每轮有界服务端诊断，客户端在内存记录 accepted/首卡片/最终 UI commit；未知费用和缺失时钟保留 null，UI commit 不代表像素绘制。下一步 G1 跑通；保留 PG 集成验证缺口，不能据离线结果宣布生产路径跑通。[RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) 维护 B1–B5 精确契约。B3 草稿仅同 generation 有效，重启或换轮仍需从 Artifact 恢复；未实现散文预算语义自动判分。
 
 ## 续作入口
 

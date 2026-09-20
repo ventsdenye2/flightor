@@ -60,6 +60,14 @@
 
 `node scripts/test-planner-publication.cjs` 运行真实组件代码，通过确定性 hooks 与 Taro host stubs 验证等待分支卡片、草稿输入/保留、取消反馈和航段展开。它不启动浏览器、真实 React renderer 或微信设备；平台滚动、样式、输入法与真实网络表现仍待验收。当前所有验证命令和结果见 [progress](budget-travel-agent/progress.md)。
 
+## B5 展示计时（当前实现）
+
+正式 Plan/PlannerPage 只在本轮已发布引用加载为可用数据、且实际展示分支包含该卡片后，通过 effect 记录首航班/攻略 commit；单纯收到引用、旧已采用航班、空航班结果不计首结果。攻略保存/资料核验状态与整轮 deliveryStatus 分别保留，不能把首卡片当成验收完成。最终 UI 需本轮响应完成且页面退出 busy 后记录。
+
+点击到有效 accepted、首结果和最终 commit 使用同一客户端 performance.now；缺失时钟或自动恢复没有点击则对应值为 null。失败/取消/替代保留已有首结果及独立终态，不补最终完成时间；账号、auth revision、session/request/Trip/conversation 与 turn/generation 约束迟到事件。`src/services/plannerTelemetry.ts` 只保留默认 32 轮的内存快照，未写历史或上传。
+
+证据标签为 `react_effect_commit_not_paint`，不宣称像素已绘制。`test:planner-publication` 同时运行组件、Plan 页面与独立 telemetry sink 回归；真实浏览器/微信 paint、滚动和输入体验仍需 G1 平台验收。详细指标与取数见 [EVALUATION §4.1](budget-travel-agent/EVALUATION.md)。
+
 ## 信息结构
 
 生产攻略 v1 的可选 `budget` 在行程概览和攻略卡单独显示为“全程预算约束”：只接受服务端同时提供的 `amount`、三位大写 `currency`、`scope`、`partyBasis: unspecified`、`period: trip_total`，明确标注为行程总额与同行人数口径未指定，不换算为每日或人均金额。可选 `supportingEvidence` 单独归入“实用与补充信息”，显示服务端恢复的标题、说明、类别、目的地和核验状态；过期的核验记录按 `expiresAt` 显示为资料已过期。它是补充资料，不作为景点安排或用户已选择活动。

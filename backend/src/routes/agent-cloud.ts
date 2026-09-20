@@ -150,6 +150,7 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
     const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))
     const flightSelections = new PostgresWorkspaceRepository(context.db, userId)
     return new CloudPlannerService({
+      observation: value => logger.info({ plannerObservation: value }, 'Planner turn observation'),
       trips, conversations, artifacts, memory, runtime, flightSelections,
       leanGoalsEnabled: context.env.PLANNER_LEAN_GOALS_ENABLED,
       ownerId: userId,

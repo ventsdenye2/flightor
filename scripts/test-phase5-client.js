@@ -95,6 +95,12 @@ vm.runInNewContext(historyCompiled, {
   URL
 }, { filename: historyPath })
 const history = historyModule.exports
+let telemetryNow = 100
+const telemetryModule = { exports: {} }
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/services/plannerTelemetry.ts', 'utf8'), {
+  compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
+}).outputText, { module: telemetryModule, exports: telemetryModule.exports, performance: { now: () => telemetryNow } })
+const telemetry = telemetryModule.exports
 
 let passed = 0
 let failed = 0
@@ -255,6 +261,7 @@ const chatStoreSandbox = {
   require(specifier) {
     if (specifier === 'mobx') return { makeAutoObservable: () => {}, runInAction: callback => callback() }
     if (specifier === '../services/routeService') return { confirmPicks: async () => [] }
+    if (specifier === '../services/plannerTelemetry') return telemetry
     if (specifier === '../services/conversationService') return {
       emptyTripState: service.emptyTripState,
       converse: (...args) => converseStub(...args),
@@ -920,6 +927,85 @@ publishArtifacts(publication(1))
 finishArtifacts(response)
 check('same-owner login change rejects late artifact callbacks and final response', await artifactOwnerSend === false
   && artifactOwnerStore.artifactRefs.length === 0 && !artifactOwnerStore.timeline.at(-1).artifactRefs)
+
+const measuredStore = makeRouteStore()
+let finishMeasured
+telemetryNow = 200
+converseStub = (_request, options) => {
+  telemetryNow = 300
+  options.onAccepted({ ...artifactScope })
+  options.onProgress({ connection: 'running', startedAt: 100, ...artifactScope })
+  telemetryNow = 400
+  options.onArtifacts(publication(1))
+  return new Promise(resolve => { finishMeasured = resolve })
+}
+const measuredSend = measuredStore.send('sensitive prompt must not enter telemetry', 'en', { clickedAtMs: 180 })
+await flushArtifacts()
+const measurementId = measuredStore.turnTelemetryId
+const measurementFor = id => telemetry.getPlannerTelemetrySnapshot().find(value => value.id === id)
+check('telemetry binds the valid ack but receipt of refs is not a rendered guide', measurementFor(measurementId).clickToAckMs === 120
+  && measurementFor(measurementId).firstGuide === null && measurementFor(measurementId).turnId === artifactScope.turnId)
+telemetryNow = 500
+measuredStore.recordTurnUiCommit(measurementId, { kind: 'guide', artifactId: 'old-guide' })
+check('historical cards cannot claim this turn first result', measurementFor(measurementId).firstGuide === null)
+measuredStore.recordTurnUiCommit(measurementId, { kind: 'guide', artifactId: savedGuideRef.id, verificationStatus: 'verified' })
+check('actual guide commit records a monotonic duration and verification separately', measurementFor(measurementId).firstGuideCommitMs === 320
+  && measurementFor(measurementId).firstGuide.verificationStatus === 'verified')
+telemetryNow = 700
+finishMeasured(response); await measuredSend
+check('transport completion leaves final UI missing until its component commit', measurementFor(measurementId).status === 'completed'
+  && measurementFor(measurementId).finalUiCommitMs === null && measuredStore.turnTelemetryFinalReady)
+telemetryNow = 800
+measuredStore.recordTurnUiCommit(measurementId, { kind: 'final' })
+check('final component commit records only client time and telemetry never enters history', measurementFor(measurementId).finalUiCommitMs === 620
+  && !JSON.stringify(measuredStore.liveSessionSnapshot()).includes('planner-client-')
+  && !JSON.stringify(telemetry.getPlannerTelemetrySnapshot()).includes('sensitive prompt'))
+telemetryNow = 900
+const nextMeasuredSend = prepareArtifactSend(measuredStore)
+await flushArtifacts()
+const nextMeasurementId = measuredStore.turnTelemetryId
+measuredStore.recordTurnUiCommit(measurementId, { kind: 'flight', artifactId: savedFlightRef.id })
+telemetryNow = 1000
+rejectArtifacts(new Error('AGENT_TURN_TIMEOUT')); await nextMeasuredSend
+check('new and old measurements coexist; failed turn never acquires old UI success', measurementFor(measurementId).status === 'completed'
+  && measurementFor(nextMeasurementId).status === 'failed' && measurementFor(nextMeasurementId).finalUiCommitMs === null)
+
+const cancelledMeasurementStore = makeRouteStore()
+let finishCancelledMeasurement
+telemetryNow = 1100
+converseStub = (_request, options) => {
+  options.onAccepted(artifactScope)
+  options.onProgress({ connection: 'running', startedAt: 1, ...artifactScope })
+  options.onArtifacts(publication(1))
+  return new Promise(resolve => { finishCancelledMeasurement = resolve })
+}
+const cancelledMeasurementSend = cancelledMeasurementStore.send('cancel timing', 'en', { clickedAtMs: 1090 })
+await flushArtifacts()
+const cancelledMeasurementId = cancelledMeasurementStore.turnTelemetryId
+telemetryNow = 1200
+cancelledMeasurementStore.recordTurnUiCommit(cancelledMeasurementId, { kind: 'guide', artifactId: savedGuideRef.id })
+telemetryNow = 1300
+cancelConversationStub = async () => ({ ...publication(1), status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' } })
+await cancelledMeasurementStore.cancelTurn('en')
+finishCancelledMeasurement(response); await cancelledMeasurementSend
+cancelledMeasurementStore.recordTurnUiCommit(cancelledMeasurementId, { kind: 'final' })
+check('cancel acknowledgement retains first result and time-to-failure without a late final timestamp', measurementFor(cancelledMeasurementId).status === 'cancelled'
+  && measurementFor(cancelledMeasurementId).timeToFailureMs === 200 && measurementFor(cancelledMeasurementId).firstGuideCommitMs === 110
+  && measurementFor(cancelledMeasurementId).finalUiCommitMs === null)
+
+const abandonedMeasurementStore = makeRouteStore()
+telemetryNow = 1400
+const abandonedMeasurementSend = abandonedMeasurementStore.send('switch away', 'en', { clickedAtMs: 1390 })
+await flushArtifacts()
+const abandonedMeasurementId = abandonedMeasurementStore.turnTelemetryId
+const finishAbandonedMeasurement = finishCancelledMeasurement
+const telemetryTarget = history.createEmptyChatSession('telemetry-other-session')
+telemetryTarget.ownerId = 'user-a'; abandonedMeasurementStore.sessions.push(telemetryTarget)
+telemetryNow = 1500; abandonedMeasurementStore.switchSession(telemetryTarget.id)
+finishAbandonedMeasurement(response); await abandonedMeasurementSend
+abandonedMeasurementStore.recordTurnUiCommit(abandonedMeasurementId, { kind: 'guide', artifactId: savedGuideRef.id })
+check('switching sessions records abandonment and discards old committed-tree callbacks', measurementFor(abandonedMeasurementId).status === 'abandoned'
+  && measurementFor(abandonedMeasurementId).timeToFailureMs === 100 && measurementFor(abandonedMeasurementId).firstGuide === null)
 
 console.log(`\n结果：${passed} 通过 / ${failed} 失败`)
 process.exit(failed > 0 ? 1 : 0)

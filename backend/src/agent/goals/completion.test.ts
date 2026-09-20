@@ -7,6 +7,7 @@ import { completeGoal, refreshGoalDelivery, summarizeGoalDelivery } from './comp
 import { createDefaultGoalVerifierRegistry } from './default-verifiers.js'
 import { InMemoryGoalRepository, InMemoryGoalRunRepository } from './repository.js'
 import { GoalVerifierRegistry, type GoalVerifier } from './verifier.js'
+import { observePlannerTurn, type PlannerObservation } from '../../lib/planner-observation.js'
 
 async function fixture() {
   const trip = emptyTripContext('trip')
@@ -31,6 +32,20 @@ async function fixture() {
 }
 
 describe('Goal completion service', () => {
+  it.each(['read_only', 'failed_commit', 'committed'] as const)('records durable verification only after a committed verdict: %s', async mode => {
+    const { scope, goal, run, verify } = await fixture()
+    verify.mockResolvedValue({ status: 'satisfied', artifactIds: [], missing: [], warnings: [] })
+    if (mode === 'failed_commit') vi.spyOn(scope.runs, 'commitCompletion').mockRejectedValue(new Error('database failed'))
+    let snapshot!: PlannerObservation
+    const promise = observePlannerTurn({ requestId: 'r', tripId: 'trip', conversationId: 'c', generationId: 'g' },
+      () => completeGoal(scope, { goalId: goal.id, runId: run.id, persist: mode !== 'read_only' }), value => { snapshot = value })
+    if (mode === 'failed_commit') await expect(promise).rejects.toThrow('database failed')
+    else await promise
+    expect(snapshot.spans).toEqual(expect.arrayContaining([expect.objectContaining({ name: 'goal_verify' })]))
+    if (mode === 'committed') expect(snapshot.milestones.firstVerifiedMs).toEqual(expect.any(Number))
+    else expect(snapshot.milestones.firstVerifiedMs).toBeNull()
+  })
+
   it('allows the Agent to improve partial results in the same active run', async () => {
     const { scope, goal, run, verify } = await fixture()
     verify.mockResolvedValue({ status: 'partial', artifactIds: [], missing: ['guide_daily_activity_coverage'], warnings: [] })

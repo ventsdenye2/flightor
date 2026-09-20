@@ -16,12 +16,52 @@ import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, Unav
 import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repository.js'
 import { GoalVerifierRegistry, type GoalVerification } from '../goals/verifier.js'
 import { AppError } from '../../lib/errors.js'
+import { observeSpan, type PlannerObservation } from '../../lib/planner-observation.js'
 
 const ctx: ToolExecutionContext = { requestId: 'r', conversationId: 'c', tripId: 't', generationId: 'g', trips: new InMemoryTripContextRepository([emptyTripContext('t')]), artifacts: new InMemoryArtifactRepository('u', new Set(['t'])), memory: new InMemoryUserMemoryRepository(), aviation: new MockAviationProvider(), fares: new MockFareProvider(), research: new UnavailableResearchAgent(), connectionSearch: new UnavailableConnectionSearchService(), flightRoutePlanner: new UnavailableFlightRoutePlanner(), routeOptimizer: new UnavailableRouteOptimizer() }
 const call = (id: string, name: string, args = {}) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
 const tool = (name: string, execute: AgentTool['execute'], extra: Partial<AgentTool> = {}): AgentTool => ({ name, description: name, inputSchema: z.object({}).strict(), outputSchema: z.object({ ok: z.boolean() }), costClass: 'free', costUnits: 1, sideEffect: 'none', parallelSafe: true, timeoutMs: 30, execute, ...extra })
 
 describe('AgentRuntime and ToolRegistry', () => {
+  it('observes model/tool/HTTP separately and records guide repairs without content', async () => {
+    const observations: PlannerObservation[] = []
+    const registry = new ToolRegistry().register(tool('save_travel_guide', async () => {
+      await observeSpan('http', 'fixture', async () => {})
+      return { status: 'needs_revision', repair: { issues: [{ classification: 'evidence_missing' }] }, privateText: 'SECRET-EVIDENCE' }
+    }, { outputSchema: z.object({ status: z.string(), repair: z.any(), privateText: z.string() }) }))
+    const complete = vi.fn().mockResolvedValueOnce({ message: { role: 'assistant', content: null,
+      tool_calls: [call('save', 'save_travel_guide'), call('missing', 'missing')] } })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: 'SECRET-REPLY' } })
+    await new AgentRuntime({ complete }, registry, { observation: value => observations.push(value) }).run({
+      context: ctx, messages: [{ role: 'user', content: 'SECRET-INPUT' }]
+    })
+    expect(observations).toHaveLength(1)
+    expect(observations[0]).toMatchObject({ generationId: 'g', outcome: 'responded',
+      counts: { modelCalls: 2, toolCalls: 2, httpAttempts: 1, guideSaveAttempts: 1, guideRepairResponses: 1 },
+      repairClasses: { evidence_missing: 1 }, milestones: { firstVerifiedMs: null } })
+    expect(observations[0]!.spans.find(span => span.name === 'missing')).toMatchObject({ status: 'error', errorCode: 'UNKNOWN_TOOL' })
+    const parent = observations[0]!.spans.find(span => span.name === 'save_travel_guide')!
+    expect(observations[0]!.spans.find(span => span.kind === 'http')!.parentId).toBe(parent.id)
+    expect(JSON.stringify(observations)).not.toContain('SECRET-')
+  })
+
+  it('records cancellation of model wait without late completion changing the observation', async () => {
+    const observations: PlannerObservation[] = [], controller = new AbortController()
+    let finish!: (value: any) => void
+    const complete = vi.fn(() => new Promise<any>(resolve => { finish = resolve }))
+    const pending = new AgentRuntime({ complete }, new ToolRegistry(), { observation: value => observations.push(value) })
+      .run({ context: ctx, signal: controller.signal, messages: [{ role: 'user', content: 'plan' }] })
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledTimes(1))
+    controller.abort()
+    expect((await pending).stopReason).toBe('cancelled')
+    expect(observations[0]).toMatchObject({ outcome: 'cancelled', counts: { modelCalls: 1 }, milestones: { firstVerifiedMs: null } })
+    expect(observations[0]!.spans[0]!.status).toBe('error')
+    const snapshot = JSON.stringify(observations)
+    finish({ message: { role: 'assistant', content: 'late' } })
+    await Promise.resolve()
+    expect(JSON.stringify(observations)).toBe(snapshot)
+  })
+
   it('removes an English analysis preface only when a Chinese reply follows a divider', () => {
     expect(sanitizePlannerReply('I need to inspect the selected flight and formulate the final response.\n---\n已采用这条航线，可以继续安排行程。'))
       .toBe('已采用这条航线，可以继续安排行程。')

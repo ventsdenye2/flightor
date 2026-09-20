@@ -6,6 +6,7 @@ import { InMemoryTripContextRepository } from '../trips/repository.js'
 import { emptyTripContext } from '../trips/types.js'
 import { v7 as uuidv7 } from 'uuid'
 import { selectedFlightContext } from '../workspaces/flight-selection.js'
+import { observePlannerTurn, type PlannerObservation } from '../lib/planner-observation.js'
 
 function setup() {
   const trip = {
@@ -22,6 +23,21 @@ function setup() {
 }
 
 describe('Artifact workspace consistency', () => {
+  it('records saved milestones only after repository commit and never from failed writes', async () => {
+    const { artifacts, input } = setup(), snapshots: PlannerObservation[] = []
+    const scope = await createArtifactWorkspace(input)
+    const create = vi.spyOn(artifacts, 'create').mockRejectedValueOnce(new Error('database failed'))
+    await expect(observePlannerTurn({ requestId: 'r', tripId: 'trip', conversationId: 'c', generationId: 'g' },
+      () => saveWorkspaceArtifact(scope, { type: 'travel_guide', schemaVersion: 1, payload: {}, sourceArtifactIds: [] }),
+      value => snapshots.push(value))).rejects.toThrow('database failed')
+    expect(snapshots[0]!.milestones.firstGuideSavedMs).toBeNull()
+    create.mockRestore()
+    await observePlannerTurn({ requestId: 'r2', tripId: 'trip', conversationId: 'c', generationId: 'g2' },
+      () => saveWorkspaceArtifact(scope, { type: 'travel_guide', schemaVersion: 1, payload: {}, sourceArtifactIds: [] }), value => snapshots.push(value))
+    expect(snapshots[1]!.milestones.firstGuideSavedMs).toEqual(expect.any(Number))
+    expect(snapshots[1]!.milestones.firstVerifiedMs).toBeNull()
+  })
+
   it('notifies only after commit, and observer failure does not change a saved result', async () => {
     const { artifacts, input } = setup()
     let release!: () => void

@@ -132,4 +132,31 @@ check('adopted segments remain readable with change and plan disabled', () => {
   h.find('flight-decision__details-toggle').props.onClick(); h.render(); assert.match(h.content(), /CA123/)
   assert.equal(h.find('ux-secondary').props.disabled, true); assert.equal(h.find('ux-primary').props.disabled, true)
 })
+check('telemetry observes committed result branches rather than merely receiving refs', () => {
+  const commits = []
+  const h = planner({ productionResultAvailable: false, flightDecision: undefined,
+    productionTelemetry: { id: 'turn-local', flights: [], finalReady: false },
+    onProductionCommit: (id, event) => commits.push({ id, ...event }) })
+  assert.equal(commits.length, 0)
+  h.props.flightDecision = { type: 'FlightDecision', props: { children: 'loaded flight' } }
+  h.props.productionTelemetry = { id: 'turn-local', flights: [{ id: 'flight', verificationStatus: 'partial' }], finalReady: false }
+  h.render()
+  assert.ok(commits.some(value => value.kind === 'flight' && value.artifactId === 'flight'))
+  assert.equal(commits.some(value => value.kind === 'guide' || value.kind === 'final'), false)
+  h.props.productionResultAvailable = true
+  h.props.productionTelemetry = { ...h.props.productionTelemetry, guide: { id: 'guide', verificationStatus: 'verified' } }
+  h.render()
+  assert.ok(commits.some(value => value.kind === 'guide' && value.verificationStatus === 'verified'))
+  assert.equal(commits.some(value => value.kind === 'final'), false)
+  h.props.productionBusy = false; h.props.productionReply = 'Saved and checked.'
+  h.props.productionTelemetry = { ...h.props.productionTelemetry, finalReady: true }
+  h.render()
+  assert.ok(commits.some(value => value.kind === 'final' && value.id === 'turn-local'))
+})
+check('failure and cancellation views do not fabricate a final commit', () => {
+  const commits = [], h = planner({ productionBusy: false, productionError: 'Stopped', productionResultAvailable: false,
+    productionTelemetry: { id: 'cancelled-turn', flights: [], finalReady: false }, onProductionCommit: (_id, event) => commits.push(event) })
+  h.render()
+  assert.equal(commits.some(value => value.kind === 'final'), false)
+})
 console.log(`${passed} Planner publication component checks passed (deterministic hooks; no browser/device).`)
