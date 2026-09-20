@@ -1,0 +1,1749 @@
+{
+  "runId": "g1-live-2026-09-20T15-21-51-390Z",
+  "codeSha": "75a0a6d73bf946748a4ad090e6c5a417497dd841",
+  "dirtyDiffHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "runnerHash": "10154c7cfc495d4a73bc6d4c1b47dfe095e45ca7e3ea5629490cf0cdd26bacef",
+  "meterHash": "4d5b750b59a89d840e17987ba610181859a8a4b7a8d105f951df2db2d6160233",
+  "model": "deepseek/deepseek-v4-flash-0731",
+  "pricing": {
+    "prompt": "0.00000004",
+    "completion": "0.00000008",
+    "input_cache_read": "0.000000016"
+  },
+  "authorizedUsd": 2,
+  "callLimits": {
+    "model": 48,
+    "serp": 24
+  },
+  "evidenceLayer": "real providers + real PostgreSQL + authenticated Fastify inject",
+  "uiPaintMeasured": false,
+  "startingBudget": {
+    "knownCostUsd": 0.017287,
+    "heldUsd": 0.5,
+    "totalCostUsd": 0.517287,
+    "calls": [
+      {
+        "index": 1,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906365262,
+        "statusCode": 200,
+        "durationMs": 5747,
+        "costUsd": 0.00103892,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 2,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906374170,
+        "statusCode": 200,
+        "durationMs": 2153,
+        "costUsd": 0.000426104,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 3,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906377124,
+        "statusCode": 200,
+        "durationMs": 1866,
+        "costUsd": 0.0004474,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 4,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906381404,
+        "statusCode": 200,
+        "durationMs": 6744
+      },
+      {
+        "index": 5,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906381414,
+        "statusCode": 200,
+        "durationMs": 1497
+      },
+      {
+        "index": 6,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906382927,
+        "statusCode": 200,
+        "durationMs": 1493
+      },
+      {
+        "index": 7,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906384432,
+        "statusCode": 200,
+        "durationMs": 779
+      },
+      {
+        "index": 8,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906388168,
+        "statusCode": 200,
+        "durationMs": 3625,
+        "costUsd": 0.0005712312,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 9,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906416472,
+        "statusCode": 200,
+        "durationMs": 4668,
+        "costUsd": 0.00133852,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 10,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906490051,
+        "statusCode": 200,
+        "durationMs": 2506,
+        "costUsd": 0.0006634,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 11,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906499679,
+        "statusCode": 200,
+        "durationMs": 11113
+      },
+      {
+        "index": 12,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906499688,
+        "statusCode": 200,
+        "durationMs": 831
+      },
+      {
+        "index": 13,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906510802,
+        "statusCode": 200,
+        "durationMs": 1451,
+        "costUsd": 0.00027875,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 14,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906514202,
+        "statusCode": 200,
+        "durationMs": 1649,
+        "costUsd": 0.000680072,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 15,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906555795,
+        "statusCode": 200,
+        "durationMs": 1286,
+        "costUsd": 0.000791976,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 16,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906600074,
+        "statusCode": 200,
+        "durationMs": 2268,
+        "costUsd": 0.0008456,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 17,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906618937,
+        "statusCode": 200,
+        "durationMs": 1769
+      },
+      {
+        "index": 18,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906620824,
+        "statusCode": 200,
+        "durationMs": 2814,
+        "costUsd": 0.00103256,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 19,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906628852,
+        "statusCode": 200,
+        "durationMs": 1492,
+        "costUsd": 0.00044292,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 20,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906641097,
+        "statusCode": 200,
+        "durationMs": 2938,
+        "costUsd": 0.0010558,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 21,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906645217,
+        "statusCode": 200,
+        "durationMs": 1870,
+        "costUsd": 0.000472536,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 22,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906660587,
+        "statusCode": 200,
+        "durationMs": 2484,
+        "costUsd": 0.0011118,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 23,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906675684,
+        "statusCode": 200,
+        "durationMs": 1310
+      },
+      {
+        "index": 24,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906675699,
+        "statusCode": 200,
+        "durationMs": 1307
+      },
+      {
+        "index": 25,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906677013,
+        "statusCode": 200,
+        "durationMs": 791
+      },
+      {
+        "index": 26,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906677815,
+        "statusCode": 200,
+        "durationMs": 1619,
+        "costUsd": 0.0009016,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 27,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906693962,
+        "statusCode": 200,
+        "durationMs": 1356,
+        "costUsd": 0.000636576,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 28,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906751260,
+        "statusCode": 200,
+        "durationMs": 3080,
+        "costUsd": 0.00136684,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 29,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906805025,
+        "statusCode": 200,
+        "durationMs": 5034,
+        "costUsd": 0.0014276,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 30,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906813071,
+        "statusCode": 200,
+        "durationMs": 2884,
+        "costUsd": 0.001748736,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      }
+    ]
+  },
+  "budget": {
+    "knownCostUsd": 0.026748,
+    "heldUsd": 0.95,
+    "totalCostUsd": 0.976748,
+    "calls": [
+      {
+        "index": 1,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906365262,
+        "statusCode": 200,
+        "durationMs": 5747,
+        "costUsd": 0.00103892,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 2,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906374170,
+        "statusCode": 200,
+        "durationMs": 2153,
+        "costUsd": 0.000426104,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 3,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906377124,
+        "statusCode": 200,
+        "durationMs": 1866,
+        "costUsd": 0.0004474,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 4,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906381404,
+        "statusCode": 200,
+        "durationMs": 6744
+      },
+      {
+        "index": 5,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906381414,
+        "statusCode": 200,
+        "durationMs": 1497
+      },
+      {
+        "index": 6,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906382927,
+        "statusCode": 200,
+        "durationMs": 1493
+      },
+      {
+        "index": 7,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906384432,
+        "statusCode": 200,
+        "durationMs": 779
+      },
+      {
+        "index": 8,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906388168,
+        "statusCode": 200,
+        "durationMs": 3625,
+        "costUsd": 0.0005712312,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 9,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906416472,
+        "statusCode": 200,
+        "durationMs": 4668,
+        "costUsd": 0.00133852,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 10,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906490051,
+        "statusCode": 200,
+        "durationMs": 2506,
+        "costUsd": 0.0006634,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 11,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906499679,
+        "statusCode": 200,
+        "durationMs": 11113
+      },
+      {
+        "index": 12,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906499688,
+        "statusCode": 200,
+        "durationMs": 831
+      },
+      {
+        "index": 13,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906510802,
+        "statusCode": 200,
+        "durationMs": 1451,
+        "costUsd": 0.00027875,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 14,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906514202,
+        "statusCode": 200,
+        "durationMs": 1649,
+        "costUsd": 0.000680072,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 15,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906555795,
+        "statusCode": 200,
+        "durationMs": 1286,
+        "costUsd": 0.000791976,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 16,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906600074,
+        "statusCode": 200,
+        "durationMs": 2268,
+        "costUsd": 0.0008456,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 17,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906618937,
+        "statusCode": 200,
+        "durationMs": 1769
+      },
+      {
+        "index": 18,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906620824,
+        "statusCode": 200,
+        "durationMs": 2814,
+        "costUsd": 0.00103256,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 19,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906628852,
+        "statusCode": 200,
+        "durationMs": 1492,
+        "costUsd": 0.00044292,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 20,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906641097,
+        "statusCode": 200,
+        "durationMs": 2938,
+        "costUsd": 0.0010558,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 21,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906645217,
+        "statusCode": 200,
+        "durationMs": 1870,
+        "costUsd": 0.000472536,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 22,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906660587,
+        "statusCode": 200,
+        "durationMs": 2484,
+        "costUsd": 0.0011118,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 23,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906675684,
+        "statusCode": 200,
+        "durationMs": 1310
+      },
+      {
+        "index": 24,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906675699,
+        "statusCode": 200,
+        "durationMs": 1307
+      },
+      {
+        "index": 25,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789906677013,
+        "statusCode": 200,
+        "durationMs": 791
+      },
+      {
+        "index": 26,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906677815,
+        "statusCode": 200,
+        "durationMs": 1619,
+        "costUsd": 0.0009016,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 27,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906693962,
+        "statusCode": 200,
+        "durationMs": 1356,
+        "costUsd": 0.000636576,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 28,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906751260,
+        "statusCode": 200,
+        "durationMs": 3080,
+        "costUsd": 0.00136684,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 29,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906805025,
+        "statusCode": 200,
+        "durationMs": 5034,
+        "costUsd": 0.0014276,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 30,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789906813071,
+        "statusCode": 200,
+        "durationMs": 2884,
+        "costUsd": 0.001748736,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 31,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789917717655,
+        "statusCode": 200,
+        "durationMs": 5723,
+        "costUsd": 0.00111652,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 32,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789917731429,
+        "statusCode": 200,
+        "durationMs": 1962
+      },
+      {
+        "index": 33,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789917731436,
+        "statusCode": 200,
+        "durationMs": 2374
+      },
+      {
+        "index": 34,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789917733928,
+        "statusCode": 200,
+        "durationMs": 1085
+      },
+      {
+        "index": 35,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789917735360,
+        "statusCode": 200,
+        "durationMs": 1152
+      },
+      {
+        "index": 36,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789917741168,
+        "statusCode": 200,
+        "durationMs": 465,
+        "costUsd": 0.00038532,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 37,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789917763015,
+        "statusCode": 200,
+        "durationMs": 6466,
+        "costUsd": 0.00130308,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 38,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789917790983,
+        "statusCode": 200,
+        "durationMs": 5560,
+        "costUsd": 0.00136788,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 39,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789917811669,
+        "statusCode": 200,
+        "durationMs": 3887
+      },
+      {
+        "index": 40,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789917815687,
+        "statusCode": 200,
+        "durationMs": 7186,
+        "costUsd": 0.00113072,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 41,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789917837738,
+        "statusCode": 200,
+        "durationMs": 1470
+      },
+      {
+        "index": 42,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789917837744,
+        "statusCode": 200,
+        "durationMs": 2728
+      },
+      {
+        "index": 43,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "success",
+        "startedAt": 1789917839467,
+        "statusCode": 200,
+        "durationMs": 1212
+      },
+      {
+        "index": 44,
+        "kind": "serp",
+        "reservedUsd": 0.05,
+        "status": "unknown",
+        "startedAt": 1789917841455,
+        "durationMs": 30012
+      },
+      {
+        "index": 45,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789917871474,
+        "statusCode": 200,
+        "durationMs": 3615,
+        "costUsd": 0.001445444,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      },
+      {
+        "index": 46,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789917878881,
+        "statusCode": 200,
+        "durationMs": 4915,
+        "costUsd": 0.00132552,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "tool_calls"
+      },
+      {
+        "index": 47,
+        "kind": "model",
+        "requestModel": "deepseek/deepseek-v4-flash-0731",
+        "reservedUsd": 0.1,
+        "status": "success",
+        "startedAt": 1789917947505,
+        "statusCode": 200,
+        "durationMs": 6764,
+        "costUsd": 0.00138208,
+        "responseModel": "deepseek/deepseek-v4-flash-0731",
+        "finishReason": "stop"
+      }
+    ]
+  },
+  "startedAt": "2026-09-20T15:21:55.094Z",
+  "finishedAt": "2026-09-20T15:26:04.501Z",
+  "cases": [
+    {
+      "caseId": "self-ticket",
+      "prompt": "我的机票已自备，不查航班。请为2026年10月20日至21日东京两日游研究具体去处并保存攻略。本次两天游玩总预算1500元人民币，喜欢文化与小吃，节奏轻松，每天一个有来源的主景点，并提供实用交通或饮食信息。优先官方资料；未核实的价格、开放时间和交通耗时要明确说明。",
+      "persistenceStatus": "passed",
+      "stages": {
+        "setupMs": 81.13119999999981,
+        "apiAcceptedMs": 16.868899999999485,
+        "finalResponseMs": 93998.9485,
+        "workspaceRestoreMs": 37.82129999999597,
+        "totalCaseMs": 94120.5653
+      },
+      "firstArtifacts": {
+        "travel_guide": {
+          "artifactId": "01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+          "apiReadElapsedMs": 73433.3744
+        }
+      },
+      "artifacts": [
+        {
+          "id": "01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+          "type": "travel_guide"
+        }
+      ],
+      "restored": true,
+      "delivery": {
+        "status": "satisfied",
+        "goalId": "01a0bf69-1a26-71bb-8aac-bb8527a39e25",
+        "kind": "travel_guide",
+        "artifactIds": [
+          "01a0bf6a-0262-743f-b6bf-7fe7276ebe10"
+        ],
+        "missing": [],
+        "warnings": [
+          "evidence_partially_verified"
+        ],
+        "goals": [
+          {
+            "status": "satisfied",
+            "artifactIds": [
+              "01a0bf6a-0262-743f-b6bf-7fe7276ebe10"
+            ],
+            "missing": [],
+            "warnings": [
+              "evidence_partially_verified"
+            ],
+            "goalId": "01a0bf69-1a26-71bb-8aac-bb8527a39e25",
+            "kind": "travel_guide"
+          }
+        ]
+      },
+      "observation": {
+        "version": 1,
+        "requestId": "req-3",
+        "tripId": "01a0bf68-e436-71a3-a08a-28cb50c5896d",
+        "conversationId": "01a0bf68-e44c-7124-abcd-95648113fc35",
+        "generationId": "01a0bf68-e45e-75dc-a851-d55a7b8a5e9a",
+        "startedAt": "2026-09-20T15:21:57.600Z",
+        "clock": "server_monotonic",
+        "durationMs": 93523.18539999999,
+        "outcome": "completed",
+        "spans": [
+          {
+            "id": 1,
+            "parentId": null,
+            "kind": "phase",
+            "name": "planning_context",
+            "startMs": 19.674799999999777,
+            "errorCode": null,
+            "endMs": 30.79619999999977,
+            "status": "ok",
+            "durationMs": 11.121399999999994,
+            "exclusiveMs": 11.121399999999994
+          },
+          {
+            "id": 2,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 41.356299999999464,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 27061,
+                "completionTokens": 426,
+                "totalTokens": 27487,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1117,
+              "configFingerprint": "7525cd3aa77a510113e5c424aa2159277c19d24ab7c6eba94b19a7bc60af01ba",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 13748.693,
+            "status": "ok",
+            "durationMs": 13707.3367,
+            "exclusiveMs": 16.807999999997264
+          },
+          {
+            "id": 3,
+            "parentId": 2,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 54.529999999999745,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 13745.058700000001,
+            "status": "ok",
+            "durationMs": 13690.528700000003,
+            "exclusiveMs": 13690.528700000003
+          },
+          {
+            "id": 4,
+            "parentId": null,
+            "kind": "tool",
+            "name": "research_destination",
+            "startMs": 13749.013600000002,
+            "errorCode": null,
+            "endMs": 45407.3978,
+            "status": "ok",
+            "durationMs": 31658.384199999997,
+            "exclusiveMs": 155.71879999999146
+          },
+          {
+            "id": 5,
+            "parentId": 4,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 13829.3161,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 16324.895800000002,
+            "status": "ok",
+            "durationMs": 2495.579700000002,
+            "exclusiveMs": 2495.579700000002
+          },
+          {
+            "id": 6,
+            "parentId": 4,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 13835.7627,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 18332.9697,
+            "status": "ok",
+            "durationMs": 4497.207000000002,
+            "exclusiveMs": 4497.207000000002
+          },
+          {
+            "id": 7,
+            "parentId": 4,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 16328.2759,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 17758.6701,
+            "status": "ok",
+            "durationMs": 1430.3941999999988,
+            "exclusiveMs": 1430.3941999999988
+          },
+          {
+            "id": 8,
+            "parentId": 4,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 17759.8375,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 23562.650700000002,
+            "status": "ok",
+            "durationMs": 5802.8132000000005,
+            "exclusiveMs": 5802.8132000000005
+          },
+          {
+            "id": 9,
+            "parentId": 4,
+            "kind": "model",
+            "name": "openrouter",
+            "startMs": 23567.4726,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "DeepInfra",
+              "gateway": "openrouter",
+              "finishReason": "stop",
+              "usage": {
+                "promptTokens": 3275,
+                "completionTokens": 1049,
+                "totalTokens": 4324,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 386,
+              "configFingerprint": "9fc4f704a6571a71c97afe8fb73821bc4bc11e3722ad79afcb86f218ad9a189f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4000,
+              "temperature": 0,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": null,
+              "timeoutMs": 60000
+            },
+            "endMs": 45336.803400000004,
+            "status": "ok",
+            "durationMs": 21769.330800000003,
+            "exclusiveMs": 4.1208000000042375
+          },
+          {
+            "id": 10,
+            "parentId": 9,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 23568.269800000002,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 45333.4798,
+            "status": "ok",
+            "durationMs": 21765.21,
+            "exclusiveMs": 21765.21
+          },
+          {
+            "id": 11,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 45407.6083,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 29387,
+                "completionTokens": 1595,
+                "totalTokens": 30982,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1304,
+              "configFingerprint": "7525cd3aa77a510113e5c424aa2159277c19d24ab7c6eba94b19a7bc60af01ba",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 73118.3122,
+            "status": "ok",
+            "durationMs": 27710.7039,
+            "exclusiveMs": 10.066000000013446
+          },
+          {
+            "id": 12,
+            "parentId": 11,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 45414.8508,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 73115.48869999999,
+            "status": "ok",
+            "durationMs": 27700.637899999987,
+            "exclusiveMs": 27700.637899999987
+          },
+          {
+            "id": 13,
+            "parentId": null,
+            "kind": "tool",
+            "name": "save_travel_guide",
+            "startMs": 73118.3936,
+            "errorCode": null,
+            "endMs": 73372.98229999999,
+            "status": "ok",
+            "durationMs": 254.58869999999297,
+            "exclusiveMs": 219.20779999998922
+          },
+          {
+            "id": 14,
+            "parentId": 13,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 73305.80589999999,
+            "errorCode": null,
+            "endMs": 73341.1868,
+            "status": "ok",
+            "durationMs": 35.38090000000375,
+            "exclusiveMs": 35.38090000000375
+          },
+          {
+            "id": 15,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 73373.0575,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "stop",
+              "usage": {
+                "promptTokens": 33335,
+                "completionTokens": 431,
+                "totalTokens": 33766,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1368,
+              "configFingerprint": "7525cd3aa77a510113e5c424aa2159277c19d24ab7c6eba94b19a7bc60af01ba",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 93421.72929999999,
+            "status": "ok",
+            "durationMs": 20048.671799999996,
+            "exclusiveMs": 13.155899999997928
+          },
+          {
+            "id": 16,
+            "parentId": 15,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 73382.2031,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 93417.719,
+            "status": "ok",
+            "durationMs": 20035.5159,
+            "exclusiveMs": 20035.5159
+          },
+          {
+            "id": 17,
+            "parentId": null,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 93434.75869999999,
+            "errorCode": null,
+            "endMs": 93467.62629999999,
+            "status": "ok",
+            "durationMs": 32.867599999997765,
+            "exclusiveMs": 32.867599999997765
+          }
+        ],
+        "spansTruncated": false,
+        "counts": {
+          "modelCalls": 4,
+          "toolCalls": 2,
+          "httpAttempts": 8,
+          "guideSaveAttempts": 1,
+          "guideRevisionAttempts": 0,
+          "guideRepairResponses": 0
+        },
+        "milestones": {
+          "firstFlightSavedMs": null,
+          "firstGuideSavedMs": 73264.83489999999,
+          "firstVerifiedMs": 73366.10149999999
+        },
+        "repairClasses": {},
+        "providerReportedSearches": null,
+        "modelUsage": {
+          "promptTokens": 93058,
+          "completionTokens": 3501,
+          "totalTokens": 96559,
+          "reasoningTokens": 0,
+          "cachedTokens": 0
+        },
+        "modelCostUsdMicros": 4175,
+        "knownModelCostUsdMicros": 4175,
+        "unknownModelCostCalls": 0
+      }
+    },
+    {
+      "caseId": "selected-flight",
+      "prompt": "请根据我已采用的北京至东京直飞航班及全部航段时刻，安排2026年10月20日至21日东京两日攻略并保存。全程预算约束4000元人民币，喜欢文化与小吃、节奏轻松；抵达前不要安排活动，每天一个有来源的主景点，并补充实用信息。不要重新查票或更换航班，不需要演出展览；未知费用、开放时间和交通耗时保持未知。",
+      "persistenceStatus": "passed",
+      "stages": {
+        "setupMs": 30.74639999998908,
+        "fareSearchAndAdoptionMs": 3973.568299999999,
+        "apiAcceptedMs": 7.241500000003725,
+        "finalResponseMs": 148814.75089999998,
+        "workspaceRestoreMs": 47.834399999992456,
+        "totalCaseMs": 152868.7229
+      },
+      "firstArtifacts": {
+        "travel_guide": {
+          "artifactId": "01a0bf6c-6510-74f5-b53c-da44b504b90a",
+          "apiReadElapsedMs": 132028.43550000002
+        }
+      },
+      "artifacts": [
+        {
+          "id": "01a0bf6c-6510-74f5-b53c-da44b504b90a",
+          "type": "travel_guide"
+        }
+      ],
+      "selection": {
+        "kind": "offer",
+        "artifactId": "01a0bf6a-630f-7549-b64f-122b7e234aba",
+        "offerId": "gf-2026-10-20-HU 439-2557",
+        "layoverPreference": "airport_only",
+        "contextVersion": 0,
+        "revision": 1,
+        "selectedAt": "2026-09-20T15:23:35.626Z"
+      },
+      "restored": true,
+      "delivery": {
+        "status": "satisfied",
+        "goalId": "01a0bf6a-b966-767e-be4a-caf090afdc06",
+        "kind": "travel_guide",
+        "artifactIds": [
+          "01a0bf6c-6510-74f5-b53c-da44b504b90a"
+        ],
+        "missing": [],
+        "warnings": [
+          "flight_schedule_uses_coarse_time_slots",
+          "evidence_partially_verified"
+        ],
+        "goals": [
+          {
+            "status": "satisfied",
+            "artifactIds": [
+              "01a0bf6c-6510-74f5-b53c-da44b504b90a"
+            ],
+            "missing": [],
+            "warnings": [
+              "flight_schedule_uses_coarse_time_slots",
+              "evidence_partially_verified"
+            ],
+            "goalId": "01a0bf6a-b966-767e-be4a-caf090afdc06",
+            "kind": "travel_guide"
+          }
+        ]
+      },
+      "observation": {
+        "version": 1,
+        "requestId": "req-3g",
+        "tripId": "01a0bf6a-53bb-759c-808d-ba70f06103a4",
+        "conversationId": "01a0bf6a-53c7-7593-a841-9a5a3ef8e0e8",
+        "generationId": "01a0bf6a-6356-709c-b064-f5a260947671",
+        "startedAt": "2026-09-20T15:23:35.639Z",
+        "clock": "server_monotonic",
+        "durationMs": 148404.92320000002,
+        "outcome": "completed",
+        "spans": [
+          {
+            "id": 1,
+            "parentId": null,
+            "kind": "phase",
+            "name": "planning_context",
+            "startMs": 25.75030000001425,
+            "errorCode": null,
+            "endMs": 31.512200000011944,
+            "status": "ok",
+            "durationMs": 5.761899999997695,
+            "exclusiveMs": 5.761899999997695
+          },
+          {
+            "id": 2,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 41.10960000001069,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 27384,
+                "completionTokens": 442,
+                "totalTokens": 27826,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1131,
+              "configFingerprint": "7525cd3aa77a510113e5c424aa2159277c19d24ab7c6eba94b19a7bc60af01ba",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 21986.8012,
+            "status": "ok",
+            "durationMs": 21945.69159999999,
+            "exclusiveMs": 9.710500000001048
+          },
+          {
+            "id": 3,
+            "parentId": 2,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 47.70370000001276,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 21983.684800000003,
+            "status": "ok",
+            "durationMs": 21935.98109999999,
+            "exclusiveMs": 21935.98109999999
+          },
+          {
+            "id": 4,
+            "parentId": null,
+            "kind": "tool",
+            "name": "get_active_goal",
+            "startMs": 21986.9072,
+            "errorCode": null,
+            "endMs": 21997.5754,
+            "status": "ok",
+            "durationMs": 10.66820000000007,
+            "exclusiveMs": 10.66820000000007
+          },
+          {
+            "id": 5,
+            "parentId": null,
+            "kind": "tool",
+            "name": "research_destination",
+            "startMs": 21997.597400000013,
+            "errorCode": null,
+            "endMs": 63232.227199999994,
+            "status": "ok",
+            "durationMs": 41234.62979999998,
+            "exclusiveMs": 161.74339999997756
+          },
+          {
+            "id": 6,
+            "parentId": 5,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 22099.786500000002,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 23828.138000000006,
+            "status": "ok",
+            "durationMs": 1728.3515000000043,
+            "exclusiveMs": 1728.3515000000043
+          },
+          {
+            "id": 7,
+            "parentId": 5,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 22105.61660000001,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 26046.833100000003,
+            "status": "ok",
+            "durationMs": 3941.216499999995,
+            "exclusiveMs": 3941.216499999995
+          },
+          {
+            "id": 8,
+            "parentId": 5,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 23828.588900000002,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 25814.83970000001,
+            "status": "ok",
+            "durationMs": 1986.250800000009,
+            "exclusiveMs": 1986.250800000009
+          },
+          {
+            "id": 9,
+            "parentId": 5,
+            "kind": "http",
+            "name": "serpapi",
+            "startMs": 25815.937300000005,
+            "errorCode": "PROVIDER_TIMEOUT",
+            "status": "error",
+            "endMs": 55833.6177,
+            "durationMs": 30017.680399999997,
+            "exclusiveMs": 30017.680399999997
+          },
+          {
+            "id": 10,
+            "parentId": 5,
+            "kind": "model",
+            "name": "openrouter",
+            "startMs": 55835.207599999994,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Phala",
+              "gateway": "openrouter",
+              "finishReason": "stop",
+              "usage": {
+                "promptTokens": 2989,
+                "completionTokens": 568,
+                "totalTokens": 3557,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1446,
+              "configFingerprint": "9fc4f704a6571a71c97afe8fb73821bc4bc11e3722ad79afcb86f218ad9a189f",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4000,
+              "temperature": 0,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": null,
+              "timeoutMs": 60000
+            },
+            "endMs": 63174.2628,
+            "status": "ok",
+            "durationMs": 7339.0552000000025,
+            "exclusiveMs": 2.3144000000029337
+          },
+          {
+            "id": 11,
+            "parentId": 10,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 55835.55540000001,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 63172.29620000001,
+            "status": "ok",
+            "durationMs": 7336.7408,
+            "exclusiveMs": 7336.7408
+          },
+          {
+            "id": 12,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 63232.44080000001,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "tool_calls",
+              "usage": {
+                "promptTokens": 29378,
+                "completionTokens": 1880,
+                "totalTokens": 31258,
+                "reasoningTokens": 1,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1326,
+              "configFingerprint": "7525cd3aa77a510113e5c424aa2159277c19d24ab7c6eba94b19a7bc60af01ba",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 131041.5925,
+            "status": "ok",
+            "durationMs": 67809.15169999999,
+            "exclusiveMs": 14.194399999978486
+          },
+          {
+            "id": 13,
+            "parentId": 12,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 63241.54579999999,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 131036.5031,
+            "status": "ok",
+            "durationMs": 67794.95730000001,
+            "exclusiveMs": 67794.95730000001
+          },
+          {
+            "id": 14,
+            "parentId": null,
+            "kind": "tool",
+            "name": "save_travel_guide",
+            "startMs": 131041.78940000001,
+            "errorCode": null,
+            "endMs": 131855.708,
+            "status": "ok",
+            "durationMs": 813.9186000000045,
+            "exclusiveMs": 777.2495000000054
+          },
+          {
+            "id": 15,
+            "parentId": 14,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 131757.7023,
+            "errorCode": null,
+            "endMs": 131794.3714,
+            "status": "ok",
+            "durationMs": 36.66909999999916,
+            "exclusiveMs": 36.66909999999916
+          },
+          {
+            "id": 16,
+            "parentId": null,
+            "kind": "model",
+            "name": "planner",
+            "startMs": 131855.826,
+            "errorCode": null,
+            "model": {
+              "requestModel": "deepseek/deepseek-v4-flash-0731",
+              "responseModel": "deepseek/deepseek-v4-flash-0731",
+              "provider": "Relace",
+              "gateway": "openrouter",
+              "finishReason": "stop",
+              "usage": {
+                "promptTokens": 33696,
+                "completionTokens": 428,
+                "totalTokens": 34124,
+                "reasoningTokens": 0,
+                "cachedTokens": 0
+              },
+              "costUsdMicros": 1383,
+              "configFingerprint": "7525cd3aa77a510113e5c424aa2159277c19d24ab7c6eba94b19a7bc60af01ba",
+              "routeFingerprint": "76ef4ad6f0c8a4ae66efb13875c107cee40c78997a212353d379acfbb2f45591",
+              "maxTokens": 4096,
+              "temperature": null,
+              "reasoning": {
+                "enabled": false,
+                "exclude": true
+              },
+              "toolChoice": "auto",
+              "timeoutMs": 60000
+            },
+            "endMs": 148150.6941,
+            "status": "ok",
+            "durationMs": 16294.868099999992,
+            "exclusiveMs": 13.066199999972014
+          },
+          {
+            "id": 17,
+            "parentId": 16,
+            "kind": "http",
+            "name": "openrouter",
+            "startMs": 131865.563,
+            "errorCode": null,
+            "httpStatus": 200,
+            "endMs": 148147.36490000002,
+            "status": "ok",
+            "durationMs": 16281.80190000002,
+            "exclusiveMs": 16281.80190000002
+          },
+          {
+            "id": 18,
+            "parentId": null,
+            "kind": "phase",
+            "name": "goal_verify",
+            "startMs": 148216.163,
+            "errorCode": null,
+            "endMs": 148261.6261,
+            "status": "ok",
+            "durationMs": 45.463099999993574,
+            "exclusiveMs": 45.463099999993574
+          }
+        ],
+        "spansTruncated": false,
+        "counts": {
+          "modelCalls": 4,
+          "toolCalls": 3,
+          "httpAttempts": 8,
+          "guideSaveAttempts": 1,
+          "guideRevisionAttempts": 0,
+          "guideRepairResponses": 0
+        },
+        "milestones": {
+          "firstFlightSavedMs": null,
+          "firstGuideSavedMs": 131628.9161,
+          "firstVerifiedMs": 131848.0234
+        },
+        "repairClasses": {},
+        "providerReportedSearches": null,
+        "modelUsage": {
+          "promptTokens": 93447,
+          "completionTokens": 3318,
+          "totalTokens": 96765,
+          "reasoningTokens": 1,
+          "cachedTokens": 0
+        },
+        "modelCostUsdMicros": 5286,
+        "knownModelCostUsdMicros": 5286,
+        "unknownModelCostCalls": 0
+      }
+    }
+  ]
+}

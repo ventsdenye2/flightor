@@ -30,6 +30,8 @@ Proposed ADR 和本轮方案描述目标，不代表当前代码已生效。ADR 
 | 性能诊断证据 | [9 月 13 日东京调用分析](CALL_ANALYSIS_2026-09-13_TOKYO.md)，单次自备机票攻略 |
 | 可选航空供应商 | [OAG](oag-integration.md)，不是核心必需依赖 |
 
+最新 G1 [修复后追加复验](design/budget-travel-agent/G1_RETEST_2026-09-20.md)：两例真实持久链路通过，价格时效质量仍未通过；含完整阶段耗时与累计费用。
+
 ## 已接受 ADR 导航
 
 - [0001 Runtime](adr/0001-agent-runtime-phase-0-1.md)、[0002 云状态](adr/0002-cloud-state-phase-2.md)、[0003 工具](adr/0003-core-tools-phase-3.md)。

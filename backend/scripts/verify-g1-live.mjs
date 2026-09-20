@@ -21,6 +21,8 @@ const safeJson = value => {
   return output
 }
 const model = sourceEnv.PLANNER_MODEL || sourceEnv.OPENROUTER_MODEL
+const extendedCalls = process.env.G1_AUTHORIZED_CALL_LIMITS === '48/24'
+const callLimits = extendedCalls ? { model: 48, serp: 24 } : { model: 24, serp: 12 }
 const resumeDirectory = process.env.G1_RESUME_LEDGER_DIRECTORY
 const resolvedResumeDirectory = resumeDirectory ? path.resolve(resumeDirectory) : undefined
 if (resolvedResumeDirectory && (path.dirname(resolvedResumeDirectory) !== path.join(root, '.demo')
@@ -39,8 +41,8 @@ if (!process.argv.includes('--execute')) {
   const used = prior?.calls.reduce((sum, call) => sum + Math.ceil((call.costUsd ?? call.reservedUsd) * 1_000_000), 0) / 1_000_000
   console.log(JSON.stringify({ mode: 'dry-run', model, limitUsd: 2, cases, stages: ['setup', 'fare_search_and_adoption', 'accepted', 'model/tool/http spans', 'first_saved_artifact_read', 'durable_verified', 'final_response', 'workspace_restore'],
     ...(prior ? { resume: { ledgerDirectory: resolvedResumeDirectory, accountingOnly: true, totalHeldOrSpentUsd: used,
-      remainingUsd: prior.limitUsd - used, remainingModelCalls: 24 - prior.calls.filter(c => c.kind === 'model').length,
-      remainingSearchCalls: 12 - prior.calls.filter(c => c.kind === 'serp').length } } : {}),
+      remainingUsd: prior.limitUsd - used, remainingModelCalls: callLimits.model - prior.calls.filter(c => c.kind === 'model').length,
+      remainingSearchCalls: callLimits.serp - prior.calls.filter(c => c.kind === 'serp').length, callLimits } } : {}),
     executeRequires: 'G1_DATABASE_URL targeting dedicated flightor_g1_live, G1_AUTHORIZED_USD=2; provider and UI timing are distinct' }, null, 2))
   process.exit(0)
 }
@@ -59,7 +61,8 @@ if (!catalogResponse.ok) throw Error('G1_PRICING_UNAVAILABLE')
 const catalog = await catalogResponse.json()
 const descriptor = catalog.data?.find(value => value.id === model)
 if (!descriptor?.pricing) throw Error('G1_MODEL_PRICING_MISSING')
-const meter = installG1Budget({ directory: ledgerDirectory, resume: Boolean(resumeDirectory), model, pricing: descriptor.pricing, limitUsd: 2, fetchImpl: rawFetch })
+if (extendedCalls && !resumeDirectory) throw Error('G1_EXTENDED_CALLS_REQUIRE_ORIGINAL_LEDGER')
+const meter = installG1Budget({ directory: ledgerDirectory, resume: Boolean(resumeDirectory), model, pricing: descriptor.pricing, limitUsd: 2, fetchImpl: rawFetch, callLimits })
 const startingBudget = meter.snapshot()
 process.once('exit', () => {
   try { meter.close() } catch { /* retain the lock if a request is still pending */ }
@@ -82,7 +85,7 @@ const manifest = { runId, startedAt: new Date().toISOString(), codeSha: execFile
   runnerHash: createHash('sha256').update(fs.readFileSync(import.meta.filename)).digest('hex'), model, pricing: descriptor.pricing,
   meterHash: createHash('sha256').update(fs.readFileSync(path.join(root, 'scripts/g1-budget.mjs'))).digest('hex'),
   priceSources: ['https://openrouter.ai/api/v1/models', 'https://serpapi.com/pricing'],
-  authorizedUsd: 2, ledgerDirectory, startingBudget, resumedBudget: Boolean(resumeDirectory),
+  authorizedUsd: 2, callLimits, ledgerDirectory, startingBudget, resumedBudget: Boolean(resumeDirectory),
   leanProtocol: true, research: 'real SerpApi plus existing synthesis', uiPaintMeasured: false, evidenceLayer: 'real providers + real PostgreSQL + authenticated Fastify inject', cases: [] }
 const write = () => {
   fs.writeFileSync(path.join(directory, 'report.json'), safeJson({ ...manifest, budget: meter.snapshot() }))

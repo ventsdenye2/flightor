@@ -111,6 +111,19 @@ test('resume fails closed for a missing ledger and over-limit call history', asy
   assert.throws(() => installG1Budget({ directory, model, pricing, resume: true }), e => e.code === 'G1_CALL_LIMIT')
 })
 
+test('authorized extension retains cumulative calls and the USD balance', async () => {
+  const { directory, meter } = await fixture()
+  for (let i = 0; i < 12; i++) await meter.fetch('https://serpapi.com/search.json?engine=google')
+  meter.close()
+  const resumed = installG1Budget({ directory, model, pricing, resume: true, callLimits: { model: 48, serp: 24 }, fetchImpl: async () => response() })
+  activeMeters.push(resumed)
+  assert.equal(resumed.snapshot().heldUsd, 0.6)
+  for (let i = 0; i < 12; i++) await resumed.fetch('https://serpapi.com/search.json?engine=google')
+  assert.equal(resumed.snapshot().calls.length, 24)
+  assert.equal(resumed.snapshot().heldUsd, 1.2)
+  await assert.rejects(resumed.fetch('https://serpapi.com/search.json?engine=google'), e => e.code === 'G1_CALL_LIMIT')
+})
+
 test('close refuses an inflight request and releases after completion', async () => {
   const { meter } = await fixture(async () => new Promise(resolve => setTimeout(() => resolve(response()), 20)))
   const request = meter.fetch('https://serpapi.com/search.json?engine=google')

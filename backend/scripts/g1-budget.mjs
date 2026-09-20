@@ -31,7 +31,7 @@ function pricingRates(pricing, model) {
   return { prompt, completion }
 }
 
-function validateLedger(value, limitUsd, model) {
+function validateLedger(value, limitUsd, model, callLimits) {
   if (!value || value.version !== 1 || value.limitUsd !== limitUsd || typeof value.blocked !== 'boolean' || !Array.isArray(value.calls)) throw fail('G1_INVALID_LEDGER')
   let modelCount = 0
   let serpCount = 0
@@ -46,18 +46,18 @@ function validateLedger(value, limitUsd, model) {
       if (call.requestModel !== undefined) throw fail('G1_INVALID_LEDGER')
     }
   }
-  if (modelCount > 24 || serpCount > 12) throw fail('G1_CALL_LIMIT')
+  if (modelCount > callLimits.model || serpCount > callLimits.serp) throw fail('G1_CALL_LIMIT')
   if (!value.blocked && value.calls.some(call => typeof call.costUsd === 'number' && call.costUsd > call.reservedUsd)) throw fail('G1_INVALID_LEDGER')
   return value
 }
 
-function readLedger(directory, limitUsd, model, resume) {
+function readLedger(directory, limitUsd, model, resume, callLimits) {
   fs.mkdirSync(directory, { recursive: true })
   const file = path.join(directory, 'ledger.json')
   const initial = { version: 1, limitUsd, blocked: false, calls: [] }
   if (resume) {
     if (!fs.existsSync(file)) throw fail('G1_LEDGER_MISSING')
-    try { return { file, value: validateLedger(JSON.parse(fs.readFileSync(file, 'utf8')), limitUsd, model) } } catch (readError) {
+    try { return { file, value: validateLedger(JSON.parse(fs.readFileSync(file, 'utf8')), limitUsd, model, callLimits) } } catch (readError) {
       if (readError?.code === 'G1_INVALID_LEDGER' || readError?.code === 'G1_LEDGER_MODEL_MISMATCH' || readError?.code === 'G1_CALL_LIMIT') throw readError
       throw fail('G1_INVALID_LEDGER')
     }
@@ -83,11 +83,14 @@ function spend(ledger) {
   return ledger.calls.reduce((sum, call) => sum + micros(typeof call.costUsd === 'number' ? call.costUsd : call.reservedUsd), 0)
 }
 
-export function installG1Budget({ directory, model, pricing, limitUsd = 2, fetchImpl = globalThis.fetch, resume = false }) {
+export function installG1Budget({ directory, model, pricing, limitUsd = 2, fetchImpl = globalThis.fetch, resume = false, callLimits = { model: 24, serp: 12 } }) {
   if (!directory || typeof model !== 'string' || !model) throw fail('INVALID_INSTALL')
   if (!Number.isFinite(limitUsd) || limitUsd <= 0 || limitUsd > 2) throw fail('INVALID_LIMIT')
   if (typeof fetchImpl !== 'function') throw fail('INVALID_FETCH')
   if (typeof resume !== 'boolean') throw fail('INVALID_RESUME')
+  if (!callLimits || !Number.isInteger(callLimits.model) || !Number.isInteger(callLimits.serp)
+    || callLimits.model < 1 || callLimits.model > 48 || callLimits.serp < 1 || callLimits.serp > 24) throw fail('INVALID_CALL_LIMITS')
+  callLimits = { ...callLimits }
   const lockFile = path.join(directory, 'ledger.lock')
   fs.mkdirSync(directory, { recursive: true })
   let lockFd
@@ -110,7 +113,7 @@ export function installG1Budget({ directory, model, pricing, limitUsd = 2, fetch
   let ledger
   let file
   try {
-    ({ file, value: ledger } = readLedger(directory, limitUsd, model, resume))
+    ({ file, value: ledger } = readLedger(directory, limitUsd, model, resume, callLimits))
   } catch (error) {
     close()
     throw error
@@ -158,7 +161,7 @@ export function installG1Budget({ directory, model, pricing, limitUsd = 2, fetch
     } else throw fail('G1_URL_FORBIDDEN')
     if (state.blocked || spend(ledger) + micros(reservedUsd) > micros(limitUsd)) throw fail('G1_BUDGET_EXCEEDED')
     const count = ledger.calls.filter(c => c.kind === kind).length
-    if (count >= (kind === 'model' ? 24 : 12)) throw fail('G1_CALL_LIMIT')
+    if (count >= callLimits[kind]) throw fail('G1_CALL_LIMIT')
     const call = { index: state.next++, kind, requestModel: kind === 'model' ? requestModel : undefined, reservedUsd, status: 'running', startedAt: Date.now() }
     if (call.requestModel === undefined) delete call.requestModel
     ledger.calls.push(call)
