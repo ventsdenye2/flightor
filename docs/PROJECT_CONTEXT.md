@@ -1,6 +1,6 @@
 # FlightOR 当前项目上下文
 
-更新：2026-09-20，检查基线 main `9954c34`。这是当前代码地图；性能数字与已运行结果必须引用具体日期证据。当前工作批次已实现 B1 只读上下文预装；后续目标生命周期/攻略协议优化仍待实现，离线结果见当前 progress。
+更新：2026-09-20。B0/B1 已提交 `cabbf51`；当前 B2 已在默认关闭的开关后实现。性能数字与已运行结果必须引用具体日期证据，离线与数据库/live 的验证边界见当前 progress。
 
 ## 当前主链
 
@@ -22,7 +22,7 @@
 | UI | 蓝色正式页面已有部分真实接入；航班采用恢复已具历史证据；活动展示转换仍缺景点坐标与素材 |
 | 测试 | 默认离线与 PostgreSQL suites 分离；`test:db` 缺少 TEST_DATABASE_URL 明确失败；build 不等于真机验收 |
 
-当前输出 delivery 由 completion/verifier 决定，工具正常返回或模型说完成不能代替 `satisfied`。用户明确要求才生成最终航线，内层路径搜索/优化工具不开放给会话 Planner 随意执行。当前 Goal 控制工具仍公开；把机械记账收回服务端是拟议变更，不是现状。
+当前输出 delivery 由 completion/verifier 决定，工具正常返回或模型说完成不能代替 `satisfied`。用户明确要求才生成最终航线，内层路径搜索/优化工具不开放给会话 Planner 随意执行。默认旧模式仍公开 Goal 控制工具；`PLANNER_LEAN_GOALS_ENABLED=true` 启用 B2：业务工具携带 intent/goalRef，服务端原子接受 Goal/Run，固定本轮约束并自动验收，隐藏 declare/resume/finish。单一 completion 权威保持不变；详细公开面见 TOOLS。当前未修改运行环境来启用该开关，PG 接受事务尚缺实际集成验证。
 
 首次模型调用前已增加 `planning-context.ts`：预装当前兼容研究 finding、未完成目标参数和已保存攻略摘要，显式给出日期/城市/类别覆盖与省略项，不自动接受旧目标。新增上下文最多 24,000 字符，Memory 禁用不注入；原 Trip、航班选择和历史消息仍按既有方式提供。详细限额与历史日期修复策略见 [RUNTIME_PLAN §2.1](design/budget-travel-agent/RUNTIME_PLAN.md)。局部准备耗时已写入对话元数据，尚未形成真实性能/费用评估。
 
@@ -41,7 +41,7 @@
 
 9 月 13 日 HANDOFF 中“仍在集成工作区、未合并”描述的是当时状态，不能作为今天 main 的事实。旧演示额度、端口、服务状态也不自动延续。
 
-当前任务顺序唯一依据：[DPS](design/budget-travel-agent/DPS.md)。B0/B1 后继续 B2 领域目标接受和 Run 生命周期，再推进保存/展示与测量；完整跑通后才做案例评估和 DSH 决策。[RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) 分别标记 B1 当前实现与其它拟议契约。
+当前任务顺序唯一依据：[DPS](design/budget-travel-agent/DPS.md)。B2 之后推进 B3 保存引用/错误分类，随后 B4 展示与 B5 完整观测；保留 PG 集成验证缺口，不能据离线结果宣布生产路径跑通。[RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) 分别标记 B1/B2 当前实现与其它拟议契约。
 
 ## 续作入口
 

@@ -135,7 +135,7 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
     const memory = new PostgresUserMemoryRepository(context.db, userId)
     const goalRepository = new PostgresGoalRepository(context.db, userId)
     const goalRunRepository = new PostgresGoalRunRepository(context.db, userId)
-    const runtime = new AgentRuntime(context.providers.openrouter, createPlannerToolRegistry(), {
+    const runtime = new AgentRuntime(context.providers.openrouter, createPlannerToolRegistry({ leanGoalsEnabled: context.env.PLANNER_LEAN_GOALS_ENABLED }), {
       model: context.env.PLANNER_MODEL,
       turnTimeoutMs: PLANNER_TURN_TIMEOUT_MS,
       maxToolSteps: 10,
@@ -151,6 +151,7 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
     const flightSelections = new PostgresWorkspaceRepository(context.db, userId)
     return new CloudPlannerService({
       trips, conversations, artifacts, memory, runtime, flightSelections,
+      leanGoalsEnabled: context.env.PLANNER_LEAN_GOALS_ENABLED,
       ownerId: userId,
       goalRepository,
       goalRunRepository,

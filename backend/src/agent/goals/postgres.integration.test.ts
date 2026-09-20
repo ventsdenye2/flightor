@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { Kysely, PostgresDialect } from 'kysely'
+import { Kysely, PostgresDialect, sql } from 'kysely'
 import pg from 'pg'
 import { up as createInitialSchema } from '../../db/migrations/001_initial.js'
 import { up as createCloudStateSchema } from '../../db/migrations/006_cloud_state.js'
@@ -52,6 +52,59 @@ suite('PostgreSQL durable planning goals', () => {
       idempotencyKey: key
     }
   }
+
+  it('accepts Goal and Run atomically under concurrent retries and rejects competing generations', async () => {
+    const trip = await createTrip()
+    const runs = new PostgresGoalRunRepository(db, userId)
+    const input = { tripId: trip.id, requestId: 'atomic-acceptance', generationId: 'generation-1',
+      contextSnapshot: emptyTripContext(trip.id), intent: { kind: 'flight_search' as const, parameters: { requestKey: 'flights' } } }
+    const [first, replay] = await Promise.all([runs.accept(input), runs.accept(input)])
+    expect(replay).toEqual(first)
+    expect(await new PostgresGoalRepository(db, userId).listForTrip(trip.id)).toHaveLength(1)
+    expect(await runs.listForGoal(first.goal.id)).toHaveLength(1)
+    await expect(runs.accept({ ...input, intent: { ...input.intent, parameters: { requestKey: 'changed' } } }))
+      .rejects.toMatchObject({ code: 'GOAL_IDEMPOTENCY_CONFLICT' })
+    await expect(runs.accept({ ...input, generationId: 'generation-2' }))
+      .rejects.toMatchObject({ code: 'GOAL_RUN_ALREADY_RUNNING' })
+    await runs.commitCompletion({ goalId: first.goal.id, runId: first.run.id, expectedGoalRevision: 0, expectedRunRevision: 0,
+      goalStatus: 'partial', runStatus: 'partial' })
+    await expect(runs.accept(input)).rejects.toMatchObject({ code: 'GOAL_RUN_NOT_RUNNING' })
+    const second = await runs.accept({ ...input, requestId: 'continuation', generationId: 'generation-2',
+      intent: undefined, goalRef: first.goal.id })
+    expect(second.goal.id).toBe(first.goal.id)
+    expect(second.run.id).not.toBe(first.run.id)
+  })
+
+  it('rolls back the new Goal if its Run insert fails', async () => {
+    const trip = await createTrip()
+    const runs = new PostgresGoalRunRepository(db, userId)
+    await sql`alter table planning_goal_runs add constraint acceptance_injected_failure check (generation_id <> 'reject-this-insert')`.execute(db)
+    try {
+      await expect(runs.accept({ tripId: trip.id, requestId: 'rollback', generationId: 'reject-this-insert',
+        contextSnapshot: emptyTripContext(trip.id), intent: { kind: 'flight_search', parameters: { requestKey: 'flights' } } })).rejects.toThrow()
+      expect(await new PostgresGoalRepository(db, userId).listForTrip(trip.id)).toEqual([])
+    } finally {
+      await sql`alter table planning_goal_runs drop constraint acceptance_injected_failure`.execute(db)
+    }
+  })
+
+  it('checks the trusted owner and current Trip version before accepting a reference', async () => {
+    const trip = await createTrip()
+    const runs = new PostgresGoalRunRepository(db, userId)
+    const input = { tripId: trip.id, requestId: 'acceptance-owner', generationId: 'generation-1',
+      contextSnapshot: emptyTripContext(trip.id), intent: { kind: 'flight_search' as const, parameters: { requestKey: 'flights' } } }
+    const first = await runs.accept(input)
+    await expect(new PostgresGoalRunRepository(db, '999999999').accept({ ...input, intent: undefined, goalRef: first.goal.id }))
+      .rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' })
+    const otherTrip = await createTrip()
+    await expect(runs.accept({ ...input, tripId: otherTrip.id, contextSnapshot: emptyTripContext(otherTrip.id), intent: undefined, goalRef: first.goal.id }))
+      .rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' })
+    await expect(runs.accept({ ...input, contextSnapshot: { ...input.contextSnapshot, version: 1 } }))
+      .rejects.toMatchObject({ code: 'TRIP_CONTEXT_VERSION_CONFLICT' })
+    await db.updateTable('trips').set({ current_context_version: 1 }).where('public_id', '=', trip.id).execute()
+    await expect(runs.accept({ ...input, contextSnapshot: { ...input.contextSnapshot, version: 1 }, generationId: 'generation-2' }))
+      .rejects.toMatchObject({ code: 'GOAL_RUN_ALREADY_RUNNING' })
+  })
 
   it('replays the same goal idempotently and rejects key reuse', async () => {
     const trip = await createTrip()

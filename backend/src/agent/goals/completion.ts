@@ -51,7 +51,7 @@ async function checkpoint(scope: GoalCompletionScope): Promise<void> {
   if (scope.isCurrent?.() === false) throw new AppError('GOAL_RUN_NOT_CURRENT', 'The active operation changed', 409)
 }
 
-/** Shared by finish_goal and runtime finalization; never inspects model text. */
+/** Shared by business-tool completion, finish_goal and runtime finalization; never inspects model text. */
 export async function completeGoal(
   scope: GoalCompletionScope,
   input: { goalId: string; runId?: string; persist?: boolean; closePartialRun?: boolean }

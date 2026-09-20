@@ -58,6 +58,8 @@ export interface ToolExecutionContext {
   activeGoalKind?: GoalKind
   activeGoalRunId?: string
   activeGoalContextVersion?: number
+  /** Server-owned semantic acceptance lock for the opt-in lean protocol. */
+  acceptedGoalIntent?: { goalId: string; runId: string; kind: GoalKind; contextVersion: number; fingerprint: string }
 }
 
 export interface AgentTool<Input = unknown, Output = unknown> {
@@ -104,6 +106,11 @@ function asSafeMessage(value: unknown): string {
     if (value.code === 'PROVIDER_RATE_LIMITED') return 'The provider is temporarily rate limited. Do not immediately repeat research through another tool. Reuse compatible saved evidence if sufficient, or explain the interruption and ask the user to retry later.'
     if (value.code === 'USER_MEMORY_VERSION_CONFLICT') return 'User Memory version conflict'
     if (value.code === 'USER_MEMORY_DISABLED') return 'User Memory is disabled'
+    if (value.code === 'GOAL_INTENT_REQUIRED') return 'Pass intent or goalRef with the first durable business operation.'
+    if (value.code === 'GOAL_INTENT_CONFLICT') return 'Keep the accepted Goal and its constraints. Correct the result without weakening the objective; changed requirements need a new user turn.'
+    if (value.code === 'GOAL_KIND_MISMATCH') return 'The business operation does not match the accepted Goal kind.'
+    if (value.code === 'GOAL_RUN_ALREADY_RUNNING') return 'Another operation owns this Goal run. Wait for it to finish; do not take it over.'
+    if (value.code === 'GOAL_NOT_RUNNABLE') return 'The Goal is satisfied or cancelled, or its attempt has ended. Do not continue writing to it.'
     if (value.code === 'LOCATION_NOT_RESOLVED') return 'Use a canonical location id from resolve_location or destination discovery for this operation. Fare searches accept airport IATA codes and resolve both airports on the server.'
   }
   return 'Tool execution failed'

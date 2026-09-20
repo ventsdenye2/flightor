@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
 import { AppError } from '../../lib/errors.js'
+import { acceptGoalRunInputSchema, type AcceptGoalRunInput } from './acceptance-types.js'
 import {
   createGoalInputSchema,
   createGoalRunInputSchema,
@@ -76,6 +77,7 @@ export interface GoalRunCompatibilityQuery {
 }
 
 export interface GoalRunRepository {
+  accept?(input: AcceptGoalRunInput): Promise<GoalCompletionResult>
   create(input: CreateGoalRunInput): Promise<{ run: GoalRunRecord; created: boolean }>
   get(runId: string): Promise<GoalRunRecord | undefined>
   listForGoal(goalId: string): Promise<GoalRunRecord[]>
@@ -168,6 +170,41 @@ function canonicalize(value: unknown): unknown {
 
 export function canonicalFingerprint(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex')
+}
+
+export function acceptanceGoalInput(input: AcceptGoalRunInput): CreateGoalInput {
+  if (!input.intent) throw new AppError('GOAL_INTENT_REQUIRED', 'A new goal requires intent', 400)
+  return createGoalInputSchema.parse({ ...input.intent, tripId: input.tripId,
+    conversationId: input.conversationId, createdContextVersion: input.contextSnapshot.version,
+    idempotencyKey: `accept:${canonicalFingerprint({ requestId: input.requestId })}` })
+}
+
+export function acceptanceRunInput(input: AcceptGoalRunInput, goalId: string): CreateGoalRunInput {
+  return createGoalRunInputSchema.parse({ goalId, tripId: input.tripId, generationId: input.generationId,
+    contextVersion: input.contextSnapshot.version, contextSnapshot: input.contextSnapshot,
+    idempotencyKey: `accept:${canonicalFingerprint({ requestId: input.requestId, generationId: input.generationId })}` })
+}
+
+/** A generation can only replay its original frozen context, never adopt another attempt. */
+export function acceptedExistingRun(goal: GoalRecord, runs: readonly GoalRunRecord[], input: AcceptGoalRunInput): GoalRunRecord | undefined {
+  if (goal.tripId !== input.tripId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
+  if (goal.kind === 'route_generation') throw new AppError('GOAL_NOT_RUNNABLE', 'Route generation requires its explicit workflow', 409)
+  if (goal.status === 'cancelled' || goal.status === 'satisfied') {
+    throw new AppError('GOAL_NOT_RUNNABLE', 'Goal is not runnable', 409)
+  }
+  const running = runs.find(run => run.status === 'running')
+  if (running && running.generationId !== input.generationId) {
+    throw new AppError('GOAL_RUN_ALREADY_RUNNING', 'Goal already has a running execution', 409)
+  }
+  const existing = runs.find(run => run.generationId === input.generationId)
+  if (existing && (existing.contextVersion !== input.contextSnapshot.version
+    || canonicalFingerprint(existing.contextSnapshot) !== canonicalFingerprint(input.contextSnapshot))) {
+    throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'A generation cannot change its frozen Trip context', 409)
+  }
+  if (existing && existing.status !== 'running') {
+    throw new AppError('GOAL_RUN_NOT_RUNNING', 'A completed attempt requires a new generation', 409)
+  }
+  return existing
 }
 
 function goalFingerprint(input: CreateGoalInput): string {
@@ -283,6 +320,31 @@ export class InMemoryGoalRepository implements GoalRepository {
     return cloneGoal(stored)
   }
 
+  /** Prepare both aggregates before an uninterrupted pair of Map writes. */
+  acceptRun(input: AcceptGoalRunInput, ownerId: string, prepareRun: (goal: GoalRecord) => { run: GoalRunRecord; commit: () => void }): GoalCompletionResult {
+    if (ownerId !== this.ownerId) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
+    const goalInput = input.intent ? acceptanceGoalInput(input) : undefined
+    let goal = input.goalRef ? this.goals.get(input.goalRef) : [...this.goals.values()].find(item =>
+      item.ownerId === this.ownerId && item.tripId === input.tripId && item.idempotencyKey === goalInput!.idempotencyKey)
+    if (goal && (goal.ownerId !== this.ownerId || goal.tripId !== input.tripId)) {
+      throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
+    }
+    if (goalInput && goal && goal.requestFingerprint !== goalFingerprint(goalInput)) throw new GoalIdempotencyConflict()
+    if (!goal) {
+      if (!goalInput) throw new AppError('RESOURCE_NOT_FOUND', 'Goal was not found', 404)
+      const now = new Date().toISOString()
+      const record = goalRecordSchema.parse({ id: uuidv7(), ownerId: this.ownerId, tripId: input.tripId,
+        conversationId: input.conversationId, kind: goalInput.kind, parameters: goalInput.parameters,
+        status: 'pending', createdContextVersion: input.contextSnapshot.version, revision: 0, createdAt: now, updatedAt: now })
+      goal = { ...record, idempotencyKey: goalInput.idempotencyKey, requestFingerprint: goalFingerprint(goalInput) }
+    }
+    const prepared = prepareRun(cloneGoal(goal))
+    const result = structuredClone({ goal: cloneGoal(goal), run: prepared.run })
+    prepared.commit()
+    this.goals.set(goal.id, goal)
+    return result
+  }
+
   /** Synchronous, completion-specific coordinator; the callback only commits the prepared in-memory run. */
   commitRunCompletion(input: GoalCompletionInput, run: StoredGoalRun, writeRun: (run: StoredGoalRun) => void, actualTripVersion?: number): GoalCompletionResult {
     const goal = this.goals.get(input.goalId)
@@ -308,6 +370,30 @@ export class InMemoryGoalRunRepository implements GoalRunRepository {
     private readonly currentTripVersion?: (tripId: string) => number | undefined
   ) {
     this.runs = sharedRuns
+  }
+
+  async accept(rawInput: AcceptGoalRunInput): Promise<GoalCompletionResult> {
+    const input = acceptGoalRunInputSchema.parse(rawInput)
+    if (!(this.goals instanceof InMemoryGoalRepository)) {
+      throw new AppError('GOAL_ACCEPTANCE_UNAVAILABLE', 'Atomic acceptance requires its matching Goal repository', 503)
+    }
+    const currentVersion = this.currentTripVersion?.(input.tripId)
+    if (this.currentTripVersion && currentVersion === undefined) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
+    if (currentVersion !== undefined && currentVersion !== input.contextSnapshot.version) {
+      throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Trip changed before Goal acceptance', 409)
+    }
+    return this.goals.acceptRun(input, this.ownerId, goal => {
+      const runs = [...this.runs.values()].filter(run => run.ownerId === this.ownerId && run.goalId === goal.id)
+      const existing = acceptedExistingRun(goal, runs, input)
+      if (existing) return { run: cloneRun(this.runs.get(existing.id)!), commit: () => {} }
+      const runInput = acceptanceRunInput(input, goal.id)
+      const now = new Date().toISOString()
+      const run = goalRunRecordSchema.parse({ id: uuidv7(), ownerId: this.ownerId, goalId: goal.id, tripId: input.tripId,
+        generationId: input.generationId, contextVersion: input.contextSnapshot.version, contextSnapshot: input.contextSnapshot,
+        status: 'running', workingSet: { artifactRefs: [], locationHandles: [] }, revision: 0, createdAt: now, updatedAt: now })
+      const stored = { ...run, idempotencyKey: runInput.idempotencyKey, requestFingerprint: runFingerprint(runInput) }
+      return { run, commit: () => { this.runs.set(run.id, stored) } }
+    })
   }
 
   async create(rawInput: CreateGoalRunInput): Promise<{ run: GoalRunRecord; created: boolean }> {

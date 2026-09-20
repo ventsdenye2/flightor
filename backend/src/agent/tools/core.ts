@@ -20,6 +20,8 @@ import { cancelGoalTool, declareGoalTool, finishGoalTool, getGoalTool, resumeGoa
 import { startRouteGenerationTool } from './route-generation.js'
 import { workspaceScope } from './workspace-scope.js'
 import { locationSelectorSchema, type LocationSelector } from '../../locations/selector.js'
+import { withGoalIntent } from './goal-intent.js'
+import { AppError } from '../../lib/errors.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
@@ -338,7 +340,32 @@ export function createCoreToolRegistry(): ToolRegistry {
  * the deterministic engine, while its internal connection/path/optimization
  * tools remain unavailable to the Planner.
  */
-export function createPlannerToolRegistry(): ToolRegistry {
+export function createPlannerToolRegistry(options: { leanGoalsEnabled?: boolean } = {}): ToolRegistry {
+  if (options.leanGoalsEnabled) {
+    return new ToolRegistry()
+      .register(getGoalTool)
+      .register(cancelGoalTool)
+      .register({ ...startRouteGenerationTool, async execute(input, context, signal) {
+        if (context.acceptedGoalIntent) throw new AppError('GOAL_INTENT_CONFLICT', 'Final route generation requires a separate objective', 409)
+        return startRouteGenerationTool.execute(input, context, signal)
+      } })
+      .register(getTripArtifactsTool)
+      .register(readArtifactTool)
+      .register(getTripContextTool)
+      .register(withGoalIntent(updateTripContextTool, ['trip_context_update'], { completeAfter: true }))
+      .register(resolveLocationTool)
+      .register(withGoalIntent(searchFlightsTool, ['flight_search'], { completeAfter: true }))
+      .register(withGoalIntent(searchFlexibleFlightsTool, ['flight_search'], { completeAfter: true }))
+      .register(withGoalIntent(confirmFlightPriceTool, ['flight_search'], { completeAfter: true }))
+      .register(withGoalIntent(searchDestinationsTool, ['travel_guide']))
+      .register(withGoalIntent(recommendDestinationsTool, ['travel_guide']))
+      .register(withGoalIntent(planTripRouteTool, ['travel_guide']))
+      .register(withGoalIntent(researchDestinationTool, ['travel_guide']))
+      .register(withGoalIntent(webResearchTool, ['travel_guide']))
+      .register(withGoalIntent(saveTravelGuideTool, ['travel_guide'], { required: true, completeAfter: true }))
+      .register(getUserMemoryTool)
+      .register(updateUserMemoryTool)
+  }
   return new ToolRegistry()
     .register(declareGoalTool)
     .register(getGoalTool)

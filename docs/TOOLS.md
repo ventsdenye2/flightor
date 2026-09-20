@@ -1,6 +1,6 @@
 # FlightOR Agent Tool Registry
 
-> 2026-09-20: B1 read-only planning context is implemented; [ADR 0019](adr/0019-lean-planner-evaluation.md) lean Goal handling and stable candidate references remain proposed. Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
+> 2026-09-20: B1 read-only context and opt-in B2 business-tool Goal acceptance are implemented. B2 is disabled by default and its new PostgreSQL acceptance transaction awaits live DB validation. Stable candidate references remain proposed under [ADR 0019](adr/0019-lean-planner-evaluation.md). Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
 
 This file is the source-of-truth inventory for Agent-facing tools. It follows
 `docs/FLIGHTOR_ARCHITECTURE.md`; implementation status means both code and contract
@@ -46,7 +46,51 @@ Goal requirements. No tool schema or completion authority changed in B1. Exact
 limits, expiry/date handling and metadata are in
 [RUNTIME_PLAN section 2.1](design/budget-travel-agent/RUNTIME_PLAN.md).
 
-The durable Agentic completion protocol is **Implemented** in the PostgreSQL
+### B2 opt-in business-tool protocol
+
+`PLANNER_LEAN_GOALS_ENABLED=false` (default) retains the table below. With `true`,
+the Planner hides `declare_goal`, `resume_goal`, `finish_goal`; read and cancel
+remain available. Core registry/direct legacy callers retain their existing API.
+
+| Business tools with optional `intent` / `goalRef` | Accepted kind | Completion behavior |
+| --- | --- | --- |
+| `research_destination`, `web_research`, `search_destinations`, `recommend_destinations`, `plan_trip_route` | `travel_guide` | Bind once, keep attempt running |
+| `save_travel_guide` | `travel_guide`, required if no accepted goal | Existing save result plus shared completion feedback |
+| `search_flights`, `search_flexible_flights`, `confirm_flight_price` | `flight_search` | Existing result plus shared completion feedback |
+| `update_trip_context` | `trip_context_update` | Existing update result plus shared completion feedback |
+
+`intent` is `{kind, parameters}` using the same bounded parameter schema as
+`declare_goal`; `goalRef` is an existing UUID, not permission to access it.
+Supply at most one; subsequent calls may omit both. Calls before acceptance may
+remain ephemeral except guide save, which requires a goal. Once accepted,
+business writes stay within that Goal's kind/parameters/current version;
+semantic switching or weakening produces `GOAL_INTENT_CONFLICT`, kind mismatch
+produces `GOAL_KIND_MISMATCH`, missing initial intent for save produces
+`GOAL_INTENT_REQUIRED`. New user turns may explicitly resume unfinished Goals.
+Another generation's running attempt is never taken over.
+
+Results may add `acceptedGoal: {goalId, runId, kind, contextVersion}` and
+`completion: {status, artifactIds, missing, warnings}`. These are server-derived.
+The atomic acceptance transaction creates both records or neither; late
+cancellation closes only its own attempt. Save and runtime finalization share
+`completeGoal`, and partial feedback keeps the run open for corrections.
+Goal completion outages retain the saved Artifact result with pending feedback.
+Automatic completion first records the Artifact in the Run working set. Its
+2.5-second child deadline (shorter near the outer tool deadline) returns pending
+with `goal_verification_timeout` rather than discarding an already saved result;
+parent cancellation still applies. Lean tools allow an extra 5 seconds within
+the registry's 120-second cap; the whole-turn deadline is unchanged.
+This does not publish cards before the final reply (B4) or replace the existing
+`researchArtifactIds/researchIndex/findingId` input (B3).
+
+Trip changes must precede research/guide/flight acceptance; changing the version
+afterward requires a new turn. A durable Trip-update intent submits its requested
+fields in one operation. `start_route_generation` remains separately authorized
+and cannot replace an already accepted goal in the same lean turn. Roll back
+between turns by setting the flag to `false` and restarting the API; no data
+migration is involved. Full contract: [RUNTIME_PLAN section 2.2](design/budget-travel-agent/RUNTIME_PLAN.md).
+
+The legacy durable Agentic completion protocol is **Implemented** in the PostgreSQL
 production composition and the in-memory test seam. Goal controls validate
 results without prescribing an end-to-end tool sequence:
 

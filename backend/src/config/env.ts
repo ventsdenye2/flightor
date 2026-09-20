@@ -40,6 +40,7 @@ const envSchema = z.object({
   OPENROUTER_BASE_URL: optionalUrl.default('https://openrouter.ai/api/v1'),
   OPENROUTER_MODEL: z.string().trim().min(1).default('deepseek/deepseek-v4-flash-0731'),
   PLANNER_MODEL: z.string().trim().default(''),
+  PLANNER_LEAN_GOALS_ENABLED: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),
   RESEARCH_MODEL: z.string().trim().default(''),
   /** Default remains the established SerpApi + synthesis path. */
   NATIVE_RESEARCH_PROVIDER: z.enum(['serpapi', 'openrouter_native']).default('serpapi'),

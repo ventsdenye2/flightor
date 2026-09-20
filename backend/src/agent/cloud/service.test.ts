@@ -8,20 +8,58 @@ import { InMemoryUserMemoryRepository } from '../../memory/repository.js'
 import { InMemoryTripRepository } from '../../trips/repository.js'
 import type { AgentModelClient } from '../runtime/model.js'
 import { AgentRuntime } from '../runtime/runtime.js'
-import { createCoreToolRegistry } from '../tools/core.js'
+import { createCoreToolRegistry, createPlannerToolRegistry } from '../tools/core.js'
 import { CloudPlannerService } from './service.js'
 import { UnavailableResearchAgent } from '../../research-agent/unavailable.js'
 import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from '../../flight-routing/unavailable.js'
 import { ToolRegistry } from '../runtime/registry.js'
 import { AppError } from '../../lib/errors.js'
 import { z } from 'zod'
-import { InMemoryGoalRepository } from '../goals/repository.js'
+import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repository.js'
+import { createDefaultGoalVerifierRegistry } from '../goals/default-verifiers.js'
 
 const call = (id: string, name: string, args: unknown) => ({
   id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) }
 })
 
 describe('CloudPlannerService vertical slice', () => {
+  it('uses the lean prompt and returns verified delivery from one business operation without Goal bookkeeping calls', async () => {
+    const trips = new InMemoryTripRepository(), trip = await trips.create()
+    const ownerId = 'lean-owner', owned = new Set([trip.id])
+    const conversations = new InMemoryConversationRepository(ownerId, owned)
+    const conversation = await conversations.create({ tripId: trip.id })
+    const goals = new InMemoryGoalRepository(ownerId), runs = new InMemoryGoalRunRepository(ownerId, goals)
+    const model: AgentModelClient = { complete: vi.fn()
+      .mockImplementationOnce(async (messages, _model, options) => {
+        expect(messages[0]?.content).toContain('first business operation carries intent=')
+        const names = options.tools.map((tool: { function: { name: string } }) => tool.function.name)
+        expect(names).not.toContain('declare_goal')
+        expect(names).not.toContain('finish_goal')
+        return { message: { role: 'assistant', content: null, tool_calls: [call('update', 'update_trip_context', {
+          patch: { notes: ['Keep a free afternoon'] }, expectedVersion: 0,
+          intent: { kind: 'trip_context_update', parameters: { fields: ['notes'] } }
+        })] } }
+      })
+      .mockImplementationOnce(async messages => {
+        const response = JSON.parse(messages.at(-1).content)
+        expect(response.data.completion.status).toBe('satisfied')
+        return { message: { role: 'assistant', content: '已保存行程偏好。' } }
+      }) }
+    const service = new CloudPlannerService({ leanGoalsEnabled: true, ownerId, trips, conversations,
+      artifacts: new InMemoryArtifactRepository(ownerId, owned), memory: new InMemoryUserMemoryRepository(),
+      goalRepository: goals, goalRunRepository: runs, goalVerifiers: createDefaultGoalVerifierRegistry(),
+      runtime: new AgentRuntime(model, createPlannerToolRegistry({ leanGoalsEnabled: true })),
+      aviation: new MockAviationProvider(), fares: new MockFareProvider(), research: new UnavailableResearchAgent(),
+      connectionSearch: new UnavailableConnectionSearchService(), flightRoutePlanner: new UnavailableFlightRoutePlanner(),
+      routeOptimizer: new UnavailableRouteOptimizer() })
+    const result = await service.runTurn({ requestId: 'lean', tripId: trip.id, conversationId: conversation.id,
+      generationId: 'lean', message: '为行程记录：留一个自由活动的下午' })
+    expect(result).toMatchObject({ tripVersion: 1, stopReason: 'completed', delivery: { status: 'satisfied', kind: 'trip_context_update' } })
+    expect((await conversations.listMessages(conversation.id))[1]?.metadata).toMatchObject({ goal_protocol: 'lean',
+      tool_traces: [{ tool: 'update_trip_context', status: 'success' }] })
+    expect(model.complete).toHaveBeenCalledTimes(2)
+  })
+
   it('lets the user repair inconsistent historical dates through the Planner', async () => {
     const base = await new InMemoryTripRepository().create()
     const trips = new InMemoryTripRepository([{ ...base, context: { ...base.context, travelDays: 2,

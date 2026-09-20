@@ -2,7 +2,7 @@ import type { AgentModelClient, ChatMessage, ChatOptions, FunctionToolCall } fro
 import type { ToolExecutionContext, ToolExecutionOutcome } from './registry.js'
 import { ToolRegistry } from './registry.js'
 import { AppError } from '../../lib/errors.js'
-import { addArtifactRef, addLocationHandle } from '../goals/working-set.js'
+import { syncActiveGoalWorkingSet } from '../goals/working-set-observer.js'
 import { completeGoal, noGoalDelivery, summarizeGoalDelivery, type GoalDelivery, type GoalDeliveryItem } from '../goals/completion.js'
 import { emitActivity, type AgentActivityObserver } from './activity.js'
 import { settleWithSignal } from './cancellation.js'
@@ -102,38 +102,6 @@ function stale(input: AgentRunInput): boolean {
 
 function toolCalls(message: Extract<ChatMessage, { role: 'assistant' }>): FunctionToolCall[] {
   return message.tool_calls ?? []
-}
-
-async function syncActiveGoalWorkingSet(context: ToolExecutionContext, outcome: ToolExecutionOutcome, signal: AbortSignal): Promise<void> {
-  signal.throwIfAborted()
-  if (!outcome.ok || !context.activeGoalRunId || !context.goalRunRepository) return
-  const run = await context.goalRunRepository.get(context.activeGoalRunId)
-  signal.throwIfAborted()
-  if (!run || run.status !== 'running') return
-  let workingSet = run.workingSet
-  const observedAt = new Date().toISOString()
-  for (const id of outcome.artifactIds) {
-    const artifact = await context.artifacts.getForScope(id, {
-      tripId: context.tripId,
-      ...(context.activeGoalId ? { goalId: context.activeGoalId } : {}),
-      runId: run.id,
-      tripContextVersion: run.contextVersion
-    })
-    signal.throwIfAborted()
-    if (!artifact) continue
-    workingSet = addArtifactRef(workingSet, { id: artifact.id, type: artifact.type, schemaVersion: artifact.schemaVersion, observedAt })
-  }
-  for (const location of context.resolvedLocations?.values() ?? []) {
-    workingSet = addLocationHandle(workingSet, {
-      id: location.id,
-      kind: location.type,
-      observedAt
-    })
-  }
-  if (JSON.stringify(workingSet) !== JSON.stringify(run.workingSet)) {
-    signal.throwIfAborted()
-    await context.goalRunRepository.update(run.id, run.revision, { status: 'running', workingSet })
-  }
 }
 
 export class AgentRuntime {

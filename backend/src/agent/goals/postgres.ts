@@ -3,6 +3,7 @@ import type { Kysely, Transaction } from 'kysely'
 import type { Database, JsonValue } from '../../db/types.js'
 import { AppError } from '../../lib/errors.js'
 import { tripContextSchema } from '../../trips/types.js'
+import { acceptGoalRunInputSchema, type AcceptGoalRunInput } from './acceptance-types.js'
 import {
   createGoalInputSchema,
   createGoalRunInputSchema,
@@ -20,6 +21,9 @@ import {
 } from './types.js'
 import {
   canonicalFingerprint,
+  acceptanceGoalInput,
+  acceptanceRunInput,
+  acceptedExistingRun,
   canGoalTransition,
   canRunTransition,
   goalCompletionInputSchema,
@@ -45,6 +49,7 @@ type GoalRow = {
   user_id: string
   trip_id: string
   trip_public_id: string
+  conversation_id: string | null
   conversation_public_id: string | null
   idempotency_key: string
   request_hash: string
@@ -139,7 +144,7 @@ const selectGoal = (db: Db) => db
   .innerJoin('trips', 'trips.id', 'planning_goals.trip_id')
   .leftJoin('conversations', 'conversations.id', 'planning_goals.conversation_id')
   .select([
-    'planning_goals.id', 'planning_goals.public_id', 'planning_goals.user_id', 'planning_goals.trip_id',
+    'planning_goals.id', 'planning_goals.public_id', 'planning_goals.user_id', 'planning_goals.trip_id', 'planning_goals.conversation_id',
     'trips.public_id as trip_public_id', 'conversations.public_id as conversation_public_id',
     'planning_goals.idempotency_key', 'planning_goals.request_hash', 'planning_goals.kind',
     'planning_goals.parameters_json', 'planning_goals.created_context_version',
@@ -303,6 +308,62 @@ export class PostgresGoalRepository implements GoalRepository {
 
 export class PostgresGoalRunRepository implements GoalRunRepository {
   constructor(private readonly db: Kysely<Database>, private readonly ownerId: string) {}
+
+  async accept(rawInput: AcceptGoalRunInput): Promise<GoalCompletionResult> {
+    const input = acceptGoalRunInputSchema.parse(rawInput)
+    return this.db.transaction().execute(async trx => {
+      // The Trip lock serializes acceptance with context updates and existing Goal/Run writers.
+      const trip = await trx.selectFrom('trips').select(['id', 'current_context_version'])
+        .where('public_id', '=', input.tripId).where('user_id', '=', this.ownerId).forUpdate().executeTakeFirst()
+      if (!trip) throw notFound('Trip was not found')
+      if (trip.current_context_version !== input.contextSnapshot.version) {
+        throw versionConflict(input.contextSnapshot.version, trip.current_context_version)
+      }
+      let conversationId: string | null = null
+      if (input.conversationId !== undefined) {
+        const conversation = await trx.selectFrom('conversations').select('id')
+          .where('public_id', '=', input.conversationId).where('user_id', '=', this.ownerId)
+          .where('trip_id', '=', trip.id).executeTakeFirst()
+        if (!conversation) throw notFound('Conversation was not found')
+        conversationId = conversation.id
+      }
+      const goalInput = input.intent ? acceptanceGoalInput(input) : undefined
+      let query = selectGoal(trx).where('planning_goals.user_id', '=', this.ownerId).where('planning_goals.trip_id', '=', trip.id)
+      query = input.goalRef ? query.where('planning_goals.public_id', '=', input.goalRef)
+        : query.where('planning_goals.idempotency_key', '=', goalInput!.idempotencyKey)
+      let goalRow = await query.forUpdate('planning_goals').executeTakeFirst() as GoalRow | undefined
+      if (goalRow && goalInput && goalRow.request_hash !== goalFingerprint(goalInput)) throw new GoalIdempotencyConflict()
+      const now = new Date()
+      if (!goalRow) {
+        if (!goalInput) throw notFound('Goal was not found')
+        const goalId = uuidv7()
+        await trx.insertInto('planning_goals').values({ public_id: goalId, user_id: this.ownerId, trip_id: trip.id,
+          conversation_id: conversationId, idempotency_key: goalInput.idempotencyKey, request_hash: goalFingerprint(goalInput),
+          kind: goalInput.kind, parameters_json: goalInput.parameters as JsonValue,
+          created_context_version: input.contextSnapshot.version, authorization_source: null, authorization_granted_at: null,
+          status: 'pending', revision: 0, created_at: now, updated_at: now, completed_at: null }).execute()
+        goalRow = await selectGoal(trx).where('planning_goals.public_id', '=', goalId)
+          .where('planning_goals.user_id', '=', this.ownerId).executeTakeFirstOrThrow() as GoalRow
+      }
+      const goal = toGoal(goalRow)
+      const runRows = await selectRun(trx).where('planning_goal_runs.goal_id', '=', goalRow.id)
+        .where('planning_goal_runs.user_id', '=', this.ownerId).forUpdate('planning_goal_runs').execute() as GoalRunRow[]
+      const existing = acceptedExistingRun(goal, runRows.map(toRun), input)
+      if (existing) return { goal, run: existing }
+      const runInput = acceptanceRunInput(input, goal.id)
+      const runId = uuidv7()
+      // A failed Run insert rolls back the new Goal as part of this same transaction.
+      await trx.insertInto('planning_goal_runs').values({ public_id: runId, goal_id: goalRow.id, user_id: this.ownerId,
+        trip_id: trip.id, conversation_id: goalRow.conversation_id, generation_id: input.generationId,
+        idempotency_key: runInput.idempotencyKey, request_hash: runFingerprint(runInput),
+        context_version: input.contextSnapshot.version, context_json: input.contextSnapshot as unknown as JsonValue,
+        status: 'running', working_set_json: emptyGoalWorkingSet() as unknown as JsonValue,
+        revision: 0, created_at: now, updated_at: now, completed_at: null }).execute()
+      const runRow = await selectRun(trx).where('planning_goal_runs.public_id', '=', runId)
+        .where('planning_goal_runs.user_id', '=', this.ownerId).executeTakeFirstOrThrow() as GoalRunRow
+      return { goal, run: toRun(runRow) }
+    })
+  }
 
   async create(rawInput: CreateGoalRunInput): Promise<{ run: GoalRunRecord; created: boolean }> {
     const input = createGoalRunInputSchema.parse(rawInput)

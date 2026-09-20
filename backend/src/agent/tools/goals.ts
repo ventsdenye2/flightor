@@ -1,12 +1,9 @@
 import { z } from 'zod'
 import { AppError } from '../../lib/errors.js'
 import {
-  flightSearchGoalParametersSchema,
   goalRecordSchema,
   goalRunRecordSchema,
   goalKindSchema,
-  travelGuideGoalParametersSchema,
-  tripContextUpdateGoalParametersSchema,
   type GoalRecord,
   type GoalRunRecord
 } from '../goals/types.js'
@@ -15,16 +12,11 @@ import { goalVerificationSchema, type GoalVerifierRegistry } from '../goals/veri
 import { completeGoal } from '../goals/completion.js'
 import { closeGoalRunAttempt } from '../goals/attempt.js'
 import type { AgentTool } from '../runtime/registry.js'
+import { plannerGoalIntentSchema as declareGoalInputSchema } from '../goals/acceptance-types.js'
 
 const missing = (name: string): never => {
   throw new AppError('GOAL_RUNTIME_UNAVAILABLE', `${name} is not configured for this runtime`, 503)
 }
-
-const declareGoalInputSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('travel_guide'), parameters: travelGuideGoalParametersSchema }).strict(),
-  z.object({ kind: z.literal('flight_search'), parameters: flightSearchGoalParametersSchema }).strict(),
-  z.object({ kind: z.literal('trip_context_update'), parameters: tripContextUpdateGoalParametersSchema }).strict()
-])
 
 const declareGoalOutputSchema = z.object({ goal: goalRecordSchema, run: goalRunRecordSchema }).strict()
 const goalIdInputSchema = z.object({ goalId: z.string().uuid() }).strict()

@@ -9,6 +9,12 @@ const validEnv = {
 }
 
 describe('parseEnv', () => {
+  it('keeps the lean Goal protocol opt-in and rejects ambiguous flag values', () => {
+    expect(parseEnv(validEnv).PLANNER_LEAN_GOALS_ENABLED).toBe(false)
+    expect(parseEnv({ ...validEnv, PLANNER_LEAN_GOALS_ENABLED: 'true' }).PLANNER_LEAN_GOALS_ENABLED).toBe(true)
+    expect(parseEnv({ ...validEnv, PLANNER_LEAN_GOALS_ENABLED: 'false' }).PLANNER_LEAN_GOALS_ENABLED).toBe(false)
+    expect(() => parseEnv({ ...validEnv, PLANNER_LEAN_GOALS_ENABLED: 'yes' })).toThrow('PLANNER_LEAN_GOALS_ENABLED')
+  })
   it('allows explicitly disabling the cache only outside production', () => {
     expect(parseEnv({ ...validEnv, REDIS_ENABLED: 'false' }).REDIS_ENABLED).toBe(false)
     expect(() => parseEnv({ ...validEnv, NODE_ENV: 'production', REDIS_ENABLED: 'false' })).toThrow('Redis cannot be disabled')

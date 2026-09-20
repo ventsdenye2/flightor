@@ -1,6 +1,6 @@
 # 当前修改方案：先精简 FlightOR，再以实测决定 Harness
 
-日期：2026-09-20。状态：**分步实施中：B0/B1 已落地，其余待实现**。本批实现只读上下文预装及离线验证；未跑真实模型评测或安装 DSH。逐项证据见 [progress](progress.md)。
+日期：2026-09-20。状态：**分步实施中：B0/B1 已落地，B2 在默认关闭的兼容开关后实施；B3 起待实现**。B2 PostgreSQL 新事务尚缺实际数据库验证；未跑真实模型评测或安装 DSH。逐项证据见 [progress](progress.md)。
 
 这是本轮后端修改的唯一范围入口：[DPS](DPS.md) 定义执行顺序，[EVALUATION](EVALUATION.md) 定义案例与决策门槛。[RAS](RAS.md) 保留产品需求，[RDS](RDS.md) 是后续完整能力设计，不是首轮全部施工清单。
 
@@ -47,13 +47,16 @@
 
 ### 2.2 保留一次语义目标接受，收回机械记账
 
-目标是消除常规链路中的 get→resume/declare→finish 模型往返，不是移除持久 Goal。
+**B2 已实现的可选协议**：`PLANNER_LEAN_GOALS_ENABLED=true` 同时选择 lean 工具注册表和对应系统协议，默认 `false` 保留旧路径。不是模型/Provider 切换，也没有新增数据库表。
 
-- 已授权 UI 动作（例如“按已选航班生成攻略”）可携带服务端校验的操作类型和选择 revision，在领域边界创建/恢复匹配的 Goal/Run。客户端声明不替代 owner、上下文和用户授权校验。
-- 自由文本仍由 Planner 判断。首个业务工具调用可携带紧凑 `intent` 或服务端提供的 `goalRef`；程序校验并原子接受目标、绑定本次 Run，再执行该操作。意图不清先澄清，不用 regex 选择目标。
-- 接受后的目标约束在本次执行固定；工具不能借重新声明目标降低要求。另一个 generation 的 running Run 不被接管；改需求须明确新修订。
-- 保存成功后由现有 completion 服务验收、更新 Goal/Run，并发布结果；不再要求模型决定“是否调用 finish”。模型可以读取未满足项继续修正；最终自然语言不阻塞已保存卡片。
-- 迁移先加 feature flag 与兼容适配。目标为快速路径注册表隐藏机械 Goal 工具，兼容路径仍可读历史目标；不能同时出现两套完成权威。具体工具公开面必须同步 TOOLS/ADR 与测试。
+- 首个需要持久交付的业务工具附加 `intent: {kind, parameters}` 或 `goalRef: "已有Goal的UUID"`，两者互斥。intent 仅支持 `travel_guide`、`flight_search`、`trip_context_update`，参数与旧 declare_goal 共用 schema。goalRef 是选择器，不是授权凭据，须经过 owner/Trip/状态检查。研究不带 intent 可作临时查询；保存攻略必须携带或已有本轮接受的攻略目标。
+- `GoalRunRepository.accept` 在领域边界原子创建/绑定 Goal 和 Run。PostgreSQL 锁 Trip→Goal→Run，并在同一事务内写入；Run 插入失败不得留下新 Goal。requestId 固定目标幂等键，requestId/generationId 固定尝试键。内存实现同步准备与提交；仍保留既有仓库测试接口。
+- 本轮服务器记录目标/Run/contextVersion 和参数指纹。后续业务工具可省略 intent；重复相同意图允许，换目标引用、降低参数或跨目标种类拒绝。另一个 generation 正在运行时不接管，即使 Trip 已改；已终止尝试不得被同 generation 再激活，failed/partial 只允许新 generation 续跑。satisfied/cancelled 不接受新写入。
+- 条件修改必须在接受研究/航班/攻略目标前持久化。接受后版本变化返回冲突，需要新的用户轮次；本轮不支持同轮目标修订。持久 `trip_context_update` 需一次提交所要求字段。取消或 generation 失效期间迟到的接受会关闭其自身尝试，业务执行与保存仍沿用原 workspace 检查。
+- `save_travel_guide`、航班搜索/确认及持久 Trip 更新操作返回既有结果并附 `acceptedGoal`；在关闭尝试前复用工作集同步记录产物，再通过同一个 `completeGoal` 附上 `completion`，不依赖模型调用 finish。未满足要求时保持可修复的 running 尝试；保存已提交而完成存储暂不可用时保留 Artifact 引用并标记 pending。lean 工具总 timeout 在原值上增加 5 秒（上限 120 秒），自动工作集同步/验收最多 2.5 秒且预留距工具外层 deadline 至少 0.5 秒；子期限到返回 `goal_verification_timeout`，其它验收故障为 `goal_verification_unavailable`，父取消仍终止。整轮 timeout 不变；已开始的数据库事务仍依赖既有事务版本/终态保护。运行时最终答复共用同一 verifier/completion，不能依据工具名或模型文本认定成功。
+- lean 注册表隐藏 `declare_goal/resume_goal/finish_goal`，保留只读 `get_active_goal` 与取消；旧注册表和持久数据读取不变。`start_route_generation` 仍是单独明确授权领域操作，不能借 intent 启动或在本轮已接受其它目标后接管。
+
+精确公开面见 [TOOLS](../../TOOLS.md)，启用/回退见 [deploy](../../deploy.md)。本批没有新增客户端“操作类型”传参协议；现有自由文本入口由 Planner 判断意图。**卡片先于最终文本发布仍属于 B4**，不能把 B2 工具完成反馈视为前端已实现渐进展示。
 
 ## 3. 紧凑的行程决策接口
 
