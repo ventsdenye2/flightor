@@ -16,7 +16,7 @@ import { validateGuideContent, type TravelGuideConstraints } from './validation.
 const city: LocationRef = { id: 'city:TYO', type: 'city', name: 'Tokyo', cityCode: 'TYO', countryCode: 'JP' }
 const constraints: TravelGuideConstraints = { maxResults: 10, maxCities: 1, researchTypes: ['activity', 'practical'], allowPartial: true }
 
-async function fixture(mutate?: (source: ResearchArtifact) => void) {
+async function fixture(mutate?: (source: ResearchArtifact) => void, requirements = constraints) {
   const ownerId = 'owner'
   const trip = { ...emptyTripContext('trip'), version: 1, travelDays: 1,
     budget: { amount: 600, currency: 'CNY', scope: 'trip' as const },
@@ -26,7 +26,7 @@ async function fixture(mutate?: (source: ResearchArtifact) => void) {
   const trips = new InMemoryTripContextRepository([trip])
   const goals = new InMemoryGoalRepository(ownerId)
   const goal = (await goals.create({ tripId: trip.id, kind: 'travel_guide', createdContextVersion: 1, idempotencyKey: 'goal',
-    parameters: { questions: ['Museums and transportation'], ...constraints } })).goal
+    parameters: { questions: ['Museums and transportation'], ...requirements } })).goal
   const runs = new InMemoryGoalRunRepository(ownerId, goals)
   const run = (await runs.create({ goalId: goal.id, tripId: trip.id, generationId: 'generation', contextVersion: 1,
     contextSnapshot: trip, idempotencyKey: 'run' })).run
@@ -46,10 +46,57 @@ async function fixture(mutate?: (source: ResearchArtifact) => void) {
     supportingRefs: [{ researchArtifactId: source.id, findingId: 'practical' }],
     days: [{ day: 1, cityId: city.id, kind: 'visit', theme: 'Museum day',
       items: [{ researchIndex: 0, findingId: 'activity', timeOfDay: 'afternoon', planningNote: 'Enjoy a relaxed visit' }] }] }
-  const save = () => saveAuthoredTravelGuide(input, constraints, scope)
+  const save = () => saveAuthoredTravelGuide(input, requirements, scope)
   const verify = () => createDefaultGoalVerifierRegistry().verify(goal, { ownerId, tripId: trip.id, run, currentTrip: trip, artifacts })
   return { input, save, verify, scope, source, artifacts, trip }
 }
+
+describe('event occurrence evidence', () => {
+  const requirements: TravelGuideConstraints = { ...constraints, researchTypes: ['event', 'practical'] }
+  const event = (source: ResearchArtifact, from?: string, to = from) => {
+    source.brief.researchTypes = ['event', 'practical']
+    const finding = source.findings[0]!
+    finding.category = 'event'
+    finding.title = 'Festival'
+    finding.summary = 'A late October festival; its query window is not an occurrence date.'
+    finding.sources[0]!.snippet = from ? `Festival: ${from} to ${to}.` : 'Festival takes place in late October.'
+    if (from && to) finding.temporalEvidence = { from, to, sourceUrl: finding.sources[0]!.url, quote: finding.sources[0]!.snippet }
+  }
+
+  it('keeps old research readable but refuses a dated guide without source date evidence', async () => {
+    const test = await fixture(source => event(source), requirements)
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['guide_event_date_evidence_missing']) })
+    expect((await test.artifacts.listForTrip(test.trip.id)).map(record => record.type)).toEqual(['research'])
+  })
+
+  it('rejects an event outside the scheduled date even when the research query covers the trip', async () => {
+    const test = await fixture(source => event(source, '2026-10-26', '2026-11-04'), requirements)
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', details: expect.arrayContaining([
+      expect.objectContaining({ code: 'guide_event_date_mismatch', day: 1, date: '2026-10-10' })
+    ]) })
+  })
+
+  it('uses the same source date check for save and durable verification', async () => {
+    const test = await fixture(source => event(source, '2026-10-10'), requirements)
+    expect(await test.save()).toMatchObject({ status: 'saved' })
+    expect(await test.verify()).toMatchObject({ status: 'satisfied' })
+  })
+
+  it('does not accept model date claims with a fabricated quote', async () => {
+    const test = await fixture(source => {
+      event(source, '2026-10-10')
+      source.findings[0]!.sources[0]!.snippet = 'Festival takes place in late October.'
+    }, requirements)
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['guide_event_date_evidence_missing']) })
+  })
+
+  it('does not bypass the event date gate through supporting evidence', async () => {
+    const test = await fixture(source => event(source), requirements)
+    test.input.days[0]!.items = [{ ...test.input.days[0]!.items[0]!, findingId: 'practical' }]
+    test.input.supportingRefs = [{ researchArtifactId: test.source.id, findingId: 'activity' }]
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['guide_event_date_evidence_missing']) })
+  })
+})
 
 describe('authored guide supporting evidence and budget', () => {
   it('satisfies practical coverage separately from itinerary items and preserves the total budget', async () => {

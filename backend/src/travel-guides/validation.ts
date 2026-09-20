@@ -2,6 +2,7 @@ import type { LocationRef } from '../aviation/types.js'
 import { cityGroupingIdentity, locationsOverlap } from '../locations/identity.js'
 import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
 import type { ResearchArtifact } from '../research-agent/types.js'
+import { supportedTemporalEvidence } from '../research-agent/temporal-evidence.js'
 import { tripDatesConsistent, tripDurationDays, tripTravelWindow } from '../trips/dates.js'
 import type { TripRoutePlanPayload } from '../trip-planning/types.js'
 import type { TripContext } from '../trips/types.js'
@@ -161,6 +162,29 @@ export function validateGuideContent(input: {
         details.push({ code: 'eligible_research_evidence', ...detail, category: finding.category,
           ...(finding.destinations[0] ? { location: finding.destinations[0].id } : {}) })
         return false
+      }
+      // Query windows and cache expiry say nothing about when an event occurs.
+      // Recheck the stored source binding during both saving and durable verification.
+      if (finding.category === 'event' || finding.temporalEvidence) {
+        const temporal = supportedTemporalEvidence(finding.temporalEvidence, finding.sources)
+        if (!temporal || !evidenceReferences.includes(temporal.sourceUrl)) {
+          reject('guide_event_date_evidence_missing', detail)
+          return false
+        }
+        if (!expectedWindow?.from || !expectedWindow.to) {
+          reject('guide_event_schedule_date_missing', detail)
+          return false
+        }
+        const shift = (date: string, days: number) => new Date(Date.parse(`${date}T00:00:00Z`)
+          + days * 86_400_000).toISOString().slice(0, 10)
+        const date = day === undefined ? undefined : shift(expectedWindow.from, day - 1)
+        const latestDate = day === undefined ? undefined : shift(expectedWindow.to, -(expectedDays - day))
+        const compatible = date && latestDate ? date <= latestDate && temporal.from <= date && latestDate <= temporal.to
+          : temporal.from <= expectedWindow.to && temporal.to >= expectedWindow.from
+        if (!compatible) {
+          reject('guide_event_date_mismatch', { ...detail, date: date ?? expectedWindow.from })
+          return false
+        }
       }
       coveredTypes.add(finding.category)
       partialEvidence ||= status === 'partially_verified'

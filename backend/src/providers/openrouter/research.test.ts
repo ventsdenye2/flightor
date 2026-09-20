@@ -38,6 +38,29 @@ describe('OpenRouterResearchSynthesisModel', () => {
     expect((complete.mock.calls[0] as unknown[])[1]).toBe('provider/research-model')
   })
 
+  it('accepts a source-anchored ISO temporal evidence object while keeping old replies valid', async () => {
+    const eventBrief = { ...brief, researchTypes: ['event' as const] }
+    const eventSource = { ...source, snippet: 'The event runs 2026-10-26 through 2026-11-04.' }
+    const content = JSON.stringify({ findings: [{ category: 'event', destinationIndex: 0, title: 'Festival', summary: 'A dated festival', sourceIndexes: [0], temporalEvidence: { sourceIndex: 0, from: '2026-10-26', to: '2026-11-04', quote: 'The event runs 2026-10-26 through 2026-11-04.' } }] })
+    const complete = vi.fn(async () => ({ message: { role: 'assistant' as const, content }, finishReason: 'stop' }))
+    const model = new OpenRouterResearchSynthesisModel({ complete }, 'model')
+    expect((await model.synthesize({ brief: eventBrief, sources: [eventSource] }))[0]?.temporalEvidence).toMatchObject({ from: '2026-10-26', to: '2026-11-04', sourceIndex: 0 })
+    complete.mockResolvedValueOnce({ message: { role: 'assistant', content: JSON.stringify({ findings: [{ category: 'event', destinationIndex: 0, title: 'Festival', summary: 'A dated festival', sourceIndexes: [0] }] }) } })
+    expect((await model.synthesize({ brief: eventBrief, sources: [eventSource] }))[0]?.temporalEvidence).toBeUndefined()
+  })
+
+  it('keeps other valid findings when one temporal claim cannot be admitted', async () => {
+    const content = JSON.stringify({ findings: [
+      { category: 'activity', destinationIndex: 0, title: 'Food', summary: 'Try markets', sourceIndexes: [0], temporalEvidence: { sourceIndex: 0, from: '2026-10-21', to: '2026-10-21', quote: 'invented 2026-10-21' } },
+      { category: 'activity', destinationIndex: 0, title: 'Park', summary: 'Walk outside', sourceIndexes: [0] }
+    ] })
+    const model = new OpenRouterResearchSynthesisModel({ complete: vi.fn(async () => ({ message: { role: 'assistant' as const, content } })) }, 'model')
+    const result = await model.synthesize({ brief, sources: [source] })
+    expect(result).toHaveLength(2)
+    expect(result[0]?.temporalEvidence).toBeUndefined()
+    expect(result[1]?.title).toBe('Park')
+  })
+
   it.each([
     'not json',
     '[{"category":"activity","destinationIndex":0,"title":"bad","summary":"bad","sourceIndexes":[1]}]',

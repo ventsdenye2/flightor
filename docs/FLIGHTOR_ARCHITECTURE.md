@@ -781,7 +781,11 @@ canonical location resolutions. A tool may use a validated latest-compatible
 result from that working set or an explicit compatible reference when the Agent
 needs to choose between alternatives. In both cases, the server establishes
 authority and lineage; the model does not establish facts by copying an object
-or an Artifact ID.
+or an Artifact ID. The current owner-scoped Trip snapshot is also a valid source
+for seeding the current-turn location ledger: a previously saved canonical city
+or airport can be reused by `research_destination` without another provider
+lookup. The Trip snapshot remains subject to the same owner, Trip and version
+workspace checks; this reuse does not authorize arbitrary IDs or copied fields.
 
 Research query wording is a bounded model capability within the research
 domain. The domain fixes at most eight destination/question tasks; a query
@@ -1124,6 +1128,16 @@ Used for:
 ### `research_destination`
 
 Structured destination research.
+
+Research findings may carry optional v2 `temporalEvidence` with `from`, `to`,
+`sourceUrl` and `quote`. The date fields are occurrence dates only when the
+quote comes from a retrieved snippet and contains one or two complete ISO dates;
+query windows and source expiry are not occurrence evidence. Save and durable
+Goal verification use the same validator: missing or mismatched evidence
+rejects an event scheduled against Trip dates, and `allowPartial` does not waive
+that requirement. Existing artifacts remain readable, but readability is not a
+fresh verification pass. The current native research path does not produce this
+evidence, so it cannot by itself support date-bound event scheduling.
 
 ### `save_travel_guide`
 
@@ -1591,6 +1605,15 @@ Important event dates should normally have:
 
 - one authoritative official source; or
 - multiple independent supporting sources.
+
+For structured research, the durable date contract is narrower than a source's
+query window or expiry metadata. Optional v2 `temporalEvidence` consists of
+`from`/`to` occurrence dates, `sourceUrl`, and a `quote` copied from a retrieved
+snippet. `quote` must contain one or two complete ISO dates; source metadata
+alone cannot satisfy the contract. The save path and durable verifier share the
+same check, and `allowPartial` does not exempt a date-bound event. Native
+research currently has no such evidence output, so a native finding cannot be
+used as proof for event scheduling on Trip dates.
 
 ---
 

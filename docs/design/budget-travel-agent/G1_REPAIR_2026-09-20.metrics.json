@@ -1,0 +1,46 @@
+{
+  "at": "2026-09-20T12:50:08.301Z",
+  "evidence": "restored real PostgreSQL snapshot; current domain verifier only; no Planner or Provider calls",
+  "restoreMs": 1522.5006,
+  "totalMs": 2081.5456000000004,
+  "results": [
+    {
+      "caseId": "self-ticket",
+      "goalId": "01a0bebb-cddb-76bf-a03c-6f9acb816521",
+      "runId": "01a0bebb-cdfb-7779-826d-2cfec9ff8532",
+      "priorStatus": "satisfied",
+      "loadMs": 100.39750000000004,
+      "verifyMs": 212.08239999999978,
+      "result": {
+        "status": "failed",
+        "artifactIds": [],
+        "missing": [
+          "guide_event_date_evidence_missing",
+          "guide_research_type:event"
+        ],
+        "warnings": [
+          "evidence_partially_verified"
+        ]
+      }
+    },
+    {
+      "caseId": "selected-flight",
+      "goalId": "01a0bebf-e06b-7448-810a-3b3dabace09e",
+      "runId": "01a0bebf-e079-77e6-95cc-78e905adb432",
+      "priorStatus": "satisfied",
+      "loadMs": 74.52489999999989,
+      "verifyMs": 170.13139999999976,
+      "result": {
+        "status": "satisfied",
+        "artifactIds": [
+          "01a0bec2-6026-7015-8444-0c0087e4ce02"
+        ],
+        "missing": [],
+        "warnings": [
+          "flight_schedule_uses_coarse_time_slots",
+          "evidence_partially_verified"
+        ]
+      }
+    }
+  ]
+}

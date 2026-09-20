@@ -36,6 +36,8 @@
 
 新增 JSON 上下文上限 24,000 个 JavaScript 字符，按完整条目裁剪并给出省略原因，保留按需读取工具；这不是 tokenizer 精确计量，也不包括已有 Trip/航班/Memory/对话历史。已保存攻略最多 2 份，每份前 8 天摘要并标记航班选择是否匹配；摘要不重新认证 delivery。预算原样保留 amount/currency/scope，当前 Trip 无 party basis，明确为 `unspecified`，不擅自拆成每日预算。禁用 Memory 不注入，已启用 Memory 沿用既有 8 KiB 限制。
 
+**G1 地点与日期证据边界（ADR 0020）**：研究工具初始化当前 owner-scoped Trip snapshot 的 canonical 地点到本轮 ledger，因此已保存的 Tokyo id `8` 等地点可以在后续 `research_destination` 中复用，不需要再次调用 `resolve_location`；仍受 owner、Trip、context version 和 workspace 检查约束，模型不能用复制的描述或任意 ID 扩权。研究 finding 的 v2 `temporalEvidence` 为可选对象，仅允许 `from`、`to`、`sourceUrl`、`quote` 四个字段；`quote` 必须来自检索 snippet，并包含 1–2 个完整 ISO 日期。queryWindow 和 expiry 只表示检索/有效期，不是事件发生日期。save 与 durable verifier 共用该校验，缺失或不匹配时拒绝日期绑定的 event，`allowPartial` 不豁免。旧 Artifact 仍可读取，但读取不等于重新验证；当前 native research 不产该证据，不能单独支持日期排程 event。Goal 的 `researchTypes` 必需语义未改变。该边界由 [ADR 0020](../../adr/0020-canonical-trip-locations-and-temporal-evidence.md) 记录，G1 仍未因本规则放行。
+
 `planning_context` 对话元数据只记准备耗时、字符数、条目数和省略原因，不存研究正文/Memory；它是 B5 的准备阶段局部埋点，不是模型 usage、费用或端到端计时。B3 已在保留的 finding 上附加稳定 candidateRef，仍遵守 24k 字符总界限；保存输入兼容旧索引，具体见 §3。
 
 在 `agent/cloud/service.ts` 组装有界 PlanningContext，复用 `agent/goals/working-set.ts` 和 `artifacts/presentation.ts`，必要时拟建 `agent/cloud/planning-context.ts`：

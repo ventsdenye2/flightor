@@ -74,6 +74,25 @@ describe('research Agent tools', () => {
     await expect(researchDestinationTool.execute({ ...input, destination: 'unknown-id' }, executionContext, new AbortController().signal)).rejects.toMatchObject({ code: 'LOCATION_NOT_RESOLVED' })
     expect(research).toHaveBeenCalledTimes(2)
   })
+
+  it('reuses a canonical location already saved on the active Trip', async () => {
+    const numericDestination = { ...destination, id: '8' }
+    const delegate = new MockResearchAgent([{ ...finding, destinations: [numericDestination] }])
+    const research = vi.fn(delegate.research.bind(delegate))
+    const executionContext = context({ research }) as any
+    executionContext.trips = new InMemoryTripContextRepository([{
+      ...emptyTripContext('t'),
+      destinationIntent: { mode: 'explicit', required: [numericDestination], preferred: [], excluded: [] }
+    }])
+
+    await researchDestinationTool.execute({
+      destination: '8', questions: ['Tokyo museums'], researchTypes: ['activity'], maxResults: 5
+    }, executionContext, new AbortController().signal)
+
+    expect(research).toHaveBeenCalledOnce()
+    expect(research.mock.calls[0]?.[0].destinations).toEqual([numericDestination])
+  })
+
   it('persists a v2 artifact and returns only a compact result', async () => {
     const delegate = new MockResearchAgent([finding])
     const research = vi.fn(delegate.research.bind(delegate))

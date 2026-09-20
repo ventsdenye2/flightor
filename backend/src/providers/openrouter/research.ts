@@ -1,6 +1,7 @@
 import { AppError } from '../../lib/errors.js'
 import type { AgentModelClient, ChatMessage, ChatOptions } from '../../agent/runtime/model.js'
 import { RESEARCH_TYPE_DESCRIPTION, researchBriefSchema, type ResearchBrief } from '../../research-agent/types.js'
+import { admitDraftTemporalEvidence, draftTemporalEvidenceSchema } from '../../research-agent/temporal-evidence.js'
 import {
   researchSourceCandidateSchema,
   type ResearchDraftFinding,
@@ -26,10 +27,11 @@ function synthesisPrompt(input: ResearchSynthesisInput): { system: string; user:
     system: [
       'You are a constrained travel research summarizer.',
       'Use only the supplied brief and indexed source snippets.',
-      'Return ONLY a JSON object with a findings array of objects with category, destinationIndex, title, summary, and sourceIndexes.',
+      'Return ONLY a JSON object with a findings array of objects with category, destinationIndex, title, summary, sourceIndexes, and optional nullable temporalEvidence.',
       `Return at most ${input.brief.maxResults ?? 10} distinct findings. Keep each summary under 300 characters. Do not use Markdown fences or introductory text.`,
       'sourceIndexes must be integer indexes into the supplied source list; never output URLs, citations, or new sources.',
       'Do not assert facts that are absent from the snippets.',
+      'For a time-sensitive finding, include temporalEvidence only when one selected source snippet contains exact complete ISO date(s) YYYY-MM-DD that prove the claim. temporalEvidence must contain sourceIndex, from, to, and an exact contiguous quote copied from that source snippet; sourceIndex must also appear in sourceIndexes. Do not infer dates from brief travelWindow, publishedAt, checkedAt, expiresAt, seasons, months, or natural-language dates. If no qualifying ISO-date quote exists, omit temporalEvidence or set it to null.',
       RESEARCH_TYPE_DESCRIPTION,
       'Do not recommend dated exhibitions or events outside the travel window. Historical snippets may support a permanent venue description only; never carry their old event, opening-hour or price claims into the requested trip.',
       'Cover the requested themes when evidence supports them. Prefer distinct places or dining experiences over generic directory pages. Merge references corroborating the same finding; never attach unrelated sources merely to increase the citation count.',
@@ -39,7 +41,7 @@ function synthesisPrompt(input: ResearchSynthesisInput): { system: string; user:
   }
 }
 
-function parseDrafts(value: unknown, brief: ResearchBrief, sourceCount: number): ResearchDraftFinding[] {
+function parseDrafts(value: unknown, brief: ResearchBrief, sources: readonly { url: string; snippet: string }[]): ResearchDraftFinding[] {
   if (!Array.isArray(value) || value.length > MAX_DRAFTS) {
     throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'OpenRouter research output was not a bounded JSON array', 502)
   }
@@ -47,21 +49,32 @@ function parseDrafts(value: unknown, brief: ResearchBrief, sourceCount: number):
   for (const item of value) {
     if (typeof item !== 'object' || item === null) throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'OpenRouter research output contained an invalid finding', 502)
     const record = item as Record<string, unknown>
-    const keys = Object.keys(record).sort().join(',')
+    const keys = Object.keys(record).filter(key => key !== 'temporalEvidence').sort().join(',')
     if (keys !== 'category,destinationIndex,sourceIndexes,summary,title') throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'OpenRouter research output contained unexpected fields', 502)
     if (!brief.researchTypes.includes(record.category as ResearchBrief['researchTypes'][number])) throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'OpenRouter research output contained an invalid category', 502)
     if (!Number.isInteger(record.destinationIndex) || Number(record.destinationIndex) < 0 || Number(record.destinationIndex) >= brief.destinations.length) throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'OpenRouter research output contained an invalid destination reference', 502)
     if (typeof record.title !== 'string' || record.title.trim().length === 0 || record.title.length > 240) throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'OpenRouter research output contained an invalid title', 502)
     if (typeof record.summary !== 'string' || record.summary.trim().length === 0 || record.summary.length > 1_500) throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'OpenRouter research output contained an invalid summary', 502)
-    if (!Array.isArray(record.sourceIndexes) || record.sourceIndexes.length < 1 || record.sourceIndexes.length > 20 || !record.sourceIndexes.every(index => typeof index === 'number' && Number.isInteger(index) && index >= 0 && index < sourceCount)) {
+    if (!Array.isArray(record.sourceIndexes) || record.sourceIndexes.length < 1 || record.sourceIndexes.length > 20 || !record.sourceIndexes.every(index => typeof index === 'number' && Number.isInteger(index) && index >= 0 && index < sources.length)) {
       throw new AppError('RESEARCH_SYNTHESIS_INVALID', 'OpenRouter research output contained an invalid source reference', 502)
     }
+    const temporalInput = record.temporalEvidence
+    const temporalShape = temporalInput === undefined || temporalInput === null
+      ? undefined
+      : draftTemporalEvidenceSchema.safeParse(temporalInput)
+    // Temporal evidence is optional evidence. If its shape, source index, quote,
+    // or ISO transcription cannot be admitted, retain the finding as temporal
+    // unknown so the shared guide validator can fail closed for scheduled events.
+    const temporalEvidence = temporalShape?.success
+      ? admitDraftTemporalEvidence(temporalShape.data, sources, record.sourceIndexes as number[])
+      : undefined
     result.push({
       category: record.category as ResearchDraftFinding['category'],
       destinationIndex: record.destinationIndex as number,
       title: record.title,
       summary: record.summary,
-      sourceIndexes: record.sourceIndexes as number[]
+      sourceIndexes: record.sourceIndexes as number[],
+      ...(temporalEvidence ? { temporalEvidence: { from: temporalEvidence.from, to: temporalEvidence.to, quote: temporalEvidence.quote, sourceIndex: (temporalInput as { sourceIndex: number }).sourceIndex } } : {})
     })
   }
   return result
@@ -107,7 +120,13 @@ export class OpenRouterResearchSynthesisModel implements ResearchSynthesisModel 
       type: 'object', additionalProperties: false, required: ['findings'], properties: { findings: { type: 'array', items: {
         type: 'object', additionalProperties: false, required: ['category', 'destinationIndex', 'title', 'summary', 'sourceIndexes'],
         properties: { category: { type: 'string', enum: brief.researchTypes, description: RESEARCH_TYPE_DESCRIPTION }, destinationIndex: { type: 'integer' },
-          title: { type: 'string' }, summary: { type: 'string' }, sourceIndexes: { type: 'array', items: { type: 'integer' } } }
+          title: { type: 'string' }, summary: { type: 'string' }, sourceIndexes: { type: 'array', items: { type: 'integer' } },
+          temporalEvidence: { anyOf: [
+            { type: 'null' },
+            { type: 'object', additionalProperties: false, required: ['sourceIndex', 'from', 'to', 'quote'], properties: {
+              sourceIndex: { type: 'integer', minimum: 0 }, from: { type: 'string', format: 'date' }, to: { type: 'string', format: 'date' }, quote: { type: 'string', minLength: 1, maxLength: 800 }
+            } }
+          ] } }
       } } }
     } } }
     const completionOptions: ChatOptions = { responseFormat, maxTokens: MAX_MODEL_TOKENS, timeoutMs: 60_000, temperature: 0, reasoning: { enabled: false, exclude: true }, ...(options?.signal ? { signal: options.signal } : {}) }
@@ -118,6 +137,6 @@ export class OpenRouterResearchSynthesisModel implements ResearchSynthesisModel 
     const parsed = parseJsonContent(content)
     const drafts = typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) && Object.keys(parsed).join(',') === 'findings'
       ? (parsed as { findings: unknown }).findings : parsed
-    return parseDrafts(drafts, brief, sources.length)
+    return parseDrafts(drafts, brief, sources)
   }
 }

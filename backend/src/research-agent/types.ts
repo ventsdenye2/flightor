@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { locationRefSchema, verificationRecordSchema } from '../aviation/types.js'
+import { temporalEvidenceSchema } from './temporal-evidence.js'
 
 export const RESEARCH_TYPE_DESCRIPTION = 'activity: a place to visit, meal or experience; practical: factual logistics such as transport, booking or visitor passes; event: a dated exhibition or festival; seasonal: a seasonal condition; stopover: an airport layover experience. Classify by the evidence, not by which category is easiest to fill.'
 export const researchTypeSchema = z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']).describe(RESEARCH_TYPE_DESCRIPTION)
@@ -57,6 +58,7 @@ export const researchFindingSchema = z.object({
   destinations: z.array(locationRefSchema).min(1).max(12),
   title: z.string().min(1).max(240),
   summary: z.string().min(1).max(1_500),
+  temporalEvidence: temporalEvidenceSchema.optional(),
   sources: z.array(researchSourceSchema).min(1).max(20),
   verification: verificationRecordSchema,
   warnings: z.array(z.string().min(1).max(240)).max(20)

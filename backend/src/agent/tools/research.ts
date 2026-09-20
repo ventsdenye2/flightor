@@ -3,10 +3,11 @@ import { researchBriefSchema, researchTypeSchema, type ResearchBrief } from '../
 import { locationSelectorSchema } from '../../locations/selector.js'
 import { researchTripDestinations, researchStatusCounts, researchTravelWindow } from '../../research-agent/workspace.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
-import { canonicalResolvedLocation } from './resolved-locations.js'
+import { canonicalResolvedLocation, recordTripLocations } from './resolved-locations.js'
 import { workspaceScope } from './workspace-scope.js'
 import type { TripContext } from '../../trips/types.js'
 import { guideCandidateRef, candidateRefSchema } from '../../travel-guides/candidates.js'
+import { temporalEvidenceSchema } from '../../research-agent/temporal-evidence.js'
 
 const artifactReferenceSchema = z.object({
   id: z.string().uuid(),
@@ -34,6 +35,7 @@ export const researchToolOutputSchema = z.object({
     title: z.string().max(240),
     summary: z.string().max(1500),
     category: researchTypeSchema,
+    temporalEvidence: temporalEvidenceSchema.optional(),
     destinations: z.array(z.object({ id: z.string().max(160), name: z.string().max(240) }).strict()).max(12),
     verificationStatus: z.enum(['verified', 'partially_verified', 'stale', 'unverified'])
   }).strict()).max(50),
@@ -56,6 +58,7 @@ export async function executeResearchBrief(
   const brief = researchBriefSchema.parse(input)
   const trip = snapshot ?? await context.trips.get(context.tripId)
   if (!trip) throw new Error('Trip context was not found')
+  recordTripLocations(context, trip)
   const scope = await workspaceScope(context, signal, trip)
   brief.destinations = brief.destinations.map(destination => canonicalResolvedLocation(context, destination))
   // Both research tools inherit only omitted dates, from the snapshot accepted by this workspace.
@@ -73,6 +76,7 @@ export async function executeResearchBrief(
     findings: artifact.findings.map(finding => ({
       candidateRef: guideCandidateRef(scope, artifact, finding.id),
       id: finding.id, title: finding.title, summary: finding.summary, category: finding.category,
+      ...(finding.temporalEvidence ? { temporalEvidence: finding.temporalEvidence } : {}),
       destinations: finding.destinations.map(destination => ({ id: destination.id, name: destination.name })),
       verificationStatus: finding.verification.expiresAt && Date.parse(finding.verification.expiresAt) <= Date.now() ? 'stale' : finding.verification.status
     })),
@@ -111,6 +115,7 @@ export const researchDestinationTool: AgentTool<
   async execute(input, context, signal) {
     const trip = await context.trips.get(context.tripId)
     if (!trip) throw new Error('Trip context was not found')
+    recordTripLocations(context, trip)
     const brief = researchBriefSchema.parse({
       destinations: [canonicalResolvedLocation(context, input.destination)],
       interests: trip.interests,

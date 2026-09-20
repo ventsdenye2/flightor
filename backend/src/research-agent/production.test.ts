@@ -21,6 +21,20 @@ function result(url: string, title = 'Result'): ResearchSearchResult {
 }
 
 describe('ProductionResearchAgent', () => {
+  it.each([true, false])('admits event dates only from a retrieved excerpt (supported=%s)', async supported => {
+    const source = result('https://example.com/festival')
+    source.candidates[0]!.snippet = supported ? 'Festival runs 2026-10-26 to 2026-11-04.' : 'Festival takes place in late October.'
+    const agent = new ProductionResearchAgent({ searchProvider: { name: 'fixture', search: async () => source },
+      synthesisModel: { synthesize: async () => [{ category: 'event', destinationIndex: 0, title: 'Festival',
+        summary: 'Festival', sourceIndexes: [0], temporalEvidence: { sourceIndex: 0,
+          from: '2026-10-26', to: '2026-11-04', quote: 'Festival runs 2026-10-26 to 2026-11-04.' } }] } })
+    const artifact = await agent.research({ ...brief, researchTypes: ['event'],
+      travelWindow: { from: '2026-10-20', to: '2026-10-21' } }, { requestId: 'event-provenance' })
+    expect(artifact.findings).toHaveLength(1)
+    if (supported) expect(artifact.findings[0]!.temporalEvidence).toMatchObject({ from: '2026-10-26', to: '2026-11-04', sourceUrl: 'https://example.com/festival' })
+    else expect(artifact.findings[0]!.temporalEvidence).toBeUndefined()
+  })
+
   it('starts the next query when either worker is free and preserves source ordering', async () => {
     const pending: Array<(value: ResearchSearchResult) => void> = []
     const provider: ResearchSearchProvider = { name: 'rolling', search: vi.fn(() => new Promise(resolve => { pending.push(resolve) })) }

@@ -367,7 +367,7 @@ route generation. Tools never supply their own duplicate lineage-write policy.
 | Tool | Status | Input / output | Side effects | Cost | Authority / providers | Cache / failure |
 | --- | --- | --- | --- | --- | --- | --- |
 | `web_research` | Implemented (Phase 4B compatibility vocabulary) | Strict minimal `ResearchBrief` → `research` v2 artifact + compact source-bound findings | Creates artifact | paid | Restricted production `ResearchAgent`; SerpApi research adapter; optional OpenRouter synthesis | Bounded snippets only; provider/model failure degrades conservatively; missing SerpApi key is explicit unavailable |
-| `research_destination` | Implemented (Phase 4B) | Trusted destination + active Trip window/interests/questions → `research` v2 artifact + selectable finding IDs, summaries, locations and verification status | Creates artifact | paid | Same restricted Research pipeline | Every finding has standard verification/TTL; event snippet evidence is never fully verified |
+| `research_destination` | Implemented (Phase 4B; G1 evidence contract) | Trusted destination + active Trip window/interests/questions → `research` v2 artifact + selectable finding IDs, summaries, locations, optional `temporalEvidence` and verification status | Creates artifact | paid | Same restricted Research pipeline | Canonical locations may be reused from the current owner-scoped Trip snapshot; `temporalEvidence` is optional (`from`/`to`/`sourceUrl`/`quote`) but required for date-bound event scheduling; quote must be a retrieved snippet containing 1–2 complete ISO dates; native research currently does not provide it |
 | `save_travel_guide` | Implemented (ADR 0012 + B3) | Stable candidate refs or legacy indices + authored days + optional supportingRefs; same-turn draft patches → saved v1 or classified repair | Creates derived route and guide artifacts after validation | cheap | Server restores evidence and Trip budget; shared Goal validator | No provider calls or automatic redistribution; unused research excluded; source/date/version/cancellation checks and bounded feedback; draft patches do not persist across turns |
 | `build_travel_guide` | Implemented (Phase 4B; compatibility only) | Owner-scoped trip-route + research refs → `travel_guide` v1 artifact | Creates artifact | cheap | Deterministic FlightOR composition | Excluded from public Planner; retained in complete Core registry; stale/unverified findings are omitted and missing days remain empty |
 
@@ -508,9 +508,19 @@ stale enough to reclaim.
 
 ## Phase 7–9 consumers
 
-Planner now exposes `get_trip_artifacts` (at most 20 current-trip references) and `read_artifact` (bounded, explicitly truncated JSON excerpts) to answer about persisted routes, research and guides across turns. Reads remain user- and trip-scoped. Saved prices are not fresh confirmation. Destination summaries include the exact canonical location for safe tool handoff; Research still requires a location resolved within the active turn. Neither read tool triggers final route generation.
+Planner now exposes `get_trip_artifacts` (at most 20 current-trip references) and `read_artifact` (bounded, explicitly truncated JSON excerpts) to answer about persisted routes, research and guides across turns. Reads remain user- and trip-scoped. Saved prices are not fresh confirmation. Destination summaries include the exact canonical location for safe tool handoff; Research still requires a location present in the authoritative current-turn ledger. Neither read tool triggers final route generation.
 
-`research_destination.destination` accepts the exact resolved location ID string; the server retrieves the complete canonical object from its per-turn ledger. Full-object callers remain compatible, but their descriptive fields never override a ledger record. Unknown IDs fail with a recoverable resolution prerequisite. This avoids making model-copied coordinates part of the authority check while preserving the same-turn provider requirement.
+`research_destination.destination` accepts the exact resolved location ID string; the server retrieves the complete canonical object from its per-turn ledger. The ledger is also seeded from the current owner-scoped Trip snapshot, so a location already saved there (for example, Tokyo id `8`) can be reused on a later turn without another provider lookup. Full-object callers remain compatible, but their descriptive fields never override a ledger record. Unknown IDs fail with a recoverable resolution prerequisite. This avoids making model-copied coordinates part of the authority check while preserving the current Trip owner/version boundary.
+
+Research v2 may include optional `temporalEvidence` with only `from`, `to`,
+`sourceUrl` and `quote`. `quote` must come from a retrieved search snippet and
+contain one or two complete ISO dates; `queryWindow` and `expiry` are not event
+occurrence evidence. The save path and durable Goal verifier share this check:
+missing or mismatched evidence rejects date-bound event scheduling, and
+`allowPartial` does not bypass it. Old Artifacts remain readable without being
+re-verified. The current native research adapter does not produce this evidence,
+so it cannot alone support event scheduling against Trip dates. The required
+semantics of Goal `researchTypes` are unchanged; see [ADR 0020](adr/0020-canonical-trip-locations-and-temporal-evidence.md).
 
 Native research HTTP 429 returns `PROVIDER_RATE_LIMITED` and the safe warning
 `research_provider_rate_limited`. The two research tools share the current

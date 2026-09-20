@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { locationRefSchema } from '../aviation/types.js'
 import { researchBriefSchema, researchSourceAuthoritySchema } from './types.js'
 import { researchSearchTermsSchema } from './query-planner.js'
+import type { TemporalEvidence } from './temporal-evidence.js'
 
 export const researchSearchInputSchema = z.object({
   destination: locationRefSchema,
@@ -46,6 +47,7 @@ export interface ResearchDraftFinding {
   title: string
   summary: string
   sourceIndexes: number[]
+  temporalEvidence?: (Omit<TemporalEvidence, 'sourceUrl'> & { sourceIndex: number }) | null
 }
 
 export interface ResearchSynthesisInput {

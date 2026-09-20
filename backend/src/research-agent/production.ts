@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { AppError } from '../lib/errors.js'
+import { admitDraftTemporalEvidence } from './temporal-evidence.js'
 import {
   researchArtifactSchema,
   researchBriefSchema,
@@ -154,7 +155,7 @@ function queryInputs(brief: ResearchBrief, destinationIndex: number, preferences
 function draftIsValid(draft: unknown, brief: ResearchBrief, sourceCount: number): draft is ResearchDraftFinding {
   if (typeof draft !== 'object' || draft === null) return false
   const candidate = draft as Record<string, unknown>
-  if (Object.keys(candidate).sort().join(',') !== 'category,destinationIndex,sourceIndexes,summary,title') return false
+  if (Object.keys(candidate).filter(key => key !== 'temporalEvidence').sort().join(',') !== 'category,destinationIndex,sourceIndexes,summary,title') return false
   if (!brief.researchTypes.includes(candidate.category as ResearchBrief['researchTypes'][number])) return false
   if (!Number.isInteger(candidate.destinationIndex) || Number(candidate.destinationIndex) < 0 || Number(candidate.destinationIndex) >= brief.destinations.length) return false
   if (typeof candidate.title !== 'string' || candidate.title.trim().length === 0 || candidate.title.length > 240) return false
@@ -234,12 +235,14 @@ function buildSynthesizedFindings(
     if (seen.has(id)) continue
     seen.add(id)
     const verification = verifyResearchFinding(category, selected, { checkedAt })
+    const temporalEvidence = admitDraftTemporalEvidence(draft.temporalEvidence, sources, draft.sourceIndexes)
     const finding = {
       id,
       category,
       destinations: [destination],
       title,
       summary,
+      ...(temporalEvidence ? { temporalEvidence } : {}),
       sources: selected.map(sourceForFinding),
       verification,
       warnings: warningForVerification(category, verification.status)
