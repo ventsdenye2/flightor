@@ -1,6 +1,6 @@
 # FlightOR Agent Architecture v1
 
-> **Current checkpoint — 2026-09-20:** B0/B1 are committed at cabbf51, B2 at d895d0e, B3 at 6649644 and B4 at 1ce177b. B5 adds bounded per-turn model/tool/HTTP diagnostics and client result-commit timing. B2 business-tool Goal acceptance remains disabled by default (`PLANNER_LEAN_GOALS_ENABLED=false`) and its PostgreSQL transaction still awaits DB integration execution. B3–B5 work with either Goal protocol; G1 and formal performance measurements have not run. [RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) owns exact limits and compatibility; offline checks do not replace [dated live acceptance](FLIGHT_FIRST_ACCEPTANCE.md). Follow [documentation maintenance](DOCS_MAINTENANCE.md) in every change batch.
+> **Current checkpoint — 2026-09-20:** B0/B1 are committed at cabbf51, B2 at d895d0e, B3 at 6649644 and B4 at 1ce177b. B5 adds bounded per-turn model/tool/HTTP diagnostics and client result-commit timing. B2 business-tool Goal acceptance remains disabled by default (`PLANNER_LEAN_GOALS_ENABLED=false`) and its PostgreSQL acceptance/rollback/concurrency checks have now run in an isolated PostgreSQL 16 instance. B3–B5 work with either Goal protocol; G1 database checks are in progress; real Provider/platform acceptance and formal performance measurements remain unrun. [RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) owns exact limits and compatibility; offline checks do not replace [dated live acceptance](FLIGHT_FIRST_ACCEPTANCE.md). Follow [documentation maintenance](DOCS_MAINTENANCE.md) in every change batch.
 
 ### B5 observation ownership
 
@@ -29,6 +29,19 @@ effect commits. This is explicitly commit evidence, not browser/device paint.
 Server and client elapsed times must not be subtracted across devices. Extraction
 and the unrun benchmark boundary are in
 [EVALUATION §4.1](design/budget-travel-agent/EVALUATION.md).
+
+### Selection retries and current-version adoption
+
+An owner-scoped PATCH containing only the already persisted flight choice is
+an idempotent no-op, including a retry after a Trip Context edit. It returns the
+original selection revision/contextVersion and does not refresh its validity
+or write the aggregate; the workspace still reports the current Trip version
+and stale route generation. The choice identity includes layover preference.
+Changing that preference, choosing another source, or adopting again after
+clearing is a new write: optimistic workspace version and current source/run
+checks still apply. A historical saved choice is not proof of a current valid
+fare or satisfied guide. This existing behavior is covered by G1 PostgreSQL
+integration checks; it does not broaden the narrow compatible-offer exception.
 
 > Status: **Product + engineering baseline**
 >

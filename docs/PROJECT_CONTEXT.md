@@ -1,6 +1,6 @@
 # FlightOR 当前项目上下文
 
-更新：2026-09-20。B0/B1 已提交 `cabbf51`，B2 已提交 `d895d0e`、仍默认关闭，B3 已提交 `6649644`，B4 已提交 `1ce177b`；B5 已实施服务端模型/工具/HTTP 观测与客户端 UI commit 计时。性能数字与已运行结果必须引用具体日期证据，离线与数据库/live 的验证边界见当前 progress。
+更新：2026-09-20。B0/B1 已提交 `cabbf51`，B2 已提交 `d895d0e`、仍默认关闭，B3 已提交 `6649644`，B4 已提交 `1ce177b`；B5 已提交，进入 G1 数据库与持久恢复验证。性能数字与已运行结果必须引用具体日期证据，离线与数据库/live 的验证边界见当前 progress。
 
 ## 当前主链
 
@@ -22,7 +22,7 @@
 | UI | 蓝色正式页面已有部分真实接入；航班采用恢复已具历史证据；活动展示转换仍缺景点坐标与素材 |
 | 测试 | 默认离线与 PostgreSQL suites 分离；`test:db` 缺少 TEST_DATABASE_URL 明确失败；build 不等于真机验收 |
 
-当前输出 delivery 由 completion/verifier 决定，工具正常返回或模型说完成不能代替 `satisfied`。用户明确要求才生成最终航线，内层路径搜索/优化工具不开放给会话 Planner 随意执行。默认旧模式仍公开 Goal 控制工具；`PLANNER_LEAN_GOALS_ENABLED=true` 启用 B2：业务工具携带 intent/goalRef，服务端原子接受 Goal/Run，固定本轮约束并自动验收，隐藏 declare/resume/finish。单一 completion 权威保持不变；详细公开面见 TOOLS。当前未修改运行环境来启用该开关，PG 接受事务尚缺实际集成验证。
+当前输出 delivery 由 completion/verifier 决定，工具正常返回或模型说完成不能代替 `satisfied`。用户明确要求才生成最终航线，内层路径搜索/优化工具不开放给会话 Planner 随意执行。默认旧模式仍公开 Goal 控制工具；`PLANNER_LEAN_GOALS_ENABLED=true` 启用 B2：业务工具携带 intent/goalRef，服务端原子接受 Goal/Run，固定本轮约束并自动验收，隐藏 declare/resume/finish。单一 completion 权威保持不变；详细公开面见 TOOLS。当前未修改运行环境来启用该开关，G1 已在独立临时 PostgreSQL 执行原子接受、并发和回滚集成验证，真实 Provider/平台验收仍待执行。
 
 首次模型调用前已增加 `planning-context.ts`：预装当前兼容研究 finding、未完成目标参数和已保存攻略摘要，显式给出日期/城市/类别覆盖与省略项，不自动接受旧目标。新增上下文最多 24,000 字符，Memory 禁用不注入；原 Trip、航班选择和历史消息仍按既有方式提供。详细限额与历史日期修复策略见 [RUNTIME_PLAN §2.1](design/budget-travel-agent/RUNTIME_PLAN.md)。局部准备耗时已写入对话元数据，尚未形成真实性能/费用评估。
 
@@ -41,7 +41,7 @@
 
 9 月 13 日 HANDOFF 中“仍在集成工作区、未合并”描述的是当时状态，不能作为今天 main 的事实。旧演示额度、端口、服务状态也不自动延续。
 
-当前任务顺序唯一依据：[DPS](design/budget-travel-agent/DPS.md)。B4 在现有短轮询上提前展示已保存结果，按作用域与 revision 合并，取消确认后再释放提交，保留浏览与未发送草稿。B5 已输出每轮有界服务端诊断，客户端在内存记录 accepted/首卡片/最终 UI commit；未知费用和缺失时钟保留 null，UI commit 不代表像素绘制。下一步 G1 跑通；保留 PG 集成验证缺口，不能据离线结果宣布生产路径跑通。[RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) 维护 B1–B5 精确契约。B3 草稿仅同 generation 有效，重启或换轮仍需从 Artifact 恢复；未实现散文预算语义自动判分。
+当前任务顺序唯一依据：[DPS](design/budget-travel-agent/DPS.md)。B4 在现有短轮询上提前展示已保存结果，按作用域与 revision 合并，取消确认后再释放提交，保留浏览与未发送草稿。B5 已输出每轮有界服务端诊断，客户端在内存记录 accepted/首卡片/最终 UI commit；未知费用和缺失时钟保留 null，UI commit 不代表像素绘制。当前推进 G1；数据库及确定性模型/证据 fixture 验证独立于真实 Provider/平台验收，不能宣布生产路径已跑通。[RUNTIME_PLAN](design/budget-travel-agent/RUNTIME_PLAN.md) 维护 B1–B5 精确契约。B3 草稿仅同 generation 有效，重启或换轮仍需从 Artifact 恢复；未实现散文预算语义自动判分。
 
 ## 续作入口
 

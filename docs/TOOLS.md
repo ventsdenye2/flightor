@@ -1,6 +1,6 @@
 # FlightOR Agent Tool Registry
 
-> 2026-09-20: B1 context, opt-in B2 Goal acceptance, B3 stable guide decisions/repair, B4 early committed-result publication and B5 bounded observability are implemented. B2 is disabled by default and its new PostgreSQL acceptance transaction awaits live DB validation. B3–B5 work in both Goal modes; contracts and compatibility are recorded under [ADR 0019](adr/0019-lean-planner-evaluation.md). Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
+> 2026-09-20: B1 context, opt-in B2 Goal acceptance, B3 stable guide decisions/repair, B4 early committed-result publication and B5 bounded observability are implemented. B2 is disabled by default and its PostgreSQL acceptance/rollback/concurrency checks have now run in a dedicated local instance; real Provider acceptance remains pending. B3–B5 work in both Goal modes; contracts and compatibility are recorded under [ADR 0019](adr/0019-lean-planner-evaluation.md). Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
 
 This file is the source-of-truth inventory for Agent-facing tools. It follows
 `docs/FLIGHTOR_ARCHITECTURE.md`; implementation status means both code and contract

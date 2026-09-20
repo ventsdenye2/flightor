@@ -1,6 +1,6 @@
 # ADR 0019：精简 Planner 协议后再评估 Harness
 
-日期：2026-09-20。状态：**分阶段采用：B1/B3–B5 已实施；B2 在默认关闭的开关后实施；G1 待跑通**。B2 离线验证通过，新 PG 原子接受事务待实际数据库验证，未开启生产。精确契约见 [RUNTIME_PLAN §2–6](../design/budget-travel-agent/RUNTIME_PLAN.md) 与 [验证进度](../design/budget-travel-agent/progress.md)。
+日期：2026-09-20。状态：**分阶段采用：B1/B3–B5 已实施；B2 在默认关闭的开关后实施；G1 待跑通**。B2 已通过专用 PostgreSQL 原子接受、并发和回滚验证；真实 Provider/平台验收待执行，未开启生产。精确契约见 [RUNTIME_PLAN §2–6](../design/budget-travel-agent/RUNTIME_PLAN.md) 与 [验证进度](../design/budget-travel-agent/progress.md)。
 
 ## 决策方向
 

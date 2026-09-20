@@ -44,4 +44,10 @@ npm --prefix backend run dev
 
 在两轮执行之间修改后端配置并重启 API 生效；回退为 `false` 恢复旧工具与提示协议。不要把进程重启宣称为持久 turn 恢复；正在运行的临时 turn 仍受既有进程生命周期限制。
 
-本批完成离线验证，新 PostgreSQL 接受事务的集成用例已增加，但 `npm --prefix backend run test:db -- src/agent/goals/postgres.integration.test.ts` 因缺少显式 `TEST_DATABASE_URL` 启动失败。数据库事务/竞争验证及 G1 的真实链路验证完成前保持默认关闭；离线成功不等于生产开启已验收。新上下文元数据记录 `goal_protocol: lean|legacy`，不记录敏感配置。
+G1 在 2026-09-20 使用独立临时 PostgreSQL 16 实例运行 Goal 集成套件，11 项通过，包含 B2 原子接受、并发重试和回滚；当前证据见 [progress](design/budget-travel-agent/progress.md)。该测试连接只通过子进程的 `TEST_DATABASE_URL` 提供，未覆盖已有环境文件或业务数据库。B2 仍默认关闭，数据库通过不等于真实 Planner/Provider 链路已验收。新上下文元数据记录 `goal_protocol: lean|legacy`，不记录敏感配置。
+
+### 隔离 PostgreSQL 集成验证
+
+`npm --prefix backend run test:db` 与默认离线测试分开；未显式设置 `TEST_DATABASE_URL` 会在加载配置时失败，不能报告 skip 为成功。套件会创建/删除自己的随机 schema，并执行扩展及迁移，连接必须指向专用测试实例。
+
+本批使用本地 `postgres:16-alpine` 镜像、随机 loopback 端口、独立测试账号及 tmpfs 数据目录；容器带 `--rm`，验证后停止删除。没有启动 Compose 迁移任务，也没有对既有业务容器写入测试数据。新数据库不代表生产迁移已完成。两条攻略的确定性模型/证据 fixture 回归与后续真实 Provider 验收分别记载。

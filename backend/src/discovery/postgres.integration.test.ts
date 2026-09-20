@@ -135,8 +135,24 @@ suite('Editorial publishing and cloud workspace PostgreSQL boundaries', () => {
     expect(restored.routeGeneration?.id).toBe(created.run.id)
     expect(restored.routeGeneration?.resultArtifactId).toBe(artifact.id)
     await trips.update(trip.id, { notes: ['Changed conditions'] }, 0)
-    expect((await workspaces.get(trip.id)).routeGeneration?.stale).toBe(true)
-    await expect(workspaces.update(trip.id, { expectedVersion: 1, savedRoute: { artifactId: artifact.id, routeId: path.id } })).rejects.toMatchObject({ code: 'STALE_ROUTE_SELECTION' })
+    const edited = await workspaces.get(trip.id)
+    expect(edited.routeGeneration?.stale).toBe(true)
+    // Replaying an already persisted choice is a no-op, not a fresh adoption.
+    for (const expectedVersion of [0, 1]) {
+      const replay = await workspaces.update(trip.id, { expectedVersion, savedRoute: { artifactId: artifact.id, routeId: path.id } })
+      expect(replay).toMatchObject({ version: 1, contextVersion: 1, selectedFlight: saved.selectedFlight, updatedAt: edited.trip.updatedAt })
+      expect(replay.selectedFlight?.contextVersion).toBe(0)
+    }
+    // Changing preference or adopting again after clearing is a new write and must reject stale sources.
+    await expect(workspaces.update(trip.id, { expectedVersion: 1, selectedFlight: {
+      kind: 'route', artifactId: artifact.id, routeId: path.id, layoverPreference: 'consider_city'
+    } })).rejects.toMatchObject({ code: 'STALE_ROUTE_SELECTION' })
+    expect((await workspaces.get(trip.id)).trip.selectedFlight).toEqual(saved.selectedFlight)
+    await workspaces.update(trip.id, { expectedVersion: 1, savedRoute: null })
+    await expect(workspaces.update(trip.id, { expectedVersion: 2, savedRoute: { artifactId: artifact.id, routeId: path.id } })).rejects.toMatchObject({ code: 'STALE_ROUTE_SELECTION' })
+    const after = await workspaces.get(trip.id)
+    expect(after.trip).toMatchObject({ version: 2, selectedFlight: null })
+    expect(after.routeGeneration?.stale).toBe(true)
   })
   it('persists an exact fare choice idempotently and increments its revision only when the choice changes', async () => {
     const trips = new PostgresTripRepository(db, userId), trip = await trips.create({ title: 'Fare selection' })

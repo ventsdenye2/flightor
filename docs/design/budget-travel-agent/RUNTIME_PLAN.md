@@ -1,6 +1,6 @@
 # 当前修改方案：先精简 FlightOR，再以实测决定 Harness
 
-日期：2026-09-20。状态：**B0–B5 已实施，B2 仍默认关闭；下一步 G1 跑通验证**。B2 PostgreSQL 新事务尚缺实际数据库验证；未跑真实模型评测或安装 DSH。B3–B5 契约见 §3–6，逐项证据见 [progress](progress.md)。
+日期：2026-09-20。状态：**B0–B5 已实施，B2 仍默认关闭；G1 数据库与持久恢复验证推进中**。B2 新事务已在专用 PostgreSQL 16 实例执行验证；未跑真实模型评测或安装 DSH。B3–B5 契约见 §3–6，逐项证据见 [progress](progress.md)。
 
 这是本轮后端修改的唯一范围入口：[DPS](DPS.md) 定义执行顺序，[EVALUATION](EVALUATION.md) 定义案例与决策门槛。[RAS](RAS.md) 保留产品需求，[RDS](RDS.md) 是后续完整能力设计，不是首轮全部施工清单。
 

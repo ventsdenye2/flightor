@@ -1,8 +1,29 @@
 # 当前进度与验证
 
-更新：2026-09-20。B0/B1 已提交 main `cabbf51`，B2 已提交 `d895d0e`，B3 已提交 `6649644`，B4 已提交 `1ce177b`。当前阶段：B5 已实施，下一步 G1；B2 仍默认关闭，新 PG 事务待实际数据库验证。保留用户原有未跟踪 `docs/demo/DEMO_MASTER.md`，不纳入提交。未修改运行模型/Provider 路由/依赖或现有环境文件。
+更新：2026-09-20。B0/B1 已提交 main `cabbf51`，B2 已提交 `d895d0e`，B3 已提交 `6649644`，B4 已提交 `1ce177b`，B5 已提交 `2c2cb1d`。当前阶段：G1 数据库与确定性持久恢复验证；B2 仍默认关闭，真实 Planner/Provider 与平台验收待执行。保留用户原有未跟踪 `docs/demo/DEMO_MASTER.md`，不纳入提交。未修改运行模型/Provider 路由/依赖或现有环境文件。
 
-## B5 本批完成情况
+## G1 数据库验证（2026-09-20）
+
+- 用户启动 Docker 后，使用现有 `postgres:16-alpine` 镜像创建本批独立临时容器：仅 loopback 随机端口、tmpfs 数据目录、`--rm`。`TEST_DATABASE_URL` 只传给本批测试子进程，测试自行创建/清理 schema；没有迁移或改写业务数据库，没有重启现有 API/Worker。
+- Goal 原子接受/竞争/回滚定向套件 11/11 通过，补齐 B2 当时未运行的实际 PG 证据。
+- 新增 `backend/src/workspaces/postgres.integration.test.ts`：两条案例均经过真实 CloudPlannerService → AgentRuntime → lean 保存工具 → PostgreSQL Artifact/Goal/Run → 服务端写入对话 metadata → 新 repository 刷新恢复。模型回复、研究与航班明确为 fixture，没有外部调用；不手工写入 satisfied 历史。检查攻略同 ID 恢复、服务端 delivery、已采用航班的精确来源/航段时刻和跨 owner 拒绝，自备机票不生成 flightSelection。
+- 完整 DB 首轮 34/35 通过，唯一失败为旧 route 重复采用断言。溯源 `614dff7` 的同选择幂等契约，并经独立审查确认：同选择重试应保持原 revision/contextVersion/selectedAt，不执行新写入。更新回归同时检查旧/当前 expectedVersion 的 no-op，以及改变中转偏好、清除后再次采用仍拒绝 stale；生产代码没有因此改变。对应 discovery 套件 8/8 通过。
+- 新 fixture 初次暴露非 UUID payload ID、混用 context/workspace version 和缺少 route-generation 迁移，均在测试数据中修正后，两个目标案例通过。没有修改领域校验、扩大跨版本例外或改错误处理以通过测试。
+- Luna 负责有界覆盖审计和 fixture 初稿，主 agent 集成真实 CloudPlanner 持久闭环并运行数据库验收；另一 Luna 独立审查幂等/版本边界。架构、部署说明及所有活跃计划入口同步；历史 B2/B5 表格保留当时的未执行状态，不改写旧证据。
+
+### G1 本批验证证据
+
+| 检查 | 本批结果与边界 |
+| --- | --- |
+| 完整 PostgreSQL | 最终 `npm --prefix backend run test:db`：7 文件、37 项通过；包含 Goal 11、Artifact 4、workspace guide 2、discovery 8、native ledger 5、route generation 6、cloud state 1。运行于专用 PostgreSQL 16，不是内存替身 |
+| 类型检查 | `npm --prefix backend run check` 通过 |
+| 变更范围 | 仅修改两份集成测试和对应 docs；未改生产代码/配置/依赖。未重复执行不受影响的前端构建/测试，不借用 B5 数字冒称新执行 |
+| 文档/Git | 提交门禁检查同批 docs、相对链接与暂存空白；本批测试容器验证后停止删除，现有业务容器保持运行 |
+| 仍未验证 | 真实模型/Provider、H5/微信平台与性能批次；fixture 的 verified 标记只属于测试资料，不能当成已获取的真实研究证据 |
+
+真实模型/Provider 两条链路与 H5/微信平台仍未执行，B2 未在运行环境开启。当前主环境已有相关凭证（仅核对是否存在），不能据此推断可用余额或继承历史额度；后续 live 批次需要按 DPS 记录本批调用/费用边界。正式计时与多案例仍在 G1 之后。
+
+## B5 已提交完成情况（历史批次）
 
 - 新增每轮有界服务端 recorder：上下文准备、Planner/研究模型、工具、实际 HTTP 和 Goal 验证 span，保留父子关系、并发区间去重及取消后 interrupted/迟到冻结。默认每轮只输出一条结构化日志，不向模型或公共 API 增加诊断内容。
 - OpenRouter 记录实际出站配置、请求/返回模型、响应 Provider、tokens/费用、去敏入口指纹。未知账单保持 null，显式零保留；工具、HTTP 和 native 搜索分别计数。审查发现并修复了失败正文漏记已知搜索数，以及不同网关配置指纹碰撞的问题。
@@ -140,7 +161,7 @@
 
 ## 下一步
 
-按 DPS 继续 **G1：补齐 B2 PostgreSQL 原子事务验证，再验证已选航班与自备机票两条真实攻略链路的保存、验收和刷新恢复**。B5 已提供基本观测；B2 的 `TEST_DATABASE_URL` 实际事务验证缺口仍须在启用新协议前补齐。B4 提前发布与 B5 埋点不能替代平台体验或性能成绩，不从离线样本宣称速度提升。
+按 DPS 继续 **G1 后半：已选航班与自备机票两条真实 Planner/Provider 攻略链路的保存、验收和刷新恢复，以及平台展示验收**。本批 PG 事务及确定性持久恢复已验证；测试用 scripted model 不证明真实模型能正确决策，也不证明 Provider 当前可用。B4 提前发布与 B5 埋点不能替代平台体验或性能成绩，不从离线样本宣称速度提升。
 
 G1 两条真实链路跑通后才启动正式时间测量与多案例批次。当前没有新的付费调用额度记录，旧演示额度不可沿用；尚未进入实际运行阶段，也没有据此阻止本批离线推进。
 
