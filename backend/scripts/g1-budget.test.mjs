@@ -12,8 +12,12 @@ const response = (payload = { model, usage: { cost: 0.01 }, choices: [{ finish_r
   new Response(JSON.stringify(payload), { status: 200, headers: { 'content-type': 'application/json' } })
 async function fixture(fetchImpl = async () => response()) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'flightor-g1-'))
-  return { directory, meter: installG1Budget({ directory, model, pricing, fetchImpl }) }
+  const meter = installG1Budget({ directory, model, pricing, fetchImpl })
+  activeMeters.push(meter)
+  return { directory, meter }
 }
+const activeMeters = []
+test.afterEach(() => { while (activeMeters.length) activeMeters.pop().close() })
 
 test('concurrent admission never exceeds the USD budget', async () => {
   const { meter } = await fixture(async () => { await new Promise(r => setTimeout(r, 5)); return response({ model, usage: { cost: 0.10 } }) })
@@ -52,6 +56,7 @@ test('ledger excludes credentials and refuses overwrite on restart', async () =>
   const { directory, meter } = await fixture()
   await meter.fetch('https://serpapi.com/search.json?engine=google&api_key=secret-token')
   const before = await fs.readFile(path.join(directory, 'ledger.json'), 'utf8')
+  meter.close()
   assert.throws(() => installG1Budget({ directory, model, pricing, fetchImpl: async () => response() }), e => e.code === 'G1_LEDGER_EXISTS')
   assert.equal((await fs.readFile(path.join(directory, 'ledger.json'), 'utf8')), before)
   assert.equal(before.includes('secret-token'), false)
@@ -64,4 +69,53 @@ test('HTTP errors retain reservation even when their body reports a cost', async
   await meter.fetch('https://openrouter.ai/api/v1/chat/completions', { method: 'POST', body })
   assert.equal(meter.snapshot().heldUsd, 0.1)
   assert.equal(meter.snapshot().knownCostUsd, 0)
+})
+
+test('resume restores unknown reservations and does not reset call counts', async () => {
+  const { directory, meter } = await fixture(async () => { throw new Error('offline') })
+  await assert.rejects(meter.fetch('https://serpapi.com/search.json?engine=google'), /offline/)
+  meter.close()
+  const resumed = installG1Budget({ directory, model, pricing, resume: true, fetchImpl: async () => response() })
+  activeMeters.push(resumed)
+  assert.equal(resumed.snapshot().calls.length, 1)
+  assert.equal(resumed.snapshot().heldUsd, 0.05)
+})
+
+test('resume preserves blocked state and rejects a higher limit', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'flightor-g1-'))
+  const meter = installG1Budget({ directory, model, pricing, limitUsd: 1, fetchImpl: async () => response({ model, usage: { cost: 0.11 } }) })
+  activeMeters.push(meter)
+  await meter.fetch('https://openrouter.ai/api/v1/chat/completions', { method: 'POST', body })
+  meter.close()
+  const resumed = installG1Budget({ directory, model, pricing, limitUsd: 1, resume: true, fetchImpl: async () => response() })
+  activeMeters.push(resumed)
+  await assert.rejects(resumed.fetch('https://serpapi.com/search.json?engine=google'), e => e.code === 'G1_BUDGET_EXCEEDED')
+  resumed.close()
+  assert.throws(() => installG1Budget({ directory, model, pricing, limitUsd: 2, resume: true }), e => e.code === 'G1_INVALID_LEDGER')
+})
+
+test('directory lock rejects concurrent installers and malformed resume fails closed', async () => {
+  const { directory, meter } = await fixture()
+  assert.throws(() => installG1Budget({ directory, model, pricing }), e => e.code === 'G1_LEDGER_LOCKED')
+  meter.close()
+  await fs.writeFile(path.join(directory, 'ledger.json'), '{bad', 'utf8')
+  assert.throws(() => installG1Budget({ directory, model, pricing, resume: true }), e => e.code === 'G1_INVALID_LEDGER')
+  assert.equal(await fs.readFile(path.join(directory, 'ledger.lock'), 'utf8').catch(() => null), null)
+})
+
+test('resume fails closed for a missing ledger and over-limit call history', async () => {
+  const missing = await fs.mkdtemp(path.join(os.tmpdir(), 'flightor-g1-'))
+  assert.throws(() => installG1Budget({ directory: missing, model, pricing, resume: true }), e => e.code === 'G1_LEDGER_MISSING')
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'flightor-g1-'))
+  await fs.writeFile(path.join(directory, 'ledger.json'), JSON.stringify({ version: 1, limitUsd: 2, blocked: false, calls: Array.from({ length: 25 }, (_, index) => ({ index: index + 1, kind: 'model', requestModel: model, reservedUsd: 0.1, status: 'unknown' })) }), 'utf8')
+  assert.throws(() => installG1Budget({ directory, model, pricing, resume: true }), e => e.code === 'G1_CALL_LIMIT')
+})
+
+test('close refuses an inflight request and releases after completion', async () => {
+  const { meter } = await fixture(async () => new Promise(resolve => setTimeout(() => resolve(response()), 20)))
+  const request = meter.fetch('https://serpapi.com/search.json?engine=google')
+  assert.throws(() => meter.close(), e => e.code === 'G1_PENDING_CALLS')
+  await request
+  meter.close()
+  await assert.rejects(meter.fetch('https://serpapi.com/search.json?engine=google'), e => e.code === 'G1_CLOSED')
 })

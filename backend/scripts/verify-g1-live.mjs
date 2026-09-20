@@ -21,6 +21,10 @@ const safeJson = value => {
   return output
 }
 const model = sourceEnv.PLANNER_MODEL || sourceEnv.OPENROUTER_MODEL
+const resumeDirectory = process.env.G1_RESUME_LEDGER_DIRECTORY
+const resolvedResumeDirectory = resumeDirectory ? path.resolve(resumeDirectory) : undefined
+if (resolvedResumeDirectory && (path.dirname(resolvedResumeDirectory) !== path.join(root, '.demo')
+  || !path.basename(resolvedResumeDirectory).startsWith('g1-live-'))) throw Error('G1_LEDGER_DIRECTORY_FORBIDDEN')
 if (model !== 'deepseek/deepseek-v4-flash-0731' || (sourceEnv.RESEARCH_MODEL || model) !== model
   || (sourceEnv.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '') !== 'https://openrouter.ai/api/v1'
   || (sourceEnv.NATIVE_RESEARCH_PROVIDER || 'serpapi') !== 'serpapi') throw Error('G1_CONFIG_NOT_ADMITTED')
@@ -31,7 +35,12 @@ const cases = [
     prompt: '请根据我已采用的北京至东京直飞航班及全部航段时刻，安排2026年10月20日至21日东京两日攻略并保存。全程预算约束4000元人民币，喜欢文化与小吃、节奏轻松；抵达前不要安排活动，每天一个有来源的主景点，并补充实用信息。不要重新查票或更换航班，不需要演出展览；未知费用、开放时间和交通耗时保持未知。' }
 ]
 if (!process.argv.includes('--execute')) {
+  const prior = resolvedResumeDirectory ? JSON.parse(fs.readFileSync(path.join(resolvedResumeDirectory, 'ledger.json'), 'utf8')) : undefined
+  const used = prior?.calls.reduce((sum, call) => sum + Math.ceil((call.costUsd ?? call.reservedUsd) * 1_000_000), 0) / 1_000_000
   console.log(JSON.stringify({ mode: 'dry-run', model, limitUsd: 2, cases, stages: ['setup', 'fare_search_and_adoption', 'accepted', 'model/tool/http spans', 'first_saved_artifact_read', 'durable_verified', 'final_response', 'workspace_restore'],
+    ...(prior ? { resume: { ledgerDirectory: resolvedResumeDirectory, accountingOnly: true, totalHeldOrSpentUsd: used,
+      remainingUsd: prior.limitUsd - used, remainingModelCalls: 24 - prior.calls.filter(c => c.kind === 'model').length,
+      remainingSearchCalls: 12 - prior.calls.filter(c => c.kind === 'serp').length } } : {}),
     executeRequires: 'G1_DATABASE_URL targeting dedicated flightor_g1_live, G1_AUTHORIZED_USD=2; provider and UI timing are distinct' }, null, 2))
   process.exit(0)
 }
@@ -43,13 +52,18 @@ if (!sourceEnv.OPENROUTER_API_KEY || !sourceEnv.SERPAPI_KEY) throw Error('G1_PRO
 const runId = `g1-live-${new Date().toISOString().replace(/[:.]/g, '-')}`
 const directory = path.join(root, '.demo', runId)
 fs.mkdirSync(directory, { recursive: true })
+const ledgerDirectory = resolvedResumeDirectory ?? directory
 const rawFetch = globalThis.fetch
 const catalogResponse = await rawFetch('https://openrouter.ai/api/v1/models', { signal: AbortSignal.timeout(20000), redirect: 'error' })
 if (!catalogResponse.ok) throw Error('G1_PRICING_UNAVAILABLE')
 const catalog = await catalogResponse.json()
 const descriptor = catalog.data?.find(value => value.id === model)
 if (!descriptor?.pricing) throw Error('G1_MODEL_PRICING_MISSING')
-const meter = installG1Budget({ directory, model, pricing: descriptor.pricing, limitUsd: 2, fetchImpl: rawFetch })
+const meter = installG1Budget({ directory: ledgerDirectory, resume: Boolean(resumeDirectory), model, pricing: descriptor.pricing, limitUsd: 2, fetchImpl: rawFetch })
+const startingBudget = meter.snapshot()
+process.once('exit', () => {
+  try { meter.close() } catch { /* retain the lock if a request is still pending */ }
+})
 globalThis.fetch = meter.fetch
 // Only this process opts into B2 and uses the dedicated database. No environment files are rewritten.
 Object.assign(process.env, sourceEnv, { NODE_ENV: 'test', DATABASE_URL: databaseUrl, REDIS_ENABLED: 'false',
@@ -68,7 +82,8 @@ const manifest = { runId, startedAt: new Date().toISOString(), codeSha: execFile
   runnerHash: createHash('sha256').update(fs.readFileSync(import.meta.filename)).digest('hex'), model, pricing: descriptor.pricing,
   meterHash: createHash('sha256').update(fs.readFileSync(path.join(root, 'scripts/g1-budget.mjs'))).digest('hex'),
   priceSources: ['https://openrouter.ai/api/v1/models', 'https://serpapi.com/pricing'],
-  authorizedUsd: 2, leanProtocol: true, research: 'real SerpApi plus existing synthesis', uiPaintMeasured: false, evidenceLayer: 'real providers + real PostgreSQL + authenticated Fastify inject', cases: [] }
+  authorizedUsd: 2, ledgerDirectory, startingBudget, resumedBudget: Boolean(resumeDirectory),
+  leanProtocol: true, research: 'real SerpApi plus existing synthesis', uiPaintMeasured: false, evidenceLayer: 'real providers + real PostgreSQL + authenticated Fastify inject', cases: [] }
 const write = () => {
   fs.writeFileSync(path.join(directory, 'report.json'), safeJson({ ...manifest, budget: meter.snapshot() }))
 }
@@ -202,6 +217,7 @@ try {
   await db.destroy()
   globalThis.fetch = rawFetch
   manifest.finishedAt = new Date().toISOString(); write()
+  meter.close()
   if (manifest.cases.length !== 2 || manifest.cases.some(entry => entry.status !== 'passed')) process.exitCode = 1
   console.log(JSON.stringify({ evidenceDirectory: directory, cases: manifest.cases.map(entry => ({ id: entry.caseId, status: entry.status })), budget: meter.snapshot() }))
 }
