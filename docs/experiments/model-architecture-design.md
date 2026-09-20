@@ -1,3 +1,5 @@
+> **历史研究组件实验：不代表当前完整 Planner 性能，旧批次预算不授权新调用。新评测见 [EVALUATION](../design/budget-travel-agent/EVALUATION.md)。**
+
 # 模型对比与后端架构实验设计
 
 状态：首轮真实研究组件实验已于 2026-09-13 执行，最新结果与完成范围见 [首轮结果](model-architecture-results-2026-09-13.md)。正式数据使用 v3；v2 运行记录保留为前序实验，不能与 v3 合并排名。完整 Planner 尚未验证。

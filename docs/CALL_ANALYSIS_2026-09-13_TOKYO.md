@@ -235,11 +235,11 @@ Qwen 的选择有组件实验依据，但 **DeepSeek + Qwen + 当前工具流程
 
 ## 11. 证据与复核入口
 
-本文已内嵌完成判断所需的时间、结果与限制。以下本地 `.demo` 文件被 Git 忽略，供同一工作区进一步复核，不依赖其存在才能阅读本文：
+本文已内嵌完成判断所需的时间、结果与限制。2026-09-20 文档整理检查发现，下列四个诊断文件当前不在本工作区；路径仅用于追溯，不能视为本轮已读取的证据。文件原本被 Git 忽略，历史统计没有在本轮重新计算：
 
-- [脱敏时间证据](../backend/.demo/success-timing-evidence.json)：请求区间、审计状态、工具追踪、关联 ID、汇总公式及限制。
-- [离线保存校验证据](../backend/.demo/success-validation-evidence.json)：原始三个保存参数的选择结构、Goal 限制及 `needs_revision → needs_revision → saved` 回放结果。
-- [只读时间诊断脚本](../backend/.demo/inspect-success-timing.mjs)与[离线保存验证脚本](../backend/.demo/replay-success-save-validation.mjs)：只读访问明确的本地诊断数据库，输出不包含登录信息或完整回复。
+- 脱敏时间证据（历史路径：`backend/.demo/success-timing-evidence.json`，当前缺失）：请求区间、审计状态、工具追踪、关联 ID、汇总公式及限制。
+- 离线保存校验证据（历史路径：`backend/.demo/success-validation-evidence.json`，当前缺失）：原始三个保存参数的选择结构、Goal 限制及 `needs_revision → needs_revision → saved` 回放结果。
+- 只读时间诊断脚本（历史路径：`backend/.demo/inspect-success-timing.mjs`，当前缺失）与离线保存验证脚本（历史路径：`backend/.demo/replay-success-save-validation.mjs`，当前缺失）：只读访问明确的本地诊断数据库，输出不包含登录信息或完整回复。
 - 原始外部调用时间来自 `backend/.demo/live-integration-ledger-round2.json` 的第 57–70 项；对应 `live-round2-receipt-57.json` 至 `live-round2-receipt-70.json`。这些原始回执不应整份复制到用户界面或对外报告。
 
 实现依据：

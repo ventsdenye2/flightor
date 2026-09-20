@@ -1,5 +1,7 @@
 # FlightOR Agent Architecture v1
 
+> **Current checkpoint — 2026-09-20, based on main 9954c34:** B1 now preloads bounded read-only research/Goal/guide context before the Planner's first call. Owner-scoped repositories, current Trip version and evidence validity constrain the projection; it never activates a Goal or replaces save-time verification. [RUNTIME_PLAN section 2.1](design/budget-travel-agent/RUNTIME_PLAN.md) owns limits and omissions. Goal lifecycle and stable save references in [ADR 0019](adr/0019-lean-planner-evaluation.md) remain proposed. The latest flight-first live record completed flight adoption but not the subsequent guide; B1 offline checks do not replace that [dated acceptance](FLIGHT_FIRST_ACCEPTANCE.md). Follow [documentation maintenance](DOCS_MAINTENANCE.md) in every change batch.
+
 > Status: **Product + engineering baseline**
 >
 > Purpose: This document is the authoritative design contract for the next major iteration of FlightOR.
@@ -2561,7 +2563,8 @@ API. The former implementation and local history may remain temporarily as
 migration/test assets, but they are not a current authority and must not be
 silently used as a fallback for the new API.
 
-The mini-program migration is a separate in-progress boundary. It must create
+The mini-program session transport migration is implemented; device acceptance
+remains a separate evidence boundary. It must create
 or resume an authenticated owner-scoped Trip and Conversation, send only the
 new camelCase request, render compact Artifact references, and invoke the
 explicit route-generation run when the user presses Generate Route. It must not
@@ -2593,7 +2596,7 @@ API.
 
 Deliver:
 
-- this document committed to root;
+- this document maintained under `docs/` (the historical root location is superseded);
 - `docs/TOOLS.md`;
 - architecture decision notes where needed;
 - no destructive frontend refactor yet.

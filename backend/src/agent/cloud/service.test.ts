@@ -15,12 +15,82 @@ import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, Unav
 import { ToolRegistry } from '../runtime/registry.js'
 import { AppError } from '../../lib/errors.js'
 import { z } from 'zod'
+import { InMemoryGoalRepository } from '../goals/repository.js'
 
 const call = (id: string, name: string, args: unknown) => ({
   id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) }
 })
 
 describe('CloudPlannerService vertical slice', () => {
+  it('lets the user repair inconsistent historical dates through the Planner', async () => {
+    const base = await new InMemoryTripRepository().create()
+    const trips = new InMemoryTripRepository([{ ...base, context: { ...base.context, travelDays: 2,
+      departureWindow: { from: '2026-10-12', to: '2026-10-12', precision: 'exact' },
+      returnWindow: { from: '2026-10-14', to: '2026-10-14', precision: 'exact' } } }])
+    const owned = new Set([base.id]), conversations = new InMemoryConversationRepository('date-repair', owned)
+    const conversation = await conversations.create({ tripId: base.id })
+    const model: AgentModelClient = { complete: vi.fn()
+      .mockImplementationOnce(async messages => {
+        expect(messages[0]?.content).toContain('needs_correction')
+        return { message: { role: 'assistant', content: null, tool_calls: [call('repair', 'update_trip_context', {
+          expectedVersion: 0, patch: { returnWindow: { from: '2026-10-13', to: '2026-10-13', precision: 'exact' } }
+        })] } }
+      })
+      .mockResolvedValueOnce({ message: { role: 'assistant', content: '返程日期已修正。' } }) }
+    const service = new CloudPlannerService({ trips, conversations, artifacts: new InMemoryArtifactRepository('date-repair', owned),
+      memory: new InMemoryUserMemoryRepository(), runtime: new AgentRuntime(model, createCoreToolRegistry()),
+      aviation: new MockAviationProvider(), fares: new MockFareProvider(), research: new UnavailableResearchAgent(),
+      connectionSearch: new UnavailableConnectionSearchService(), flightRoutePlanner: new UnavailableFlightRoutePlanner(),
+      routeOptimizer: new UnavailableRouteOptimizer() })
+    const result = await service.runTurn({ requestId: 'repair', tripId: base.id, conversationId: conversation.id,
+      generationId: 'repair', message: '把返程日期改为10月13日，两天行程' })
+    expect(result.tripContext).toMatchObject({ version: 1, travelDays: 2, returnWindow: { from: '2026-10-13' } })
+    expect(result.reply).toBe('返程日期已修正。')
+  })
+
+  it('preloads current evidence and goals before the first model call without activating delivery or disabled Memory', async () => {
+    const trips = new InMemoryTripRepository(), trip = await trips.create({ title: 'Preloaded Tokyo' })
+    const owned = new Set([trip.id]), ownerId = 'user-preload'
+    const conversations = new InMemoryConversationRepository(ownerId, owned)
+    const conversation = await conversations.create({ tripId: trip.id })
+    const artifacts = new InMemoryArtifactRepository(ownerId, owned)
+    const goals = new InMemoryGoalRepository(ownerId)
+    const goal = (await goals.create({ tripId: trip.id, kind: 'travel_guide', createdContextVersion: 0,
+      parameters: { questions: ['Tokyo walking'], researchTypes: ['activity'], maxResults: 4, maxCities: 1, allowPartial: true },
+      idempotencyKey: 'preload' })).goal
+    const id = '00000000-0000-4000-8000-000000000001'
+    const city = { id: 'city-tyo', type: 'city', name: 'Tokyo', countryCode: 'JP', cityCode: 'TYO' }
+    const checkedAt = '2026-09-20T00:00:00.000Z'
+    await artifacts.create({ id, tripId: trip.id, type: 'research', schemaVersion: 2, tripContextVersion: 0,
+      payload: { id, type: 'research', schemaVersion: 2, brief: { destinations: [city], interests: [],
+        questions: ['Walks'], researchTypes: ['activity'] }, findings: [{ id: 'walk-1', category: 'activity', destinations: [city],
+        title: 'Saved walk', summary: 'A source-backed walk.', sources: [{ title: 'Venue', url: 'https://example.com/walk',
+          domain: 'example.com', snippet: 'Walking route', authority: 'official_venue' }],
+        verification: { status: 'verified', checkedAt, confidence: 1, sources: [{ provider: 'fixture', reference: 'https://example.com/walk' }] }, warnings: [] }],
+      queryCount: 1, warnings: [], createdAt: checkedAt } })
+    const model: AgentModelClient = { complete: vi.fn(async messages => {
+      const system = messages[0]?.content ?? ''
+      expect(system).toContain('Saved walk')
+      expect(system).toContain(id)
+      expect(system).toContain(goal.id)
+      expect(system).not.toContain('DISABLED_PRIVATE_PREFERENCE')
+      return { message: { role: 'assistant' as const, content: '已有研究可供查看。' } }
+    }) }
+    const service = new CloudPlannerService({ ownerId, trips, conversations, artifacts, goalRepository: goals,
+      memory: new InMemoryUserMemoryRepository({ enabled: false, markdown: 'DISABLED_PRIVATE_PREFERENCE' }),
+      runtime: new AgentRuntime(model, createCoreToolRegistry()), aviation: new MockAviationProvider(), fares: new MockFareProvider(),
+      research: new UnavailableResearchAgent(), connectionSearch: new UnavailableConnectionSearchService(),
+      flightRoutePlanner: new UnavailableFlightRoutePlanner(), routeOptimizer: new UnavailableRouteOptimizer() })
+    const result = await service.runTurn({ requestId: 'preload', tripId: trip.id, conversationId: conversation.id,
+      generationId: 'preload', message: '现在有哪些资料？' })
+    expect(model.complete).toHaveBeenCalledTimes(1)
+    expect(result.delivery.status).toBe('not_requested')
+    expect(await goals.get(goal.id)).toEqual(goal)
+    const saved = (await conversations.listMessages(conversation.id))[1]!
+    expect(saved.metadata).toMatchObject({ planning_context: { goals: 1, researchArtifacts: 1, findings: 1 }, tool_traces: [] })
+    expect(JSON.stringify(saved.metadata)).not.toContain('source-backed walk')
+  })
+
   it('returns and persists safe research failure diagnostics for workspace recovery', async () => {
     const trips = new InMemoryTripRepository(), trip = await trips.create({ title: 'Rate limited trip' })
     const owned = new Set([trip.id]), conversations = new InMemoryConversationRepository('user-limit', owned)

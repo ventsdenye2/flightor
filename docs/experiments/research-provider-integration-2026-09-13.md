@@ -1,3 +1,5 @@
+> **历史研究组件实验：不代表当前完整 Planner 性能，旧批次预算不授权新调用。新评测见 [EVALUATION](../design/budget-travel-agent/EVALUATION.md)。**
+
 # 研究 Provider 离线纵向集成，2026-09-13
 
 首轮评测已独立提交为 `f3906e3ab785f46bbf48b68d1a4d23837b6cfac1`。后续在同一实验工作树实现了可注入真实 ResearchAgent 接口的薄适配器，并验证真实服务、Runtime、工具、内存仓库和服务端交付规则。主工作树、生产配置及微信适配工作树均未在本阶段修改；没有启动共享服务或占用验收端口。

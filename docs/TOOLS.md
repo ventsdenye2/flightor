@@ -1,5 +1,7 @@
 # FlightOR Agent Tool Registry
 
+> 2026-09-20: B1 read-only planning context is implemented; [ADR 0019](adr/0019-lean-planner-evaluation.md) lean Goal handling and stable candidate references remain proposed. Every tool modification must update this inventory and its verification record in the same change batch; see [maintenance rules](DOCS_MAINTENANCE.md).
+
 This file is the source-of-truth inventory for Agent-facing tools. It follows
 `docs/FLIGHTOR_ARCHITECTURE.md`; implementation status means both code and contract
 tests exist. Provider-specific payloads must be normalized before crossing a
@@ -32,6 +34,17 @@ the public conversation Planner registry and may run only inside the explicit
 route-generation composition.
 
 ## Agentic goal controls
+
+Before the first model call, CloudPlannerService supplies a bounded read-only
+PlanningContext with compatible research findings, unfinished Goal parameters and
+saved-guide summaries. This can avoid a discovery-only `get_active_goal` or
+list/read round trip when the retained material is sufficient. It never activates
+a Goal or creates a Run. Omitted or changed material still uses existing read
+tools; saving still revalidates authority, version, evidence and selection.
+Coverage gaps describe only the preload, not mandatory new research or accepted
+Goal requirements. No tool schema or completion authority changed in B1. Exact
+limits, expiry/date handling and metadata are in
+[RUNTIME_PLAN section 2.1](design/budget-travel-agent/RUNTIME_PLAN.md).
 
 The durable Agentic completion protocol is **Implemented** in the PostgreSQL
 production composition and the in-memory test seam. Goal controls validate

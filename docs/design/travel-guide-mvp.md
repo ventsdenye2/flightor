@@ -1,3 +1,5 @@
+> **阶段说明（2026-09-20）：本页保留 9 月 8 日 MVP 范围，不是最新验收。当前状态见 [PROJECT_CONTEXT](../PROJECT_CONTEXT.md)，当前修改见 [RUNTIME_PLAN](budget-travel-agent/RUNTIME_PLAN.md)。**
+
 # 路线研究与攻略生成 MVP
 
 2026-09-08。实现决策见 [ADR 0012](../adr/0012-agent-authored-itineraries.md)，最新验收见 [DEMO_STATUS](../DEMO_STATUS.md)。

@@ -1,3 +1,5 @@
+> **历史记录（2026-09-20 归类）：下文工作区、命令、进度、费用和验收只适用于记录当时；不作为当前执行入口。现状见 [PROJECT_CONTEXT](PROJECT_CONTEXT.md)，当前计划见 [DPS](design/budget-travel-agent/DPS.md)。**
+
 # FlightOR：在 main 跑通“先选航班，再规划游玩”
 
 > 这是新的实施任务，不是旧视频任务的补充。把全文交给正在处理 FlightOR 的本地 Codex。

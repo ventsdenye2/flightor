@@ -1,3 +1,5 @@
+> **历史研究组件实验：不代表当前完整 Planner 性能，旧批次预算不授权新调用。新评测见 [EVALUATION](../design/budget-travel-agent/EVALUATION.md)。**
+
 # 活动研究实验：来源抽查记录
 
 记录日期：2026-09-13（Asia/Shanghai）。执行者：Codex AI。范围：旧 `pilot-02` 与 `research-screen-v2` 中已经发现的少量主张，以及文末单独记录的 v3 固定案例抽查。各协议的记录独立保留。

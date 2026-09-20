@@ -1,3 +1,5 @@
+> **历史研究组件实验：不代表当前完整 Planner 性能，旧批次预算不授权新调用。新评测见 [EVALUATION](../design/budget-travel-agent/EVALUATION.md)。**
+
 # 模型与后端研究架构：首轮结果
 
 日期：2026-09-13（Asia/Shanghai）。实验分支：`codex/model-architecture-lab`。本轮仅覆盖活动研究组件，未修改主仓、前端工作区或生产模型配置。

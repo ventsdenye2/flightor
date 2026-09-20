@@ -1,3 +1,5 @@
+> **历史记录（2026-09-20 归类）：下文工作区、命令、进度、费用和验收只适用于记录当时；不作为当前执行入口。现状见 [PROJECT_CONTEXT](PROJECT_CONTEXT.md)，当前计划见 [DPS](design/budget-travel-agent/DPS.md)。**
+
 # FlightOR UI 同构验收
 
 核查日期：2026-09-14。恢复分支：`codex/ui-parity-recovery`。

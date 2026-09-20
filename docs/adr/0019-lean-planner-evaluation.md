@@ -1,0 +1,19 @@
+# ADR 0019：精简 Planner 协议后再评估 Harness
+
+日期：2026-09-20。状态：**分阶段采用：B1 已实施；B2 及后续契约 Proposed**。用户已确定工作顺序；当前只落地只读上下文预装，见 [RUNTIME_PLAN §2.1](../design/budget-travel-agent/RUNTIME_PLAN.md) 与 [验证进度](../design/budget-travel-agent/progress.md)。具体目标/保存工具契约仍需实施验证；公开 Goal 工具未删除。
+
+## 决策方向
+
+1. 保留当前 runtime，先针对已采用航班的攻略生成精简状态准备、机械记账、候选引用与修复协议。
+2. Planner 保持旅行决策权；服务端处理可机械推导的 Run 生命周期、来源映射、保存和完成，不恢复固定业务 DAG。
+3. 预装有界有效证据；稳定候选引用替代数组位置；区分草案错误、证据缺失、Provider 故障和版本冲突。
+4. 已落盘结果可先展示，最终文本不阻塞卡片；保留真实进度、取消/版本/owner 与部分交付语义。
+5. 先跑通 B，再计时、固定多用户案例和质量评估；之后才决定是否试验 DSH C。不同模型/Provider/提示词变化不能混入 Harness 对照。
+
+## 契约与兼容
+
+精确拟议契约、修改围栏见 [RUNTIME_PLAN](../design/budget-travel-agent/RUNTIME_PLAN.md)。执行依赖见 [DPS](../design/budget-travel-agent/DPS.md)，门槛见 [EVALUATION](../design/budget-travel-agent/EVALUATION.md)。不复制协议以免多处漂移。
+
+采用时需要同步 TOOLS、权威架构与领域测试；当前公开 Goal 控制工具及 `researchIndex` 旧接口仍是实现事实。新旧接口经兼容适配共用同一领域完成服务；历史 Artifact 保持可读。完整持久 Turn/攻略 visits v2 和航空范围扩展属于 ADR 0018 后续方向，不作为此次快速路径前置。
+
+DSH 只可能替换通用 runtime 层，不接管 FlightOR 业务状态、用户采用授权或验收权威。未完成同口径评估前不安装生产依赖、不宣布迁移。
