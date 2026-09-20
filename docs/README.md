@@ -37,7 +37,7 @@ Proposed ADR 和本轮方案描述目标，不代表当前代码已生效。ADR 
 - [0006 Agent API](adr/0006-agent-api-and-route-generation-phase-5.md)、[0007 工作区](adr/0007-plan-and-flight-workspace-phase-6.md)、[0008 发现与云行程](adr/0008-route-discovery-and-cloud-workspaces.md)。
 - [0009 运行边界](adr/0009-live-demo-route-generation.md)、[0010 自主编排](adr/0010-domain-owned-planning-workflows.md)、[0011 交付一致性](adr/0011-verified-delivery-and-workspace-consistency.md)。
 - [0012 Agent 编写攻略](adr/0012-agent-authored-itineraries.md)、[0013 本地登录](adr/0013-local-test-authentication.md)、[0014 联程票价](adr/0014-provider-connecting-fares.md)。
-- [0015 临时进度](adr/0015-transient-planner-progress.md)、[0016 原生研究](adr/0016-native-research-production-integration.md)、[0017 日期](adr/0017-inclusive-trip-dates.md)、[0020 地点复用与日期证据](adr/0020-canonical-trip-locations-and-temporal-evidence.md)。
+- [0015 临时进度](adr/0015-transient-planner-progress.md)、[0016 原生研究](adr/0016-native-research-production-integration.md)、[0017 日期](adr/0017-inclusive-trip-dates.md)、[0020 地点复用与日期证据](adr/0020-canonical-trip-locations-and-temporal-evidence.md)、[0021 探索范围与必需证据](adr/0021-guide-required-evidence.md)。
 
 ## 历史资料
 

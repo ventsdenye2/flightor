@@ -1,4 +1,5 @@
 import type { LocationRef } from '../aviation/types.js'
+import { requiredGuideEvidenceTypes } from '../agent/goals/types.js'
 import { cityGroupingIdentity, locationsOverlap } from '../locations/identity.js'
 import { CURATED_LOCATION_IDENTITY_POLICY } from '../locations/curated-directory.js'
 import type { ResearchArtifact } from '../research-agent/types.js'
@@ -12,6 +13,7 @@ export interface TravelGuideConstraints {
   maxResults: number
   maxCities: number
   researchTypes: ResearchArtifact['brief']['researchTypes']
+  requiredEvidenceTypes?: ResearchArtifact['brief']['researchTypes'] | undefined
   allowPartial: boolean
   allowRestDays?: boolean | undefined
 }
@@ -206,7 +208,7 @@ export function validateGuideContent(input: {
     checkEvidence(evidence, cities, `supportingEvidence.${index}`)
   }
   if (usedFindings.size > constraints.maxResults) missing.push('guide_result_limit')
-  for (const category of constraints.researchTypes) if (!coveredTypes.has(category)) {
+  for (const category of requiredGuideEvidenceTypes(constraints)) if (!coveredTypes.has(category)) {
     missing.push(`guide_research_type:${category}`)
     details.push({ code: `guide_research_type:${category}`, category })
   }

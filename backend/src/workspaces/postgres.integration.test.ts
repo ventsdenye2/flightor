@@ -106,7 +106,7 @@ suite('PostgreSQL workspace guide persistence and refresh', () => {
     const goals = new PostgresGoalRepository(db, ownerId)
     const runs = new PostgresGoalRunRepository(db, ownerId)
     const call = { id: 'save-guide', type: 'function' as const, function: { name: 'save_travel_guide', arguments: JSON.stringify({
-      intent: { kind: 'travel_guide', parameters: { questions: ['Museums'], researchTypes: ['activity'], maxResults: 10, maxCities: 1, allowPartial: false } },
+      intent: { kind: 'travel_guide', parameters: { questions: ['Museums'], researchTypes: ['activity', 'event'], requiredEvidenceTypes: ['activity'], maxResults: 10, maxCities: 1, allowPartial: false } },
       researchArtifactIds: [research.id], days: [{ day: 1, cityId: city.id, kind: 'visit', theme: '文化与街巷',
         items: [{ researchIndex: 0, findingId: 'finding-0', timeOfDay: 'flexible', planningNote: '安排参观博物馆。' }] }]
     }) } }
@@ -132,6 +132,7 @@ suite('PostgreSQL workspace guide persistence and refresh', () => {
     const guide = await artifacts.get(guideId)
     expect(guide?.type).toBe('travel_guide')
     const goal = (await goals.listForTrip(trip.id))[0]!
+    expect(goal.parameters).toMatchObject({ researchTypes: ['activity', 'event'], requiredEvidenceTypes: ['activity'] })
     const run = (await runs.listForGoal(goal.id))[0]!
     expect({ goal: goal.status, run: run.status }).toEqual({ goal: 'satisfied', run: 'satisfied' })
     return { trip, guideId, guide, workspace, conversation, artifacts, selectedFlightArtifactId, result }

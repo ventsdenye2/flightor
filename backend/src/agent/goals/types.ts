@@ -3,6 +3,8 @@ import { ARTIFACT_TYPES } from '../../artifacts/repository.js'
 import { researchTypeSchema } from '../../research-agent/types.js'
 import { tripContextSchema, type TripContext } from '../../trips/types.js'
 
+export type ResearchType = z.infer<typeof researchTypeSchema>
+
 export const goalKindSchema = z.enum([
   'travel_guide',
   'flight_search',
@@ -25,14 +27,31 @@ export const goalAuthorizationSchema = z.object({
   grantedAt: z.iso.datetime()
 }).strict()
 
-export const travelGuideGoalParametersSchema = z.object({
+const travelGuideGoalParametersBaseSchema = z.object({
   questions: z.array(z.string().trim().min(1).max(500)).min(1).max(8),
-  researchTypes: z.array(researchTypeSchema).min(1).max(5).describe('Required evidence categories in the saved guide. Every selected category must be represented by a sourced finding. Choose only categories needed for the user objective; personal planning tips alone do not require practical research. Missing required categories need evidence, not a replacement or weakened Goal.'),
+  researchTypes: z.array(researchTypeSchema).min(1).max(5).describe('Exploration evidence categories for research. When requiredEvidenceTypes is omitted, these retain the legacy meaning of required categories; otherwise they are the bounded discovery scope and are not automatically new requirements.'),
+  requiredEvidenceTypes: z.array(researchTypeSchema).max(5).optional().describe('Evidence categories required in the saved guide, chosen from the user objective and limited to researchTypes. An explicit empty array means no category is required; omission preserves legacy researchTypes-as-required behavior. Accepted goal requirements cannot be weakened.'),
   maxResults: z.number().int().min(1).max(20).describe('Maximum total selected findings across all days, not a per-day limit.'),
   maxCities: z.number().int().min(1).max(12),
   allowPartial: z.boolean().describe('Allows clearly labelled partially verified sources; does not waive daily coverage or required categories.'),
   allowRestDays: z.boolean().optional().describe('Allow explicitly described rest or travel days without sourced activities only when compatible with the user request; otherwise omit or false.')
 }).strict()
+
+export const travelGuideGoalParametersSchema = travelGuideGoalParametersBaseSchema.superRefine((value, context) => {
+  if (value.requiredEvidenceTypes === undefined) return
+  value.requiredEvidenceTypes.forEach((type, index) => {
+    if (!value.researchTypes.includes(type)) {
+      context.addIssue({ code: 'custom', path: ['requiredEvidenceTypes', index], message: 'Required evidence types must be a subset of researchTypes' })
+    }
+  })
+})
+
+export function requiredGuideEvidenceTypes(input: {
+  researchTypes: ResearchType[]
+  requiredEvidenceTypes?: ResearchType[] | undefined
+}): ResearchType[] {
+  return [...(input.requiredEvidenceTypes === undefined ? input.researchTypes : input.requiredEvidenceTypes)]
+}
 
 export const flightSearchGoalParametersSchema = z.object({
   requestKey: z.string().trim().min(1).max(200),

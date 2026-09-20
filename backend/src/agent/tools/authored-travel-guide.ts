@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { saveAuthoredTravelGuide } from '../../travel-guides/authored.js'
 import { travelGuideArtifactPayloadSchema } from '../../travel-guides/artifact.js'
 import type { TravelGuideConstraints } from '../../travel-guides/validation.js'
-import { travelGuideGoalParametersSchema } from '../goals/types.js'
+import { requiredGuideEvidenceTypes, travelGuideGoalParametersSchema } from '../goals/types.js'
 import type { AgentTool } from '../runtime/registry.js'
 import { workspaceScope } from './workspace-scope.js'
 import { acceptGuideDraft, resolveGuideDraft, saveGuideInputSchema, type SaveGuideInput, type GuideRepairIssue } from './guide-draft.js'
@@ -19,7 +19,14 @@ const repairIssueSchema = z.object({ code: z.string().max(500), classification: 
 const outputSchema = z.object({
   status: z.enum(['saved', 'needs_revision']),
   issues: z.array(z.string().max(500)).max(400),
-  requirements: travelGuideGoalParametersSchema.pick({ maxCities: true, maxResults: true, researchTypes: true, allowPartial: true, allowRestDays: true }).optional(),
+  requirements: z.object({
+    maxCities: travelGuideGoalParametersSchema.shape.maxCities,
+    maxResults: travelGuideGoalParametersSchema.shape.maxResults,
+    researchTypes: travelGuideGoalParametersSchema.shape.researchTypes,
+    requiredEvidenceTypes: travelGuideGoalParametersSchema.shape.requiredEvidenceTypes,
+    allowPartial: travelGuideGoalParametersSchema.shape.allowPartial,
+    allowRestDays: travelGuideGoalParametersSchema.shape.allowRestDays
+  }).strict().optional(),
   revisionGuidance: z.string().max(500).optional(),
   feedbackTruncated: z.boolean().optional(),
   details: z.array(z.object({ code: z.string().max(500), day: z.number().int().min(1).max(60).optional(), sourceFindingId: z.string().max(160).optional(),
@@ -90,7 +97,8 @@ export const saveTravelGuideTool: AgentTool<SaveGuideInput, z.infer<typeof outpu
       constraints = travelGuideGoalParametersSchema.parse(goal.parameters)
     }
     const { maxCities, maxResults, researchTypes, allowPartial, allowRestDays } = constraints
-    const requirements = { maxCities, maxResults, researchTypes, allowPartial, ...(allowRestDays === undefined ? {} : { allowRestDays }) }
+    const requirements = { maxCities, maxResults, researchTypes, requiredEvidenceTypes: requiredGuideEvidenceTypes(constraints),
+      allowPartial, ...(allowRestDays === undefined ? {} : { allowRestDays }) }
     try {
       const scope = await workspaceScope(context, signal)
       const accepted = acceptGuideDraft(input, context, scope)

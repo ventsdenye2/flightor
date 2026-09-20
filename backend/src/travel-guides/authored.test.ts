@@ -51,6 +51,26 @@ async function fixture(mutate?: (source: ResearchArtifact) => void, requirements
   return { input, save, verify, scope, source, artifacts, trip }
 }
 
+describe('exploration scope and required evidence', () => {
+  it('saves and durably verifies without an optional exploratory event', async () => {
+    const test = await fixture(undefined, { ...constraints, researchTypes: ['activity', 'practical', 'event'], requiredEvidenceTypes: ['activity', 'practical'] })
+    expect(await test.save()).toMatchObject({ status: 'saved' })
+    expect(await test.verify()).toMatchObject({ status: 'satisfied' })
+  })
+
+  it.each([undefined, ['activity', 'practical', 'event'] as const])('keeps legacy and explicit event requirements mandatory: %j', async required => {
+    const test = await fixture(undefined, { ...constraints, researchTypes: ['activity', 'practical', 'event'],
+      ...(required ? { requiredEvidenceTypes: [...required] } : {}) })
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['guide_research_type:event']) })
+  })
+
+  it('does not allow an empty itinerary when no category is mandatory', async () => {
+    const test = await fixture(undefined, { ...constraints, requiredEvidenceTypes: [] })
+    test.input.days[0]!.items = []
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['guide_no_selected_findings']) })
+  })
+})
+
 describe('event occurrence evidence', () => {
   const requirements: TravelGuideConstraints = { ...constraints, researchTypes: ['event', 'practical'] }
   const event = (source: ResearchArtifact, from?: string, to = from) => {
@@ -94,6 +114,11 @@ describe('event occurrence evidence', () => {
     const test = await fixture(source => event(source), requirements)
     test.input.days[0]!.items = [{ ...test.input.days[0]!.items[0]!, findingId: 'practical' }]
     test.input.supportingRefs = [{ researchArtifactId: test.source.id, findingId: 'activity' }]
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['guide_event_date_evidence_missing']) })
+  })
+
+  it('still validates dates of an optional event when it is selected', async () => {
+    const test = await fixture(source => event(source), { ...requirements, requiredEvidenceTypes: ['practical'] })
     expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['guide_event_date_evidence_missing']) })
   })
 })

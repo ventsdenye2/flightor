@@ -244,4 +244,18 @@ describe('preparePlanningContext', () => {
     const artifacts = new InMemoryArtifactRepository(OWNER_A, new Set([TRIP_ID]))
     await expect(preparePlanningContext({ trip, artifacts, signal: controller.signal })).rejects.toThrow()
   })
+
+  it.each([false, true])('projects effective required coverage without activating or rewriting a goal (explicit: %s)', async explicit => {
+    const artifacts = new InMemoryArtifactRepository(OWNER_A, new Set([TRIP_ID]))
+    const goals = new InMemoryGoalRepository(OWNER_A)
+    const input = goalInput('11111111-1111-4111-8111-111111111111')
+    const created = await goals.create({ ...input, parameters: { ...input.parameters, researchTypes: ['activity', 'event'],
+      ...(explicit ? { requiredEvidenceTypes: ['activity'] } : {}) } })
+    const result = await preparePlanningContext({ trip, artifacts, goals, ownerId: OWNER_A, now: NOW })
+    const context = JSON.parse(result.content)
+    expect(context.unfinishedGoals[0].evidenceCoverage).toEqual({ researchTypes: ['activity', 'event'],
+      requiredEvidenceTypes: explicit ? ['activity'] : ['activity', 'event'],
+      semantics: explicit ? 'explicit_requirements' : 'legacy_all_required' })
+    expect(await goals.get(created.goal.id)).toEqual(created.goal)
+  })
 })

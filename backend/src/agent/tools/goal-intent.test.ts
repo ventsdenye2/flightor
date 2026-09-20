@@ -104,13 +104,13 @@ describe('Lean Goal intent protocol', () => {
     expect((await seed.runs.listForGoal(accepted.goal.id)).map(run => run.generationId)).toEqual(expect.arrayContaining(['seed-generation', 'generation-2']))
   })
 
-  it('does not weaken accepted constraints or switch intent during one turn', async () => {
+  it.each([false, true])('does not weaken accepted constraints or switch intent during one turn (explicit coverage: %s)', async explicit => {
     const test = await fixture()
     const model = vi.fn()
       .mockResolvedValueOnce({ message: { role: 'assistant' as const, content: null,
-        tool_calls: [call('save-1', 'save_travel_guide', { ...test.input, intent: { ...intent(), parameters: { ...intent().parameters, researchTypes: ['activity', 'practical'] } } })] } })
+        tool_calls: [call('save-1', 'save_travel_guide', { ...test.input, intent: { ...intent(), parameters: { ...intent().parameters, researchTypes: ['activity', 'practical'], ...(explicit ? { requiredEvidenceTypes: ['activity', 'practical'] } : {}) } } })] } })
       .mockResolvedValueOnce({ message: { role: 'assistant' as const, content: null,
-        tool_calls: [call('save-2', 'save_travel_guide', { ...test.input, intent: intent() })] } })
+        tool_calls: [call('save-2', 'save_travel_guide', { ...test.input, intent: explicit ? { ...intent(), parameters: { ...intent().parameters, researchTypes: ['activity', 'practical'], requiredEvidenceTypes: ['activity'] } } : intent() })] } })
       .mockResolvedValueOnce({ message: { role: 'assistant' as const, content: '我会补齐缺失证据。' } })
     const result = await new AgentRuntime({ complete: model }, createPlannerToolRegistry({ leanGoalsEnabled: true }))
       .run({ messages: [{ role: 'user', content: '保存攻略并满足活动与实用信息要求' }], context: test.context })

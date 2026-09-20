@@ -8,7 +8,7 @@ import { tripDatesConsistent, tripTravelWindow } from '../../trips/dates.js'
 import type { TripContext } from '../../trips/types.js'
 import type { SelectedFlightContext } from '../../workspaces/flight-selection.js'
 import type { GoalRepository, GoalRunRepository } from '../goals/repository.js'
-import { emptyGoalWorkingSet, type GoalRecord } from '../goals/types.js'
+import { emptyGoalWorkingSet, requiredGuideEvidenceTypes, travelGuideGoalParametersSchema, type GoalRecord } from '../goals/types.js'
 import { mergeWorkingSet } from '../goals/working-set.js'
 import { guideCandidateRef } from '../../travel-guides/candidates.js'
 
@@ -54,7 +54,12 @@ export async function preparePlanningContext(input: PlanningContextInput) {
         omitted.add('goals_without_current_context')
         continue
       }
+      const guideParameters = goal.kind === 'travel_guide' ? travelGuideGoalParametersSchema.safeParse(goal.parameters) : undefined
       goalSummaries.push({ id: goal.id, kind: goal.kind, status: goal.status, parameters: goal.parameters,
+        ...(guideParameters?.success ? { evidenceCoverage: {
+          researchTypes: guideParameters.data.researchTypes, requiredEvidenceTypes: requiredGuideEvidenceTypes(guideParameters.data),
+          semantics: guideParameters.data.requiredEvidenceTypes === undefined ? 'legacy_all_required' : 'explicit_requirements'
+        } } : {}),
         revision: goal.revision, createdContextVersion: goal.createdContextVersion })
       if (compatibleRun) {
         // Bound each merge before the working-set schema's aggregate limit.

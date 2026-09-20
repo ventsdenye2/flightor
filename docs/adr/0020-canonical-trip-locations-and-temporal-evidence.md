@@ -17,6 +17,12 @@ Planner 每轮会创建新的地点 authority ledger。若当前 Trip 已持久�
 
 地点复用允许省去针对已存 canonical 地点的重复 provider resolve；实际调用减少量尚未通过新 live 批次测量。这一复用保持 Trip 的事实归属；它不改变跨 owner、跨 Trip 或跨 version 的兼容规则。日期证据合同让事件排程有可审计来源，但不证明来源本身真实、完整或永久有效，也不替代 provider/platform 运行验收。G1 当前仍未放行。
 
+## 与后续 Goal 语义的关系
+
+ADR 0021 将攻略 Goal 的探索范围与必需证据类别分开；它不改本 ADR 的
+temporalEvidence 格式或日期硬门槛。可选 event 只有在被实际选入攻略时才
+进入本 ADR 的日期验证，但一旦选入，`allowPartial` 仍不能豁免。
+
 ## 验证状态
 
 地点复用及 temporalEvidence schema、源文校验、保存/持久完成有离线回归覆盖；完整后端 95 文件 / 745 项、PostgreSQL 7 文件 / 37 项通过。原真实 SQL 快照复验拦住错误电影节攻略，正常航班攻略仍通过，详见 [修复报告](../design/budget-travel-agent/G1_REPAIR_2026-09-20.md)。本批未重跑真实 Provider；native 适配器不产该字段的源码边界已审查，未把通用 event 缺证据回归称为 native 端到端验收。

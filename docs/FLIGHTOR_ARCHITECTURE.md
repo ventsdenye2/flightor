@@ -898,6 +898,19 @@ The Research Agent must not:
 - turn research findings into required destinations or required events; or
 - perform structured aviation/fare queries.
 
+The durable travel-guide Goal separates exploration from required evidence with
+optional `requiredEvidenceTypes`. It has no default value: when omitted, the
+legacy contract requires every `researchTypes` category; when present, it must
+be a subset of `researchTypes` and only that subset is required. An explicit
+empty array is valid and means no extra category coverage requirement. The
+research brief remains an independent exploration request and is not rewritten
+from the Goal. The shared domain interpretation is used by save, durable
+completion, PlanningContext and repair feedback; accepted parameters remain
+immutable and are part of the existing fingerprint/idempotency boundary. A
+selected optional event still requires the ADR 0020 temporal evidence/date
+check. Existing Artifact/source-query payloads and old/new Goal JSON need no
+migration, but an older strict reader may reject the new field during rollback.
+
 `resolve_location`, `search_flights`, and `search_flexible_flights` remain
 Planner-owned structured tools. Route generation remains deterministic:
 

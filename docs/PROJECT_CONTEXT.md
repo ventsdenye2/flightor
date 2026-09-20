@@ -2,6 +2,8 @@
 
 更新：2026-09-20。B0/B1 已提交 `cabbf51`，B2 已提交 `d895d0e`、仍默认关闭，B3 已提交 `6649644`，B4 已提交 `1ce177b`；B5 和 G1 数据库验证已提交。G1 两条真实 Provider 保存/恢复契约通过，但内容日期硬错误阻止放行；逐阶段耗时与费用见 [9 月 20 日报告](design/budget-travel-agent/G1_LIVE_2026-09-20.md)。平台与正式 A/B 批次仍未验证。 后续日期证据门槛与地点复用已实现，旧错误攻略在零付费快照复验中被拦截，正常航班攻略仍通过；未重跑修复后 live 链路，见 [修复复验](design/budget-travel-agent/G1_REPAIR_2026-09-20.md)。
 
+G1 后续合同修复已增加可选 `requiredEvidenceTypes`，显式区分探索范围与必需覆盖；省略字段仍沿用旧严格语义。保存、完成与反馈共享解释函数，已接受参数不可降低；见 [ADR 0021](adr/0021-guide-required-evidence.md) 及 [当前验证](design/budget-travel-agent/progress.md)。修复后 live 与平台验收仍待执行。
+
 ## 当前主链
 
 `src/pages/plan/index.tsx` → `src/services/conversationService.ts` → 认证 `POST /v1/agent/turns` + GET 短轮询 → `backend/src/routes/agent-cloud.ts` → `CloudPlannerService` → `AgentRuntime` 的自主工具循环。同步 `POST /v1/agent/converse` 共用同一 Planner；旧 conversation-agent/cloud 代码不代表第二个当前主 Agent。

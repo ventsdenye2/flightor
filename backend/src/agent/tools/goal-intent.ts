@@ -30,7 +30,7 @@ export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, ki
     throw new Error(`Goal intent requires object contracts: ${tool.name}`)
   }
   const inputSchema = tool.inputSchema.safeExtend({
-    intent: plannerGoalIntentSchema.optional().describe('On the first durable operation, accept the user objective once. Keep its constraints fixed for this turn.'),
+    intent: plannerGoalIntentSchema.optional().describe('On the first durable operation, accept the user objective once. For new travel guides, explicitly set requiredEvidenceTypes for user-required coverage separately from researchTypes exploration. Omission preserves the legacy rule that every researchType is required. Keep all accepted constraints fixed for this turn.'),
     goalRef: z.string().uuid().optional().describe('Alternatively resume this existing Goal only if its parameters match the current user request.')
   }).superRefine((value, issue) => {
     if (value.intent !== undefined && value.goalRef !== undefined) issue.addIssue({ code: 'custom', message: 'Use intent or goalRef, not both.' })

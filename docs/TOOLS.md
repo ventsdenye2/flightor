@@ -89,7 +89,12 @@ with `goal_verification_timeout` rather than discarding an already saved result;
 parent cancellation still applies. Lean tools allow an extra 5 seconds within
 the registry's 120-second cap; the whole-turn deadline is unchanged.
 Early card publication is independently provided by B4's workspace commit observer. B3 offers stable
-candidateRef decisions alongside the legacy positional input below.
+candidateRef decisions alongside the legacy positional input below. Guide Goal parameters may also include
+optional `requiredEvidenceTypes`; omission has no default rewrite and preserves the legacy contract that every
+`researchTypes` category is required. When explicitly present, it must be a subset of `researchTypes` and only
+those categories are required; `researchTypes` then describes the bounded exploration scope. An explicit empty
+array means no additional category requirement. The accepted parameter object is immutable, so reducing this
+subset after acceptance is a conflict. See [ADR 0021](adr/0021-guide-required-evidence.md).
 
 ### Runtime diagnostics (B5; no new public tool)
 
@@ -139,6 +144,17 @@ supportingRefs replaces the complete support selection. Unspecified days and
 supports remain. Conflicting version/generation/flight/Goal/Run/revision requires
 a fresh full draft. Successful save clears it; drafts do not survive restarts.
 Every attempt reruns full source and content checks before persistence.
+
+The shared `requiredGuideEvidenceTypes` interpretation is used by goal
+acceptance, save validation, durable completion, read-only PlanningContext and
+repair feedback. It never mutates an accepted Goal or infers requirements from
+the Research Artifact brief. If the field is absent, all legacy
+`researchTypes` remain required; if present, only its explicit subset is
+required while the rest remain exploration categories. A selected optional
+event still goes through the ADR 0020 temporal evidence/date check. Old
+Artifacts and source query briefs are unchanged, and old/new Goal JSON needs no
+migration; however, an older strict reader may reject the new field, so a code
+rollback must account for that compatibility boundary.
 
 Saved results also return optional server-owned `budget` and supportingEvidence.
 Budget copies Trip amount/currency/scope with period=trip_total and
@@ -520,7 +536,9 @@ missing or mismatched evidence rejects date-bound event scheduling, and
 `allowPartial` does not bypass it. Old Artifacts remain readable without being
 re-verified. The current native research adapter does not produce this evidence,
 so it cannot alone support event scheduling against Trip dates. The required
-semantics of Goal `researchTypes` are unchanged; see [ADR 0020](adr/0020-canonical-trip-locations-and-temporal-evidence.md).
+semantics of legacy Goal `researchTypes` remain unchanged; new explicit coverage
+uses `requiredEvidenceTypes` under [ADR 0021](adr/0021-guide-required-evidence.md).
+Date evidence remains governed by [ADR 0020](adr/0020-canonical-trip-locations-and-temporal-evidence.md).
 
 Native research HTTP 429 returns `PROVIDER_RATE_LIMITED` and the safe warning
 `research_provider_rate_limited`. The two research tools share the current

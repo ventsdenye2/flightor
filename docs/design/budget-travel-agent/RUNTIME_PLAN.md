@@ -52,8 +52,10 @@
 **B2 已实现的可选协议**：`PLANNER_LEAN_GOALS_ENABLED=true` 同时选择 lean 工具注册表和对应系统协议，默认 `false` 保留旧路径。不是模型/Provider 切换，也没有新增数据库表。
 
 - 首个需要持久交付的业务工具附加 `intent: {kind, parameters}` 或 `goalRef: "已有Goal的UUID"`，两者互斥。intent 仅支持 `travel_guide`、`flight_search`、`trip_context_update`，参数与旧 declare_goal 共用 schema。goalRef 是选择器，不是授权凭据，须经过 owner/Trip/状态检查。研究不带 intent 可作临时查询；保存攻略必须携带或已有本轮接受的攻略目标。
+- `travel_guide` 参数中的 `requiredEvidenceTypes` 是可选字段且无默认值。省略时兼容旧合同：`researchTypes` 的全部类别都必需；显式提供时必须是 `researchTypes` 子集，仅该子集是必需证据，`researchTypes` 其余部分表示探索范围；显式空数组表示没有额外类别覆盖要求。共享 `requiredGuideEvidenceTypes` helper 同时服务 Goal、save、durable completion、PlanningContext 与 repair feedback，不从 Research Artifact brief 反推，也不改变已接受参数。可选 event 一旦选入攻略仍检查 ADR 0020 的 temporalEvidence 日期门槛。
 - `GoalRunRepository.accept` 在领域边界原子创建/绑定 Goal 和 Run。PostgreSQL 锁 Trip→Goal→Run，并在同一事务内写入；Run 插入失败不得留下新 Goal。requestId 固定目标幂等键，requestId/generationId 固定尝试键。内存实现同步准备与提交；仍保留既有仓库测试接口。
 - 本轮服务器记录目标/Run/contextVersion 和参数指纹。后续业务工具可省略 intent；重复相同意图允许，换目标引用、降低参数或跨目标种类拒绝。另一个 generation 正在运行时不接管，即使 Trip 已改；已终止尝试不得被同 generation 再激活，failed/partial 只允许新 generation 续跑。satisfied/cancelled 不接受新写入。
+- `requiredEvidenceTypes` 与其他 Goal 参数一起进入 fingerprint、幂等和同轮不可变约束；接受后减少必需类别必须开启新的用户轮次。旧 Goal/Run 不迁移，旧/新 JSON 共用存储；旧 strict reader 可能无法读取新增字段，回滚旧代码前必须处理这一兼容边界。
 - 条件修改必须在接受研究/航班/攻略目标前持久化。接受后版本变化返回冲突，需要新的用户轮次；本轮不支持同轮目标修订。持久 `trip_context_update` 需一次提交所要求字段。取消或 generation 失效期间迟到的接受会关闭其自身尝试，业务执行与保存仍沿用原 workspace 检查。
 - `save_travel_guide`、航班搜索/确认及持久 Trip 更新操作返回既有结果并附 `acceptedGoal`；在关闭尝试前复用工作集同步记录产物，再通过同一个 `completeGoal` 附上 `completion`，不依赖模型调用 finish。未满足要求时保持可修复的 running 尝试；保存已提交而完成存储暂不可用时保留 Artifact 引用并标记 pending。lean 工具总 timeout 在原值上增加 5 秒（上限 120 秒），自动工作集同步/验收最多 2.5 秒且预留距工具外层 deadline 至少 0.5 秒；子期限到返回 `goal_verification_timeout`，其它验收故障为 `goal_verification_unavailable`，父取消仍终止。整轮 timeout 不变；已开始的数据库事务仍依赖既有事务版本/终态保护。运行时最终答复共用同一 verifier/completion，不能依据工具名或模型文本认定成功。
 - lean 注册表隐藏 `declare_goal/resume_goal/finish_goal`，保留只读 `get_active_goal` 与取消；旧注册表和持久数据读取不变。`start_route_generation` 仍是单独明确授权领域操作，不能借 intent 启动或在本轮已接受其它目标后接管。
