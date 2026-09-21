@@ -2993,3 +2993,6 @@ Route Artifact workspaces, cloud Trips/Memory, reviewed Discovery, public Explor
 ## 2026-09-21：攻略引用资料适用性
 
 新攻略每条日程及 supportingEvidence 由服务端写入 `sourceApplicability`，仅支持 `reference_only` 和固定说明。来源核验/检索时间不证明价格、开放时间、交通时长的当前或出行日适用性。新 v3 builder 的保存及完成共用检查，Planner 不能自行提升；旧记录仍可读，客户端保守展示。语义、兼容/回滚和未实现的正文时效复核见 [ADR 0022](adr/0022-guide-source-applicability.md)。这不是 G1 内容或平台已验收。
+
+
+2026-09-21：SerpApi 主研究路径增加有界正文读取及 `claimEvidence` 原文绑定，读到正文不升级为当前/未来事实已核实。攻略共享 validator 拒绝声明出处错误和同对象冲突；保持 reference_only。接入、限制与兼容见 [ADR 0023](adr/0023-source-pages-and-quoted-claims.md)。

@@ -36,10 +36,13 @@ const cases = [
   { id: 'selected-flight', withFlight: true, budget: 4000,
     prompt: '请根据我已采用的北京至东京直飞航班及全部航段时刻，安排2026年10月20日至21日东京两日攻略并保存。全程预算约束4000元人民币，喜欢文化与小吃、节奏轻松；抵达前不要安排活动，每天一个有来源的主景点，并补充实用信息。不要重新查票或更换航班，不需要演出展览；未知费用、开放时间和交通耗时保持未知。' }
 ]
+const requestedCase = process.env.G1_CASE
+if (requestedCase && !cases.some(item => item.id === requestedCase)) throw Error('G1_CASE_INVALID')
+const selectedCases = requestedCase ? cases.filter(item => item.id === requestedCase) : cases
 if (!process.argv.includes('--execute')) {
   const prior = resolvedResumeDirectory ? JSON.parse(fs.readFileSync(path.join(resolvedResumeDirectory, 'ledger.json'), 'utf8')) : undefined
   const used = prior?.calls.reduce((sum, call) => sum + Math.ceil((call.costUsd ?? call.reservedUsd) * 1_000_000), 0) / 1_000_000
-  console.log(JSON.stringify({ mode: 'dry-run', model, limitUsd: 2, cases, stages: ['setup', 'fare_search_and_adoption', 'accepted', 'model/tool/http spans', 'first_saved_artifact_read', 'durable_verified', 'final_response', 'workspace_restore'],
+  console.log(JSON.stringify({ mode: 'dry-run', model, limitUsd: 2, cases: selectedCases, stages: ['setup', 'fare_search_and_adoption', 'accepted', 'model/tool/http spans', 'first_saved_artifact_read', 'durable_verified', 'final_response', 'workspace_restore'],
     ...(prior ? { resume: { ledgerDirectory: resolvedResumeDirectory, accountingOnly: true, totalHeldOrSpentUsd: used,
       remainingUsd: prior.limitUsd - used, remainingModelCalls: callLimits.model - prior.calls.filter(c => c.kind === 'model').length,
       remainingSearchCalls: callLimits.serp - prior.calls.filter(c => c.kind === 'serp').length, callLimits } } : {}),
@@ -127,7 +130,7 @@ try {
   const city = (await locations.resolveLocation({ query: 'Tokyo', types: ['city'], limit: 5 })).matches.find(value => value.cityCode === 'TYO')
   const origin = (await locations.resolveLocation({ query: 'PEK', types: ['airport'], limit: 5 })).matches.find(value => value.iata === 'PEK')
   if (!city || !origin) throw Error('G1_REFERENCE_SEED_MISSING')
-  for (const specification of cases) {
+  for (const specification of selectedCases) {
     const entry = { caseId: specification.id, prompt: specification.prompt, status: 'running', stages: {}, firstArtifacts: {}, artifacts: [], pollStages: [] }
     manifest.cases.push(entry); write()
     const caseStart = performance.now()
@@ -221,6 +224,6 @@ try {
   globalThis.fetch = rawFetch
   manifest.finishedAt = new Date().toISOString(); write()
   meter.close()
-  if (manifest.cases.length !== 2 || manifest.cases.some(entry => entry.status !== 'passed')) process.exitCode = 1
+  if (manifest.cases.length !== selectedCases.length || manifest.cases.some(entry => entry.status !== 'passed')) process.exitCode = 1
   console.log(JSON.stringify({ evidenceDirectory: directory, cases: manifest.cases.map(entry => ({ id: entry.caseId, status: entry.status })), budget: meter.snapshot() }))
 }

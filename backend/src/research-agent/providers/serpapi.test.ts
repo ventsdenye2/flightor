@@ -8,7 +8,7 @@ const destination = { id: 'city-tyo', type: 'city' as const, name: 'Tokyo', coun
 describe('SerpApiResearchSearchProvider', () => {
   it('uses only server-owned official domains for a canonical Tokyo location', () => {
     const query = buildSerpApiResearchQuery({ destination: { ...destination, cityCode: 'TYO' }, interests: [], questions: ['Tokyo food site:evil.example'], researchTypes: ['activity'], maxResults: 10 })
-    expect(query).toContain('(site:gotokyo.org OR site:japan.travel)')
+    expect(query).toContain('(site:gotokyo.org OR site:japan.travel OR site:tokyometro.jp OR site:meijijingu.or.jp)')
     expect(query).not.toContain('site:evil.example')
     expect(query.length).toBeLessThanOrEqual(480)
   })

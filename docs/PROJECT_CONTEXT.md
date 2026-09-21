@@ -52,3 +52,6 @@ G1 后续合同修复已增加可选 `requiredEvidenceTypes`，显式区分探�
 每次先检查 Git/当前任务和 progress，再读相关架构/工具/ADR。每次修改同批更新 docs，执行 [文档维护规则](DOCS_MAINTENANCE.md)。本地命令见 [部署与运行](deploy.md)，运行时配置不要抄旧交接中的密钥、额度或假定端口。
 
 2026-09-21：新攻略日程/补充引用携带 reference_only 适用性说明，来源 verification 与价格/营业时间的当前适用性分离；旧记录保守展示。详见 [ADR 0022](adr/0022-guide-source-applicability.md)。代码修复不追认 G1 内容通过，实测边界见 progress。
+
+
+2026-09-21：SerpApi 主研究路径增加有界正文读取及 `claimEvidence` 原文绑定，读到正文不升级为当前/未来事实已核实。攻略共享 validator 拒绝声明出处错误和同对象冲突；保持 reference_only。接入、限制与兼容见 [ADR 0023](adr/0023-source-pages-and-quoted-claims.md)。

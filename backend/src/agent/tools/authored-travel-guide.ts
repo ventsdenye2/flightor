@@ -44,7 +44,7 @@ const outputSchema = z.object({
 
 function classify(code: string): GuideRepairIssue['classification'] {
   if (/CONTEXT_VERSION|SELECTION|guide_draft_conflict/.test(code)) return 'context_conflict'
-  if (/^guide_research_type:|guide_event_date_evidence_missing|eligible_research_evidence|verified_evidence|research_travel_window|supporting_evidence_(stale|unverified)/.test(code)) return 'evidence_missing'
+  if (/^guide_research_type:|guide_event_date_evidence_missing|guide_claim_evidence_mismatch|guide_claim_evidence_conflict|eligible_research_evidence|verified_evidence|research_travel_window|supporting_evidence_(stale|unverified)/.test(code)) return 'evidence_missing'
   return 'draft_invalid'
 }
 

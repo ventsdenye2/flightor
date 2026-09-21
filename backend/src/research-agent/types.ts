@@ -1,3 +1,4 @@
+import { claimEvidenceSchema, sourcePageSchema } from './claim-evidence.js'
 import { z } from 'zod'
 import { locationRefSchema, verificationRecordSchema } from '../aviation/types.js'
 import { temporalEvidenceSchema } from './temporal-evidence.js'
@@ -49,7 +50,8 @@ export const researchSourceSchema = z.object({
   domain: z.string().min(1).max(253),
   snippet: z.string().min(1).max(800),
   authority: researchSourceAuthoritySchema,
-  publishedAt: z.iso.datetime().optional()
+  publishedAt: z.iso.datetime().optional(),
+  page: sourcePageSchema.optional()
 }).strict()
 
 export const researchFindingSchema = z.object({
@@ -59,6 +61,7 @@ export const researchFindingSchema = z.object({
   title: z.string().min(1).max(240),
   summary: z.string().min(1).max(1_500),
   temporalEvidence: temporalEvidenceSchema.optional(),
+  claimEvidence: z.array(claimEvidenceSchema).max(8).optional(),
   sources: z.array(researchSourceSchema).min(1).max(20),
   verification: verificationRecordSchema,
   warnings: z.array(z.string().min(1).max(240)).max(20)

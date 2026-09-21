@@ -6,7 +6,7 @@ export const CURATED_RESEARCH_QUERY_POLICY = new CuratedResearchQueryPolicy([
   {
     countryCode: 'JP',
     cityCode: 'TYO',
-    domains: ['gotokyo.org', 'japan.travel'],
+    domains: ['gotokyo.org', 'japan.travel', 'tokyometro.jp', 'meijijingu.or.jp'],
     warning: 'research_uses_curated_public_tourism_sources'
   }
 ], CURATED_LOCATION_IDENTITY_POLICY)

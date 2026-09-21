@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { artifactReadingContent } from '../artifacts/presentation.js'
 import { sourceApplicability } from './source-applicability.js'
 import { describe, expect, it } from 'vitest'
@@ -265,5 +266,40 @@ describe('source reference applicability', () => {
     const guide = structuredClone(result.payload)
     Object.assign(guide.supportingEvidence![0]!.sourceApplicability!, { status: 'verified' })
     expect(travelGuideArtifactPayloadSchema.safeParse(guide).success).toBe(false)
+  })
+})
+
+
+describe('source-observed claims', () => {
+  const attach = (source: ResearchArtifact, conflict = false) => {
+    const finding = source.findings[1]!
+    const text = 'Adult one-day pass: 900 yen. Adult one-day pass: 1100 yen.'
+    const page = { text, retrievedAt: '2026-09-21T00:00:00.000Z', contentHash: createHash('sha256').update(text).digest('hex') }
+    finding.sources[0]!.page = page
+    const base = { kind: 'price' as const, subject: 'Adult one-day pass', sourceUrl: finding.sources[0]!.url,
+      status: 'source_observed' as const, retrievedAt: page.retrievedAt, contentHash: page.contentHash }
+    finding.claimEvidence = [{ ...base, value: '900 yen', quote: 'Adult one-day pass: 900 yen.' },
+      ...(conflict ? [{ ...base, value: '1100 yen', quote: 'Adult one-day pass: 1100 yen.' }] : [])]
+  }
+  it('persists source-bound claims without upgrading applicability and revalidates on completion', async () => {
+    const test = await fixture(source => attach(source))
+    const result = await test.save()
+    if (result.status !== 'saved') throw new Error('Expected saved guide')
+    expect(result.payload.supportingEvidence![0]!.claimEvidence).toEqual(test.source.findings[1]!.claimEvidence)
+    expect(result.payload.supportingEvidence![0]!.sourceApplicability).toEqual(sourceApplicability())
+    expect(await test.verify()).toMatchObject({ status: 'satisfied' })
+    const guide = structuredClone(result.payload)
+    guide.supportingEvidence![0]!.claimEvidence![0]!.value = '100 yen'
+    const route = tripRoutePlanPayloadSchema.parse((await test.artifacts.get(guide.routeArtifactId))!.payload)
+    expect(validateGuideContent({ guide, route, research: new Map([[test.source.id, researchArtifactSchema.parse(test.source)]]), trip: test.trip, constraints }).missing)
+      .toContain('guide_claim_evidence_mismatch')
+  })
+  it('blocks unresolved conflicting values even when partial evidence is allowed', async () => {
+    const test = await fixture(source => attach(source, true))
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['guide_claim_evidence_conflict']) })
+  })
+  it('blocks claims rejected by source binding instead of trusting their prose', async () => {
+    const test = await fixture(source => { attach(source); source.findings[1]!.warnings.push('claim_evidence_rejected') })
+    expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: expect.arrayContaining(['guide_claim_evidence_mismatch']) })
   })
 })

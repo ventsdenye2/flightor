@@ -124,7 +124,7 @@ export async function saveAuthoredTravelGuide(
         id: `guide_${createHash('sha256').update(`${sourceId}:${finding.id}:${day.day}`).digest('hex').slice(0, 24)}`,
         title: finding.title, description: finding.summary, city, category: finding.category,
         reason: choice.requestedActivityIds?.length ? 'user_requested' as const : 'interest_match' as const,
-        sourceArtifactId: sourceId, sourceFindingId: finding.id, verification: finding.verification, sourceApplicability: sourceApplicability(),
+        sourceArtifactId: sourceId, sourceFindingId: finding.id, verification: finding.verification, ...(finding.claimEvidence ? { claimEvidence: finding.claimEvidence } : {}), sourceApplicability: sourceApplicability(),
         timeOfDay: choice.timeOfDay, planningNote: choice.planningNote
       }]
     })
@@ -134,7 +134,7 @@ export async function saveAuthoredTravelGuide(
     const finding = research.get(reference.researchArtifactId)!.findings.find(value => value.id === reference.findingId)!
     return [{ sourceArtifactId: reference.researchArtifactId, sourceFindingId: finding.id,
       title: finding.title, description: finding.summary, category: finding.category,
-      destinations: finding.destinations, verification: finding.verification, sourceApplicability: sourceApplicability() }]
+      destinations: finding.destinations, verification: finding.verification, ...(finding.claimEvidence ? { claimEvidence: finding.claimEvidence } : {}), sourceApplicability: sourceApplicability() }]
   })
   const verification = aggregateGuideVerification([...days.flatMap(day => day.items), ...supportingEvidence], now)
   const selectedFlight = scope.selectedFlight

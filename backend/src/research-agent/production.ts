@@ -1,3 +1,5 @@
+import { admitClaimEvidence, hasClaimConflict, sourcePageSchema } from './claim-evidence.js'
+import type { ResearchSourceReader } from './source-reader.js'
 import { createHash } from 'node:crypto'
 import { AppError } from '../lib/errors.js'
 import { admitDraftTemporalEvidence } from './temporal-evidence.js'
@@ -46,6 +48,7 @@ export interface ProductionResearchAgentOptions {
   now?: () => Date
   maxSearchCalls?: number
   maxSources?: number
+  sourceReader?: ResearchSourceReader
 }
 
 interface NormalizedSource extends ResearchSourceCandidate {
@@ -155,7 +158,7 @@ function queryInputs(brief: ResearchBrief, destinationIndex: number, preferences
 function draftIsValid(draft: unknown, brief: ResearchBrief, sourceCount: number): draft is ResearchDraftFinding {
   if (typeof draft !== 'object' || draft === null) return false
   const candidate = draft as Record<string, unknown>
-  if (Object.keys(candidate).filter(key => key !== 'temporalEvidence').sort().join(',') !== 'category,destinationIndex,sourceIndexes,summary,title') return false
+  if (Object.keys(candidate).filter(key => key !== 'temporalEvidence' && key !== 'claimEvidence').sort().join(',') !== 'category,destinationIndex,sourceIndexes,summary,title') return false
   if (!brief.researchTypes.includes(candidate.category as ResearchBrief['researchTypes'][number])) return false
   if (!Number.isInteger(candidate.destinationIndex) || Number(candidate.destinationIndex) < 0 || Number(candidate.destinationIndex) >= brief.destinations.length) return false
   if (typeof candidate.title !== 'string' || candidate.title.trim().length === 0 || candidate.title.length > 240) return false
@@ -235,6 +238,8 @@ function buildSynthesizedFindings(
     if (seen.has(id)) continue
     seen.add(id)
     const verification = verifyResearchFinding(category, selected, { checkedAt })
+    const claimEvidence = admitClaimEvidence(draft.claimEvidence, sources, draft.sourceIndexes)
+    const rejectedClaims = (draft.claimEvidence?.length ?? 0) > claimEvidence.length
     const temporalEvidence = admitDraftTemporalEvidence(draft.temporalEvidence, sources, draft.sourceIndexes)
     const finding = {
       id,
@@ -243,9 +248,12 @@ function buildSynthesizedFindings(
       title,
       summary,
       ...(temporalEvidence ? { temporalEvidence } : {}),
+      ...(claimEvidence.length ? { claimEvidence } : {}),
       sources: selected.map(sourceForFinding),
       verification,
-      warnings: warningForVerification(category, verification.status)
+      warnings: [...warningForVerification(category, verification.status),
+        ...(rejectedClaims ? ['claim_evidence_rejected'] : []),
+        ...(hasClaimConflict(claimEvidence) ? ['claim_evidence_conflict'] : [])]
     }
     const parsed = researchFindingSchema.safeParse(finding)
     if (parsed.success) findings.push(parsed.data)
@@ -260,6 +268,7 @@ export class ProductionResearchAgent implements ResearchAgent {
   private readonly clock: (() => Date) | undefined
   private readonly searchCallLimit: number
   private readonly sourceLimit: number
+  private readonly sourceReader: ResearchSourceReader | undefined
 
   constructor(options: ProductionResearchAgentOptions)
   constructor(searchProvider: ResearchSearchProvider, synthesisModel?: ResearchSynthesisModel, options?: Omit<ProductionResearchAgentOptions, 'searchProvider' | 'synthesisModel'>)
@@ -275,6 +284,7 @@ export class ProductionResearchAgent implements ResearchAgent {
     this.searchProvider = options.searchProvider
     this.synthesisModel = isSynthesis(options.synthesisModel) ? options.synthesisModel : undefined
     this.queryPlanner = options.queryPlanner
+    this.sourceReader = options.sourceReader
     this.clock = options.now
     this.searchCallLimit = Math.min(MAX_SEARCH_CALLS, Math.max(1, Math.floor(options.maxSearchCalls ?? MAX_SEARCH_CALLS)))
     this.sourceLimit = Math.min(MAX_SOURCES, Math.max(1, Math.floor(options.maxSources ?? MAX_SOURCES)))
@@ -358,6 +368,29 @@ export class ProductionResearchAgent implements ResearchAgent {
         if (context.signal?.aborted) throw context.signal.reason ?? error
         warnings.push(boundedWarning(`research_provider_failed:${this.searchProvider.name}:destination_${destinationIndex}`))
       }
+    }
+
+    // Only server reads may supply page snapshots; normalizeSource discards provider-supplied pages.
+    // Four sources, two workers: bounded latency/input, no new search/model call.
+    if (this.sourceReader && this.synthesisModel) {
+      const rank = (source: NormalizedSource) => ['official_venue', 'official_organizer', 'official_event'].includes(source.authority) ? 0
+        : source.authority === 'government_tourism' ? 1 : 2
+      const reading = [...sources].sort((a, b) => rank(a) - rank(b)).slice(0, 4)
+      let next = 0
+      await Promise.all(Array.from({ length: Math.min(2, reading.length) }, async () => {
+        while (next < reading.length) {
+          abortIfNeeded(context.signal)
+          const source = reading[next++]!
+          try {
+            source.page = sourcePageSchema.parse(await this.sourceReader!.read(source.url, context.signal ? { signal: context.signal } : {}))
+          } catch (error) {
+            if (context.signal?.aborted) throw context.signal.reason ?? error
+            warnings.push('research_source_read_failed')
+          }
+        }
+      }))
+      abortIfNeeded(context.signal)
+      if (sources.length > reading.length) warnings.push('research_source_read_limit')
     }
 
     let findings: ResearchArtifact['findings'] = []

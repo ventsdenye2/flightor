@@ -74,3 +74,5 @@ G1 续跑：设置 `G1_RESUME_LEDGER_DIRECTORY` 指向本仓库 `backend/.demo/g
 UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI 清理交接和航班优先验收，明确哪些仅为当时样稿状态。
 
 最终检查结果集中在 [progress](design/budget-travel-agent/progress.md)。
+
+2026-09-21：runner 支持 `G1_CASE=self-ticket` 或 `selected-flight` 选择原有固定案例；不传仍运行两例，其他值拒绝。单例续验也必须沿用原账本/次数限制，不能当作完整两例验收。新增 source reader 公共网页 HTTP 有独立 span，与收费模型/搜索计数分开。

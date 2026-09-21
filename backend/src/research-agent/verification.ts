@@ -1,3 +1,4 @@
+import { sourcePageSchema } from './claim-evidence.js'
 import { createHash } from 'node:crypto'
 import type { VerificationRecord } from '../aviation/types.js'
 import { researchSourceAuthoritySchema } from './types.js'
@@ -69,10 +70,19 @@ function looksPublicTourismHostname(hostname: string): boolean {
     || hostname.endsWith('.visit')
 }
 
+// Reviewed first-party identities, not semantic freshness guarantees. Exact hosts only.
+// Evidence: https://www.tokyometro.jp/en/ticket/1day/index.html
+// and https://www.meijijingu.or.jp/en/visit/ (reviewed 2026-09-21).
+const FIRST_PARTY_HOSTS: Readonly<Record<string, ResearchSourceAuthority>> = {
+  'tokyometro.jp': 'official_organizer',
+  'meijijingu.or.jp': 'official_venue'
+}
+
 /** Classify only host-level authority; title/snippet wording is never used. */
 export function classifyResearchSourceAuthority(url: string): ResearchSourceAuthority {
   const hostname = normalizedHostname(url)
   if (!hostname) return 'unknown'
+  if (FIRST_PARTY_HOSTS[hostname]) return FIRST_PARTY_HOSTS[hostname]!
   if (looksGovernmentHostname(hostname) || looksPublicTourismHostname(hostname)) return 'government_tourism'
   if (KNOWN_MEDIA_HOSTS.has(hostname) || [...KNOWN_MEDIA_HOSTS].some(value => hostname.endsWith(`.${value}`))) return 'reliable_media'
   return 'unknown'
@@ -143,7 +153,8 @@ export function verifyResearchFinding(
   const authoritative = normalizedSources.some(source => {
     const computed = classifyResearchSourceAuthority(source.url)
     const declared = researchSourceAuthoritySchema.safeParse(source.authority).success ? source.authority : 'unknown'
-    return computed === 'government_tourism' && declared === 'government_tourism'
+    return (computed === 'government_tourism' && declared === 'government_tourism')
+      || (computed === declared && ['official_organizer', 'official_venue'].includes(computed) && sourcePageSchema.safeParse(source.page).success)
   })
   const independentRoots = new Set(normalizedSources.map(source => registrableResearchHostname(source.url)))
   let status: VerificationRecord['status'] = 'unverified'
@@ -169,7 +180,7 @@ export function verifyResearchFinding(
   }
 
   const expiresAt = addDays(checkedAt, RESEARCH_VERIFICATION_TTL_DAYS[category])
-  // This provider path is snippet-only, so no branch above yields `verified`.
+  // Neither host identity nor a fetched page proves semantic validity: no branch yields `verified`.
   // A future fetched/structured source type must add a distinct evidence mode
   // rather than weakening these branches in place.
   return {

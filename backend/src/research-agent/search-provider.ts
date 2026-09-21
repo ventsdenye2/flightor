@@ -1,3 +1,4 @@
+import { sourcePageSchema, type draftClaimEvidenceSchema } from './claim-evidence.js'
 import { z } from 'zod'
 import { locationRefSchema } from '../aviation/types.js'
 import { researchBriefSchema, researchSourceAuthoritySchema } from './types.js'
@@ -23,7 +24,8 @@ export const researchSourceCandidateSchema = z.object({
   url: z.url().max(500),
   domain: z.string().min(1).max(253),
   authority: researchSourceAuthoritySchema,
-  publishedAt: z.iso.datetime().optional()
+  publishedAt: z.iso.datetime().optional(),
+  page: sourcePageSchema.optional()
 }).strict()
 
 export type ResearchSourceCandidate = z.infer<typeof researchSourceCandidateSchema>
@@ -47,6 +49,7 @@ export interface ResearchDraftFinding {
   title: string
   summary: string
   sourceIndexes: number[]
+  claimEvidence?: z.infer<typeof draftClaimEvidenceSchema>[] | null
   temporalEvidence?: (Omit<TemporalEvidence, 'sourceUrl'> & { sourceIndex: number }) | null
 }
 

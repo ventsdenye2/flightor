@@ -1,3 +1,4 @@
+import { hasClaimConflict, supportedClaimEvidence } from '../research-agent/claim-evidence.js'
 import { sourceApplicabilitySchema } from './source-applicability.js'
 import type { LocationRef } from '../aviation/types.js'
 import { requiredGuideEvidenceTypes } from '../agent/goals/types.js'
@@ -150,6 +151,17 @@ export function validateGuideContent(input: {
       if ((item.sourceApplicability !== undefined || ['agent-authored-guide-v3', 'travel-guide-v3'].includes(guide.builderVersion))
         && !sourceApplicabilitySchema.safeParse(item.sourceApplicability).success) {
         reject('guide_source_applicability_missing', detail)
+        return false
+      }
+      if (finding.warnings.includes('claim_evidence_rejected')
+        || JSON.stringify(item.claimEvidence ?? []) !== JSON.stringify(finding.claimEvidence ?? [])
+        || (finding.claimEvidence ?? []).some(claim => !supportedClaimEvidence(claim, finding.sources)
+          || !finding.verification.sources.some(source => source.reference === claim.sourceUrl))) {
+        reject('guide_claim_evidence_mismatch', detail)
+        return false
+      }
+      if (hasClaimConflict(finding.claimEvidence ?? [])) {
+        reject('guide_claim_evidence_conflict', detail)
         return false
       }
       const reference = `${item.sourceArtifactId}:${item.sourceFindingId}`

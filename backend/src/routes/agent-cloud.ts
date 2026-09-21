@@ -1,3 +1,4 @@
+import { PublicResearchSourceReader } from '../research-agent/source-reader.js'
 import type { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
@@ -167,6 +168,7 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
         : context.env.SERPAPI_KEY
           ? new ProductionResearchAgent({
             searchProvider: context.providers.researchSearch,
+            sourceReader: new PublicResearchSourceReader(),
             synthesisModel: new OpenRouterResearchSynthesisModel(context.providers.openrouter, context.env.RESEARCH_MODEL)
           })
           : new UnavailableResearchAgent(),

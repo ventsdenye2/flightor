@@ -40,6 +40,7 @@ interface NormalizedFinding {
   summary: string
   verification: VerificationRecord
   artifactId: string
+  claimEvidence?: ResearchArtifact['findings'][number]['claimEvidence']
 }
 
 function normalizedFindings(artifact: ReadableResearchArtifact): NormalizedFinding[] {
@@ -51,6 +52,7 @@ function normalizedFindings(artifact: ReadableResearchArtifact): NormalizedFindi
       title: finding.title,
       summary: finding.summary,
       verification: finding.verification,
+      ...(finding.claimEvidence ? { claimEvidence: finding.claimEvidence } : {}),
       artifactId: artifact.id
     }))
   }
@@ -133,6 +135,7 @@ export class DeterministicTravelGuideBuilder implements TravelGuideBuilder {
           reason: reasonFor(finding.category),
           sourceArtifactId: finding.artifactId,
           sourceFindingId: finding.id,
+          ...(finding.claimEvidence ? { claimEvidence: finding.claimEvidence } : {}),
           sourceApplicability: sourceApplicability(),
           verification: finding.verification
         }))

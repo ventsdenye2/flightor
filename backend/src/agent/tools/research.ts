@@ -1,3 +1,4 @@
+import { claimEvidenceSchema } from '../../research-agent/claim-evidence.js'
 import { z } from 'zod'
 import { researchBriefSchema, researchTypeSchema, type ResearchBrief } from '../../research-agent/types.js'
 import { locationSelectorSchema } from '../../locations/selector.js'
@@ -36,6 +37,8 @@ export const researchToolOutputSchema = z.object({
     summary: z.string().max(1500),
     category: researchTypeSchema,
     temporalEvidence: temporalEvidenceSchema.optional(),
+    claimEvidence: z.array(claimEvidenceSchema).max(8).optional(),
+    evidenceWarnings: z.array(z.string().max(240)).max(20).optional(),
     destinations: z.array(z.object({ id: z.string().max(160), name: z.string().max(240) }).strict()).max(12),
     verificationStatus: z.enum(['verified', 'partially_verified', 'stale', 'unverified'])
   }).strict()).max(50),
@@ -77,6 +80,8 @@ export async function executeResearchBrief(
       candidateRef: guideCandidateRef(scope, artifact, finding.id),
       id: finding.id, title: finding.title, summary: finding.summary, category: finding.category,
       ...(finding.temporalEvidence ? { temporalEvidence: finding.temporalEvidence } : {}),
+      ...(finding.claimEvidence ? { claimEvidence: finding.claimEvidence } : {}),
+      evidenceWarnings: finding.warnings,
       destinations: finding.destinations.map(destination => ({ id: destination.id, name: destination.name })),
       verificationStatus: finding.verification.expiresAt && Date.parse(finding.verification.expiresAt) <= Date.now() ? 'stale' : finding.verification.status
     })),
@@ -103,7 +108,7 @@ export const researchDestinationTool: AgentTool<
   z.infer<typeof researchToolOutputSchema>
 > = {
   name: 'research_destination',
-  description: 'Research sourced activities for one trusted destination and return the findings directly for itinerary planning. Write concise, focused search questions; request a useful set for the whole visit rather than searching each day. Choose queries freely based on missing evidence. Pass destination as a trusted resolved id STRING; the active Trip supplies dates and interests. Preserve partial/unverified labels; use eligible finding ids in save_travel_guide.',
+  description: 'Research sourced activities for one trusted destination and return the findings directly for itinerary planning. For any price, opening-hours or transport-duration facts needed by the user, include a focused question for the operator or venue official page and distinguish it from tourism summaries. Write concise, focused search questions; request a useful set for the whole visit rather than searching each day. Choose queries freely based on missing evidence. Pass destination as a trusted resolved id STRING; the active Trip supplies dates and interests. Preserve partial/unverified labels; use eligible finding ids in save_travel_guide.',
   inputSchema: researchDestinationInputSchema,
   outputSchema: researchToolOutputSchema,
   costClass: 'paid',
