@@ -2,6 +2,7 @@ import type { AgentModelClient, ChatMessage, ChatOptions, FunctionToolCall } fro
 import type { ToolExecutionContext, ToolExecutionOutcome } from './registry.js'
 import { ToolRegistry } from './registry.js'
 import { AppError } from '../../lib/errors.js'
+import { guidePublicationReply, publicationFor, GUIDE_LEGACY_REPLY } from '../../travel-guides/publication.js'
 import { syncActiveGoalWorkingSet } from '../goals/working-set-observer.js'
 import { completeGoal, noGoalDelivery, summarizeGoalDelivery, type GoalDelivery, type GoalDeliveryItem } from '../goals/completion.js'
 import { emitActivity, type AgentActivityObserver } from './activity.js'
@@ -157,6 +158,7 @@ export class AgentRuntime {
     let costUnits = 0
     let toolSteps = 0
     let executedToolCalls = 0
+    const committedGuideIds = new Set<string>()
     const executionContext: ToolExecutionContext = {
       ...input.context,
       resolvedLocationKeys: new Set<string>(),
@@ -166,6 +168,7 @@ export class AgentRuntime {
         if (controller.signal.aborted || stale(input) || record.tripId !== input.context.tripId
           || record.conversationId !== input.context.conversationId || record.tripContextVersion === undefined
           || (record.type !== 'flight_search' && record.type !== 'travel_guide')) return
+        if (record.type === 'travel_guide') committedGuideIds.add(record.id)
         emitActivity(input.onActivity, { type: 'artifact_committed', tripId: record.tripId,
           conversationId: input.context.conversationId, generationId: input.context.generationId,
           artifact: { id: record.id, type: record.type, schemaVersion: record.schemaVersion,
@@ -185,6 +188,25 @@ export class AgentRuntime {
       }
     }
     observeGoal()
+
+    const publishedGuideReply = async (delivery: GoalDelivery, requireCommitted = false): Promise<string | undefined> => {
+      if (!delivery.goals.some(goal => goal.kind === 'travel_guide')) return undefined
+      for (const id of delivery.artifactIds) {
+        if (requireCommitted && !committedGuideIds.has(id)) continue
+        let record
+        try { record = await settleWithSignal(() => executionContext.artifacts.get(id), controller.signal) }
+        catch { return GUIDE_LEGACY_REPLY }
+        if (!record || record.type !== 'travel_guide' || record.tripId !== executionContext.tripId
+          || (record.conversationId !== undefined && record.conversationId !== executionContext.conversationId)
+          || (record.goalId !== undefined && !delivery.goals.some(goal => goal.goalId === record.goalId && goal.artifactIds.includes(record.id)))
+          || record.tripContextVersion !== executionContext.activeGoalContextVersion) continue
+        const publication = publicationFor(record)
+        if (publication && publication.flightSelectionRevision === executionContext.selectedFlight?.selection.revision) {
+          return guidePublicationReply(record)
+        }
+      }
+      return GUIDE_LEGACY_REPLY
+    }
 
     const readDelivery = async (persist: boolean): Promise<GoalDelivery> => {
       if (touchedGoals.size === 0) return noGoalDelivery()
@@ -298,9 +320,12 @@ export class AgentRuntime {
           if (stale(input)) return await fallback('stale_generation', delivery)
           const stopReason: AgentRunResult['stopReason'] = delivery.status === 'not_requested' ? 'responded'
             : delivery.status === 'satisfied' ? 'completed' : `goal_${delivery.status}`
+          const published = delivery.status === 'satisfied' ? await publishedGuideReply(delivery) : undefined
+          if (controller.signal.aborted) return await fallback(turnTimedOut ? 'turn_timeout' : 'cancelled', delivery)
+          if (stale(input)) return await fallback('stale_generation', delivery)
           return result = {
             reply: researchRateLimited(traces) && (delivery.status === 'pending' || delivery.status === 'partial' || delivery.status === 'failed')
-              ? RESEARCH_RATE_LIMIT_REPLY : deliveryReply(delivery, reply), messages, toolSteps,
+              ? RESEARCH_RATE_LIMIT_REPLY : published ?? deliveryReply(delivery, reply), messages, toolSteps,
             toolCalls: executedToolCalls, costUnits, fallback: false, stopReason, delivery, traces
           }
         }
@@ -382,6 +407,22 @@ export class AgentRuntime {
             name: outcome.toolName,
             content: outcome.content
           })
+        }
+        // Only a successful guide-only goal batch may omit the final prose generation.
+        // Mixed goals, repair feedback, failures and cancellation retain the normal loop.
+        if (outcomes.every(outcome => outcome.ok) && outcomes.some(outcome => outcome.toolName === 'save_travel_guide' && outcome.artifactIds.length > 0)
+          && touchedGoals.size > 0 && [...touchedGoals.values()].every(goal => goal.kind === 'travel_guide')) {
+          const delivery = await readDelivery(true)
+          if (controller.signal.aborted) return await fallback(turnTimedOut ? 'turn_timeout' : 'cancelled', delivery)
+          if (stale(input)) return await fallback('stale_generation', delivery)
+          if (delivery.status === 'satisfied') {
+            const reply = await publishedGuideReply(delivery, true)
+            if (controller.signal.aborted) return await fallback(turnTimedOut ? 'turn_timeout' : 'cancelled', delivery)
+            if (stale(input)) return await fallback('stale_generation', delivery)
+            if (reply && reply !== GUIDE_LEGACY_REPLY) return result = {
+              reply, messages, toolSteps, toolCalls: executedToolCalls, costUnits, fallback: false, stopReason: 'completed', delivery, traces
+            }
+          }
         }
       }
     } finally {

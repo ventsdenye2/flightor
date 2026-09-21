@@ -30,6 +30,41 @@ export function firstText(...values: unknown[]): string | undefined {
   return values.map(text).find((value): value is string => value !== undefined)
 }
 
+export interface TravelGuidePublicationDisplay {
+  version: 1
+  artifactId: string
+  tripContextVersion: number
+  contentContract: 'limited'
+  evidenceCoverage: 'partial' | 'unknown'
+  budgetNotice: string
+  legacy: boolean
+  reply: string
+}
+
+/**
+ * Published guide metadata is the trust boundary for guide prose. Callers
+ * must also bind artifactId and (when available) tripContextVersion; raw or
+ * old cached guide payloads are never displayable through this helper.
+ */
+export function displayTravelGuidePublication(value: unknown, expectedArtifactId?: string, expectedTripContextVersion?: number): TravelGuidePublicationDisplay | undefined {
+  const item = record(value)
+  const budget = record(item?.budgetAssessment)
+  const artifactId = text(item?.artifactId)
+  const reply = text(item?.reply)
+  const notice = text(budget?.notice)
+  if (item?.version !== 1 || !artifactId || !reply || !notice
+    || item?.contentContract !== 'limited'
+    || (item?.evidenceCoverage !== 'partial' && item?.evidenceCoverage !== 'unknown')
+    || budget?.status !== 'undetermined' || budget?.knownSubtotal !== null
+    || budget?.scopeCoverage !== 'incomplete' || typeof item?.legacy !== 'boolean'
+    || typeof item?.tripContextVersion !== 'number' || !Number.isInteger(item.tripContextVersion) || item.tripContextVersion < 0
+    || (expectedArtifactId !== undefined && artifactId !== expectedArtifactId)
+    || (expectedTripContextVersion !== undefined && item.tripContextVersion !== expectedTripContextVersion)) return undefined
+  return { version: 1, artifactId, tripContextVersion: item.tripContextVersion,
+    contentContract: 'limited', evidenceCoverage: item.evidenceCoverage, budgetNotice: notice,
+    legacy: item.legacy, reply }
+}
+
 export const SOURCE_APPLICABILITY_NOTICE = '以下为来源资料摘要；其中价格、开放时间和交通时长的当前及出行日适用性尚未核实，请以运营方届时公告为准。'
 
 /**

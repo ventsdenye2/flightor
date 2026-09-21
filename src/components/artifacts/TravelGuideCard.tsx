@@ -1,7 +1,7 @@
 import { View, Text } from '@tarojs/components'
 import type { ArtifactEnvelope } from '../../services/artifactService'
 import { ArtifactCard } from './ArtifactCard'
-import { displayGuideTime, displayLocation, displaySupportingEvidence, displayTravelGuideBudget, firstText, formatResearchDescription, numberValue, record, records } from './payload'
+import { displayGuideTime, displayLocation, displaySupportingEvidence, displayTravelGuideBudget, displayTravelGuidePublication, firstText, formatResearchDescription, numberValue, record, records } from './payload'
 import './TravelGuideCard.scss'
 
 export interface TravelGuideCardProps {
@@ -12,6 +12,13 @@ export interface TravelGuideCardProps {
 export function TravelGuideCard({ artifact, onAction }: TravelGuideCardProps) {
   const payload = record(artifact.payload)
   if (!payload) return null
+  const publication = displayTravelGuidePublication(payload.publication, artifact.id)
+  if (!publication) {
+    return <ArtifactCard artifact={artifact} accent='guide' label='TRAVEL GUIDE' title='旧版攻略内容待核实'
+      summary='已保留保存的路线；旧版说明尚未逐项审查。' actionLabel={onAction ? '查看行程大纲' : undefined} onAction={onAction}>
+      <Text className='artifact-guide__item'>请重新加载已发布的攻略，费用和开放时间仍需核实。</Text>
+    </ArtifactCard>
+  }
   const days = records(payload.days, 60)
   const firstDay = days[0]
   const firstCity = firstDay ? displayLocation(firstDay.city) : undefined
@@ -29,6 +36,7 @@ export function TravelGuideCard({ artifact, onAction }: TravelGuideCardProps) {
       onAction={onAction}
     >
       {budget ? <View className='artifact-guide__budget'><Text className='artifact-guide__section-title'>全程预算约束</Text><Text className='artifact-guide__budget-value'>{budget.label} · {budget.currency} {budget.amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}</Text><Text className='artifact-guide__caption'>行程总额 · 同行人数口径未指定</Text></View> : null}
+      <Text className='artifact-guide__applicability'>{publication.budgetNotice}</Text>
       <View className='artifact-guide__days'>
         {days.slice(0, 3).map((day, index) => {
           const dayNumber = numberValue(day.day)

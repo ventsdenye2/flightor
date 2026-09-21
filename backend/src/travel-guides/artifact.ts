@@ -1,4 +1,5 @@
 import { claimEvidenceSchema } from '../research-agent/claim-evidence.js'
+import { guidePublicationSchema } from './publication-schema.js'
 import { sourceApplicabilitySchema } from './source-applicability.js'
 import { z } from 'zod'
 import { locationRefSchema, verificationRecordSchema } from '../aviation/types.js'
@@ -52,6 +53,7 @@ export const travelGuideSupportingEvidenceSchema = z.object({
 }).strict()
 
 export const travelGuideArtifactPayloadSchema = z.object({
+  publication: guidePublicationSchema.optional(),
   kind: z.literal('trip_travel_guide'),
   schemaVersion: z.literal(1),
   builderVersion: z.string().min(1).max(64),

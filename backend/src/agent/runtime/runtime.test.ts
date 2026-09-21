@@ -6,6 +6,9 @@ import { emptyTripContext } from '../../trips/types.js'
 import { createCoreToolRegistry } from '../tools/core.js'
 import { ToolRegistry, type AgentTool, type ToolExecutionContext } from './registry.js'
 import { AgentRuntime, sanitizePlannerReply } from './runtime.js'
+import { buildGuidePublication, GUIDE_LEGACY_REPLY } from '../../travel-guides/publication.js'
+import { travelGuideArtifactPayloadSchema } from '../../travel-guides/artifact.js'
+import { v7 as uuidv7 } from 'uuid'
 import type { AgentModelClient } from './model.js'
 import type { ProviderCallOptions, ResolveLocationInput } from '../../aviation/providers/provider.js'
 import { z } from 'zod'
@@ -371,8 +374,45 @@ describe('Server-verified turn delivery', () => {
       .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Saved from compatible evidence.' } })
     const result = await new AgentRuntime({ complete }, registry).run({ messages: [{ role: 'user', content: 'Plan' }], context: state.context })
     expect(result.delivery.status).toBe(status)
-    expect(result.reply).toBe(status === 'satisfied' ? 'Saved from compatible evidence.' : '联网研究服务暂时限流，本轮未能完成攻略。已保存的结果会保留，请稍后重试。')
+    expect(result.reply).toBe(status === 'satisfied' ? GUIDE_LEGACY_REPLY : '联网研究服务暂时限流，本轮未能完成攻略。已保存的结果会保留，请稍后重试。')
   })
+
+  it.each(['complete', 'partial', 'failed_batch', 'no_commit', 'cancelled', 'stale'] as const)(
+    'uses committed publication and only short-circuits a complete current guide: %s', async mode => {
+      const id = uuidv7()
+      const state = await setup({ status: mode === 'partial' ? 'partial' : 'satisfied', artifactIds: [id],
+        missing: mode === 'partial' ? ['guide_day:2'] : [], warnings: [] })
+      state.context.artifacts = new InMemoryArtifactRepository('u', new Set(['t']))
+      const controller = new AbortController()
+      let current = true
+      const registry = new ToolRegistry().register(tool('save_travel_guide', async (_input, context) => {
+        const guide = travelGuideArtifactPayloadSchema.parse({ kind: 'trip_travel_guide', schemaVersion: 1,
+          builderVersion: 'test', routeArtifactId: 'route', sourceArtifactIds: ['route'],
+          days: [{ day: 1, city: { id: 'c', name: 'City', type: 'city', countryCode: 'JP' }, items: [] }],
+          unassignedActivityRefs: [], verification: { status: 'unverified', confidence: 0, sources: [], checkedAt: '2026-09-21T00:00:00.000Z' },
+          warnings: [], createdAt: '2026-09-21T00:00:00.000Z' })
+        const artifact = await context.artifacts.create({ id, tripId: 't', conversationId: 'c', goalId: state.goal.id,
+          runId: state.run.id, tripContextVersion: 0, type: 'travel_guide', schemaVersion: 1,
+          payload: { ...guide, publication: buildGuidePublication({ id, tripContextVersion: 0 }, guide) } })
+        if (mode !== 'no_commit') context.onArtifactCommitted?.(artifact)
+        if (mode === 'cancelled') controller.abort()
+        if (mode === 'stale') current = false
+        return { artifact: { id } }
+      }, { sideEffect: 'state', parallelSafe: false, timeoutMs: 1000,
+        outputSchema: z.object({ artifact: z.object({ id: z.string() }) }) }))
+      const complete = vi.fn().mockResolvedValueOnce({ message: { role: 'assistant', content: null,
+        tool_calls: [call('save', 'save_travel_guide'), ...(mode === 'failed_batch' ? [call('fail', 'unknown_tool')] : [])] } })
+        .mockResolvedValueOnce({ message: { role: 'assistant', content: 'Let me think. 门票100元且符合预算。' } })
+      const result = await new AgentRuntime({ complete }, registry).run({ context: state.context,
+        messages: [{ role: 'user', content: 'save guide' }], signal: controller.signal, isGenerationCurrent: () => current })
+      expect(result.reply).not.toContain('符合预算')
+      expect(result.reply).not.toContain('Let me think')
+      expect(complete).toHaveBeenCalledTimes(['complete', 'cancelled', 'stale'].includes(mode) ? 1 : 2)
+      if (mode === 'complete') expect(result).toMatchObject({ stopReason: 'completed', delivery: { status: 'satisfied' } })
+      if (mode === 'partial') expect(result.stopReason).toBe('goal_partial')
+      if (mode === 'cancelled') expect(result.stopReason).toBe('cancelled')
+      if (mode === 'stale') expect(result.stopReason).toBe('stale_generation')
+    })
 
   it('rejects a premature success claim when the Agent omits finish_goal', async () => {
     const state = await setup({ status: 'pending', artifactIds: [], missing: ['travel_guide_artifact'], warnings: [] })

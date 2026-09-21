@@ -86,6 +86,22 @@ export interface TravelGuideDay {
   items: TravelGuideItem[]
 }
 
+export interface TravelGuidePublication {
+  version: 1
+  artifactId: string
+  tripContextVersion: number
+  contentContract: 'limited'
+  evidenceCoverage: 'partial' | 'unknown'
+  budgetAssessment: {
+    status: 'undetermined'
+    knownSubtotal: null
+    scopeCoverage: 'incomplete'
+    notice: string
+  }
+  legacy: boolean
+  reply: string
+}
+
 export interface TravelGuide {
   route: TravelGuideRoute
   summary: BilingualText
@@ -93,6 +109,7 @@ export interface TravelGuide {
   sources: TravelGuideSource[]
   source: TravelGuideSourceKind
   warnings: string[]
+  publication?: TravelGuidePublication
 }
 
 /** Canonical location reference returned by the authenticated cloud API. */

@@ -3,6 +3,7 @@ import type { ArtifactRepository } from '../../artifacts/repository.js'
 import type { ConversationRepository } from '../../conversations/repository.js'
 import type { FareProvider } from '../../fares/providers/provider.js'
 import { AppError } from '../../lib/errors.js'
+import { guidePublicationReply, GUIDE_LEGACY_REPLY } from '../../travel-guides/publication.js'
 import type { UserMemoryRepository } from '../../memory/repository.js'
 import type { TripRepository } from '../../trips/repository.js'
 import type { ResearchAgent } from '../../research-agent/types.js'
@@ -223,10 +224,18 @@ export class CloudPlannerService {
       ...(result.fallback ? [`agent_${result.stopReason}`] : []),
       ...result.delivery.warnings
     ])].slice(0, 40)
+    const guideTurn = result.delivery.goals.some(goal => goal.kind === 'travel_guide')
+      || artifactRefs.some(ref => ref.type === 'travel_guide')
+    let publicReply = result.reply
+    if (guideTurn && result.delivery.status === 'satisfied') {
+      const guideRef = artifactRefs.find(ref => ref.type === 'travel_guide' && result.delivery.artifactIds.includes(ref.id))
+      const guide = guideRef ? await this.dependencies.artifacts.get(guideRef.id) : undefined
+      publicReply = guide && guide.tripId === input.tripId ? guidePublicationReply(guide) : GUIDE_LEGACY_REPLY
+    }
     await this.dependencies.conversations.appendMessage({
       conversationId: input.conversationId,
       role: 'assistant',
-      content: result.reply,
+      content: publicReply,
       metadata: {
         request_id: input.requestId,
         generation_id: input.generationId,
@@ -236,6 +245,7 @@ export class CloudPlannerService {
         delivery: result.delivery,
         planning_context: planningContext.metrics,
         goal_protocol: this.dependencies.leanGoalsEnabled ? 'lean' : 'legacy',
+        ...(guideTurn ? { guide_publication_version: 1 } : {}),
         tool_traces: result.traces.map(trace => ({
           step: trace.agentStep,
           tool: trace.toolName,
@@ -253,7 +263,7 @@ export class CloudPlannerService {
     const memoryRecordAfter = await this.dependencies.memory.get()
     input.signal?.throwIfAborted()
     return {
-      reply: result.reply,
+      reply: publicReply,
       tripVersion: current.version,
       tripContext: current,
       artifactRefs,

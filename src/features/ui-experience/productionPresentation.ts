@@ -1,7 +1,7 @@
 import type { ArtifactEnvelope } from '../../services/artifactService'
 import type { CloudWorkspace } from '../../services/workspaceService'
 import type { ConversationDelivery } from '../../services/conversationService'
-import { displaySupportingEvidence, displayTravelGuideBudget, firstText, formatResearchDescription, numberValue, record, records, text } from '../../components/artifacts/payload'
+import { displaySupportingEvidence, displayTravelGuideBudget, displayTravelGuidePublication, firstText, formatResearchDescription, numberValue, record, records, text } from '../../components/artifacts/payload'
 import { readRouteArtifact } from '../../services/routeArtifact'
 import type { Activity, PricePresentation, SourcePresentation, TripDay, TripFlightPresentation, TripPresentation } from './presentation'
 import { displayOfferById } from '../../components/artifacts/payload'
@@ -133,8 +133,16 @@ function delivered(delivery: ConversationDelivery | undefined, id: string): bool
 export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guideArtifact?: ArtifactEnvelope, workspace?: CloudWorkspace, savedRouteArtifact?: ArtifactEnvelope): TripPresentation {
   const route = record(routeArtifact.payload)
   if (routeArtifact.type !== 'route' || route?.kind !== 'trip_route_plan') throw new Error('不支持的路线快照')
-  const guide = guideArtifact ? record(guideArtifact.payload) : undefined
-  if (guideArtifact && (guideArtifact.type !== 'travel_guide' || guide?.kind !== 'trip_travel_guide' || guideArtifact.tripId !== routeArtifact.tripId || guide.routeArtifactId !== routeArtifact.id)) throw new Error('攻略与路线快照不匹配')
+  const guideCandidate = guideArtifact ? record(guideArtifact.payload) : undefined
+  if (guideArtifact && (guideArtifact.type !== 'travel_guide' || guideCandidate?.kind !== 'trip_travel_guide' || guideArtifact.tripId !== routeArtifact.tripId || guideCandidate.routeArtifactId !== routeArtifact.id)) throw new Error('攻略与路线快照不匹配')
+  const publication = guideArtifact && guideCandidate
+    ? displayTravelGuidePublication(guideCandidate.publication, guideArtifact.id, numberValue(route.tripContextVersion))
+    : undefined
+  // Old local caches/replays may contain plausible guide prose without the
+  // server publication binding. Keep the route/flight boundary, but drop all
+  // guide-owned titles, notes, evidence, warnings, and activities.
+  const guide = publication ? guideCandidate : undefined
+  const staleGuide = Boolean(guideArtifact && !publication)
   const current = workspace?.trip.id === routeArtifact.tripId && workspace.trip.contextVersion === route.tripContextVersion
   const context = current ? workspace?.tripContextSummary : undefined
   const savedSelection = workspace?.trip.selectedFlight
@@ -166,10 +174,11 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
       ? savedOfferFlights(savedRouteArtifact, savedSelection.offerId)
       : savedRouteFlights(savedRouteArtifact, savedSelection.routeId)
   }
+  const description = `${current ? '' : '这是此前保存的行程版本。'}${staleGuide ? '这份旧攻略无法安全展示，已保留路线和航班边界。' : guide && !guideMatchesSelection ? '航班已更换，这份安排需要按新航班调整。' : guide ? '每日安排已保存，活动及开放时间仍需核验。' : '路线草案已保存，每日安排待补充。'}${publication ? ` ${publication.budgetNotice}` : ''}${warnings.length ? '含待确认事项，请查看规划记录。' : ''}`
   return { id: routeArtifact.tripId, title: (workspace?.trip.id === routeArtifact.tripId ? firstText(workspace.trip.title) : undefined) ?? (guide ? '我的旅行安排' : '我的路线草案'),
     destination: routeNames[0] ?? days[0]?.subtitle ?? '目的地待确认', route: routeNames,
     dates: { start: start ?? null, end: end ?? null, label: !start && !end ? '日期待确认' : '' }, durationDays: context?.travelDays ?? (days.length || null),
-    travelers: null, cover: null, description: `${current ? '' : '这是此前保存的行程版本。'}${guide && !guideMatchesSelection ? '航班已更换，这份安排需要按新航班调整。' : guide ? '每日安排已保存，活动及开放时间仍需核验。' : '路线草案已保存，每日安排待补充。'}${warnings.length ? '含待确认事项，请查看规划记录。' : ''}`,
+    travelers: null, cover: null, description,
     days, status: satisfied ? 'ready' : 'partial', flights: savedRoute, alternatives: [],
      sources: [...new Map(allSources.map(source => [`${source.url ?? source.label}:${source.status}`, source])).values()], ...(budget ? { budget } : {}), ...(supportingEvidence.length ? { supportingEvidence } : {}) }
 }

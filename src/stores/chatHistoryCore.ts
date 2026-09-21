@@ -20,7 +20,8 @@ import type {
   TravelGuideItem,
   TravelGuideRoute,
   TravelGuideSource,
-  TravelGuideSourceKind
+  TravelGuideSourceKind,
+  TravelGuidePublication
 } from '../services/conversationService'
 import type { ConfirmedPick, RouteLeg, RoutePick, RouteResult } from '../services/routeService'
 import type { RouteGenerationRunView } from '../services/routeGenerationService'
@@ -52,6 +53,7 @@ const PHASES: readonly ConversationPhase[] = ['discover', 'clarify', 'plan']
 const PRIORITIES: readonly TripState['priorities'][number][] = ['budget', 'comfort', 'few_transfers', 'culture']
 const PACES: readonly TripState['pace'][] = ['relaxed', 'balanced', 'many_cities']
 const ROUTE_KINDS: readonly RoutePick['kind'][] = ['cheapest', 'mostCities', 'mostNights']
+const LEGACY_GUIDE_MESSAGE = '此前缓存包含旧版攻略内容；预算与攻略正文已隐藏，请重新加载已发布攻略。'
 
 export interface ConversationTurnSnapshot {
   id: string
@@ -635,6 +637,33 @@ function sanitizeTravelGuideDay(value: unknown): TravelGuideDay | null {
   return { day, city, cityIata, items }
 }
 
+function sanitizeTravelGuidePublication(value: unknown): TravelGuidePublication | null {
+  if (!isRecord(value) || value.version !== 1 || typeof value.artifactId !== 'string' || !value.artifactId.trim()
+    || !Number.isInteger(value.tripContextVersion) || Number(value.tripContextVersion) < 0
+    || value.contentContract !== 'limited'
+    || (value.evidenceCoverage !== 'partial' && value.evidenceCoverage !== 'unknown')
+    || !isRecord(value.budgetAssessment) || value.budgetAssessment.status !== 'undetermined'
+    || value.budgetAssessment.knownSubtotal !== null || value.budgetAssessment.scopeCoverage !== 'incomplete'
+    || typeof value.budgetAssessment.notice !== 'string' || !value.budgetAssessment.notice.trim()
+    || typeof value.legacy !== 'boolean' || typeof value.reply !== 'string' || !value.reply.trim()) return null
+  return {
+    version: 1,
+    artifactId: value.artifactId.trim().slice(0, 160),
+    tripContextVersion: Number(value.tripContextVersion),
+    contentContract: 'limited',
+    evidenceCoverage: value.evidenceCoverage,
+    budgetAssessment: { status: 'undetermined', knownSubtotal: null, scopeCoverage: 'incomplete', notice: value.budgetAssessment.notice.trim().slice(0, 600) },
+    legacy: value.legacy,
+    reply: value.reply.trim().slice(0, MAX_CHAT_MESSAGE_CHARS)
+  }
+}
+
+function hasGuideDelivery(value: unknown): boolean {
+  if (!isRecord(value)) return false
+  if (value.kind === 'travel_guide') return true
+  return Array.isArray(value.goals) && value.goals.some(goal => hasGuideDelivery(goal))
+}
+
 function travelGuideSourceCount(guide: TravelGuide): number {
   return guide.sources.length + guide.days.reduce(
     (count, day) => count + day.items.reduce((itemCount, item) => itemCount + item.sources.length, 0),
@@ -692,6 +721,11 @@ function fitTravelGuide(guide: TravelGuide): TravelGuide | undefined {
 /** Strictly rehydrate one backend guide; invalid guide data never invalidates its session. */
 export function sanitizeTravelGuide(value: unknown): TravelGuide | undefined {
   if (!isRecord(value) || !Array.isArray(value.days) || !Array.isArray(value.sources)) return undefined
+  const publication = sanitizeTravelGuidePublication(value.publication)
+  // Local history is untrusted input. A structurally valid old guide without
+  // a server publication is deliberately discarded before any prose can be
+  // rendered; route and flight snapshots live in their own fields.
+  if (!publication) return undefined
   const route = sanitizeTravelGuideRoute(value.route)
   const summary = cleanBilingual(value.summary, 800)
   const source = isTravelGuideSourceKind(value.source) ? value.source : null
@@ -715,7 +749,7 @@ export function sanitizeTravelGuide(value: unknown): TravelGuide | undefined {
     if (!sourceValue) return undefined
     sources.push(sourceValue)
   }
-  return fitTravelGuide({ route, summary, days, sources, source, warnings })
+  return fitTravelGuide({ route, summary, days, sources, source, warnings, publication })
 }
 
 export function cloneTravelGuide(guide: TravelGuide | undefined): TravelGuide | undefined {
@@ -736,7 +770,8 @@ export function cloneTravelGuide(guide: TravelGuide | undefined): TravelGuide | 
     })),
     sources: guide.sources.map(source => ({ ...source })),
     source: guide.source,
-    warnings: [...guide.warnings]
+    warnings: [...guide.warnings],
+    ...(guide.publication ? { publication: { ...guide.publication, budgetAssessment: { ...guide.publication.budgetAssessment } } } : {})
   }
 }
 
@@ -766,6 +801,11 @@ function sanitizeTurn(value: unknown, fallbackId: string): ConversationTurnSnaps
       : null
   if (artifactRefs === null) return null
   const travelGuide = value.travelGuide === undefined ? undefined : sanitizeTravelGuide(value.travelGuide)
+  const guideReferenced = Boolean(value.travelGuide !== undefined || artifactRefs?.some(ref => ref.type === 'travel_guide') || hasGuideDelivery(value.delivery))
+  // A cached assistant reply may contain old free-form budget guarantees. For
+  // any guide-associated turn, use only the trusted published reply or a
+  // static notice; user messages and unrelated turns remain untouched.
+  if (guideReferenced && assistant) assistant = { role: 'assistant', content: travelGuide?.publication?.reply ?? LEGACY_GUIDE_MESSAGE }
   const id = cleanText(value.id, 80) ?? fallbackId
   const error = cleanOptionalText(value.error, 240)
   const delivery = sanitizeDelivery(value.delivery)

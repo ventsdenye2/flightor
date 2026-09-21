@@ -1,4 +1,5 @@
 import { sourceApplicability } from '../travel-guides/source-applicability.js'
+import { projectGuideRecord } from '../travel-guides/publication.js'
 import { z } from 'zod'
 import { airportTimeViewSchema, projectAirportTime, type AirportTimeView } from '../aviation/airport-time.js'
 import { projectUnconfirmedFareFields } from '../fares/presentation.js'
@@ -71,6 +72,27 @@ export function projectArtifactPresentation(record: Pick<ArtifactRecord, 'type' 
 }
 
 export function presentArtifact(record: ArtifactRecord): PresentedArtifact {
+  if (record.type === 'travel_guide') return projectGuideRecord(record)
+  if (record.type === 'research' && (record.schemaVersion === 1 || record.schemaVersion === 2)) {
+    const payload = object(record.payload)
+    if (Array.isArray(payload?.findings)) return { ...record, verification: undefined, payload: {
+      kind: 'research_references', schemaVersion: record.schemaVersion,
+      findings: payload.findings.slice(0, 50).map((value, index) => {
+        const finding = object(value)
+        const sources = Array.isArray(finding?.sources) ? finding.sources : []
+        return { id: typeof finding?.id === 'string' ? finding.id : `reference-${index}`,
+          sources: sources.slice(0, 20).flatMap(value => {
+            const source = object(value)
+            if (typeof source?.url !== 'string' || typeof source.title !== 'string') return []
+            try {
+              const url = new URL(source.url)
+              if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return []
+              return [{ title: source.title.slice(0, 240), url: url.href }]
+            } catch { return [] }
+          }) }
+      })
+    } }
+  }
   const presentation = projectArtifactPresentation(record)
   return presentation ? { ...record, presentation } : record
 }

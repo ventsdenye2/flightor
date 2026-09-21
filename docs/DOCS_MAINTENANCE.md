@@ -21,6 +21,8 @@
 
 ## 检查入口
 
+2026-09-21：G1 runner 保留历史 `status` 兼容字段，新增 `acceptance` 分列 `persistence`、`content=not_assessed`、`platform=not_assessed` 与 rubricVersion。脚本不能仅因保存/恢复成功推断内容或平台通过；此批仅离线语法检查，不触发新 live。
+
 ```powershell
 node scripts/check-docs.cjs
 git diff --check

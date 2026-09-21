@@ -210,6 +210,9 @@ try {
         if (workspace) fs.writeFileSync(path.join(directory, `${specification.id}-failed-workspace.json`), safeJson(workspace))
       }
     } finally {
+      // Historical status is a persistence result, not a content or platform verdict.
+      entry.acceptance = { rubricVersion: 'G1-publication-v1', persistence: entry.status,
+        content: 'not_assessed', platform: 'not_assessed' }
       entry.stages.totalCaseMs = performance.now() - caseStart; write()
       console.log(JSON.stringify({ caseId: entry.caseId, status: entry.status, errorCode: entry.errorCode, stages: entry.stages }))
     }

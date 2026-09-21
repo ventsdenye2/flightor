@@ -76,6 +76,16 @@
 
 ## 信息结构
 
+### 攻略发布边界（2026-09-21 当前实现）
+
+攻略正文只在服务端发布元数据通过 v1 绑定时展示：`publication.version=1`、`contentContract=limited`、`artifactId` 必须等于当前攻略 artifact，且 `tripContextVersion` 必须等于路线快照版本。预算判断固定显示服务端提供的 `budgetAssessment.notice`，不把 `knownSubtotal: null` 解释成已核算金额。
+
+旧本地缓存、回放或缺少/格式错误的 publication 会关闭攻略自己的标题、摘要、主题、活动说明、notes、warnings 与 supportingEvidence；行程仍保留真实路线天数和航班边界，并显示“旧攻略无法安全展示”的通用提示。Artifact 卡片同样显示通用不可用状态，不回退到原始 payload。历史缓存仅接受带 publication 的攻略；它是客户端输入边界，结构正确本身不证明来源可信，实际来源信任仍依赖服务端 artifact 接口与 owner 范围。
+
+`node scripts/test-production-presentation.cjs` 覆盖缺 publication、publication artifact 身份不一致和路线版本不一致时的关闭行为；`node scripts/test-chat-history.js` 覆盖旧攻略正文注入被丢弃以及有效发布攻略的恢复。两者均为离线确定性检查，不替代真实 API、浏览器或微信设备验收。
+
+研究卡片只显示研究 finding 关联的来源文档标题和经过协议校验的 HTTP(S) URL，并明确显示来源缺失或状态未知；finding 自身的模型标题、摘要和不确定性不进入公共卡片。若本地助手消息关联旧 `travel_guide` 引用但没有可信新发布攻略，恢复时只替换该关联助手消息为静态旧攻略提示，用户消息及其他轮次保持不变。`node scripts/test-artifacts.js` 与 `node scripts/test-chat-history.js` 覆盖这两条边界。
+
 生产攻略 v1 的可选 `budget` 在行程概览和攻略卡单独显示为“全程预算约束”：只接受服务端同时提供的 `amount`、三位大写 `currency`、`scope`、`partyBasis: unspecified`、`period: trip_total`，明确标注为行程总额与同行人数口径未指定，不换算为每日或人均金额。可选 `supportingEvidence` 单独归入“实用与补充信息”，显示服务端恢复的标题、说明、类别、目的地和核验状态；过期的核验记录按 `expiresAt` 显示为资料已过期。它是补充资料，不作为景点安排或用户已选择活动。
 
 固定样例为：上海 → 多哈 → 里斯本，7 天。概览先给路线与总状态；每日行程按天展示城市、安排和来源；航班列表先呈现时刻、价格、航司与中转风险；详情以 bottom sheet 展开完整段落、来源、未知项和操作。

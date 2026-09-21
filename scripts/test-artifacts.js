@@ -18,6 +18,7 @@ function loadTypeScript(relativePath, dependencies = {}) {
     module,
     exports: module.exports,
     console,
+    URL,
     require(specifier) {
       if (dependencies[specifier]) return dependencies[specifier]
       throw new Error(`unexpected dependency: ${specifier}`)
@@ -107,6 +108,27 @@ check('dispatches travel guide payload kind', registry.resolveArtifactRenderer(e
 check('dispatches route_set by payload kind', registry.resolveArtifactRenderer(envelope('route_set', 1, { kind: 'flight_paths', schemaVersion: 1, paths: [] })).key === 'route_set:flight_paths')
 check('unsupported schema uses bounded fallback', registry.resolveArtifactRenderer(envelope('flight_search', 99, { id: 'f', type: 'flight_search', offers: [] })).key === 'unavailable')
 check('unknown route kind uses bounded fallback', registry.resolveArtifactRenderer(envelope('route_set', 1, { kind: 'future_kind', schemaVersion: 1 })).key === 'unavailable')
+const researchCardSource = fs.readFileSync(path.resolve(process.cwd(), 'src/components/artifacts/ResearchCard.tsx'), 'utf8')
+check('research card attributes source document references instead of generated finding prose', researchCardSource.includes('source.title') && researchCardSource.includes('source.reference') && researchCardSource.includes('来源资料标题（未核实适用性）') && !researchCardSource.includes('firstText(finding.title)') && !researchCardSource.includes('firstText(finding.summary)'))
+
+const jsx = (type, props) => ({ type: typeof type === 'string' ? type : 'Component', props })
+const visibleText = node => Array.isArray(node) ? node.map(visibleText).join(' ')
+  : typeof node === 'string' || typeof node === 'number' ? String(node)
+  : node?.props ? [node.props.title, node.props.summary, node.props.label, node.props.actionLabel, node.props.children].map(visibleText).join(' ') : ''
+const cardDependencies = { 'react/jsx-runtime': { jsx, jsxs: jsx }, '@tarojs/components': { View: 'View', Text: 'Text' },
+  './ArtifactCard': { ArtifactCard: 'ArtifactCard' }, './payload': payload, './TravelGuideCard.scss': {}, './ResearchCard.scss': {} }
+const guideCard = loadTypeScript('src/components/artifacts/TravelGuideCard.tsx', cardDependencies).TravelGuideCard
+const published = { version: 1, artifactId: 'guide-1', tripContextVersion: 1, contentContract: 'limited', evidenceCoverage: 'unknown',
+  legacy: false, reply: '攻略已保存', budgetAssessment: { status: 'undetermined', knownSubtotal: null, scopeCoverage: 'incomplete', notice: '目前不能确认总支出是否满足预算。' } }
+const renderGuide = publication => visibleText(guideCard({ artifact: { id: 'guide-1', type: 'travel_guide', schemaVersion: 1,
+  payload: { publication, days: [{ day: 1, items: [{ title: 'UNSAFE_OLD_FREE', description: 'UNSAFE_OLD_BUDGET' }] }] } } }))
+check('rendered guide card shows budget unknown and rejects old prose without publication',
+  renderGuide(published).includes(published.budgetAssessment.notice) && !renderGuide(undefined).includes('UNSAFE_OLD'))
+const researchCard = loadTypeScript('src/components/artifacts/ResearchCard.tsx', cardDependencies).ResearchCard
+const researchTree = visibleText(researchCard({ artifact: { id: 'research-1', schemaVersion: 2, type: 'research', payload: {
+  findings: [{ title: 'UNSAFE_FREE', summary: 'UNSAFE_BUDGET', sources: [{ title: 'Museum source', url: 'https://example.com/museum' }] }]
+} } }))
+check('rendered research card retains attributed references without generated assertions', researchTree.includes('Museum source') && !researchTree.includes('UNSAFE_'))
 
 console.log('\n【Flight Artifact adapter】strict payload parsing')
 const validFlightPayload = {

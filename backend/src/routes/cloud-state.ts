@@ -12,6 +12,7 @@ import type { UserMemoryRepository } from '../memory/repository.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
 import type { TripRepository } from '../trips/repository.js'
 import { tripContextPatchSchema } from '../trips/types.js'
+import { projectHistoricalGuideMessages } from '../travel-guides/publication-history.js'
 
 export interface CloudRepositories {
   trips: TripRepository
@@ -107,8 +108,15 @@ export async function registerCloudStateRoutes(
 
   app.get('/v1/conversations/:conversationId/messages', async (request, reply) => {
     const { conversationId } = conversationParamsSchema.parse(request.params)
-    const messages = await (await repositories(request)).conversations.listMessages(conversationId)
-    return reply.send({ messages })
+    const repos = await repositories(request)
+    const conversation = await repos.conversations.get(conversationId)
+    if (!conversation) return reply.code(404).send({ error: { code: 'RESOURCE_NOT_FOUND', message: 'Conversation was not found' } })
+    const messages = (await repos.conversations.listMessages(conversationId))
+      .filter(message => message.role === 'user' || message.role === 'assistant')
+    const projected = await projectHistoricalGuideMessages(messages, {
+      tripId: conversation.tripId, conversationId, artifacts: repos.artifacts
+    })
+    return reply.send({ messages: projected })
   })
 
   app.get('/v1/artifacts/:id', async (request, reply) => {

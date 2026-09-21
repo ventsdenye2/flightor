@@ -12,6 +12,7 @@ import { PostgresGoalRepository, PostgresGoalRunRepository } from '../agent/goal
 import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifiers.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
 import { PostgresArtifactRepository } from '../artifacts/postgres.js'
+import { projectHistoricalGuideMessages } from '../travel-guides/publication-history.js'
 import { type WorkspacePatch, type WorkspaceRepository, type WorkspaceTrip, type TripWorkspace, type WorkspaceMessage } from './types.js'
 import {
   assertFlightChoice, legacySavedRoute, readSavedFlightSelection, sameFlightChoice,
@@ -55,14 +56,17 @@ export class PostgresWorkspaceRepository implements WorkspaceRepository {
     const messages: WorkspaceMessage[] = []
     if (selected) {
       const rows = await new PostgresConversationRepository(this.db, this.userId).listMessages(selected.id, 100)
-      for (const m of rows) {
-        if (m.role !== 'user' && m.role !== 'assistant') continue
+      const publicRows = rows.filter(m => m.role === 'user' || m.role === 'assistant')
+      const projectedRows = await projectHistoricalGuideMessages(publicRows, {
+        tripId, conversationId: selected.id, artifacts: new PostgresArtifactRepository(this.db, this.userId)
+      })
+      for (const m of projectedRows) {
         const ids = Array.isArray(m.metadata.artifact_refs) ? m.metadata.artifact_refs : []
         const delivery = goalDeliverySchema.safeParse(m.metadata.delivery)
         const stopReason = typeof m.metadata.stop_reason === 'string' && /^[a-z][a-z_]{0,79}$/.test(m.metadata.stop_reason) ? m.metadata.stop_reason : undefined
         const warnings = Array.isArray(m.metadata.warnings)
           ? m.metadata.warnings.filter((value): value is string => typeof value === 'string' && /^[a-z][a-z0-9_]{0,239}$/.test(value)).slice(0, 40) : undefined
-        messages.push({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt, artifactRefs: ids.flatMap(id => typeof id === 'string' && refsById.has(id) ? [refsById.get(id)!] : []), ...(delivery.success ? { delivery: delivery.data } : {}),
+        messages.push({ id: m.id, role: m.role as 'user' | 'assistant', content: m.content, createdAt: m.createdAt, artifactRefs: ids.flatMap(id => typeof id === 'string' && refsById.has(id) ? [refsById.get(id)!] : []), ...(delivery.success ? { delivery: delivery.data } : {}),
           ...(m.role === 'assistant' && stopReason ? { stopReason } : {}), ...(m.role === 'assistant' && warnings ? { warnings } : {}) })
       }
     }

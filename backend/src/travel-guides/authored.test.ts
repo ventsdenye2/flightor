@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
 import { artifactReadingContent } from '../artifacts/presentation.js'
+import { presentArtifact } from '../artifacts/presentation.js'
+import { buildGuidePublication, projectGuideRecord, publicationFor, guidePublicationReply } from './publication.js'
 import { sourceApplicability } from './source-applicability.js'
 import { describe, expect, it } from 'vitest'
 import { v7 as uuidv7 } from 'uuid'
@@ -53,6 +55,86 @@ async function fixture(mutate?: (source: ResearchArtifact) => void, requirements
   const verify = () => createDefaultGoalVerifierRegistry().verify(goal, { ownerId, tripId: trip.id, run, currentTrip: trip, artifacts })
   return { input, save, verify, scope, source, artifacts, trip }
 }
+
+describe('guide public contract', () => {
+  it.each([undefined, []])('omitted or empty claims cannot publish prose through any guide field: %j', async claims => {
+    const injection = '门票999元且免费，无需预约，全年开放，保证不超预算'
+    const test = await fixture(source => {
+      for (const finding of source.findings) {
+        finding.title = injection; finding.summary = injection
+        if (claims) finding.claimEvidence = claims
+        finding.sources[0]!.title = 'Museum visitor information'
+      }
+    })
+    test.input.days[0]!.theme = injection; test.input.days[0]!.notes = injection
+    test.input.days[0]!.items[0]!.planningNote = injection
+    const saved = await test.save()
+    expect(saved.status).toBe('saved')
+    if (saved.status !== 'saved') throw new Error('expected save')
+    const stored = await test.artifacts.get(saved.record.id)
+    expect(JSON.stringify(stored?.payload)).toContain(injection)
+    const publicRecord = presentArtifact(stored!)
+    expect(JSON.stringify(publicRecord)).not.toContain(injection)
+    expect(publicRecord.payload).toMatchObject({ publication: { version: 1, legacy: false,
+      budgetAssessment: { status: 'undetermined', knownSubtotal: null, scopeCoverage: 'incomplete' } },
+      days: [{ items: [{ title: '资料标题：Museum visitor information', timeOfDay: 'afternoon' }] }] })
+    expect(guidePublicationReply(stored!)).toContain('不能确认')
+    expect(await test.verify()).toMatchObject({ status: 'satisfied' })
+    expect(JSON.stringify((await test.artifacts.get(saved.record.id))?.payload)).toContain(injection)
+  })
+
+  it('old or mismatched publication falls back without mutating audit data', async () => {
+    const test = await fixture()
+    const saved = await test.save()
+    if (saved.status !== 'saved') throw new Error('expected save')
+    const raw = travelGuideArtifactPayloadSchema.parse(saved.record.payload)
+    for (const publication of [undefined, { ...raw.publication!, artifactId: 'other' },
+      { ...raw.publication!, tripContextVersion: 77 }, { ...raw.publication!, flightSelectionRevision: 999 }]) {
+      const record = { ...saved.record, payload: { ...raw, publication } }
+      expect(publicationFor(record)?.legacy).toBe(true)
+      expect(JSON.stringify(projectGuideRecord(record))).not.toContain('activity facts')
+      expect((record.payload.days[0]!.items[0]!).description).toBe('activity facts')
+    }
+    const changed = structuredClone(saved.record)
+    ;(changed.payload as typeof raw).days[0]!.items[0]!.title = 'Different saved item'
+    expect(publicationFor(changed)?.legacy).toBe(true)
+  })
+
+  it('retains source-bound item excerpts without publishing unbound title suffixes', async () => {
+    const test = await fixture(source => {
+      source.findings[0]!.title = 'Example Museum free all year'
+      source.findings[0]!.sources[0]!.snippet = 'Visit Example Museum. Check its operator for opening details.'
+    })
+    const saved = await test.save()
+    if (saved.status !== 'saved') throw new Error('expected save')
+    const output = projectGuideRecord(saved.record)
+    expect(JSON.stringify(output)).toContain('来源条目摘录：Example Museum')
+    expect(JSON.stringify(output)).toContain('搜索摘要')
+    expect(JSON.stringify(output)).not.toContain('free all year')
+  })
+
+  it('publishes only bound source excerpts, never a semantic or future-validity claim', async () => {
+    const test = await fixture()
+    const saved = await test.save()
+    if (saved.status !== 'saved') throw new Error('expected save')
+    const guide = travelGuideArtifactPayloadSchema.parse(saved.record.payload)
+    const source = structuredClone(test.source)
+    const finding = source.findings[0]!
+    const text = 'Adult admission 100 JPY.'
+    const page = { text, retrievedAt: '2026-09-21T00:00:00.000Z', contentHash: createHash('sha256').update(text).digest('hex') }
+    finding.sources[0]!.page = page
+    finding.claimEvidence = [{ kind: 'price', subject: 'adult', value: '100 JPY', quote: text,
+      sourceUrl: finding.sources[0]!.url, retrievedAt: page.retrievedAt, contentHash: page.contentHash, status: 'source_observed' }]
+    const publish = () => projectGuideRecord({ ...saved.record, payload: { ...guide,
+      publication: buildGuidePublication(saved.record, guide, [source]) } })
+    expect(JSON.stringify(publish())).toContain('主体、条件及出行日适用性未审查')
+    finding.claimEvidence[0]!.quote = 'Invented 100 JPY'
+    expect(JSON.stringify(publish())).not.toContain('Invented')
+    expect(JSON.stringify(publish())).not.toContain('100 JPY')
+    delete finding.sources[0]!.page
+    expect(JSON.stringify(publish())).not.toContain('100 JPY')
+  })
+})
 
 describe('exploration scope and required evidence', () => {
   it('saves and durably verifies without an optional exploratory event', async () => {

@@ -4,6 +4,8 @@
 
 ## 从这里开始
 
+- [攻略发布合同 ADR 0024](adr/0024-guide-publication-contract.md) 与 [G1 冻结验收 v1](design/budget-travel-agent/G1_PUBLICATION_RUBRIC_V1.md)：9月21日独立诊断后的修正范围，验证见 progress。
+
 - [当前项目上下文](PROJECT_CONTEXT.md)：代码现状与已知边界。
 - [当前架构修改方案](design/budget-travel-agent/RUNTIME_PLAN.md)：先精简现有流程，再跑通、测量、案例评估，最后决定是否试验 DSH。
 - [唯一开发计划](design/budget-travel-agent/DPS.md)、[测试与评估协议](design/budget-travel-agent/EVALUATION.md)、[进度](design/budget-travel-agent/progress.md)。

@@ -102,6 +102,15 @@ describe('Artifact time presentation', () => {
     expect(JSON.parse(artifactReadingContent(stored)).payload).toEqual(stored.payload)
   })
 
+  it('public research reads expose only attributed references; internal Agent reads retain audit material', () => {
+    const stored = artifact('research', { findings: [{ id: 'f', title: 'FREE_UNBOUND', summary: 'BUDGET_UNBOUND',
+      sources: [{ title: 'Visitor information', url: 'https://example.com/visit', snippet: 'AUDIT_ONLY', page: { text: 'BODY_AUDIT' } }] }] }, 2)
+    const output = JSON.stringify(presentArtifact(stored))
+    expect(output).toContain('Visitor information')
+    for (const hidden of ['FREE_UNBOUND', 'BUDGET_UNBOUND', 'AUDIT_ONLY', 'BODY_AUDIT']) expect(output).not.toContain(hidden)
+    expect(artifactReadingContent(stored)).toContain('BUDGET_UNBOUND')
+  })
+
   it('bounds projections for oversized stored payloads', () => {
     const stored = artifact('route_set', { edges: Array.from({ length: MAX_AIRPORT_TIME_VIEWS + 1 }, () => ({
       from: { id: 'PVG' }, to: { id: 'NRT' }, departureAt: edge.departureAt

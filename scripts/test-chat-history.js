@@ -80,6 +80,7 @@ function travelGuide(overrides = {}) {
     sources: [source],
     source: 'web',
     warnings: [],
+    publication: { version: 1, artifactId: 'guide-artifact-1', tripContextVersion: 1, contentContract: 'limited', evidenceCoverage: 'partial', budgetAssessment: { status: 'undetermined', knownSubtotal: null, scopeCoverage: 'incomplete', notice: '预算尚未完整核算。' }, legacy: false, reply: '已发布攻略。' },
     ...overrides
   }
 }
@@ -132,10 +133,31 @@ check('当前会话 ID 可独立指向新空会话', sanitizeHistoryPayload({ ve
 console.log('\n【本地会话缓存】攻略轮次与来源边界')
 const guideSession = session('guide')
 const guide = travelGuide()
+guideSession.timeline[0].assistant = { role: 'assistant', content: '旧缓存攻略保证预算 900 元。' }
 guideSession.timeline[0].travelGuide = guide
 const guideRestored = sanitizeHistoryPayload({ version: 1, currentSessionId: 'guide', sessions: [guideSession] }).sessions[0]
-check('攻略可随 v1 会话持久化恢复', guideRestored?.timeline[0]?.travelGuide?.summary.en === guide.summary.en
-  && guideRestored?.timeline[0]?.travelGuide?.days[0]?.items[0]?.sources[0]?.domain === 'example.com')
+check('带发布绑定的攻略可随 v1 会话持久化恢复', guideRestored?.timeline[0]?.travelGuide?.summary.en === guide.summary.en
+  && guideRestored?.timeline[0]?.travelGuide?.days[0]?.items[0]?.sources[0]?.domain === 'example.com'
+  && guideRestored?.timeline[0]?.assistant?.content === '已发布攻略。')
+
+const legacyGuideSession = session('legacy-guide')
+legacyGuideSession.timeline[0].travelGuide = travelGuide({ publication: undefined })
+const legacyGuideRestored = sanitizeHistoryPayload({ version: 1, currentSessionId: 'legacy-guide', sessions: [legacyGuideSession] }).sessions[0]
+check('旧攻略正文注入在本地恢复时被丢弃', legacyGuideRestored != null && legacyGuideRestored.timeline[0]?.travelGuide === undefined)
+
+const legacyReplySession = session('legacy-guide-reply')
+legacyReplySession.timeline[0].assistant = { role: 'assistant', content: '预算只要 900 元，保证全程不超支。' }
+legacyReplySession.timeline[0].artifactRefs = [{ id: 'guide-artifact-1', type: 'travel_guide', schemaVersion: 1, tripContextVersion: 1, presentationHint: 'travel_guide' }]
+const legacyReplyRestored = sanitizeHistoryPayload({ version: 1, currentSessionId: 'legacy-guide-reply', sessions: [legacyReplySession] }).sessions[0]
+check('旧攻略关联的助手预算承诺被替换为静态提示', legacyReplyRestored?.timeline[0]?.assistant?.content.includes('预算与攻略正文已隐藏')
+  && !legacyReplyRestored?.timeline[0]?.assistant?.content.includes('900'))
+
+const nestedGuideReplySession = session('nested-guide-reply')
+nestedGuideReplySession.timeline[0].assistant = { role: 'assistant', content: '预算承诺 100 元。' }
+nestedGuideReplySession.timeline[0].delivery = { status: 'partial', artifactIds: [], missing: [], warnings: [], goals: [{ status: 'partial', kind: 'travel_guide', artifactIds: [], missing: [], warnings: [] }] }
+const nestedGuideReplyRestored = sanitizeHistoryPayload({ version: 1, currentSessionId: 'nested-guide-reply', sessions: [nestedGuideReplySession] }).sessions[0]
+check('聚合 delivery goals 中的旧攻略助手回复也被隐藏', nestedGuideReplyRestored?.timeline[0]?.assistant?.content.includes('预算与攻略正文已隐藏')
+  && !nestedGuideReplyRestored?.timeline[0]?.assistant?.content.includes('100'))
 
 const spoofedDomainSession = session('spoofed-domain')
 const spoofedDomainSource = {

@@ -1,4 +1,7 @@
 import { AppError } from '../lib/errors.js'
+import { v7 as uuidv7 } from 'uuid'
+import { travelGuideArtifactPayloadSchema } from '../travel-guides/artifact.js'
+import { admittedResearch, buildGuidePublication } from '../travel-guides/publication.js'
 import { TripContextVersionConflict, type TripContextRepository } from '../trips/repository.js'
 import type { TripContext } from '../trips/types.js'
 import { assertArtifactContextVersion, assertArtifactSourceContext, type ArtifactRecord, type ArtifactRepository, type ArtifactType, type CreateArtifactInput } from './repository.js'
@@ -85,10 +88,20 @@ export async function saveWorkspaceArtifact(
   options?: { researchAuditId?: string }
 ): Promise<ArtifactRecord> {
   assertArtifactContextVersion({ tripContextVersion: scope.tripContextVersion, payload: input.payload }, scope.tripContextVersion)
+  const sources: ArtifactRecord[] = []
   for (const id of new Set(input.sourceArtifactIds)) {
     const source = await scope.artifacts.getForScope(id, { tripId: scope.tripId })
     if (!source) throw new AppError('RESOURCE_NOT_FOUND', 'Source artifact was not found', 404)
     assertWorkspaceArtifactVersion(scope, source)
+    sources.push(source)
+  }
+  if (input.type === 'travel_guide' && input.schemaVersion === 1) {
+    const parsed = travelGuideArtifactPayloadSchema.safeParse(input.payload)
+    if (parsed.success) {
+      const id = input.id ?? uuidv7()
+      input = { ...input, id, payload: { ...parsed.data,
+        publication: buildGuidePublication({ id, tripContextVersion: scope.tripContextVersion }, parsed.data, admittedResearch(sources)) } }
+    }
   }
   await checkpoint(scope)
   const create = {
