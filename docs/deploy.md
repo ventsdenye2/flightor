@@ -10,6 +10,8 @@
 
 ## 本地
 
+2026-09-21 G1 环境补验：当前专用验收库 `127.0.0.1:63432/flightor_g1_publication_acceptance_20260921` 可用，定向 4 项通过；Docker 管理接口仍超时，不要用下面的 Compose 命令重建或停止仍承载原 tmpfs 实验库的容器。微信 SDK 自动化 9432 已能操作本项目；用户已开启 32348 服务端口，官方 CLI 端口发现仍异常。固定结果 UI 测试使用合成登录和请求拦截，不依赖生产 API，不能声称后端服务/真实微信认证已调通。具体复现及边界见 [平台环境报告](design/budget-travel-agent/G1_PUBLICATION_H5_2026-09-21.md)。
+
 在根目录：
 ```powershell
 docker compose up -d --build

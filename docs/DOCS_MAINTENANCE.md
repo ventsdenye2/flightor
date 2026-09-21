@@ -21,6 +21,8 @@
 
 ## 检查入口
 
+2026-09-21：新增 `scripts/qa-g1-publication-weapp.cjs` 复用已保存公开投影，在实际开发者工具检查双入口详情和页面 reLaunch 恢复。连接已启用的 9432，需未登录模拟器；登录和全部 wx.request 被 mock，不访问真实 Provider。保存文本/截图/阶段耗时，结束后退出合成身份、恢复原 storage/页面并撤销 mock。`output/weapp/` 与既有 Playwright 输出一样忽略提交。实际运行、两次保留失败和未测范围见 [平台报告](design/budget-travel-agent/G1_PUBLICATION_H5_2026-09-21.md)；本轮无产品功能/架构变更。
+
 2026-09-21：G1 runner 保留历史 `status` 兼容字段，新增 `acceptance` 分列 `persistence`、`content=not_assessed`、`platform=not_assessed` 与 rubricVersion。脚本不能仅因保存/恢复成功推断内容或平台通过；此批仅离线语法检查，不触发新 live。
 
 ```powershell

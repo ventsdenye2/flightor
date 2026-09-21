@@ -28,6 +28,7 @@ dist-h5/
 dist-h5-replay/
 dist-weapp-demo/
 output/playwright/
+output/weapp/
 tools/demo-video/public/*.wav
 tools/demo-video/public/shots/
 tools/demo-video/public/mix.wav
