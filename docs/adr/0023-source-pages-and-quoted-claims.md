@@ -27,3 +27,7 @@ Research source 可选 `page={text,retrievedAt,contentHash}`；哈希为规范�
 每页 HTTP 记录 research-source-read span，嵌入原 research_destination 阶段，不与父耗时相加。读取公开网页不占 SerpApi 搜索次数，亦不是新的模型调用；仍有 4 页硬上限。原 US$2 累计账本不清零。
 
 验收 runner 新增 `G1_CASE=self-ticket|selected-flight`，只选择既定输入，不改变其文本或额度；省略仍跑两例。单例通过不能冒充完整两例 G1。HTTP 403 或其他失败明确记录，不能用 Codex web 工具代替应用 reader 成功。
+
+## 真实复验暴露的未封闭路径
+
+[9月21日单例](../design/budget-travel-agent/G1_SOURCE_RETEST_2026-09-21.md) 仍在无claimEvidence时输出具体票价。当前可选字段合同只校验已声明证据，不证明散文不存在未声明事实；预算文字也未受结构合计约束。G1因此不放行，后续需结构化用户事实输出，不能把此ADR称为完整事实核验。

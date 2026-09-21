@@ -46,3 +46,5 @@ Proposed ADR 和本轮方案描述目标，不代表当前代码已生效。ADR 
 HANDOFF 文件、DEMO_STATUS、PHASE789/UI_PARITY 验收和 experiments 是各自日期的记录，不是最新生产承诺。索引与处置见 [文档清理记录](DOCS_MAINTENANCE.md)。旧后端、旧部署及多城方案保存在 [archive](archive/README.md)，原路径已纠正或改为兼容入口。演示视频暂停，demo 文档不能触发新执行任务。
 
 2026-09-21：新增 [攻略引用适用性 ADR 0022](adr/0022-guide-source-applicability.md)，当前事实有效性仍需核实，G1 未放行。
+
+最近实测：[9月21日正文接入单例复验](design/budget-travel-agent/G1_SOURCE_RETEST_2026-09-21.md)，持久通过但内容仍失败，搜索累计额度已满。

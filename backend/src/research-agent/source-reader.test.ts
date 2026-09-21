@@ -41,3 +41,33 @@ describe('PublicResearchSourceReader', () => {
     await expect(timed.read('https://example.com')).rejects.toHaveProperty('name', 'SOURCE_TIMEOUT')
   })
 })
+
+
+it('pins public addresses without blocking whole /8 ranges containing documentation networks', async () => {
+  for (const address of ['203.1.2.3', '198.51.99.1', '192.2.1.1']) {
+    const request = vi.fn(async () => response('ok'))
+    const reader = new PublicResearchSourceReader({ resolve: async () => [address], request })
+    await expect(reader.read('https://example.com/path')).resolves.toMatchObject({ text: 'ok' })
+    expect(request).toHaveBeenCalledWith(expect.objectContaining({ hostname: address, servername: 'example.com', path: '/path' }))
+  }
+  for (const address of ['203.0.113.1', '198.51.100.1', '192.0.2.1', '239.1.2.3', '240.1.2.3']) {
+    const request = vi.fn(async () => response('bad'))
+    await expect(new PublicResearchSourceReader({ resolve: async () => [address], request }).read('https://example.com'))
+      .rejects.toHaveProperty('name', 'SOURCE_DNS_REJECTED')
+    expect(request).not.toHaveBeenCalled()
+  }
+})
+
+it('bounds stalled bodies and avoids DNS for an already cancelled read', async () => {
+  const resolve = vi.fn(async () => ['93.184.216.34'])
+  const controller = new AbortController(); controller.abort()
+  await expect(new PublicResearchSourceReader({ resolve }).read('https://example.com', { signal: controller.signal }))
+    .rejects.toHaveProperty('name', 'SOURCE_CANCELLED')
+  expect(resolve).not.toHaveBeenCalled()
+  let requestSignal: AbortSignal | undefined
+  const stalled = new PublicResearchSourceReader({ timeoutMs: 5, resolve,
+    request: async ({ signal }) => { requestSignal = signal; return { statusCode: 200, headers: { 'content-type': 'text/plain' },
+      body: { [Symbol.asyncIterator]: () => ({ next: () => new Promise<IteratorResult<Uint8Array>>(() => {}) }) } } } })
+  await expect(stalled.read('https://example.com')).rejects.toHaveProperty('name', 'SOURCE_TIMEOUT')
+  expect(requestSignal?.aborted).toBe(true)
+})

@@ -55,3 +55,5 @@ G1 后续合同修复已增加可选 `requiredEvidenceTypes`，显式区分探�
 
 
 2026-09-21：SerpApi 主研究路径增加有界正文读取及 `claimEvidence` 原文绑定，读到正文不升级为当前/未来事实已核实。攻略共享 validator 拒绝声明出处错误和同对象冲突；保持 reference_only。接入、限制与兼容见 [ADR 0023](adr/0023-source-pages-and-quoted-claims.md)。
+
+最新[9月21日单例](design/budget-travel-agent/G1_SOURCE_RETEST_2026-09-21.md)实际保存/恢复通过但内容未过；具体票价可以省略claimEvidence出现在散文中，预算结论缺计算，英文元叙述仍存在。搜索累计24/24已满。Docker异常导致专用临时容器清理未确认，见报告准确标识。

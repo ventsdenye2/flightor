@@ -7,3 +7,5 @@ The reader accepts HTTPS URLs on port 443 without credentials, resolves public I
 The request is observed as `http/research-source-read`. Tests cover unsafe URLs, private or mixed DNS answers, redirects, encoding/content type, body limits, cancellation, timeout, and HTML entity/tag extraction. Real DNS/TLS/provider reachability and integration into native research synthesis remain unverified by these unit tests.
 
 2026-09-21 integrated checks: 8 reader tests passed; full backend 99 files / 783 tests passed in 87.00 s. Real application reader: Meiji Jingu HTTPS body read succeeded in 1.748 s; Tokyo Metro returned HTTP 403 in 0.790 s. The latter remains an explicit failure, not a verified price. Native research was not changed.
+
+Post-live review narrowed documentation-network rejection to the actual subnets instead of entire 203/8 and adjacent public ranges; 10 targeted reader tests passed in 0.653 s, including pinned transport arguments, pre-cancel and stalled-body deadline. This follow-up was not used to relabel the frozen live result.
