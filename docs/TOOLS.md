@@ -550,3 +550,8 @@ compatible evidence or explain the interruption; changing research questions
 does not remove a provider limit. Workspace messages retain safe stop reasons
 and warning codes for the same failure display after restoring a conversation.
 Route, research, guide and destination Artifacts now have client renderers. Cloud workspace restoration retains Artifact references and generation runs. Discovery runs constrained research through a dedicated Worker job and requires human publication; it adds no autonomous publish tool to the Planner registry. See [ADR 0008](./adr/0008-route-discovery-and-cloud-workspaces.md).
+
+
+## 2026-09-21：攻略引用资料适用性
+
+新攻略每条日程及 supportingEvidence 由服务端写入 `sourceApplicability`，仅支持 `reference_only` 和固定说明。来源核验/检索时间不证明价格、开放时间、交通时长的当前或出行日适用性。新 v3 builder 的保存及完成共用检查，Planner 不能自行提升；旧记录仍可读，客户端保守展示。语义、兼容/回滚和未实现的正文时效复核见 [ADR 0022](adr/0022-guide-source-applicability.md)。这不是 G1 内容或平台已验收。

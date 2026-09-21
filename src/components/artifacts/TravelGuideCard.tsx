@@ -1,7 +1,7 @@
 import { View, Text } from '@tarojs/components'
 import type { ArtifactEnvelope } from '../../services/artifactService'
 import { ArtifactCard } from './ArtifactCard'
-import { displayGuideTime, displayLocation, displaySupportingEvidence, displayTravelGuideBudget, firstText, numberValue, record, records } from './payload'
+import { displayGuideTime, displayLocation, displaySupportingEvidence, displayTravelGuideBudget, firstText, formatResearchDescription, numberValue, record, records } from './payload'
 import './TravelGuideCard.scss'
 
 export interface TravelGuideCardProps {
@@ -41,11 +41,14 @@ export function TravelGuideCard({ artifact, onAction }: TravelGuideCardProps) {
                 <Text className='artifact-guide__city'>{city ?? 'City not provided'}</Text>
               </View>
               {firstText(day.theme) ? <Text className='artifact-guide__theme'>{firstText(day.theme)}</Text> : null}
-              {items.slice(0, 2).map((item, itemIndex) => (
-                <Text key={firstText(item.id) ?? `${firstText(item.title) ?? 'item'}-${itemIndex}`} className='artifact-guide__item'>
-                  {displayGuideTime(item.timeOfDay) ? `${displayGuideTime(item.timeOfDay)} · ` : ''}{firstText(item.title) ?? 'Activity title unavailable'}
-                </Text>
-              ))}
+              {items.slice(0, 2).map((item, itemIndex) => {
+                const description = formatResearchDescription(firstText(item.description, item.summary, item.planningNote), item.sourceApplicability)
+                return <View key={firstText(item.id) ?? `${firstText(item.title) ?? 'item'}-${itemIndex}`} className='artifact-guide__item'>
+                  <Text>{displayGuideTime(item.timeOfDay) ? `${displayGuideTime(item.timeOfDay)} · ` : ''}{firstText(item.title) ?? 'Activity title unavailable'}</Text>
+                  {description.description ? <Text className='artifact-guide__item-copy'>{description.description}</Text> : null}
+                  {description.notice ? <Text className='artifact-guide__applicability'>{description.notice}</Text> : null}
+                </View>
+              })}
               {firstText(day.notes) ? <Text className='artifact-guide__more'>{firstText(day.notes)}</Text> : null}
               {items.length === 0 && !firstText(day.notes) ? <Text className='artifact-guide__item'>No activity details returned.</Text> : null}
             </View>
@@ -53,7 +56,7 @@ export function TravelGuideCard({ artifact, onAction }: TravelGuideCardProps) {
         })}
         {days.length > 3 && <Text className='artifact-guide__more'>Showing 3 of {days.length} returned days</Text>}
       </View>
-      {evidence.length ? <View className='artifact-guide__evidence'><Text className='artifact-guide__section-title'>实用与补充信息</Text>{evidence.map(item => <View key={`${item.sourceArtifactId}-${item.sourceFindingId}`} className='artifact-guide__evidence-item'><Text className='artifact-guide__evidence-title'>{item.title}</Text><Text className='artifact-guide__evidence-copy'>{item.description}</Text><Text className='artifact-guide__caption'>{item.category} · {item.verification === 'verified' ? '已核验' : item.verification === 'partial' ? '部分核验' : item.verification === 'stale' ? '资料已过期' : '待核验'}{item.destinations.length ? ` · ${item.destinations.join('、')}` : ''}</Text></View>)}</View> : null}
+      {evidence.length ? <View className='artifact-guide__evidence'><Text className='artifact-guide__section-title'>实用与补充信息</Text>{evidence.map(item => <View key={`${item.sourceArtifactId}-${item.sourceFindingId}`} className='artifact-guide__evidence-item'><Text className='artifact-guide__evidence-title'>{item.title}</Text><Text className='artifact-guide__evidence-copy'>{item.description}</Text><Text className='artifact-guide__applicability'>{item.sourceApplicabilityNotice}</Text><Text className='artifact-guide__caption'>{item.category} · {item.verification === 'verified' ? '已核验' : item.verification === 'partial' ? '部分核验' : item.verification === 'stale' ? '资料已过期' : '待核验'}{item.destinations.length ? ` · ${item.destinations.join('、')}` : ''}</Text></View>)}</View> : null}
     </ArtifactCard>
   )
 }

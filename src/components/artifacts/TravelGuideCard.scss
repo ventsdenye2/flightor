@@ -14,4 +14,6 @@
   &__theme { display: block; margin-top: 12rpx; color: var(--color-text-primary, #fff); font-size: 26rpx; line-height: 1.5; }
   &__item, &__more { display: block; margin-top: 10rpx; color: var(--color-text-secondary, rgba(235, 235, 245, .68)); font-size: 24rpx; line-height: 1.45; }
   &__item::before { content: '• '; color: #45c6cb; }
+  &__item-copy, &__applicability { display: block; margin-top: 4rpx; font-size: 21rpx; line-height: 1.45; }
+  &__applicability { color: #a77722; }
 }

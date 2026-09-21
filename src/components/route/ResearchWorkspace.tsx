@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button, View, Text } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import type { ArtifactEnvelope } from '../../services/artifactService'
-import { displayGuideTime, displayLocation, firstText, record, records, strings } from '../artifacts/payload'
+import { displayGuideTime, displayLocation, firstText, formatResearchDescription, record, records, strings } from '../artifacts/payload'
 import './RouteWorkspace.scss'
 
 function verificationStatusLabel(status: string | undefined): string {
@@ -51,7 +51,7 @@ export function ResearchWorkspace({ artifact }: { artifact: ArtifactEnvelope }) 
     {item ? <View className='route-workspace__section'>
       <Text className='route-workspace__heading'>{firstText(item.title) ?? '活动详情'}</Text>
       {firstText(item.planningNote) ? <Text>安排建议：{firstText(item.planningNote)}</Text> : null}
-      <Text>{firstText(item.summary, item.description) ?? '这是你希望安排的活动，具体内容待进一步核实。'}</Text>
+      {(() => { const description = formatResearchDescription(firstText(item.summary, item.description), item.sourceApplicability); return <><Text>{description.description || '这是你希望安排的活动，具体内容待进一步核实。'}</Text><Text className='route-workspace__muted'>{description.notice}</Text></> })()}
       {verification && <Text className='route-workspace__muted'>核验状态：{verificationStatusLabel(firstText(verification.status))}{firstText(verification.checkedAt) ? ` · ${firstText(verification.checkedAt)}` : ''}</Text>}
       {strings(item.warnings, 20).map(w => <Text key={w} className='route-workspace__warning'>{w}</Text>)}
       {sourceUrls.map((url, index) => <Button key={url} className='route-workspace__action' hoverClass='route-workspace__control--pressed' ariaLabel={`复制第 ${index + 1} 个资料链接`} onClick={() => copySourceUrl(url)}>复制资料链接</Button>)}

@@ -9,10 +9,11 @@ export interface TripFlightPresentation {
 }
 export interface Activity {
   id: string; name: string; time: string | null; until: string | null; category: string; summary: string
+  sourceApplicabilityNotice: string
   latitude?: number | null; longitude?: number | null; media: MediaPresentation | null; source: SourcePresentation | null
 }
 export interface TripBudgetPresentation { amount: number; currency: string; scope: 'airfare' | 'transport' | 'trip'; label: string }
-export interface SupportingEvidencePresentation { title: string; description: string; category: string; destinations: string[]; verification: 'verified' | 'partial' | 'stale' | 'unverified' }
+export interface SupportingEvidencePresentation { title: string; description: string; sourceApplicabilityNotice: string; category: string; destinations: string[]; verification: 'verified' | 'partial' | 'stale' | 'unverified' }
 export interface TripDay { id: string | number; label: string; title: string; subtitle: string; status: 'ready' | 'pending'; activities: Activity[] }
 export interface TripPresentation {
   id: string; title: string; destination: string; country?: string; route: string[]

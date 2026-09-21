@@ -57,6 +57,10 @@ const requestStub = async options => {
 
 const airportTime = loadTypeScript('src/services/airportTime.ts')
 const flightConnections = loadTypeScript('src/services/flightConnections.ts')
+const payload = loadTypeScript('src/components/artifacts/payload.ts', {
+  '../../services/airportTime': { airportTimeDisplay: () => null, isUnconfirmedField: () => false },
+  '../../services/flightConnections': { flightConnections: () => [] }
+})
 const service = loadTypeScript('src/services/artifactService.ts', {
   './airportTime': airportTime,
   '../utils/request': { request: requestStub }
@@ -76,6 +80,12 @@ const flightService = loadTypeScript('src/services/flightService.ts', {
 })
 
 console.log('\n【Artifact envelope】bounded validation')
+console.log('\n【Source applicability formatter】conservative compatibility')
+const expectedApplicability = '以下为来源资料摘要；其中价格、开放时间和交通时长的当前及出行日适用性尚未核实，请以运营方届时公告为准。'
+check('uses the fixed notice for old and malformed applicability fields', payload.formatResearchDescription('原始资料', undefined).notice === expectedApplicability && payload.formatResearchDescription('原始资料', { status: 'verified', notice: '已核验' }).notice === expectedApplicability)
+check('preserves source text while keeping the fixed notice separate', payload.formatResearchDescription(`原始资料。${expectedApplicability}`, { status: 'reference_only', notice: expectedApplicability }).description.endsWith(expectedApplicability) && payload.formatResearchDescription(`原始资料。${expectedApplicability}`).notice === expectedApplicability)
+const displayEvidence = payload.displaySupportingEvidence([{ sourceArtifactId: 'a', sourceFindingId: 'f', title: '交通', description: '机场到市区', category: 'practical', verification: { status: 'verified' }, sourceApplicability: { status: 'reference_only', notice: '任意提示' } }])
+check('normalizes supporting evidence with a conservative notice', displayEvidence[0]?.sourceApplicabilityNotice === expectedApplicability)
 const valid = {
   id: 'artifact-1', tripId: 'trip-1', type: 'flight_search', schemaVersion: 1,
   payload: { id: 'artifact-1', type: 'flight_search', offers: [] },

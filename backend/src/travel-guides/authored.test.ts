@@ -1,9 +1,11 @@
+import { artifactReadingContent } from '../artifacts/presentation.js'
+import { sourceApplicability } from './source-applicability.js'
 import { describe, expect, it } from 'vitest'
 import { v7 as uuidv7 } from 'uuid'
 import { InMemoryArtifactRepository } from '../artifacts/repository.js'
 import { createArtifactWorkspace } from '../artifacts/workspace.js'
 import type { LocationRef } from '../aviation/types.js'
-import type { ResearchArtifact } from '../research-agent/types.js'
+import { researchArtifactSchema, type ResearchArtifact } from '../research-agent/types.js'
 import { tripRoutePlanPayloadSchema } from '../trip-planning/types.js'
 import { InMemoryTripContextRepository } from '../trips/repository.js'
 import { emptyTripContext } from '../trips/types.js'
@@ -215,5 +217,53 @@ describe('authored guide supporting evidence and budget', () => {
     })
     expect(await test.save()).toMatchObject({ status: 'needs_revision', issues: ['guide_ambiguous_finding'] })
     expect((await test.artifacts.listForTrip(test.trip.id)).map(record => record.type)).toEqual(['research'])
+  })
+})
+
+
+describe('source reference applicability', () => {
+  it('keeps even verified recent price/hour references explicitly unconfirmed for this trip', async () => {
+    const test = await fixture(source => {
+      source.findings[0]!.summary = 'Museum is always open; admission 20 EUR.'
+      source.findings[1]!.summary = 'One day pass costs 900 yen; express train about 60 minutes.'
+      for (const finding of source.findings) finding.verification.checkedAt = new Date().toISOString()
+    })
+    const result = await test.save()
+    if (result.status !== 'saved') throw new Error('Expected saved guide')
+    for (const item of [...result.payload.days[0]!.items, ...result.payload.supportingEvidence!]) {
+      expect(item.sourceApplicability).toEqual(sourceApplicability())
+      expect(item.verification.status).toBe('verified')
+      expect(item.description).toBe(test.source.findings.find(f => f.id === item.sourceFindingId)!.summary)
+    }
+    expect(await test.verify()).toMatchObject({ status: 'satisfied' })
+  })
+
+  it.each(['visit', 'support'] as const)('rejects removal of the %s reference qualification on durable revalidation', async location => {
+    const test = await fixture()
+    const result = await test.save()
+    if (result.status !== 'saved') throw new Error('Expected saved guide')
+    const guide = structuredClone(result.payload)
+    const item = location === 'visit' ? guide.days[0]!.items[0]! : guide.supportingEvidence![0]!
+    delete item.sourceApplicability
+    const route = tripRoutePlanPayloadSchema.parse((await test.artifacts.get(guide.routeArtifactId))!.payload)
+    expect(validateGuideContent({ guide, route, research: new Map([[test.source.id, researchArtifactSchema.parse(test.source)]]), trip: test.trip, constraints }))
+      .toMatchObject({ status: 'failed', missing: expect.arrayContaining(['guide_source_applicability_missing']) })
+    expect(travelGuideArtifactPayloadSchema.safeParse({ ...guide, builderVersion: 'agent-authored-guide-v2' }).success).toBe(true)
+    guide.builderVersion = 'agent-authored-guide-v2'
+    expect(validateGuideContent({ guide, route, research: new Map([[test.source.id, researchArtifactSchema.parse(test.source)]]), trip: test.trip, constraints }).status).toBe('satisfied')
+    const readable = JSON.parse(artifactReadingContent({ ...result.record, payload: guide }))
+    const readItem = location === 'visit' ? readable.payload.days[0].items[0] : readable.payload.supportingEvidence[0]
+    expect(readItem.sourceApplicability).toEqual(sourceApplicability())
+    expect(item.sourceApplicability).toBeUndefined()
+  })
+
+  it('does not allow model input or serialized evidence to promote reference applicability', async () => {
+    const test = await fixture()
+    const result = await test.save()
+    if (result.status !== 'saved') throw new Error('Expected saved guide')
+    expect(authoredGuideInputSchema.safeParse({ ...test.input, sourceApplicability: { status: 'verified' } }).success).toBe(false)
+    const guide = structuredClone(result.payload)
+    Object.assign(guide.supportingEvidence![0]!.sourceApplicability!, { status: 'verified' })
+    expect(travelGuideArtifactPayloadSchema.safeParse(guide).success).toBe(false)
   })
 })

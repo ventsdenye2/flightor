@@ -1,3 +1,4 @@
+import { sourceApplicabilitySchema } from './source-applicability.js'
 import type { LocationRef } from '../aviation/types.js'
 import { requiredGuideEvidenceTypes } from '../agent/goals/types.js'
 import { cityGroupingIdentity, locationsOverlap } from '../locations/identity.js'
@@ -57,7 +58,7 @@ export function validateGuideContent(input: {
   const datesConsistent = tripDatesConsistent(trip)
   if (!datesConsistent) reject('trip_dates_inconsistent', { fieldPath: 'trip.dates', blockedChecks: ['research_travel_window', 'guide_day_coverage'] })
   // Old persisted v1 guides remain readable. New authored guides must carry the server budget snapshot.
-  if (guide.budget || (guide.builderVersion === 'agent-authored-guide-v2' && trip.budget)) {
+  if (guide.budget || (['agent-authored-guide-v2', 'agent-authored-guide-v3'].includes(guide.builderVersion) && trip.budget)) {
     if (!trip.budget || !guide.budget || guide.budget.amount !== trip.budget.amount
       || guide.budget.currency !== trip.budget.currency || guide.budget.scope !== trip.budget.scope
       || guide.budget.partyBasis !== 'unspecified' || guide.budget.period !== 'trip_total') {
@@ -144,6 +145,11 @@ export function validateGuideContent(input: {
         || ('destinations' in item && JSON.stringify(item.destinations) !== JSON.stringify(finding.destinations))
         || JSON.stringify(finding.verification) !== JSON.stringify(item.verification)) {
         reject('guide_item_evidence_mismatch', detail)
+        return false
+      }
+      if ((item.sourceApplicability !== undefined || ['agent-authored-guide-v3', 'travel-guide-v3'].includes(guide.builderVersion))
+        && !sourceApplicabilitySchema.safeParse(item.sourceApplicability).success) {
+        reject('guide_source_applicability_missing', detail)
         return false
       }
       const reference = `${item.sourceArtifactId}:${item.sourceFindingId}`

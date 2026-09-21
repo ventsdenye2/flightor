@@ -1,3 +1,4 @@
+import { sourceApplicability } from './source-applicability.js'
 import { createHash } from 'node:crypto'
 import type { LocationRef, VerificationRecord } from '../aviation/types.js'
 import { locationsOverlap } from '../locations/identity.js'
@@ -12,7 +13,7 @@ import {
   type TravelGuideBuilderContext
 } from './artifact.js'
 
-const BUILDER_VERSION = 'travel-guide-v2'
+const BUILDER_VERSION = 'travel-guide-v3'
 
 function sameLocation(left: LocationRef, right: LocationRef): boolean {
   return locationsOverlap(left, right, CURATED_LOCATION_IDENTITY_POLICY)
@@ -132,6 +133,7 @@ export class DeterministicTravelGuideBuilder implements TravelGuideBuilder {
           reason: reasonFor(finding.category),
           sourceArtifactId: finding.artifactId,
           sourceFindingId: finding.id,
+          sourceApplicability: sourceApplicability(),
           verification: finding.verification
         }))
       }

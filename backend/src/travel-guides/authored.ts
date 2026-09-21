@@ -1,3 +1,4 @@
+import { sourceApplicability } from './source-applicability.js'
 import { createHash } from 'node:crypto'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
@@ -123,7 +124,7 @@ export async function saveAuthoredTravelGuide(
         id: `guide_${createHash('sha256').update(`${sourceId}:${finding.id}:${day.day}`).digest('hex').slice(0, 24)}`,
         title: finding.title, description: finding.summary, city, category: finding.category,
         reason: choice.requestedActivityIds?.length ? 'user_requested' as const : 'interest_match' as const,
-        sourceArtifactId: sourceId, sourceFindingId: finding.id, verification: finding.verification,
+        sourceArtifactId: sourceId, sourceFindingId: finding.id, verification: finding.verification, sourceApplicability: sourceApplicability(),
         timeOfDay: choice.timeOfDay, planningNote: choice.planningNote
       }]
     })
@@ -133,7 +134,7 @@ export async function saveAuthoredTravelGuide(
     const finding = research.get(reference.researchArtifactId)!.findings.find(value => value.id === reference.findingId)!
     return [{ sourceArtifactId: reference.researchArtifactId, sourceFindingId: finding.id,
       title: finding.title, description: finding.summary, category: finding.category,
-      destinations: finding.destinations, verification: finding.verification }]
+      destinations: finding.destinations, verification: finding.verification, sourceApplicability: sourceApplicability() }]
   })
   const verification = aggregateGuideVerification([...days.flatMap(day => day.items), ...supportingEvidence], now)
   const selectedFlight = scope.selectedFlight
@@ -163,7 +164,7 @@ export async function saveAuthoredTravelGuide(
     stopoverOnly: [], landTransfers: [], unassignedActivityRefs, verification, warnings
   })
   const guide = travelGuideArtifactPayloadSchema.parse({
-    kind: 'trip_travel_guide', schemaVersion: 1, builderVersion: 'agent-authored-guide-v2', composition: 'agent_authored',
+    kind: 'trip_travel_guide', schemaVersion: 1, builderVersion: 'agent-authored-guide-v3', composition: 'agent_authored',
     sourceArtifactIds: [routeId, ...sourceArtifactIds], routeArtifactId: routeId,
     ...(selectedFlight ? {
       flightSelection: {

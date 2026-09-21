@@ -1,7 +1,7 @@
 import type { ArtifactEnvelope } from '../../services/artifactService'
 import type { CloudWorkspace } from '../../services/workspaceService'
 import type { ConversationDelivery } from '../../services/conversationService'
-import { displaySupportingEvidence, displayTravelGuideBudget, firstText, numberValue, record, records, text } from '../../components/artifacts/payload'
+import { displaySupportingEvidence, displayTravelGuideBudget, firstText, formatResearchDescription, numberValue, record, records, text } from '../../components/artifacts/payload'
 import { readRouteArtifact } from '../../services/routeArtifact'
 import type { Activity, PricePresentation, SourcePresentation, TripDay, TripFlightPresentation, TripPresentation } from './presentation'
 import { displayOfferById } from '../../components/artifacts/payload'
@@ -120,9 +120,10 @@ export function savedOfferFlights(artifact: ArtifactEnvelope | undefined, offerI
 }
 function activity(item: Item, index: number): Activity {
   const time = text(item.timeOfDay)
+  const summary = formatResearchDescription(firstText(item.description, item.summary, item.planningNote), item.sourceApplicability)
   return { id: text(item.id) ?? `activity-${index}`, name: firstText(item.title, item.name) ?? '活动待补充',
     time: time ? ({ morning: '上午', afternoon: '下午', evening: '晚上', flexible: '灵活安排' } as Record<string, string>)[time] ?? null : null,
-    until: null, category: text(item.category) ?? '活动', summary: firstText(item.description, item.summary, item.planningNote) ?? '活动资料待补充。',
+    until: null, category: text(item.category) ?? '活动', summary: summary.description || '活动资料待补充。', sourceApplicabilityNotice: summary.notice,
     // The guide contract currently has city coordinates only, not venue coordinates.
     latitude: null, longitude: null, media: null, source: sources(item)[0] ?? null }
 }

@@ -60,6 +60,12 @@
 
 `node scripts/test-planner-publication.cjs` 运行真实组件代码，通过确定性 hooks 与 Taro host stubs 验证等待分支卡片、草稿输入/保留、取消反馈和航段展开。它不启动浏览器、真实 React renderer 或微信设备；平台滚动、样式、输入法与真实网络表现仍待验收。当前所有验证命令和结果见 [progress](budget-travel-agent/progress.md)。
 
+## 来源资料适用性提示（当前实现）
+
+攻略每日条目、活动详情和 `supportingEvidence` 的研究描述旁统一显示固定的保守提示：“以下为来源资料摘要；其中价格、开放时间和交通时长的当前及出行日适用性尚未核实，请以运营方届时公告为准。” `src/components/artifacts/payload.ts` 是共享 formatter；旧数据缺少 `sourceApplicability`、字段格式错误，或提交了声称“已核验”的任意 notice，均回退到这条固定提示。原始 description 保持不改；同一描述已经包含完整提示时不再重复渲染。
+
+该提示说明来源资料的适用性边界，不改变活动或 supporting evidence 的 `verified`、`partial`、`stale` 核验标签，也不把资料中的参考时长当作行程交通时长。formatter、production presentation 适配和生产/Artifact 展示分别由 `test:artifacts` 与 `test:production-presentation` 的定向用例覆盖；这些是离线源码和确定性组件检查，仍不等同真实 Provider、浏览器像素或微信真机验收。
+
 ## B5 展示计时（当前实现）
 
 正式 Plan/PlannerPage 只在本轮已发布引用加载为可用数据、且实际展示分支包含该卡片后，通过 effect 记录首航班/攻略 commit；单纯收到引用、旧已采用航班、空航班结果不计首结果。攻略保存/资料核验状态与整轮 deliveryStatus 分别保留，不能把首卡片当成验收完成。最终 UI 需本轮响应完成且页面退出 busy 后记录。

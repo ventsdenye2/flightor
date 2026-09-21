@@ -30,6 +30,19 @@ export function firstText(...values: unknown[]): string | undefined {
   return values.map(text).find((value): value is string => value !== undefined)
 }
 
+export const SOURCE_APPLICABILITY_NOTICE = '以下为来源资料摘要；其中价格、开放时间和交通时长的当前及出行日适用性尚未核实，请以运营方届时公告为准。'
+
+/**
+ * Research text is reference material even when its verification status says
+ * verified. The backend field is optional for old artifacts, so the UI uses a
+ * fixed conservative notice and never trusts an arbitrary notice string.
+ */
+export function formatResearchDescription(value: unknown, _applicability?: unknown): { description: string; notice: string } {
+  // The backend field is advisory only. Always emit the UI-owned notice so a
+  // malformed field or source text that merely quotes the notice cannot weaken it.
+  return { description: text(value) ?? '', notice: SOURCE_APPLICABILITY_NOTICE }
+}
+
 const guideTimeLabels: Record<string, string> = { morning: '上午', afternoon: '下午', evening: '晚上', flexible: '灵活安排' }
 
 export function displayGuideTime(value: unknown): string | undefined {
@@ -37,7 +50,7 @@ export function displayGuideTime(value: unknown): string | undefined {
 }
 
 export interface DisplayTravelGuideBudget { amount: number; currency: string; scope: 'airfare' | 'transport' | 'trip'; label: string }
-export interface DisplaySupportingEvidence { sourceArtifactId: string; sourceFindingId: string; title: string; description: string; category: string; destinations: string[]; verification: 'verified' | 'partial' | 'stale' | 'unverified' }
+export interface DisplaySupportingEvidence { sourceArtifactId: string; sourceFindingId: string; title: string; description: string; sourceApplicabilityNotice: string; category: string; destinations: string[]; verification: 'verified' | 'partial' | 'stale' | 'unverified' }
 const guideBudgetScopes: Record<DisplayTravelGuideBudget['scope'], string> = { airfare: '机票', transport: '交通', trip: '全程' }
 
 export function displayTravelGuideBudget(value: unknown): DisplayTravelGuideBudget | undefined {
@@ -69,7 +82,7 @@ export function displaySupportingEvidence(value: unknown): DisplaySupportingEvid
     const category = categoryValue && ({ event: '活动', seasonal: '季节信息', activity: '活动', stopover: '中转建议', practical: '实用信息' } as Record<string, string>)[categoryValue]
     if (!sourceArtifactId || !sourceFindingId || !title || !description || !category) return []
     const destinations = records(item?.destinations, 8).map(destination => firstText(destination.name, destination.city, destination.iata)).filter((value): value is string => value !== undefined)
-    return [{ sourceArtifactId, sourceFindingId, title, description, category, destinations, verification: evidenceVerification(item?.verification) }]
+    return [{ sourceArtifactId, sourceFindingId, title, description, sourceApplicabilityNotice: formatResearchDescription(description, item?.sourceApplicability).notice, category, destinations, verification: evidenceVerification(item?.verification) }]
   })
 }
 

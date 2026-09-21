@@ -1,3 +1,4 @@
+import { sourceApplicability } from './source-applicability.js'
 import { describe, expect, it } from 'vitest'
 import type { LocationRef, VerificationRecord } from '../aviation/types.js'
 import type { ResearchArtifact } from '../research-agent/types.js'
@@ -79,6 +80,8 @@ describe('DeterministicTravelGuideBuilder', () => {
       routeArtifactId: 'route-1', route: route(), researchArtifacts: [research()]
     })
 
+    expect(result.builderVersion).toBe('travel-guide-v3')
+    expect(result.days[0]!.items[0]!.sourceApplicability).toEqual(sourceApplicability())
     expect(result.routeArtifactId).toBe('route-1')
     expect(result.sourceArtifactIds).toEqual(['route-1', 'destination-set-1', 'research-1'])
     expect(result.days.flatMap(day => day.items)).toHaveLength(1)

@@ -1,3 +1,4 @@
+import { sourceApplicability } from '../travel-guides/source-applicability.js'
 import { z } from 'zod'
 import { airportTimeViewSchema, projectAirportTime, type AirportTimeView } from '../aviation/airport-time.js'
 import { projectUnconfirmedFareFields } from '../fares/presentation.js'
@@ -85,10 +86,14 @@ export function artifactReadingContent(record: ArtifactRecord): string {
     if (time) return time
     if (depth > MAX_PAYLOAD_DEPTH || value === null || typeof value !== 'object') return value
     if (Array.isArray(value)) return value.map((child, index) => copy(child, pointer(path, String(index)), depth + 1))
-    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, copy(child, pointer(path, key), depth + 1)]))
+    const projected = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, copy(child, pointer(path, key), depth + 1)]))
+    if (record.type === 'travel_guide' && record.schemaVersion === 1
+      && typeof projected.sourceFindingId === 'string' && typeof projected.description === 'string'
+      && projected.sourceApplicability === undefined) projected.sourceApplicability = sourceApplicability()
+    return projected
   }
   return JSON.stringify({
-    payload: presentation ? copy(record.payload, '', 0) : record.payload,
+    payload: presentation || record.type === 'travel_guide' ? copy(record.payload, '', 0) : record.payload,
     verification: record.verification, createdAt: record.createdAt,
     ...(presentation ? { presentation: { schemaVersion: 1, truncated: presentation.truncated } } : {})
   })

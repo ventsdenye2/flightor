@@ -2988,3 +2988,8 @@ FlightOR should be able to understand that request, research current opportuniti
 
 ## Implementation checkpoint — 2026-09-07, Phase 7–9
 Route Artifact workspaces, cloud Trips/Memory, reviewed Discovery, public Explore adoption and the apps/admin console are implemented. See ADR 0008 and [operation/acceptance](./PHASE789_ACCEPTANCE.md) for concrete scope and unverified deployment/device/provider boundaries. Single-destination outbound generation remains the accepted v1 implementation limit.
+
+
+## 2026-09-21：攻略引用资料适用性
+
+新攻略每条日程及 supportingEvidence 由服务端写入 `sourceApplicability`，仅支持 `reference_only` 和固定说明。来源核验/检索时间不证明价格、开放时间、交通时长的当前或出行日适用性。新 v3 builder 的保存及完成共用检查，Planner 不能自行提升；旧记录仍可读，客户端保守展示。语义、兼容/回滚和未实现的正文时效复核见 [ADR 0022](adr/0022-guide-source-applicability.md)。这不是 G1 内容或平台已验收。

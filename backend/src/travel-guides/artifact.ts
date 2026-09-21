@@ -1,3 +1,4 @@
+import { sourceApplicabilitySchema } from './source-applicability.js'
 import { z } from 'zod'
 import { locationRefSchema, verificationRecordSchema } from '../aviation/types.js'
 import { readableResearchArtifactSchema } from '../research-agent/types.js'
@@ -12,6 +13,7 @@ export const travelGuideArtifactItemSchema = z.object({
   reason: z.enum(['user_requested', 'interest_match', 'event', 'seasonal', 'agent_recommended', 'stopover']),
   sourceArtifactId: z.string().min(1).max(160),
   sourceFindingId: z.string().min(1).max(160),
+  sourceApplicability: sourceApplicabilitySchema.optional(),
   verification: verificationRecordSchema,
   timeOfDay: z.enum(['morning', 'afternoon', 'evening', 'flexible']).optional(),
   planningNote: z.string().trim().min(1).max(500).optional()
@@ -42,6 +44,7 @@ export const travelGuideSupportingEvidenceSchema = z.object({
   description: z.string().min(1).max(1_500),
   category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']),
   destinations: z.array(locationRefSchema).min(1).max(12),
+  sourceApplicability: sourceApplicabilitySchema.optional(),
   verification: verificationRecordSchema
 }).strict()
 

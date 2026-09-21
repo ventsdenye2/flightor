@@ -12,7 +12,7 @@
 | B3 | R04 R05 R09 | `backend/src/agent/tools/authored-travel-guide.ts`、`guide-draft.ts`、`travel-guides/candidates.ts`、`authored.ts`、`validation.ts`、正式 UI adapters | B1/B2；稳定候选引用、supportingRefs、错误分类、局部修订；沿用可表达的 v1 | 现有 practical 可直接补选；无自动研究修复；结构化预算守恒；取消/来源/版本校验保留 | 已实施，离线验证见 progress；真实模型文字质量留 G1/M2 |
 | B4 | R06 R07 R08 | `backend/src/agent/runtime/activity.ts`、`agent/cloud/turns.ts`、`src/services/conversationService.ts`、`src/stores/chatStore.ts`、正式 UI adapter | B3；已提交结果立即进入现有轮询，浏览与输入草稿不全局锁死 | 卡片先于最终复述可见；不发布未提交结果；切账号/修改无迟到污染 | 已实施；离线证据与真实 UI 验收边界见 progress |
 | B5 | R06 R09 | `backend/src/lib/planner-observation.ts`、`agent/runtime`、`providers/openrouter`、`src/services/plannerTelemetry.ts`、客户端渲染点 | B1–B4；基本测量不改变模型/路由 | usage/配置/路由指纹、保存/验收/首结果时刻；嵌套区间去重，未知费用 null | 已实施；离线证据见 progress，正式测量与平台 paint 未验收 |
-| G1 跑通 | R03 R09 | 既有 backend tests、PG suites、UI tests；单次 `backend/scripts/verify-g1-live.mjs`；`progress.md` | B1–B5；先离线，再两条有界真实链路 | 已选航班攻略及自备机票攻略保存、领域验收、刷新恢复；真实费用/失败明确 | 进行中：真实持久契约 2/2，但内容日期硬失败；先修复复验，平台待验收 |
+| G1 跑通 | R03 R09 | 既有 backend tests、PG suites、UI tests；单次 `backend/scripts/verify-g1-live.mjs`；`progress.md` | B1–B5；先离线，再两条有界真实链路 | 已选航班攻略及自备机票攻略保存、领域验收、刷新恢复；真实费用/失败明确 | 进行中：真实持久契约 2/2；旧日期问题已修复，最新价格时效质量未过，平台待验收 |
 | M1 运行测量 | R06 | 拟建 `backend/benchmarks/planner/runner.ts`、manifest/results | G1；实现 EVALUATION 的计时与固定输入 | 端到端与后端耗时区分；A/B 相同配置；先单请求，不混负载 | 待做 |
 | M2 多案例 | 全部 | 拟建 `backend/benchmarks/planner/cases.json` 与 fixtures；EVALUATION | M1；16 案例及 U12 三子案例；冻结事实与小批 live 分开 | 每例有预期、实际、错误、费用和证据；失败/超时入分母 | 待做 |
 | G2 评估 | 全部 | EVALUATION 的批次报告与 progress | M2；按预注册门槛评价性能/质量/返工/维护 | 明确保留 B、继续业务优化或试验 C；不默认接 DSH | 待做 |
@@ -32,3 +32,5 @@ G1 后续修复：已增加显式必需证据类别，保留旧目标语义与�
 按改动选择 backend check/test、独立 test:db、前端 conversation-progress/production-presentation、weapp 构建与真机验收；命令以 package.json 为准。无 TEST_DATABASE_URL 的数据库命令明确失败，不写成通过。未经执行不能引用旧测试数验收新改动。
 
 真实调用使用有效凭证和当前明确额度；旧实验授权不能自动沿用。首轮修改可先完成全部离线验证。测量正式批次必须在 G1 跑通后启动；埋点随开发加入不等于提前进行性能试验。
+
+2026-09-21：推进 G1 引用适用性边界，见 [ADR 0022](../../adr/0022-guide-source-applicability.md)。当前保守标注未知，不等于已完成逐项时效核实；不进入 M1。
