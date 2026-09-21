@@ -48,3 +48,5 @@ HANDOFF 文件、DEMO_STATUS、PHASE789/UI_PARITY 验收和 experiments 是各�
 2026-09-21：新增 [攻略引用适用性 ADR 0022](adr/0022-guide-source-applicability.md)，当前事实有效性仍需核实，G1 未放行。
 
 最近实测：[9月21日正文接入单例复验](design/budget-travel-agent/G1_SOURCE_RETEST_2026-09-21.md)，持久通过但内容仍失败，搜索累计额度已满。
+
+问题咨询：[G1 阻塞说明与 GPT-6 Pro 咨询材料（9月21日）](design/budget-travel-agent/G1_PROBLEM_BRIEF_FOR_GPT6PRO_2026-09-21.md)，汇总真实失败、合同缺口、阶段耗时与待决策问题；不是新实施方案或验收放行。
