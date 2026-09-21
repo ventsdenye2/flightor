@@ -126,7 +126,10 @@ suite('PostgreSQL workspace guide persistence and refresh', () => {
     const result = await service.runTurn({ requestId: `request-${withFlight ? 'flight' : 'self'}`, tripId: trip.id, conversationId: conversation.id,
       generationId: `generation-${withFlight ? 'flight' : 'self'}`, message: '请保存这份每日攻略' })
     expect(result).toMatchObject({ stopReason: 'completed', delivery: { status: 'satisfied', kind: 'travel_guide' } })
-    expect(model.complete).toHaveBeenCalledTimes(2)
+    // A satisfied save now uses the server-owned publication reply shortcut;
+    // the model only emits the save tool call and is not asked for a second
+    // natural-language recap.
+    expect(model.complete).toHaveBeenCalledTimes(1)
     expect(result.artifactRefs).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'travel_guide' })]))
     const guideId = result.artifactRefs.find(ref => ref.type === 'travel_guide')!.id
     const guide = await artifacts.get(guideId)

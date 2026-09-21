@@ -134,6 +134,42 @@ describe('guide public contract', () => {
     delete finding.sources[0]!.page
     expect(JSON.stringify(publish())).not.toContain('100 JPY')
   })
+
+  it('preserves unspaced source names and practical search references without publishing model prose', async () => {
+    const test = await fixture(source => {
+      source.findings[0]!.title = '示例寺与商店街全年免费'
+      source.findings[0]!.sources[0]!.snippet = '参观示例寺后可沿河散步。'
+      source.findings[1]!.summary = 'Model says transport is free'
+      source.findings[1]!.sources[0]!.snippet = 'Use an IC card or individual tickets for subway and bus travel.'
+    })
+    const saved = await test.save()
+    if (saved.status !== 'saved') throw new Error('expected save')
+    const output = projectGuideRecord(saved.record)
+    const text = JSON.stringify(output)
+    expect(text).toContain('来源条目摘录：示例寺')
+    expect(text).toContain('Use an IC card or individual tickets')
+    expect(text).toContain('搜索摘要参考（非网页正文）')
+    expect(text).not.toContain('Model says transport is free')
+    expect(text).not.toContain('全年免费')
+    const guide = travelGuideArtifactPayloadSchema.parse(saved.record.payload)
+    const refs = Object.values(guide.publication!.references)
+    refs[1]![0]!.excerpts[0]!.quote = 'Forged free transport'
+    const corrupted = projectGuideRecord({ ...saved.record, payload: guide })
+    expect(JSON.stringify((corrupted.payload as typeof guide).supportingEvidence)).not.toContain('Forged')
+  })
+
+  it('does not use a corrupted page snapshot to locate a publication name', async () => {
+    const test = await fixture()
+    const saved = await test.save()
+    if (saved.status !== 'saved') throw new Error('expected save')
+    const source = structuredClone(test.source)
+    source.findings[0]!.title = 'Example Museum'
+    source.findings[0]!.sources[0]!.page = { text: 'Example Museum', contentHash: '0'.repeat(64), retrievedAt: source.createdAt }
+    const guide = travelGuideArtifactPayloadSchema.parse(saved.record.payload)
+    const output = projectGuideRecord({ ...saved.record, payload: { ...guide,
+      publication: buildGuidePublication(saved.record, guide, [source]) } })
+    expect(JSON.stringify(output)).not.toContain('Example Museum')
+  })
 })
 
 describe('exploration scope and required evidence', () => {

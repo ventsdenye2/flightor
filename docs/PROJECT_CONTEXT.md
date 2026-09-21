@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-09-21 验收收尾：[报告](design/budget-travel-agent/G1_PUBLICATION_ACCEPTANCE_2026-09-21.md) 记录当前源码的双样本独立 PostgreSQL、P1–P6 与实际 H5 详情/刷新。仅增加来源绑定名称/实用引文的最小表达修正；旧原记录 P5 仍失败，当前写入副本通过最低参考范围。新 Provider、微信开发者工具和真机未测，G1 总门不关闭、M1 未开始。下文同日“最新修正”的离线边界为本次验收之前的实施记录。
+
 2026-09-21 最新修正：[ADR 0024](adr/0024-guide-publication-contract.md) 将攻略公开投影、预算未知判断、成功确认和历史恢复统一到服务端 publication v1。原始摘要/规划备注不再直接作为公开攻略文字；有界来源摘录不冒充独立核实。G1 按 [冻结合同 v1](design/budget-travel-agent/G1_PUBLICATION_RUBRIC_V1.md) 区分持久、不可变约束、发布及最低有用性。此次离线验证不构成新 live 或平台通过；搜索额度仍24/24用满。
 
 更新：2026-09-20。B0/B1 已提交 `cabbf51`，B2 已提交 `d895d0e`、仍默认关闭，B3 已提交 `6649644`，B4 已提交 `1ce177b`；B5 和 G1 数据库验证已提交。G1 修复后两条真实 Provider 保存/恢复契约通过，但内容价格时效问题阻止放行；逐阶段耗时与费用见 [9 月 20 日报告](design/budget-travel-agent/G1_LIVE_2026-09-20.md)。平台与正式 A/B 批次仍未验证。 后续日期证据门槛与地点复用已实现，旧错误攻略在零付费快照复验中被拦截，正常航班攻略仍通过；已完成修复后 live 追加复验，最新结论见当前进度，见 [修复复验](design/budget-travel-agent/G1_REPAIR_2026-09-20.md)。

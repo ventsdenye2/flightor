@@ -1,0 +1,2961 @@
+{
+  "schemaVersion": 1,
+  "purpose": "G1 publication v1 offline fixture; public facts only, no user identities or credentials.",
+  "cases": [
+    {
+      "id": "selfTicket",
+      "source": {
+        "runDirectory": "g1-live-2026-09-20T15-21-51-390Z",
+        "sqlTable": "public.artifacts",
+        "legacyArtifactFile": "self-ticket-travel_guide-01a0bf6a-0262-743f-b6bf-7fe7276ebe10.json"
+      },
+      "legacy": {
+        "artifact": {
+          "id": "01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+          "tripContextVersion": 0,
+          "sourceArtifactIds": [
+            "01a0bf6a-023c-7619-86b2-d2639c582616",
+            "01a0bf69-9581-77eb-a04b-787dfd3402b2"
+          ],
+          "type": "travel_guide",
+          "schemaVersion": 1,
+          "payload": {
+            "days": [
+              {
+                "day": 1,
+                "city": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "kind": "visit",
+                "items": [
+                  {
+                    "id": "guide_d1ac6c0425a2f0dbc2fe489b",
+                    "city": {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    },
+                    "title": "Sensoji Temple and Nakamise Street",
+                    "reason": "interest_match",
+                    "category": "activity",
+                    "timeOfDay": "morning",
+                    "description": "Sensoji Temple in Asakusa, with 1,400 years of history, is a top cultural site. The adjacent Nakamise shopping street offers local snacks and souvenirs.",
+                    "planningNote": "主景点：浅草寺，约1400年历史的代表性文化场所；相邻仲见世商店街提供本地小吃与纪念品。开放时间与门票未在此来源核实，宜出行前查官方。",
+                    "verification": {
+                      "status": "partially_verified",
+                      "sources": [
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.gotokyo.org/book/wp-content/uploads/2025/03/2503_tokyonightstory_EN_low.pdf"
+                        },
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.tickets.gotokyo.org/en/tickets/more_experiences?page=10%2F%2F"
+                        }
+                      ],
+                      "checkedAt": "2026-09-20T15:22:11.426Z",
+                      "expiresAt": "2026-12-19T15:22:11.426Z",
+                      "confidence": 0.58
+                    },
+                    "sourceFindingId": "finding_a9de0e9c9810a74db00c20e2",
+                    "sourceArtifactId": "01a0bf69-9581-77eb-a04b-787dfd3402b2"
+                  },
+                  {
+                    "id": "guide_be593d2643682cda70eb608d",
+                    "city": {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    },
+                    "title": "Tokyo Street Food: Ramen, Takoyaki, Taiyaki",
+                    "reason": "interest_match",
+                    "category": "activity",
+                    "timeOfDay": "afternoon",
+                    "description": "Tokyo offers iconic street foods like ramen, takoyaki, taiyaki, okonomiyaki, yakitori, and more, available at various stalls and shops.",
+                    "planningNote": "小吃体验：拉面、章鱼烧、鲷鱼烧、御好烧、烧鸟等各类小吃摊与店铺；具体价格未核实，以现场为准。",
+                    "verification": {
+                      "status": "partially_verified",
+                      "sources": [
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.japan.travel/en/us/blog/gourmet-on-the-go-where-to-find-the-best-street-food-in-japan"
+                        }
+                      ],
+                      "checkedAt": "2026-09-20T15:22:11.426Z",
+                      "expiresAt": "2026-12-19T15:22:11.426Z",
+                      "confidence": 0.58
+                    },
+                    "sourceFindingId": "finding_2f89fc24b82376df93aacc26",
+                    "sourceArtifactId": "01a0bf69-9581-77eb-a04b-787dfd3402b2"
+                  }
+                ],
+                "notes": "主景点为浅草寺（约1400年历史），配合仲见世商店街现场小吃，节奏轻松。门票与开放时间资料为部分核实，建议出行前以官方信息为准。",
+                "theme": "浅草历史文化与小食"
+              },
+              {
+                "day": 2,
+                "city": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "kind": "visit",
+                "items": [
+                  {
+                    "id": "guide_214465b354044c831cda6859",
+                    "city": {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    },
+                    "title": "Meiji Jingu Shrine",
+                    "reason": "interest_match",
+                    "category": "activity",
+                    "timeOfDay": "morning",
+                    "description": "Meiji Jingu is a major Shinto shrine in Tokyo, always open to the public, ideal for a quiet morning visit.",
+                    "planningNote": "主景点：明治神宫，东京主要的传统神社，始终对公众开放，适合安静的上午造访。",
+                    "verification": {
+                      "status": "partially_verified",
+                      "sources": [
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.gotokyo.org/en/see-and-do/attractions/index.html"
+                        },
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.gotokyo.org/en/see-and-do/morning/index.html"
+                        }
+                      ],
+                      "checkedAt": "2026-09-20T15:22:11.426Z",
+                      "expiresAt": "2026-12-19T15:22:11.426Z",
+                      "confidence": 0.58
+                    },
+                    "sourceFindingId": "finding_4c96983d933d81532d9cac42",
+                    "sourceArtifactId": "01a0bf69-9581-77eb-a04b-787dfd3402b2"
+                  },
+                  {
+                    "id": "guide_c38729ce9d7b78f8ff571412",
+                    "city": {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    },
+                    "title": "Tokyo Local Specialties: Monjayaki and Fukagawa Meshi",
+                    "reason": "interest_match",
+                    "category": "activity",
+                    "timeOfDay": "afternoon",
+                    "description": "Try local Tokyo dishes like monjayaki (savory pancake), Fukagawa meshi (clam rice), and Yanagawa nabe hot pot.",
+                    "planningNote": "食文化：可尝试文字烧（もんじゃ焼き）、深川饭（蛤蜊盖饭）等东京本地特色；具体店家价格未核实。",
+                    "verification": {
+                      "status": "partially_verified",
+                      "sources": [
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.gotokyo.org/en/see-and-do/drinking-and-dining/tokyo-local-food/index.html"
+                        }
+                      ],
+                      "checkedAt": "2026-09-20T15:22:11.426Z",
+                      "expiresAt": "2026-12-19T15:22:11.426Z",
+                      "confidence": 0.58
+                    },
+                    "sourceFindingId": "finding_4b9d0502e16981c8c306f586",
+                    "sourceArtifactId": "01a0bf69-9581-77eb-a04b-787dfd3402b2"
+                  }
+                ],
+                "notes": "主景点为明治神宫，适合安静的上午参观；搭配本地特色小吃，节奏轻松。门票与开放时间资料为部分核实，以官方信息为准。",
+                "theme": "明治神宫与本地食文化"
+              }
+            ],
+            "kind": "trip_travel_guide",
+            "budget": {
+              "scope": "trip",
+              "amount": 1500,
+              "period": "trip_total",
+              "currency": "CNY",
+              "partyBasis": "unspecified"
+            },
+            "warnings": [
+              "guide_schedule_is_suggested_not_time_verified",
+              "research_uses_curated_public_tourism_sources",
+              "guide_contains_partially_verified_research"
+            ],
+            "createdAt": "2026-09-20T15:23:10.779Z",
+            "composition": "agent_authored",
+            "verification": {
+              "status": "partially_verified",
+              "sources": [
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/book/wp-content/uploads/2025/03/2503_tokyonightstory_EN_low.pdf"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.tickets.gotokyo.org/en/tickets/more_experiences?page=10%2F%2F"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/en/us/blog/gourmet-on-the-go-where-to-find-the-best-street-food-in-japan"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/en/see-and-do/attractions/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/en/see-and-do/morning/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/en/see-and-do/drinking-and-dining/tokyo-local-food/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/en/au/plan/useful-tickets-tokyo"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/en/plan/getting-around/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/en/guide/japan-on-a-budget"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/en/sg/story/suica-card-japan"
+                }
+              ],
+              "checkedAt": "2026-09-20T15:23:10.779Z",
+              "confidence": 0.58
+            },
+            "schemaVersion": 1,
+            "builderVersion": "agent-authored-guide-v2",
+            "routeArtifactId": "01a0bf6a-023c-7619-86b2-d2639c582616",
+            "sourceArtifactIds": [
+              "01a0bf6a-023c-7619-86b2-d2639c582616",
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2"
+            ],
+            "supportingEvidence": [
+              {
+                "title": "Tokyo Subway Ticket Options",
+                "category": "practical",
+                "description": "Tokyo Subway Ticket offers 24, 48, and 72-hour passes: 800, 1,200, and 1,500 yen for adults; half price for children.",
+                "destinations": [
+                  {
+                    "id": "8",
+                    "name": "Tokyo",
+                    "type": "city",
+                    "cityCode": "TYO",
+                    "latitude": 35.772,
+                    "longitude": 140.3929,
+                    "countryCode": "JP"
+                  }
+                ],
+                "verification": {
+                  "status": "partially_verified",
+                  "sources": [
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.japan.travel/en/au/plan/useful-tickets-tokyo"
+                    }
+                  ],
+                  "checkedAt": "2026-09-20T15:22:11.426Z",
+                  "expiresAt": "2026-11-19T15:22:11.426Z",
+                  "confidence": 0.58
+                },
+                "sourceFindingId": "finding_5e279571e0ac8d566687290b",
+                "sourceArtifactId": "01a0bf69-9581-77eb-a04b-787dfd3402b2"
+              },
+              {
+                "title": "IC Cards and Transport Passes",
+                "category": "practical",
+                "description": "Use IC cards like Suica for subways, buses, and waterbuses. One-day passes for Tokyo Metro & Toei Subway cost 900 yen; Toei 1-day pass is 700 yen.",
+                "destinations": [
+                  {
+                    "id": "8",
+                    "name": "Tokyo",
+                    "type": "city",
+                    "cityCode": "TYO",
+                    "latitude": 35.772,
+                    "longitude": 140.3929,
+                    "countryCode": "JP"
+                  }
+                ],
+                "verification": {
+                  "status": "partially_verified",
+                  "sources": [
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.gotokyo.org/en/plan/getting-around/index.html"
+                    },
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.japan.travel/en/guide/japan-on-a-budget"
+                    },
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.japan.travel/en/sg/story/suica-card-japan"
+                    }
+                  ],
+                  "checkedAt": "2026-09-20T15:22:11.426Z",
+                  "expiresAt": "2026-11-19T15:22:11.426Z",
+                  "confidence": 0.58
+                },
+                "sourceFindingId": "finding_c6756aa2705f3328fc8832f5",
+                "sourceArtifactId": "01a0bf69-9581-77eb-a04b-787dfd3402b2"
+              }
+            ],
+            "unassignedActivityRefs": []
+          },
+          "verification": {
+            "status": "partially_verified",
+            "sources": [
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/book/wp-content/uploads/2025/03/2503_tokyonightstory_EN_low.pdf"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.tickets.gotokyo.org/en/tickets/more_experiences?page=10%2F%2F"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/en/us/blog/gourmet-on-the-go-where-to-find-the-best-street-food-in-japan"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/en/see-and-do/attractions/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/en/see-and-do/morning/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/en/see-and-do/drinking-and-dining/tokyo-local-food/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/en/au/plan/useful-tickets-tokyo"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/en/plan/getting-around/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/en/guide/japan-on-a-budget"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/en/sg/story/suica-card-japan"
+              }
+            ],
+            "checkedAt": "2026-09-20T15:23:10.779Z",
+            "confidence": 0.58
+          },
+          "createdAt": "2026-09-20T15:23:10.830Z",
+          "updatedAt": "2026-09-20T15:23:10.830Z"
+        },
+        "researchArtifacts": [
+          {
+            "id": "01a0bf69-9581-77eb-a04b-787dfd3402b2",
+            "type": "research",
+            "schemaVersion": 2,
+            "payload": {
+              "id": "01a0bf69-9581-77eb-a04b-787dfd3402b2",
+              "type": "research",
+              "brief": {
+                "interests": [
+                  "文化",
+                  "小吃"
+                ],
+                "questions": [
+                  "What are the top cultural main attractions in Tokyo such as temples, shrines and historic districts?",
+                  "What street food and local snack experiences are recommended in Tokyo?",
+                  "What are the practical transport options and costs for getting around Tokyo, including metro passes?",
+                  "What are the opening hours and entry fees for major Tokyo cultural attractions?"
+                ],
+                "maxResults": 12,
+                "destinations": [
+                  {
+                    "id": "8",
+                    "name": "Tokyo",
+                    "type": "city",
+                    "cityCode": "TYO",
+                    "latitude": 35.772,
+                    "longitude": 140.3929,
+                    "countryCode": "JP"
+                  }
+                ],
+                "travelWindow": {
+                  "to": "2026-10-21",
+                  "from": "2026-10-20"
+                },
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ]
+              },
+              "findings": [
+                {
+                  "id": "finding_a9de0e9c9810a74db00c20e2",
+                  "title": "Sensoji Temple and Nakamise Street",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/book/wp-content/uploads/2025/03/2503_tokyonightstory_EN_low.pdf",
+                      "title": "English",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "Asakusa, famous for the Senso-ji Temple, whose history goes back about 1,400 years, is one of Japan's top tourist destinations. This area was once a center ...",
+                      "authority": "government_tourism"
+                    },
+                    {
+                      "url": "https://www.tickets.gotokyo.org/en/tickets/more_experiences?page=10%2F%2F",
+                      "title": "More Experiences| The Official Tokyo Travel Guide, GO TOKYO",
+                      "domain": "www.tickets.gotokyo.org",
+                      "snippet": "Part of the complex is also 200m long traditional shopping street Nakamise, offering not just variety of souvenirs but also many local snacks and meals. Try ...",
+                      "authority": "unknown"
+                    }
+                  ],
+                  "summary": "Sensoji Temple in Asakusa, with 1,400 years of history, is a top cultural site. The adjacent Nakamise shopping street offers local snacks and souvenirs.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/book/wp-content/uploads/2025/03/2503_tokyonightstory_EN_low.pdf"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.tickets.gotokyo.org/en/tickets/more_experiences?page=10%2F%2F"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_4c96983d933d81532d9cac42",
+                  "title": "Meiji Jingu Shrine",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/en/see-and-do/attractions/index.html",
+                      "title": "Top tourist attractions in Tokyo: the best sightseeing spots",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "Get to know the history of Edo and more at Tokyo historical sites · Sensoji Temple · Meiji Jingu · Hamarikyu Gardens · Edo-Tokyo Open Air Architectural Museum.",
+                      "authority": "government_tourism"
+                    },
+                    {
+                      "url": "https://www.gotokyo.org/en/see-and-do/morning/index.html",
+                      "title": "Enjoy Tokyo in the early morning",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "Some shrines and temples, such as Meiji Shrine and Sensoji Temple, are always open to the public, making them perfect for a quiet morning stroll",
+                      "authority": "government_tourism",
+                      "publishedAt": "2025-11-05T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "Meiji Jingu is a major Shinto shrine in Tokyo, always open to the public, ideal for a quiet morning visit.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/en/see-and-do/attractions/index.html"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/en/see-and-do/morning/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_b20441777af352238433a571",
+                  "title": "Hamarikyu Gardens",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/en/see-and-do/attractions/index.html",
+                      "title": "Top tourist attractions in Tokyo: the best sightseeing spots",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "Get to know the history of Edo and more at Tokyo historical sites · Sensoji Temple · Meiji Jingu · Hamarikyu Gardens · Edo-Tokyo Open Air Architectural Museum.",
+                      "authority": "government_tourism"
+                    }
+                  ],
+                  "summary": "Hamarikyu Gardens is a historic landscape garden in Tokyo, offering a peaceful escape with scenic views.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/en/see-and-do/attractions/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_8932adf080a632b9bbe3eb62",
+                  "title": "Edo-Tokyo Open Air Architectural Museum",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/en/see-and-do/attractions/index.html",
+                      "title": "Top tourist attractions in Tokyo: the best sightseeing spots",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "Get to know the history of Edo and more at Tokyo historical sites · Sensoji Temple · Meiji Jingu · Hamarikyu Gardens · Edo-Tokyo Open Air Architectural Museum.",
+                      "authority": "government_tourism"
+                    }
+                  ],
+                  "summary": "This museum preserves historical buildings from the Edo period, offering insight into Tokyo's architectural heritage.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/en/see-and-do/attractions/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_4459a3f1ae237e0edf236b29",
+                  "title": "Ueno Toshogu Shrine and Bentendo",
+                  "sources": [
+                    {
+                      "url": "https://www.japan.travel/en/itineraries/shrines-museums-and-parks-in-tokyo",
+                      "title": "A Cultural Day in Tokyo | Itineraries",
+                      "domain": "www.japan.travel",
+                      "snippet": "Keep an eye out for Ueno Toshogu Shrine, the octagonal-shaped temple hall of Bentendo on an island in Shinobazu Pond, and Kiyomizu Kannon Temple with a balcony ...",
+                      "authority": "government_tourism"
+                    }
+                  ],
+                  "summary": "In Ueno, visit Toshogu Shrine and the octagonal Bentendo hall on Shinobazu Pond, plus Kiyomizu Kannon Temple with a balcony.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.japan.travel/en/itineraries/shrines-museums-and-parks-in-tokyo"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_d8560819c8514b25a400a978",
+                  "title": "Shibuya Crossing and Hachiko Statue",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/en/story/walks-and-tours/tokyo-itinerary/index.html",
+                      "title": "Tokyo Itinerary Plan For The Best Vacation in 5 Days",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "Shibuya is a center for modern Tokyo fashion and culture. It's packed with famous spots such as the bronze Hachiko Statue, Shibuya Scramble ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-03-11T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "Shibuya is a modern cultural hub, featuring the iconic Hachiko Statue and the famous Shibuya Scramble crossing.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/en/story/walks-and-tours/tokyo-itinerary/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_729f05addd73ec8ef461be33",
+                  "title": "Zojoji Temple and Tokyo Tower View",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/en/story/guide/december/index.html",
+                      "title": "Best Things to Do and See in Tokyo in December",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "Zojoji Temple offers a spectacular view of Tokyo Tower, and a chance to hear \"joya-no-kane\"—the ringing of a temple's bell 108 times to usher in ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-06-15T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "Zojoji Temple offers a spectacular view of Tokyo Tower, a notable cultural and photographic spot.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/en/story/guide/december/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_95b047eccc779e05efddc204",
+                  "title": "Tokyo Metropolitan Government Building Observation Deck",
+                  "sources": [
+                    {
+                      "url": "https://www.japan.travel/en/my/travelers-blog/where-get-best-view-tokyo-free",
+                      "title": "This Iconic Building Affords the Best View of Tokyo for FREE",
+                      "domain": "www.japan.travel",
+                      "snippet": "The observation deck on the 45th floor of Tokyo Metropolitan Main Building No. 1 in Shinjuku affords a sweeping view of the bustling metropolis for free.",
+                      "authority": "government_tourism"
+                    }
+                  ],
+                  "summary": "The free observation deck on the 45th floor of the Tokyo Metropolitan Main Building in Shinjuku provides sweeping city views.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.japan.travel/en/my/travelers-blog/where-get-best-view-tokyo-free"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_2f89fc24b82376df93aacc26",
+                  "title": "Tokyo Street Food: Ramen, Takoyaki, Taiyaki",
+                  "sources": [
+                    {
+                      "url": "https://www.japan.travel/en/us/blog/gourmet-on-the-go-where-to-find-the-best-street-food-in-japan",
+                      "title": "Gourmet on the Go: Where to Find the Best Street Food in ...",
+                      "domain": "www.japan.travel",
+                      "snippet": "From the iconic ramen and takoyaki to the delightful taiyaki, okonomiyaki, yakitori, tonkatsu, croquettes, gyoza, and udon, the options seem ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2023-11-16T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "Tokyo offers iconic street foods like ramen, takoyaki, taiyaki, okonomiyaki, yakitori, and more, available at various stalls and shops.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.japan.travel/en/us/blog/gourmet-on-the-go-where-to-find-the-best-street-food-in-japan"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_4b9d0502e16981c8c306f586",
+                  "title": "Tokyo Local Specialties: Monjayaki and Fukagawa Meshi",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/en/see-and-do/drinking-and-dining/tokyo-local-food/index.html",
+                      "title": "Tokyo Local Food",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "Monjayaki—a savory pancake similar to okonomiyaki, Fukagawa meshi clam rice, and Yanagawa nabe hot pot are only a few of the many local ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2020-09-30T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "Try local Tokyo dishes like monjayaki (savory pancake), Fukagawa meshi (clam rice), and Yanagawa nabe hot pot.",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/en/see-and-do/drinking-and-dining/tokyo-local-food/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-12-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_5e279571e0ac8d566687290b",
+                  "title": "Tokyo Subway Ticket Options",
+                  "sources": [
+                    {
+                      "url": "https://www.japan.travel/en/au/plan/useful-tickets-tokyo",
+                      "title": "Useful Tickets in Tokyo",
+                      "domain": "www.japan.travel",
+                      "snippet": "Tokyo Subway Ticket (24 hr, 48 hr, 72 hr) ; 24-hour Ticket – Adult (12+): 800 yen, Child (6-11): 400 yen ; 48-hour Ticket – Adult (12+): 1,200 yen, Child (6-11): ...",
+                      "authority": "government_tourism"
+                    }
+                  ],
+                  "summary": "Tokyo Subway Ticket offers 24, 48, and 72-hour passes: 800, 1,200, and 1,500 yen for adults; half price for children.",
+                  "category": "practical",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.japan.travel/en/au/plan/useful-tickets-tokyo"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-11-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_c6756aa2705f3328fc8832f5",
+                  "title": "IC Cards and Transport Passes",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/en/plan/getting-around/index.html",
+                      "title": "Transportation in Tokyo",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "To ride the subway, buses and waterbuses, use an IC card, travel pass or individual tickets for smooth travel. Traveling over ground, ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-09-01T00:00:00.000Z"
+                    },
+                    {
+                      "url": "https://www.japan.travel/en/guide/japan-on-a-budget",
+                      "title": "Guide to Traveling Japan on a Budget",
+                      "domain": "www.japan.travel",
+                      "snippet": "Common 1-day ticket for Tokyo Metro & Toei Subway, 900 yen ; Toei 1 Day Pass, 700 yen ; Airport Limousine Bus (Narita Airport to Central Tokyo), 3,200 yen ; bus ...",
+                      "authority": "government_tourism"
+                    },
+                    {
+                      "url": "https://www.japan.travel/en/sg/story/suica-card-japan",
+                      "title": "See More of Japan With the Help of the Suica Card",
+                      "domain": "www.japan.travel",
+                      "snippet": "The Suica card can be used for the JR East train lines in Tokyo's metropolitan area. It can also be used for many buses and subways.",
+                      "authority": "government_tourism",
+                      "publishedAt": "2023-01-13T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "Use IC cards like Suica for subways, buses, and waterbuses. One-day passes for Tokyo Metro & Toei Subway cost 900 yen; Toei 1-day pass is 700 yen.",
+                  "category": "practical",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/en/plan/getting-around/index.html"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.japan.travel/en/guide/japan-on-a-budget"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.japan.travel/en/sg/story/suica-card-japan"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:22:11.426Z",
+                    "expiresAt": "2026-11-19T15:22:11.426Z",
+                    "confidence": 0.58
+                  }
+                }
+              ],
+              "warnings": [
+                "research_uses_curated_public_tourism_sources",
+                "research_uses_curated_public_tourism_sources",
+                "research_uses_curated_public_tourism_sources",
+                "research_uses_curated_public_tourism_sources"
+              ],
+              "createdAt": "2026-09-20T15:22:11.426Z",
+              "queryCount": 4,
+              "schemaVersion": 2
+            },
+            "tripContextVersion": 0,
+            "sourceArtifactIds": []
+          }
+        ],
+        "routeArtifact": {
+          "id": "01a0bf6a-023c-7619-86b2-d2639c582616",
+          "schemaVersion": 1,
+          "payload": {
+            "days": [
+              {
+                "day": 1,
+                "city": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "activityRefs": []
+              },
+              {
+                "day": 2,
+                "city": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "activityRefs": []
+              }
+            ],
+            "kind": "trip_route_plan",
+            "cities": [
+              {
+                "role": "visit",
+                "reasons": [
+                  "Planner-selected visit structure"
+                ],
+                "location": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "stayDays": 2
+              }
+            ],
+            "warnings": [
+              "guide_schedule_is_suggested_not_time_verified",
+              "research_uses_curated_public_tourism_sources",
+              "guide_contains_partially_verified_research"
+            ],
+            "stopoverOnly": [],
+            "verification": {
+              "status": "partially_verified",
+              "sources": [
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/book/wp-content/uploads/2025/03/2503_tokyonightstory_EN_low.pdf"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.tickets.gotokyo.org/en/tickets/more_experiences?page=10%2F%2F"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/en/us/blog/gourmet-on-the-go-where-to-find-the-best-street-food-in-japan"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/en/see-and-do/attractions/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/en/see-and-do/morning/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/en/see-and-do/drinking-and-dining/tokyo-local-food/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/en/au/plan/useful-tickets-tokyo"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/en/plan/getting-around/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/en/guide/japan-on-a-budget"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/en/sg/story/suica-card-japan"
+                }
+              ],
+              "checkedAt": "2026-09-20T15:23:10.779Z",
+              "confidence": 0.58
+            },
+            "landTransfers": [],
+            "schemaVersion": 1,
+            "plannerVersion": "agent-authored-guide-v1",
+            "sourceArtifactIds": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2"
+            ],
+            "tripContextVersion": 0,
+            "unassignedActivityRefs": []
+          },
+          "verification": {
+            "status": "partially_verified",
+            "sources": [
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/book/wp-content/uploads/2025/03/2503_tokyonightstory_EN_low.pdf"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.tickets.gotokyo.org/en/tickets/more_experiences?page=10%2F%2F"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/en/us/blog/gourmet-on-the-go-where-to-find-the-best-street-food-in-japan"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/en/see-and-do/attractions/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/en/see-and-do/morning/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/en/see-and-do/drinking-and-dining/tokyo-local-food/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/en/au/plan/useful-tickets-tokyo"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/en/plan/getting-around/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/en/guide/japan-on-a-budget"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/en/sg/story/suica-card-japan"
+              }
+            ],
+            "checkedAt": "2026-09-20T15:23:10.779Z",
+            "confidence": 0.58
+          }
+        }
+      },
+      "replayPolicy": "Legacy payload remains unchanged; integration creates a separate current-write copy through saveWorkspaceArtifact.",
+      "goalParameters": {
+        "maxCities": 1,
+        "questions": [
+          "东京的文化热点与主景点有哪些？",
+          "东京有哪些值得体验的小吃和美食？",
+          "东京市内交通（地铁券）的实用信息？",
+          "主要文化景点的开放时间与门票？"
+        ],
+        "maxResults": 10,
+        "allowPartial": true,
+        "researchTypes": [
+          "activity",
+          "practical"
+        ],
+        "requiredEvidenceTypes": [
+          "activity",
+          "practical"
+        ]
+      }
+    },
+    {
+      "id": "selectedFlight",
+      "source": {
+        "runDirectory": "g1-live-2026-09-20T15-21-51-390Z",
+        "sqlTable": "public.artifacts",
+        "legacyArtifactFile": "selected-flight-travel_guide-01a0bf6c-6510-74f5-b53c-da44b504b90a.json"
+      },
+      "legacy": {
+        "artifact": {
+          "id": "01a0bf6c-6510-74f5-b53c-da44b504b90a",
+          "tripContextVersion": 0,
+          "sourceArtifactIds": [
+            "01a0bf6c-6463-754b-92a5-eea267a9726e",
+            "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed",
+            "01a0bf6a-630f-7549-b64f-122b7e234aba"
+          ],
+          "type": "travel_guide",
+          "schemaVersion": 1,
+          "payload": {
+            "days": [
+              {
+                "day": 1,
+                "city": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "kind": "visit",
+                "items": [
+                  {
+                    "id": "guide_5801e3c926542a1babe5f7c0",
+                    "city": {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    },
+                    "title": "浅草寺与仲见世商店街",
+                    "reason": "interest_match",
+                    "category": "activity",
+                    "timeOfDay": "afternoon",
+                    "description": "浅草寺是东京代表性文化景点，周边仲见世商店街可边逛边尝小吃、购买传统工艺品，适合下午轻松游览。",
+                    "planningNote": "当日主景点：浅草寺及仲见世商店街，午后抵达东京市区后前往，边走边尝小吃、选购传统工艺品，是代表性文化景点，轻松度过首日下午。",
+                    "verification": {
+                      "status": "partially_verified",
+                      "sources": [
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.tickets.gotokyo.org/cn/tickets/more_experiences?page=8%2F"
+                        },
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html"
+                        },
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/best-of-tokyo/index.html"
+                        }
+                      ],
+                      "checkedAt": "2026-09-20T15:23:57.738Z",
+                      "expiresAt": "2026-12-19T15:23:57.738Z",
+                      "confidence": 0.58
+                    },
+                    "sourceFindingId": "finding_3b352ac2510324dcb1d58be2",
+                    "sourceArtifactId": "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed"
+                  },
+                  {
+                    "id": "guide_aeced67a0e463e42e3b925b7",
+                    "city": {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    },
+                    "title": "藏前匠人之街",
+                    "reason": "interest_match",
+                    "category": "activity",
+                    "timeOfDay": "evening",
+                    "description": "从浅草经仲见世商店街可前往藏前，这里同时拥有珍贵传统工艺品店与流行新店，适合悠闲漫步感受当地历史文化。",
+                    "planningNote": "从浅草经仲见世前往藏前匠人之街，悠闲漫步感受当地传统手工艺与文化，节奏舒缓。",
+                    "verification": {
+                      "status": "partially_verified",
+                      "sources": [
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html"
+                        }
+                      ],
+                      "checkedAt": "2026-09-20T15:23:57.738Z",
+                      "expiresAt": "2026-12-19T15:23:57.738Z",
+                      "confidence": 0.58
+                    },
+                    "sourceFindingId": "finding_c26be254cbcfaf97187145aa",
+                    "sourceArtifactId": "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed"
+                  }
+                ],
+                "notes": "航班HU 439于12:30左右抵达成田机场；13:00前不安排任何活动。抵达后先乘成田特快或机场大巴进入东京市区，然后再开始下午的浅草文化游览，节奏轻松。",
+                "theme": "浅草文化 · 抵达首日"
+              },
+              {
+                "day": 2,
+                "city": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "kind": "visit",
+                "items": [
+                  {
+                    "id": "guide_07795c91d1a9fe6e2cae1b29",
+                    "city": {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    },
+                    "title": "上野公园博物馆群",
+                    "reason": "interest_match",
+                    "category": "activity",
+                    "timeOfDay": "morning",
+                    "description": "上野公园周边坐落东京国立博物馆、上野之森美术馆、国立西洋美术馆等文化设施，适合下午文化游览。",
+                    "planningNote": "当日主景点：上野公园博物馆群（东京国立博物馆等），上午慢游文化设施，共鸣文化与历史。",
+                    "verification": {
+                      "status": "partially_verified",
+                      "sources": [
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html"
+                        }
+                      ],
+                      "checkedAt": "2026-09-20T15:23:57.738Z",
+                      "expiresAt": "2026-12-19T15:23:57.738Z",
+                      "confidence": 0.58
+                    },
+                    "sourceFindingId": "finding_d9ad0363999979a1166cf16f",
+                    "sourceArtifactId": "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed"
+                  },
+                  {
+                    "id": "guide_f2ca4520bdfe7640538c67f6",
+                    "city": {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    },
+                    "title": "原宿竹下通街头小吃",
+                    "reason": "interest_match",
+                    "category": "activity",
+                    "timeOfDay": "afternoon",
+                    "description": "原宿竹下通聚集年轻人与街头服饰店，并有可丽饼等知名街头小吃，适合轻松逛吃。",
+                    "planningNote": "前往原宿竹下通，逛年轻人聚集的街头店铺并品尝可丽饼等知名街头小吃，轻松逛吃收尾。",
+                    "verification": {
+                      "status": "partially_verified",
+                      "sources": [
+                        {
+                          "provider": "research-search",
+                          "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html"
+                        }
+                      ],
+                      "checkedAt": "2026-09-20T15:23:57.738Z",
+                      "expiresAt": "2026-12-19T15:23:57.738Z",
+                      "confidence": 0.58
+                    },
+                    "sourceFindingId": "finding_d649cffe8daa05062d75586f",
+                    "sourceArtifactId": "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed"
+                  }
+                ],
+                "notes": "全日注重文化与小吃，节奏轻松。上午安排一个文化主景点，下午转入街头小吃区逛吃。",
+                "theme": "上野文化 · 街头逛吃"
+              }
+            ],
+            "kind": "trip_travel_guide",
+            "budget": {
+              "scope": "trip",
+              "amount": 4000,
+              "period": "trip_total",
+              "currency": "CNY",
+              "partyBasis": "unspecified"
+            },
+            "warnings": [
+              "guide_schedule_is_suggested_not_time_verified",
+              "research_uses_curated_public_tourism_sources",
+              "research_provider_failed:serpapi-research:destination_0",
+              "guide_contains_partially_verified_research",
+              "guide_bound_to_confirmed_flight"
+            ],
+            "createdAt": "2026-09-20T15:25:46.978Z",
+            "composition": "agent_authored",
+            "layoverPlans": [],
+            "verification": {
+              "status": "partially_verified",
+              "sources": [
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.tickets.gotokyo.org/cn/tickets/more_experiences?page=8%2F"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/best-of-tokyo/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/plan/airport-access/narita-airport/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/tw/plan/airport-access/narita-airport"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/plan/getting-to-tokyo/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/plan/airport-access/index.html"
+                }
+              ],
+              "checkedAt": "2026-09-20T15:25:46.978Z",
+              "confidence": 0.58
+            },
+            "schemaVersion": 1,
+            "builderVersion": "agent-authored-guide-v2",
+            "flightSelection": {
+              "kind": "offer",
+              "choiceId": "gf-2026-10-20-HU 439-2557",
+              "revision": 1,
+              "artifactId": "01a0bf6a-630f-7549-b64f-122b7e234aba",
+              "selectedAt": "2026-09-20T15:23:35.626Z",
+              "originDepartureAt": "2026-10-20 08:00",
+              "destinationArrivalAt": "2026-10-20 12:30"
+            },
+            "routeArtifactId": "01a0bf6c-6463-754b-92a5-eea267a9726e",
+            "sourceArtifactIds": [
+              "01a0bf6c-6463-754b-92a5-eea267a9726e",
+              "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed",
+              "01a0bf6a-630f-7549-b64f-122b7e234aba"
+            ],
+            "supportingEvidence": [
+              {
+                "title": "成田特快N'EX直达东京各站",
+                "category": "practical",
+                "description": "从成田机场可乘JR成田特快N'EX直达东京站、品川、涩谷、新宿等主要车站，约1小时内到达东京站，可使用日本铁路通票。",
+                "destinations": [
+                  {
+                    "id": "8",
+                    "name": "Tokyo",
+                    "type": "city",
+                    "cityCode": "TYO",
+                    "latitude": 35.772,
+                    "longitude": 140.3929,
+                    "countryCode": "JP"
+                  }
+                ],
+                "verification": {
+                  "status": "partially_verified",
+                  "sources": [
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.gotokyo.org/cn/plan/airport-access/narita-airport/index.html"
+                    },
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html"
+                    },
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.japan.travel/tw/plan/airport-access/narita-airport"
+                    }
+                  ],
+                  "checkedAt": "2026-09-20T15:23:57.738Z",
+                  "expiresAt": "2026-11-19T15:23:57.738Z",
+                  "confidence": 0.58
+                },
+                "sourceFindingId": "finding_438f8883e75a741adb0c0026",
+                "sourceArtifactId": "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed"
+              },
+              {
+                "title": "成田机场至东京交通概览",
+                "category": "practical",
+                "description": "成田机场距东京市中心约50-60公里，可乘特快列车或机场大巴前往市区，最短约需1小时。",
+                "destinations": [
+                  {
+                    "id": "8",
+                    "name": "Tokyo",
+                    "type": "city",
+                    "cityCode": "TYO",
+                    "latitude": 35.772,
+                    "longitude": 140.3929,
+                    "countryCode": "JP"
+                  }
+                ],
+                "verification": {
+                  "status": "partially_verified",
+                  "sources": [
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.gotokyo.org/cn/plan/getting-to-tokyo/index.html"
+                    },
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.gotokyo.org/cn/plan/airport-access/index.html"
+                    },
+                    {
+                      "provider": "research-search",
+                      "reference": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html"
+                    }
+                  ],
+                  "checkedAt": "2026-09-20T15:23:57.738Z",
+                  "expiresAt": "2026-11-19T15:23:57.738Z",
+                  "confidence": 0.58
+                },
+                "sourceFindingId": "finding_51d2073239ac1bb615ab1ac4",
+                "sourceArtifactId": "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed"
+              }
+            ],
+            "unassignedActivityRefs": []
+          },
+          "verification": {
+            "status": "partially_verified",
+            "sources": [
+              {
+                "provider": "research-search",
+                "reference": "https://www.tickets.gotokyo.org/cn/tickets/more_experiences?page=8%2F"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/best-of-tokyo/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/plan/airport-access/narita-airport/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/tw/plan/airport-access/narita-airport"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/plan/getting-to-tokyo/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/plan/airport-access/index.html"
+              }
+            ],
+            "checkedAt": "2026-09-20T15:25:46.978Z",
+            "confidence": 0.58
+          },
+          "createdAt": "2026-09-20T15:25:47.194Z",
+          "updatedAt": "2026-09-20T15:25:47.194Z"
+        },
+        "researchArtifacts": [
+          {
+            "id": "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed",
+            "type": "research",
+            "schemaVersion": 2,
+            "payload": {
+              "id": "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed",
+              "type": "research",
+              "brief": {
+                "interests": [
+                  "文化",
+                  "小吃"
+                ],
+                "questions": [
+                  "东京有哪些有代表性的文化主景点（如浅草寺、明治神宫、皇居等）适合下午游览？",
+                  "东京哪些区域的街头小吃和传统美食最集中，适合轻松逛吃？",
+                  "从成田机场到东京市内的交通方式和注意事项有哪些？",
+                  "东京各主要景点的门票费用大约是多少，哪些是免费进入的？"
+                ],
+                "maxResults": 10,
+                "destinations": [
+                  {
+                    "id": "8",
+                    "name": "Tokyo",
+                    "type": "city",
+                    "cityCode": "TYO",
+                    "latitude": 35.772,
+                    "longitude": 140.3929,
+                    "countryCode": "JP"
+                  }
+                ],
+                "travelWindow": {
+                  "to": "2026-10-21",
+                  "from": "2026-10-20"
+                },
+                "researchTypes": [
+                  "activity",
+                  "practical"
+                ]
+              },
+              "findings": [
+                {
+                  "id": "finding_3b352ac2510324dcb1d58be2",
+                  "title": "浅草寺与仲见世商店街",
+                  "sources": [
+                    {
+                      "url": "https://www.tickets.gotokyo.org/cn/tickets/more_experiences?page=8%2F",
+                      "title": "更多体验_东京旅游官方网站GO TOKYO",
+                      "domain": "www.tickets.gotokyo.org",
+                      "snippet": "CReelu/徒步游览东京的传统街区：浅草（雷门、浅草寺）和合羽桥（以美食样品和日式料理闻名）。开启一段探索当地历史文化的旅程。",
+                      "authority": "unknown"
+                    },
+                    {
+                      "url": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html",
+                      "title": "东京河岸散步",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "参观了象征性的“浅草寺”，逛逛浅草“仲见世商店街”，停下脚步尝尝小吃，买买东西，然后前往同时拥有珍贵传统工艺品店与流行新店的悠闲匠人之街“藏前”和“ ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-03-31T00:00:00.000Z"
+                    },
+                    {
+                      "url": "https://www.gotokyo.org/cn/story/walks-and-tours/best-of-tokyo/index.html",
+                      "title": "东京三日巡礼",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "浅草寺周边街道四处可见出售传统工艺品、小吃、饰品的商店以及和服租赁店。 参拜完浅草寺后，可前往怀旧风格居酒屋林立的“Hoppy大道”。这里很多店家都 ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2020-09-30T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "浅草寺是东京代表性文化景点，周边仲见世商店街可边逛边尝小吃、购买传统工艺品，适合下午轻松游览。",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.tickets.gotokyo.org/cn/tickets/more_experiences?page=8%2F"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/best-of-tokyo/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:23:57.738Z",
+                    "expiresAt": "2026-12-19T15:23:57.738Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_c26be254cbcfaf97187145aa",
+                  "title": "藏前匠人之街",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html",
+                      "title": "东京河岸散步",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "参观了象征性的“浅草寺”，逛逛浅草“仲见世商店街”，停下脚步尝尝小吃，买买东西，然后前往同时拥有珍贵传统工艺品店与流行新店的悠闲匠人之街“藏前”和“ ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-03-31T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "从浅草经仲见世商店街可前往藏前，这里同时拥有珍贵传统工艺品店与流行新店，适合悠闲漫步感受当地历史文化。",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:23:57.738Z",
+                    "expiresAt": "2026-12-19T15:23:57.738Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_b59d73cc8f718234c20bd28d",
+                  "title": "Hoppy大道居酒屋街",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/cn/story/walks-and-tours/best-of-tokyo/index.html",
+                      "title": "东京三日巡礼",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "浅草寺周边街道四处可见出售传统工艺品、小吃、饰品的商店以及和服租赁店。 参拜完浅草寺后，可前往怀旧风格居酒屋林立的“Hoppy大道”。这里很多店家都 ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2020-09-30T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "参拜浅草寺后，可前往怀旧风格居酒屋林立的Hoppy大道，体验传统日式饮酒小吃氛围。",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/best-of-tokyo/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:23:57.738Z",
+                    "expiresAt": "2026-12-19T15:23:57.738Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_d649cffe8daa05062d75586f",
+                  "title": "原宿竹下通街头小吃",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html",
+                      "title": "东京旅行计划—为期五天的完美假期规划",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "TOKYO 博物馆、上野之森美术馆、国立西洋美术馆等都坐落于此。 主要街道“竹下通”聚集了许多身穿活泼缤纷街头服饰的年轻人,并有可丽饼等知名街头小吃。",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-03-05T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "原宿竹下通聚集年轻人与街头服饰店，并有可丽饼等知名街头小吃，适合轻松逛吃。",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:23:57.738Z",
+                    "expiresAt": "2026-12-19T15:23:57.738Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_d9ad0363999979a1166cf16f",
+                  "title": "上野公园博物馆群",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html",
+                      "title": "东京旅行计划—为期五天的完美假期规划",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "TOKYO 博物馆、上野之森美术馆、国立西洋美术馆等都坐落于此。 主要街道“竹下通”聚集了许多身穿活泼缤纷街头服饰的年轻人,并有可丽饼等知名街头小吃。",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-03-05T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "上野公园周边坐落东京国立博物馆、上野之森美术馆、国立西洋美术馆等文化设施，适合下午文化游览。",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:23:57.738Z",
+                    "expiresAt": "2026-12-19T15:23:57.738Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_438f8883e75a741adb0c0026",
+                  "title": "成田特快N'EX直达东京各站",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/cn/plan/airport-access/narita-airport/index.html",
+                      "title": "成田国际机场- 前往方式、航站楼信息等",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "乘坐JR线的“成田特快N'EX”，可以从成田机场直接到达东京站、品川站、涩谷站、新宿站等各大车站。 该特快列车可使用“日本铁路通票”乘坐。若想从成田机场 ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-09-01T00:00:00.000Z"
+                    },
+                    {
+                      "url": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html",
+                      "title": "成田國際機場- 前往方式、航站樓資訊等",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "成田機場至東京都心約有50至60km，根據不同的交通方式，到達東京都心最短約需1小時。從成田機場出發的特快列車都會停靠東京主要車站，前往東京各區可說是 ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-09-01T00:00:00.000Z"
+                    },
+                    {
+                      "url": "https://www.japan.travel/tw/plan/airport-access/narita-airport",
+                      "title": "成田機場機場交通| Airport Access | Plan",
+                      "domain": "www.japan.travel",
+                      "snippet": "搭乘成田特快，可以在1 小時內到達東京車站，除了對號座位的特別急行車票之外，也有自由座的車票：即指定日期和第幾車，但不指定列車班次和座位的特別急行 ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2022-09-22T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "从成田机场可乘JR成田特快N'EX直达东京站、品川、涩谷、新宿等主要车站，约1小时内到达东京站，可使用日本铁路通票。",
+                  "category": "practical",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/plan/airport-access/narita-airport/index.html"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.japan.travel/tw/plan/airport-access/narita-airport"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:23:57.738Z",
+                    "expiresAt": "2026-11-19T15:23:57.738Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_51d2073239ac1bb615ab1ac4",
+                  "title": "成田机场至东京交通概览",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/cn/plan/getting-to-tokyo/index.html",
+                      "title": "前往东京",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "成田国际机场或东京市区的羽田机场。 乘坐飞机乘坐飞往成田机场或羽田机场的航班是前往日本最普遍的方式。抵达机场后,只要乘坐特快列车或机场大巴,就能前往东京市区。 旅 ...",
+                      "authority": "government_tourism"
+                    },
+                    {
+                      "url": "https://www.gotokyo.org/cn/plan/airport-access/index.html",
+                      "title": "从机场、客轮码头到东京市区",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "乘坐铁路、巴士或计程车即可顺畅地从主要机场“成田国际机场”、“羽田机场”或客轮码头“东京国际邮轮码头”去往东京市区。也非常适合飞机和船相结合的“飞行&邮轮”旅行。",
+                      "authority": "government_tourism"
+                    },
+                    {
+                      "url": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html",
+                      "title": "成田國際機場- 前往方式、航站樓資訊等",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "成田機場至東京都心約有50至60km，根據不同的交通方式，到達東京都心最短約需1小時。從成田機場出發的特快列車都會停靠東京主要車站，前往東京各區可說是 ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2026-09-01T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "成田机场距东京市中心约50-60公里，可乘特快列车或机场大巴前往市区，最短约需1小时。",
+                  "category": "practical",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/plan/getting-to-tokyo/index.html"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/plan/airport-access/index.html"
+                      },
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:23:57.738Z",
+                    "expiresAt": "2026-11-19T15:23:57.738Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_6f67ae2674080656478acca7",
+                  "title": "涩谷美食与购物",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/cn/story/guide/shibuya-shop/index.html",
+                      "title": "涩谷、原宿、表参道购物指南",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "人流密集、包罗万象的地区——涩谷，这里不仅是集结剧院、现场表演空间及夜总会的文化发源地，同时也是美食和购物的天堂。世界知名品牌店、日本连锁店及富有 ...",
+                      "authority": "government_tourism",
+                      "publishedAt": "2019-07-31T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "涩谷是文化发源地，集结剧院、现场表演空间及夜总会，同时也是美食和购物的天堂，适合下午逛吃。",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/story/guide/shibuya-shop/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:23:57.738Z",
+                    "expiresAt": "2026-12-19T15:23:57.738Z",
+                    "confidence": 0.58
+                  }
+                },
+                {
+                  "id": "finding_a90b91c46b6ae129143dd756",
+                  "title": "东京米其林美食体验",
+                  "sources": [
+                    {
+                      "url": "https://www.gotokyo.org/cn/story/guide/michelin-star-restaurants/index.html",
+                      "title": "东京米其林餐厅",
+                      "domain": "www.gotokyo.org",
+                      "snippet": "东京的米其林星级餐厅数量是全球之冠。 · 怀石、寿司、天妇罗、烤鸡串、拉面等日本料理，以及法式、意式、中式等各种米其林星级美食，都能在东京品尝到。",
+                      "authority": "government_tourism",
+                      "publishedAt": "2021-02-25T00:00:00.000Z"
+                    }
+                  ],
+                  "summary": "东京米其林星级餐厅数量全球之冠，可品尝怀石、寿司、天妇罗、烤鸡串、拉面等日料及多国米其林美食。",
+                  "category": "activity",
+                  "warnings": [
+                    "evidence_partially_verified"
+                  ],
+                  "destinations": [
+                    {
+                      "id": "8",
+                      "name": "Tokyo",
+                      "type": "city",
+                      "cityCode": "TYO",
+                      "latitude": 35.772,
+                      "longitude": 140.3929,
+                      "countryCode": "JP"
+                    }
+                  ],
+                  "verification": {
+                    "status": "partially_verified",
+                    "sources": [
+                      {
+                        "provider": "research-search",
+                        "reference": "https://www.gotokyo.org/cn/story/guide/michelin-star-restaurants/index.html"
+                      }
+                    ],
+                    "checkedAt": "2026-09-20T15:23:57.738Z",
+                    "expiresAt": "2026-12-19T15:23:57.738Z",
+                    "confidence": 0.58
+                  }
+                }
+              ],
+              "warnings": [
+                "research_uses_curated_public_tourism_sources",
+                "research_uses_curated_public_tourism_sources",
+                "research_uses_curated_public_tourism_sources",
+                "research_provider_failed:serpapi-research:destination_0"
+              ],
+              "createdAt": "2026-09-20T15:23:57.738Z",
+              "queryCount": 4,
+              "schemaVersion": 2
+            },
+            "tripContextVersion": 0,
+            "sourceArtifactIds": []
+          }
+        ],
+        "selectedFlightArtifact": {
+          "id": "01a0bf6a-630f-7549-b64f-122b7e234aba",
+          "type": "flight_search",
+          "schemaVersion": 1,
+          "payload": {
+            "id": "01a0bf6a-630f-7549-b64f-122b7e234aba",
+            "type": "flight_search",
+            "query": {
+              "origin": "PEK",
+              "currency": "CNY",
+              "destination": "NRT",
+              "travelClass": 1,
+              "departureDate": "2026-10-20"
+            },
+            "offers": [
+              {
+                "id": "gf-2026-10-20-VN 513-VN 310-1380",
+                "airlines": [
+                  "越南航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "HAN",
+                    "durationMinutes": 345,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "越南航空",
+                    "aircraft": "Airbus A321",
+                    "arrivesAt": "2026-10-20 18:40",
+                    "departsAt": "2026-10-20 15:45",
+                    "destination": "HAN",
+                    "flightNumber": "VN 513",
+                    "durationMinutes": 235
+                  },
+                  {
+                    "origin": "HAN",
+                    "airline": "越南航空",
+                    "aircraft": "Boeing 787",
+                    "arrivesAt": "2026-10-21 07:35",
+                    "departsAt": "2026-10-21 00:25",
+                    "destination": "NRT",
+                    "flightNumber": "VN 310",
+                    "durationMinutes": 310
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1380,
+                "transferType": "airline",
+                "totalDurationMinutes": 890
+              },
+              {
+                "id": "gf-2026-10-20-CX 347-CX 500-1480",
+                "airlines": [
+                  "国泰航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "HKG",
+                    "durationMinutes": 95,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "国泰航空",
+                    "aircraft": "Airbus A330",
+                    "arrivesAt": "2026-10-20 13:45",
+                    "departsAt": "2026-10-20 10:00",
+                    "destination": "HKG",
+                    "flightNumber": "CX 347",
+                    "durationMinutes": 225
+                  },
+                  {
+                    "origin": "HKG",
+                    "airline": "国泰航空",
+                    "aircraft": "Airbus A330",
+                    "arrivesAt": "2026-10-20 20:50",
+                    "departsAt": "2026-10-20 15:20",
+                    "destination": "NRT",
+                    "flightNumber": "CX 500",
+                    "durationMinutes": 270
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1480,
+                "transferType": "airline",
+                "totalDurationMinutes": 590
+              },
+              {
+                "id": "gf-2026-10-20-OZ 332-OZ 108-1761",
+                "airlines": [
+                  "韩亚"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "ICN",
+                    "durationMinutes": 290,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "韩亚",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 13:40",
+                    "departsAt": "2026-10-20 10:40",
+                    "destination": "ICN",
+                    "flightNumber": "OZ 332",
+                    "durationMinutes": 120
+                  },
+                  {
+                    "origin": "ICN",
+                    "airline": "韩亚",
+                    "aircraft": "Airbus A330",
+                    "arrivesAt": "2026-10-20 21:00",
+                    "departsAt": "2026-10-20 18:30",
+                    "destination": "NRT",
+                    "flightNumber": "OZ 108",
+                    "durationMinutes": 150
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1761,
+                "transferType": "airline",
+                "totalDurationMinutes": 560
+              },
+              {
+                "id": "gf-2026-10-20-KE 864-LJ 201-1801",
+                "airlines": [
+                  "大韩航空",
+                  "真航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "ICN",
+                    "durationMinutes": 165,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "大韩航空",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 04:40",
+                    "departsAt": "2026-10-20 01:30",
+                    "destination": "ICN",
+                    "flightNumber": "KE 864",
+                    "durationMinutes": 130
+                  },
+                  {
+                    "origin": "ICN",
+                    "airline": "真航空",
+                    "aircraft": "Boeing 737",
+                    "arrivesAt": "2026-10-20 09:55",
+                    "departsAt": "2026-10-20 07:25",
+                    "destination": "NRT",
+                    "flightNumber": "LJ 201",
+                    "durationMinutes": 150
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1801,
+                "transferType": "airline",
+                "totalDurationMinutes": 445
+              },
+              {
+                "id": "gf-2026-10-20-HU 439-2557",
+                "airlines": [
+                  "海航"
+                ],
+                "currency": "CNY",
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "海航",
+                    "aircraft": "Boeing 737",
+                    "arrivesAt": "2026-10-20 12:30",
+                    "departsAt": "2026-10-20 08:00",
+                    "destination": "NRT",
+                    "flightNumber": "HU 439",
+                    "durationMinutes": 210
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 2557,
+                "transferType": "direct",
+                "totalDurationMinutes": 210
+              },
+              {
+                "id": "gf-2026-10-20-CA 101-CX 500-1480",
+                "airlines": [
+                  "国航",
+                  "国泰航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "HKG",
+                    "durationMinutes": 210,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "国航",
+                    "aircraft": "Comac C919",
+                    "arrivesAt": "2026-10-20 11:50",
+                    "departsAt": "2026-10-20 08:05",
+                    "destination": "HKG",
+                    "flightNumber": "CA 101",
+                    "durationMinutes": 225
+                  },
+                  {
+                    "origin": "HKG",
+                    "airline": "国泰航空",
+                    "aircraft": "Airbus A330",
+                    "arrivesAt": "2026-10-20 20:50",
+                    "departsAt": "2026-10-20 15:20",
+                    "destination": "NRT",
+                    "flightNumber": "CX 500",
+                    "durationMinutes": 270
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1480,
+                "transferType": "airline",
+                "totalDurationMinutes": 705
+              },
+              {
+                "id": "gf-2026-10-20-CX 337-CX 526-1480",
+                "airlines": [
+                  "国泰航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "HKG",
+                    "durationMinutes": 530,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "国泰航空",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 23:25",
+                    "departsAt": "2026-10-20 19:40",
+                    "destination": "HKG",
+                    "flightNumber": "CX 337",
+                    "durationMinutes": 225
+                  },
+                  {
+                    "origin": "HKG",
+                    "airline": "国泰航空",
+                    "aircraft": "Boeing 777",
+                    "arrivesAt": "2026-10-21 13:40",
+                    "departsAt": "2026-10-21 08:15",
+                    "destination": "NRT",
+                    "flightNumber": "CX 526",
+                    "durationMinutes": 265
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1480,
+                "transferType": "airline",
+                "totalDurationMinutes": 1020
+              },
+              {
+                "id": "gf-2026-10-20-ZH 9110-ZH 651-1592",
+                "airlines": [
+                  "深航"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "SZX",
+                    "durationMinutes": 720,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "深航",
+                    "aircraft": "Airbus A330",
+                    "arrivesAt": "2026-10-21 00:30",
+                    "departsAt": "2026-10-20 21:00",
+                    "destination": "SZX",
+                    "flightNumber": "ZH 9110",
+                    "durationMinutes": 210
+                  },
+                  {
+                    "origin": "SZX",
+                    "airline": "深航",
+                    "aircraft": "Boeing 737",
+                    "arrivesAt": "2026-10-21 18:00",
+                    "departsAt": "2026-10-21 12:30",
+                    "destination": "NRT",
+                    "flightNumber": "ZH 651",
+                    "durationMinutes": 270
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1592,
+                "transferType": "airline",
+                "totalDurationMinutes": 1200
+              },
+              {
+                "id": "gf-2026-10-20-KE 864-KE 711-1711",
+                "airlines": [
+                  "大韩航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "ICN",
+                    "durationMinutes": 500,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "大韩航空",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 04:40",
+                    "departsAt": "2026-10-20 01:30",
+                    "destination": "ICN",
+                    "flightNumber": "KE 864",
+                    "durationMinutes": 130
+                  },
+                  {
+                    "origin": "ICN",
+                    "airline": "大韩航空",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 15:35",
+                    "departsAt": "2026-10-20 13:00",
+                    "destination": "NRT",
+                    "flightNumber": "KE 711",
+                    "durationMinutes": 155
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1711,
+                "transferType": "airline",
+                "totalDurationMinutes": 785
+              },
+              {
+                "id": "gf-2026-10-20-KE 852-KE 703-1711",
+                "airlines": [
+                  "大韩航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "ICN",
+                    "durationMinutes": 750,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "大韩航空",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 21:40",
+                    "departsAt": "2026-10-20 18:30",
+                    "destination": "ICN",
+                    "flightNumber": "KE 852",
+                    "durationMinutes": 130
+                  },
+                  {
+                    "origin": "ICN",
+                    "airline": "大韩航空",
+                    "aircraft": "Boeing 787-10",
+                    "arrivesAt": "2026-10-21 12:40",
+                    "departsAt": "2026-10-21 10:10",
+                    "destination": "NRT",
+                    "flightNumber": "KE 703",
+                    "durationMinutes": 150
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1711,
+                "transferType": "airline",
+                "totalDurationMinutes": 1030
+              },
+              {
+                "id": "gf-2026-10-20-OZ 332-KE 705-1821",
+                "airlines": [
+                  "韩亚",
+                  "大韩航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "ICN",
+                    "durationMinutes": 295,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "韩亚",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 13:40",
+                    "departsAt": "2026-10-20 10:40",
+                    "destination": "ICN",
+                    "flightNumber": "OZ 332",
+                    "durationMinutes": 120
+                  },
+                  {
+                    "origin": "ICN",
+                    "airline": "大韩航空",
+                    "aircraft": "Airbus A330",
+                    "arrivesAt": "2026-10-20 21:05",
+                    "departsAt": "2026-10-20 18:35",
+                    "destination": "NRT",
+                    "flightNumber": "KE 705",
+                    "durationMinutes": 150
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1821,
+                "transferType": "airline",
+                "totalDurationMinutes": 565
+              },
+              {
+                "id": "gf-2026-10-20-CX 337-CX 524-1870",
+                "airlines": [
+                  "国泰航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "HKG",
+                    "durationMinutes": 115,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "国泰航空",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 23:25",
+                    "departsAt": "2026-10-20 19:40",
+                    "destination": "HKG",
+                    "flightNumber": "CX 337",
+                    "durationMinutes": 225
+                  },
+                  {
+                    "origin": "HKG",
+                    "airline": "国泰航空",
+                    "aircraft": "Airbus A330",
+                    "arrivesAt": "2026-10-21 06:50",
+                    "departsAt": "2026-10-21 01:20",
+                    "destination": "NRT",
+                    "flightNumber": "CX 524",
+                    "durationMinutes": 270
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1870,
+                "transferType": "airline",
+                "totalDurationMinutes": 610
+              },
+              {
+                "id": "gf-2026-10-20-KE 2052-KE 705-1876",
+                "airlines": [
+                  "大韩航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "GMP",
+                    "airportChange": true,
+                    "durationMinutes": 215,
+                    "departureAirport": "ICN",
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "大韩航空",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 15:00",
+                    "departsAt": "2026-10-20 11:45",
+                    "destination": "GMP",
+                    "flightNumber": "KE 2052",
+                    "durationMinutes": 135
+                  },
+                  {
+                    "origin": "ICN",
+                    "airline": "大韩航空",
+                    "aircraft": "Airbus A330",
+                    "arrivesAt": "2026-10-20 21:05",
+                    "departsAt": "2026-10-20 18:35",
+                    "destination": "NRT",
+                    "flightNumber": "KE 705",
+                    "durationMinutes": 150
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 1876,
+                "transferType": "airline",
+                "totalDurationMinutes": 500
+              },
+              {
+                "id": "gf-2026-10-20-MU 5100-MU 521-2141",
+                "airlines": [
+                  "东航"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "PVG",
+                    "durationMinutes": 170,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "东航",
+                    "aircraft": "Airbus A320neo",
+                    "arrivesAt": "2026-10-20 08:55",
+                    "departsAt": "2026-10-20 07:00",
+                    "destination": "PVG",
+                    "flightNumber": "MU 5100",
+                    "durationMinutes": 115
+                  },
+                  {
+                    "origin": "PVG",
+                    "airline": "东航",
+                    "aircraft": "Airbus A350",
+                    "arrivesAt": "2026-10-20 15:55",
+                    "departsAt": "2026-10-20 11:45",
+                    "destination": "NRT",
+                    "flightNumber": "MU 521",
+                    "durationMinutes": 190
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 2141,
+                "transferType": "airline",
+                "totalDurationMinutes": 475
+              },
+              {
+                "id": "gf-2026-10-20-CX 395-CX 526-2390",
+                "airlines": [
+                  "国泰航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "HKG",
+                    "durationMinutes": 80,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "国泰航空",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 06:55",
+                    "departsAt": "2026-10-20 03:15",
+                    "destination": "HKG",
+                    "flightNumber": "CX 395",
+                    "durationMinutes": 220
+                  },
+                  {
+                    "origin": "HKG",
+                    "airline": "国泰航空",
+                    "aircraft": "Airbus A350",
+                    "arrivesAt": "2026-10-20 13:40",
+                    "departsAt": "2026-10-20 08:15",
+                    "destination": "NRT",
+                    "flightNumber": "CX 526",
+                    "durationMinutes": 265
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 2390,
+                "transferType": "airline",
+                "totalDurationMinutes": 565
+              },
+              {
+                "id": "gf-2026-10-20-KE 2062-LJ 221-3121",
+                "airlines": [
+                  "大韩航空",
+                  "真航空"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "PUS",
+                    "durationMinutes": 85,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "大韩航空",
+                    "aircraft": "Boeing 737MAX 8 Passenger",
+                    "arrivesAt": "2026-10-20 06:30",
+                    "departsAt": "2026-10-20 03:10",
+                    "destination": "PUS",
+                    "flightNumber": "KE 2062",
+                    "durationMinutes": 140
+                  },
+                  {
+                    "origin": "PUS",
+                    "airline": "真航空",
+                    "aircraft": "Boeing 737",
+                    "arrivesAt": "2026-10-20 10:05",
+                    "departsAt": "2026-10-20 07:55",
+                    "destination": "NRT",
+                    "flightNumber": "LJ 221",
+                    "durationMinutes": 130
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 3121,
+                "transferType": "airline",
+                "totalDurationMinutes": 355
+              },
+              {
+                "id": "gf-2026-10-20-OZ 332-OZ 106-3561",
+                "airlines": [
+                  "韩亚"
+                ],
+                "currency": "CNY",
+                "layovers": [
+                  {
+                    "airport": "ICN",
+                    "durationMinutes": 125,
+                    "afterSegmentIndex": 0
+                  }
+                ],
+                "segments": [
+                  {
+                    "origin": "PEK",
+                    "airline": "韩亚",
+                    "aircraft": "Airbus A321neo",
+                    "arrivesAt": "2026-10-20 13:40",
+                    "departsAt": "2026-10-20 10:40",
+                    "destination": "ICN",
+                    "flightNumber": "OZ 332",
+                    "durationMinutes": 120
+                  },
+                  {
+                    "origin": "ICN",
+                    "airline": "韩亚",
+                    "aircraft": "Airbus A330",
+                    "arrivesAt": "2026-10-20 18:25",
+                    "departsAt": "2026-10-20 15:45",
+                    "destination": "NRT",
+                    "flightNumber": "OZ 106",
+                    "durationMinutes": 160
+                  }
+                ],
+                "bookingUrl": "https://www.google.com/travel/flights?q=flights+from+PEK+to+NRT+on+2026-10-20",
+                "totalAmount": 3561,
+                "transferType": "airline",
+                "totalDurationMinutes": 405
+              }
+            ],
+            "provider": "serpapi",
+            "checkedAt": "2026-09-20T15:23:35.564Z",
+            "verification": {
+              "status": "verified",
+              "sources": [
+                {
+                  "provider": "serpapi",
+                  "reference": "PEK-NRT-2026-10-20"
+                }
+              ],
+              "checkedAt": "2026-09-20T15:23:35.564Z",
+              "confidence": 0.9
+            }
+          },
+          "tripContextVersion": 0,
+          "sourceArtifactIds": []
+        },
+        "routeArtifact": {
+          "id": "01a0bf6c-6463-754b-92a5-eea267a9726e",
+          "schemaVersion": 1,
+          "payload": {
+            "days": [
+              {
+                "day": 1,
+                "city": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "activityRefs": []
+              },
+              {
+                "day": 2,
+                "city": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "activityRefs": []
+              }
+            ],
+            "kind": "trip_route_plan",
+            "cities": [
+              {
+                "role": "visit",
+                "reasons": [
+                  "Planner-selected visit structure"
+                ],
+                "location": {
+                  "id": "8",
+                  "name": "Tokyo",
+                  "type": "city",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929,
+                  "countryCode": "JP"
+                },
+                "stayDays": 2
+              }
+            ],
+            "warnings": [
+              "guide_schedule_is_suggested_not_time_verified",
+              "research_uses_curated_public_tourism_sources",
+              "research_provider_failed:serpapi-research:destination_0",
+              "guide_contains_partially_verified_research",
+              "guide_bound_to_confirmed_flight"
+            ],
+            "stopoverOnly": [],
+            "verification": {
+              "status": "partially_verified",
+              "sources": [
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.tickets.gotokyo.org/cn/tickets/more_experiences?page=8%2F"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/best-of-tokyo/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/plan/airport-access/narita-airport/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.japan.travel/tw/plan/airport-access/narita-airport"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/plan/getting-to-tokyo/index.html"
+                },
+                {
+                  "provider": "research-search",
+                  "reference": "https://www.gotokyo.org/cn/plan/airport-access/index.html"
+                }
+              ],
+              "checkedAt": "2026-09-20T15:25:46.978Z",
+              "confidence": 0.58
+            },
+            "landTransfers": [],
+            "schemaVersion": 1,
+            "plannerVersion": "agent-authored-guide-v1",
+            "sourceArtifactIds": [
+              "01a0bf6b-5a1f-73b5-99c9-660e5cf150ed",
+              "01a0bf6a-630f-7549-b64f-122b7e234aba"
+            ],
+            "tripContextVersion": 0,
+            "unassignedActivityRefs": []
+          },
+          "verification": {
+            "status": "partially_verified",
+            "sources": [
+              {
+                "provider": "research-search",
+                "reference": "https://www.tickets.gotokyo.org/cn/tickets/more_experiences?page=8%2F"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/see-and-do/nature/waterfront/riverside-walks.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/best-of-tokyo/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/story/walks-and-tours/tokyo-itinerary/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/plan/airport-access/narita-airport/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/tc/plan/airport-access/narita-airport/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.japan.travel/tw/plan/airport-access/narita-airport"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/plan/getting-to-tokyo/index.html"
+              },
+              {
+                "provider": "research-search",
+                "reference": "https://www.gotokyo.org/cn/plan/airport-access/index.html"
+              }
+            ],
+            "checkedAt": "2026-09-20T15:25:46.978Z",
+            "confidence": 0.58
+          }
+        }
+      },
+      "replayPolicy": "Legacy payload remains unchanged; integration creates a separate current-write copy through saveWorkspaceArtifact.",
+      "goalParameters": {
+        "maxCities": 1,
+        "questions": [
+          "东京有哪些有代表性的文化主景点（如浅草寺、明治神宫、皇居等）适合下午游览？",
+          "东京哪些区域的街头小吃和传统美食最集中，适合轻松逛吃？",
+          "从成田机场到东京市内的交通方式和注意事项有哪些？",
+          "东京各主要景点的门票费用大约是多少，哪些是免费进入的？"
+        ],
+        "maxResults": 8,
+        "allowPartial": true,
+        "researchTypes": [
+          "activity",
+          "practical"
+        ],
+        "requiredEvidenceTypes": [
+          "activity",
+          "practical"
+        ]
+      }
+    }
+  ],
+  "sources": {
+    "sqlSnapshot": {
+      "path": "backend/.demo/g1-live-2026-09-20T15-21-51-390Z/database.sql",
+      "sha256": "79584c74d354800583c2e43623293db3133c6d438f3befa519a21e75f2947006"
+    },
+    "selfTicket": {
+      "path": "backend/.demo/g1-live-2026-09-20T15-21-51-390Z/self-ticket-travel_guide-01a0bf6a-0262-743f-b6bf-7fe7276ebe10.json",
+      "sha256": "f4155a1258981ac3a6437fec14ebcfa8eedaa996f9ce7fa2353e2be519f2d160"
+    },
+    "selectedFlight": {
+      "path": "backend/.demo/g1-live-2026-09-20T15-21-51-390Z/selected-flight-travel_guide-01a0bf6c-6510-74f5-b53c-da44b504b90a.json",
+      "sha256": "c607978bad5bf8398a1ab0a7c691f8190c673713359ccb230e72f26fd3abfc7e"
+    }
+  }
+}

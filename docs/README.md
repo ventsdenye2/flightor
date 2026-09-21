@@ -4,6 +4,8 @@
 
 ## 从这里开始
 
+- [G1 发布合同 v1 验收收尾](design/budget-travel-agent/G1_PUBLICATION_ACCEPTANCE_2026-09-21.md)：离线、独立数据库和 H5 固定结果详情/刷新已验证；旧记录 P5 失败，新 live 与微信环境仍未测，G1 总门未关闭。
+
 - [攻略发布合同 ADR 0024](adr/0024-guide-publication-contract.md) 与 [G1 冻结验收 v1](design/budget-travel-agent/G1_PUBLICATION_RUBRIC_V1.md)：9月21日独立诊断后的修正范围，验证见 progress。
 
 - [当前项目上下文](PROJECT_CONTEXT.md)：代码现状与已知边界。

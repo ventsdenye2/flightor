@@ -24,8 +24,14 @@ function sourceLabel(title: string, source: ResearchArtifact['findings'][number]
   const parts = title.trim().split(/\s+/).slice(0, 30)
   const candidates = Array.from({ length: parts.length }, (_, index) => parts.slice(0, parts.length - index).join(' '))
     .filter(value => value.length >= 2 && value.length <= 160 && (value.includes(' ') || !/[A-Za-z]/.test(value)))
+  // Unspaced names need the same literal prefix lookup; never publish an unmatched suffix.
+  if (/[^\x00-\x7f]/.test(title)) {
+    for (let length = Math.min(title.length, 160); length >= 2; length--) candidates.push(title.slice(0, length))
+  }
+  const pageText = source.page && createHash('sha256').update(source.page.text).digest('hex') === source.page.contentHash
+    ? source.page.text : undefined
   const texts = [{ text: source.title, basis: 'source_title' as const },
-    { text: source.page?.text, basis: 'page_excerpt' as const }, { text: source.snippet, basis: 'search_excerpt' as const }]
+    { text: pageText, basis: 'page_excerpt' as const }, { text: source.snippet, basis: 'search_excerpt' as const }]
   for (const candidate of candidates) {
     for (const { text, basis } of texts) {
       if (text?.includes(candidate)) return { labelQuote: candidate, labelBasis: basis }
@@ -53,10 +59,15 @@ export function buildGuidePublication(record: Pick<ArtifactRecord, 'id' | 'tripC
     const source = research.find(value => value.id === item.sourceArtifactId)
     const finding = source?.findings.find(value => value.id === item.sourceFindingId)
     const claims = finding?.claimEvidence ?? []
-    references[referenceKey(item)] = (finding?.sources ?? []).filter(source => safeUrl(source.url)).map(source => ({
+    references[referenceKey(item)] = (finding?.sources ?? []).filter(source => safeUrl(source.url)).map((source, index) => ({
       url: source.url, title: source.title, ...sourceLabel(finding!.title, source),
-      excerpts: hasClaimConflict(claims) ? [] : claims.filter(claim => claim.sourceUrl === source.url
-        && supportedClaimEvidence(claim, finding!.sources)).map(claim => ({ quote: claim.quote, retrievedAt: claim.retrievedAt }))
+      excerpts: hasClaimConflict(claims) ? [] : [...claims.filter(claim => claim.sourceUrl === source.url
+        && supportedClaimEvidence(claim, finding!.sources)).map(claim => ({ quote: claim.quote, retrievedAt: claim.retrievedAt })),
+        ...(claims.length === 0 && index === 0 && source.snippet ? [{
+          quote: source.snippet.slice(0, 800), retrievedAt: finding!.verification.checkedAt,
+          basis: 'search_excerpt' as const,
+          contentHash: createHash('sha256').update(source.snippet.slice(0, 800)).digest('hex')
+        }] : [])]
     }))
   }
   const assessment = budgetAssessment(guide)
@@ -97,7 +108,9 @@ export function projectGuideRecord(record: ArtifactRecord): ArtifactRecord {
     const labelled = refs.find(ref => ref.labelQuote)
     const title = labelled ? `来源条目摘录：${labelled.labelQuote}`
       : refs[0] ? `资料标题：${refs[0].title.slice(0, 230)}` : '已保存的活动（资料待核实）'
-    const excerpts = refs.flatMap(ref => ref.excerpts.map(excerpt => `来源原文摘录（${excerpt.retrievedAt} 读取；主体、条件及出行日适用性未审查）：「${excerpt.quote}」`)).slice(0, 1)
+    const excerpts = refs.flatMap(ref => ref.excerpts.filter(excerpt => !excerpt.basis ||
+      excerpt.contentHash === createHash('sha256').update(excerpt.quote).digest('hex'))
+      .map(excerpt => `${excerpt.basis === 'search_excerpt' ? '搜索摘要参考（非网页正文）' : '来源原文摘录'}（${excerpt.retrievedAt} 记录；主体、条件及出行日适用性未审查；来源：${ref.url}）：「${excerpt.quote}」`)).slice(0, 1)
     const labelNotice = labelled ? `条目名称摘自${labelled.labelBasis === 'page_excerpt' ? '网页正文' : labelled.labelBasis === 'search_excerpt' ? '搜索摘要' : '来源标题'}，未作独立身份核实。` : ''
     return { title, description: `${labelNotice}${UNKNOWN}${excerpts.length ? `\n${excerpts.join('\n')}` : ''}`,
       sourceArtifactId: item.sourceArtifactId, sourceFindingId: item.sourceFindingId, category: item.category,
