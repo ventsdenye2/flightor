@@ -1,0 +1,213 @@
+{
+  "note": "Real editorial smoke outputs on retained source fixtures; contract acceptance is not independent factual certification.",
+  "model": "deepseek/deepseek-v4-flash-0731",
+  "totals": {
+    "calls": 9,
+    "knownUsd": 0.006764,
+    "heldUsd": 0.2,
+    "unknown": 2
+  },
+  "examples": [
+    {
+      "locale": "zh",
+      "mode": "initial",
+      "text": {
+        "locale": "zh",
+        "reply": "以下是为期两天的东京轻松文化小吃之旅。行程节奏舒缓，兼顾文化景点与地道小吃，适合喜欢文化与美食的旅行者。",
+        "overview": "本次东京两日游以文化和小吃为主题，节奏轻松。第一天在浅草感受千年古寺与热闹的仲见世商店街，品尝街头小吃；第二天上午探访明治神宫，下午体验东京本地特色美食。交通方面，可考虑使用Suica等IC卡或地铁一日券，方便出行。",
+        "days": [
+          {
+            "day": 1,
+            "theme": "浅草历史文化与小食"
+          },
+          {
+            "day": 2,
+            "theme": "明治神宫与本地食文化"
+          }
+        ],
+        "activities": [
+          {
+            "activityId": "guide_d1ac6c0425a2f0dbc2fe489b",
+            "name": "浅草寺与仲见世商店街",
+            "introduction": "浅草寺是东京最具代表性的文化地标，拥有约1400年历史。寺前的仲见世商店街长约200米，两旁店铺售卖各种纪念品和本地小吃，是感受江户风情与品尝小吃的绝佳去处。",
+            "recommendationReason": "浅草寺是东京最著名的文化景点之一，符合您对文化体验的兴趣；仲见世商店街提供丰富的小吃选择，满足您对小吃的好奇。",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_a9de0e9c9810a74db00c20e2"
+            ]
+          },
+          {
+            "activityId": "guide_be593d2643682cda70eb608d",
+            "name": "东京街头小吃：拉面、章鱼烧、鲷鱼烧等",
+            "introduction": "东京街头小吃种类繁多，从拉面、章鱼烧到鲷鱼烧、御好烧、烧鸟等，遍布各处摊位和店铺，是体验当地饮食文化的直接方式。",
+            "recommendationReason": "您喜欢小吃，这项活动让您有机会品尝多种东京特色街头美食，轻松融入当地生活。",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_2f89fc24b82376df93aacc26"
+            ]
+          },
+          {
+            "activityId": "guide_214465b354044c831cda6859",
+            "name": "明治神宫",
+            "introduction": "明治神宫是东京重要的传统神社，环境宁静，适合在清晨或上午安静地参访，感受日本神道文化。",
+            "recommendationReason": "明治神宫是东京核心的文化景点，符合您对文化的兴趣；其宁静氛围适合轻松节奏的上午行程。",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_4c96983d933d81532d9cac42"
+            ]
+          },
+          {
+            "activityId": "guide_c38729ce9d7b78f8ff571412",
+            "name": "东京本地特色：文字烧与深川饭",
+            "introduction": "文字烧是一种类似御好烧的咸味煎饼，深川饭是蛤蜊盖饭，还有柳川锅等，都是东京独有的地方美食，值得一试。",
+            "recommendationReason": "您喜欢小吃，这些东京本地特色美食能带给您独特的美食体验，且与轻松节奏相符。",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_4b9d0502e16981c8c306f586"
+            ]
+          }
+        ]
+      },
+      "observation": {
+        "durationMs": 28375.147,
+        "calls": 1,
+        "promptTokens": 7993,
+        "completionTokens": 894,
+        "knownCostUsdMicros": 1712,
+        "unknownCostCalls": 0,
+        "failure": null,
+        "repairReasons": []
+      }
+    },
+    {
+      "locale": "en",
+      "mode": "initial",
+      "text": {
+        "locale": "en",
+        "reply": "Here's a relaxed two-day Tokyo plan focused on culture and snacks, as you requested. Day 1 starts at Sensoji Temple and Nakamise Street, then you can enjoy street food in the afternoon. Day 2 begins with a peaceful visit to Meiji Jingu Shrine, followed by local specialties like monjayaki and clam rice. The pace is easy, with plenty of time to savor each experience.",
+        "overview": "This two-day Tokyo itinerary is designed for a relaxed pace, focusing on cultural landmarks and local snacks. Day 1 begins at Sensoji Temple in Asakusa, followed by a stroll along Nakamise Street for street food. Day 2 features a quiet morning at Meiji Jingu Shrine, then an afternoon sampling Tokyo's local specialties like monjayaki and Fukagawa meshi. The plan balances cultural immersion with culinary delights, keeping the schedule light and enjoyable.",
+        "days": [
+          {
+            "day": 1,
+            "theme": "Asakusa History and Street Food"
+          },
+          {
+            "day": 2,
+            "theme": "Meiji Shrine and Local Cuisine"
+          }
+        ],
+        "activities": [
+          {
+            "activityId": "guide_d1ac6c0425a2f0dbc2fe489b",
+            "name": "Sensoji Temple and Nakamise Street",
+            "introduction": "Start your Tokyo visit in Asakusa at Sensoji Temple, a cultural landmark with about 1,400 years of history. After exploring the temple grounds, stroll along Nakamise Street, a traditional shopping street about 200 meters long, where you can sample local snacks and browse souvenirs.",
+            "recommendationReason": "This matches your interest in culture and snacks, offering a historic temple paired with a lively street food and souvenir market, all in a relaxed morning setting.",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_a9de0e9c9810a74db00c20e2"
+            ]
+          },
+          {
+            "activityId": "guide_be593d2643682cda70eb608d",
+            "name": "Tokyo Street Food: Ramen, Takoyaki, Taiyaki",
+            "introduction": "Spend the afternoon exploring Tokyo's street food scene. Look for stalls and shops serving iconic treats like ramen, takoyaki (octopus balls), taiyaki (fish-shaped cakes), okonomiyaki (savory pancakes), and yakitori (grilled chicken skewers).",
+            "recommendationReason": "This directly addresses your love of snacks, letting you taste a variety of Tokyo's most beloved street foods at your own pace.",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_2f89fc24b82376df93aacc26"
+            ]
+          },
+          {
+            "activityId": "guide_214465b354044c831cda6859",
+            "name": "Meiji Jingu Shrine",
+            "introduction": "Begin your second day with a quiet visit to Meiji Jingu, one of Tokyo's major Shinto shrines. The serene forested grounds offer a peaceful contrast to the city's bustle, ideal for a calm morning stroll.",
+            "recommendationReason": "This fits your cultural interest and relaxed pace, providing a tranquil start to the day at a significant spiritual site.",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_4c96983d933d81532d9cac42"
+            ]
+          },
+          {
+            "activityId": "guide_c38729ce9d7b78f8ff571412",
+            "name": "Tokyo Local Specialties: Monjayaki and Fukagawa Meshi",
+            "introduction": "In the afternoon, try Tokyo's local specialties. Sample monjayaki, a savory pancake similar to okonomiyaki, Fukagawa meshi (clam rice), and Yanagawa nabe hot pot, all classic dishes that showcase the city's culinary heritage.",
+            "recommendationReason": "This continues your food exploration with authentic local dishes, deepening your cultural experience through taste.",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_4b9d0502e16981c8c306f586"
+            ]
+          }
+        ]
+      },
+      "observation": {
+        "durationMs": 19830.871499999997,
+        "calls": 1,
+        "promptTokens": 8659,
+        "completionTokens": 1018,
+        "knownCostUsdMicros": 889,
+        "unknownCostCalls": 0,
+        "failure": null,
+        "repairReasons": []
+      }
+    },
+    {
+      "locale": "en",
+      "mode": "localization",
+      "text": {
+        "locale": "en",
+        "reply": "Here is a relaxed two-day Tokyo itinerary focused on culture and street food. The pace is easy, blending cultural sights with local bites—ideal for travelers who enjoy both heritage and casual eating.",
+        "overview": "This two-day Tokyo trip centers on culture and snacks at a relaxed pace. Day one explores Senso-ji, a thousand-year-old temple, and the lively Nakamise shopping street with street food tastings. Day two starts with a quiet morning at Meiji Jingu, followed by an afternoon of Tokyo-specific local dishes. For transport, consider an IC card like Suica or a metro day pass for convenience.",
+        "days": [
+          {
+            "day": 1,
+            "theme": "Asakusa History, Culture & Street Food"
+          },
+          {
+            "day": 2,
+            "theme": "Meiji Jingu & Local Food Culture"
+          }
+        ],
+        "activities": [
+          {
+            "activityId": "guide_d1ac6c0425a2f0dbc2fe489b",
+            "name": "Senso-ji Temple & Nakamise Shopping Street",
+            "introduction": "Senso-ji is Tokyo's most iconic cultural landmark, with a history of about 1,400 years. The Nakamise shopping street in front of the temple stretches roughly 200 meters, lined with shops selling souvenirs and local snacks—a great place to soak up the Edo-era atmosphere and sample treats.",
+            "recommendationReason": "Senso-ji is one of Tokyo's most famous cultural sites, matching your interest in cultural experiences. The Nakamise street offers a wide variety of snacks, satisfying your curiosity for local street food.",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_a9de0e9c9810a74db00c20e2"
+            ]
+          },
+          {
+            "activityId": "guide_be593d2643682cda70eb608d",
+            "name": "Tokyo Street Food: Ramen, Takoyaki, Taiyaki & More",
+            "introduction": "Tokyo's street food scene is incredibly diverse—from ramen and takoyaki to taiyaki, okonomiyaki, and yakitori—available at countless stalls and shops across the city. It's a direct way to experience local food culture.",
+            "recommendationReason": "Since you enjoy snacks, this activity lets you sample multiple Tokyo-style street foods and easily immerse yourself in local life.",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_2f89fc24b82376df93aacc26"
+            ]
+          },
+          {
+            "activityId": "guide_214465b354044c831cda6859",
+            "name": "Meiji Jingu",
+            "introduction": "Meiji Jingu is an important traditional Shinto shrine in Tokyo, known for its serene environment. It's best visited quietly in the early morning or late morning to appreciate the peaceful atmosphere and Shinto culture.",
+            "recommendationReason": "Meiji Jingu is a core cultural site in Tokyo, fitting your interest in culture. Its tranquil setting suits a relaxed morning itinerary.",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_4c96983d933d81532d9cac42"
+            ]
+          },
+          {
+            "activityId": "guide_c38729ce9d7b78f8ff571412",
+            "name": "Tokyo Local Specialties: Monjayaki & Fukagawa-meshi",
+            "introduction": "Monjayaki is a savory pancake similar to okonomiyaki, while fukagawa-meshi is a clam rice bowl. Other local dishes like yanagawa-nabe are also unique to Tokyo and worth trying.",
+            "recommendationReason": "You enjoy snacks, and these Tokyo-specific local dishes offer a unique culinary experience that matches the relaxed pace of the trip.",
+            "sourceRefs": [
+              "01a0bf69-9581-77eb-a04b-787dfd3402b2/finding_4b9d0502e16981c8c306f586"
+            ]
+          }
+        ]
+      },
+      "observation": {
+        "durationMs": 40271.1545,
+        "calls": 1,
+        "promptTokens": 1435,
+        "completionTokens": 950,
+        "knownCostUsdMicros": 772,
+        "unknownCostCalls": 0,
+        "failure": null,
+        "repairReasons": []
+      }
+    }
+  ]
+}

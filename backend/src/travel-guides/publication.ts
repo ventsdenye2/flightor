@@ -5,10 +5,19 @@ import { supportedClaimEvidence, hasClaimConflict } from '../research-agent/clai
 import { travelGuideArtifactPayloadSchema, type TravelGuideArtifactPayload } from './artifact.js'
 import { guidePublicationSchema, type GuidePublication } from './publication-schema.js'
 import { sourceApplicability } from './source-applicability.js'
+import { finalPendingReply, type PublicationLocale } from './finalization-schema.js'
 
 export const GUIDE_LEGACY_REPLY = '此前保存的攻略仍可查看。旧版文字未逐项审查，费用、开放时间及交通耗时待核实，不能确认是否满足预算。'
 const UNKNOWN = '建议时段仅表示安排意向；费用、开放时间、预约要求和交通耗时待核实。'
 const referenceKey = (item: { sourceArtifactId: string; sourceFindingId: string }) => JSON.stringify([item.sourceArtifactId, item.sourceFindingId])
+/** Future media/map enrichment is a separate projection keyed to content + activity,
+ * never a mutation of the guide prose or its business/content version. */
+export function guideEnrichmentKey(record: ArtifactRecord, activityId: string): { contentVersion: string; activityId: string } | undefined {
+  const guide = travelGuideArtifactPayloadSchema.safeParse(record.payload)
+  const publication = publicationFor(record)
+  return guide.success && publication && guide.data.days.some(day => day.items.some(item => item.id === activityId))
+    ? { contentVersion: publication.guideContentHash, activityId } : undefined
+}
 function guideContentHash(guide: TravelGuideArtifactPayload): string {
   const { publication: _publication, ...content } = guide
   return createHash('sha256').update(JSON.stringify(content)).digest('hex')
@@ -91,18 +100,44 @@ export function publicationFor(record: ArtifactRecord): GuidePublication | undef
   return buildGuidePublication(record, guide, [], true)
 }
 
-export function guidePublicationReply(record: ArtifactRecord): string {
-  return publicationFor(record)?.reply ?? GUIDE_LEGACY_REPLY
+export function guidePublicationReply(record: ArtifactRecord, locale: PublicationLocale = 'zh'): string {
+  const publication = publicationFor(record)
+  if (publication?.finalization) return publication.finalization.variants[locale]?.text?.reply ?? finalPendingReply(locale)
+  if (locale === 'en') return finalPendingReply(locale)
+  return publication?.reply ?? GUIDE_LEGACY_REPLY
 }
 
 /** Public copies omit raw prose; stored artifacts remain intact for verifier and audit. */
-export function projectGuideRecord(record: ArtifactRecord): ArtifactRecord {
+export function projectGuideRecord(record: ArtifactRecord, locale: PublicationLocale = 'zh'): ArtifactRecord {
   if (record.type !== 'travel_guide') return record
   const parsed = travelGuideArtifactPayloadSchema.safeParse(record.payload)
   const publication = publicationFor(record)
   if (!parsed.success || !publication) return { ...record, verification: undefined,
     payload: { kind: 'trip_travel_guide', schemaVersion: 1, days: [], warnings: ['guide_publication_unavailable'] } }
   const guide = parsed.data
+  if (publication.finalization || locale === 'en') {
+    const variant = publication.finalization?.variants[locale]
+    const accepted = variant?.status === 'accepted' ? variant.text : null
+    const publicPublication = { ...publication, finalization: undefined, locale,
+      canLocalize: Object.values(publication.finalization?.variants ?? {}).some(value => value?.status === 'accepted'),
+      status: accepted ? 'accepted' : variant ? 'blocked' : 'preparing',
+      issues: variant?.issues ?? [], reply: accepted?.reply ?? finalPendingReply(locale), overview: accepted?.overview,
+      budgetAssessment: { ...publication.budgetAssessment, notice: locale === 'en' ? 'Budget is a target; total costs have not been established.' : '预算为目标口径，尚未核定总费用。' } }
+    return { ...record, verification: undefined, payload: {
+      kind: guide.kind, schemaVersion: guide.schemaVersion, builderVersion: guide.builderVersion,
+      routeArtifactId: guide.routeArtifactId, sourceArtifactIds: guide.sourceArtifactIds,
+      flightSelection: guide.flightSelection, budget: guide.budget, createdAt: guide.createdAt,
+      publication: publicPublication, warnings: accepted ? [] : ['guide_finalization_pending'],
+      days: accepted ? guide.days.map(day => ({ day: day.day, city: day.city, kind: day.kind,
+        theme: accepted.days.find(value => value.day === day.day)?.theme,
+        items: day.items.map(item => {
+          const text = accepted.activities.find(value => value.activityId === item.id)!
+          return { id: item.id, title: text.name, description: text.introduction, planningNote: text.recommendationReason,
+            recommendationReason: text.recommendationReason, city: item.city, category: item.category, reason: item.reason,
+            timeOfDay: item.timeOfDay, sourceArtifactId: item.sourceArtifactId, sourceFindingId: item.sourceFindingId }
+        }) })) : [], supportingEvidence: [], unassignedActivityRefs: []
+    } }
+  }
   const projectItem = <T extends { sourceArtifactId: string; sourceFindingId: string; category: string }>(item: T) => {
     const refs = publication.references[referenceKey(item)] ?? []
     const labelled = refs.find(ref => ref.labelQuote)

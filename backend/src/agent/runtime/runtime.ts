@@ -110,6 +110,8 @@ function toolCalls(message: Extract<ChatMessage, { role: 'assistant' }>): Functi
 }
 
 export class AgentRuntime {
+  /** Share the actual configured client/model without starting another runtime. */
+  publicationModel() { return { client: this.modelClient, model: this.options.model, reasoning: this.modelOptions.reasoning } }
   private readonly maxToolSteps: number
   private readonly maxCostUnits: number
   private readonly maxToolCallsPerStep: number

@@ -4,6 +4,9 @@ import { assertArtifactSourceContext, assertArtifactGoalWritable, assertArtifact
 import { AppError } from '../lib/errors.js'
 import type { Database, JsonValue } from '../db/types.js'
 import { TripContextVersionConflict } from '../trips/repository.js'
+import { mergeFinalVariant } from '../travel-guides/finalization-storage.js'
+import type { FinalVariant, PublicationLocale } from '../travel-guides/finalization-schema.js'
+import { readSavedFlightSelection } from '../workspaces/flight-selection.js'
 
 type ArtifactRow = {
   internal_id?: string
@@ -99,6 +102,29 @@ function resourceNotFound(message: string): AppError {
 
 /** PostgreSQL implementation scoped to one trusted internal user id. */
 export class PostgresArtifactRepository implements ArtifactRepository {
+  async saveFinalVariant(id: string, hash: string, locale: PublicationLocale, variant: FinalVariant, signal?: AbortSignal): Promise<ArtifactRecord> {
+    // The model call has already finished. Only the short merge is transactional.
+    await this.db.transaction().execute(async trx => {
+      const row = await trx.selectFrom('artifacts').selectAll().where('public_id', '=', id)
+        .where('user_id', '=', this.userId).forUpdate().executeTakeFirst()
+      if (!row) throw resourceNotFound('Artifact was not found')
+      const trip = await trx.selectFrom('trips').select(['public_id', 'current_context_version', 'saved_route_json'])
+        .where('id', '=', row.trip_id).where('user_id', '=', this.userId).forShare().executeTakeFirstOrThrow()
+      if (trip.current_context_version !== row.trip_context_version) throw new AppError('PUBLICATION_CONTENT_CHANGED', 'Trip changed', 409)
+      const record = toArtifact({ ...row, id: row.public_id, trip_public_id: trip.public_id })
+      const payload = mergeFinalVariant(record, hash, locale, variant)
+      const saved = typeof trip.saved_route_json === 'string' ? JSON.parse(trip.saved_route_json) : trip.saved_route_json
+      const selection = readSavedFlightSelection(saved)
+      if (selection?.revision !== payload.flightSelection?.revision || selection?.artifactId !== payload.flightSelection?.artifactId) {
+        throw new AppError('PUBLICATION_CONTENT_CHANGED', 'Selected flight changed', 409)
+      }
+      signal?.throwIfAborted()
+      await trx.updateTable('artifacts').set({ payload_json: JSON.stringify(payload) as unknown as JsonValue, updated_at: new Date() })
+        .where('id', '=', row.id).execute()
+      signal?.throwIfAborted()
+    })
+    return (await this.get(id))!
+  }
   constructor(
     private readonly db: Kysely<Database>,
     private readonly userId: string

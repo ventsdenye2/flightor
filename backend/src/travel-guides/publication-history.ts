@@ -2,6 +2,7 @@ import type { ArtifactRepository } from '../artifacts/repository.js'
 import { goalDeliverySchema } from '../agent/goals/completion.js'
 import type { ConversationMessage } from '../conversations/repository.js'
 import { GUIDE_LEGACY_REPLY, guidePublicationReply } from './publication.js'
+import { finalPendingReply } from './finalization-schema.js'
 
 /** Stable copy shown when an old guide message has no usable saved guide. */
 export const LEGACY_GUIDE_HISTORY_NOTICE = GUIDE_LEGACY_REPLY
@@ -14,6 +15,10 @@ const GUIDE_DELIVERY_NOTICES = {
 } as const
 
 export interface HistoryPublicationScope {
+  locale?: 'zh' | 'en'
+  tripContextVersion?: number
+  flightSelectionRevision?: number | undefined
+  checkFlightSelection?: boolean
   tripId: string
   conversationId: string
   artifacts: Pick<ArtifactRepository, 'get'>
@@ -51,14 +56,18 @@ export async function projectHistoricalGuideMessage(
   // prose. Replace it with a deterministic status notice; only satisfied
   // turns may publish a saved guide reply.
   if (delivery && delivery.status !== 'satisfied') {
-    return { ...message, content: GUIDE_DELIVERY_NOTICES[delivery.status] }
+    return { ...message, content: scope.locale === 'en' ? finalPendingReply('en') : GUIDE_DELIVERY_NOTICES[delivery.status] }
   }
   if (!isGuideMessage && refs.length === 0) return message
 
   for (const id of refs.slice(0, 100)) {
     const record = await scope.artifacts.get(id)
     if (!record || !sameScope(record, scope)) continue
-    return { ...message, content: guidePublicationReply(record) }
+    if ((scope.tripContextVersion !== undefined && record.tripContextVersion !== scope.tripContextVersion)
+      || (scope.checkFlightSelection && (record.payload as { flightSelection?: { revision: number } })?.flightSelection?.revision !== scope.flightSelectionRevision)) {
+      return { ...message, content: finalPendingReply(scope.locale ?? 'zh') }
+    }
+    return { ...message, content: guidePublicationReply(record, scope.locale ?? 'zh') }
   }
   return isGuideMessage ? { ...message, content: LEGACY_GUIDE_HISTORY_NOTICE } : message
 }

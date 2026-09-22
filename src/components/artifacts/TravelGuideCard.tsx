@@ -19,6 +19,12 @@ export function TravelGuideCard({ artifact, onAction }: TravelGuideCardProps) {
       <Text className='artifact-guide__item'>请重新加载已发布的攻略，费用和开放时间仍需核实。</Text>
     </ArtifactCard>
   }
+  if (publication.status && publication.status !== 'accepted') {
+    return <ArtifactCard artifact={artifact} accent='guide' label='DRAFT'
+      title={publication.locale === 'en' ? 'Final text is not ready' : '终稿尚未就绪'} summary={publication.reply}>
+      {records(record(payload.publication)?.issues, 100).map((issue, index) => <Text key={index}>{firstText(issue.detail)}</Text>)}
+    </ArtifactCard>
+  }
   const days = records(payload.days, 60)
   const firstDay = days[0]
   const firstCity = firstDay ? displayLocation(firstDay.city) : undefined
@@ -54,7 +60,8 @@ export function TravelGuideCard({ artifact, onAction }: TravelGuideCardProps) {
                 return <View key={firstText(item.id) ?? `${firstText(item.title) ?? 'item'}-${itemIndex}`} className='artifact-guide__item'>
                   <Text>{displayGuideTime(item.timeOfDay) ? `${displayGuideTime(item.timeOfDay)} · ` : ''}{firstText(item.title) ?? 'Activity title unavailable'}</Text>
                   {description.description ? <Text className='artifact-guide__item-copy'>{description.description}</Text> : null}
-                  {description.notice ? <Text className='artifact-guide__applicability'>{description.notice}</Text> : null}
+                  {publication.status === 'accepted' && firstText(item.recommendationReason) ? <Text className='artifact-guide__item-copy'>{firstText(item.recommendationReason)}</Text> : null}
+                  {publication.status !== 'accepted' && description.notice ? <Text className='artifact-guide__applicability'>{description.notice}</Text> : null}
                 </View>
               })}
               {firstText(day.notes) ? <Text className='artifact-guide__more'>{firstText(day.notes)}</Text> : null}

@@ -21,6 +21,7 @@ import { validateGuideContent } from './validation.js'
 import { travelGuideArtifactPayloadSchema } from './artifact.js'
 import { tripRoutePlanPayloadSchema } from '../trip-planning/types.js'
 import { researchArtifactSchema } from '../research-agent/types.js'
+import { GuideFinalizer, sourceRef } from './finalization.js'
 
 type Sample = {
   id: string
@@ -150,5 +151,38 @@ suite('PostgreSQL G1 publication v1 original sample copies', () => {
     const workspaceRecoveryMs = performance.now() - workspaceStartedAt
     console.log(JSON.stringify({ fixture: sample.id, timingMs: { ...test.timing, independentRereadProjectionMs, workspaceRecoveryMs } }))
     expect(JSON.stringify(test.legacy.payload)).toContain('planningNote')
+    // Publication-only persistence after completion, independent connection and language.
+    const guide = travelGuideArtifactPayloadSchema.parse(test.saved.payload)
+    // Bind the new draft id using the normal workspace save boundary.
+    const trips = new PostgresTripRepository(db, ownerId)
+    const selectedFlight = await test.workspace.getSelectedFlight(test.trip.id)
+    const scope = await createArtifactWorkspace({ artifacts: test.artifacts, trips, tripId: test.trip.id,
+      requireGuideFinalization: true, ...(selectedFlight ? { selectedFlight } : {}) })
+    const saved = await saveWorkspaceArtifact(scope, { type: 'travel_guide', schemaVersion: 1, payload: guide, sourceArtifactIds: guide.sourceArtifactIds })
+    expect((presentArtifact(saved).payload as any).days).toEqual([])
+    const publication = publicationFor(saved)!
+    const variants = await Promise.all((['zh', 'en'] as const).map(async locale => {
+      const text = { locale,
+        reply: locale === 'zh' ? '东京文化行程终稿已准备好，可以按每日主题查看安排。' : 'Your Tokyo cultural itinerary is ready to explore by daily theme.',
+        overview: locale === 'zh' ? '按照既定节奏游览，感受传统文化与街区氛围。' : 'Explore traditional culture and the neighborhood atmosphere at the planned pace.',
+        days: guide.days.map(day => ({ day: day.day, theme: locale === 'zh' ? '文化漫游' : 'Cultural walk' })),
+        activities: guide.days.flatMap(day => day.items).map(item => ({ activityId: item.id, name: item.title,
+          introduction: locale === 'zh' ? '沿着原定路线漫步，感受这片街区的文化氛围。' : 'Walk the planned route and appreciate the cultural atmosphere of the neighborhood.',
+          recommendationReason: locale === 'zh' ? '这段游览回应文化兴趣，并保留轻松的旅行节奏。' : 'This visit responds to your cultural interests at a relaxed pace.', sourceRefs: [sourceRef(item)] })) }
+      const variant = await new GuideFinalizer({ complete: async () => ({ message: { role: 'assistant', content: JSON.stringify({ text, issues: [] }) } }) })
+        .generate({ locale, guide, accepted: text, research: [], requirements: null })
+      expect(variant.status).toBe('accepted')
+      return { locale, variant }
+    }))
+    await Promise.all(variants.map(({ locale, variant }) => test.artifacts.saveFinalVariant(saved.id, publication.guideContentHash, locale, variant)))
+    const fresh = (await new PostgresArtifactRepository(recoveryDb, ownerId).get(saved.id))!
+    expect(publicationFor(fresh)?.finalization?.variants.zh?.status).toBe('accepted')
+    expect(publicationFor(fresh)?.finalization?.variants.en?.status).toBe('accepted')
+    expect((fresh.payload as any).days).toEqual(guide.days)
+    expect((await trips.get(test.trip.id))?.version).toBe(test.trip.context.version)
+    expect(await new PostgresArtifactRepository(recoveryDb, '0').get(saved.id)).toBeUndefined()
+    await expect(test.artifacts.saveFinalVariant(saved.id, '0'.repeat(64), 'zh', variants[0]!.variant)).rejects.toThrow('Guide content changed')
+    await trips.update(test.trip.id, { interests: ['updated'] }, test.trip.context.version)
+    await expect(test.artifacts.saveFinalVariant(saved.id, publication.guideContentHash, 'zh', variants[0]!.variant)).rejects.toThrow('Trip changed')
   })
 })

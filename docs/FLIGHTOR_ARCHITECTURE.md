@@ -2998,3 +2998,6 @@ Route Artifact workspaces, cloud Trips/Memory, reviewed Discovery, public Explor
 
 
 2026-09-21：SerpApi 主研究路径增加有界正文读取及 `claimEvidence` 原文绑定，读到正文不升级为当前/未来事实已核实。攻略共享 validator 拒绝声明出处错误和同对象冲突；保持 reference_only。接入、限制与兼容见 [ADR 0023](adr/0023-source-pages-and-quoted-claims.md)。
+# 2026-09-22：发布末端终稿合同
+
+新Planner攻略在Artifact保存边界标记为草稿，原始研究与规划正文仍供领域验收；后置GuideFinalizer复用同模型/client，无工具，一次结构化生成，最多一次表达修复。独立的publication-only短事务合并zh/en终稿，不修改Trip、航班、活动身份、顺序或Goal/Run。领域satisfied不等于内容accepted；公开读取只能投影目标语言接纳文本或明确准备/阻塞状态。完整合同、90秒/180k字符边界、同进程并发去重和素材独立扩展接口见[ADR 0025](adr/0025-bounded-guide-finalization.md)。不在数据库长事务、GET或verifier内调用模型。

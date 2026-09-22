@@ -1,4 +1,5 @@
 import { PublicResearchSourceReader } from '../research-agent/source-reader.js'
+import { presentArtifact } from '../artifacts/presentation.js'
 import type { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
@@ -41,6 +42,7 @@ import { goalDeliverySchema } from '../agent/goals/completion.js'
 import { PostgresWorkspaceRepository } from '../workspaces/postgres.js'
 
 export const cloudAgentRequestSchema = z.object({
+  locale: z.enum(['zh', 'en']).default('zh'),
   tripId: z.string().uuid(),
   conversationId: z.string().uuid(),
   message: z.string().trim().min(1).max(2_000)
@@ -151,6 +153,7 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
     const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))
     const flightSelections = new PostgresWorkspaceRepository(context.db, userId)
     return new CloudPlannerService({
+      finalizationObservation: observation => logger.info({ finalization: observation, model: context.env.PLANNER_MODEL }, 'Guide finalization completed'),
       observation: value => logger.info({ plannerObservation: value }, 'Planner turn observation'),
       trips, conversations, artifacts, memory, runtime, flightSelections,
       leanGoalsEnabled: context.env.PLANNER_LEAN_GOALS_ENABLED,
@@ -191,6 +194,14 @@ export async function registerCloudAgentRoutes(
     onError: (error, turnId) => app.log.error({ err: error, turnId }, 'Planner turn failed')
   })
   app.addHook('onClose', async () => { turns.close() })
+
+  app.post('/v1/artifacts/:id/localization', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (request, reply) => {
+    const identity = await authenticateRequest(request, context)
+    const { id } = z.object({ id: z.string().uuid() }).strict().parse(request.params)
+    const { locale } = z.object({ locale: z.enum(['zh', 'en']) }).strict().parse(request.body)
+    const artifact = await serviceForUser(identity.userId).localizeGuide(id, locale)
+    return reply.header('Cache-Control', 'no-store').send({ artifact: presentArtifact(artifact, locale) })
+  })
 
   const currentSnapshot = async (ownerId: string, turnId: string) => {
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -262,6 +273,7 @@ export async function registerCloudAgentRoutes(
       tripId: input.tripId,
       conversationId: input.conversationId,
       message: input.message,
+      locale: input.locale,
       generationId: uuidv7()
     })
     return reply.header('Cache-Control', 'no-store').send(buildCloudAgentResponse(input, result))

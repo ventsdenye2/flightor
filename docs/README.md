@@ -1,5 +1,7 @@
 # FlightOR 文档入口
 
+2026-09-22：[有界终稿 ADR 0025](adr/0025-bounded-guide-finalization.md) 已实现；[本轮验证及费用](design/budget-travel-agent/FINALIZATION_2026-09-22.md) 含真实中英终稿示例。新 Planner 攻略先保存隐藏草稿，接纳后按 locale 展示；未部署、未追认完整 G1 验收。
+
 更新：2026-09-20。文档的“当前实现”“待实现方案”“历史证据”分开维护，不再以旧交接文件充当最新状态。
 
 ## 从这里开始

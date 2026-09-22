@@ -40,7 +40,7 @@ export class PostgresWorkspaceRepository implements WorkspaceRepository {
     return { trips: rows.slice(0, input.limit).map(tripView), nextCursor: hasMore ? rows[input.limit - 1]!.public_id : null }
   }
 
-  async get(tripId: string, conversationId?: string): Promise<TripWorkspace> {
+  async get(tripId: string, conversationId?: string, locale: 'zh' | 'en' = 'zh'): Promise<TripWorkspace> {
     const trip = await this.db.selectFrom('trips').selectAll().where('public_id', '=', tripId).where('user_id', '=', this.userId).executeTakeFirst()
     if (!trip) throw notFound()
     const [contextRow, conversationRows, artifacts] = await Promise.all([
@@ -58,7 +58,9 @@ export class PostgresWorkspaceRepository implements WorkspaceRepository {
       const rows = await new PostgresConversationRepository(this.db, this.userId).listMessages(selected.id, 100)
       const publicRows = rows.filter(m => m.role === 'user' || m.role === 'assistant')
       const projectedRows = await projectHistoricalGuideMessages(publicRows, {
-        tripId, conversationId: selected.id, artifacts: new PostgresArtifactRepository(this.db, this.userId)
+        tripId, conversationId: selected.id, locale, tripContextVersion: trip.current_context_version,
+        checkFlightSelection: true, flightSelectionRevision: readSavedFlightSelection(json(trip.saved_route_json))?.revision,
+        artifacts: new PostgresArtifactRepository(this.db, this.userId)
       })
       for (const m of projectedRows) {
         const ids = Array.isArray(m.metadata.artifact_refs) ? m.metadata.artifact_refs : []

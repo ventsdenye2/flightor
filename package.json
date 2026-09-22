@@ -31,7 +31,7 @@
     "test:planner-publication": "node scripts/test-planner-publication.cjs && node scripts/test-plan-flight-publication.cjs && node scripts/test-planner-telemetry.cjs",
     "test:planner-reply": "node scripts/test-planner-reply.cjs",
     "test:session-recovery": "node scripts/test-session-recovery.js",
-    "test:artifacts": "node scripts/test-artifacts.js",
+    "test:artifacts": "node scripts/test-artifacts.js && node scripts/test-finalization-client.cjs",
     "test:route-page-dispatch": "node scripts/test-route-page-dispatch.cjs",
     "test:route-ui-polish": "node scripts/test-route-ui-polish.cjs",
     "test:flight-connections": "node scripts/test-flight-connections.js",

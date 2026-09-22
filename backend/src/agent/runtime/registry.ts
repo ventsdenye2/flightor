@@ -25,6 +25,7 @@ export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
 export type ToolSideEffect = 'none' | 'state'
 
 export interface ToolExecutionContext {
+  requireGuideFinalization?: boolean
   /** Authenticated owner for durable Goal records. */
   ownerId?: string
   requestId: string

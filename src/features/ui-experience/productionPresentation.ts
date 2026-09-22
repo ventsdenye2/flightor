@@ -118,12 +118,12 @@ export function savedOfferFlights(artifact: ArtifactEnvelope | undefined, offerI
     source
   }]
 }
-function activity(item: Item, index: number): Activity {
+function activity(item: Item, index: number, accepted = false, locale = 'zh'): Activity {
   const time = text(item.timeOfDay)
   const summary = formatResearchDescription(firstText(item.description, item.summary, item.planningNote), item.sourceApplicability)
   return { id: text(item.id) ?? `activity-${index}`, name: firstText(item.title, item.name) ?? '活动待补充',
-    time: time ? ({ morning: '上午', afternoon: '下午', evening: '晚上', flexible: '灵活安排' } as Record<string, string>)[time] ?? null : null,
-    until: null, category: text(item.category) ?? '活动', summary: summary.description || '活动资料待补充。', sourceApplicabilityNotice: summary.notice,
+    time: time ? (locale === 'en' ? time : ({ morning: '上午', afternoon: '下午', evening: '晚上', flexible: '灵活安排' } as Record<string, string>)[time]) ?? null : null,
+    until: null, category: text(item.category) ?? '活动', summary: accepted ? [summary.description, text(item.recommendationReason)].filter(Boolean).join('\n') : summary.description || '活动资料待补充。', sourceApplicabilityNotice: accepted ? '' : summary.notice,
     // The guide contract currently has city coordinates only, not venue coordinates.
     latitude: null, longitude: null, media: null, source: sources(item)[0] ?? null }
 }
@@ -154,13 +154,13 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
       && text(guideSelection.choiceId) === (savedSelection.kind === 'offer' ? savedSelection.offerId : savedSelection.routeId)
       && numberValue(guideSelection.revision) === savedSelection.revision)
     : !guideSelection
-  const guideApplicable = Boolean(guide && current && guideMatchesSelection)
+  const guideApplicable = Boolean(guide && current && guideMatchesSelection && (!publication?.status || publication.status === 'accepted'))
   const start = context?.departureWindow?.precision === 'exact' ? context.departureWindow.from : null
   const end = context?.returnWindow?.precision === 'exact' ? context.returnWindow.to ?? context.returnWindow.from : null
   const dayValues = records(guide?.days ?? route.days, 60)
-  const days: TripDay[] = dayValues.map((day, index) => ({ id: numberValue(day.day) ?? index + 1, label: `第 ${numberValue(day.day) ?? index + 1} 天`,
+  const days: TripDay[] = dayValues.map((day, index) => ({ id: numberValue(day.day) ?? index + 1, label: publication?.locale === 'en' ? `Day ${numberValue(day.day) ?? index + 1}` : `第 ${numberValue(day.day) ?? index + 1} 天`,
     title: firstText(day.theme) ?? (guide ? day.kind === 'rest' ? '休息与自由活动' : '每日安排' : '每日安排待补充'), subtitle: locationName(day.city), status: guideApplicable ? 'ready' : 'pending',
-    activities: guide ? records(day.items, 6).map((item, itemIndex) => activity(item, index * 6 + itemIndex)) : [] }))
+    activities: guide ? records(day.items, 6).map((item, itemIndex) => activity(item, index * 6 + itemIndex, publication?.status === 'accepted', publication?.locale)) : [] }))
   const routeNames = records(route.cities, 12).map(city => locationName(city.location))
   const allSources = dayValues.flatMap(day => records(day.items, 6).flatMap(sources))
   const warnings = [...(Array.isArray(route.warnings) ? route.warnings : []), ...(Array.isArray(guide?.warnings) ? guide.warnings : [])].filter(value => typeof value === 'string')
@@ -178,7 +178,7 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
   return { id: routeArtifact.tripId, title: (workspace?.trip.id === routeArtifact.tripId ? firstText(workspace.trip.title) : undefined) ?? (guide ? '我的旅行安排' : '我的路线草案'),
     destination: routeNames[0] ?? days[0]?.subtitle ?? '目的地待确认', route: routeNames,
     dates: { start: start ?? null, end: end ?? null, label: !start && !end ? '日期待确认' : '' }, durationDays: context?.travelDays ?? (days.length || null),
-    travelers: null, cover: null, description,
+    travelers: null, cover: null, description: publication?.status ? publication.overview ?? publication.reply : description,
     days, status: satisfied ? 'ready' : 'partial', flights: savedRoute, alternatives: [],
      sources: [...new Map(allSources.map(source => [`${source.url ?? source.label}:${source.status}`, source])).values()], ...(budget ? { budget } : {}), ...(supportingEvidence.length ? { supportingEvidence } : {}) }
 }

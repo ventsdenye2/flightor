@@ -1,5 +1,7 @@
 import { v7 as uuidv7 } from 'uuid'
 import { AppError } from '../lib/errors.js'
+import { mergeFinalVariant } from '../travel-guides/finalization-storage.js'
+import type { FinalVariant, PublicationLocale } from '../travel-guides/finalization-schema.js'
 
 export const ARTIFACT_TYPES = [
   'flight_search',
@@ -100,6 +102,7 @@ export interface ArtifactRelationshipResolver {
 }
 
 export interface ArtifactRepository {
+  saveFinalVariant?(id: string, contentHash: string, locale: PublicationLocale, variant: FinalVariant, signal?: AbortSignal): Promise<ArtifactRecord>
   create(input: CreateArtifactInput): Promise<ArtifactRecord>
   /** Atomically records the final artifact on a pre-existing native research audit. */
   createWithResearchAudit?(input: CreateArtifactInput, auditId: string): Promise<ArtifactRecord>
@@ -113,6 +116,15 @@ export interface ArtifactRepository {
 interface OwnedArtifact extends ArtifactRecord { ownerId: string }
 
 export class InMemoryArtifactRepository implements ArtifactRepository {
+  async saveFinalVariant(id: string, hash: string, locale: PublicationLocale, variant: FinalVariant, signal?: AbortSignal): Promise<ArtifactRecord> {
+    const record = await this.get(id)
+    if (!record) throw new AppError('RESOURCE_NOT_FOUND', 'Artifact not found', 404)
+    const current = this.records.get(id)!
+    signal?.throwIfAborted()
+    const payload = mergeFinalVariant(current, hash, locale, variant)
+    this.records.set(id, { ...current, payload, updatedAt: new Date().toISOString() })
+    return (await this.get(id))!
+  }
   private readonly records: Map<string, OwnedArtifact>
 
   constructor(
@@ -191,7 +203,7 @@ export class InMemoryArtifactRepository implements ArtifactRepository {
   async listForTrip(tripId: string, limit = 10): Promise<ArtifactRecord[]> {
     if (!this.ownedTripIds.has(tripId)) return []
     return [...this.records.values()].filter(record => record.ownerId === this.ownerId && record.tripId === tripId)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)).slice(0, Math.min(20, Math.max(1, limit)))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)).slice(0, boundedLimit(limit))
       .map(({ ownerId: _owner, ...record }) => structuredClone(record))
   }
 

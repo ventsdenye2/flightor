@@ -71,8 +71,8 @@ export function projectArtifactPresentation(record: Pick<ArtifactRecord, 'type' 
   return { schemaVersion: 1, airportTimes, ...(unconfirmedFields.length ? { unconfirmedFields } : {}), truncated }
 }
 
-export function presentArtifact(record: ArtifactRecord): PresentedArtifact {
-  if (record.type === 'travel_guide') return projectGuideRecord(record)
+export function presentArtifact(record: ArtifactRecord, locale: 'zh' | 'en' = 'zh'): PresentedArtifact {
+  if (record.type === 'travel_guide') return projectGuideRecord(record, locale)
   if (record.type === 'research' && (record.schemaVersion === 1 || record.schemaVersion === 2)) {
     const payload = object(record.payload)
     if (Array.isArray(payload?.findings)) return { ...record, verification: undefined, payload: {

@@ -57,7 +57,7 @@ function harness(steps) {
       throw new Error(`Unexpected dependency ${specifier}`)
     }
   }, { filename: file })
-  state.run = options => module.exports.converse(input, {
+  state.run = (options, requestInput = input) => module.exports.converse(requestInput, {
     startedAt: 500,
     isCurrent: () => state.current,
     onProgress: value => { state.progress.push(value); state.onProgress?.(value) },
@@ -75,11 +75,18 @@ async function test(name, run) {
   console.log(`PASS ${name}`)
 }
 
+await test('explicit English UI locale survives a Chinese user request', async () => {
+  const h = harness([accepted, view('completed', 'finalizing')])
+  await h.run(undefined, { ...input, locale: 'en', message: '请安排文化景点' })
+  assert.equal(h.calls[0].data.locale, 'en')
+  assert.equal(h.calls[0].data.message, '请安排文化景点')
+})
+
 await test('one submission, serial short polls and stage changes follow successful GETs', async () => {
   const h = harness([accepted, view(), view('running', 'researching'), view('completed', 'finalizing')])
   assert.equal(await h.run(), response)
   assert.equal(h.calls.filter(call => call.method === 'POST').length, 1)
-  assert.deepEqual(JSON.parse(JSON.stringify(h.calls[0].data)), input)
+  assert.deepEqual(JSON.parse(JSON.stringify(h.calls[0].data)), { ...input, locale: 'zh' })
   assert.equal(h.calls[1].url, '/v1/agent/turns/turn-1')
   assert.equal(h.maxActive, 1)
   assert.ok(h.calls.every(call => call.timeout <= 10_000 && call.retry === 0 && call.showError === false))

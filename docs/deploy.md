@@ -53,3 +53,8 @@ G1 在 2026-09-20 使用独立临时 PostgreSQL 16 实例运行 Goal 集成套�
 `npm --prefix backend run test:db` 与默认离线测试分开；未显式设置 `TEST_DATABASE_URL` 会在加载配置时失败，不能报告 skip 为成功。套件会创建/删除自己的随机 schema，并执行扩展及迁移，连接必须指向专用测试实例。
 
 本批使用本地 `postgres:16-alpine` 镜像、随机 loopback 端口、独立测试账号及 tmpfs 数据目录；容器带 `--rm`，验证后停止删除。没有启动 Compose 迁移任务，也没有对既有业务容器写入测试数据。新数据库不代表生产迁移已完成。两条攻略的确定性模型/证据 fixture 回归与后续真实 Provider 验收分别记载。
+# 2026-09-22 终稿运行补充
+
+终稿不增加模型/Provider环境变量：默认使用主Planner实际client、model和reasoning。专用编辑参数为90秒共同上限（服从整轮剩余时间）、8000输出token、180000输入字符、最多2次调用；上下文不足返回明确缺口。API默认开启新Planner攻略草稿/终稿边界，无数据库迁移。回退应保留草稿隐藏，不能删除标记后公开原始自由文本。当前同进程请求合并；多API实例尚无分布式调用租约。
+
+真实终稿烟测：先backend build；在backend目录设置本轮授权`FINALIZATION_AUTHORIZED_USD=2`后执行`node --env-file=.env scripts/verify-guide-finalization.mjs --execute`。默认不传`--execute`只读配置；固定账本自动续用、最多12次、零搜索，不能新建目录重置额度。详见[运行合同](adr/0025-bounded-guide-finalization.md)和[实测报告](design/budget-travel-agent/FINALIZATION_2026-09-22.md)。本批未重启/部署现有API，也未重启Docker或微信SDK。

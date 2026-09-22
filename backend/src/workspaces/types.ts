@@ -33,6 +33,6 @@ export interface TripWorkspace {
 }
 export interface WorkspaceRepository {
   list(input: { limit: number; before?: string; status?: Trip['status'] }): Promise<{ trips: WorkspaceTrip[]; nextCursor: string | null }>
-  get(tripId: string, conversationId?: string): Promise<TripWorkspace>
+  get(tripId: string, conversationId?: string, locale?: 'zh' | 'en'): Promise<TripWorkspace>
   update(tripId: string, input: WorkspacePatch): Promise<WorkspaceTrip>
 }

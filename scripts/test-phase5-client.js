@@ -123,7 +123,7 @@ calls.length = 0
 await service.converse({ tripId: 'trip-1', conversationId: 'conversation-1', message: '  latest request  ' })
 check('Planner body contains exactly one new message', calls[0]?.url === '/v1/agent/turns'
   && JSON.stringify(calls[0]?.data) === JSON.stringify({
-    tripId: 'trip-1', conversationId: 'conversation-1', message: 'latest request'
+    locale: 'zh', tripId: 'trip-1', conversationId: 'conversation-1', message: 'latest request'
   }))
 check('Planner body does not replay legacy messages or state', !('messages' in (calls[0]?.data ?? {})) && !('state' in (calls[0]?.data ?? {})))
 

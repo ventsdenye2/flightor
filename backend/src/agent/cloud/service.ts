@@ -4,6 +4,10 @@ import type { ConversationRepository } from '../../conversations/repository.js'
 import type { FareProvider } from '../../fares/providers/provider.js'
 import { AppError } from '../../lib/errors.js'
 import { guidePublicationReply, GUIDE_LEGACY_REPLY } from '../../travel-guides/publication.js'
+import { GuideFinalizer } from '../../travel-guides/finalization.js'
+import { finalizeGuide } from '../../travel-guides/finalization-service.js'
+import type { PublicationLocale, FinalVariant } from '../../travel-guides/finalization-schema.js'
+import { finalPendingReply } from '../../travel-guides/finalization-schema.js'
 import type { UserMemoryRepository } from '../../memory/repository.js'
 import type { TripRepository } from '../../trips/repository.js'
 import type { ResearchAgent } from '../../research-agent/types.js'
@@ -36,6 +40,7 @@ export interface CloudPlannerRepositories {
 }
 
 export interface CloudPlannerDependencies extends CloudPlannerRepositories {
+  finalizationObservation?: (value: FinalVariant['observation']) => void
   observation?: (value: PlannerObservation) => void
   leanGoalsEnabled?: boolean
   ownerId?: string
@@ -57,6 +62,7 @@ export interface CloudPlannerDependencies extends CloudPlannerRepositories {
 }
 
 export interface CloudPlannerTurnInput {
+  locale?: PublicationLocale
   requestId: string
   tripId: string
   conversationId: string
@@ -99,6 +105,25 @@ function historyMessage(role: string, content: string): ChatMessage | undefined 
 export class CloudPlannerService {
   constructor(private readonly dependencies: CloudPlannerDependencies) {}
 
+  private finalizer() {
+    const model = this.dependencies.runtime.publicationModel()
+    return new GuideFinalizer(model.client, model.model, model.reasoning ? { reasoning: model.reasoning } : {}, this.dependencies.finalizationObservation)
+  }
+
+  async localizeGuide(id: string, locale: PublicationLocale) {
+    const record = await this.dependencies.artifacts.get(id)
+    if (!record || record.type !== 'travel_guide') throw new AppError('RESOURCE_NOT_FOUND', 'Guide not found', 404)
+    const assertCurrent = async () => {
+      const trip = await this.dependencies.trips.get(record.tripId)
+      const selected = await this.dependencies.flightSelections?.getSelectedFlight(record.tripId)
+      if (!trip || trip.version !== record.tripContextVersion || selected?.selection.revision !== (record.payload as { flightSelection?: { revision: number } }).flightSelection?.revision) {
+        throw new AppError('PUBLICATION_CONTENT_CHANGED', 'Trip or flight selection changed', 409)
+      }
+    }
+    return finalizeGuide({ ownerId: this.dependencies.ownerId ?? record.tripId, record, artifacts: this.dependencies.artifacts,
+      finalizer: this.finalizer(), locale, localization: true, assertCurrent })
+  }
+
   /** Owner-scoped repositories validate access before an asynchronous job is accepted. */
   async validateTurn(input: Pick<CloudPlannerTurnInput, 'tripId' | 'conversationId' | 'signal'>) {
     input.signal?.throwIfAborted()
@@ -125,6 +150,7 @@ export class CloudPlannerService {
   }
 
   private async executeTurn(input: CloudPlannerTurnInput): Promise<CloudPlannerTurnResult> {
+    const deadline = Date.now() + 300_000
     const trip = await this.validateTurn(input)
     const selectedFlight = await this.dependencies.flightSelections?.getSelectedFlight(input.tripId) ?? null
 
@@ -166,6 +192,7 @@ export class CloudPlannerService {
     const result = await this.dependencies.runtime.run({
       messages,
       context: {
+        requireGuideFinalization: true,
         ...(this.dependencies.ownerId ? { ownerId: this.dependencies.ownerId } : {}),
         requestId: input.requestId,
         conversationId: input.conversationId,
@@ -204,6 +231,29 @@ export class CloudPlannerService {
     input.signal?.throwIfAborted()
     emitActivity(input.onActivity, { type: 'finalizing' })
     const artifactIds = [...new Set(result.traces.flatMap(trace => trace.artifactIds))]
+    const savedGuideIds = [...new Set(result.traces.filter(trace => trace.toolResultStatus === 'success'
+      && (trace.toolName === 'save_travel_guide' || trace.toolName === 'build_travel_guide')).flatMap(trace => trace.artifactIds))]
+    for (const id of savedGuideIds) {
+      if (['cancelled', 'turn_timeout', 'stale_generation'].includes(result.stopReason)) break
+      const record = await this.dependencies.artifacts.get(id)
+      if (!record || record.type !== 'travel_guide' || record.tripId !== input.tripId) continue
+      if (record.tripContextVersion !== (await this.dependencies.trips.get(input.tripId))?.version) continue
+      const assertCurrent = async () => {
+        input.signal?.throwIfAborted()
+        const state = await this.publicationContext(input)
+        const revision = (record.payload as { flightSelection?: { revision: number } }).flightSelection?.revision
+        if (state.tripContextVersion !== record.tripContextVersion || state.selectedFlightRevision !== revision) {
+          throw new AppError('PUBLICATION_CONTENT_CHANGED', 'Trip or selected flight changed', 409)
+        }
+        input.signal?.throwIfAborted()
+      }
+      const currentTrip = await this.dependencies.trips.get(input.tripId)
+      await finalizeGuide({ ownerId: this.dependencies.ownerId ?? input.tripId, record, artifacts: this.dependencies.artifacts,
+        finalizer: this.finalizer(), locale: input.locale ?? 'zh', memoryEnabled: Boolean(memory), assertCurrent,
+        requirements: { currentMessage: input.message,
+          preferences: memory?.markdown, trip: currentTrip, selectedFlight },
+        ...(input.signal ? { signal: input.signal } : {}), timeoutMs: Math.max(1, deadline - Date.now()) })
+    }
     recordTurnOutcome(result.stopReason)
     const publication = await this.publicationContext(input)
     const artifactRefs = (await Promise.all(artifactIds.map(id => this.dependencies.artifacts.get(id))))
@@ -227,11 +277,15 @@ export class CloudPlannerService {
     const guideTurn = result.delivery.goals.some(goal => goal.kind === 'travel_guide')
       || artifactRefs.some(ref => ref.type === 'travel_guide')
     let publicReply = result.reply
-    if (guideTurn && result.delivery.status === 'satisfied') {
-      const guideRef = artifactRefs.find(ref => ref.type === 'travel_guide' && result.delivery.artifactIds.includes(ref.id))
+    if (guideTurn && (result.delivery.status === 'satisfied' || result.delivery.status === 'not_requested')) {
+      // Reading an existing guide does not activate a Goal, but its narration
+      // must use the same publication boundary as a newly saved guide.
+      const guideRef = artifactRefs.find(ref => ref.type === 'travel_guide' &&
+        (result.delivery.status === 'not_requested' || result.delivery.artifactIds.includes(ref.id)))
       const guide = guideRef ? await this.dependencies.artifacts.get(guideRef.id) : undefined
-      publicReply = guide && guide.tripId === input.tripId ? guidePublicationReply(guide) : GUIDE_LEGACY_REPLY
+      publicReply = guide && guide.tripId === input.tripId ? guidePublicationReply(guide, input.locale ?? 'zh') : finalPendingReply(input.locale ?? 'zh')
     }
+    if (guideTurn && result.delivery.status !== 'satisfied' && result.delivery.status !== 'not_requested') publicReply = finalPendingReply(input.locale ?? 'zh')
     await this.dependencies.conversations.appendMessage({
       conversationId: input.conversationId,
       role: 'assistant',

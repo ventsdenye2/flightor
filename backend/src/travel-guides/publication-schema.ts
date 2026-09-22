@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { finalizationSchema } from './finalization-schema.js'
 
 const referenceSchema = z.object({
   url: z.url().max(500), title: z.string().min(1).max(240),
@@ -10,6 +11,7 @@ const referenceSchema = z.object({
   }).strict()).max(8)
 }).strict()
 export const guidePublicationSchema = z.object({
+  finalization: finalizationSchema.optional(),
   version: z.literal(1), artifactId: z.string().min(1).max(160), tripContextVersion: z.number().int().nonnegative(),
   guideContentHash: z.string().regex(/^[a-f0-9]{64}$/),
   flightSelectionRevision: z.number().int().positive().optional(),

@@ -9,6 +9,7 @@ import { isCompatibleSelectedFlightSource, type SelectedFlightContext } from '..
 
 /** Authenticated scope shared by artifact-producing domain services. */
 export interface ArtifactWorkspace {
+  requireGuideFinalization?: boolean
   artifacts: ArtifactRepository
   /** Authenticated owner, carried only to domain-owned infrastructure such as research audit linking. */
   ownerId?: string
@@ -99,8 +100,9 @@ export async function saveWorkspaceArtifact(
     const parsed = travelGuideArtifactPayloadSchema.safeParse(input.payload)
     if (parsed.success) {
       const id = input.id ?? uuidv7()
-      input = { ...input, id, payload: { ...parsed.data,
-        publication: buildGuidePublication({ id, tripContextVersion: scope.tripContextVersion }, parsed.data, admittedResearch(sources)) } }
+      const publication = buildGuidePublication({ id, tripContextVersion: scope.tripContextVersion }, parsed.data, admittedResearch(sources))
+      if (scope.requireGuideFinalization) publication.finalization = { version: 1, variants: {} }
+      input = { ...input, id, payload: { ...parsed.data, publication } }
     }
   }
   await checkpoint(scope)

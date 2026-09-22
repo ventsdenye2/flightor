@@ -13,8 +13,12 @@ import { PostgresTripRepository } from '../trips/postgres.js'
 import type { TripRepository } from '../trips/repository.js'
 import { tripContextPatchSchema } from '../trips/types.js'
 import { projectHistoricalGuideMessages } from '../travel-guides/publication-history.js'
+import { publicationFor } from '../travel-guides/publication.js'
+import { finalPendingReply } from '../travel-guides/finalization-schema.js'
+import { PostgresWorkspaceRepository } from '../workspaces/postgres.js'
 
 export interface CloudRepositories {
+  selectedFlightRevision?: (tripId: string) => Promise<number | undefined>
   trips: TripRepository
   conversations: ConversationRepository
   artifacts: ArtifactRepository
@@ -49,6 +53,7 @@ export const updateMemorySettingsRequestSchema = z.object({
 
 function defaultFactory(context: AppContext): CloudRepositoryFactory {
   return userId => ({
+    selectedFlightRevision: async tripId => (await new PostgresWorkspaceRepository(context.db, userId).getSelectedFlight(tripId))?.selection.revision,
     trips: new PostgresTripRepository(context.db, userId),
     conversations: new PostgresConversationRepository(context.db, userId),
     artifacts: new PostgresArtifactRepository(context.db, userId),
@@ -107,6 +112,7 @@ export async function registerCloudStateRoutes(
   })
 
   app.get('/v1/conversations/:conversationId/messages', async (request, reply) => {
+    const { locale } = z.object({ locale: z.enum(['zh', 'en']).default('zh') }).strict().parse(request.query)
     const { conversationId } = conversationParamsSchema.parse(request.params)
     const repos = await repositories(request)
     const conversation = await repos.conversations.get(conversationId)
@@ -114,16 +120,30 @@ export async function registerCloudStateRoutes(
     const messages = (await repos.conversations.listMessages(conversationId))
       .filter(message => message.role === 'user' || message.role === 'assistant')
     const projected = await projectHistoricalGuideMessages(messages, {
-      tripId: conversation.tripId, conversationId, artifacts: repos.artifacts
+      tripId: conversation.tripId, conversationId, locale, artifacts: repos.artifacts
     })
     return reply.send({ messages: projected })
   })
 
   app.get('/v1/artifacts/:id', async (request, reply) => {
+    const { locale } = z.object({ locale: z.enum(['zh', 'en']).default('zh') }).strict().parse(request.query)
     const { id } = idParamsSchema.parse(request.params)
-    const artifact = await (await repositories(request)).artifacts.get(id)
+    const repos = await repositories(request)
+    const artifact = await repos.artifacts.get(id)
     if (!artifact) return reply.code(404).send({ error: { code: 'RESOURCE_NOT_FOUND', message: 'Artifact was not found' } })
-    return reply.send({ artifact: presentArtifact(artifact) })
+    const publication = publicationFor(artifact)
+    if (publication?.finalization) {
+      const trip = await repos.trips.get(artifact.tripId)
+      const revision = await repos.selectedFlightRevision?.(artifact.tripId)
+      if (trip?.version !== artifact.tripContextVersion || (repos.selectedFlightRevision && revision !== publication.flightSelectionRevision)) {
+        const projected = presentArtifact({ ...artifact, payload: { ...(artifact.payload as object), publication: { ...publication, finalization: { version: 1, variants: {} } } } }, locale)
+        const payload = projected.payload as { publication: Record<string, unknown> }
+        payload.publication.status = 'blocked'; payload.publication.reply = finalPendingReply(locale)
+        payload.publication.issues = [{ activityId: null, code: 'stale', detail: locale === 'zh' ? '行程或航班已变化，需要重新规划。' : 'The trip or selected flight changed; the draft needs revision.' }]
+        return reply.send({ artifact: projected })
+      }
+    }
+    return reply.send({ artifact: presentArtifact(artifact, locale) })
   })
 
   app.get('/v1/memory', async (request, reply) => {

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { observer } from 'mobx-react-lite'
+import { localeStore } from '../../i18n'
 import { View, Text } from '@tarojs/components'
 import type { ArtifactRefLike, ArtifactEnvelope, ArtifactFetchContext } from '../../services/artifactService'
 import { ArtifactSessionChangedError, artifactService } from '../../services/artifactService'
@@ -21,18 +23,19 @@ function errorMessage(error: unknown): string {
   return 'Artifact could not be loaded.'
 }
 
-export function ArtifactTimelineItem({ artifactRef, ownerId, sessionId, onAction }: ArtifactTimelineItemProps) {
+export const ArtifactTimelineItem = observer(function ArtifactTimelineItem({ artifactRef, ownerId, sessionId, onAction }: ArtifactTimelineItemProps) {
+  const locale = localeStore.locale
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
     let active = true
-    const context: ArtifactFetchContext = { ownerId, sessionId }
+    const context: ArtifactFetchContext = { ownerId, sessionId, locale }
     setState({ status: 'loading' })
     artifactService.fetchArtifact(artifactRef.id, context)
       .then(artifact => { if (active) setState({ status: 'ready', artifact }) })
       .catch(error => { if (active) setState({ status: 'error', message: errorMessage(error) }) })
     return () => { active = false }
-  }, [artifactRef.id, ownerId, sessionId, attempt])
+  }, [artifactRef.id, ownerId, sessionId, attempt, locale])
 
   if (state.status === 'loading') {
     return <View className='artifact-timeline__loading' role='status'><Text>Loading artifact…</Text></View>
@@ -41,4 +44,4 @@ export function ArtifactTimelineItem({ artifactRef, ownerId, sessionId, onAction
     return <UnavailableArtifactCard reason={state.message} onRetry={() => setAttempt(value => value + 1)} />
   }
   return <ArtifactRenderer artifact={state.artifact} onAction={() => onAction?.(state.artifact)} />
-}
+})

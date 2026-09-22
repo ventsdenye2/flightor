@@ -31,6 +31,9 @@ export function firstText(...values: unknown[]): string | undefined {
 }
 
 export interface TravelGuidePublicationDisplay {
+  locale?: 'zh' | 'en'
+  status?: 'accepted' | 'blocked' | 'preparing'
+  overview?: string
   version: 1
   artifactId: string
   tripContextVersion: number
@@ -61,6 +64,9 @@ export function displayTravelGuidePublication(value: unknown, expectedArtifactId
     || (expectedArtifactId !== undefined && artifactId !== expectedArtifactId)
     || (expectedTripContextVersion !== undefined && item.tripContextVersion !== expectedTripContextVersion)) return undefined
   return { version: 1, artifactId, tripContextVersion: item.tripContextVersion,
+    ...(item.locale === 'zh' || item.locale === 'en' ? { locale: item.locale } : {}),
+    ...(item.status === 'accepted' || item.status === 'blocked' || item.status === 'preparing' ? { status: item.status } : {}),
+    ...(text(item.overview) ? { overview: text(item.overview) } : {}),
     contentContract: 'limited', evidenceCoverage: item.evidenceCoverage, budgetNotice: notice,
     legacy: item.legacy, reply }
 }

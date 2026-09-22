@@ -4,12 +4,16 @@ import { record } from '../components/artifacts/payload'
 import { artifactToTripPresentation } from '../features/ui-experience/productionPresentation'
 
 export async function loadProductionTrip(id: string, context: ArtifactFetchContext) {
-  const selected = await artifactService.fetchArtifact(id, context)
+  let selected = await artifactService.fetchArtifact(id, context)
+  const publication = record(record(selected.payload)?.publication)
+  if (selected.type === 'travel_guide' && publication?.status === 'preparing' && publication?.canLocalize === true) {
+    selected = await artifactService.localizeArtifact(id, context)
+  }
   const routeId = selected.type === 'route' ? selected.id : record(selected.payload)?.routeArtifactId
   if (typeof routeId !== 'string') throw new Error('攻略缺少对应路线，请从规划记录重新打开')
   const [route, workspace] = await Promise.all([
     selected.type === 'route' ? Promise.resolve(selected) : artifactService.fetchArtifact(routeId, context),
-    getCloudWorkspace(selected.tripId, selected.conversationId)
+    getCloudWorkspace(selected.tripId, selected.conversationId, context.locale)
   ])
   if (route.tripId !== selected.tripId) throw new Error('攻略与行程不匹配')
   const selection = workspace.trip.selectedFlight

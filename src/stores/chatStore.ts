@@ -647,7 +647,7 @@ export class ChatStore {
         this.persistCurrentSession()
       }
       this.activeArtifactPublication = publishArtifacts
-      const result = await converse({ tripId: this.tripId, conversationId: this.conversationId, message: content }, {
+      const result = await converse({ tripId: this.tripId, conversationId: this.conversationId, message: content, locale }, {
         startedAt,
         isCurrent,
         onArtifacts: publishArtifacts,
@@ -666,7 +666,7 @@ export class ChatStore {
         throw new Error('CONVERSATION_ID_MISMATCH')
       }
       runInAction(() => {
-        const assistant: ConversationMessage = { role: 'assistant', content: result.reply }
+        const assistant: ConversationMessage = { role: 'assistant', content: result.reply, locale }
         const turnArtifactRefs = [...new Map([...publishedRefs.values(), ...result.artifactRefs]
           .filter(ref => !invalidatedPublishedIds.has(ref.id)).map(ref => [ref.id, { ...ref }])).values()]
         this.messages = appendAssistant(this.messages, assistant.content)
@@ -791,7 +791,7 @@ export class ChatStore {
     const isCurrent = () => requestId === this.workspaceSyncRequestId && this.ownerForRequest() === ownerId
       && this.activeOwnerId === ownerId && this.currentSessionId === sessionId && this.tripId === tripId && this.conversationId === conversationId
     try {
-      const workspace = await getCloudWorkspace(tripId, conversationId)
+      const workspace = await getCloudWorkspace(tripId, conversationId, locale)
       if (!isCurrent()) return
       if (workspace.trip.id !== tripId || workspace.conversationId !== conversationId) throw new Error('WORKSPACE_ID_MISMATCH')
       runInAction(() => {

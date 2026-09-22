@@ -27,9 +27,9 @@ export async function listCloudTrips(status?: WorkspaceTrip['status'], before?: 
   const query = ['limit=20', ...(status ? [`status=${status}`] : []), ...(before ? [`before=${encodeURIComponent(before)}`] : [])].join('&')
   return request({ url: `/v1/trips?${query}`, retry: 1 })
 }
-export async function getCloudWorkspace(tripId: string, conversationId?: string): Promise<CloudWorkspace> {
+export async function getCloudWorkspace(tripId: string, conversationId?: string, locale: 'zh' | 'en' = 'zh'): Promise<CloudWorkspace> {
   requireCloud()
-  return request({ url: `/v1/trips/${encodeURIComponent(tripId)}/workspace${conversationId ? `?conversationId=${encodeURIComponent(conversationId)}` : ''}`, retry: 1 })
+  return request({ url: `/v1/trips/${encodeURIComponent(tripId)}/workspace?locale=${locale}${conversationId ? `&conversationId=${encodeURIComponent(conversationId)}` : ''}`, retry: 1 })
 }
 export async function updateCloudTrip(tripId: string, change: { expectedVersion: number; title?: string; status?: 'planning' | 'archived'; savedRoute?: { artifactId: string; routeId: string } | null; selectedFlight?: ({ kind: 'offer'; artifactId: string; offerId: string } | { kind: 'route'; artifactId: string; routeId: string }) & { layoverPreference: 'airport_only' | 'consider_city' } | null }): Promise<WorkspaceTrip> {
   requireCloud()

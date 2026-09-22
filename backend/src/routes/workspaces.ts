@@ -15,8 +15,8 @@ export async function registerWorkspaceRoutes(app: FastifyInstance, context: App
   })
   app.get('/v1/trips/:id/workspace', async request => {
     const r = await repo(request), { id } = idSchema.parse(request.params)
-    const query = z.object({ conversationId: z.string().uuid().optional() }).strict().parse(request.query)
-    return r.get(id, query.conversationId)
+    const query = z.object({ conversationId: z.string().uuid().optional(), locale: z.enum(['zh', 'en']).default('zh') }).strict().parse(request.query)
+    return r.get(id, query.conversationId, query.locale)
   })
   app.patch('/v1/trips/:id', async request => {
     const r = await repo(request), { id } = idSchema.parse(request.params)

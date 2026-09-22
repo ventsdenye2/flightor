@@ -24,6 +24,7 @@ export interface TripState {
 }
 
 export interface ConversationMessage {
+  locale?: 'zh' | 'en'
   role: 'user' | 'assistant'
   content: string
 }
@@ -201,6 +202,7 @@ export interface ConversationResponse {
 
 /** Exact request shape from the mini-program to POST /v1/agent/turns. */
 export interface ConversationRequest {
+  locale?: 'zh' | 'en'
   tripId: string
   conversationId: string
   message: string
@@ -806,6 +808,7 @@ export async function converse(input: ConversationRequest, options: ConverseOpti
   const message = input.message.trim()
   if (!input.tripId || !input.conversationId || !message) throw new Error('INVALID_CONVERSATION_REQUEST')
   const body: ConversationRequest = {
+    locale: input.locale ?? 'zh',
     tripId: input.tripId,
     conversationId: input.conversationId,
     message

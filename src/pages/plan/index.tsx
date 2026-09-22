@@ -42,7 +42,7 @@ function useScopedFlightArtifact(id: string | undefined, ownerId: string | undef
 function PlanPage() {
   useProductionTab('plan')
   const locale = localeStore.locale
-  const [productionResult, setProductionResult] = useState<{ key: string; trip: TripPresentation; guideId?: string; verificationStatus: string | null }>()
+  const [productionResult, setProductionResult] = useState<{ key: string; trip: TripPresentation; guideId?: string; reply?: string; verificationStatus: string | null }>()
   const [productionError, setProductionError] = useState('')
   const [productionLoginOpen, setProductionLoginOpen] = useState(false)
   const [workspaceTrip, setWorkspaceTrip] = useState<{ key: string; trip: WorkspaceTrip }>()
@@ -63,7 +63,7 @@ function PlanPage() {
   const alternativeArtifactId = selectedFlight && flightRef?.id !== selectedFlight.artifactId ? flightRef?.id : undefined
   const currentFlightArtifact = useScopedFlightArtifact(flightArtifactId, ownerId, chatStore.currentSessionId, chatStore.tripId, userStore.sessionRevision)
   const alternativeFlightArtifact = useScopedFlightArtifact(alternativeArtifactId, ownerId, chatStore.currentSessionId, chatStore.tripId, userStore.sessionRevision)
-  const resultKey = `${workspaceKey}:${productionRef?.id}:${selectedFlight?.revision ?? 0}`
+  const resultKey = `${workspaceKey}:${productionRef?.id}:${selectedFlight?.revision ?? 0}:${locale}:${chatStore.isThinking}`
   const busy = chatStore.isThinking || chatStore.multiLoading || chatStore.multiConfirming
 
   useEffect(() => {
@@ -73,8 +73,9 @@ function PlanPage() {
     const sessionId = chatStore.currentSessionId
     const tripId = chatStore.tripId
     const authRevision = userStore.sessionRevision
-    loadProductionTrip(productionRef.id, { ownerId, sessionId })
+    loadProductionTrip(productionRef.id, { ownerId, sessionId, locale })
       .then(value => { if (active && authRevision === userStore.sessionRevision && ownerId === userStore.profile?.uid && sessionId === chatStore.currentSessionId && tripId === chatStore.tripId) { setProductionResult({ key: resultKey, trip: value.presentation, guideId: value.guide?.id,
+        reply: record(record(value.guide?.payload)?.publication)?.reply as string | undefined,
         verificationStatus: artifactVerificationStatus(value.guide) }); setProductionError('') } })
       .catch(error => { if (active && authRevision === userStore.sessionRevision && ownerId === userStore.profile?.uid && sessionId === chatStore.currentSessionId && tripId === chatStore.tripId) setProductionError(error instanceof Error ? error.message : '行程结果暂不可用') })
     return () => { active = false }
@@ -162,7 +163,8 @@ function PlanPage() {
       productionCancelling={chatStore.turnCancelling}
       locale={locale}
       productionError={productionError || chatStore.multiError}
-      productionReply={lastTurn?.assistant?.content}
+      productionReply={productionRef?.type === 'travel_guide' ? (productionResult?.key === resultKey ? productionResult.reply : undefined)
+        : lastTurn?.assistant?.locale && lastTurn.assistant.locale !== locale ? undefined : lastTurn?.assistant?.content}
       productionPrompt={lastTurn?.user.content}
       productionResultAvailable={Boolean(result)}
       productionStopReason={lastTurn?.stopReason}

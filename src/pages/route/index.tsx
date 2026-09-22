@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, Text, View } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
 import { observer } from 'mobx-react-lite'
+import { localeStore } from '../../i18n'
 import { artifactService, type ArtifactEnvelope } from '../../services/artifactService'
 import { readRouteArtifact, type RouteView } from '../../services/routeArtifact'
 import { userStore } from '../../stores/userStore'
@@ -28,7 +29,8 @@ function RoutePage() {
   const offerId = decodeRouteParam(params.offerId)
   const routeId = decodeRouteParam(params.routeId)
   const ownerId = userStore.profile?.uid
-  const key = `${ownerId ?? ''}:${userStore.sessionRevision}:${chatStore.currentSessionId}:${artifactId}`
+  const locale = localeStore.locale
+  const key = `${ownerId ?? ''}:${userStore.sessionRevision}:${chatStore.currentSessionId}:${artifactId}:${locale}`
   const [state, setState] = useState<State>({ key: '' })
   const [attempt, setAttempt] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -41,7 +43,7 @@ function RoutePage() {
     setSaved(''); setSaving(false); setLayoverPreference('airport_only')
     if (!ownerId || !artifactId) return () => { active = false }
     setState({ key })
-    const context = { ownerId, sessionId: chatStore.currentSessionId, force: attempt > 0 }
+    const context = { ownerId, sessionId: chatStore.currentSessionId, force: attempt > 0, locale }
     artifactService.fetchArtifact(artifactId, context).then(async artifact => {
       if (!active) return
       const resolution = resolveArtifactRenderer(artifact)

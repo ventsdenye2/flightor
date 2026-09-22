@@ -23,6 +23,7 @@ export interface ArtifactEnvelope {
 export type ArtifactRefLike = CloudArtifactRef
 
 export interface ArtifactFetchContext {
+  locale?: 'zh' | 'en'
   /** Stable authenticated owner identifier used to invalidate local cache. */
   ownerId?: string
   /** Stable local auth/session identifier used to ignore late responses. */
@@ -161,6 +162,8 @@ export class ArtifactService {
   clearCache(): void { this.cache.clear() }
 
   async fetchArtifact(id: string, context: ArtifactFetchContext = {}): Promise<ArtifactEnvelope> {
+    const locale = context.locale ?? 'zh'
+    const cacheKey = `${id}:${locale}`
     if (!boundedString(id, MAX_ID_LENGTH)) throw new ArtifactValidationError('Artifact id is missing or too long')
     // Callers may establish identity once with setSession and omit it on each
     // read. An explicit owner/session field is still enough to rotate it.
@@ -169,12 +172,12 @@ export class ArtifactService {
     }
     const identity = this.cache.sessionIdentity
     if (!context.force) {
-      const cached = this.cache.get(id)
+      const cached = this.cache.get(cacheKey)
       if (cached) return cached
     }
 
     const response = await this.transport<{ artifact: unknown }>({
-      url: `/v1/artifacts/${encodeURIComponent(id)}`,
+      url: `/v1/artifacts/${encodeURIComponent(id)}?locale=${locale}`,
       method: 'GET',
       retry: 1,
       timeout: 15000
@@ -182,7 +185,20 @@ export class ArtifactService {
     if (identity !== this.cache.sessionIdentity) throw new ArtifactSessionChangedError()
     if (!isRecord(response) || !('artifact' in response)) throw new ArtifactValidationError('Artifact response envelope is missing')
     const artifact = validateArtifactEnvelope(response.artifact)
-    this.cache.set(artifact.id, artifact)
+    const publication = isRecord(artifact.payload) && isRecord(artifact.payload.publication) ? artifact.payload.publication : undefined
+    if (publication?.status !== 'preparing') this.cache.set(cacheKey, artifact)
+    return artifact
+  }
+
+  /** Explicit locale demand; GET/refresh never initiates full finalization. */
+  async localizeArtifact(id: string, context: ArtifactFetchContext): Promise<ArtifactEnvelope> {
+    const identity = this.cache.sessionIdentity
+    const locale = context.locale ?? 'zh'
+    const response = await request<{ artifact: unknown }>({ url: `/v1/artifacts/${encodeURIComponent(id)}/localization`,
+      method: 'POST', data: { locale }, retry: 0, timeout: 100000 })
+    if (identity !== this.cache.sessionIdentity) throw new ArtifactSessionChangedError()
+    const artifact = validateArtifactEnvelope(response.artifact)
+    this.cache.set(`${id}:${locale}`, artifact)
     return artifact
   }
 }
