@@ -569,3 +569,8 @@ Agent请求增加`locale: zh|en`（兼容缺省zh）；Artifact/Workspace/histor
 ## 2026-09-22 正式终稿页面读取与动作
 
 `tripContextSummary.notes` 只读返回当前 Trip 已有的有界 notes（最多50条、每条500字符），供 Workspace/Agent 恢复明确的机票自备说明；不从未选择航班推断。没有增加 Planner 工具。正式详情加载/刷新/切换语言只读 GET；缺失语言由准备按钮调用既有 localization，技术重试同时检查 canLocalize、canRetry 和最新 revision，传输 retry=0。字段和测试见 [正式页面报告](design/budget-travel-agent/PUBLICATION_UI_2026-09-22.md)。
+
+
+## 2026-09-22 发布后的地点 API（不是 Planner 工具）
+
+GET `/v1/map-config` 公开 OSM 瓦片模板和是否配置，不含 secret。认证 GET `/v1/artifacts/:id/places` 只读当前 owner/Trip/航班/hash 的独立 enrichment；显式 POST 同路径严格接收 `{contentVersion}`，需要 accepted 底稿，最多12条线索/25秒、单查询8秒、数据库全局限流1100ms，网络不在事务内。GET、刷新、locale 切换不调用 POI；请求不提供搜索/规划/保存业务权限。实体/缓存/取消/冲突合同见 [ADR 0026](adr/0026-place-identity-and-maps.md)，不是新增 Agent 或 Goal。

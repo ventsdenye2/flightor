@@ -7,10 +7,11 @@ import type { TripExperienceProps } from './TripExperience'
 import { DayPlan } from './DayPlan'
 import { FlightTicket } from './FlightTicket'
 import { Icon, Photo } from './VisualMedia'
+import TripMap from '../maps/TripMap'
 
 /** The production branch shares the existing travel layout; audit prose is never UI copy. */
 export default function PublishedTripExperience({ trip, onBack, onContinuePlanning, onOpenSource, onRefresh,
-  onPrepareLocale, publicationBusy = false, publicationError = '', initialTab = 'overview' }: TripExperienceProps) {
+  onPrepareLocale, publicationBusy = false, publicationError = '', onPreparePlaces,placesBusy=false,placesError='',initialTab = 'overview' }: TripExperienceProps) {
   const locale = trip.locale ?? 'zh'
   const tt = (key: string, params?: Record<string, string | number>) => tripText(locale, key, params)
   const [tab, setTab] = useState(initialTab)
@@ -27,6 +28,8 @@ export default function PublishedTripExperience({ trip, onBack, onContinuePlanni
     : trip.flightArrangement === 'selected' ? firstFlight ? 'trip.selectedFlight' : 'trip.flightMissing' : 'trip.flightPending')
   const dates = [trip.dates.start, trip.dates.end].filter(Boolean).join(' – ') || tt('trip.dateUnknown')
   const mediaSources = trip.days.flatMap(day => day.activities.flatMap(item => item.media?.source ? [item.media.source] : []))
+  const mapActivities=trip.days.flatMap(day=>day.activities.filter(a=>a.place?.status==='resolved'&&a.latitude!=null&&a.longitude!=null).map(a=>({id:a.id,name:a.name,latitude:a.latitude!,longitude:a.longitude!,countryCode:a.place?.countryCode??'',kind:a.place?.kind})))
+  const mapPoints=[...(trip.mapCities??[]),...mapActivities,...new Map((trip.flightPaths??[]).flat().map(p=>[p.id,p])).values()]
   const sourceButton = (source: SourcePresentation, index: number) => <Button key={`${source.url ?? source.label}-${index}`} className='ux-credit'
     onClick={() => source.url && onOpenSource?.(source.url)} disabled={!source.url}>
     <Text>{source.label}</Text>{source.url ? <Icon name='external' /> : null}</Button>
@@ -66,6 +69,10 @@ export default function PublishedTripExperience({ trip, onBack, onContinuePlanni
         {(['overview', 'days', 'flights'] as const).map(value => <Button key={value} className={`ux-tab ${tab === value ? 'is-active' : ''}`} aria-selected={tab === value} onClick={() => setTab(value)}>{tt(`trip.${value}`)}</Button>)}
       </View>
       {tab === 'overview' ? <View className='ux-overview'>
+        {accepted?<><View className='ux-map-actions'><Text className='ux-section-title'>{tt('trip.mapTitle')}</Text><Button className='ux-text-button ux-prepare-places' disabled={placesBusy} onClick={onPreparePlaces}>{tt(placesBusy?'trip.placesResolving':'trip.resolvePlaces')}</Button></View>
+          {placesError?<Text className='ux-issue'>{placesError}</Text>:null}
+          <TripMap points={mapPoints} flightLines={trip.flightPaths} locale={locale} mapKey={`overview-${pub?.contentVersion}`} onSelect={id=>{for(let i=0;i<trip.days.length;i++){const item=trip.days[i].activities.find(a=>a.id===id);if(item){setDayIndex(i);setTab('days');setActivity(item);break}}}} />
+        </>:null}
         <View className='ux-flight-status'><Icon name='plane' /><Text>{flightStatus}</Text></View>
         {firstFlight ? <FlightTicket flight={firstFlight} locale={locale} onExpand={() => setTab('flights')} /> : null}
         {accepted ? <View className='ux-day-previews'>{trip.days.map((day, index) => <Button key={day.id} className='ux-day-teaser' onClick={() => { setDayIndex(index); setTab('days') }}>
@@ -87,6 +94,8 @@ export default function PublishedTripExperience({ trip, onBack, onContinuePlanni
             : <View className='ux-media-compact'><Icon name='image' /><Text>{tt('trip.photoPending')}</Text></View>}
           <Text className='ux-detail-title'>{activity.name}</Text>
           <Text className='ux-muted'>{activity.area} · {activity.time || tt('trip.flexible')} · {activity.category}</Text>
+          <Text className='ux-place-status'>{tt(activity.place?.status==='resolved'?`trip.place.${activity.place.kind}`:`trip.place.${activity.place?.status??'unresolved'}`)}</Text>
+          {activity.place?.source ? sourceButton(activity.place.source,0) : null}
           <View className='ux-detail-section'><Text className='ux-section-title'>{tt('trip.introduction')}</Text><Text className='ux-detail-copy'>{activity.introduction}</Text></View>
           <View className='ux-detail-section'><Text className='ux-section-title'>{tt('trip.reason')}</Text><Text className='ux-detail-copy'>{activity.recommendationReason}</Text></View>
           <Button className='ux-primary' onClick={onContinuePlanning}>{tt('trip.adjustDay')}</Button>

@@ -63,3 +63,8 @@ G1 后续合同修复已增加可选 `requiredEvidenceTypes`，显式区分探�
 2026-09-21：SerpApi 主研究路径增加有界正文读取及 `claimEvidence` 原文绑定，读到正文不升级为当前/未来事实已核实。攻略共享 validator 拒绝声明出处错误和同对象冲突；保持 reference_only。接入、限制与兼容见 [ADR 0023](adr/0023-source-pages-and-quoted-claims.md)。
 
 最新[9月21日单例](design/budget-travel-agent/G1_SOURCE_RETEST_2026-09-21.md)实际保存/恢复通过但内容未过；具体票价可以省略claimEvidence出现在散文中，预算结论缺计算，英文元叙述仍存在。搜索累计24/24已满。Docker异常导致专用临时容器清理未确认，见报告准确标识。
+
+
+## 2026-09-22 第三阶段地点扩展
+
+发布后的显式地点补全已接入 Nominatim、独立 PostgreSQL 缓存/绑定和正式地图；不会进入 Planner 工具循环。只有当前 accepted 内容 hash 和 activityId 对应的 resolved 实体能显示景点坐标；语言切换/刷新只读，图片未接。H5 真实底图与双入口恢复通过，微信标记/联动已验证但东京底图仍空白，不能宣称全平台地图完成。配置、15/24 次真实调用及截图见 [第三阶段记录](design/budget-travel-agent/PLACES_MAP_2026-09-22.md)。上文“活动缺坐标”以此增量为准；媒体仍待后续任务。

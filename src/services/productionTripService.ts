@@ -2,6 +2,7 @@ import { artifactService, type ArtifactFetchContext } from './artifactService'
 import { getCloudWorkspace } from './workspaceService'
 import { record } from '../components/artifacts/payload'
 import { artifactToTripPresentation } from '../features/ui-experience/productionPresentation'
+import { readPlaceEnrichment, resolvePlaceEnrichment } from './placeService'
 
 export async function loadProductionTrip(id: string, context: ArtifactFetchContext) {
   const selected = await artifactService.fetchArtifact(id, context)
@@ -37,7 +38,22 @@ export async function loadProductionTrip(id: string, context: ArtifactFetchConte
   if (selection && selection.contextVersion === routeContextVersion) {
     try { selectedFlightArtifact = await artifactService.fetchArtifact(selection.artifactId, context) } catch { /* Keep the itinerary usable with an empty flight state. */ }
   }
-  return { route, guide: guide ?? staleGuide, workspace, presentation: artifactToTripPresentation(route, guide ?? staleGuide, workspace, selectedFlightArtifact, context.locale ?? 'zh') }
+  let effectiveGuide=guide??staleGuide
+  if(effectiveGuide && record(record(effectiveGuide.payload)?.publication)?.status==='accepted'){
+    try { const enrichment=await readPlaceEnrichment(effectiveGuide.id);if(enrichment){
+      const prior=effectiveGuide.enrichment?.contentVersion===enrichment.contentVersion?effectiveGuide.enrichment:undefined
+      effectiveGuide={...effectiveGuide,enrichment:{...prior,...enrichment,activities:{...prior?.activities,
+        ...Object.fromEntries(Object.entries(enrichment.activities).map(([id,value])=>[id,{...record(prior?.activities[id]),...record(value)}]))}}}
+    } } catch { /* Maps never block accepted text; explicit resolution can be retried separately. */ }
+  }
+  return { route, guide: effectiveGuide, workspace, presentation: artifactToTripPresentation(route, effectiveGuide, workspace, selectedFlightArtifact, context.locale ?? 'zh') }
+}
+
+export async function prepareProductionPlaces(id:string,context:ArtifactFetchContext){
+ const loaded=await loadProductionTrip(id,{...context,force:true}),pub=loaded.presentation.publication
+ if(pub?.status!=='accepted'||!pub.artifactId||!pub.contentVersion)throw Error('PLACE_BASE_UNAVAILABLE')
+ await resolvePlaceEnrichment(pub.artifactId,pub.contentVersion)
+ return loadProductionTrip(id,{...context,force:true})
 }
 
 /** Only an explicit UI action invokes this; rendering and recovery remain GET-only. */

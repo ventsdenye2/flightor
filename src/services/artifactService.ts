@@ -18,7 +18,7 @@ export interface ArtifactEnvelope {
   createdAt: string
   updatedAt: string
   /** Optional read-side enrichment, independently keyed to the accepted content and activity IDs. */
-  enrichment?: { contentVersion: string; activities: Record<string, unknown> }
+  enrichment?: { contentVersion: string; activities: Record<string, unknown>; cities?:unknown[]; flightPaths?:unknown[][] }
 }
 
 /** Reuse the compact conversation reference; complete payloads stay remote. */
@@ -103,7 +103,9 @@ export function validateArtifactEnvelope(value: unknown): ArtifactEnvelope {
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
     ...(isRecord(value.enrichment) && boundedString(value.enrichment.contentVersion, 64) && isRecord(value.enrichment.activities)
-      ? { enrichment: { contentVersion: value.enrichment.contentVersion, activities: value.enrichment.activities } } : {})
+      ? { enrichment: { contentVersion: value.enrichment.contentVersion, activities: value.enrichment.activities,
+        ...(Array.isArray(value.enrichment.cities)?{cities:value.enrichment.cities.slice(0,30)}:{}),
+        ...(Array.isArray(value.enrichment.flightPaths)?{flightPaths:value.enrichment.flightPaths.filter(Array.isArray).slice(0,30)}:{}) } } : {})
   }
 }
 

@@ -84,3 +84,10 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 ## 2026-09-22 正式终稿 UI 验证脚本
 
 `node scripts/qa-publication-ui-h5.cjs` 在已构建且由 `node scripts/serve-h5.cjs` 提供的10086 H5上使用已安装 Chrome，拦截 API 运输为冻结 fixture；`node scripts/qa-publication-ui-weapp.cjs` 使用既有9432 SDK与已登录模拟器，只替换 wx.request，finally 撤销 mock、恢复原语言/页面，不替换登录身份。脚本各自保留失败 JSON，成功报告/截图在忽略的 output/playwright/publication-ui 和 output/weapp/publication-ui。固定材料来自上一任务终稿示例与旧双入口 fixture，不调用模型/研究，不证明真实 API或真机验收。不要并发运行两个微信 fixture 脚本或在真实付费规划运行时替换 request。实际结果与失败经过见 [报告](design/budget-travel-agent/PUBLICATION_UI_2026-09-22.md)。
+
+
+## 2026-09-22 地点验证脚本
+
+`test-places-postgres.mjs` 仅使用 loopback DB 的新 `places_test_<timestamp>` schema，测试后删除该隔离schema；不操作生产业务。`places-live-server.mjs` 使用保留的 `places_map_20260922` schema及独占账本锁，只有 `--execute` 允许最多24次已授权Nominatim调用；`--acceptance` 保留原调试攻略并建最终验收副本，`--refresh-token` 仅更新隔离验收身份。`reparse-places-validation.mjs` 仅对隔离调试记录利用保留response作离线诊断，保存修改前后记录，不重置账本、不作为真实端到端证据。
+
+`qa-places-h5.cjs` 验证正式H5、真实地点API和真实OSM瓦片；`qa-places-weapp.cjs` 使用现有SDK与真实持久地点的fixture transport，合成登录后恢复guest/storage/locale/mocks。严格检查认证GET、标记数量和稳定ID；SDK回调不认证底图。真实调用15/24、独立测试、截图及微信空白底图缺口见 [地图报告](design/budget-travel-agent/PLACES_MAP_2026-09-22.md)。output保留所有失败，本轮可分享报告/代表截图另存docs；不提交token、guest存储备份或transport文件。

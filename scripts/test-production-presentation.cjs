@@ -117,11 +117,13 @@ check('only explicit current notes establish self-provided flights', () => {
   assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, withNotes(['不是机票自备'])).flightArrangement, 'unconfirmed')
 })
 check('optional enrichment is content-bound and activity-bound, not title-bound or city coordinates', () => {
-  const withMedia = { ...guideArtifact, enrichment:{contentVersion:publication.guideContentHash,activities:{'activity-1':{coordinates:{latitude:35,longitude:139},media:{src:'https://example.com/place.jpg',description:'Venue',source:{label:'Photographer',url:'https://example.com/credit'}}}}} }
+  const withMedia = { ...guideArtifact, enrichment:{contentVersion:publication.guideContentHash,activities:{'activity-1':{place:{status:'resolved',place:{placeId:'osm:way:123',kind:'park',countryCode:'JP',coordinates:{latitude:35,longitude:139,system:'WGS84'}}},coordinates:{latitude:0,longitude:0},media:{src:'https://example.com/place.jpg',description:'Venue',source:{label:'Photographer',url:'https://example.com/credit'}}}}} }
   const item = artifactToTripPresentation(routeArtifact, withMedia, workspace).days[0].activities[0]
   assert.equal(item.latitude,35);assert.equal(item.media.source.label,'Photographer')
   const stale = artifactToTripPresentation(routeArtifact,{...withMedia,enrichment:{...withMedia.enrichment,contentVersion:'wrong'}},workspace).days[0].activities[0]
   assert.equal(stale.latitude,null);assert.equal(stale.media,null)
+  for(const status of ['ambiguous','unresolved','conflict']) {const g=structuredClone(withMedia);g.enrichment.activities['activity-1'].place.status=status;assert.equal(artifactToTripPresentation(routeArtifact,g,workspace).days[0].activities[0].latitude,null)}
+  const bare=structuredClone(withMedia);delete bare.enrichment.activities['activity-1'].place;assert.equal(artifactToTripPresentation(routeArtifact,bare,workspace).days[0].activities[0].latitude,null)
 })
 
 const verifiedFare = { status: 'verified', sources: [{ provider: 'live-fares', reference: 'https://example.com/fare' }] }
@@ -312,7 +314,9 @@ function productionServiceHarness(artifacts, workspaceValue) {
   const output = ts.transpileModule(fs.readFileSync(serviceFile, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText
   const serviceModule = { exports: {} }
   const calls = []
+  const placeCalls = []
   vm.runInNewContext(output, { module: serviceModule, exports: serviceModule.exports, require: dependency => {
+    if (dependency === './placeService') return { readPlaceEnrichment:async id=>{placeCalls.push({method:'GET',id});return undefined},resolvePlaceEnrichment:async(id,contentVersion)=>{placeCalls.push({method:'POST',id,contentVersion});return {}} }
     if (dependency === './artifactService') return { artifactService: { fetchArtifact: async id => { calls.push(id); const value = artifacts[id]; if (value instanceof Error) throw value; return value }, localizeArtifact: async (id, context) => { calls.push({ post: id, revision: context.retryRevision }); artifacts[id] = {...artifacts[id],payload:{...artifacts[id].payload,publication:{...artifacts[id].payload.publication,status:'accepted'}}}; return artifacts[id] } } }
     if (dependency === './workspaceService') return { getCloudWorkspace: async () => workspaceValue }
     if (dependency.endsWith('/i18n/trip')) return tripCopy.exports
@@ -320,7 +324,7 @@ function productionServiceHarness(artifacts, workspaceValue) {
     if (dependency.endsWith('/features/ui-experience/productionPresentation')) return { artifactToTripPresentation: (_route, _guide, _workspace, saved, locale) => ({ saved, publication: artifactToTripPresentation(_route, _guide, _workspace, saved, locale).publication }) }
     throw new Error(`Unexpected production service dependency: ${dependency}`)
   } }, { filename: serviceFile })
-  return { load: serviceModule.exports.loadProductionTrip, prepare: serviceModule.exports.prepareProductionLocale, calls }
+  return { load: serviceModule.exports.loadProductionTrip, prepare: serviceModule.exports.prepareProductionLocale, preparePlaces:serviceModule.exports.prepareProductionPlaces, calls,placeCalls }
 }
 
 ;(async () => {
@@ -360,6 +364,16 @@ function productionServiceHarness(artifacts, workspaceValue) {
     assert.equal(h.calls.find(call=>typeof call==='object').revision,1)
     data['guide-1'] = {...retryGuide,payload:{...retryGuide.payload,publication:{...retryGuide.payload.publication,canLocalize:false}}}
     await assert.rejects(h.prepare('guide-1',{locale:'zh'},1), /UNAVAILABLE/)
+  })
+  await checkAsync('place restoration is GET-only; explicit action uses the accepted current hash',async()=>{
+    const data={'route-1':routeArtifact,'guide-1':guideArtifact},h=productionServiceHarness(data,{...workspace,artifactRefs:[]})
+    await h.load('guide-1',{locale:'zh'});await h.load('guide-1',{locale:'en',force:true});await h.load('guide-1',{locale:'zh',force:true})
+    assert.ok(h.placeCalls.every(c=>c.method==='GET'))
+    await h.preparePlaces('guide-1',{locale:'zh'})
+    assert.deepEqual(h.placeCalls.filter(c=>c.method==='POST'),[{method:'POST',id:'guide-1',contentVersion:publication.guideContentHash}])
+    data['guide-1']={...guideArtifact,payload:{...guideArtifact.payload,publication:{...publication,status:'preparing'}}}
+    await assert.rejects(h.preparePlaces('guide-1',{locale:'zh'}),/PLACE_BASE_UNAVAILABLE/)
+    assert.equal(h.placeCalls.filter(c=>c.method==='POST').length,1)
   })
   console.log(`Production presentation behavior checks: ${passed} passed.`)
 })().catch(error => { console.error(error); process.exitCode = 1 })

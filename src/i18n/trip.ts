@@ -1,5 +1,10 @@
 // Publication UI copy; shared by the normal i18n entry and pure display adapters.
 export const tripZh: Record<string, string> = {
+  'trip.mapTitle':'行程地图','trip.resolvePlaces':'补全地点','trip.placesResolving':'正在确认地点…','trip.placesFailed':'地点服务暂不可用，文字行程仍可查看。请稍后手动重试。',
+  'trip.mapUnresolved':'尚无已确认位置，请先补全地点；日程仍可正常查看。','trip.mapLoading':'正在加载底图…','trip.nativeMapCredit':'底图由微信地图服务提供',
+  'trip.mapOverviewNote':'城市与已确认地点；航空连线仅为示意，不是地面导航。',
+  'trip.place.venue':'已确认场馆位置','trip.place.park':'公园级位置','trip.place.district':'街区级位置','trip.place.street':'街道级位置',
+  'trip.place.unresolved':'尚未确认具体位置','trip.place.ambiguous':'存在多个同名地点，暂不标点','trip.place.unavailable':'地点服务暂不可用','trip.place.conflict':'地点依据存在冲突，需确认',
   'trip.details': '旅行详情', 'trip.overview': '概览', 'trip.days': '每日行程', 'trip.flights': '航班',
   'trip.back': '返回', 'trip.close': '关闭详情', 'trip.language': '切换语言', 'trip.day': '第 {n} 天', 'trip.duration': '{n} 天',
   'trip.dateUnknown': '日期待确认', 'trip.locationUnknown': '地点待确认', 'trip.title': '我的旅行安排', 'trip.routePending': '路线待确认',
@@ -8,6 +13,7 @@ export const tripZh: Record<string, string> = {
   'trip.introduction': '景点简介', 'trip.reason': '为什么推荐', 'trip.area': '所在区域', 'trip.viewActivity': '查看 {name}',
   'trip.photoPending': '暂无景点图片', 'trip.mapPending': '地图尚未接入，先按下方顺序游览', 'trip.mapPartial': '地图仅显示已有坐标的地点',
   'trip.mapUnavailable': '地图暂不可用，仍可查看下方日程', 'trip.mapOrder': '游览顺序示意 · 非导航路线',
+  'trip.mapHide': '底图未加载？收起地图',
   'trip.stops': '{n} 个停留', 'trip.freeDay': '自由活动', 'trip.freeDayHint': '这一天没有固定停留。', 'trip.adjustDay': '在规划记录中调整',
   'trip.slotNote': '上午、下午等为建议游览时段。', 'trip.sources': '来源与署名', 'trip.source': '参考来源 {n}', 'trip.noSources': '暂无补充来源',
   'trip.copySource': '复制来源链接', 'trip.sourceCopied': '来源链接已复制', 'trip.copyFailed': '复制失败，请重试',
@@ -38,6 +44,11 @@ export const tripZh: Record<string, string> = {
   'trip.nextDay': '次日', 'trip.reloadImage': '重新加载图片', 'trip.reviewRisks': '请在规划记录中查看并处理行程风险。'
 }
 export const tripEn: Record<string, string> = {
+  'trip.mapTitle':'Trip map','trip.resolvePlaces':'Resolve places','trip.placesResolving':'Confirming places…','trip.placesFailed':'The place service is unavailable. Your text itinerary is still available; retry manually later.',
+  'trip.mapUnresolved':'No confirmed locations yet. Resolve places to add the map; the itinerary remains available.','trip.mapLoading':'Loading the map…','trip.nativeMapCredit':'Basemap by WeChat map service',
+  'trip.mapOverviewNote':'Cities and confirmed places; flight lines are schematic, not ground navigation.',
+  'trip.place.venue':'Confirmed venue location','trip.place.park':'Park-level location','trip.place.district':'Neighborhood-level location','trip.place.street':'Street-level location',
+  'trip.place.unresolved':'Specific location not confirmed','trip.place.ambiguous':'Multiple matching places; no marker added','trip.place.unavailable':'Place service unavailable','trip.place.conflict':'Conflicting place evidence; confirmation needed',
   'trip.details': 'Trip details', 'trip.overview': 'Overview', 'trip.days': 'Daily itinerary', 'trip.flights': 'Flights',
   'trip.back': 'Back', 'trip.close': 'Close details', 'trip.language': 'Change language', 'trip.day': 'Day {n}', 'trip.duration': '{n} days',
   'trip.dateUnknown': 'Dates to be confirmed', 'trip.locationUnknown': 'Location to be confirmed', 'trip.title': 'Your travel itinerary', 'trip.routePending': 'Route to be confirmed',
@@ -46,6 +57,7 @@ export const tripEn: Record<string, string> = {
   'trip.introduction': 'About this place', 'trip.reason': 'Why this fits your trip', 'trip.area': 'Area', 'trip.viewActivity': 'View {name}',
   'trip.photoPending': 'No place photo yet', 'trip.mapPending': 'Map not connected yet. Follow the itinerary below.', 'trip.mapPartial': 'Only places with coordinates appear on the map.',
   'trip.mapUnavailable': 'Map unavailable. You can still use the itinerary below.', 'trip.mapOrder': 'Visit order · Not a navigation route',
+  'trip.mapHide': 'Map not loading? Hide map',
   'trip.stops': '{n} stops', 'trip.freeDay': 'Free time', 'trip.freeDayHint': 'No fixed stops are planned for this day.', 'trip.adjustDay': 'Adjust in planning history',
   'trip.slotNote': 'Morning and afternoon are suggested visiting periods.', 'trip.sources': 'Sources and credits', 'trip.source': 'Reference {n}', 'trip.noSources': 'No additional sources',
   'trip.copySource': 'Copy source link', 'trip.sourceCopied': 'Source link copied', 'trip.copyFailed': 'Could not copy. Please try again.',

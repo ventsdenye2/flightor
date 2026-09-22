@@ -8,6 +8,7 @@ export interface TripFlightPresentation {
   airlineLabel: string; airlineCode?: string; transferLabel?: string; transferDuration?: string; warning?: string; source: SourcePresentation
 }
 export interface Activity {
+  place?: { status:string;reason:string;placeId?:string;name?:string;kind?:string;countryCode?:string;system?:'WGS84';source?:SourcePresentation }
   id: string; name: string; time: string | null; until: string | null; category: string; summary: string
   sourceApplicabilityNotice: string
   introduction?: string; recommendationReason?: string; area?: string
@@ -18,6 +19,8 @@ export interface TripBudgetPresentation { amount: number; currency: string; scop
 export interface SupportingEvidencePresentation { title: string; description: string; sourceApplicabilityNotice: string; category: string; destinations: string[]; verification: 'verified' | 'partial' | 'stale' | 'unverified' }
 export interface TripDay { id: string | number; label: string; title: string; subtitle: string; status: 'ready' | 'pending'; activities: Activity[] }
 export interface TripPresentation {
+  mapCities?: import('../maps/coordinates').MapPoint[]
+  flightPaths?: import('../maps/coordinates').MapPoint[][]
   locale?: 'zh' | 'en'
   publication?: { artifactId?: string; contentVersion?: string; status: 'accepted' | 'preparing' | 'retryable' | 'revision_required' | 'legacy' | 'stale'; revision: number; canLocalize: boolean; canRetry: boolean; issues: Array<{ activityId?: string; code: string; label: string }> }
   flightArrangement?: 'selected' | 'self_provided' | 'unconfirmed'

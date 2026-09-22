@@ -1,0 +1,1147 @@
+{
+  "scope": "Synthetic travel/text; real Nominatim identities and PostgreSQL. H5 real HTTP and OSM tiles; WeChat fixture transport, native SDK interactions, not physical device.",
+  "h5": {
+    "recordedAt": "2026-09-22T09:44:42.720Z",
+    "passed": true,
+    "cases": [
+      {
+        "id": "selfTicket",
+        "observations": [
+          {
+            "locale": "zh",
+            "day": 1,
+            "markers": 0,
+            "text": "D1 浅草历史文化与小食\nTokyo\n尚无已确认位置，请先补全地点；日程仍可正常查看。\n地图尚未接入，先按下方顺序游览\n1\n上午\n浅草寺与仲见世商店街\n浅草寺是东京最具代表性的文化地标，拥有约1400年历史。寺前的仲见世商店街长约200米，两旁店铺售卖各种纪念品和本地小吃，是感受江户风情与品尝小吃的绝佳去处。\n尚未确认具体位置\n2\n下午\n东京街头小吃：拉面、章鱼烧、鲷鱼烧等\n东京街头小吃种类繁多，从拉面、章鱼烧到鲷鱼烧、御好烧、烧鸟等，遍布各处摊位和店铺，是体验当地饮食文化的直接方式。\n尚未确认具体位置\n在规划记录中调整\n上午、下午等为建议游览时段。"
+          },
+          {
+            "locale": "zh",
+            "day": 2,
+            "markers": 1,
+            "text": "D2 明治神宫与本地食文化\nTokyo\n1\n明治神宫\n+\n−\n Leaflet | © OpenStreetMap contributors\n游览顺序示意 · 非导航路线\n地图仅显示已有坐标的地点\n1\n上午\n明治神宫\n明治神宫是东京重要的传统神社，环境宁静，适合在清晨或上午安静地参访，感受日本神道文化。\n已确认场馆位置\n2\n下午\n东京本地特色：文字烧与深川饭\n文字烧是一种类似御好烧的咸味煎饼，深川饭是蛤蜊盖饭，还有柳川锅等，都是东京独有的地方美食，值得一试。\n尚未确认具体位置\n在规划记录中调整\n上午、下午等为建议游览时段。"
+          },
+          {
+            "locale": "en",
+            "day": 1,
+            "markers": 0,
+            "text": "D1 Asakusa History and Street Food\nTokyo\nNo confirmed locations yet. Resolve places to add the map; the itinerary remains available.\nMap not connected yet. Follow the itinerary below.\n1\nMorning\nSensoji Temple and Nakamise Street\nStart your Tokyo visit in Asakusa at Sensoji Temple, a cultural landmark with about 1,400 years of history. After exploring the temple grounds, stroll along Nakamise Street, a traditional shopping street about 200 meters long, where you can sample local snacks and browse souvenirs.\nSpecific location not confirmed\n2\nAfternoon\nTokyo Street Food: Ramen, Takoyaki, Taiyaki\nSpend the afternoon exploring Tokyo's street food scene. Look for stalls and shops serving iconic treats like ramen, takoyaki (octopus balls), taiyaki (fish-shaped cakes), okonomiyaki (savory pancakes), and yakitori (grilled chicken skewers).\nSpecific location not confirmed\nAdjust in planning history\nMorning and afternoon are suggested visiting periods."
+          },
+          {
+            "locale": "en",
+            "day": 2,
+            "markers": 1,
+            "text": "D2 Meiji Shrine and Local Cuisine\nTokyo\n1\nMeiji Jingu Shrine\n+\n−\n Leaflet | © OpenStreetMap contributors\nVisit order · Not a navigation route\nOnly places with coordinates appear on the map.\n1\nMorning\nMeiji Jingu Shrine\nBegin your second day with a quiet visit to Meiji Jingu, one of Tokyo's major Shinto shrines. The serene forested grounds offer a peaceful contrast to the city's bustle, ideal for a calm morning stroll.\nConfirmed venue location\n2\nAfternoon\nTokyo Local Specialties: Monjayaki and Fukagawa Meshi\nIn the afternoon, try Tokyo's local specialties. Sample monjayaki, a savory pancake similar to okonomiyaki, Fukagawa meshi (clam rice), and Yanagawa nabe hot pot, all classic dishes that showcase the city's culinary heritage.\nSpecific location not confirmed\nAdjust in planning history\nMorning and afternoon are suggested visiting periods."
+          }
+        ],
+        "refreshLocale": "en",
+        "queriesBefore": 15,
+        "queriesAfterExplicit": 15,
+        "queriesAfter": 15
+      },
+      {
+        "id": "selectedFlight",
+        "observations": [
+          {
+            "locale": "zh",
+            "day": 1,
+            "markers": 1,
+            "text": "D1 浅草与藏前漫步\nTokyo\n2\n藏前街区\n+\n−\n Leaflet | © OpenStreetMap contributors\n游览顺序示意 · 非导航路线\n地图仅显示已有坐标的地点\n1\n下午\n浅草寺与仲见世商店街\n下午游览浅草寺，再沿仲见世商店街散步。\n尚未确认具体位置\n2\n晚上\n藏前街区\n晚上在藏前街区散步，观察沿街的传统工艺店与新店。\n街区级位置\n在规划记录中调整\n上午、下午等为建议游览时段。"
+          },
+          {
+            "locale": "zh",
+            "day": 2,
+            "markers": 2,
+            "text": "D2 上野文化与原宿小吃\nTokyo\n1\n2\n上野公园文化区\n+\n−\n Leaflet | © OpenStreetMap contributors\n游览顺序示意 · 非导航路线\n1\n上午\n上野公园文化区\n上午在上野公园文化区散步，感受博物馆周边的文化氛围。\n街区级位置\n2\n下午\n原宿竹下通\n下午漫步原宿竹下通，浏览街头服饰店并寻找小吃。\n街道级位置\n在规划记录中调整\n上午、下午等为建议游览时段。"
+          },
+          {
+            "locale": "en",
+            "day": 1,
+            "markers": 1,
+            "text": "D1 Asakusa and Kuramae walks\nTokyo\n2\nKuramae neighborhood\n+\n−\n Leaflet | © OpenStreetMap contributors\nVisit order · Not a navigation route\nOnly places with coordinates appear on the map.\n1\nAfternoon\nSensoji Temple and Nakamise Street\nVisit Sensoji Temple in the afternoon, then stroll along Nakamise Street.\nSpecific location not confirmed\n2\nEvening\nKuramae neighborhood\nWalk through Kuramae in the evening and explore its streets of traditional craft shops and newer stores.\nNeighborhood-level location\nAdjust in planning history\nMorning and afternoon are suggested visiting periods."
+          },
+          {
+            "locale": "en",
+            "day": 2,
+            "markers": 2,
+            "text": "D2 Ueno culture and Harajuku snacks\nTokyo\n1\n2\nUeno Park cultural area\n+\n−\n Leaflet | © OpenStreetMap contributors\nVisit order · Not a navigation route\n1\nMorning\nUeno Park cultural area\nSpend the morning walking through the cultural area of Ueno Park and around its museums.\nNeighborhood-level location\n2\nAfternoon\nTakeshita Street\nStroll along Takeshita Street in Harajuku in the afternoon, browsing fashion shops and looking for snacks.\nStreet-level location\nAdjust in planning history\nMorning and afternoon are suggested visiting periods."
+          }
+        ],
+        "refreshLocale": "en",
+        "queriesBefore": 15,
+        "queriesAfterExplicit": 15,
+        "queriesAfter": 15
+      }
+    ],
+    "requests": [
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/trips/publication-ui-selfTicket/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/trips/publication-ui-selfTicket/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10/places",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/trips/publication-ui-selfTicket/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/trips/publication-ui-selfTicket/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/trips/publication-ui-selfTicket/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/artifacts/20260922-0262-743f-b6bf-7fe7276ebe10/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selfTicket",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a/places",
+        "method": "POST",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/artifacts/20260922-6510-74f5-b53c-da44b504b90a/places",
+        "method": "GET",
+        "status": 200
+      },
+      {
+        "entry": "selectedFlight",
+        "path": "/v1/map-config",
+        "method": "GET",
+        "status": 200
+      }
+    ],
+    "tiles": [
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/12/3637/1612.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/12/3638/1612.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/12/3638/1613.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/12/3637/1613.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29099/12903.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29100/12903.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29099/12904.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29100/12904.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29099/12903.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29099/12904.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29100/12903.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29099/12903.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29100/12903.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29099/12904.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29099/12903.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29100/12903.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29099/12904.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/12/3637/1612.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/12/3638/1612.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/12/3638/1613.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/12/3637/1613.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/4/14/5.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/4/14/6.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/4/13/6.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/4/13/5.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29108/12900.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29107/12901.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29107/12900.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/15/29108/12901.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/10/909/402.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/10/909/403.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/10/908/402.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/10/910/402.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/10/910/403.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/10/908/403.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/10/910/403.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/4/13/5.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/4/14/5.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/4/13/6.png"
+      },
+      {
+        "status": 200,
+        "url": "https://tile.openstreetmap.org/4/14/6.png"
+      }
+    ]
+  },
+  "weapp": {
+    "recordedAt": "2026-09-22T10:05:05.333Z",
+    "interactionChecksPassed": true,
+    "basemap": "NOT PASSED: blank Tokyo Tencent basemap despite native markers/lines",
+    "cases": [
+      {
+        "id": "selfTicket",
+        "states": [
+          {
+            "locale": "zh",
+            "day": 1,
+            "markers": [],
+            "text": "D1 浅草历史文化与小食Tokyo尚无已确认位置，请先补全地点；日程仍可正常查看。地图尚未接入，先按下方顺序游览1上午浅草寺与仲见世商店街浅草寺是东京最具代表性的文化地标，拥有约1400年历史。寺前的仲见世商店街长约200米，两旁店铺售卖各种纪念品和本地小吃，是感受江户风情与品尝小吃的绝佳去处。尚未确认具体位置2下午东京街头小吃：拉面、章鱼烧、鲷鱼烧等东京街头小吃种类繁多，从拉面、章鱼烧到鲷鱼烧、御好烧、烧鸟等，遍布各处摊位和店铺，是体验当地饮食文化的直接方式。尚未确认具体位置在规划记录中调整上午、下午等为建议游览时段。"
+          },
+          {
+            "locale": "zh",
+            "day": 2,
+            "markers": [
+              {
+                "id": 1,
+                "latitude": 35.6748417,
+                "longitude": 139.6996266,
+                "title": "明治神宫",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40,
+                "label": {
+                  "content": "1",
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 4,
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "borderRadius": 0,
+                  "bgColor": "#fff",
+                  "padding": 2,
+                  "textAlign": "center"
+                },
+                "callout": {
+                  "content": "明治神宫",
+                  "display": "BYCLICK",
+                  "padding": 8,
+                  "borderRadius": 6,
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 0,
+                  "bgColor": "#fff",
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "textAlign": "center"
+                }
+              }
+            ],
+            "text": "D2 明治神宫与本地食文化Tokyo© OpenStreetMap contributors · 底图由微信地图服务提供游览顺序示意 · 非导航路线地图仅显示已有坐标的地点1上午明治神宫明治神宫是东京重要的传统神社，环境宁静，适合在清晨或上午安静地参访，感受日本神道文化。已确认场馆位置2下午东京本地特色：文字烧与深川饭文字烧是一种类似御好烧的咸味煎饼，深川饭是蛤蜊盖饭，还有柳川锅等，都是东京独有的地方美食，值得一试。尚未确认具体位置在规划记录中调整上午、下午等为建议游览时段。"
+          },
+          {
+            "locale": "en",
+            "day": 1,
+            "markers": [],
+            "text": "D1 Asakusa History and Street FoodTokyoNo confirmed locations yet. Resolve places to add the map; the itinerary remains available.Map not connected yet. Follow the itinerary below.1MorningSensoji Temple and Nakamise StreetStart your Tokyo visit in Asakusa at Sensoji Temple, a cultural landmark with about 1,400 years of history. After exploring the temple grounds, stroll along Nakamise Street, a traditional shopping street about 200 meters long, where you can sample local snacks and browse souvenirs.Specific location not confirmed2AfternoonTokyo Street Food: Ramen, Takoyaki, TaiyakiSpend the afternoon exploring Tokyo's street food scene. Look for stalls and shops serving iconic treats like ramen, takoyaki (octopus balls), taiyaki (fish-shaped cakes), okonomiyaki (savory pancakes), and yakitori (grilled chicken skewers).Specific location not confirmedAdjust in planning historyMorning and afternoon are suggested visiting periods."
+          },
+          {
+            "locale": "en",
+            "day": 2,
+            "markers": [
+              {
+                "id": 1,
+                "latitude": 35.6748417,
+                "longitude": 139.6996266,
+                "title": "Meiji Jingu Shrine",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40,
+                "label": {
+                  "content": "1",
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 4,
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "borderRadius": 0,
+                  "bgColor": "#fff",
+                  "padding": 2,
+                  "textAlign": "center"
+                },
+                "callout": {
+                  "content": "Meiji Jingu Shrine",
+                  "display": "BYCLICK",
+                  "padding": 8,
+                  "borderRadius": 6,
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 0,
+                  "bgColor": "#fff",
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "textAlign": "center"
+                }
+              }
+            ],
+            "text": "D2 Meiji Shrine and Local CuisineTokyo© OpenStreetMap contributors · Basemap by WeChat map serviceVisit order · Not a navigation routeOnly places with coordinates appear on the map.1MorningMeiji Jingu ShrineBegin your second day with a quiet visit to Meiji Jingu, one of Tokyo's major Shinto shrines. The serene forested grounds offer a peaceful contrast to the city's bustle, ideal for a calm morning stroll.Confirmed venue location2AfternoonTokyo Local Specialties: Monjayaki and Fukagawa MeshiIn the afternoon, try Tokyo's local specialties. Sample monjayaki, a savory pancake similar to okonomiyaki, Fukagawa meshi (clam rice), and Yanagawa nabe hot pot, all classic dishes that showcase the city's culinary heritage.Specific location not confirmedAdjust in planning historyMorning and afternoon are suggested visiting periods."
+          }
+        ],
+        "refresh": true
+      },
+      {
+        "id": "selectedFlight",
+        "states": [
+          {
+            "locale": "zh",
+            "day": 1,
+            "markers": [
+              {
+                "id": 1,
+                "latitude": 35.7026209,
+                "longitude": 139.7910027,
+                "title": "藏前街区",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40,
+                "label": {
+                  "content": "2",
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 4,
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "borderRadius": 0,
+                  "bgColor": "#fff",
+                  "padding": 2,
+                  "textAlign": "center"
+                },
+                "callout": {
+                  "content": "藏前街区",
+                  "display": "BYCLICK",
+                  "padding": 8,
+                  "borderRadius": 6,
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 0,
+                  "bgColor": "#fff",
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "textAlign": "center"
+                }
+              }
+            ],
+            "text": "D1 浅草与藏前漫步Tokyo© OpenStreetMap contributors · 底图由微信地图服务提供游览顺序示意 · 非导航路线地图仅显示已有坐标的地点1下午浅草寺与仲见世商店街下午游览浅草寺，再沿仲见世商店街散步。尚未确认具体位置2晚上藏前街区晚上在藏前街区散步，观察沿街的传统工艺店与新店。街区级位置在规划记录中调整上午、下午等为建议游览时段。"
+          },
+          {
+            "locale": "zh",
+            "day": 2,
+            "markers": [
+              {
+                "id": 1,
+                "latitude": 35.7152915,
+                "longitude": 139.7738278,
+                "title": "上野公园文化区",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40,
+                "label": {
+                  "content": "1",
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 4,
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "borderRadius": 0,
+                  "bgColor": "#fff",
+                  "padding": 2,
+                  "textAlign": "center"
+                },
+                "callout": {
+                  "content": "上野公园文化区",
+                  "display": "BYCLICK",
+                  "padding": 8,
+                  "borderRadius": 6,
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 0,
+                  "bgColor": "#fff",
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "textAlign": "center"
+                }
+              },
+              {
+                "id": 2,
+                "latitude": 35.6711612,
+                "longitude": 139.7049553,
+                "title": "原宿竹下通",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40,
+                "label": {
+                  "content": "2",
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 4,
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "borderRadius": 0,
+                  "bgColor": "#fff",
+                  "padding": 2,
+                  "textAlign": "center"
+                },
+                "callout": {
+                  "content": "原宿竹下通",
+                  "display": "BYCLICK",
+                  "padding": 8,
+                  "borderRadius": 6,
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 0,
+                  "bgColor": "#fff",
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "textAlign": "center"
+                }
+              }
+            ],
+            "text": "D2 上野文化与原宿小吃Tokyo© OpenStreetMap contributors · 底图由微信地图服务提供游览顺序示意 · 非导航路线1上午上野公园文化区上午在上野公园文化区散步，感受博物馆周边的文化氛围。街区级位置2下午原宿竹下通下午漫步原宿竹下通，浏览街头服饰店并寻找小吃。街道级位置在规划记录中调整上午、下午等为建议游览时段。"
+          },
+          {
+            "locale": "en",
+            "day": 1,
+            "markers": [
+              {
+                "id": 1,
+                "latitude": 35.7026209,
+                "longitude": 139.7910027,
+                "title": "Kuramae neighborhood",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40,
+                "label": {
+                  "content": "2",
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 4,
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "borderRadius": 0,
+                  "bgColor": "#fff",
+                  "padding": 2,
+                  "textAlign": "center"
+                },
+                "callout": {
+                  "content": "Kuramae neighborhood",
+                  "display": "BYCLICK",
+                  "padding": 8,
+                  "borderRadius": 6,
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 0,
+                  "bgColor": "#fff",
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "textAlign": "center"
+                }
+              }
+            ],
+            "text": "D1 Asakusa and Kuramae walksTokyo© OpenStreetMap contributors · Basemap by WeChat map serviceVisit order · Not a navigation routeOnly places with coordinates appear on the map.1AfternoonSensoji Temple and Nakamise StreetVisit Sensoji Temple in the afternoon, then stroll along Nakamise Street.Specific location not confirmed2EveningKuramae neighborhoodWalk through Kuramae in the evening and explore its streets of traditional craft shops and newer stores.Neighborhood-level locationAdjust in planning historyMorning and afternoon are suggested visiting periods."
+          },
+          {
+            "locale": "en",
+            "day": 2,
+            "markers": [
+              {
+                "id": 1,
+                "latitude": 35.7152915,
+                "longitude": 139.7738278,
+                "title": "Ueno Park cultural area",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40,
+                "label": {
+                  "content": "1",
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 4,
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "borderRadius": 0,
+                  "bgColor": "#fff",
+                  "padding": 2,
+                  "textAlign": "center"
+                },
+                "callout": {
+                  "content": "Ueno Park cultural area",
+                  "display": "BYCLICK",
+                  "padding": 8,
+                  "borderRadius": 6,
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 0,
+                  "bgColor": "#fff",
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "textAlign": "center"
+                }
+              },
+              {
+                "id": 2,
+                "latitude": 35.6711612,
+                "longitude": 139.7049553,
+                "title": "Takeshita Street",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40,
+                "label": {
+                  "content": "2",
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 4,
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "borderRadius": 0,
+                  "bgColor": "#fff",
+                  "padding": 2,
+                  "textAlign": "center"
+                },
+                "callout": {
+                  "content": "Takeshita Street",
+                  "display": "BYCLICK",
+                  "padding": 8,
+                  "borderRadius": 6,
+                  "color": "#172f56",
+                  "fontSize": 12,
+                  "anchorX": 0,
+                  "anchorY": 0,
+                  "bgColor": "#fff",
+                  "borderWidth": 0,
+                  "borderColor": "#fff",
+                  "textAlign": "center"
+                }
+              }
+            ],
+            "text": "D2 Ueno culture and Harajuku snacksTokyo© OpenStreetMap contributors · Basemap by WeChat map serviceVisit order · Not a navigation route1MorningUeno Park cultural areaSpend the morning walking through the cultural area of Ueno Park and around its museums.Neighborhood-level location2AfternoonTakeshita StreetStroll along Takeshita Street in Harajuku in the afternoon, browsing fashion shops and looking for snacks.Street-level locationAdjust in planning historyMorning and afternoon are suggested visiting periods."
+          }
+        ],
+        "refresh": true
+      }
+    ],
+    "queriesBefore": 15,
+    "queriesAfter": 15,
+    "cleanup": "Original guest/user identity, storage, locale and page restored; request override removed"
+  },
+  "calls": {
+    "limit": 24,
+    "count": 15,
+    "costUsd": 0,
+    "records": [
+      {
+        "number": 1,
+        "url": "https://nominatim.openstreetmap.org/search?q=Meiji+Jingu+Shrine%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "failed",
+        "startedAt": "2026-09-22T08:17:39.113Z",
+        "finishedAt": "2026-09-22T08:17:47.147Z",
+        "costUsd": 0,
+        "failure": "network timeout; original error retained in local ledger"
+      },
+      {
+        "number": 2,
+        "url": "https://nominatim.openstreetmap.org/search?q=Tokyo%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "failed",
+        "startedAt": "2026-09-22T08:17:47.416Z",
+        "finishedAt": "2026-09-22T08:17:55.425Z",
+        "costUsd": 0,
+        "failure": "network timeout; original error retained in local ledger"
+      },
+      {
+        "number": 3,
+        "url": "https://nominatim.openstreetmap.org/search?q=Kuramae%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "failed",
+        "startedAt": "2026-09-22T08:17:55.677Z",
+        "finishedAt": "2026-09-22T08:18:03.691Z",
+        "costUsd": 0,
+        "failure": "network timeout; original error retained in local ledger"
+      },
+      {
+        "number": 4,
+        "url": "https://nominatim.openstreetmap.org/search?q=Ueno+Park%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "failed",
+        "startedAt": "2026-09-22T08:18:03.794Z",
+        "finishedAt": "2026-09-22T08:18:11.799Z",
+        "costUsd": 0,
+        "failure": "network timeout; original error retained in local ledger"
+      },
+      {
+        "number": 5,
+        "url": "https://nominatim.openstreetmap.org/search?q=Takeshita+Street%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "failed",
+        "startedAt": "2026-09-22T08:18:11.831Z",
+        "finishedAt": "2026-09-22T08:18:19.844Z",
+        "costUsd": 0,
+        "failure": "network timeout; original error retained in local ledger"
+      },
+      {
+        "number": 6,
+        "url": "https://nominatim.openstreetmap.org/search?q=Meiji+Jingu+Shrine%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:23:36.831Z",
+        "finishedAt": "2026-09-22T08:23:37.478Z",
+        "responseHash": "d649dbb1388c7daaa3546a46a2f9ed33a41bdafd4b160c4c4da04b611bb399a0",
+        "costUsd": 0
+      },
+      {
+        "number": 7,
+        "url": "https://nominatim.openstreetmap.org/search?q=Tokyo%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:23:37.951Z",
+        "finishedAt": "2026-09-22T08:23:38.651Z",
+        "responseHash": "ebc3c600656973a9d7b2cd052323a1f54b30646fa16ec3951409525c380fa017",
+        "costUsd": 0
+      },
+      {
+        "number": 8,
+        "url": "https://nominatim.openstreetmap.org/search?q=Kuramae%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:23:39.067Z",
+        "finishedAt": "2026-09-22T08:23:40.374Z",
+        "responseHash": "041927932fe05210ec16c2d140b3084bfa15ffc7c8fe3858b1d4ad061f318ce2",
+        "costUsd": 0
+      },
+      {
+        "number": 9,
+        "url": "https://nominatim.openstreetmap.org/search?q=Ueno+Park%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:23:40.474Z",
+        "finishedAt": "2026-09-22T08:23:41.310Z",
+        "responseHash": "028235a541070510aee5b34236822b0b1b3fd5cada44d102363e139b21f02a3f",
+        "costUsd": 0
+      },
+      {
+        "number": 10,
+        "url": "https://nominatim.openstreetmap.org/search?q=Takeshita+Street%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:23:41.585Z",
+        "finishedAt": "2026-09-22T08:23:42.475Z",
+        "responseHash": "071a89cbe5d408963363e60f5a6147d6354395568f080fece5a0b246bcb77bc6",
+        "costUsd": 0
+      },
+      {
+        "number": 11,
+        "url": "https://nominatim.openstreetmap.org/search?q=Meiji+Jingu+Shrine%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:35:32.039Z",
+        "finishedAt": "2026-09-22T08:35:33.015Z",
+        "responseHash": "d649dbb1388c7daaa3546a46a2f9ed33a41bdafd4b160c4c4da04b611bb399a0",
+        "costUsd": 0
+      },
+      {
+        "number": 12,
+        "url": "https://nominatim.openstreetmap.org/search?q=Tokyo&featureType=city&layer=address&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:35:33.201Z",
+        "finishedAt": "2026-09-22T08:35:33.914Z",
+        "responseHash": "6a77b4049827fc423a52478664e3c60a93c9a9fd1c51a32b6a73f997f3199db5",
+        "costUsd": 0
+      },
+      {
+        "number": 13,
+        "url": "https://nominatim.openstreetmap.org/search?q=Kuramae%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:35:44.366Z",
+        "finishedAt": "2026-09-22T08:35:45.040Z",
+        "responseHash": "041927932fe05210ec16c2d140b3084bfa15ffc7c8fe3858b1d4ad061f318ce2",
+        "costUsd": 0
+      },
+      {
+        "number": 14,
+        "url": "https://nominatim.openstreetmap.org/search?q=Ueno+Park%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:35:45.596Z",
+        "finishedAt": "2026-09-22T08:35:46.341Z",
+        "responseHash": "028235a541070510aee5b34236822b0b1b3fd5cada44d102363e139b21f02a3f",
+        "costUsd": 0
+      },
+      {
+        "number": 15,
+        "url": "https://nominatim.openstreetmap.org/search?q=Takeshita+Street%2C+Tokyo&countrycodes=jp&format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=8&accept-language=en",
+        "status": "200",
+        "startedAt": "2026-09-22T08:35:46.717Z",
+        "finishedAt": "2026-09-22T08:35:48.376Z",
+        "responseHash": "071a89cbe5d408963363e60f5a6147d6354395568f080fece5a0b246bcb77bc6",
+        "costUsd": 0
+      }
+    ]
+  }
+}

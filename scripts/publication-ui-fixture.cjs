@@ -3,6 +3,7 @@ const fs = require('node:fs')
 const { createHash } = require('node:crypto')
 const raw = JSON.parse(fs.readFileSync('backend/test/fixtures/g1-publication-v1-original-samples.json', 'utf8'))
 const examples = JSON.parse(fs.readFileSync('docs/design/budget-travel-agent/FINALIZATION_EXAMPLES_2026-09-22.json', 'utf8')).examples
+const { selectedText } = require('./publication-ui-selected-fixture.cjs')
 function fixtures() {
   return raw.cases.map(sample => {
     const original = structuredClone(sample.legacy.artifact)
@@ -11,11 +12,12 @@ function fixtures() {
       createdAt: original.createdAt, updatedAt: original.updatedAt }
     const hash = createHash('sha256').update(JSON.stringify(original.payload)).digest('hex')
     const guides = Object.fromEntries(['zh', 'en'].map(locale => {
-      const final = examples.find(example => example.locale === locale && example.mode === 'initial').text
-      let index = 0
-      const days = original.payload.days.map((day, dayIndex) => ({ ...day, theme: final.days[dayIndex].theme,
+      const final = sample.id === 'selectedFlight' ? selectedText(locale) : examples.find(example => example.locale === locale && example.mode === 'initial').text
+      const byId = new Map(final.activities.map(activity => [activity.activityId, activity]))
+      const days = original.payload.days.map(day => ({ ...day, theme: final.days.find(value => value.day === day.day).theme,
         items: day.items.map(item => {
-          const activity = final.activities[index++]
+          const activity = byId.get(item.id)
+          if (!activity) throw new Error(`Fixture missing activity identity: ${sample.id}/${item.id}`)
           return { ...item, title: activity.name, description: activity.introduction, recommendationReason: activity.recommendationReason }
         }) }))
       return [locale, { ...original, payload: { ...original.payload, days,
@@ -40,7 +42,7 @@ function fixtures() {
       conversationId: original.conversationId ?? null, conversations: [], artifactRefs: [{ id: original.id, type:'travel_guide',schemaVersion:1,presentationHint:'card' }],
       messages: [{id:`${sample.id}-user`,role:'user',content:'想了解文化，喜欢小吃，节奏轻松。',artifactRefs:[],createdAt:original.createdAt},
         {id:`${sample.id}-reply`,role:'assistant',content:'',artifactRefs:[{id:original.id,type:'travel_guide',schemaVersion:1,presentationHint:'card'}],delivery:{status:'satisfied',artifactIds:[original.id]},createdAt:original.createdAt}] }
-    return { id: sample.id, guides, route, flight, workspace }
+    return { id: sample.id, textProvenance: sample.id === 'selectedFlight' ? 'synthetic identity-and-slot-aligned UI fixture' : 'prior finalization example matched by activityId', guides, route, flight, workspace }
   })
 }
 module.exports = { fixtures }

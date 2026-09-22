@@ -1,4 +1,5 @@
 export default defineAppConfig({
+  usingComponents: process.env.TARO_ENV === 'weapp' ? { 'place-map': './components/place-map/index' } : {},
   pages: [
     'pages/plan/index',
     'pages/index/index',

@@ -1,0 +1,1 @@
+<map id="places" style="width:100%;height:100%" latitude="{{latitude}}" longitude="{{longitude}}" scale="13" markers="{{markers}}" polyline="{{lines}}" include-points="{{bounds}}" show-location="{{false}}" enable-poi="{{false}}" bindmarkertap="selectMarker" bindupdated="mapReady" binderror="mapError" />

@@ -129,9 +129,10 @@ export function savedOfferFlights(artifact: ArtifactEnvelope | undefined, offerI
 function activity(item: Item, enrichment: Item | undefined, locale: 'zh' | 'en'): Activity {
   const tt = (key: string) => tripText(locale, key)
   const time = text(item.timeOfDay)
-  const coordinates = record(enrichment?.coordinates)
-  const latitude = numberValue(coordinates?.latitude), longitude = numberValue(coordinates?.longitude)
-  const located = latitude !== undefined && longitude !== undefined && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
+  const resolution=record(enrichment?.place),entity=record(resolution?.place),identityPoint=record(entity?.coordinates)
+  const latitude = numberValue(identityPoint?.latitude), longitude = numberValue(identityPoint?.longitude)
+  const confirmed=resolution?.status==='resolved'&&/^osm:(node|way|relation):\d+$/.test(text(entity?.placeId)??'')&&identityPoint?.system==='WGS84'&&['venue','park','district','street'].includes(String(entity?.kind))&&/^[A-Z]{2}$/.test(text(entity?.countryCode)??'')
+  const located = confirmed && latitude !== undefined && longitude !== undefined && (latitude!==0||longitude!==0) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180
   const media = record(enrichment?.media), mediaUrl = safeSourceUrl(media?.src)
   const attribution = record(media?.source)
   const place = record(item.city)
@@ -141,6 +142,9 @@ function activity(item: Item, enrichment: Item | undefined, locale: 'zh' | 'en')
     time: time && ['morning', 'afternoon', 'evening', 'flexible'].includes(time) ? tt(`trip.${time}`) : null,
     until: null, category: tt(`trip.${['activity', 'event', 'seasonal', 'stopover', 'practical'].includes(String(item.category)) ? item.category : 'activity'}`),
     sourceApplicabilityNotice: '', latitude: located ? latitude : null, longitude: located ? longitude : null,
+    place: {status:text(resolution?.status)??'unresolved',reason:text(resolution?.reason)??'not_requested',placeId:confirmed?text(entity?.placeId):undefined,
+      name:confirmed?text(entity?.name):undefined,kind:confirmed?text(entity?.kind):undefined,countryCode:confirmed?text(entity?.countryCode):undefined,
+      ...(confirmed?{system:'WGS84' as const}:{}),...(safeSourceUrl(record(entity?.source)?.url)?{source:{label:'© OpenStreetMap contributors',url:safeSourceUrl(record(entity?.source)?.url),status:'verified' as const}}:{})},
     media: mediaUrl ? { src: mediaUrl, description: text(media?.description) ?? text(item.title)!,
       ...(text(attribution?.label) ? { source: { label: text(attribution?.label)!, url: safeSourceUrl(attribution?.url), status: 'unverified' as const } } : {}) } : null,
     source: null }
@@ -191,6 +195,9 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
   const routeRisks = (Array.isArray(route.warnings) ? route.warnings : []).map(warning =>
     tt(/closed|closure|闭馆|关闭/i.test(String(warning)) ? 'trip.issue.closed'
       : /date.{0,20}conflict|日期冲突/i.test(String(warning)) ? 'trip.issue.conflict' : 'trip.reviewRisks'))
+  const mapPoint=(raw:unknown)=>{const p=record(raw),c=record(p?.coordinates)??p,latitude=numberValue(c?.latitude),longitude=numberValue(c?.longitude)
+    return c?.system==='WGS84'&&latitude!==undefined&&longitude!==undefined&&(latitude!==0||longitude!==0)&&Math.abs(latitude)<=90&&Math.abs(longitude)<=180&&text(p?.countryCode)&&text(p?.placeId??p?.id)
+      ?{id:text(p?.placeId??p?.id)!,name:text(p?.name)??'',countryCode:text(p?.countryCode)!,latitude,longitude,kind:text(p?.kind)}:undefined}
   return { id: routeArtifact.tripId, locale, title: tt('trip.title'), destination: routeNames[0] ?? days[0]?.subtitle ?? tt('trip.locationUnknown'), route: routeNames,
     dates: { start: context?.departureWindow?.precision === 'exact' ? context.departureWindow.from ?? null : null,
       end: context?.returnWindow?.precision === 'exact' ? context.returnWindow.to ?? context.returnWindow.from ?? null : null, label: '' },
@@ -200,6 +207,8 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
     publication: { artifactId: guideArtifact?.id, contentVersion: pub?.guideContentHash, status: state, revision: pub?.revision ?? 0,
       canLocalize: Boolean(current && matchesFlight && !pub?.legacy && pub?.locale === locale && pub?.canLocalize),
       canRetry: Boolean(current && matchesFlight && pub?.locale === locale && pub?.canLocalize && pub?.canRetry && state === 'retryable'), issues },
+    mapCities:accepted?(enrichment?.cities??[]).map(mapPoint).filter((p):p is NonNullable<typeof p>=>!!p):[],
+    flightPaths:accepted&&selection?(enrichment?.flightPaths??[]).map(line=>line.map(mapPoint).filter((p):p is NonNullable<typeof p>=>!!p)).filter(line=>line.length===2):[],
     flightArrangement: selection ? 'selected' : selfProvided ? 'self_provided' : 'unconfirmed', flights, alternatives: [],
     // Never publish raw warning prose; unresolved risks remain visible with localized instructions.
     risks: [...new Set([...issues.map(issue => issue.label), ...routeRisks])],

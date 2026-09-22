@@ -13,7 +13,7 @@ import { FlightSearchCard } from '../../components/artifacts/FlightSearchCard'
 import { FlightDetail } from '../../components/route/FlightDetail'
 import { resolveArtifactRenderer } from '../../components/artifacts/registry'
 import { ensureWorkspaceConversation, getCloudWorkspace, updateCloudTrip } from '../../services/workspaceService'
-import { loadProductionTrip, prepareProductionLocale } from '../../services/productionTripService'
+import { loadProductionTrip, prepareProductionLocale, prepareProductionPlaces } from '../../services/productionTripService'
 import TripExperience from '../../features/ui-experience/TripExperience'
 import type { TripPresentation } from '../../features/ui-experience/presentation'
 import { safeSourceUrl } from '../../features/ui-experience/productionPresentation'
@@ -34,6 +34,8 @@ function RoutePage() {
   const [state, setState] = useState<State>({ key: '' })
   const [attempt, setAttempt] = useState(0)
   const [publicationAction, setPublicationAction] = useState<{ key: string; busy: boolean; error?: string }>({ key: '', busy: false })
+  const [placesAction,setPlacesAction]=useState<{key:string;busy:boolean;error?:string}>({key:'',busy:false})
+  const placeRequests=useRef(new Set<string>())
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState('')
   const [layoverPreference, setLayoverPreference] = useState<'airport_only' | 'consider_city'>('airport_only')
@@ -60,6 +62,15 @@ function RoutePage() {
   }, [key, attempt])
   const current = state.key === key ? state : undefined
   const artifact = current?.artifact
+  async function preparePlaces(){
+    if(!ownerId||placeRequests.current.has(key))return
+    placeRequests.current.add(key);setPlacesAction({key,busy:true})
+    const revision=userStore.sessionRevision
+    try {const loaded=await prepareProductionPlaces(artifactId,{ownerId,sessionId:chatStore.currentSessionId,locale})
+      if(activeKey.current===key&&userStore.sessionRevision===revision){setState({key,artifact:loaded.route,presentation:loaded.presentation});setPlacesAction({key,busy:false})}
+    }catch{if(activeKey.current===key&&userStore.sessionRevision===revision)setPlacesAction({key,busy:false,error:t('trip.placesFailed')})}
+    finally{placeRequests.current.delete(key)}
+  }
   async function prepareLocale(retryRevision?: number) {
     if (!ownerId || publicationRequests.current.has(key)) return
     publicationRequests.current.add(key)
@@ -132,6 +143,7 @@ function RoutePage() {
   const goBack = () => { void Taro.navigateBack().catch(() => Taro.switchTab({ url: '/pages/trips/index' })) }
   if (view.kind === 'trip') return <View className={ROUTE_DETAIL_SHELL_CLASS}>
     <TripExperience key={key} trip={view.presentation} production embedded onBack={goBack} onContinuePlanning={() => void continuePlanning()} onOpenSource={openSource}
+      onPreparePlaces={()=>void preparePlaces()} placesBusy={placesAction.key===key&&placesAction.busy} placesError={placesAction.key===key?placesAction.error:undefined}
       onRefresh={() => setAttempt(value => value + 1)} onPrepareLocale={retryRevision => void prepareLocale(retryRevision)}
       publicationBusy={publicationAction.key === key && publicationAction.busy} publicationError={publicationAction.key === key ? publicationAction.error : undefined} />
   </View>
