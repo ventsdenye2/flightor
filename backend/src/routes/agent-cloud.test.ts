@@ -25,6 +25,26 @@ const env = parseEnv({
 const call = (id: string, name: string, args: unknown) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
 
 describe('authenticated cloud Agent route', () => {
+  it('validates and forwards an explicit localization retry revision to the owner service', async () => {
+    const localizeGuide = vi.fn().mockResolvedValue({ id: '6d356c33-0dc0-420d-920e-159e785125c8', type: 'research', schemaVersion: 1, payload: {} })
+    const owners: string[] = [], app = Fastify()
+    await registerCloudAgentRoutes(app, { env } as unknown as AppContext, owner => {
+      owners.push(owner); return { localizeGuide } as unknown as CloudPlannerService
+    })
+    const token = await issueAccessToken({ userId: 'locale-owner', publicId: 'public-locale' }, env)
+    const url = '/v1/artifacts/6d356c33-0dc0-420d-920e-159e785125c8/localization'
+    const headers = { authorization: `Bearer ${token}` }
+    try {
+      expect((await app.inject({ method: 'POST', url, headers, payload: { locale: 'en', retryRevision: 1 } })).statusCode).toBe(200)
+      expect(localizeGuide).toHaveBeenCalledWith(url.split('/')[3], 'en', 1)
+      expect(owners).toEqual(['locale-owner'])
+      for (const payload of [{ locale: 'en', retryRevision: 0 }, { locale: 'en', retryRevision: 3 }, { locale: 'en', retryRevision: 1.5 }, { locale: 'fr' }, { locale: 'en', retry: true }]) {
+        expect((await app.inject({ method: 'POST', url, headers, payload })).statusCode).not.toBe(200)
+      }
+      expect((await app.inject({ method: 'POST', url, payload: { locale: 'en', retryRevision: 1 } })).statusCode).not.toBe(200)
+      expect(localizeGuide).toHaveBeenCalledTimes(1)
+    } finally { await app.close() }
+  })
   it('runs cloud Trip, location, fare, Artifact, Memory, and Conversation without OAG', async () => {
     const trips = new InMemoryTripRepository()
     const trip = await trips.create()

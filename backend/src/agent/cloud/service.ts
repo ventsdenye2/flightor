@@ -110,7 +110,7 @@ export class CloudPlannerService {
     return new GuideFinalizer(model.client, model.model, model.reasoning ? { reasoning: model.reasoning } : {}, this.dependencies.finalizationObservation)
   }
 
-  async localizeGuide(id: string, locale: PublicationLocale) {
+  async localizeGuide(id: string, locale: PublicationLocale, retryRevision?: number) {
     const record = await this.dependencies.artifacts.get(id)
     if (!record || record.type !== 'travel_guide') throw new AppError('RESOURCE_NOT_FOUND', 'Guide not found', 404)
     const assertCurrent = async () => {
@@ -121,7 +121,8 @@ export class CloudPlannerService {
       }
     }
     return finalizeGuide({ ownerId: this.dependencies.ownerId ?? record.tripId, record, artifacts: this.dependencies.artifacts,
-      finalizer: this.finalizer(), locale, localization: true, assertCurrent })
+      finalizer: this.finalizer(), locale, localization: true, assertCurrent,
+      ...(retryRevision === undefined ? {} : { retryRevision }) })
   }
 
   /** Owner-scoped repositories validate access before an asynchronous job is accepted. */

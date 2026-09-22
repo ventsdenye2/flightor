@@ -174,10 +174,24 @@ suite('PostgreSQL G1 publication v1 original sample copies', () => {
       expect(variant.status).toBe('accepted')
       return { locale, variant }
     }))
-    await Promise.all(variants.map(({ locale, variant }) => test.artifacts.saveFinalVariant(saved.id, publication.guideContentHash, locale, variant)))
+    const english = variants.find(value => value.locale === 'en')!.variant
+    const failure = { ...english, status: 'blocked' as const, text: null,
+      issues: [{ activityId: null, code: 'timeout' as const, detail: 'Initial localization timed out.' }],
+      observation: { ...english.observation, knownCostUsdMicros: 17, failure: 'timeout' } }
+    await Promise.all(variants.map(({ locale, variant }) => test.artifacts.saveFinalVariant(saved.id, publication.guideContentHash, locale, locale === 'en' ? failure : variant)))
+    const recoveryArtifacts = new PostgresArtifactRepository(recoveryDb, ownerId)
+    const retries = await Promise.allSettled([
+      test.artifacts.saveFinalVariant(saved.id, publication.guideContentHash, 'en', { ...english, revision: 2 }),
+      recoveryArtifacts.saveFinalVariant(saved.id, publication.guideContentHash, 'en', { ...english, revision: 2 })
+    ])
+    expect(retries.filter(value => value.status === 'fulfilled')).toHaveLength(1)
+    expect(retries.filter(value => value.status === 'rejected')).toHaveLength(1)
+    await expect(recoveryArtifacts.saveFinalVariant(saved.id, publication.guideContentHash, 'en', failure)).rejects.toThrow('attempt changed')
     const fresh = (await new PostgresArtifactRepository(recoveryDb, ownerId).get(saved.id))!
     expect(publicationFor(fresh)?.finalization?.variants.zh?.status).toBe('accepted')
     expect(publicationFor(fresh)?.finalization?.variants.en?.status).toBe('accepted')
+    expect(publicationFor(fresh)?.finalization?.variants.en?.history?.[0]?.observation.knownCostUsdMicros).toBe(17)
+    expect(publicationFor(fresh)?.finalization?.variants.en?.revision).toBe(2)
     expect((fresh.payload as any).days).toEqual(guide.days)
     expect((await trips.get(test.trip.id))?.version).toBe(test.trip.context.version)
     expect(await new PostgresArtifactRepository(recoveryDb, '0').get(saved.id)).toBeUndefined()

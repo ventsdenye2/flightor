@@ -5,7 +5,7 @@ import { supportedClaimEvidence, hasClaimConflict } from '../research-agent/clai
 import { travelGuideArtifactPayloadSchema, type TravelGuideArtifactPayload } from './artifact.js'
 import { guidePublicationSchema, type GuidePublication } from './publication-schema.js'
 import { sourceApplicability } from './source-applicability.js'
-import { finalPendingReply, type PublicationLocale } from './finalization-schema.js'
+import { canRetryFinalVariant, finalFailureKind, finalPendingReply, type PublicationLocale } from './finalization-schema.js'
 
 export const GUIDE_LEGACY_REPLY = '此前保存的攻略仍可查看。旧版文字未逐项审查，费用、开放时间及交通耗时待核实，不能确认是否满足预算。'
 const UNKNOWN = '建议时段仅表示安排意向；费用、开放时间、预约要求和交通耗时待核实。'
@@ -121,6 +121,9 @@ export function projectGuideRecord(record: ArtifactRecord, locale: PublicationLo
     const publicPublication = { ...publication, finalization: undefined, locale,
       canLocalize: Object.values(publication.finalization?.variants ?? {}).some(value => value?.status === 'accepted'),
       status: accepted ? 'accepted' : variant ? 'blocked' : 'preparing',
+      failureKind: variant ? finalFailureKind(variant) : undefined,
+      revision: variant ? variant.revision ?? 1 : 0,
+      canRetry: variant ? canRetryFinalVariant(variant) : false,
       issues: variant?.issues ?? [], reply: accepted?.reply ?? finalPendingReply(locale), overview: accepted?.overview,
       budgetAssessment: { ...publication.budgetAssessment, notice: locale === 'en' ? 'Budget is a target; total costs have not been established.' : '预算为目标口径，尚未核定总费用。' } }
     return { ...record, verification: undefined, payload: {

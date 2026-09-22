@@ -20,7 +20,7 @@ export const finalIssueSchema = z.object({
 export const finalResponseSchema = z.object({
   text: finalTextSchema.nullable(), issues: z.array(finalIssueSchema).max(400)
 }).strict()
-export const finalVariantSchema = z.object({
+const finalAttemptSchema = z.object({
   status: z.enum(['accepted', 'blocked']), text: finalTextSchema.nullable(),
   issues: z.array(finalIssueSchema).max(400),
   omitted: z.array(z.string().max(300)).max(100),
@@ -32,12 +32,25 @@ export const finalVariantSchema = z.object({
     repairReasons: z.array(z.string().max(100)).max(20).optional()
   }).strict()
 }).strict()
+// One initial generation and at most two explicitly requested retries per content/locale.
+export const MAX_FINALIZATION_ATTEMPTS = 3
+export const finalVariantSchema = finalAttemptSchema.extend({
+  revision: z.number().int().min(1).max(MAX_FINALIZATION_ATTEMPTS).optional(),
+  history: z.array(finalAttemptSchema.extend({ revision: z.number().int().positive() }).strict()).max(MAX_FINALIZATION_ATTEMPTS - 1).optional()
+}).strict()
 export const finalizationSchema = z.object({
   version: z.literal(1), variants: z.object({ zh: finalVariantSchema.optional(), en: finalVariantSchema.optional() }).strict()
 }).strict()
 export type FinalText = z.infer<typeof finalTextSchema>
 export type FinalVariant = z.infer<typeof finalVariantSchema>
 export type FinalIssue = z.infer<typeof finalIssueSchema>
+export function finalFailureKind(variant: FinalVariant): 'accepted' | 'retryable' | 'revision_required' {
+  if (variant.status === 'accepted') return 'accepted'
+  return variant.issues.length > 0 && variant.issues.every(issue =>
+    ['timeout', 'cancelled', 'provider_failure', 'format', 'language'].includes(issue.code)) ? 'retryable' : 'revision_required'
+}
+export const canRetryFinalVariant = (variant: FinalVariant) => finalFailureKind(variant) === 'retryable'
+  && (variant.revision ?? 1) < MAX_FINALIZATION_ATTEMPTS
 export const finalPendingReply = (locale: PublicationLocale) => locale === 'en'
   ? 'Your itinerary draft is saved. The final text for this language is not ready.'
   : '行程草稿已保存，当前语言的终稿尚未准备好。'

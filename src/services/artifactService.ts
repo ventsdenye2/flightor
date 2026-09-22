@@ -29,6 +29,8 @@ export interface ArtifactFetchContext {
   /** Stable local auth/session identifier used to ignore late responses. */
   sessionId?: string
   force?: boolean
+  /** Explicit user retry of the currently observed technical failure; never automatic. */
+  retryRevision?: number
 }
 
 export class ArtifactValidationError extends Error {
@@ -137,6 +139,7 @@ export class BoundedArtifactCache {
   }
 
   clear(): void { this.values.clear() }
+  delete(id: string): void { this.values.delete(id) }
 }
 
 export const artifactCache = new BoundedArtifactCache()
@@ -147,6 +150,8 @@ export interface ArtifactRequestTransport {
 
 export class ArtifactService {
   private readonly cache: BoundedArtifactCache
+  private readonly requests = new Map<string, object>()
+  private readonly localizations = new Map<string, Promise<ArtifactEnvelope>>()
 
   constructor(
     private readonly transport: ArtifactRequestTransport = request,
@@ -159,7 +164,15 @@ export class ArtifactService {
     this.cache.setSession(ownerId, sessionId)
   }
 
-  clearCache(): void { this.cache.clear() }
+  clearCache(): void { this.cache.clear(); this.requests.clear() }
+
+  private acceptResponse(key: string, token: object, artifact: ArtifactEnvelope): ArtifactEnvelope {
+    if (this.requests.get(key) !== token) throw new Error('Artifact request was superseded')
+    const publication = isRecord(artifact.payload) && isRecord(artifact.payload.publication) ? artifact.payload.publication : undefined
+    if (!publication?.status || publication.status === 'accepted') this.cache.set(key, artifact)
+    else this.cache.delete(key)
+    return artifact
+  }
 
   async fetchArtifact(id: string, context: ArtifactFetchContext = {}): Promise<ArtifactEnvelope> {
     const locale = context.locale ?? 'zh'
@@ -176,30 +189,44 @@ export class ArtifactService {
       if (cached) return cached
     }
 
-    const response = await this.transport<{ artifact: unknown }>({
-      url: `/v1/artifacts/${encodeURIComponent(id)}?locale=${locale}`,
-      method: 'GET',
-      retry: 1,
-      timeout: 15000
-    })
-    if (identity !== this.cache.sessionIdentity) throw new ArtifactSessionChangedError()
-    if (!isRecord(response) || !('artifact' in response)) throw new ArtifactValidationError('Artifact response envelope is missing')
-    const artifact = validateArtifactEnvelope(response.artifact)
-    const publication = isRecord(artifact.payload) && isRecord(artifact.payload.publication) ? artifact.payload.publication : undefined
-    if (publication?.status !== 'preparing') this.cache.set(cacheKey, artifact)
-    return artifact
+    const token = {}; this.requests.set(cacheKey, token)
+    try {
+      const response = await this.transport<{ artifact: unknown }>({
+        url: `/v1/artifacts/${encodeURIComponent(id)}?locale=${locale}`,
+        method: 'GET',
+        retry: 1,
+        timeout: 15000
+      })
+      if (identity !== this.cache.sessionIdentity) throw new ArtifactSessionChangedError()
+      if (!isRecord(response) || !('artifact' in response)) throw new ArtifactValidationError('Artifact response envelope is missing')
+      const artifact = validateArtifactEnvelope(response.artifact)
+      return this.acceptResponse(cacheKey, token, artifact)
+    } finally { if (this.requests.get(cacheKey) === token) this.requests.delete(cacheKey) }
   }
 
   /** Explicit locale demand; GET/refresh never initiates full finalization. */
   async localizeArtifact(id: string, context: ArtifactFetchContext): Promise<ArtifactEnvelope> {
+    if (!boundedString(id, MAX_ID_LENGTH)) throw new ArtifactValidationError('Artifact id is missing or too long')
+    if (context.ownerId !== undefined || context.sessionId !== undefined) this.cache.setSession(context.ownerId, context.sessionId)
     const identity = this.cache.sessionIdentity
     const locale = context.locale ?? 'zh'
-    const response = await request<{ artifact: unknown }>({ url: `/v1/artifacts/${encodeURIComponent(id)}/localization`,
-      method: 'POST', data: { locale }, retry: 0, timeout: 100000 })
-    if (identity !== this.cache.sessionIdentity) throw new ArtifactSessionChangedError()
-    const artifact = validateArtifactEnvelope(response.artifact)
-    this.cache.set(`${id}:${locale}`, artifact)
-    return artifact
+    const cacheKey = `${id}:${locale}`
+    const pendingKey = JSON.stringify([identity, cacheKey, context.retryRevision ?? 0])
+    const pending = this.localizations.get(pendingKey)
+    if (pending) return pending
+    const token = {}; this.requests.set(cacheKey, token)
+    const task = (async () => {
+      const response = await request<{ artifact: unknown }>({ url: `/v1/artifacts/${encodeURIComponent(id)}/localization`,
+        method: 'POST', data: { locale, ...(context.retryRevision === undefined ? {} : { retryRevision: context.retryRevision }) }, retry: 0, timeout: 100000 })
+      if (identity !== this.cache.sessionIdentity) throw new ArtifactSessionChangedError()
+      const artifact = validateArtifactEnvelope(response.artifact)
+      return this.acceptResponse(cacheKey, token, artifact)
+    })()
+    this.localizations.set(pendingKey, task)
+    try { return await task } finally {
+      if (this.localizations.get(pendingKey) === task) this.localizations.delete(pendingKey)
+      if (this.requests.get(cacheKey) === token) this.requests.delete(cacheKey)
+    }
   }
 }
 

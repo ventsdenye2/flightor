@@ -5,14 +5,21 @@ const ts = require('typescript')
 const moduleValue = { exports: {} }
 const calls = []
 let resolveEnglish
+let postMode = 'pending'
+let getStatus = 'accepted'
+let delayedGet
 const envelope = locale => ({ id: 'guide', tripId: 'trip', type: 'travel_guide', schemaVersion: 1,
   createdAt: '2026-09-22T00:00:00Z', updatedAt: '2026-09-22T00:00:00Z',
   payload: { publication: { locale, status: 'accepted' }, days: [] } })
 const transport = async options => {
   calls.push(options)
   const locale = options.data?.locale ?? (options.url.includes('locale=en') ? 'en' : 'zh')
-  if (options.method === 'POST') return new Promise(resolve => { resolveEnglish = () => resolve({ artifact: envelope(locale) }) })
-  return { artifact: envelope(locale) }
+  if (options.method === 'POST') {
+    if (postMode === 'blocked') return { artifact: { ...envelope(locale), payload: { publication: { locale, status: 'blocked', canRetry: true, revision: 1 } } } }
+    return new Promise(resolve => { resolveEnglish = () => resolve({ artifact: envelope(locale) }) })
+  }
+  if (getStatus === 'delayed') return new Promise(resolve => { delayedGet = () => resolve({ artifact: { ...envelope(locale), payload: { publication: { locale, status: 'blocked' } } } }) })
+  return { artifact: { ...envelope(locale), payload: { publication: { locale, status: getStatus } } } }
 }
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/services/artifactService.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
@@ -36,5 +43,23 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/services/artifactServ
   const old = service.localizeArtifact('guide', { locale: 'en' })
   service.setSession('other', 'new'); resolveEnglish()
   await assert.rejects(old, /previous owner or session/)
-  console.log('PASS locale-separated cache, refresh reuse, late language result, and owner isolation (4 checks)')
+  postMode = 'blocked'; await service.localizeArtifact('guide', { locale: 'en' })
+  const beforeRefresh = calls.length
+  await service.fetchArtifact('guide', { locale: 'en' })
+  assert.equal(calls.length, beforeRefresh + 1, 'blocked POST must not occupy cache')
+  service.clearCache(); getStatus = 'blocked'
+  await service.fetchArtifact('guide', { locale: 'en' }); await service.fetchArtifact('guide', { locale: 'en' })
+  assert.equal(calls.length, beforeRefresh + 3, 'blocked GET must not occupy cache')
+  getStatus = 'delayed'
+  const late = service.fetchArtifact('guide', { locale: 'en', force: true })
+  const lateCheck = assert.rejects(late, /superseded/)
+  postMode = 'pending'
+  const beforeRetry = calls.length
+  const retries = [service.localizeArtifact('guide', { locale: 'en', retryRevision: 1 }), service.localizeArtifact('guide', { locale: 'en', retryRevision: 1 })]
+  assert.equal(calls.length, beforeRetry + 1, 'concurrent explicit retry coalesces')
+  assert.equal(calls.at(-1).data.retryRevision, 1); assert.equal(calls.at(-1).retry, 0)
+  resolveEnglish(); await Promise.all(retries)
+  delayedGet(); await lateCheck
+  assert.equal((await service.fetchArtifact('guide', { locale: 'en' })).payload.publication.status, 'accepted')
+  console.log('PASS locale cache/reuse/isolation, failure cache eviction, explicit retry coalescing, late GET protection (8 checks)')
 })().catch(error => { console.error(error); process.exitCode = 1 })

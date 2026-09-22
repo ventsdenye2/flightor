@@ -198,8 +198,8 @@ export async function registerCloudAgentRoutes(
   app.post('/v1/artifacts/:id/localization', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (request, reply) => {
     const identity = await authenticateRequest(request, context)
     const { id } = z.object({ id: z.string().uuid() }).strict().parse(request.params)
-    const { locale } = z.object({ locale: z.enum(['zh', 'en']) }).strict().parse(request.body)
-    const artifact = await serviceForUser(identity.userId).localizeGuide(id, locale)
+    const { locale, retryRevision } = z.object({ locale: z.enum(['zh', 'en']), retryRevision: z.number().int().min(1).max(2).optional() }).strict().parse(request.body)
+    const artifact = await serviceForUser(identity.userId).localizeGuide(id, locale, retryRevision)
     return reply.header('Cache-Control', 'no-store').send({ artifact: presentArtifact(artifact, locale) })
   })
 

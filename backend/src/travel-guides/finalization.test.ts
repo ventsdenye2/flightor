@@ -6,6 +6,7 @@ import { travelGuideArtifactPayloadSchema } from './artifact.js'
 import { admittedResearch, buildGuidePublication, publicationFor, projectGuideRecord } from './publication.js'
 import { finalizeGuide } from './finalization-service.js'
 import { InMemoryArtifactRepository, type ArtifactRecord } from '../artifacts/repository.js'
+import { mergeFinalVariant } from './finalization-storage.js'
 
 const sample = JSON.parse(readFileSync(new URL('../../test/fixtures/g1-publication-v1-original-samples.json', import.meta.url), 'utf8')).cases[0].legacy
 function fixture(locale: 'zh' | 'en' = 'zh') {
@@ -27,6 +28,89 @@ function fixture(locale: 'zh' | 'en' = 'zh') {
 const response = (text: FinalText) => ({ message: { role: 'assistant' as const, content: JSON.stringify({ text, issues: [] }) } })
 
 describe('bounded finalization', () => {
+  it.each(['travel', 'visit'] as const)('allows practical tasks on a %s day without treating them as cultural visits', async kind => {
+    const f = fixture(), item = f.guide.days[0]!.items[0]!
+    f.guide.days[0]!.kind = kind
+    item.category = 'practical'; item.title = 'Airport transfer'
+    f.research.find(r => r.id === item.sourceArtifactId)!.findings.find(v => v.id === item.sourceFindingId)!.category = 'practical'
+    f.text.activities[0]!.name = '机场转乘'
+    f.text.activities[0]!.introduction = '按已选航班的机场办理转乘，沿航站楼指引前往后续航段。'
+    f.text.activities[0]!.recommendationReason = '衔接已选航班，为后续行程做好准备。'
+    const complete = vi.fn().mockResolvedValue(response(f.text))
+    expect((await new GuideFinalizer({ complete }).generate(f.input)).status).toBe('accepted')
+    expect(complete).toHaveBeenCalledTimes(1)
+    complete.mockResolvedValue({ message: { role: 'assistant', content: JSON.stringify({ text: null,
+      issues: [{ activityId: item.id, code: 'invalid_plan', detail: 'This transport guide is presented as the requested cultural attraction.' }] }) } })
+    const semantic = await new GuideFinalizer({ complete }).generate(f.input)
+    expect(semantic.issues[0]).toMatchObject({ activityId: item.id, code: 'invalid_plan' })
+  })
+  it.each(['as an AI', '保证不会超支', '门票200元', 'https://invented.example',
+    'Here is a complete English translation of the itinerary that repeats all the same details for every day'])('checks forbidden expression in activity name: %s', async name => {
+    const f = fixture(); f.text.activities[0]!.name = name
+    const complete = vi.fn().mockResolvedValue(response(f.text))
+    expect((await new GuideFinalizer({ complete }).generate(f.input)).status).toBe('blocked')
+  })
+  it('reports the specific partially placeholder activity while keeping normal guides valid', async () => {
+    const f = fixture()
+    expect(f.text.activities.length).toBeGreaterThan(1)
+    const complete = vi.fn().mockResolvedValue(response(f.text))
+    expect((await new GuideFinalizer({ complete }).generate(f.input)).status).toBe('accepted')
+    const activity = f.text.activities[1]!
+    activity.name = '待核实'; activity.introduction = '资料不足。'; activity.recommendationReason = '信息待补充'
+    complete.mockResolvedValue(response(f.text))
+    const result = await new GuideFinalizer({ complete }).generate(f.input)
+    expect(result.status).toBe('blocked')
+    expect(result.issues).toContainEqual(expect.objectContaining({ activityId: activity.activityId }))
+  })
+  it('explicitly retries an English timeout once concurrently, preserves Chinese and failed observations, rejects late writes', async () => {
+    const f = fixture(), artifacts = new InMemoryArtifactRepository('owner', new Set([f.record.tripId]))
+    const zh = await new GuideFinalizer({ complete: vi.fn().mockResolvedValue(response(f.text)) }).generate(f.input)
+    f.guide.publication!.finalization!.variants.zh = zh
+    const record = await artifacts.create({ ...f.record, goalId: undefined, runId: undefined, sourceArtifactIds: [] })
+    let resolveOld!: (value: ReturnType<typeof response>) => void
+    const complete = vi.fn().mockImplementation(() => new Promise<any>(resolve => { resolveOld = resolve }))
+    const input = { ownerId: 'owner', record, artifacts, locale: 'en' as const, localization: true,
+      finalizer: new GuideFinalizer({ complete }), timeoutMs: 5, assertCurrent: async () => {} }
+    const failed = await finalizeGuide(input)
+    expect(publicationFor(failed)?.finalization?.variants.en?.issues[0]?.code).toBe('timeout')
+    await finalizeGuide({ ...input, record: failed })
+    expect(complete).toHaveBeenCalledTimes(1)
+    complete.mockResolvedValue(response(fixture('en').text))
+    const retry = { ...input, record: failed, retryRevision: 1, timeoutMs: 1000 }
+    const [a, b] = await Promise.all([finalizeGuide(retry), finalizeGuide(retry)])
+    expect(a).toEqual(b); expect(complete).toHaveBeenCalledTimes(2)
+    const variants = publicationFor(a)!.finalization!.variants
+    expect(variants.en?.status).toBe('accepted'); expect(variants.zh).toEqual(zh)
+    expect((variants.en as any).history[0].observation).toEqual(publicationFor(failed)!.finalization!.variants.en!.observation)
+    await finalizeGuide({ ...input, record: a }); await finalizeGuide(retry)
+    expect(complete).toHaveBeenCalledTimes(2)
+    expect(() => mergeFinalVariant(a, publicationFor(a)!.guideContentHash, 'en', publicationFor(failed)!.finalization!.variants.en!)).toThrow()
+    resolveOld(response(fixture('en').text)); await Promise.resolve()
+    expect((await artifacts.get(record.id))!.payload).toEqual(a.payload)
+  })
+  it('bounds explicit failed retries, rejects stale retry tokens and requires revision for material problems', async () => {
+    const f = fixture(), artifacts = new InMemoryArtifactRepository('owner', new Set([f.record.tripId]))
+    f.guide.publication!.finalization!.variants.zh = await new GuideFinalizer({ complete: vi.fn().mockResolvedValue(response(f.text)) }).generate(f.input)
+    const record = await artifacts.create({ ...f.record, goalId: undefined, runId: undefined, sourceArtifactIds: [] })
+    const complete = vi.fn().mockRejectedValue(new Error('provider unavailable'))
+    const input = { ownerId: 'owner', record, artifacts, locale: 'en' as const, localization: true,
+      finalizer: new GuideFinalizer({ complete }), assertCurrent: async () => {} }
+    await finalizeGuide(input)
+    await finalizeGuide({ ...input, retryRevision: 1 })
+    await expect(finalizeGuide({ ...input, retryRevision: 1 })).rejects.toThrow('Retry requires')
+    const exhausted = await finalizeGuide({ ...input, retryRevision: 2 })
+    expect((projectGuideRecord(exhausted, 'en').payload as any).publication).toMatchObject({ failureKind: 'retryable', canRetry: false, revision: 3 })
+    expect(publicationFor(exhausted)!.finalization!.variants.en!.history).toHaveLength(2)
+    await expect(finalizeGuide({ ...input, retryRevision: 3 })).rejects.toThrow('Retry requires')
+    expect(complete).toHaveBeenCalledTimes(3)
+    const material = structuredClone(record)
+    const issue = { activityId: f.text.activities[0]!.activityId, code: 'invalid_plan' as const, detail: 'Transport cannot replace the requested cultural attraction.' }
+    const blocked = { ...publicationFor(exhausted)!.finalization!.variants.en!, revision: 1, history: [], issues: [issue] }
+    material.payload = mergeFinalVariant(material, publicationFor(record)!.guideContentHash, 'en', blocked)
+    // Storage independently rejects a material failure replacement even if a caller bypasses the service.
+    expect(() => mergeFinalVariant(material, publicationFor(material)!.guideContentHash, 'en', { ...blocked, revision: 2 })).toThrow('cannot be retried')
+    expect((projectGuideRecord(material, 'en').payload as any).publication).toMatchObject({ failureKind: 'revision_required', canRetry: false })
+  })
   it.each(['zh', 'en'] as const)('generates %s from full evidence once using the same client/model with no tools', async locale => {
     const f = fixture(locale)
     const complete = vi.fn(async (messages, model, options) => {
