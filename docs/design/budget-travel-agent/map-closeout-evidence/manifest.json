@@ -1,0 +1,31 @@
+{
+  "build": {
+    "gitSha": "52cb1c315edae5a69e679d9ee36d55bc2cf92991",
+    "dirty": false,
+    "sourceFingerprint": "8549c18b6d1bafc3d5d536df05cace63adc3df5a87ac8b4201067d6d50dbd4d7",
+    "builtAt": "2026-09-22T13:00:22.260Z",
+    "mode": "production",
+    "apiBaseUrl": "http://127.0.0.1:3000"
+  },
+  "point": {
+    "id": "tokyo",
+    "name": "Meiji Jingu Main Shrine",
+    "placeId": "osm:way:469908925",
+    "kind": "venue",
+    "countryCode": "JP",
+    "system": "WGS84",
+    "latitude": 35.6748417,
+    "longitude": 139.6996266,
+    "inputSystem": "WGS84",
+    "displaySystem": "GCJ02",
+    "converted": false
+  },
+  "scale": 13,
+  "files": {
+    "app.js": "0b00660a56cc9c0f740b979f264f11319f53bc99c7d267b655a52efa1ed2d083",
+    "pages/route/index.js": "b755859775189c7b4ac38e11079affe2825ae463ae72d71a152665f2fe8d76c8",
+    "components/place-map/index.js": "c97d5882f5a07065de8071bed811111bbc9ed90f082c314750fc5f4bd9773b3f",
+    "components/place-map/index.wxml": "2121a042022fba4235f754d7aeb1a896655d155096fcd5f0fd969617968a9926"
+  },
+  "scope": "Copied production build; diagnostic host only; unchanged compiled production native bridge"
+}

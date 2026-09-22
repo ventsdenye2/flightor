@@ -1,0 +1,19 @@
+{
+  "scope": "Production NominatimProvider transport probe; not an API POST",
+  "requestScopedProxy": true,
+  "environmentProxyExplicit": false,
+  "node": "v22.21.0",
+  "call": {
+    "number": 1,
+    "startedAt": "2026-09-22T13:14:34.191Z",
+    "status": "resolved",
+    "costUsd": 0,
+    "transport": "production-request-scoped-proxy",
+    "query": "Meiji Jingu Shrine, Tokyo",
+    "placeId": "osm:way:469908925",
+    "finishedAt": "2026-09-22T13:14:35.484Z",
+    "durationMs": 1288
+  },
+  "used": 1,
+  "limit": 24
+}

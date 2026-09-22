@@ -27,7 +27,7 @@ if(process.argv.includes('--refresh-token')){
 const execute=process.argv.includes('--execute'),file=path.join(directory,'ledger.json'),lock=path.join(directory,'ledger.lock')
 const fd=fs.openSync(lock,'wx');fs.writeFileSync(fd,String(process.pid))
 const ledger=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):{version:1,authorization:'User authorized OSM Nominatim, at most 24 free calls on 2026-09-22',limit:24,calls:[]}
-if(ledger.version!==1||ledger.limit!==24||!Array.isArray(ledger.calls))throw Error('Invalid existing ledger')
+if(ledger.version!==1||!(ledger.limit===24||(ledger.limit===null&&ledger.unlimitedPlaceCalls===true))||!Array.isArray(ledger.calls))throw Error('Invalid existing ledger')
 const save=()=>fs.writeFileSync(file,JSON.stringify(ledger,null,2))
 save()
 // Reuse this workstation's existing proxy, only in the live validation harness.
@@ -59,7 +59,7 @@ await sql`insert into airports(iata_code,name_zh,name_en,country_code,latitude,l
 const provider=new NominatimProvider({baseUrl:h.env.PLACES_NOMINATIM_URL,userAgent:h.env.PLACES_USER_AGENT,reserve:s=>repo.reserve(s),fetch:async(url,init)=>{
  if(!execute)throw Error('Live calls disabled: pass --execute under existing authorization')
  const u=new URL(url);if(u.origin!=='https://nominatim.openstreetmap.org'||u.pathname!=='/search')throw Error('Only selected POI endpoint allowed')
- if(ledger.calls.length>=24)throw Error('24_CALL_LIMIT')
+ if((ledger.limit!==null&&ledger.calls.length>=ledger.limit))throw Error('PLACE_CALL_LIMIT')
  const call={number:ledger.calls.length+1,url:u.href,startedAt:new Date().toISOString(),status:'reserved',costUsd:0};ledger.calls.push(call);save()
  try{const r=await transport(url,init),body=await r.text();call.status=String(r.status);call.finishedAt=new Date().toISOString();call.responseHash=createHash('sha256').update(body).digest('hex');fs.writeFileSync(path.join(directory,`response-${call.number}.json`),body);save();return new Response(body,{status:r.status,headers:r.headers})}
  catch(e){call.status='failed';call.failure=String(e);call.finishedAt=new Date().toISOString();save();throw e}
@@ -73,7 +73,7 @@ app.get('/v1/artifacts/:id',async req=>{for(const e of h.entries){const locale=r
 app.get('/v1/trips/:id/workspace',async req=>h.entries.find(e=>e.workspace.trip.id===req.params.id)?.workspace)
 const token=await issueAccessToken({...h.owner,localTest:true},h.env)
 fs.writeFileSync(path.join(directory,'transport.json'),JSON.stringify({baseUrl:'http://127.0.0.1:3013',token,entries:h.entries},null,2))
-app.get('/fixture/metrics',async()=>({calls:ledger.calls.length,limit:24,identities:await sql`select activity_id,result_json from guide_place_bindings order by artifact_id,activity_id`.execute(h.db).then(r=>r.rows)}))
+app.get('/fixture/metrics',async()=>({calls:ledger.calls.length,limit:ledger.limit,identities:await sql`select activity_id,result_json from guide_place_bindings order by artifact_id,activity_id`.execute(h.db).then(r=>r.rows)}))
 await app.listen({host:'127.0.0.1',port:3013})
 console.log(JSON.stringify({ready:true,port:3013,scope:'Synthetic trip/text, real authenticated place API + PostgreSQL + Nominatim',execute,calls:ledger.calls.length,directory}))
 async function stop(){await app.close();await h.close();fs.closeSync(fd);fs.unlinkSync(lock);process.exit()}

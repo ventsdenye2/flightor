@@ -1,0 +1,25 @@
+{
+  "scope": "Real wx.login and production API3000; no mock or fixture; existing public-schema guide",
+  "at": "2026-09-22T13:13:32.374Z",
+  "authStatus": 200,
+  "reads": [
+    {
+      "path": "/health/live",
+      "status": 200
+    },
+    {
+      "path": "/v1/map-config",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0c6ce-5b97-722b-89b7-3845bf562b0d?locale=zh",
+      "status": 200,
+      "artifactType": "travel_guide"
+    },
+    {
+      "path": "/v1/artifacts/01a0c6ce-5b97-722b-89b7-3845bf562b0d/places",
+      "status": 409,
+      "errorCode": "PLACE_BASE_UNAVAILABLE"
+    }
+  ]
+}

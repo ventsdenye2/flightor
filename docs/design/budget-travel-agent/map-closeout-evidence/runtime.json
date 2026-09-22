@@ -1,0 +1,13 @@
+{
+  "build": {
+    "sha": "52cb1c315edae5a69e679d9ee36d55bc2cf92991",
+    "dirty": false,
+    "sourceFingerprint": "8549c18b6d1bafc3d5d536df05cace63adc3df5a87ac8b4201067d6d50dbd4d7",
+    "builtAt": "2026-09-22T13:00:22.260Z",
+    "mode": "production",
+    "apiBaseUrl": "http://127.0.0.1:3000"
+  },
+  "appid": "wxdf9ff3c30a1d9549",
+  "sdk": "3.17.0",
+  "route": "pages/map-observe/index"
+}

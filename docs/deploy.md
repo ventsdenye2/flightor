@@ -65,3 +65,6 @@ G1 在 2026-09-20 使用独立临时 PostgreSQL 16 实例运行 Goal 集成套�
 先应用迁移013（独立地点绑定、查询缓存、调用租约/记录），再设置 `PLACES_NOMINATIM_URL` 和可识别应用且含联系信息的 `PLACES_USER_AGENT`；两项默认空，关闭新增解析。`MAP_TILE_URL` 默认 `https://tile.openstreetmap.org/{z}/{x}/{y}.png`，HTTPS、无URL凭证，保留 OSM 署名。公共实例无Key/无SLA，只用于符合官方政策的低量显式请求；不能周期预热或自动批量补全。生产 fetch 的代理配置由部署环境处理，本轮真实测试的现有代理只在隔离 harness 中使用。
 
 H5 使用真实OSM瓦片；微信原生Map不打包服务端Key、不申请实时定位。微信仍需按实际部署配置合法API域名；本次东京模拟器底图未通过，发布前需在目标环境确认该服务覆盖及网络，不能把原生updated事件当瓦片成功。回滚应用/关闭解析保留记录和攻略文字，migration down 有破坏性，应先备份，本轮未运行生产down。详细 [配置和验证](design/budget-travel-agent/PLACES_MAP_2026-09-22.md)。
+# 地点请求代理增量（2026-09-22）
+
+可选 `PLACES_PROXY_URL=http://127.0.0.1:7890`（示例，部署需填写实际可达代理）只改变 Nominatim 地点请求，不改变模型/研究请求。代理模式要求 Node22.21+或24.5+；保持TLS校验，不依赖全局 `NODE_USE_ENV_PROXY`，不把服务端代理URL发到前端。留空回滚到原fetch。容器内127.0.0.1指容器自身，不能照抄桌面地址。当前机器一次 `node --use-env-proxy` 子进程探测成功不代表所有部署网络已配置；正式API和窗口证据见[本轮收尾](design/budget-travel-agent/MAP_CLOSEOUT_2026-09-22.md)。

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "authorization": "User requested a new ledger batch, still USD 2, on 2026-09-22; map/place scope only",
+  "limit": null,
+  "budgetUsd": 2,
+  "startedAt": "2026-09-22T13:13:18.545Z",
+  "prior": {
+    "file": "ledger-before-reset-2026-09-22T13-13-18-545Z.json",
+    "sha256": "6f7f87d624b4a5e2c9d08a120123566b975048ba015fc9b6d6b360a34b9ece5e",
+    "calls": 17,
+    "knownCostUsd": 0
+  },
+  "calls": [
+    {
+      "number": 1,
+      "startedAt": "2026-09-22T13:14:34.191Z",
+      "status": "resolved",
+      "costUsd": 0,
+      "transport": "production-request-scoped-proxy",
+      "query": "Meiji Jingu Shrine, Tokyo",
+      "placeId": "osm:way:469908925",
+      "finishedAt": "2026-09-22T13:14:35.484Z",
+      "durationMs": 1288
+    }
+  ],
+  "authorizationUpdates": [
+    {
+      "at": "2026-09-22T13:26:19.536Z",
+      "instruction": "地点查询不限次数",
+      "priorLimit": 24,
+      "budgetUsd": 2
+    }
+  ],
+  "unlimitedPlaceCalls": true
+}

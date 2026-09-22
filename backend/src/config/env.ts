@@ -37,6 +37,7 @@ const envSchema = z.object({
   SERPAPI_KEY: z.string().default(''),
   PLACES_NOMINATIM_URL: optionalUrl.default(''),
   PLACES_USER_AGENT: z.string().trim().max(240).default(''),
+  PLACES_PROXY_URL: z.string().trim().refine(value=>{if(!value)return true;try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&u.pathname==='/'&&!u.search&&!u.hash}catch{return false}},'HTTP(S) proxy URL required').default(''),
   MAP_TILE_URL: z.string().max(500).refine(value=>{try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&['{z}','{x}','{y}'].every(token=>value.includes(token))}catch{return false}},'HTTPS tile template required').default('https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
   SERPAPI_BASE_URL: optionalUrl.default('https://serpapi.com/search.json'),
   OPENROUTER_API_KEY: z.string().default(''),

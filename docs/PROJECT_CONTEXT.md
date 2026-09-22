@@ -68,3 +68,7 @@ G1 后续合同修复已增加可选 `requiredEvidenceTypes`，显式区分探�
 ## 2026-09-22 第三阶段地点扩展
 
 发布后的显式地点补全已接入 Nominatim、独立 PostgreSQL 缓存/绑定和正式地图；不会进入 Planner 工具循环。只有当前 accepted 内容 hash 和 activityId 对应的 resolved 实体能显示景点坐标；语言切换/刷新只读，图片未接。H5 真实底图与双入口恢复通过，微信标记/联动已验证但东京底图仍空白，不能宣称全平台地图完成。配置、15/24 次真实调用及截图见 [第三阶段记录](design/budget-travel-agent/PLACES_MAP_2026-09-22.md)。上文“活动缺坐标”以此增量为准；媒体仍待后续任务。
+
+## 2026-09-22 固定版本地图收尾
+
+地点请求新增可选服务端 PLACES_PROXY_URL，专用 HTTPS Agent，未改 Planner 出口。Node22.21.0 实际请求约1288ms解析明治神宫；正式3000真实微信认证/旧攻略读取200，地点409 PLACE_BASE_UNAVAILABLE（旧攻略无接纳终稿，public 地点表亦未迁移）。52cb1c3干净微信产物在同一东京窗口5/15/30秒均有标记、无可见底图，OS与SDK一致，无可归因的原生网络错误。此轮不宣称微信地图可用；H5沿用历史实测、不重复认证。见[独立收尾报告](design/budget-travel-agent/MAP_CLOSEOUT_2026-09-22.md)。

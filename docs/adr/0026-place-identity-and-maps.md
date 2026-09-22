@@ -34,6 +34,8 @@ H5 使用 Leaflet + HTTPS OSM 实际瓦片，保留署名/正常 Referer/缓存�
 
 ## 配置与回滚
 
+2026-09-22收尾：可选服务端 `PLACES_PROXY_URL` 仅给 Nominatim 请求创建专用 Node HTTPS Agent，不设置全局 fetch/Agent，不改变 Planner 或研究出口。空值保留原传输。代理模式要求 Node22.21+或24.5+，HTTP(S)代理、目标HTTPS、GET-only、不跟随重定向、20万字节上限、沿用8秒/总截止和数据库限流。TLS仍正常校验；代理凭证不进入map-config、浏览器或诊断。详见[固定版本收尾](../design/budget-travel-agent/MAP_CLOSEOUT_2026-09-22.md)。
+
 `PLACES_NOMINATIM_URL`、`PLACES_USER_AGENT` 默认空，解析默认关闭；公共实例要求能识别应用的 UA，部署者应提供联系信息。`MAP_TILE_URL` 默认官方 OSM 模板，必须 HTTPS、含 z/x/y、无 URL 凭证。此版本署名固定 OSM，只能配置遵守 OSM 署名的兼容瓦片源，不是多供应商框架。微信底图按平台管理，无服务端 Key 打包到客户端；部署还需配置合法 request 域名。
 
 先迁移再启用。关闭解析配置可停止新增外部调用，已有文本不受影响；回滚应用后保留扩展表及调用记录，不需要删除攻略或重生成终稿。迁移 down 会删除地点扩展/缓存/记录，必须先备份，不属于本次实际执行。测试只在隔离 schema 运行，未重启 Docker、未操作未备份 tmpfs 数据。

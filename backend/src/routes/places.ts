@@ -9,7 +9,7 @@ import { NominatimProvider } from '../places/nominatim.js'
 
 export async function registerPlaceRoutes(app:FastifyInstance,context:AppContext){
  if(!context.places){const repo=new PostgresPlaceRepository(context.db)
-  context.places=new PlaceService(repo,new NominatimProvider({baseUrl:context.env.PLACES_NOMINATIM_URL,userAgent:context.env.PLACES_USER_AGENT,reserve:signal=>repo.reserve(signal)}),`${context.env.PLACES_NOMINATIM_URL}:v1`)
+  context.places=new PlaceService(repo,new NominatimProvider({baseUrl:context.env.PLACES_NOMINATIM_URL,userAgent:context.env.PLACES_USER_AGENT,proxyUrl:context.env.PLACES_PROXY_URL,reserve:signal=>repo.reserve(signal)}),`${context.env.PLACES_NOMINATIM_URL}:v1`)
  }
  app.get('/v1/map-config',async()=>({tileUrl:context.env.MAP_TILE_URL,attribution:'© OpenStreetMap contributors',enabled:!!context.env.PLACES_NOMINATIM_URL&&!!context.env.PLACES_USER_AGENT}))
  app.get('/v1/artifacts/:id/places',async(request,reply)=>{

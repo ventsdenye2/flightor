@@ -1,0 +1,771 @@
+{
+  "t0": 1790083448423,
+  "records": [
+    {
+      "seconds": 5,
+      "requestedAt": 1790083453437,
+      "os": {
+        "at": 1790083453641,
+        "window": {
+          "app": "process:C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\微信开发者工具.exe",
+          "id": 393612,
+          "title": "FlightOR Tokyo 52cb1c3 fixed"
+        },
+        "width": 1250,
+        "height": 1000
+      },
+      "sdk": {
+        "at": 1790083454309
+      },
+      "native": {
+        "startedAt": 1790083444977,
+        "at": 1790083453442,
+        "events": [
+          {
+            "at": 1790083445004,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "created",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": null,
+              "errMsg": null,
+              "errCode": null
+            }
+          },
+          {
+            "at": 1790083446430,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1670,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          },
+          {
+            "at": 1790083446430,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1673,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          },
+          {
+            "at": 1790083446430,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1674,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          }
+        ],
+        "component": {
+          "data": {
+            "latitude": 35.6748417,
+            "longitude": 139.6996266,
+            "scale": 13,
+            "markers": [
+              {
+                "id": 1,
+                "latitude": 35.6748417,
+                "longitude": 139.6996266,
+                "title": "Meiji Jingu Main Shrine",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40
+              }
+            ],
+            "lines": [],
+            "bounds": [],
+            "payload": "{\"markers\":[{\"id\":1,\"latitude\":35.6748417,\"longitude\":139.6996266,\"title\":\"Meiji Jingu Main Shrine\",\"iconPath\":\"/assets/ui-experience/marker.png\",\"width\":32,\"height\":40}],\"lines\":[],\"bounds\":[]}"
+          },
+          "diagnostics": [
+            {
+              "stage": "created",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": null,
+              "errMsg": null,
+              "errCode": null
+            },
+            {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1670,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            },
+            {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1673,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            },
+            {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1674,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          ],
+          "fitSource": "function fitBounds() {\n          var t,\n            e = this;\n          if (this.mapContextReady && this.data.bounds.length) {\n            var i = JSON.stringify(this.data.bounds);\n            if (i !== this.boundsSignature) {\n              (null === (t = this.boundsAttempt) || void 0 === t ? void 0 : t.signature) !== i && (clearTimeout(this.boundsTimer), clearTimeout(this.boundsDeadline), this.boundsAttempt = {\n                signature: i,\n                count: 0,\n                pending: !1\n              });\n              var n = this.boundsAttempt;\n              if (!(n.pending || n.count >= 2)) {\n                n.pending = !0, n.count++, this.observe(\"includePoints.start\", {\n                  attempt: n.count\n                }, \"pending\");\n                var r = n.count,\n                  o = !1,\n                  s = function s() {\n                    return e.mapContextReady && e.boundsAttempt === n && n.count === r && !o;\n                  },\n                  a = function a(t) {\n                    var i, r, a, u;\n                    s() && (o = !0, clearTimeout(e.boundsDeadline), n.pending = !1, e.observe(\"includePoints.fail\", t, \"failed\"), e.setData({\n                      latitude: null !== (i = null === (r = e.data.markers[0]) || void 0 === r ? void 0 : r.latitude) && void 0 !== i ? i : e.data.latitude,\n                      longitude: null !== (a = null === (u = e.data.markers[0]) || void 0 === u ? void 0 : u.longitude) && void 0 !== a ? a : e.data.longitude,\n                      scale: 13\n                    }), n.count < 2 && (e.boundsTimer = setTimeout(function () {\n                      e.mapContextReady && e.boundsAttempt === n && e.fitBounds();\n                    }, 400)));\n                  };\n                this.boundsDeadline = setTimeout(function () {\n                  return a({\n                    errMsg: \"includePoints callback timeout\",\n                    errCode: null\n                  });\n                }, 3e3);\n                try {\n                  wx.createMapContext(\"places\", this).includePoints({\n                    points: this.data.bounds,\n                    padding: [28, 28, 28, 28],\n                    success: function success(t) {\n                      s() && (o = !0, clearTimeout(e.boundsDeadline), n.pending = !1, e.boundsSignature = i, e.observe(\"includePoints.success\", t, \"succeeded\"));\n                    },\n                    fail: a\n                  });\n                } catch (t) {\n                  a(t);\n                }\n              }\n            }\n          }\n        }",
+          "updatedSource": "function mapReady(t) {\n          this.observe(\"updated\", t), this.triggerEvent(\"mapready\", o(t));\n        }"
+        }
+      }
+    },
+    {
+      "seconds": 15,
+      "requestedAt": 1790083463430,
+      "os": {
+        "at": 1790083463651,
+        "window": {
+          "app": "process:C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\微信开发者工具.exe",
+          "id": 393612,
+          "title": "FlightOR Tokyo 52cb1c3 fixed"
+        },
+        "width": 1250,
+        "height": 1000
+      },
+      "sdk": {
+        "at": 1790083464291
+      },
+      "native": {
+        "startedAt": 1790083444977,
+        "at": 1790083463439,
+        "events": [
+          {
+            "at": 1790083445004,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "created",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": null,
+              "errMsg": null,
+              "errCode": null
+            }
+          },
+          {
+            "at": 1790083446430,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1670,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          },
+          {
+            "at": 1790083446430,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1673,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          },
+          {
+            "at": 1790083446430,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1674,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          }
+        ],
+        "component": {
+          "data": {
+            "latitude": 35.6748417,
+            "longitude": 139.6996266,
+            "scale": 13,
+            "markers": [
+              {
+                "id": 1,
+                "latitude": 35.6748417,
+                "longitude": 139.6996266,
+                "title": "Meiji Jingu Main Shrine",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40
+              }
+            ],
+            "lines": [],
+            "bounds": [],
+            "payload": "{\"markers\":[{\"id\":1,\"latitude\":35.6748417,\"longitude\":139.6996266,\"title\":\"Meiji Jingu Main Shrine\",\"iconPath\":\"/assets/ui-experience/marker.png\",\"width\":32,\"height\":40}],\"lines\":[],\"bounds\":[]}"
+          },
+          "diagnostics": [
+            {
+              "stage": "created",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": null,
+              "errMsg": null,
+              "errCode": null
+            },
+            {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1670,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            },
+            {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1673,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            },
+            {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1674,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          ],
+          "fitSource": "function fitBounds() {\n          var t,\n            e = this;\n          if (this.mapContextReady && this.data.bounds.length) {\n            var i = JSON.stringify(this.data.bounds);\n            if (i !== this.boundsSignature) {\n              (null === (t = this.boundsAttempt) || void 0 === t ? void 0 : t.signature) !== i && (clearTimeout(this.boundsTimer), clearTimeout(this.boundsDeadline), this.boundsAttempt = {\n                signature: i,\n                count: 0,\n                pending: !1\n              });\n              var n = this.boundsAttempt;\n              if (!(n.pending || n.count >= 2)) {\n                n.pending = !0, n.count++, this.observe(\"includePoints.start\", {\n                  attempt: n.count\n                }, \"pending\");\n                var r = n.count,\n                  o = !1,\n                  s = function s() {\n                    return e.mapContextReady && e.boundsAttempt === n && n.count === r && !o;\n                  },\n                  a = function a(t) {\n                    var i, r, a, u;\n                    s() && (o = !0, clearTimeout(e.boundsDeadline), n.pending = !1, e.observe(\"includePoints.fail\", t, \"failed\"), e.setData({\n                      latitude: null !== (i = null === (r = e.data.markers[0]) || void 0 === r ? void 0 : r.latitude) && void 0 !== i ? i : e.data.latitude,\n                      longitude: null !== (a = null === (u = e.data.markers[0]) || void 0 === u ? void 0 : u.longitude) && void 0 !== a ? a : e.data.longitude,\n                      scale: 13\n                    }), n.count < 2 && (e.boundsTimer = setTimeout(function () {\n                      e.mapContextReady && e.boundsAttempt === n && e.fitBounds();\n                    }, 400)));\n                  };\n                this.boundsDeadline = setTimeout(function () {\n                  return a({\n                    errMsg: \"includePoints callback timeout\",\n                    errCode: null\n                  });\n                }, 3e3);\n                try {\n                  wx.createMapContext(\"places\", this).includePoints({\n                    points: this.data.bounds,\n                    padding: [28, 28, 28, 28],\n                    success: function success(t) {\n                      s() && (o = !0, clearTimeout(e.boundsDeadline), n.pending = !1, e.boundsSignature = i, e.observe(\"includePoints.success\", t, \"succeeded\"));\n                    },\n                    fail: a\n                  });\n                } catch (t) {\n                  a(t);\n                }\n              }\n            }\n          }\n        }",
+          "updatedSource": "function mapReady(t) {\n          this.observe(\"updated\", t), this.triggerEvent(\"mapready\", o(t));\n        }"
+        }
+      }
+    },
+    {
+      "seconds": 30,
+      "requestedAt": 1790083478424,
+      "os": {
+        "at": 1790083478728,
+        "window": {
+          "app": "process:C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\微信开发者工具.exe",
+          "id": 393612,
+          "title": "FlightOR Tokyo 52cb1c3 fixed"
+        },
+        "width": 1250,
+        "height": 1000
+      },
+      "sdk": {
+        "at": 1790083479267
+      },
+      "native": {
+        "startedAt": 1790083444977,
+        "at": 1790083478430,
+        "events": [
+          {
+            "at": 1790083445004,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "created",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": null,
+              "errMsg": null,
+              "errCode": null
+            }
+          },
+          {
+            "at": 1790083446430,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1670,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          },
+          {
+            "at": 1790083446430,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1673,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          },
+          {
+            "at": 1790083446430,
+            "type": "mapdiagnostic",
+            "detail": {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1674,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          }
+        ],
+        "component": {
+          "data": {
+            "latitude": 35.6748417,
+            "longitude": 139.6996266,
+            "scale": 13,
+            "markers": [
+              {
+                "id": 1,
+                "latitude": 35.6748417,
+                "longitude": 139.6996266,
+                "title": "Meiji Jingu Main Shrine",
+                "iconPath": "/assets/ui-experience/marker.png",
+                "width": 32,
+                "height": 40
+              }
+            ],
+            "lines": [],
+            "bounds": [],
+            "payload": "{\"markers\":[{\"id\":1,\"latitude\":35.6748417,\"longitude\":139.6996266,\"title\":\"Meiji Jingu Main Shrine\",\"iconPath\":\"/assets/ui-experience/marker.png\",\"width\":32,\"height\":40}],\"lines\":[],\"bounds\":[]}"
+          },
+          "diagnostics": [
+            {
+              "stage": "created",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": null,
+              "errMsg": null,
+              "errCode": null
+            },
+            {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1670,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            },
+            {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1673,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            },
+            {
+              "stage": "updated",
+              "status": "observed",
+              "basemap": "unknown",
+              "detail": {
+                "type": "updated",
+                "timeStamp": 1674,
+                "target": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "currentTarget": {
+                  "id": "places",
+                  "offsetLeft": 0,
+                  "offsetTop": 24,
+                  "dataset": {}
+                },
+                "mark": {},
+                "mut": false,
+                "_userTap": false,
+                "__evName": "updated"
+              },
+              "errMsg": null,
+              "errCode": null
+            }
+          ],
+          "fitSource": "function fitBounds() {\n          var t,\n            e = this;\n          if (this.mapContextReady && this.data.bounds.length) {\n            var i = JSON.stringify(this.data.bounds);\n            if (i !== this.boundsSignature) {\n              (null === (t = this.boundsAttempt) || void 0 === t ? void 0 : t.signature) !== i && (clearTimeout(this.boundsTimer), clearTimeout(this.boundsDeadline), this.boundsAttempt = {\n                signature: i,\n                count: 0,\n                pending: !1\n              });\n              var n = this.boundsAttempt;\n              if (!(n.pending || n.count >= 2)) {\n                n.pending = !0, n.count++, this.observe(\"includePoints.start\", {\n                  attempt: n.count\n                }, \"pending\");\n                var r = n.count,\n                  o = !1,\n                  s = function s() {\n                    return e.mapContextReady && e.boundsAttempt === n && n.count === r && !o;\n                  },\n                  a = function a(t) {\n                    var i, r, a, u;\n                    s() && (o = !0, clearTimeout(e.boundsDeadline), n.pending = !1, e.observe(\"includePoints.fail\", t, \"failed\"), e.setData({\n                      latitude: null !== (i = null === (r = e.data.markers[0]) || void 0 === r ? void 0 : r.latitude) && void 0 !== i ? i : e.data.latitude,\n                      longitude: null !== (a = null === (u = e.data.markers[0]) || void 0 === u ? void 0 : u.longitude) && void 0 !== a ? a : e.data.longitude,\n                      scale: 13\n                    }), n.count < 2 && (e.boundsTimer = setTimeout(function () {\n                      e.mapContextReady && e.boundsAttempt === n && e.fitBounds();\n                    }, 400)));\n                  };\n                this.boundsDeadline = setTimeout(function () {\n                  return a({\n                    errMsg: \"includePoints callback timeout\",\n                    errCode: null\n                  });\n                }, 3e3);\n                try {\n                  wx.createMapContext(\"places\", this).includePoints({\n                    points: this.data.bounds,\n                    padding: [28, 28, 28, 28],\n                    success: function success(t) {\n                      s() && (o = !0, clearTimeout(e.boundsDeadline), n.pending = !1, e.boundsSignature = i, e.observe(\"includePoints.success\", t, \"succeeded\"));\n                    },\n                    fail: a\n                  });\n                } catch (t) {\n                  a(t);\n                }\n              }\n            }\n          }\n        }",
+          "updatedSource": "function mapReady(t) {\n          this.observe(\"updated\", t), this.triggerEvent(\"mapready\", o(t));\n        }"
+        }
+      }
+    }
+  ],
+  "logs": [
+    {
+      "at": 1790083444990,
+      "kind": "console",
+      "value": {
+        "type": "info",
+        "args": [
+          "[FlightOR build]",
+          {
+            "sha": "52cb1c315edae5a69e679d9ee36d55bc2cf92991",
+            "dirty": false,
+            "sourceFingerprint": "8549c18b6d1bafc3d5d536df05cace63adc3df5a87ac8b4201067d6d50dbd4d7",
+            "builtAt": "2026-09-22T13:00:22.260Z",
+            "mode": "production",
+            "apiBaseUrl": "http://127.0.0.1:3000"
+          }
+        ]
+      }
+    },
+    {
+      "at": 1790083444996,
+      "kind": "console",
+      "value": {
+        "type": "info",
+        "args": [
+          "[FlightOR build]",
+          {
+            "sha": "52cb1c315edae5a69e679d9ee36d55bc2cf92991",
+            "dirty": false,
+            "sourceFingerprint": "8549c18b6d1bafc3d5d536df05cace63adc3df5a87ac8b4201067d6d50dbd4d7",
+            "builtAt": "2026-09-22T13:00:22.260Z",
+            "mode": "production",
+            "apiBaseUrl": "http://127.0.0.1:3000"
+          }
+        ]
+      }
+    }
+  ],
+  "networkErrors": "Native basemap network is not exposed by automator; no network root cause inferred",
+  "device": "WeChat DevTools simulator; real device untested"
+}

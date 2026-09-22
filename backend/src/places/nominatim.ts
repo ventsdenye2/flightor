@@ -1,6 +1,7 @@
 import { setTimeout as delay } from 'node:timers/promises'
 import type { Place, PlaceHint, PlaceProvider, PlaceResolution } from './types.js'
 import { placeSchema } from './types.js'
+import { createPlaceFetch } from './transport.js'
 
 const normalize = (s: string) => s.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
 export const queryName = (s: string) => s.replace(/\s+(?:neighbou?rhood|cultural area|museum district)$/i, '').trim()
@@ -59,7 +60,10 @@ export function resolveCandidates(raw: unknown, hint: PlaceHint): PlaceResolutio
 export class NominatimProvider implements PlaceProvider {
   private tail: Promise<unknown> = Promise.resolve()
   private nextAt = 0
-  constructor(private readonly options: {baseUrl:string;userAgent:string;fetch?:typeof fetch;reserve?: (signal:AbortSignal)=>Promise<(outcome?:string)=>Promise<void>>}) {}
+  private readonly fetchImpl:typeof fetch
+  constructor(private readonly options: {baseUrl:string;userAgent:string;proxyUrl?:string;fetch?:typeof fetch;reserve?: (signal:AbortSignal)=>Promise<(outcome?:string)=>Promise<void>>}) {
+    this.fetchImpl=options.fetch??createPlaceFetch(options.proxyUrl??'')
+  }
   search(hint: PlaceHint, signal: AbortSignal): Promise<PlaceResolution> {
     const run = this.tail.catch(()=>{}).then(()=>this.perform(hint,signal));this.tail=run;return run
   }
@@ -77,7 +81,7 @@ export class NominatimProvider implements PlaceProvider {
       const name=queryName(names.find(n=>/^[\x20-\x7e]+$/.test(n)) ?? hint.name)
       const url=new URL('search',this.options.baseUrl.endsWith('/')?this.options.baseUrl:this.options.baseUrl+'/')
       url.search=new URLSearchParams({q:hint.scope==='city'?name:`${name}, ${hint.city}`,...(hint.scope==='city'?{featureType:'city',layer:'address'}:{}),countrycodes:hint.countryCode.toLowerCase(),format:'jsonv2',addressdetails:'1',namedetails:'1',extratags:'1',limit:'8','accept-language':'en'}).toString()
-      const response=await(this.options.fetch??fetch)(url,{headers:{'User-Agent':this.options.userAgent,Accept:'application/json'},signal:AbortSignal.any([signal,AbortSignal.timeout(8000)]),redirect:'error'})
+      const response=await this.fetchImpl(url,{headers:{'User-Agent':this.options.userAgent,Accept:'application/json'},signal:AbortSignal.any([signal,AbortSignal.timeout(8000)]),redirect:'error'})
       if(!response.ok)throw new Error(`place_http_${response.status}`)
       const body=await response.text();if(body.length>200000)throw new Error('place_response_too_large')
       const result=resolveCandidates(JSON.parse(body),hint);outcome=result.status;return result

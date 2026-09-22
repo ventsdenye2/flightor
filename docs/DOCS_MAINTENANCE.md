@@ -91,3 +91,9 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 `test-places-postgres.mjs` 仅使用 loopback DB 的新 `places_test_<timestamp>` schema，测试后删除该隔离schema；不操作生产业务。`places-live-server.mjs` 使用保留的 `places_map_20260922` schema及独占账本锁，只有 `--execute` 允许最多24次已授权Nominatim调用；`--acceptance` 保留原调试攻略并建最终验收副本，`--refresh-token` 仅更新隔离验收身份。`reparse-places-validation.mjs` 仅对隔离调试记录利用保留response作离线诊断，保存修改前后记录，不重置账本、不作为真实端到端证据。
 
 `qa-places-h5.cjs` 验证正式H5、真实地点API和真实OSM瓦片；`qa-places-weapp.cjs` 使用现有SDK与真实持久地点的fixture transport，合成登录后恢复guest/storage/locale/mocks。严格检查认证GET、标记数量和稳定ID；SDK回调不认证底图。真实调用15/24、独立测试、截图及微信空白底图缺口见 [地图报告](design/budget-travel-agent/PLACES_MAP_2026-09-22.md)。output保留所有失败，本轮可分享报告/代表截图另存docs；不提交token、guest存储备份或transport文件。
+
+## 固定版本地图观察脚本（2026-09-22）
+
+`node scripts/prepare-fixed-map-observation.cjs` 要求52cb1c3干净dist，复制到忽略目录并增加诊断宿主页；不修改正式桥接、不查询POI。生成manifest记录app/route/bridge字节SHA，SDK同时读取运行中桥接方法，避免只认入口指纹。固定窗口截图须OS与SDK成对，updated不认证底图。
+
+`backend/scripts/probe-place-egress.mjs --execute --request-proxy` 使用服务端PLACES_PROXY_URL和原账本独占锁；PLACES_PROBE_LEDGER_DIRECTORY可指向原目录。一次执行仅一次解析，TLS正常。旧24次账本兼容，用户明确取消次数后才使用limit=null且unlimitedPlaceCalls=true；不是自动无限重试。places-live-server同样读取此授权标识，未启动新的harness。用户要求重置USD2后采用有哈希链接的历史归档，新批次费用0，未删除旧记录。具体验证见[报告](design/budget-travel-agent/MAP_CLOSEOUT_2026-09-22.md)。

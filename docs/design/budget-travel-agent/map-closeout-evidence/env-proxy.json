@@ -1,0 +1,18 @@
+{
+  "scope": "Production NominatimProvider with default Node fetch; no production API running implied",
+  "environmentProxyExplicit": true,
+  "node": "v22.21.0",
+  "call": {
+    "number": 17,
+    "startedAt": "2026-09-22T13:03:11.164Z",
+    "status": "resolved",
+    "costUsd": 0,
+    "transport": "node-explicit-env-proxy-fetch",
+    "query": "Meiji Jingu Shrine, Tokyo",
+    "placeId": "osm:way:469908925",
+    "finishedAt": "2026-09-22T13:03:12.675Z",
+    "durationMs": 1507
+  },
+  "used": 17,
+  "limit": 24
+}
