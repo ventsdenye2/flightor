@@ -1,0 +1,915 @@
+{
+  "scope": "Actual production H5 components; frozen API transport; no model/provider calls or real authentication",
+  "browser": "Installed Chrome",
+  "recordedAt": "2026-09-22T05:37:43.973Z",
+  "cases": [
+    {
+      "id": "selfTicket",
+      "detailAssertions": 16,
+      "passed": true
+    },
+    {
+      "id": "selectedFlight",
+      "detailAssertions": 16,
+      "passed": true
+    }
+  ],
+  "requests": [
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10/localization",
+      "locale": "zh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10/localization",
+      "locale": "zh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selfTicket",
+      "path": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "zh",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/localization",
+      "locale": "zh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/localization",
+      "locale": "zh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "case": "selectedFlight",
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "status": 200
+    }
+  ]
+}

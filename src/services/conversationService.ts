@@ -146,6 +146,7 @@ export interface CloudDestinationIntent {
 }
 
 export interface CloudTripContextSummary {
+  notes?: string[]
   version: number
   origin?: CloudLocationRef
   departureWindow?: CloudDateWindow

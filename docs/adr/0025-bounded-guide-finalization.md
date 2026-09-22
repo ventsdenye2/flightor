@@ -43,3 +43,7 @@
 真实烟测入口 `backend/scripts/verify-guide-finalization.mjs`，默认 dry-run。用户本轮新增明确 US$2；执行需 `FINALIZATION_AUTHORIZED_USD=2`，只允许现有 OpenRouter 模型端点，禁止搜索。固定新账本 `.demo/guide-finalization-20260922/ledger.json` 自动续用、最多12模型调用；原两份账本仅记 hash 并验证未改动。复用现有预留计费器，未知费用仍占用预留，不绕过费用上限。输入为原公开合同测试留存的完整研究 fixture，不是新规划/真实微信端到端验收。
 
 首批真实失败保留：12k token 被计费器拒绝（未出站），修改为8k；45秒共同窗口内两种语言各触发一次修复后超时，4次出站中2次未知费用继续占用预留。根据本次实测将终稿共同上限调整为90秒，仍受整轮300秒剩余时间与取消限制；不宣称提速。runner 增加安全输出诊断和等待已取消请求结算，避免账本锁清理先于请求完成。先前退出进程41180的锁经检查进程不存在后归档，账本调用原样保留。
+
+## 2026-09-22 正式 UI 接续
+
+上述“供下一任务按钮使用”的接口已接入正式概览、每日行程及详情。包括缺失语言首次生成在内，页面挂载、刷新、轮询和语言切换只读，不自动 POST；用户明确点击准备/重试才进入既有本地化接口。重试前强制读当前状态，要求 canLocalize 与 canRetry 同时成立且 revision 匹配。语言/owner/session 与同步点击去重保护保留。accepted、preparing、retryable、revision_required、legacy、stale 分开展示，不将领域 satisfied 当作正文可发布。公开终稿字段及业务版本不变；新增的可选只读 enrichment 是后续地图/图片接入位置，不生产素材。映射与平台证据见 [正式页面报告](../design/budget-travel-agent/PUBLICATION_UI_2026-09-22.md)。

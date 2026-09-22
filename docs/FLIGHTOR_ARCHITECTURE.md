@@ -3003,3 +3003,9 @@ Route Artifact workspaces, cloud Trips/Memory, reviewed Discovery, public Explor
 同日三项收尾：失败语言按技术可重试/材料需修订区分，publication-only revision 比较合并、history保留失败费用，每内容/语言最多2次显式重试；accepted不可覆盖。practical复用已有日程角色进入语义检查，名称与逐活动占位受发布限制。没有新Goal、工作流或数据库迁移，见[收尾验证](design/budget-travel-agent/FINALIZATION_FOLLOWUP_2026-09-22.md)。
 
 新Planner攻略在Artifact保存边界标记为草稿，原始研究与规划正文仍供领域验收；后置GuideFinalizer复用同模型/client，无工具，一次结构化生成，最多一次表达修复。独立的publication-only短事务合并zh/en终稿，不修改Trip、航班、活动身份、顺序或Goal/Run。领域satisfied不等于内容accepted；公开读取只能投影目标语言接纳文本或明确准备/阻塞状态。完整合同、90秒/180k字符边界、同进程并发去重和素材独立扩展接口见[ADR 0025](adr/0025-bounded-guide-finalization.md)。不在数据库长事务、GET或verifier内调用模型。
+
+## 2026-09-22 Published itinerary UI
+
+The production overview, daily list and activity sheet render only accepted target-locale text bound to the current Trip context and selected-flight revision. They never fall back to raw summary, supportingEvidence or legacy prose. Reading/restoring/polling is GET-only; first localization and bounded technical retry require an explicit user action. The latter checks an accepted base (canLocalize), canRetry and current revision again before POST. No Planner/provider/Goal changes. Workspace summaries expose existing bounded Trip notes for explicit self-arranged flights.
+
+The optional read-side Artifact envelope `enrichment: {contentVersion, activities: {[activityId]: {coordinates?: {latitude,longitude}, media?: {src,description,source?: {label,url}}}}}` is passed through only for the matching accepted guideContentHash and stable activity ID. Original city identity clues remain `locationHint`; city center is never a venue coordinate. No producer/provider is added, and enrichment is independent of finalization identity. See [field mapping and verification](design/budget-travel-agent/PUBLICATION_UI_2026-09-22.md).

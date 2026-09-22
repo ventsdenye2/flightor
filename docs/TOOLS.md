@@ -565,3 +565,7 @@ Route, research, guide and destination Artifacts now have client renderers. Clou
 Planner工具权限、参数和Goal/Run语义保持不变。CloudPlanner本轮成功保存的攻略先带隐藏草稿标记；runtime返回后复用同模型/client生成`publication.finalization.variants[locale]`，最多初始+一次结构/语言修复，不向编辑调用开放工具。材料/计划缺口按activityId持久保留，不自动重规划。普通聊天、read_artifact及刷新不启动完整终稿。
 
 Agent请求增加`locale: zh|en`（兼容缺省zh）；Artifact/Workspace/history GET按locale读持久结果；`POST /v1/artifacts/:id/localization {locale,retryRevision?}`只翻译已接纳终稿，缺失底稿保持原状态，不触发研究。技术失败仅显式携带当前revision（1或2）时有界重试；accepted复用，材料问题需修订，历史观测保留。公开failureKind/revision/canRetry供后续UI使用。精确字段、调用边界和失败回退见[ADR 0025](adr/0025-bounded-guide-finalization.md)。
+
+## 2026-09-22 正式终稿页面读取与动作
+
+`tripContextSummary.notes` 只读返回当前 Trip 已有的有界 notes（最多50条、每条500字符），供 Workspace/Agent 恢复明确的机票自备说明；不从未选择航班推断。没有增加 Planner 工具。正式详情加载/刷新/切换语言只读 GET；缺失语言由准备按钮调用既有 localization，技术重试同时检查 canLocalize、canRetry 和最新 revision，传输 retry=0。字段和测试见 [正式页面报告](design/budget-travel-agent/PUBLICATION_UI_2026-09-22.md)。

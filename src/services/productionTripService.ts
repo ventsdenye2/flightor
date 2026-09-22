@@ -4,11 +4,7 @@ import { record } from '../components/artifacts/payload'
 import { artifactToTripPresentation } from '../features/ui-experience/productionPresentation'
 
 export async function loadProductionTrip(id: string, context: ArtifactFetchContext) {
-  let selected = await artifactService.fetchArtifact(id, context)
-  const publication = record(record(selected.payload)?.publication)
-  if (selected.type === 'travel_guide' && publication?.status === 'preparing' && publication?.canLocalize === true) {
-    selected = await artifactService.localizeArtifact(id, context)
-  }
+  const selected = await artifactService.fetchArtifact(id, context)
   const routeId = selected.type === 'route' ? selected.id : record(selected.payload)?.routeArtifactId
   if (typeof routeId !== 'string') throw new Error('攻略缺少对应路线，请从规划记录重新打开')
   const [route, workspace] = await Promise.all([
@@ -41,5 +37,17 @@ export async function loadProductionTrip(id: string, context: ArtifactFetchConte
   if (selection && selection.contextVersion === routeContextVersion) {
     try { selectedFlightArtifact = await artifactService.fetchArtifact(selection.artifactId, context) } catch { /* Keep the itinerary usable with an empty flight state. */ }
   }
-  return { route, guide: guide ?? staleGuide, workspace, presentation: artifactToTripPresentation(route, guide ?? staleGuide, workspace, selectedFlightArtifact) }
+  return { route, guide: guide ?? staleGuide, workspace, presentation: artifactToTripPresentation(route, guide ?? staleGuide, workspace, selectedFlightArtifact, context.locale ?? 'zh') }
+}
+
+/** Only an explicit UI action invokes this; rendering and recovery remain GET-only. */
+export async function prepareProductionLocale(id: string, context: ArtifactFetchContext, retryRevision?: number) {
+  const loaded = await loadProductionTrip(id, { ...context, force: true })
+  const publication = loaded.presentation.publication
+  if (!publication?.artifactId || !publication.canLocalize || (retryRevision === undefined
+    ? publication.status !== 'preparing' : !publication.canRetry || publication.revision !== retryRevision)) {
+    throw new Error('PUBLICATION_RETRY_UNAVAILABLE')
+  }
+  await artifactService.localizeArtifact(publication.artifactId, { ...context, ...(retryRevision === undefined ? {} : { retryRevision }) })
+  return loadProductionTrip(id, { ...context, force: true })
 }

@@ -10,12 +10,18 @@ export interface TripFlightPresentation {
 export interface Activity {
   id: string; name: string; time: string | null; until: string | null; category: string; summary: string
   sourceApplicabilityNotice: string
+  introduction?: string; recommendationReason?: string; area?: string
+  locationHint?: { id?: string; name?: string; cityCode?: string; countryCode?: string }
   latitude?: number | null; longitude?: number | null; media: MediaPresentation | null; source: SourcePresentation | null
 }
 export interface TripBudgetPresentation { amount: number; currency: string; scope: 'airfare' | 'transport' | 'trip'; label: string }
 export interface SupportingEvidencePresentation { title: string; description: string; sourceApplicabilityNotice: string; category: string; destinations: string[]; verification: 'verified' | 'partial' | 'stale' | 'unverified' }
 export interface TripDay { id: string | number; label: string; title: string; subtitle: string; status: 'ready' | 'pending'; activities: Activity[] }
 export interface TripPresentation {
+  locale?: 'zh' | 'en'
+  publication?: { artifactId?: string; contentVersion?: string; status: 'accepted' | 'preparing' | 'retryable' | 'revision_required' | 'legacy' | 'stale'; revision: number; canLocalize: boolean; canRetry: boolean; issues: Array<{ activityId?: string; code: string; label: string }> }
+  flightArrangement?: 'selected' | 'self_provided' | 'unconfirmed'
+  risks?: string[]
   id: string; title: string; destination: string; country?: string; route: string[]
   dates: { start: string | null; end: string | null; label: string }; durationDays: number | null; travelers: number | null
   cover: MediaPresentation | null; description: string; days: TripDay[]; status: 'ready' | 'partial' | 'pending'

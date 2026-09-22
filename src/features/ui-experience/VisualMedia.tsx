@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Image, Button } from '@tarojs/components'
 import { iconPath } from './media'
+import { t } from '../../i18n'
 
 export function Icon({ name, className = '' }: { name: string; className?: string }) {
   return <Image className={`ux-icon ${className}`} src={iconPath(name)} aria-hidden mode='aspectFit' />
@@ -13,7 +14,7 @@ export function Photo({ src, description, className = '', forceError = false, re
   useEffect(() => { setFailed(forceError) }, [src, forceError])
   if (!src || failed) return <View className={`ux-photo-fallback ${className}`}>
     <Icon name='image' /><Text>{description}</Text>
-    {src && retry ? <Button className='ux-text-button' onClick={() => { setFailed(false); setAttempt(n => n + 1) }}>重新加载图片</Button> : null}
+    {src && retry ? <Button className='ux-text-button' onClick={() => { setFailed(false); setAttempt(n => n + 1) }}>{t('trip.reloadImage')}</Button> : null}
   </View>
   return <Image key={`${src}-${attempt}`} src={src} className={`ux-photo ${className}`} mode='aspectFill'
     ariaLabel={description} onError={() => setFailed(true)} />

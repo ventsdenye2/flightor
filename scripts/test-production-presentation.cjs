@@ -8,6 +8,7 @@ const root = path.resolve(__dirname, '..')
 const file = path.join(root, 'src/features/ui-experience/productionPresentation.ts')
 const compiled = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText
 const loadedModule = { exports: {} }
+const tripCopy = { exports: {} }; vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/i18n/trip.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { module: tripCopy, exports: tripCopy.exports })
 const displayPayload = {
   record: value => value && typeof value === 'object' && !Array.isArray(value) ? value : undefined,
   records: (value, max) => Array.isArray(value) ? value.slice(0, max).filter(item => item && typeof item === 'object' && !Array.isArray(item)) : [],
@@ -23,6 +24,7 @@ const displayPayload = {
   displaySupportingEvidence: value => Array.isArray(value) ? value.slice(0, 8).filter(item => item && typeof item === 'object' && item.sourceArtifactId && item.sourceArtifactId.length <= 160 && item.sourceFindingId && item.sourceFindingId.length <= 160 && item.title && item.title.length <= 240 && item.description && item.description.length <= 1500 && item.category).map(item => ({ sourceArtifactId: item.sourceArtifactId, sourceFindingId: item.sourceFindingId, title: item.title, description: item.description, sourceApplicabilityNotice: '以下为来源资料摘要；其中价格、开放时间和交通时长的当前及出行日适用性尚未核实，请以运营方届时公告为准。', category: ({ event: '活动', seasonal: '季节信息', activity: '活动', stopover: '中转建议', practical: '实用信息' })[item.category], destinations: [], verification: item.verification?.expiresAt && Date.parse(item.verification.expiresAt) <= Date.now() ? 'stale' : item.verification?.status === 'verified' ? 'verified' : item.verification?.status === 'partially_verified' ? 'partial' : item.verification?.status === 'stale' ? 'stale' : 'unverified' })).filter(item => item.category) : []
 }
 vm.runInNewContext(compiled, { module: loadedModule, exports: loadedModule.exports, URL, require: dependency => {
+  if (dependency.endsWith('/i18n/trip')) return tripCopy.exports
   if (dependency.endsWith('/components/artifacts/payload')) return displayPayload
   if (dependency.endsWith('/services/routeArtifact')) return { readRouteArtifact: artifact => artifact.__routes ?? [] }
   throw new Error(`Unexpected runtime dependency: ${dependency}`)
@@ -36,8 +38,8 @@ const { priceStatusLabel } = presentationModule.exports
 const location = { id: 'city:TYO', type: 'city', name: 'Tokyo', countryCode: 'JP', latitude: 35.6, longitude: 139.7 }
 const route = { kind: 'trip_route_plan', schemaVersion: 1, tripContextVersion: 4, cities: [{ location, stayDays: 2, role: 'visit', reasons: ['culture'] }], days: [{ day: 1, city: location, activityRefs: [] }, { day: 2, city: location, activityRefs: [] }], warnings: [], landTransfers: [] }
 const routeArtifact = { id: 'route-1', tripId: 'trip-1', type: 'route', schemaVersion: 1, payload: route }
-const guideItem = { id: 'activity-1', title: '浅草', description: '寺院与街区', city: location, category: 'activity', verification: { status: 'partially_verified', sources: [{ provider: 'provider-x', reference: 'https://example.com/a' }, { provider: 'bad', reference: 'https://user:pass@example.com/private' }, { provider: 'ftp', reference: 'ftp://example.com/a' }] }, timeOfDay: 'morning' }
-const publication = { version: 1, artifactId: 'guide-1', tripContextVersion: 4, contentContract: 'limited', evidenceCoverage: 'partial', budgetAssessment: { status: 'undetermined', knownSubtotal: null, scopeCoverage: 'incomplete', notice: '预算尚未完整核算。' }, legacy: false, reply: '已发布攻略。' }
+const guideItem = { id: 'activity-1', title: '浅草', description: '寺院与街区', recommendationReason: '适合文化兴趣和轻松节奏', city: location, category: 'activity', verification: { status: 'partially_verified', sources: [{ provider: 'provider-x', reference: 'https://example.com/a' }, { provider: 'bad', reference: 'https://user:pass@example.com/private' }, { provider: 'ftp', reference: 'ftp://example.com/a' }] }, timeOfDay: 'morning' }
+const publication = { locale: 'zh', status: 'accepted', revision: 1, guideContentHash: 'a'.repeat(64), overview: '文化与街区漫步', references: { source: [{url:'https://example.com/a'}, {url:'ftp://example.com/a'}, {url:'https://user:pass@example.com/private'}] }, version: 1, artifactId: 'guide-1', tripContextVersion: 4, contentContract: 'limited', evidenceCoverage: 'partial', budgetAssessment: { status: 'undetermined', knownSubtotal: null, scopeCoverage: 'incomplete', notice: '预算尚未完整核算。' }, legacy: false, reply: '已发布攻略。' }
 const guide = { kind: 'trip_travel_guide', schemaVersion: 1, routeArtifactId: 'route-1', publication, budget: { amount: 8000, currency: 'CNY', scope: 'trip', partyBasis: 'unspecified', period: 'trip_total' }, supportingEvidence: [{ sourceArtifactId: 'research-1', sourceFindingId: 'finding-1', title: '交通提示', description: '机场到市区的交通信息。', category: 'practical', destinations: [location], verification: { status: 'partially_verified', expiresAt: '2020-01-01T00:00:00Z' } }], days: [{ day: 1, city: location, theme: '慢慢走', items: [guideItem] }], warnings: [] }
 const guideArtifact = { id: 'guide-1', tripId: 'trip-1', type: 'travel_guide', schemaVersion: 1, payload: guide }
 const workspace = { trip: { id: 'trip-1', title: '东京周末', contextVersion: 4 }, tripContextSummary: { departureWindow: { from: '2026-10-01', to: '2026-10-09', precision: 'exact' }, returnWindow: { from: '2026-10-03', to: '2026-10-03', precision: 'exact' }, travelDays: 3 }, messages: [{ delivery: { status: 'satisfied', artifactIds: ['guide-1'] } }] }
@@ -47,13 +49,13 @@ async function checkAsync(label, fn) { await fn(); passed += 1; console.log(`PAS
 
 check('rejects non-route and wrong route payloads', () => { assert.throws(() => artifactToTripPresentation({ ...routeArtifact, type: 'research' }), /不支持/); assert.throws(() => artifactToTripPresentation({ ...routeArtifact, payload: { ...route, kind: 'wrong' } }), /不支持/) })
 check('rejects guide trip and route identity mismatches', () => { assert.throws(() => artifactToTripPresentation(routeArtifact, { ...guideArtifact, tripId: 'trip-2' }), /不匹配/); assert.throws(() => artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, routeArtifactId: 'route-2' } }), /不匹配/) })
-check('accepts only safe source URLs and preserves provider/status', () => { assert.equal(safeSourceUrl('ftp://example.com/a'), undefined); assert.equal(safeSourceUrl('https://user:pass@example.com/a'), undefined); assert.equal(safeSourceUrl('https://example.com/a'), 'https://example.com/a'); const sources = artifactToTripPresentation(routeArtifact, guideArtifact, workspace).sources; assert.equal(sources[0].label, 'provider-x'); assert.equal(sources[0].url, 'https://example.com/a'); assert.equal(sources[0].status, 'partial'); assert.equal(sources.some(source => source.url === 'ftp://example.com/a' || source.url?.includes('@')), false) })
+check('accepts only safe source URLs and preserves provider/status', () => { assert.equal(safeSourceUrl('ftp://example.com/a'), undefined); assert.equal(safeSourceUrl('https://user:pass@example.com/a'), undefined); assert.equal(safeSourceUrl('https://example.com/a'), 'https://example.com/a'); const sources = artifactToTripPresentation(routeArtifact, guideArtifact, workspace).sources; assert.equal(sources[0].label, '参考来源 1'); assert.equal(sources[0].url, 'https://example.com/a'); assert.equal(sources[0].status, 'unverified'); assert.equal(sources.some(source => source.url === 'ftp://example.com/a' || source.url?.includes('@')), false) })
 check('does not treat city center as activity coordinates or invent media', () => { const activity = artifactToTripPresentation(routeArtifact, guideArtifact, workspace).days[0].activities[0]; assert.equal(activity.latitude, null); assert.equal(activity.longitude, null); assert.equal(activity.media, null) })
 check('uses exact departure and return windows from matching context', () => { const trip = artifactToTripPresentation(routeArtifact, guideArtifact, workspace); assert.equal(trip.dates.start, '2026-10-01'); assert.equal(trip.dates.end, '2026-10-03'); assert.equal(trip.durationDays, 3); const old = artifactToTripPresentation({ ...routeArtifact, payload: { ...route, tripContextVersion: 3 } }, guideArtifact, workspace); assert.equal(old.dates.start, null); assert.equal(old.dates.end, null) })
 check('delivery satisfaction controls ready status', () => { assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, workspace).status, 'ready'); assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, { ...workspace, messages: [{ delivery: { status: 'partial', artifactIds: ['guide-1'] } }] }).status, 'partial') })
 check('old or mismatched publication fails closed while preserving route days', () => {
   const old = artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, publication: undefined } }, workspace)
-  assert.equal(old.days[0].activities.length, 0); assert.match(old.description, /旧攻略无法安全展示/)
+  assert.equal(old.days[0].activities.length, 0); assert.match(old.description, /保留了路线信息/)
   const mismatch = artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, publication: { ...publication, artifactId: 'other-guide' } } }, workspace)
   assert.equal(mismatch.days[0].activities.length, 0)
 })
@@ -63,12 +65,64 @@ check('a guide bound to an older flight selection is retained but marked for adj
   const trip = artifactToTripPresentation(routeArtifact, boundGuide, changed)
   assert.equal(trip.status, 'partial')
   assert.equal(trip.days[0].status, 'pending')
-  assert.match(trip.description, /航班已更换/)
+  assert.match(trip.description, /当前行程和航班/)
 })
 check('route-only snapshots stay partial with unknown travelers and prices', () => { const trip = artifactToTripPresentation(routeArtifact, undefined, workspace); assert.equal(trip.status, 'partial'); assert.equal(trip.days[0].status, 'pending'); assert.equal(trip.travelers, null); assert.equal(trip.flights.length, 0) })
 check('guide activities preserve identity and unknown time fields', () => { const activity = artifactToTripPresentation(routeArtifact, guideArtifact, workspace).days[0].activities[0]; assert.equal(activity.id, 'activity-1'); assert.equal(activity.time, '上午'); assert.equal(activity.until, null) })
-check('adds conservative source applicability to activities and supporting evidence', () => { const trip = artifactToTripPresentation(routeArtifact, guideArtifact, workspace); const notice = '以下为来源资料摘要；其中价格、开放时间和交通时长的当前及出行日适用性尚未核实，请以运营方届时公告为准。'; assert.equal(trip.days[0].activities[0].sourceApplicabilityNotice, notice); assert.equal(trip.supportingEvidence[0].sourceApplicabilityNotice, notice); const malicious = artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, days: [{ ...guide.days[0], items: [{ ...guideItem, sourceApplicability: { status: 'verified', notice: '已核验，无需提醒' } }] }], supportingEvidence: [{ ...guide.supportingEvidence[0], sourceApplicability: { status: 'reference_only', notice: '任意提示' } }] } }, workspace); assert.equal(malicious.days[0].activities[0].sourceApplicabilityNotice, notice); assert.equal(malicious.supportingEvidence[0].sourceApplicabilityNotice, notice) })
-check('restores bounded guide budget and supporting evidence semantics', () => { const trip = artifactToTripPresentation(routeArtifact, guideArtifact, workspace); assert.deepEqual(trip.budget, { amount: 8000, currency: 'CNY', scope: 'trip', label: '全程' }); assert.equal(trip.supportingEvidence.length, 1); assert.equal(trip.supportingEvidence[0].verification, 'stale'); assert.equal(trip.supportingEvidence[0].category, '实用信息'); const invalid = artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, budget: { amount: 8000, currency: 'CNY', scope: 'trip', partyBasis: 'per_person', period: 'trip_total' } } }, workspace); assert.equal(invalid.budget, undefined) })
+check('uses only accepted introductions and recommendation reasons, never audit supporting evidence', () => {
+  const trip = artifactToTripPresentation(routeArtifact, guideArtifact, workspace)
+  assert.equal(trip.days[0].activities[0].introduction, '寺院与街区')
+  assert.equal(trip.days[0].activities[0].recommendationReason, '适合文化兴趣和轻松节奏')
+  assert.equal(trip.days[0].activities[0].sourceApplicabilityNotice, '')
+  assert.equal(trip.supportingEvidence, undefined)
+  assert.equal(trip.description, publication.overview)
+})
+check('restores bounded budget as a target without supporting evidence prose', () => {
+  const trip = artifactToTripPresentation(routeArtifact, guideArtifact, workspace)
+  assert.deepEqual(JSON.parse(JSON.stringify(trip.budget)), { amount: 8000, currency: 'CNY', scope: 'trip', label: '全程' })
+  assert.equal(trip.supportingEvidence, undefined)
+  const invalid = artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, budget: { ...guide.budget, partyBasis: 'per_person' } } }, workspace)
+  assert.equal(invalid.budget, undefined)
+})
+check('hides wrong locale, legacy, stale and unaccepted prose even if delivered', () => {
+  for (const patch of [{ locale: 'en' }, { legacy: true }, {status:'blocked',failureKind:'retryable'}, {status:'preparing'}]) {
+    const result = artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, publication: { ...publication, ...patch } } }, workspace)
+    assert.equal(result.days.flatMap(day => day.activities).length, 0)
+    assert.notEqual(result.publication.status, 'accepted')
+    assert.notEqual(result.status, 'ready')
+  }
+})
+check('requires an accepted base as well as retry permission and preserves revision', () => {
+  const show = canLocalize => artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, publication: { ...publication, status:'blocked', failureKind:'retryable', canRetry:true, canLocalize, revision:2 } } }, workspace)
+  assert.equal(show(false).publication.canRetry, false)
+  assert.equal(show(true).publication.canRetry, true)
+  assert.equal(show(true).publication.revision, 2)
+})
+check('keeps closure and date conflicts visible without leaking audit prose', () => {
+  const warned = { ...routeArtifact, payload: { ...route, warnings: ['Closed on travel date https://audit.invalid/', '日期冲突 hash=secret'] } }
+  const result = artifactToTripPresentation(warned, guideArtifact, workspace)
+  assert.match(result.risks.join(' '), /关闭|闭馆/)
+  assert.doesNotMatch(result.risks.join(' '), /https|hash=|secret/)
+  const blocked = artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, publication: { ...publication, status:'blocked', issues:[{ activityId:'activity-1', code:'conflict', detail:'Closed on travel date' }] } } }, workspace)
+  assert.equal(blocked.publication.issues[0].activityId, 'activity-1')
+  assert.match(blocked.publication.issues[0].label, /关闭|闭馆/)
+  const malformed = artifactToTripPresentation(routeArtifact, { ...guideArtifact, payload: { ...guide, publication: { ...publication, guideContentHash: undefined } } }, workspace)
+  assert.equal(malformed.publication.status, 'revision_required')
+  assert.equal(malformed.days[0].activities.length, 0)
+})
+check('only explicit current notes establish self-provided flights', () => {
+  assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, workspace).flightArrangement, 'unconfirmed')
+  const withNotes = notes => ({...workspace,tripContextSummary:{...workspace.tripContextSummary,notes}})
+  assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, withNotes(['机票自备'])).flightArrangement, 'self_provided')
+  assert.equal(artifactToTripPresentation(routeArtifact, guideArtifact, withNotes(['不是机票自备'])).flightArrangement, 'unconfirmed')
+})
+check('optional enrichment is content-bound and activity-bound, not title-bound or city coordinates', () => {
+  const withMedia = { ...guideArtifact, enrichment:{contentVersion:publication.guideContentHash,activities:{'activity-1':{coordinates:{latitude:35,longitude:139},media:{src:'https://example.com/place.jpg',description:'Venue',source:{label:'Photographer',url:'https://example.com/credit'}}}}} }
+  const item = artifactToTripPresentation(routeArtifact, withMedia, workspace).days[0].activities[0]
+  assert.equal(item.latitude,35);assert.equal(item.media.source.label,'Photographer')
+  const stale = artifactToTripPresentation(routeArtifact,{...withMedia,enrichment:{...withMedia.enrichment,contentVersion:'wrong'}},workspace).days[0].activities[0]
+  assert.equal(stale.latitude,null);assert.equal(stale.media,null)
+})
 
 const verifiedFare = { status: 'verified', sources: [{ provider: 'live-fares', reference: 'https://example.com/fare' }] }
 const savedPath = {
@@ -148,6 +202,7 @@ function plannerHarness(overrides = {}) {
   const output = ts.transpileModule(fs.readFileSync(componentFile, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText
   const componentModule = { exports: {} }
   vm.runInNewContext(output, { module: componentModule, exports: componentModule.exports, setTimeout, clearTimeout, require: dependency => {
+    if (dependency.endsWith('/i18n/trip')) return tripCopy.exports
     if (dependency === 'react') return hooks
     if (dependency === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }), Fragment: 'Fragment' }
     if (dependency === '@tarojs/components') return Object.fromEntries(['View', 'Text', 'Button', 'Textarea'].map(name => [name, name]))
@@ -258,13 +313,14 @@ function productionServiceHarness(artifacts, workspaceValue) {
   const serviceModule = { exports: {} }
   const calls = []
   vm.runInNewContext(output, { module: serviceModule, exports: serviceModule.exports, require: dependency => {
-    if (dependency === './artifactService') return { artifactService: { fetchArtifact: async id => { calls.push(id); const value = artifacts[id]; if (value instanceof Error) throw value; return value } } }
+    if (dependency === './artifactService') return { artifactService: { fetchArtifact: async id => { calls.push(id); const value = artifacts[id]; if (value instanceof Error) throw value; return value }, localizeArtifact: async (id, context) => { calls.push({ post: id, revision: context.retryRevision }); artifacts[id] = {...artifacts[id],payload:{...artifacts[id].payload,publication:{...artifacts[id].payload.publication,status:'accepted'}}}; return artifacts[id] } } }
     if (dependency === './workspaceService') return { getCloudWorkspace: async () => workspaceValue }
-    if (dependency.endsWith('/components/artifacts/payload')) return displayPayload
-    if (dependency.endsWith('/features/ui-experience/productionPresentation')) return { artifactToTripPresentation: (_route, _guide, _workspace, saved) => ({ saved }) }
+    if (dependency.endsWith('/i18n/trip')) return tripCopy.exports
+  if (dependency.endsWith('/components/artifacts/payload')) return displayPayload
+    if (dependency.endsWith('/features/ui-experience/productionPresentation')) return { artifactToTripPresentation: (_route, _guide, _workspace, saved, locale) => ({ saved, publication: artifactToTripPresentation(_route, _guide, _workspace, saved, locale).publication }) }
     throw new Error(`Unexpected production service dependency: ${dependency}`)
   } }, { filename: serviceFile })
-  return { load: serviceModule.exports.loadProductionTrip, calls }
+  return { load: serviceModule.exports.loadProductionTrip, prepare: serviceModule.exports.prepareProductionLocale, calls }
 }
 
 ;(async () => {
@@ -291,6 +347,19 @@ function productionServiceHarness(artifacts, workspaceValue) {
     const result = await harness.load('route-1', {})
     assert.deepEqual(harness.calls, ['route-1', 'route-set-1'])
     assert.equal(result.presentation.saved, undefined)
+  })
+  await checkAsync('page loads and repeated refreshes never POST; explicit retry checks current base and revision', async () => {
+    const retryGuide = { ...guideArtifact, payload:{...guide,publication:{...publication,status:'blocked',failureKind:'retryable',canLocalize:true,canRetry:true,revision:1}} }
+    const data = { 'route-1':routeArtifact,'guide-1':retryGuide }
+    const h = productionServiceHarness(data,{...workspace,artifactRefs:[]})
+    await h.load('guide-1',{locale:'zh'});await h.load('guide-1',{locale:'zh',force:true})
+    assert.ok(h.calls.every(call=>typeof call==='string'))
+    await assert.rejects(h.prepare('guide-1',{locale:'zh'},2), /UNAVAILABLE/)
+    await h.prepare('guide-1',{locale:'zh'},1)
+    assert.equal(h.calls.filter(call=>typeof call==='object').length,1)
+    assert.equal(h.calls.find(call=>typeof call==='object').revision,1)
+    data['guide-1'] = {...retryGuide,payload:{...retryGuide.payload,publication:{...retryGuide.payload.publication,canLocalize:false}}}
+    await assert.rejects(h.prepare('guide-1',{locale:'zh'},1), /UNAVAILABLE/)
   })
   console.log(`Production presentation behavior checks: ${passed} passed.`)
 })().catch(error => { console.error(error); process.exitCode = 1 })

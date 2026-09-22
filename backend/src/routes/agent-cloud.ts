@@ -71,6 +71,7 @@ const tripContextSummarySchema = z.object({
     excluded: z.array(locationRefSchema).max(24)
   }).strict(),
   interests: z.array(z.string().min(1).max(80)).max(32),
+  notes: z.array(z.string().min(1).max(500)).max(50).optional(),
   readyForRouteGeneration: z.boolean()
 }).strict()
 
@@ -115,6 +116,7 @@ export function summarizeTrip(context: TripContext) {
     ...(context.budget ? { budget: context.budget } : {}),
     destinations: context.destinationIntent,
     interests: context.interests,
+    notes: context.notes,
     readyForRouteGeneration: routeGenerationReady(context)
   }
 }

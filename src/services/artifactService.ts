@@ -17,6 +17,8 @@ export interface ArtifactEnvelope {
   verification?: unknown
   createdAt: string
   updatedAt: string
+  /** Optional read-side enrichment, independently keyed to the accepted content and activity IDs. */
+  enrichment?: { contentVersion: string; activities: Record<string, unknown> }
 }
 
 /** Reuse the compact conversation reference; complete payloads stay remote. */
@@ -99,7 +101,9 @@ export function validateArtifactEnvelope(value: unknown): ArtifactEnvelope {
     ...(presentation ? { presentation } : {}),
     ...(value.verification === undefined ? {} : { verification: value.verification }),
     createdAt: value.createdAt,
-    updatedAt: value.updatedAt
+    updatedAt: value.updatedAt,
+    ...(isRecord(value.enrichment) && boundedString(value.enrichment.contentVersion, 64) && isRecord(value.enrichment.activities)
+      ? { enrichment: { contentVersion: value.enrichment.contentVersion, activities: value.enrichment.activities } } : {})
   }
 }
 

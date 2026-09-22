@@ -31,6 +31,12 @@ export function firstText(...values: unknown[]): string | undefined {
 }
 
 export interface TravelGuidePublicationDisplay {
+  guideContentHash?: string
+  canLocalize?: boolean
+  canRetry?: boolean
+  revision?: number
+  failureKind?: string
+  issues?: Array<{ activityId?: string; code: string; detail?: string }>
   locale?: 'zh' | 'en'
   status?: 'accepted' | 'blocked' | 'preparing'
   overview?: string
@@ -64,6 +70,9 @@ export function displayTravelGuidePublication(value: unknown, expectedArtifactId
     || (expectedArtifactId !== undefined && artifactId !== expectedArtifactId)
     || (expectedTripContextVersion !== undefined && item.tripContextVersion !== expectedTripContextVersion)) return undefined
   return { version: 1, artifactId, tripContextVersion: item.tripContextVersion,
+    guideContentHash: text(item.guideContentHash), canLocalize: item.canLocalize === true, canRetry: item.canRetry === true,
+    revision: numberValue(item.revision), failureKind: text(item.failureKind),
+    issues: records(item.issues, 400).map(issue => ({ activityId: text(issue.activityId), code: text(issue.code) ?? 'missing_material', detail: text(issue.detail) })),
     ...(item.locale === 'zh' || item.locale === 'en' ? { locale: item.locale } : {}),
     ...(item.status === 'accepted' || item.status === 'blocked' || item.status === 'preparing' ? { status: item.status } : {}),
     ...(text(item.overview) ? { overview: text(item.overview) } : {}),

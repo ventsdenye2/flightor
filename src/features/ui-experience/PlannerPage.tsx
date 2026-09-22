@@ -1,7 +1,8 @@
+import { tripText } from '../../i18n/trip'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { View, Text, Button, Textarea } from '@tarojs/components'
 import { Icon, Photo } from './VisualMedia'
-import { formatPrice, priceStatusLabel, tripDurationLabel, travelerLabel } from './presentation'
+import { formatPrice, tripDurationLabel, travelerLabel } from './presentation'
 import type { TripPresentation } from './presentation'
 import type { ConversationDelivery, ConversationTurnProgress } from '../../services/conversationService'
 import type { PlannerRenderMeasurement, PlannerUiCommit } from '../../services/plannerTelemetry'
@@ -41,6 +42,7 @@ const suggestions = [
 ]
 
 export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, productionCancelling = false, flightDecision, productionTelemetry, onProductionCommit }: PlannerPageProps) {
+  const tt = (key: string, params?: Record<string, string | number>) => tripText(locale, key, params)
   const production = Boolean(onSubmitPrompt)
   const hasResult = !production || productionResultAvailable
   const rateLimited = productionWarnings.includes('research_provider_rate_limited')
@@ -152,7 +154,7 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
           <View className='pl-loading-skeleton'><View /><View /><View /></View>
           {productionError && <View role='alert'><Text>{productionError}</Text></View>}
           {(!production || onCancelProduction) && <Button className='ux-text-button' disabled={productionCancelling} onClick={cancel}>{productionCancelling ? '正在取消…' : production ? '取消规划' : '取消查看'}</Button>}
-          {hasResult && <View className='pl-saved-while-running'><Text className='pl-saved-while-running__label'>已保存，仍在整理/核验</Text><Button className='pl-result' onClick={onOpenTrip}><View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {tripDurationLabel(trip)}</Text><Text>{production ? '已保存结果' : '固定示例'}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || '路线待确认'} · {travelerLabel(trip)}</Text><View className='pl-open-result'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></Button></View>}
+          {hasResult && <View className='pl-saved-while-running'><Text className='pl-saved-while-running__label'>已保存，仍在整理/核验</Text><Button className='pl-result' onClick={onOpenTrip}><View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {production ? trip.durationDays ? tt('trip.duration', { n: trip.durationDays }) : tt('trip.dateUnknown') : tripDurationLabel(trip)}</Text><Text>{production ? tt('trip.saved') : '固定示例'}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || tt('trip.routePending')}{!production ? ` · ${travelerLabel(trip)}` : ''}</Text><View className='pl-open-result'><Text>{tt('trip.open')}</Text><Icon name='arrow-right' /></View></View></Button></View>}
           {flightDecision}
         </View> : phase === 'cancelled' ? <View className='pl-cancelled' role='status'>
           <Text className='ux-section-title'>{production ? '已取消规划' : '已取消查看'}</Text><Text className='ux-muted'>可以继续查看参考，也可以重新写下你的想法。</Text>
@@ -165,15 +167,15 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
           {hasResult && <>
             <Button className='pl-result' onClick={onOpenTrip}>
               {trip.cover && <Photo src={trip.cover.src} description={trip.cover.description} className='pl-result-photo' retry={false} />}
-              <View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {tripDurationLabel(trip)}</Text><Text>{production ? '已保存结果' : '固定示例'}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || '路线待确认'} · {travelerLabel(trip)}</Text><View className='pl-result-bottom'><View><Text className='pl-result-price'>{formatPrice(trip.flights[0]?.price)}{trip.flights[0]?.price && trip.flights[0].price.status !== 'unknown' && trip.flights[0].price.amount !== null ? <Text>{trip.flights[0].price.unit === 'person' ? ' / 人' : ' / 合计'}</Text> : null}</Text><Text className='ux-caption'>{priceStatusLabel(trip.flights[0]?.price)}</Text></View><View className='pl-open-result'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></View>
+              <View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {production ? trip.durationDays ? tt('trip.duration', { n: trip.durationDays }) : tt('trip.dateUnknown') : tripDurationLabel(trip)}</Text><Text>{production ? tt('trip.saved') : '固定示例'}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || tt('trip.routePending')}{!production ? ` · ${travelerLabel(trip)}` : ''}</Text><View className='pl-result-bottom'><View><Text className='pl-result-price'>{trip.flights[0]?.price?.amount != null ? formatPrice(trip.flights[0].price) : tt('trip.priceUnknown')}{trip.flights[0]?.price && trip.flights[0].price.status !== 'unknown' && trip.flights[0].price.amount !== null ? <Text>{` / ${tt(trip.flights[0].price.unit === 'person' ? 'trip.person' : 'trip.total')}`}</Text> : null}</Text><Text className='ux-caption'>{trip.flights[0]?.price && trip.flights[0].price.status !== 'unknown' ? tt(`trip.price.${trip.flights[0].price.status}`) : tt('trip.priceUnknown')}</Text></View><View className='pl-open-result'><Text>{tt('trip.open')}</Text><Icon name='arrow-right' /></View></View></View>
             </Button>
-            <View className='pl-result-status'><Icon name='info' /><Text>{trip.days.length ? `已有 ${trip.days.filter(day => day.status === 'ready').length} 天参考安排，可查看和调整` : '每日安排尚未补充，可先查看旅行信息'}</Text></View>
+            <View className='pl-result-status'><Icon name='info' /><Text>{trip.publication ? tt(`trip.${trip.publication.status}`) : trip.days.length ? `已有 ${trip.days.filter(day => day.status === 'ready').length} 天参考安排，可查看和调整` : '每日安排尚未补充，可先查看旅行信息'}</Text></View>
             <Text className='pl-result-description'>{trip.description}</Text>
             {!production && <DemoNote text={`这是固定的${sampleLabel}参考，未按输入内容生成；航班、价格与安排均为示例。`} />}
           </>}
-          {!interrupted && <PlannerReply className='pl-reply-copy' content={production ? productionReply || '正在等待规划回复。' : '先看看这份参考。'} />}
+          {!interrupted && <PlannerReply className='pl-reply-copy' content={production ? productionReply || tt('trip.waitReply') : '先看看这份参考。'} />}
           {flightDecision}
-          {!interrupted && <View className='pl-followups'><Button className='pl-followup' onClick={() => reset(submitted)}><Text>{production && !hasResult ? '继续补充想法' : '修改我的想法'}</Text><Icon name='arrow-right' /></Button>{hasResult && <Button className='pl-followup' onClick={onSearchFlights}><Text>{production ? '查看航班' : '比较航班示例'}</Text><Icon name='plane' /></Button>}</View>}
+          {!interrupted && <View className='pl-followups'><Button className='pl-followup' onClick={() => reset(submitted)}><Text>{production && !hasResult ? (locale === 'en' ? 'Continue planning' : '继续补充想法') : tt('trip.editIdea')}</Text><Icon name='arrow-right' /></Button>{hasResult && <Button className='pl-followup' onClick={onSearchFlights}><Text>{production ? tt('trip.viewFlights') : '比较航班示例'}</Text><Icon name='plane' /></Button>}</View>}
         </>}
       </View>}
     </View>

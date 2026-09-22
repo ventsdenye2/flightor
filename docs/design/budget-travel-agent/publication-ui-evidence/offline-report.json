@@ -1,0 +1,52 @@
+[
+  {
+    "script": "test-production-presentation.cjs",
+    "passed": true,
+    "output": "PASS rejects non-route and wrong route payloads\nPASS rejects guide trip and route identity mismatches\nPASS accepts only safe source URLs and preserves provider/status\nPASS does not treat city center as activity coordinates or invent media\nPASS uses exact departure and return windows from matching context\nPASS delivery satisfaction controls ready status\nPASS old or mismatched publication fails closed while preserving route days\nPASS a guide bound to an older flight selection is retained but marked for adjustment\nPASS route-only snapshots stay partial with unknown travelers and prices\nPASS guide activities preserve identity and unknown time fields\nPASS uses only accepted introductions and recommendation reasons, never audit supporting evidence\nPASS restores bounded budget as a target without supporting evidence prose\nPASS hides wrong locale, legacy, stale and unaccepted prose even if delivered\nPASS requires an accepted base as well as retry permission and preserves revision\nPASS keeps closure and date conflicts visible without leaking audit prose\nPASS only explicit current notes establish self-provided flights\nPASS optional enrichment is content-bound and activity-bound, not title-bound or city coordinates\nPASS maps only the exact saved route with its verified fare semantics\nPASS keeps flights empty for stale context, wrong artifact identity or wrong route id\nPASS rejects unsupported route-set shapes and hides unverified totals\nPASS labels verified, partial and stale prices without calling them estimates\nPASS an interrupted turn without an artifact shows retry and no empty result claims\nPASS rate limiting is explained only when explicitly reported on an unfinished turn\nPASS a transport failure is an error with retry instead of a voluntary pause\nPASS a finished model turn with pending delivery and rate limiting offers an explicit retry\nPASS partial delivery retains its saved result alongside the retry action\nPASS a satisfied result stays successful even after a research rate-limit warning\nPASS clarification without an artifact stays a conversation instead of a result\nPASS saved itinerary appears before the full formatted reply without an empty photo\nPASS active planner receives the latest progress and removes it when finished\nPASS loads only the explicitly saved route artifact for an exact context\nPASS does not fetch a saved route from an older context\nPASS keeps the trip usable when its saved route cannot be loaded\nPASS page loads and repeated refreshes never POST; explicit retry checks current base and revision\nProduction presentation behavior checks: 34 passed.\n"
+  },
+  {
+    "script": "test-artifacts.js",
+    "passed": true,
+    "output": "\n【Artifact envelope】bounded validation\n\n【Source applicability formatter】conservative compatibility\n  ✅ uses the fixed notice for old and malformed applicability fields\n  ✅ preserves source text while keeping the fixed notice separate\n  ✅ normalizes supporting evidence with a conservative notice\n  ✅ accepts a bounded common envelope\n  ✅ rejects a missing payload object\n  ✅ rejects an unbounded schema version\n\n【Renderer registry】explicit dispatch and fallback\n  ✅ dispatches flight_search v1\n  ✅ dispatches research v2\n  ✅ dispatches travel guide payload kind\n  ✅ dispatches route_set by payload kind\n  ✅ unsupported schema uses bounded fallback\n  ✅ unknown route kind uses bounded fallback\n  ✅ research card attributes source document references instead of generated finding prose\n  ✅ rendered old guide card hides audit and old prose instead of claiming a final itinerary\n  ✅ rendered research card retains attributed references without generated assertions\n\n【Flight Artifact adapter】strict payload parsing\n  ✅ valid payload maps without coercion\n  ✅ string prices are rejected instead of coerced\n  ✅ malformed segment endpoints are rejected\n\n【Flight store】request generation and session cleanup\n  ✅ late response after session switch is ignored\n  ✅ failed replacement search cannot leave stale results\n  ✅ logout handler clears owner-scoped result\n\n【Auth store】logout invalidates an in-flight login\n  ✅ late login cannot restore profile or bearer credentials after logout\n\n【Artifact service】owner/session cache\n  ✅ cache prevents a duplicate owner/session fetch\n  ✅ owner/session changes clear cached authority\n  ✅ cache remains bounded\n\nArtifact 回归：25 通过 / 0 失败\n"
+  },
+  {
+    "script": "test-finalization-client.cjs",
+    "passed": true,
+    "output": "PASS locale cache/reuse/isolation, failure cache eviction, explicit retry coalescing, late GET protection (8 checks)\n"
+  },
+  {
+    "script": "test-planner-publication.cjs",
+    "passed": true,
+    "output": "PASS busy renders committed guide and flight before final prose\nPASS unsaved guide never appears as a saved card\nPASS empty busy draft remains editable while submit is disabled\nPASS draft survives completion and can then submit once\nPASS cancel awaits acknowledgement; failure stays visible while busy\nPASS new candidates expose readonly segments without adopt while busy\nPASS adopted segments remain readable with change and plan disabled\nPASS telemetry observes committed result branches rather than merely receiving refs\nPASS failure and cancellation views do not fabricate a final commit\n9 Planner publication component checks passed (deterministic hooks; no browser/device).\n"
+  },
+  {
+    "script": "test-planner-telemetry.cjs",
+    "passed": true,
+    "output": "PASS one monotonic client clock separates receipt, actual commit and final commit\nPASS historical, removed, wrong type and wrong generation refs cannot become first results\nPASS scope mismatches cannot mutate acceptance or result timing\nPASS failures and cancellations keep time-to-failure without fabricated final UI\nPASS clock unavailable, regression and missing click remain unknown instead of zero\nPASS multiple turns coexist with bounded memory and defensive snapshots\nPASS first commit is stable and unknown verification is not promoted\nPASS a missing first commit timestamp stays missing even if the clock recovers later\n8 Planner telemetry checks passed (injected monotonic clock; no live timing claim).\n"
+  },
+  {
+    "script": "test-plan-flight-publication.cjs",
+    "passed": true,
+    "output": "PASS adopted A and newly published B both load and render before final reply\nPASS matching adopted and published IDs render and fetch only once\nPASS failed alternative fetch keeps the adopted flight visible\nPASS late alternative success or failure cannot cross owner scope\nPASS late alternative success or failure cannot cross auth scope\nPASS late alternative success or failure cannot cross session scope\nPASS late alternative success or failure cannot cross trip scope\nPASS a cancelled old send cannot report failure over a newer turn\nPASS late send failure cannot cross session scope or return after switching away and back\nPASS bootstrap may activate a session and create its Trip without hiding current failure\nPASS bootstrap failure before Trip creation remains visible and can be retried\nPASS render telemetry excludes empty flight snapshots until usable offers load\n12 Plan flight publication checks passed (offline hook integration).\n"
+  },
+  {
+    "script": "test-planner-reply.cjs",
+    "passed": true,
+    "output": "PASS travel reply becomes separate paragraphs, day heading and readable list rows\nPASS ordered items keep their original numbering and indented bullets remain distinct\nPASS source HTML and URLs stay literal Text with no executable component or property\nPASS fenced and inline code preserve literal Markdown and HTML\nPASS unfinished markup and a plain-language reply are retained without truncation\nPASS line breaks remain in selectable native text and text never contains View children\nPlanner reply behavior checks: 6 passed.\n"
+  },
+  {
+    "script": "test-production-library.cjs",
+    "passed": true,
+    "output": "PASS a signed-out library hides stale account records and opens real login\nPASS empty and failed cloud loads do not invent sample trips or claim an empty account on failure\nPASS saved cloud trip actions preserve record identity and changed-context warning\nPASS workspace actions use the chosen conversation and artifact rather than preview state\nPASS profile uses supplied account and keeps the real preference editor mounted across its pages\nPASS opening target prices without a search does not manufacture airports or a reference fare\nPASS a search-supplied route saves only its chosen local target and preserves the login gate\nProduction library behavior checks: 7 passed.\n"
+  },
+  {
+    "script": "test-route-page-dispatch.cjs",
+    "passed": true,
+    "output": "PASS guest takes precedence -> guest\nPASS missing artifact id -> missing\nPASS load error -> error\nPASS pending artifact -> loading\nPASS combined route presentation -> trip\nPASS route set keeps route semantics -> route-set\nPASS flight search summary -> flight-list\nPASS flight offer detail -> flight-detail\nPASS research result -> research\nPASS destination result -> destination\nPASS unsupported schema -> unavailable\nPASS unknown artifact type -> unavailable\nPASS route waits for a production presentation -> unavailable\nPASS guide waits for a production presentation -> unavailable\nRoute page dispatch regression: 20 assertions passed\n"
+  },
+  {
+    "script": "test-route-ui-polish.cjs",
+    "passed": true,
+    "output": "Route UI polish regression: 18 assertions passed\n"
+  }
+]

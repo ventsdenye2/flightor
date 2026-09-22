@@ -56,3 +56,5 @@ HANDOFF 文件、DEMO_STATUS、PHASE789/UI_PARITY 验收和 experiments 是各�
 最近实测：[9月21日正文接入单例复验](design/budget-travel-agent/G1_SOURCE_RETEST_2026-09-21.md)，持久通过但内容仍失败，搜索累计额度已满。
 
 问题咨询：[G1 阻塞说明与 GPT-6 Pro 咨询材料（9月21日）](design/budget-travel-agent/G1_PROBLEM_BRIEF_FOR_GPT6PRO_2026-09-21.md)，汇总真实失败、合同缺口、阶段耗时与待决策问题；不是新实施方案或验收放行。
+
+2026-09-22：[正式概览与景点卡片](design/budget-travel-agent/PUBLICATION_UI_2026-09-22.md) 接续有界终稿，记录正式页面字段映射、显式本地化动作、H5/微信模拟器 fixture 验证与截图；不是全量 G1 或真实 Provider 验收。

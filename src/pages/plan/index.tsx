@@ -75,7 +75,8 @@ function PlanPage() {
     const authRevision = userStore.sessionRevision
     loadProductionTrip(productionRef.id, { ownerId, sessionId, locale })
       .then(value => { if (active && authRevision === userStore.sessionRevision && ownerId === userStore.profile?.uid && sessionId === chatStore.currentSessionId && tripId === chatStore.tripId) { setProductionResult({ key: resultKey, trip: value.presentation, guideId: value.guide?.id,
-        reply: record(record(value.guide?.payload)?.publication)?.reply as string | undefined,
+        reply: value.presentation.publication?.status === 'accepted' ? record(record(value.guide?.payload)?.publication)?.reply as string | undefined
+          : value.presentation.publication ? t(`trip.${value.presentation.publication.status}`) : undefined,
         verificationStatus: artifactVerificationStatus(value.guide) }); setProductionError('') } })
       .catch(error => { if (active && authRevision === userStore.sessionRevision && ownerId === userStore.profile?.uid && sessionId === chatStore.currentSessionId && tripId === chatStore.tripId) setProductionError(error instanceof Error ? error.message : '行程结果暂不可用') })
     return () => { active = false }

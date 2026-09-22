@@ -1,0 +1,591 @@
+{
+  "scope": "Actual production WeChat DevTools pages; fixture request transport; existing identity unchanged; not a real device or paid backend run",
+  "recordedAt": "2026-09-22T05:37:46.834Z",
+  "build": {
+    "gitSha": "8b51c993eee3f6f2a448907d1218ef90e2d61e56",
+    "dirty": true,
+    "sourceFingerprint": "ef2c5a7b8fbc64df13f3558fc847b6a618fde6306bf3ff941945eb208695d7cb",
+    "builtAt": "2026-09-22T05:36:19.949Z",
+    "mode": "production",
+    "apiBaseUrl": "http://127.0.0.1:3000"
+  },
+  "cases": [
+    {
+      "id": "selfTicket",
+      "zh": {
+        "overview": "旅行详情English已保存TokyoTokyo2026-10-20 – 2026-10-21 · 2 天本次东京两日游以文化和小吃为主题，节奏轻松。第一天在浅草感受千年古寺与热闹的仲见世商店街，品尝街头小吃；第二天上午探访明治神宫，下午体验东京本地特色美食。交通方面，可考虑使用Suica等IC卡或地铁一日券，方便出行。预算目标 · 全程CNY 1,500行程总额目标，不代表已核定花费。行程已准备好概览每日行程航班机票自备第 1 天浅草历史文化与小食浅草寺与仲见世商店街 · 东京街头小吃：拉面、章鱼烧、鲷鱼烧等第 2 天明治神宫与本地食文化明治神宫 · 东京本地特色：文字烧与深川饭来源与署名",
+        "details": [
+          "暂无景点图片浅草寺与仲见世商店街Tokyo · 上午 · 游览景点简介浅草寺是东京最具代表性的文化地标，拥有约1400年历史。寺前的仲见世商店街长约200米，两旁店铺售卖各种纪念品和本地小吃，是感受江户风情与品尝小吃的绝佳去处。为什么推荐浅草寺是东京最著名的文化景点之一，符合您对文化体验的兴趣；仲见世商店街提供丰富的小吃选择，满足您对小吃的好奇。在规划记录中调整",
+          "暂无景点图片东京街头小吃：拉面、章鱼烧、鲷鱼烧等Tokyo · 下午 · 游览景点简介东京街头小吃种类繁多，从拉面、章鱼烧到鲷鱼烧、御好烧、烧鸟等，遍布各处摊位和店铺，是体验当地饮食文化的直接方式。为什么推荐您喜欢小吃，这项活动让您有机会品尝多种东京特色街头美食，轻松融入当地生活。在规划记录中调整",
+          "暂无景点图片明治神宫Tokyo · 上午 · 游览景点简介明治神宫是东京重要的传统神社，环境宁静，适合在清晨或上午安静地参访，感受日本神道文化。为什么推荐明治神宫是东京核心的文化景点，符合您对文化的兴趣；其宁静氛围适合轻松节奏的上午行程。在规划记录中调整",
+          "暂无景点图片东京本地特色：文字烧与深川饭Tokyo · 下午 · 游览景点简介文字烧是一种类似御好烧的咸味煎饼，深川饭是蛤蜊盖饭，还有柳川锅等，都是东京独有的地方美食，值得一试。为什么推荐您喜欢小吃，这些东京本地特色美食能带给您独特的美食体验，且与轻松节奏相符。在规划记录中调整"
+        ]
+      },
+      "en": {
+        "overview": "Trip details中文SavedTokyoTokyo2026-10-20 – 2026-10-21 · 2 daysThis two-day Tokyo itinerary is designed for a relaxed pace, focusing on cultural landmarks and local snacks. Day 1 begins at Sensoji Temple in Asakusa, followed by a stroll along Nakamise Street for street food. Day 2 features a quiet morning at Meiji Jingu Shrine, then an afternoon sampling Tokyo's local specialties like monjayaki and Fukagawa meshi. The plan balances cultural immersion with culinary delights, keeping the schedule light and enjoyable.Budget target · Whole tripCNY 1,500A total trip target, not a confirmed cost.Your itinerary is readyOverviewDaily itineraryFlightsFlights arranged independentlyDay 1Asakusa History and Street FoodSensoji Temple and Nakamise Street · Tokyo Street Food: Ramen, Takoyaki, TaiyakiDay 2Meiji Shrine and Local CuisineMeiji Jingu Shrine · Tokyo Local Specialties: Monjayaki and Fukagawa MeshiSources and credits",
+        "details": [
+          "No place photo yetSensoji Temple and Nakamise StreetTokyo · Morning · VisitAbout this placeStart your Tokyo visit in Asakusa at Sensoji Temple, a cultural landmark with about 1,400 years of history. After exploring the temple grounds, stroll along Nakamise Street, a traditional shopping street about 200 meters long, where you can sample local snacks and browse souvenirs.Why this fits your tripThis matches your interest in culture and snacks, offering a historic temple paired with a lively street food and souvenir market, all in a relaxed morning setting.Adjust in planning history",
+          "No place photo yetTokyo Street Food: Ramen, Takoyaki, TaiyakiTokyo · Afternoon · VisitAbout this placeSpend the afternoon exploring Tokyo's street food scene. Look for stalls and shops serving iconic treats like ramen, takoyaki (octopus balls), taiyaki (fish-shaped cakes), okonomiyaki (savory pancakes), and yakitori (grilled chicken skewers).Why this fits your tripThis directly addresses your love of snacks, letting you taste a variety of Tokyo's most beloved street foods at your own pace.Adjust in planning history",
+          "No place photo yetMeiji Jingu ShrineTokyo · Morning · VisitAbout this placeBegin your second day with a quiet visit to Meiji Jingu, one of Tokyo's major Shinto shrines. The serene forested grounds offer a peaceful contrast to the city's bustle, ideal for a calm morning stroll.Why this fits your tripThis fits your cultural interest and relaxed pace, providing a tranquil start to the day at a significant spiritual site.Adjust in planning history",
+          "No place photo yetTokyo Local Specialties: Monjayaki and Fukagawa MeshiTokyo · Afternoon · VisitAbout this placeIn the afternoon, try Tokyo's local specialties. Sample monjayaki, a savory pancake similar to okonomiyaki, Fukagawa meshi (clam rice), and Yanagawa nabe hot pot, all classic dishes that showcase the city's culinary heritage.Why this fits your tripThis continues your food exploration with authentic local dishes, deepening your cultural experience through taste.Adjust in planning history"
+        ]
+      },
+      "refreshEqual": true,
+      "explicitRetry": true
+    },
+    {
+      "id": "selectedFlight",
+      "zh": {
+        "overview": "旅行详情English已保存TokyoTokyo2026-10-20 – 2026-10-21 · 2 天本次东京两日游以文化和小吃为主题，节奏轻松。第一天在浅草感受千年古寺与热闹的仲见世商店街，品尝街头小吃；第二天上午探访明治神宫，下午体验东京本地特色美食。交通方面，可考虑使用Suica等IC卡或地铁一日券，方便出行。预算目标 · 全程CNY 4,000行程总额目标，不代表已核定花费。行程已准备好概览每日行程航班已采用航班PEK → NRT查看航班PEK时间待确认PEK直飞NRT时间待确认NRT海航第 1 天浅草历史文化与小食浅草寺与仲见世商店街 · 东京街头小吃：拉面、章鱼烧、鲷鱼烧等第 2 天明治神宫与本地食文化明治神宫 · 东京本地特色：文字烧与深川饭来源与署名",
+        "details": [
+          "暂无景点图片浅草寺与仲见世商店街Tokyo · 下午 · 游览景点简介浅草寺是东京最具代表性的文化地标，拥有约1400年历史。寺前的仲见世商店街长约200米，两旁店铺售卖各种纪念品和本地小吃，是感受江户风情与品尝小吃的绝佳去处。为什么推荐浅草寺是东京最著名的文化景点之一，符合您对文化体验的兴趣；仲见世商店街提供丰富的小吃选择，满足您对小吃的好奇。在规划记录中调整",
+          "暂无景点图片东京街头小吃：拉面、章鱼烧、鲷鱼烧等Tokyo · 晚上 · 游览景点简介东京街头小吃种类繁多，从拉面、章鱼烧到鲷鱼烧、御好烧、烧鸟等，遍布各处摊位和店铺，是体验当地饮食文化的直接方式。为什么推荐您喜欢小吃，这项活动让您有机会品尝多种东京特色街头美食，轻松融入当地生活。在规划记录中调整",
+          "暂无景点图片明治神宫Tokyo · 上午 · 游览景点简介明治神宫是东京重要的传统神社，环境宁静，适合在清晨或上午安静地参访，感受日本神道文化。为什么推荐明治神宫是东京核心的文化景点，符合您对文化的兴趣；其宁静氛围适合轻松节奏的上午行程。在规划记录中调整",
+          "暂无景点图片东京本地特色：文字烧与深川饭Tokyo · 下午 · 游览景点简介文字烧是一种类似御好烧的咸味煎饼，深川饭是蛤蜊盖饭，还有柳川锅等，都是东京独有的地方美食，值得一试。为什么推荐您喜欢小吃，这些东京本地特色美食能带给您独特的美食体验，且与轻松节奏相符。在规划记录中调整"
+        ]
+      },
+      "en": {
+        "overview": "Trip details中文SavedTokyoTokyo2026-10-20 – 2026-10-21 · 2 daysThis two-day Tokyo itinerary is designed for a relaxed pace, focusing on cultural landmarks and local snacks. Day 1 begins at Sensoji Temple in Asakusa, followed by a stroll along Nakamise Street for street food. Day 2 features a quiet morning at Meiji Jingu Shrine, then an afternoon sampling Tokyo's local specialties like monjayaki and Fukagawa meshi. The plan balances cultural immersion with culinary delights, keeping the schedule light and enjoyable.Budget target · Whole tripCNY 4,000A total trip target, not a confirmed cost.Your itinerary is readyOverviewDaily itineraryFlightsSelected flightPEK → NRTView flightsPEKTime to be confirmedPEKDirectNRTTime to be confirmedNRT海航Day 1Asakusa History and Street FoodSensoji Temple and Nakamise Street · Tokyo Street Food: Ramen, Takoyaki, TaiyakiDay 2Meiji Shrine and Local CuisineMeiji Jingu Shrine · Tokyo Local Specialties: Monjayaki and Fukagawa MeshiSources and credits",
+        "details": [
+          "No place photo yetSensoji Temple and Nakamise StreetTokyo · Afternoon · VisitAbout this placeStart your Tokyo visit in Asakusa at Sensoji Temple, a cultural landmark with about 1,400 years of history. After exploring the temple grounds, stroll along Nakamise Street, a traditional shopping street about 200 meters long, where you can sample local snacks and browse souvenirs.Why this fits your tripThis matches your interest in culture and snacks, offering a historic temple paired with a lively street food and souvenir market, all in a relaxed morning setting.Adjust in planning history",
+          "No place photo yetTokyo Street Food: Ramen, Takoyaki, TaiyakiTokyo · Evening · VisitAbout this placeSpend the afternoon exploring Tokyo's street food scene. Look for stalls and shops serving iconic treats like ramen, takoyaki (octopus balls), taiyaki (fish-shaped cakes), okonomiyaki (savory pancakes), and yakitori (grilled chicken skewers).Why this fits your tripThis directly addresses your love of snacks, letting you taste a variety of Tokyo's most beloved street foods at your own pace.Adjust in planning history",
+          "No place photo yetMeiji Jingu ShrineTokyo · Morning · VisitAbout this placeBegin your second day with a quiet visit to Meiji Jingu, one of Tokyo's major Shinto shrines. The serene forested grounds offer a peaceful contrast to the city's bustle, ideal for a calm morning stroll.Why this fits your tripThis fits your cultural interest and relaxed pace, providing a tranquil start to the day at a significant spiritual site.Adjust in planning history",
+          "No place photo yetTokyo Local Specialties: Monjayaki and Fukagawa MeshiTokyo · Afternoon · VisitAbout this placeIn the afternoon, try Tokyo's local specialties. Sample monjayaki, a savory pancake similar to okonomiyaki, Fukagawa meshi (clam rice), and Yanagawa nabe hot pot, all classic dishes that showcase the city's culinary heritage.Why this fits your tripThis continues your food exploration with authentic local dishes, deepening your cultural experience through taste.Adjust in planning history"
+        ]
+      },
+      "refreshEqual": true,
+      "explicitRetry": true
+    }
+  ],
+  "requests": [
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-retry/localization",
+      "locale": "zh",
+      "method": "POST",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-prepare",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-prepare",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-prepare",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-prepare/localization",
+      "locale": "zh",
+      "method": "POST",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-prepare",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-023c-7619-86b2-d2639c582616",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-revision",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-revision",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-legacy",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-0262-743f-b6bf-7fe7276ebe10-legacy",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selfTicket/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "zh",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-retry/localization",
+      "locale": "zh",
+      "method": "POST",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-retry",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-prepare",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-prepare",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-prepare",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-prepare/localization",
+      "locale": "zh",
+      "method": "POST",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-prepare",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-revision",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-revision",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-legacy",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a-legacy",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    },
+    {
+      "url": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "locale": "en",
+      "method": "GET",
+      "statusCode": 200
+    }
+  ],
+  "cleanup": "request mock removed, original locale/page restored; user identity untouched"
+}

@@ -14,7 +14,7 @@ import { InMemoryConversationRepository } from '../conversations/repository.js'
 import { MockFareProvider } from '../fares/providers/mock.js'
 import { InMemoryUserMemoryRepository } from '../memory/repository.js'
 import { InMemoryTripRepository } from '../trips/repository.js'
-import { registerCloudAgentRoutes } from './agent-cloud.js'
+import { registerCloudAgentRoutes, summarizeTrip } from './agent-cloud.js'
 import { UnavailableResearchAgent } from '../research-agent/unavailable.js'
 import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from '../flight-routing/unavailable.js'
 
@@ -25,6 +25,14 @@ const env = parseEnv({
 const call = (id: string, name: string, args: unknown) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
 
 describe('authenticated cloud Agent route', () => {
+  it('preserves explicit ticket arrangement notes in the readonly trip summary', async () => {
+    const trips = new InMemoryTripRepository()
+    const trip = await trips.create()
+    const context = { ...trip.context, notes: ['机票自备', 'Prefer museums'] }
+    expect(summarizeTrip(context).notes).toEqual(context.notes)
+    expect(summarizeTrip({ ...context, notes: [] }).notes).toEqual([])
+    expect(context.notes).toEqual(['机票自备', 'Prefer museums'])
+  })
   it('validates and forwards an explicit localization retry revision to the owner service', async () => {
     const localizeGuide = vi.fn().mockResolvedValue({ id: '6d356c33-0dc0-420d-920e-159e785125c8', type: 'research', schemaVersion: 1, payload: {} })
     const owners: string[] = [], app = Fastify()

@@ -2,6 +2,7 @@
 import { makeAutoObservable } from 'mobx'
 import { getStorage, setStorage } from '../utils/storage'
 import { formatDuration, formatDurationCN } from '../utils/format'
+import { tripZh, tripEn } from './trip'
 
 export type Locale = 'zh' | 'en'
 
@@ -888,7 +889,7 @@ const en: Dict = {
   'map.airport': 'Airports'
 }
 
-const DICTS: Record<Locale, Dict> = { zh, en }
+const DICTS: Record<Locale, Dict> = { zh: { ...zh, ...tripZh }, en: { ...en, ...tripEn } }
 
 /** 取词：t('fcc.total', { dur: '13小时30分' }) */
 export function t(key: string, params?: Record<string, string | number>): string {

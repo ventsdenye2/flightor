@@ -115,15 +115,16 @@ const jsx = (type, props) => ({ type: typeof type === 'string' ? type : 'Compone
 const visibleText = node => Array.isArray(node) ? node.map(visibleText).join(' ')
   : typeof node === 'string' || typeof node === 'number' ? String(node)
   : node?.props ? [node.props.title, node.props.summary, node.props.label, node.props.actionLabel, node.props.children].map(visibleText).join(' ') : ''
-const cardDependencies = { 'react/jsx-runtime': { jsx, jsxs: jsx }, '@tarojs/components': { View: 'View', Text: 'Text' },
+const tripCopy = loadTypeScript('src/i18n/trip.ts', {})
+const cardDependencies = { 'mobx-react-lite': { observer: value => value }, '../../i18n': {localeStore:{locale:'zh'},t:(key,params)=>tripCopy.tripText('zh',key,params)}, 'react/jsx-runtime': { jsx, jsxs: jsx }, '@tarojs/components': { View: 'View', Text: 'Text' },
   './ArtifactCard': { ArtifactCard: 'ArtifactCard' }, './payload': payload, './TravelGuideCard.scss': {}, './ResearchCard.scss': {} }
 const guideCard = loadTypeScript('src/components/artifacts/TravelGuideCard.tsx', cardDependencies).TravelGuideCard
 const published = { version: 1, artifactId: 'guide-1', tripContextVersion: 1, contentContract: 'limited', evidenceCoverage: 'unknown',
   legacy: false, reply: '攻略已保存', budgetAssessment: { status: 'undetermined', knownSubtotal: null, scopeCoverage: 'incomplete', notice: '目前不能确认总支出是否满足预算。' } }
 const renderGuide = publication => visibleText(guideCard({ artifact: { id: 'guide-1', type: 'travel_guide', schemaVersion: 1,
   payload: { publication, days: [{ day: 1, items: [{ title: 'UNSAFE_OLD_FREE', description: 'UNSAFE_OLD_BUDGET' }] }] } } }))
-check('rendered guide card shows budget unknown and rejects old prose without publication',
-  renderGuide(published).includes(published.budgetAssessment.notice) && !renderGuide(undefined).includes('UNSAFE_OLD'))
+check('rendered old guide card hides audit and old prose instead of claiming a final itinerary',
+  renderGuide(published).includes('旧版攻略尚无终稿') && !renderGuide(published).includes('UNSAFE_OLD') && !renderGuide(published).includes(published.budgetAssessment.notice) && !renderGuide(undefined).includes('UNSAFE_OLD'))
 const researchCard = loadTypeScript('src/components/artifacts/ResearchCard.tsx', cardDependencies).ResearchCard
 const researchTree = visibleText(researchCard({ artifact: { id: 'research-1', schemaVersion: 2, type: 'research', payload: {
   findings: [{ title: 'UNSAFE_FREE', summary: 'UNSAFE_BUDGET', sources: [{ title: 'Museum source', url: 'https://example.com/museum' }] }]

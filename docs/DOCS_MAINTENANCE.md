@@ -80,3 +80,7 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 最终检查结果集中在 [progress](design/budget-travel-agent/progress.md)。
 
 2026-09-21：runner 支持 `G1_CASE=self-ticket` 或 `selected-flight` 选择原有固定案例；不传仍运行两例，其他值拒绝。单例续验也必须沿用原账本/次数限制，不能当作完整两例验收。新增 source reader 公共网页 HTTP 有独立 span，与收费模型/搜索计数分开。
+
+## 2026-09-22 正式终稿 UI 验证脚本
+
+`node scripts/qa-publication-ui-h5.cjs` 在已构建且由 `node scripts/serve-h5.cjs` 提供的10086 H5上使用已安装 Chrome，拦截 API 运输为冻结 fixture；`node scripts/qa-publication-ui-weapp.cjs` 使用既有9432 SDK与已登录模拟器，只替换 wx.request，finally 撤销 mock、恢复原语言/页面，不替换登录身份。脚本各自保留失败 JSON，成功报告/截图在忽略的 output/playwright/publication-ui 和 output/weapp/publication-ui。固定材料来自上一任务终稿示例与旧双入口 fixture，不调用模型/研究，不证明真实 API或真机验收。不要并发运行两个微信 fixture 脚本或在真实付费规划运行时替换 request。实际结果与失败经过见 [报告](design/budget-travel-agent/PUBLICATION_UI_2026-09-22.md)。

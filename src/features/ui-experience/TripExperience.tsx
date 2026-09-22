@@ -7,6 +7,7 @@ import { DayPlan } from './DayPlan'
 import { FlightTicket, FlightRoute } from './FlightTicket'
 import { EmptyState } from './SharedUI'
 import './experience.scss'
+import PublishedTripExperience from './PublishedTripExperience'
 
 type Tab = 'overview' | 'days' | 'flights'
 type Sheet = { kind: 'activity'; activity: Activity } | { kind: 'adjust' } | { kind: 'credits' }
@@ -24,12 +25,17 @@ export interface TripExperienceProps {
   production?: boolean
   initialTab?: Tab
   onContinuePlanning?: () => void
+  onRefresh?: () => void
+  onPrepareLocale?: (retryRevision?: number) => void
+  publicationBusy?: boolean
+  publicationError?: string
 }
 function TripPhoto({ image, className, forceError = false }: { image: MediaPresentation | null; className: string; forceError?: boolean }) {
   return image?.src ? <Photo src={image.src} description={image.description} className={className} forceError={forceError} /> : <View className={`ux-photo-fallback ${className}`}><Icon name='image' /><Text>{image?.description || '目的地照片待补充'}</Text></View>
 }
 
 export default function TripExperience(props: TripExperienceProps) {
+  if (props.production) return <PublishedTripExperience {...props} />
   // A different trip starts with its own selected day, edits and pending timers.
   return <TripContent key={props.trip.id} {...props} />
 }

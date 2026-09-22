@@ -76,6 +76,25 @@
 .ux-toast { position: absolute; bottom: 83px; left: 18px; right: 18px; z-index: 1200; background: #172f56; color: #fff; box-shadow: 0 4px 20px #172f5620; padding: 12px 14px; display: flex; align-items: center; gap: 8px; border-radius: 12px; font-size: 12px; pointer-events: none; .ux-icon { filter: brightness(0) invert(1); } }
 .ux-modal { position: absolute; inset: 0; z-index: 1100; background: #102c4260; display: flex; align-items: flex-end; }.ux-sheet { position: relative; width: 100%; max-height: 90%; overflow-y: auto; border-radius: 22px 22px 0 0; background: #fff; padding: 45px 18px max(25px, env(safe-area-inset-bottom)); box-shadow: 0 -10px 40px #172f5614; animation: ux-slide .22s ease-out; }.ux-sheet-handle { position: absolute; top: 11px; left: 45%; width: 10%; height: 4px; border-radius: 4px; background: #cbd8dc; }.ux-app .ux-sheet-close { position: absolute; top: 4px; right: 9px; }.ux-detail-photo { width: 100%; height: 217px; border-radius: 10px; }.ux-detail-title { display: block; font-family: 'Songti SC', SimSun, serif; font-size: 26px; line-height: 1.4; font-weight: 600; margin: 17px 0 5px; }.ux-detail-copy { display: block; margin: 18px 0; font-size: 14px; line-height: 1.9; }.ux-app .ux-source { width: 100%; display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 12px; background: #eff6f7; color: #2563eb; font-size: 12px; min-height: 48px; .ux-icon:last-child { margin-left: auto; width: 14px; height: 14px; } }.ux-detail-caveat { margin-top: 11px; }.ux-sheet-actions { display: flex; gap: 12px; margin-top: 20px; }.ux-app .ux-adjust-option { position: relative; display: block; padding: 22px 30px 22px 0; border-bottom: 1px solid #e4edef; width: 100%; .ux-muted { margin-top: 6px; }.ux-icon { position: absolute; right: 0; top: 30px; } }.ux-sheet > .ux-caption:last-child { margin-top: 20px; }.ux-app .ux-credit { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 18px 0; border-bottom: 1px solid #e4edef; }
 @keyframes ux-slide { from { transform: translateY(20px); opacity: .6; } to { transform: translateY(0); opacity: 1; } }
+.ux-published {
+  .ux-title, .ux-detail-title, .ux-activity-name, .ux-section-title { overflow-wrap: anywhere; letter-spacing: normal; }
+  .ux-header-title { min-width: 0; flex: 1; text-align: center; white-space: nowrap; }
+  .ux-locale-toggle { width: auto; min-width: 64px; flex: 0 0 auto; margin: 0; }
+  .ux-trip-overview { display: block; margin-top: 14px; font-size: 14px; line-height: 1.8; }
+  .ux-publication-state { margin: 14px 18px 0; padding: 12px; background: #f1f5fc; border-radius: 10px; }
+  .ux-publication-state--accepted { padding: 0; background: transparent; color: #426b57; .ux-section-title { font-size: 12px; font-weight: 400; } }
+  .ux-publication-state--retryable, .ux-publication-state--revision_required, .ux-publication-state--stale { background: #fff4e5; }
+  .ux-publication-actions { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px; }
+  .ux-issue { display: block; margin-top: 8px; font-size: 12px; color: #856337; }
+  .ux-flight-status, .ux-media-compact { display: flex; align-items: center; gap: 10px; padding: 12px 0; font-size: 12px; color: #6c7f86; }
+  .ux-media-compact { min-height: 52px; padding: 12px; border-radius: 10px; background: #f1f5fc; }
+  .ux-empty-compact { padding: 22px 18px; color: #6c7f86; }
+  .ux-detail-section { margin-top: 20px; .ux-detail-copy { margin: 6px 0 20px; } }
+  .ux-activity-name { font-size: 15px; } .ux-activity-summary { font-size: 12px; }
+  .ux-timeline-time { width: 52px; text-align: center; overflow-wrap: anywhere; }
+  .ux-flight-times { gap: 8px; > view, > div { min-width: 0; } .ux-time { font-size: 15px; overflow-wrap: anywhere; } }
+  .ux-map-caption { background: transparent; padding: 4px 0; }
+}
 @keyframes ux-pulse { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .ux-app view, .ux-app view::before, .ux-app div, .ux-app div::before { animation: none !important; scroll-behavior: auto !important; } }
 @media (max-width: 360px) { .ux-title { font-size: 26px; }.ux-day-title { font-size: 21px; }.ux-thumbnail { width: 55px; height: 68px; }.ux-activity { gap: 7px; } }

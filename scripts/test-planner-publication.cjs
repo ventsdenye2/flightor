@@ -3,6 +3,8 @@ const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const vm = require('node:vm')
 const ts = require('typescript')
+const tripCopy = { exports: {} }
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/i18n/trip.ts', 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText, {module:tripCopy,exports:tripCopy.exports})
 function harness(file, name, props, dependencies = {}) {
   const slots = [], effects = []
   let cursor = 0, dirty = false, tree
@@ -30,6 +32,7 @@ function harness(file, name, props, dependencies = {}) {
     module: component, exports: component.exports, setTimeout, clearTimeout,
     require(dep) {
       if (dep in dependencies) return dependencies[dep]
+      if (dep.endsWith('/i18n/trip')) return tripCopy.exports
       if (dep === 'react') return hooks
       if (dep === 'react/jsx-runtime') return { jsx, jsxs: jsx, Fragment: 'Fragment' }
       if (dep === '@tarojs/components') return { View: 'View', Text: 'Text', Button: 'Button', Textarea: 'Textarea' }
