@@ -11,14 +11,15 @@ import TripMap from '../maps/TripMap'
 
 /** The production branch shares the existing travel layout; audit prose is never UI copy. */
 export default function PublishedTripExperience({ trip, onBack, onContinuePlanning, onOpenSource, onRefresh,
-  onPrepareLocale, publicationBusy = false, publicationError = '', onPreparePlaces,placesBusy=false,placesError='',initialTab = 'overview' }: TripExperienceProps) {
+  onPrepareLocale, publicationBusy = false, publicationError = '', onPreparePlaces,placesBusy=false,placesError='',onPrepareMedia,mediaBusy=false,mediaError='',initialTab = 'overview' }: TripExperienceProps) {
   const locale = trip.locale ?? 'zh'
   const tt = (key: string, params?: Record<string, string | number>) => tripText(locale, key, params)
   const [tab, setTab] = useState(initialTab)
   const [dayIndex, setDayIndex] = useState(0)
-  const [activity, setActivity] = useState<Activity | null>(null)
+  const [selectedActivity, setActivity] = useState<Activity | null>(null)
+  const activity=trip.days.flatMap(d=>d.activities).find(a=>a.id===selectedActivity?.id)??null
   const [credits, setCredits] = useState(false)
-  useEffect(() => { setActivity(null); setCredits(false); setDayIndex(0) }, [trip.days, locale])
+  useEffect(() => { setActivity(null); setCredits(false); setDayIndex(0) }, [trip.id,trip.publication?.artifactId,trip.publication?.contentVersion])
   const pub = trip.publication
   const state = pub?.status ?? 'legacy'
   const accepted = state === 'accepted'
@@ -41,7 +42,7 @@ export default function PublishedTripExperience({ trip, onBack, onContinuePlanni
     </View>
     <View className='ux-scroll'>
       {tab === 'overview' ? <View className='ux-intro'>
-        {trip.cover?.src ? <Photo src={trip.cover.src} description={trip.cover.description} className='ux-hero' /> : null}
+        {trip.cover?.src ? <><Photo src={trip.cover.src} candidates={trip.cover.candidates} description={trip.cover.description} className='ux-hero' collapse />{trip.cover.source?sourceButton(trip.cover.source,0):null}<Text className='ux-caption'>{trip.cover.description} · {tt('trip.photoCrop')}</Text></> : null}
         <Text className='ux-caption'>{tt('trip.saved')}</Text>
         <Text className='ux-title'>{trip.destination}</Text>
         <Text className='ux-route'>{trip.route.join(' → ') || tt('trip.routePending')}</Text>
@@ -68,6 +69,7 @@ export default function PublishedTripExperience({ trip, onBack, onContinuePlanni
       <View className='ux-tabs' role='tablist' ariaLabel={tt('trip.details')}>
         {(['overview', 'days', 'flights'] as const).map(value => <Button key={value} className={`ux-tab ${tab === value ? 'is-active' : ''}`} aria-selected={tab === value} onClick={() => setTab(value)}>{tt(`trip.${value}`)}</Button>)}
       </View>
+      {accepted?<View className='ux-media-actions'><Button className='ux-text-button ux-prepare-media' disabled={mediaBusy} onClick={onPrepareMedia}>{tt(mediaBusy?'trip.mediaLoading':'trip.prepareMedia')}</Button>{mediaError?<Text className='ux-issue'>{mediaError}</Text>:null}</View>:null}
       {tab === 'overview' ? <View className='ux-overview'>
         {accepted?<><View className='ux-map-actions'><Text className='ux-section-title'>{tt('trip.mapTitle')}</Text><Button className='ux-text-button ux-prepare-places' disabled={placesBusy} onClick={onPreparePlaces}>{tt(placesBusy?'trip.placesResolving':'trip.resolvePlaces')}</Button></View>
           {placesError?<Text className='ux-issue'>{placesError}</Text>:null}
@@ -90,7 +92,7 @@ export default function PublishedTripExperience({ trip, onBack, onContinuePlanni
       <View className='ux-sheet' role='dialog' aria-modal='true' ariaLabel={activity?.name ?? tt('trip.sources')} onClick={event => event.stopPropagation()}>
         <View className='ux-sheet-handle' /><Button className='ux-icon-button ux-sheet-close' ariaLabel={tt('trip.close')} onClick={() => { setActivity(null); setCredits(false) }}><Icon name='close' /></Button>
         {activity ? <>
-          {activity.media?.src ? <><Photo src={activity.media.src} description={activity.media.description} className='ux-detail-photo' />{activity.media.source ? sourceButton(activity.media.source, 0) : null}</>
+          {activity.media?.src ? <><Photo src={activity.media.src} candidates={activity.media.candidates} description={activity.media.description} className='ux-detail-photo' collapse />{activity.media.source ? sourceButton(activity.media.source, 0) : null}{activity.media.licenseUrl?sourceButton({label:tt('trip.photoLicense'),url:activity.media.licenseUrl,status:'verified'},1):null}<Text className='ux-caption'>{tt('trip.photoCrop')}</Text></>
             : <View className='ux-media-compact'><Icon name='image' /><Text>{tt('trip.photoPending')}</Text></View>}
           <Text className='ux-detail-title'>{activity.name}</Text>
           <Text className='ux-muted'>{activity.area} · {activity.time || tt('trip.flexible')} · {activity.category}</Text>

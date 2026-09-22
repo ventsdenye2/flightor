@@ -68,3 +68,8 @@ H5 使用真实OSM瓦片；微信原生Map不打包服务端Key、不申请实�
 # 地点请求代理增量（2026-09-22）
 
 可选 `PLACES_PROXY_URL=http://127.0.0.1:7890`（示例，部署需填写实际可达代理）只改变 Nominatim 地点请求，不改变模型/研究请求。代理模式要求 Node22.21+或24.5+；保持TLS校验，不依赖全局 `NODE_USE_ENV_PROXY`，不把服务端代理URL发到前端。留空回滚到原fetch。容器内127.0.0.1指容器自身，不能照抄桌面地址。当前机器一次 `node --use-env-proxy` 子进程探测成功不代表所有部署网络已配置；正式API和窗口证据见[本轮收尾](design/budget-travel-agent/MAP_CLOSEOUT_2026-09-22.md)。
+# 第四阶段媒体配置（2026-09-22）
+
+先执行已有013及新014迁移，新增媒体绑定/缓存表；本轮仅隔离schema已迁移，正式库未执行。`MEDIA_USER_AGENT`为空时禁补全、GET仍读既存媒体；启用时设置可识别应用/联系信息。无需图片Key、无需对象存储。`MEDIA_PROXY_URL`仅供媒体HTTPS Agent，Node22.21+/24.5+，不改全局或Planner出口。API允许调用Wikimedia固定域名，客户端直读真实返回的thumb.wikimedia.org/upload.wikimedia.org HTTPS照片。许可、尺寸、缓存TTL和回滚见[ADR0027](adr/0027-place-media.md)。
+
+生产后端须配置微信request HTTPS域名，照片源须在目标网络可达并满足平台证书要求；若改为downloadFile需另配下载域名。既有开发urlCheck=false未修改，不能据开发模拟器推断生产通过。微信照片页面、真机和正式public库当前未验收；地图暂停排查、仍未解决。详见[验证与费用](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)。

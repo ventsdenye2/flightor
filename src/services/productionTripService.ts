@@ -4,6 +4,30 @@ import { record } from '../components/artifacts/payload'
 import { artifactToTripPresentation } from '../features/ui-experience/productionPresentation'
 import type {TripPresentation} from '../features/ui-experience/presentation'
 import { readPlaceEnrichment, resolvePlaceEnrichment } from './placeService'
+import { readMediaEnrichment, resolveMediaEnrichment } from './mediaService'
+
+/** Merge only the arriving extension, never replace newer unrelated fields. */
+export function mergeProductionExtension(current:TripPresentation,incoming:TripPresentation,kind:'places'|'media'):TripPresentation {
+ if(!samePlacePublication(current,incoming))return current
+ const byId=new Map(incoming.days.flatMap(d=>d.activities).map(a=>[a.id,a]))
+ return {...current,...(kind==='media'?{cover:incoming.cover}:{mapCities:incoming.mapCities,flightPaths:incoming.flightPaths}),
+  days:current.days.map(d=>({...d,activities:d.activities.map(a=>{const next=byId.get(a.id);return !next?a:kind==='media'?{...a,media:next.media}:{...a,place:next.place,latitude:next.latitude,longitude:next.longitude}})}))}
+}
+
+export async function loadProductionMedia(loaded:Awaited<ReturnType<typeof loadProductionTrip>>,context:ArtifactFetchContext){
+ const pub=loaded.presentation.publication
+ if(!loaded.guide||pub?.status!=='accepted')return loaded
+ const enrichment=await readMediaEnrichment(loaded.guide.id)
+ if(enrichment.contentVersion!==pub.contentVersion)return loaded
+ const guide={...loaded.guide,enrichment}
+ return {...loaded,guide,presentation:artifactToTripPresentation(loaded.route,guide,loaded.workspace,loaded.selectedFlightArtifact,context.locale??'zh')}
+}
+export async function prepareProductionMedia(id:string,context:ArtifactFetchContext){
+ const loaded=await loadProductionTrip(id,{...context,force:true}),pub=loaded.presentation.publication
+ if(pub?.status!=='accepted'||!pub.artifactId||!pub.contentVersion)throw Error('MEDIA_BASE_UNAVAILABLE')
+ await resolveMediaEnrichment(pub.artifactId,pub.contentVersion)
+ return loadProductionMedia(loaded,context)
+}
 
 export async function loadProductionTrip(id: string, context: ArtifactFetchContext) {
   const selected = await artifactService.fetchArtifact(id, context)

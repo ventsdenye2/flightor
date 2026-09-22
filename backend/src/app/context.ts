@@ -4,6 +4,7 @@ import type { AppEnv } from '../config/env.js'
 import type { Database } from '../db/types.js'
 import type { Providers } from '../providers/index.js'
 import type { PlaceService } from '../places/service.js'
+import type { MediaService } from '../media/service.js'
 
 export interface AppContext {
   db: Kysely<Database>
@@ -11,4 +12,5 @@ export interface AppContext {
   env: AppEnv
   providers: Providers
   places?: PlaceService
+  media?: MediaService
 }

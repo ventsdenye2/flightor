@@ -39,7 +39,7 @@ export function DayPlan({ day, dayNumber, onActivity, onAdjust, imageError = fal
     <View className='ux-timeline'>
       {day.activities.map((activity, i) => <Button key={activity.id} className={`ux-activity ${selectedId===activity.id?'is-map-selected':''}`} data-activity-id={activity.id} onClick={() => select(activity)} ariaLabel={tt('trip.viewActivity', { name: activity.name })}>
         <View className='ux-timeline-time'><Text className='ux-number'>{i + 1}</Text><Text>{activity.time || tt('trip.flexible')}</Text></View>
-        {activity.media?.src || !published ? <Photo src={activity.media?.src} description={activity.media?.description || tt('trip.photoPending')} className='ux-thumbnail' forceError={imageError} retry={false} /> : null}
+        {activity.media?.src || !published ? <Photo src={activity.media?.src} candidates={activity.media?.candidates} description={activity.media?.description || tt('trip.photoPending')} className='ux-thumbnail' forceError={imageError} retry={false} collapse={published} /> : null}
         <View className='ux-activity-copy'><Text className='ux-activity-name'>{activity.name}</Text><Text className='ux-activity-summary'>{activity.summary}</Text>{published?<Text className='ux-place-status'>{tt(activity.place?.status==='resolved'?`trip.place.${activity.place.kind}`:`trip.place.${activity.place?.status??'unresolved'}`)}</Text>:null}{activity.media?.atmosphere ? <Text className='ux-photo-label'>图片为氛围参考</Text> : null}</View>
         <Icon name='chevron-right' className='ux-activity-chevron' />
       </Button>)}

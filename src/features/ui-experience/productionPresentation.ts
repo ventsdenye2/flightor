@@ -145,7 +145,8 @@ function activity(item: Item, enrichment: Item | undefined, locale: 'zh' | 'en')
     place: {status:text(resolution?.status)??'unresolved',reason:text(resolution?.reason)??'not_requested',placeId:confirmed?text(entity?.placeId):undefined,
       name:confirmed?text(entity?.name):undefined,kind:confirmed?text(entity?.kind):undefined,countryCode:confirmed?text(entity?.countryCode):undefined,
       ...(confirmed?{system:'WGS84' as const}:{}),...(safeSourceUrl(record(entity?.source)?.url)?{source:{label:'© OpenStreetMap contributors',url:safeSourceUrl(record(entity?.source)?.url),status:'verified' as const}}:{})},
-    media: mediaUrl ? { src: mediaUrl, description: text(media?.description) ?? text(item.title)!,
+    media: mediaUrl ? { src: mediaUrl, description: text(item.title)!,
+      candidates:records(media?.candidates,2).map(c=>safeSourceUrl(c.src)).filter((s):s is string=>!!s),licenseUrl:safeSourceUrl(attribution?.licenseUrl),
       ...(text(attribution?.label) ? { source: { label: text(attribution?.label)!, url: safeSourceUrl(attribution?.url), status: 'unverified' as const } } : {}) } : null,
     source: null }
 }
@@ -201,7 +202,7 @@ export function artifactToTripPresentation(routeArtifact: ArtifactEnvelope, guid
   return { id: routeArtifact.tripId, locale, title: tt('trip.title'), destination: routeNames[0] ?? days[0]?.subtitle ?? tt('trip.locationUnknown'), route: routeNames,
     dates: { start: context?.departureWindow?.precision === 'exact' ? context.departureWindow.from ?? null : null,
       end: context?.returnWindow?.precision === 'exact' ? context.returnWindow.to ?? context.returnWindow.from ?? null : null, label: '' },
-    durationDays: context?.travelDays ?? (days.length || null), travelers: null, cover: null,
+    durationDays: context?.travelDays ?? (days.length || null), travelers: null, cover: days.flatMap(d=>d.activities).find(a=>a.media?.src)?.media??null,
     description: accepted ? pub!.overview! : tt(`trip.${state === 'preparing' ? 'preparingHint' : state === 'retryable' ? 'retryableHint' : state === 'revision_required' ? 'revisionHint' : state === 'legacy' ? 'legacyHint' : 'staleHint'}`),
     days, status: accepted && guideArtifact && workspace?.messages.some(message => delivered(message.delivery, guideArtifact.id)) ? 'ready' : 'partial',
     publication: { artifactId: guideArtifact?.id, contentVersion: pub?.guideContentHash, status: state, revision: pub?.revision ?? 0,

@@ -14,6 +14,7 @@ import { FlightDetail } from '../../components/route/FlightDetail'
 import { resolveArtifactRenderer } from '../../components/artifacts/registry'
 import { ensureWorkspaceConversation, getCloudWorkspace, updateCloudTrip } from '../../services/workspaceService'
 import { loadProductionTrip, loadProductionPlaces, samePlacePublication, prepareProductionLocale, prepareProductionPlaces } from '../../services/productionTripService'
+import { loadProductionMedia, prepareProductionMedia, mergeProductionExtension } from '../../services/productionTripService'
 import TripExperience from '../../features/ui-experience/TripExperience'
 import type { TripPresentation } from '../../features/ui-experience/presentation'
 import { safeSourceUrl } from '../../features/ui-experience/productionPresentation'
@@ -36,6 +37,8 @@ function RoutePage() {
   const [publicationAction, setPublicationAction] = useState<{ key: string; busy: boolean; error?: string }>({ key: '', busy: false })
   const [placesAction,setPlacesAction]=useState<{key:string;busy:boolean;error?:string}>({key:'',busy:false})
   const placeRequests=useRef(new Set<string>())
+  const mediaRequests=useRef(new Set<string>())
+  const [mediaAction,setMediaAction]=useState<{key:string;busy:boolean;error?:string}>({key:'',busy:false})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState('')
   const [layoverPreference, setLayoverPreference] = useState<'airport_only' | 'consider_city'>('airport_only')
@@ -44,10 +47,14 @@ function RoutePage() {
   const generation = useRef(0)
   function supplementPlaces(loaded: Awaited<ReturnType<typeof loadProductionTrip>>, context: Parameters<typeof loadProductionTrip>[1], ticket: number) {
     const revision = userStore.sessionRevision
+    void loadProductionMedia(loaded,context).then(enriched=>{
+      if(generation.current!==ticket||activeKey.current!==key||userStore.sessionRevision!==revision||userStore.profile?.uid!==ownerId)return
+      setState(previous=>previous.key===key&&previous.presentation?{...previous,presentation:mergeProductionExtension(previous.presentation,enriched.presentation,'media')}:previous)
+    }).catch(()=>{})
     void loadProductionPlaces(loaded, context).then(enriched => {
       if (generation.current !== ticket || activeKey.current !== key || userStore.sessionRevision !== revision || userStore.profile?.uid !== ownerId) return
       setState(previous => previous.key === key && samePlacePublication(previous.presentation, enriched.presentation)
-        ? { ...previous, presentation: enriched.presentation } : previous)
+        ? { ...previous, presentation: mergeProductionExtension(previous.presentation!,enriched.presentation,'places') } : previous)
     }).catch(() => { /* Extension diagnostics own failures; accepted text remains usable. */ })
   }
   useEffect(() => {
@@ -75,13 +82,25 @@ function RoutePage() {
   }, [key, attempt])
   const current = state.key === key ? state : undefined
   const artifact = current?.artifact
+  async function prepareMedia(){
+    if(!ownerId||mediaRequests.current.has(key))return
+    mediaRequests.current.add(key);setMediaAction({key,busy:true})
+    const ticket=generation.current,revision=userStore.sessionRevision
+    try{const loaded=await prepareProductionMedia(artifactId,{ownerId,sessionId:chatStore.currentSessionId,locale})
+      if(generation.current===ticket&&activeKey.current===key&&userStore.sessionRevision===revision&&userStore.profile?.uid===ownerId){
+        setState(previous=>previous.key===key&&previous.presentation?{...previous,presentation:mergeProductionExtension(previous.presentation,loaded.presentation,'media')}:previous)
+        setMediaAction({key,busy:false})
+      }
+    }catch{if(activeKey.current===key&&userStore.sessionRevision===revision)setMediaAction({key,busy:false,error:t('trip.mediaFailed')})}
+    finally{mediaRequests.current.delete(key)}
+  }
   async function preparePlaces(){
     if(!ownerId||placeRequests.current.has(key))return
     placeRequests.current.add(key);setPlacesAction({key,busy:true})
-    const ticket=++generation.current
+    const ticket=generation.current
     const revision=userStore.sessionRevision
     try {const loaded=await prepareProductionPlaces(artifactId,{ownerId,sessionId:chatStore.currentSessionId,locale})
-      if(generation.current===ticket&&activeKey.current===key&&userStore.sessionRevision===revision){setState({key,artifact:loaded.route,presentation:loaded.presentation});setPlacesAction({key,busy:false})}
+      if(generation.current===ticket&&activeKey.current===key&&userStore.sessionRevision===revision){setState(previous=>previous.key===key&&previous.presentation?{...previous,presentation:mergeProductionExtension(previous.presentation,loaded.presentation,'places')}:previous);setPlacesAction({key,busy:false})}
     }catch{if(activeKey.current===key&&userStore.sessionRevision===revision)setPlacesAction({key,busy:false,error:t('trip.placesFailed')})}
     finally{placeRequests.current.delete(key)}
   }
@@ -162,6 +181,7 @@ function RoutePage() {
   if (view.kind === 'trip') return <View className={ROUTE_DETAIL_SHELL_CLASS}>
     <TripExperience key={key} trip={view.presentation} production embedded onBack={goBack} onContinuePlanning={() => void continuePlanning()} onOpenSource={openSource}
       onPreparePlaces={()=>void preparePlaces()} placesBusy={placesAction.key===key&&placesAction.busy} placesError={placesAction.key===key?placesAction.error:undefined}
+      onPrepareMedia={()=>void prepareMedia()} mediaBusy={mediaAction.key===key&&mediaAction.busy} mediaError={mediaAction.key===key?mediaAction.error:undefined}
       onRefresh={() => setAttempt(value => value + 1)} onPrepareLocale={retryRevision => void prepareLocale(retryRevision)}
       publicationBusy={publicationAction.key === key && publicationAction.busy} publicationError={publicationAction.key === key ? publicationAction.error : undefined} />
   </View>

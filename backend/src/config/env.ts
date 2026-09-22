@@ -35,6 +35,8 @@ const envSchema = z.object({
   OAG_LOCATIONS_PATH: z.string().default('/locations'),
   OAG_FLIGHT_INFO_PATH: z.string().default('/flight-instances/'),
   SERPAPI_KEY: z.string().default(''),
+  MEDIA_USER_AGENT: z.string().trim().max(240).default(''),
+  MEDIA_PROXY_URL: z.string().trim().default(''),
   PLACES_NOMINATIM_URL: optionalUrl.default(''),
   PLACES_USER_AGENT: z.string().trim().max(240).default(''),
   PLACES_PROXY_URL: z.string().trim().refine(value=>{if(!value)return true;try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&u.pathname==='/'&&!u.search&&!u.hash}catch{return false}},'HTTP(S) proxy URL required').default(''),

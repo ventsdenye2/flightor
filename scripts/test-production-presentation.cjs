@@ -316,6 +316,7 @@ function productionServiceHarness(artifacts, workspaceValue, readPlaces=async()=
   const calls = []
   const placeCalls = []
   vm.runInNewContext(output, { module: serviceModule, exports: serviceModule.exports, require: dependency => {
+    if (dependency === './mediaService') return { readMediaEnrichment:async()=>({contentVersion:publication.guideContentHash,activities:{}}),resolveMediaEnrichment:async()=>({}) }
     if (dependency === './placeService') return { readPlaceEnrichment:async id=>{placeCalls.push({method:'GET',id});return readPlaces(id)},resolvePlaceEnrichment:async(id,contentVersion)=>{placeCalls.push({method:'POST',id,contentVersion});return {}} }
     if (dependency === './artifactService') return { artifactService: { fetchArtifact: async id => { calls.push(id); const value = artifacts[id]; if (value instanceof Error) throw value; return value }, localizeArtifact: async (id, context) => { calls.push({ post: id, revision: context.retryRevision }); artifacts[id] = {...artifacts[id],payload:{...artifacts[id].payload,publication:{...artifacts[id].payload.publication,status:'accepted'}}}; return artifacts[id] } } }
     if (dependency === './workspaceService') return { getCloudWorkspace: async () => workspaceValue }

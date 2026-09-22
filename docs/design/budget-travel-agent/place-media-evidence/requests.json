@@ -1,0 +1,164 @@
+{
+  "schema": "places_test_1790087145949",
+  "requests": [
+    {
+      "host": "en.wikipedia.org",
+      "kind": "json",
+      "status": null,
+      "bytes": 0,
+      "ok": false,
+      "at": "2026-09-22T14:26:43.277Z"
+    },
+    {
+      "host": "en.wikipedia.org",
+      "kind": "json",
+      "status": null,
+      "bytes": 0,
+      "ok": false,
+      "at": "2026-09-22T14:26:43.307Z"
+    },
+    {
+      "host": "en.wikipedia.org",
+      "kind": "json",
+      "status": null,
+      "bytes": 0,
+      "ok": false,
+      "at": "2026-09-22T14:26:43.332Z"
+    },
+    {
+      "host": "en.wikipedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 2352,
+      "ok": true,
+      "at": "2026-09-22T14:29:14.176Z"
+    },
+    {
+      "host": "en.wikipedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 2382,
+      "ok": true,
+      "at": "2026-09-22T14:39:04.284Z"
+    },
+    {
+      "host": "ja.wikipedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 2661,
+      "ok": true,
+      "at": "2026-09-22T14:39:06.304Z"
+    },
+    {
+      "host": "zh.wikipedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 2382,
+      "ok": true,
+      "at": "2026-09-22T14:39:08.306Z"
+    },
+    {
+      "host": "en.wikipedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 2473,
+      "ok": true,
+      "at": "2026-09-22T14:39:10.208Z"
+    },
+    {
+      "host": "commons.wikimedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 3219,
+      "ok": true,
+      "at": "2026-09-22T14:39:11.532Z"
+    },
+    {
+      "host": "thumb.wikimedia.org",
+      "kind": "image",
+      "status": 200,
+      "bytes": 352541,
+      "ok": true,
+      "at": "2026-09-22T14:39:13.298Z"
+    },
+    {
+      "host": "en.wikipedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 2753,
+      "ok": true,
+      "at": "2026-09-22T14:39:14.349Z"
+    },
+    {
+      "host": "ja.wikipedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 2401,
+      "ok": true,
+      "at": "2026-09-22T14:39:15.881Z"
+    },
+    {
+      "host": "commons.wikimedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 3578,
+      "ok": true,
+      "at": "2026-09-22T14:39:16.894Z"
+    },
+    {
+      "host": "thumb.wikimedia.org",
+      "kind": "image",
+      "status": 200,
+      "bytes": 438792,
+      "ok": true,
+      "at": "2026-09-22T14:39:21.613Z"
+    }
+  ],
+  "knownCostUsd": 0,
+  "scope": "New isolated fixture trip/text via normal Artifact repository; preserved real POI identity; real Wikimedia requests; no Planner",
+  "additionalMeteredProbes": [
+    {
+      "host": "en.wikipedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 792,
+      "ok": true,
+      "at": "2026-09-22T14:30:56.762Z"
+    },
+    {
+      "host": "commons.wikimedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 3158,
+      "ok": true,
+      "at": "2026-09-22T14:30:57.711Z"
+    },
+    {
+      "host": "commons.wikimedia.org",
+      "kind": "json",
+      "status": 200,
+      "bytes": 3158,
+      "ok": true,
+      "at": "2026-09-22T14:36:40.754Z"
+    }
+  ],
+  "additionalUnmeteredProbes": [
+    {
+      "purpose": "request-specific proxy API reachability for Ueno Park",
+      "status": 200,
+      "bytes": 147,
+      "source": "tool output"
+    },
+    {
+      "purpose": "Meiji Shrine exact page metadata inspection",
+      "status": 200,
+      "bytes": 713,
+      "source": "tool output"
+    }
+  ],
+  "totalServerAttempts": 19,
+  "paidCalls": 0,
+  "modelCalls": 0,
+  "researchCalls": 0,
+  "geocodingCalls": 0
+}

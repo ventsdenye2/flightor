@@ -1,5 +1,7 @@
 # 文档维护规则与本轮清理记录
 
+2026-09-22媒体维护脚本：`backend/scripts/media-validation.mjs`复用地点fixture helper，在独立loopback schema创建新的fixture攻略，正式媒体路由与真实PostgreSQL执行；默认禁新增出站，`--execute`才有界允许免费Wikimedia请求，不绕过旧账本/生产底稿保护。保留累计validation.json及失败，不写public。`test-media-postgres.mjs`使用唯一临时schema验证并发和版本保护，仅清理该schema。`qa-place-media-h5.cjs`用独立Chrome、3014真实媒体API、10087正式H5和明确fixture文字，检查真实原链解码/图像错误/版本产物并截图；需要代理时仅该浏览器配置，不改系统。`test-place-media-client.cjs`为离线并发合并与浏览状态回归。命令、失败和未测边界见[报告](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)。
+
 生效：2026-09-20，来源：用户明确要求“之后的每一次修改都要同步修改 docs”。仓库入口 [AGENTS](../AGENTS.md) 引用本规则。这里是仓库规则，不写入个人全局记忆。
 
 ## 每次修改必须做什么
@@ -97,3 +99,4 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 `node scripts/prepare-fixed-map-observation.cjs` 要求52cb1c3干净dist，复制到忽略目录并增加诊断宿主页；不修改正式桥接、不查询POI。生成manifest记录app/route/bridge字节SHA，SDK同时读取运行中桥接方法，避免只认入口指纹。固定窗口截图须OS与SDK成对，updated不认证底图。
 
 `backend/scripts/probe-place-egress.mjs --execute --request-proxy` 使用服务端PLACES_PROXY_URL和原账本独占锁；PLACES_PROBE_LEDGER_DIRECTORY可指向原目录。一次执行仅一次解析，TLS正常。旧24次账本兼容，用户明确取消次数后才使用limit=null且unlimitedPlaceCalls=true；不是自动无限重试。places-live-server同样读取此授权标识，未启动新的harness。用户要求重置USD2后采用有哈希链接的历史归档，新批次费用0，未删除旧记录。具体验证见[报告](design/budget-travel-agent/MAP_CLOSEOUT_2026-09-22.md)。
+`test-place-media-stale.cjs` 使用延迟媒体 Promise 驱动实际 RoutePage hooks，离线验证账号、会话、行程、请求代次和内容版本切换后旧结果被忽略；与 media-client 一并纳入 `npm run test:production-presentation`，不发外部请求。

@@ -19,6 +19,7 @@ import { registerTripPlanRoutes } from './routes/trip-plans.js'
 import { registerTravelGuideRoutes } from './routes/travel-guides.js'
 import { registerCloudStateRoutes } from './routes/cloud-state.js'
 import { registerPlaceRoutes } from './routes/places.js'
+import { registerMediaRoutes } from './routes/media.js'
 import { registerCloudAgentRoutes } from './routes/agent-cloud.js'
 import { registerRouteGenerationRoutes } from './routes/route-generation.js'
 import { registerWorkspaceRoutes } from './routes/workspaces.js'
@@ -105,6 +106,7 @@ export async function buildApp(context: AppContext) {
   await registerCloudAgentRoutes(app, context)
   await registerCloudStateRoutes(app, context)
   await registerPlaceRoutes(app, context)
+  await registerMediaRoutes(app, context)
   await registerWorkspaceRoutes(app, context)
   await registerEditorialRoutes(app, context)
   await registerExploreRoutes(app, context)

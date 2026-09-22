@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-09-22第四阶段：[真实景点图片](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)已接独立Wikimedia媒体API、迁移014、版本绑定缓存和正式封面/缩略图/详情；两景点H5真实照片闭环，微信页面/真机及正式public库未验收。显式补图，不改Planner/研究/终稿、不调用Nominatim。地图底图暂停排查、仍未解决。下文各阶段“图片未接”保留历史时点，当前合同以[ADR0027](adr/0027-place-media.md)为准。
+
 2026-09-22终稿增量：主 Planner 发布末端复用实际模型/client，直接一次结构化编辑调用（最多一次格式/语言修复），不启动新Agent。新攻略草稿隐藏自由文本，publication按zh/en持久保存接纳文本/问题/调用观测，语言切换不改Trip版本；GET只读，首次另一语言通过显式本地化POST使用接纳终稿。详见[ADR 0025](adr/0025-bounded-guide-finalization.md)及[验证/费用](design/budget-travel-agent/FINALIZATION_2026-09-22.md)。下文旧publication来源摘录规则仅适用于旧记录，当前领域satisfied与内容accepted分离。
 
 2026-09-21 验收收尾：[报告](design/budget-travel-agent/G1_PUBLICATION_ACCEPTANCE_2026-09-21.md) 记录当前源码的双样本独立 PostgreSQL、P1–P6 与实际 H5 详情/刷新。仅增加来源绑定名称/实用引文的最小表达修正；旧原记录 P5 仍失败，当前写入副本通过最低参考范围。微信开发者工具已补测固定结果的页面显示及 reLaunch 恢复（合成登录/只读请求拦截）；新 Provider、冷启动和真机未测，G1 总门不关闭、M1 未开始。环境状态见 [H5/微信报告](design/budget-travel-agent/G1_PUBLICATION_H5_2026-09-21.md)。下文同日“最新修正”的离线边界为本次验收之前的实施记录。

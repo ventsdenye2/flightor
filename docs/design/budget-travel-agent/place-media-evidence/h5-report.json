@@ -1,0 +1,426 @@
+{
+  "scope": "Production H5; isolated fixture accepted trip/text; real media API/PostgreSQL/Wikimedia images; maps unavailable; not production account or physical device",
+  "requests": [
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/places",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/media",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/places",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/media",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/places",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/media",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6463-754b-92a5-eea267a9726e",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/trips/publication-ui-selectedFlight/workspace",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6a-630f-7549-b64f-122b7e234aba",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/places",
+      "method": "GET",
+      "status": 503
+    },
+    {
+      "path": "/v1/artifacts/01a0bf6c-6510-74f5-b53c-da44b504b90a/media",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "images": [
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Takeshita_Street_in_December_2018.jpg/960px-Takeshita_Street_in_December_2018.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "status": 200
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Ueno_park.jpg/960px-Ueno_park.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "status": 200
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Ueno_park.jpg/960px-Ueno_park.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "status": 200
+    },
+    {
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Ueno_park.jpg/960px-Ueno_park.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "status": 200
+    }
+  ],
+  "startedAt": "2026-09-22T15:32:03.005Z",
+  "before": {
+    "requests": [
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": null,
+        "bytes": 0,
+        "ok": false,
+        "at": "2026-09-22T14:26:43.277Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": null,
+        "bytes": 0,
+        "ok": false,
+        "at": "2026-09-22T14:26:43.307Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": null,
+        "bytes": 0,
+        "ok": false,
+        "at": "2026-09-22T14:26:43.332Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2352,
+        "ok": true,
+        "at": "2026-09-22T14:29:14.176Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2382,
+        "ok": true,
+        "at": "2026-09-22T14:39:04.284Z"
+      },
+      {
+        "host": "ja.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2661,
+        "ok": true,
+        "at": "2026-09-22T14:39:06.304Z"
+      },
+      {
+        "host": "zh.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2382,
+        "ok": true,
+        "at": "2026-09-22T14:39:08.306Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2473,
+        "ok": true,
+        "at": "2026-09-22T14:39:10.208Z"
+      },
+      {
+        "host": "commons.wikimedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 3219,
+        "ok": true,
+        "at": "2026-09-22T14:39:11.532Z"
+      },
+      {
+        "host": "thumb.wikimedia.org",
+        "kind": "image",
+        "status": 200,
+        "bytes": 352541,
+        "ok": true,
+        "at": "2026-09-22T14:39:13.298Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2753,
+        "ok": true,
+        "at": "2026-09-22T14:39:14.349Z"
+      },
+      {
+        "host": "ja.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2401,
+        "ok": true,
+        "at": "2026-09-22T14:39:15.881Z"
+      },
+      {
+        "host": "commons.wikimedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 3578,
+        "ok": true,
+        "at": "2026-09-22T14:39:16.894Z"
+      },
+      {
+        "host": "thumb.wikimedia.org",
+        "kind": "image",
+        "status": 200,
+        "bytes": 438792,
+        "ok": true,
+        "at": "2026-09-22T14:39:21.613Z"
+      }
+    ],
+    "knownCostUsd": 0,
+    "schema": "places_test_1790087145949"
+  },
+  "titleBefore": "上野公园文化区",
+  "ueno": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Ueno_park.jpg/960px-Ueno_park.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "width": 960,
+    "height": 720
+  },
+  "thumbnail": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Ueno_park.jpg/960px-Ueno_park.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "width": 960,
+    "height": 720
+  },
+  "takeshita": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4d/Takeshita_Street_in_December_2018.jpg/960px-Takeshita_Street_in_December_2018.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "width": 960,
+    "height": 1280
+  },
+  "cover": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Ueno_park.jpg/960px-Ueno_park.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "width": 960,
+    "height": 720
+  },
+  "after": {
+    "requests": [
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": null,
+        "bytes": 0,
+        "ok": false,
+        "at": "2026-09-22T14:26:43.277Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": null,
+        "bytes": 0,
+        "ok": false,
+        "at": "2026-09-22T14:26:43.307Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": null,
+        "bytes": 0,
+        "ok": false,
+        "at": "2026-09-22T14:26:43.332Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2352,
+        "ok": true,
+        "at": "2026-09-22T14:29:14.176Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2382,
+        "ok": true,
+        "at": "2026-09-22T14:39:04.284Z"
+      },
+      {
+        "host": "ja.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2661,
+        "ok": true,
+        "at": "2026-09-22T14:39:06.304Z"
+      },
+      {
+        "host": "zh.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2382,
+        "ok": true,
+        "at": "2026-09-22T14:39:08.306Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2473,
+        "ok": true,
+        "at": "2026-09-22T14:39:10.208Z"
+      },
+      {
+        "host": "commons.wikimedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 3219,
+        "ok": true,
+        "at": "2026-09-22T14:39:11.532Z"
+      },
+      {
+        "host": "thumb.wikimedia.org",
+        "kind": "image",
+        "status": 200,
+        "bytes": 352541,
+        "ok": true,
+        "at": "2026-09-22T14:39:13.298Z"
+      },
+      {
+        "host": "en.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2753,
+        "ok": true,
+        "at": "2026-09-22T14:39:14.349Z"
+      },
+      {
+        "host": "ja.wikipedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 2401,
+        "ok": true,
+        "at": "2026-09-22T14:39:15.881Z"
+      },
+      {
+        "host": "commons.wikimedia.org",
+        "kind": "json",
+        "status": 200,
+        "bytes": 3578,
+        "ok": true,
+        "at": "2026-09-22T14:39:16.894Z"
+      },
+      {
+        "host": "thumb.wikimedia.org",
+        "kind": "image",
+        "status": 200,
+        "bytes": 438792,
+        "ok": true,
+        "at": "2026-09-22T14:39:21.613Z"
+      }
+    ],
+    "knownCostUsd": 0,
+    "schema": "places_test_1790087145949"
+  },
+  "restored": true,
+  "layout": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "nonImageCollapsed": true,
+  "build": {
+    "baseSha": "a9808829da738eb39614a7bfc50d7784a578dafe",
+    "dirty": true,
+    "assets": [
+      {
+        "path": "/js/21.js",
+        "sha256": "1691606425f53daf60ca69341f35e565d4188161ed3a1f19d6d0b81af63fc402"
+      },
+      {
+        "path": "/js/app.js",
+        "sha256": "1ba130804e8d725885cd940f0ca2d78e671b7c82ed61da050e39ae45886ee097"
+      },
+      {
+        "path": "/chunk/34.js",
+        "sha256": "3c2d52926fdc31bb11647540b8ec705f3ca468d1db9296caa3a25bd6c2330d69"
+      }
+    ]
+  },
+  "passed": true
+}

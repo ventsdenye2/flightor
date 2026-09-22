@@ -32,6 +32,9 @@ export interface TripExperienceProps {
   onPreparePlaces?:()=>void
   placesBusy?:boolean
   placesError?:string
+  onPrepareMedia?:()=>void
+  mediaBusy?:boolean
+  mediaError?:string
 }
 function TripPhoto({ image, className, forceError = false }: { image: MediaPresentation | null; className: string; forceError?: boolean }) {
   return image?.src ? <Photo src={image.src} description={image.description} className={className} forceError={forceError} /> : <View className={`ux-photo-fallback ${className}`}><Icon name='image' /><Text>{image?.description || '目的地照片待补充'}</Text></View>

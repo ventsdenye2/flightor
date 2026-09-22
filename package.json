@@ -52,7 +52,7 @@
     "test:phase789-client": "node scripts/test-phase789-client.js",
     "admin:dev": "npm --prefix apps/admin run dev",
     "admin:build": "npm --prefix apps/admin run build",
-    "test:production-presentation": "node scripts/test-production-presentation.cjs && npm run test:planner-reply && node scripts/test-production-library.cjs"
+    "test:production-presentation": "node scripts/test-production-presentation.cjs && npm run test:planner-reply && node scripts/test-production-library.cjs && node scripts/test-place-media-client.cjs && node scripts/test-place-media-stale.cjs"
   },
   "overrides": {
     "webpack": "5.78.0"

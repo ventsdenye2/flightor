@@ -1,5 +1,6 @@
 // Publication UI copy; shared by the normal i18n entry and pure display adapters.
 export const tripZh: Record<string, string> = {
+  'trip.prepareMedia':'补全 / 重试图片','trip.mediaLoading':'正在查找景点照片…','trip.mediaFailed':'图片暂未补齐，文字行程仍可使用。请稍后重试。','trip.photoCrop':'照片已按版式裁切','trip.photoLicense':'照片许可',
   'trip.mapTitle':'行程地图','trip.resolvePlaces':'补全地点','trip.placesResolving':'正在确认地点…','trip.placesFailed':'地点服务暂不可用，文字行程仍可查看。请稍后手动重试。',
   'trip.mapUnresolved':'尚无已确认位置，请先补全地点；日程仍可正常查看。','trip.mapLoading':'正在加载底图…','trip.nativeMapCredit':'底图由微信地图服务提供',
   'trip.mapOverviewNote':'城市与已确认地点；航空连线仅为示意，不是地面导航。',
@@ -44,6 +45,7 @@ export const tripZh: Record<string, string> = {
   'trip.nextDay': '次日', 'trip.reloadImage': '重新加载图片', 'trip.reviewRisks': '请在规划记录中查看并处理行程风险。'
 }
 export const tripEn: Record<string, string> = {
+  'trip.prepareMedia':'Add / retry photos','trip.mediaLoading':'Finding place photos…','trip.mediaFailed':'Photos are unavailable. Your text itinerary is still usable; retry later.','trip.photoCrop':'Photo cropped to fit','trip.photoLicense':'Photo license',
   'trip.mapTitle':'Trip map','trip.resolvePlaces':'Resolve places','trip.placesResolving':'Confirming places…','trip.placesFailed':'The place service is unavailable. Your text itinerary is still available; retry manually later.',
   'trip.mapUnresolved':'No confirmed locations yet. Resolve places to add the map; the itinerary remains available.','trip.mapLoading':'Loading the map…','trip.nativeMapCredit':'Basemap by WeChat map service',
   'trip.mapOverviewNote':'Cities and confirmed places; flight lines are schematic, not ground navigation.',

@@ -574,3 +574,6 @@ Agent请求增加`locale: zh|en`（兼容缺省zh）；Artifact/Workspace/histor
 ## 2026-09-22 发布后的地点 API（不是 Planner 工具）
 
 GET `/v1/map-config` 公开 OSM 瓦片模板和是否配置，不含 secret。认证 GET `/v1/artifacts/:id/places` 只读当前 owner/Trip/航班/hash 的独立 enrichment；显式 POST 同路径严格接收 `{contentVersion}`，需要 accepted 底稿，最多12条线索/25秒、单查询8秒、数据库全局限流1100ms，网络不在事务内。GET、刷新、locale 切换不调用 POI；请求不提供搜索/规划/保存业务权限。实体/缓存/取消/冲突合同见 [ADR 0026](adr/0026-place-identity-and-maps.md)，不是新增 Agent 或 Goal。
+# 2026-09-22 发布后媒体端点
+
+认证 GET/POST `/v1/artifacts/:id/media` 不属于 Planner 工具表；GET仅返回当前accepted guideContentHash对应的已存活动媒体，POST `{contentVersion}` 才执行显式、有界Wikimedia补全。owner/Trip/航班/内容/活动保护复用地点快照，独立媒体事务不会改正文或地点。没有新增模型/搜索工具调用，详见[ADR0027](adr/0027-place-media.md)。

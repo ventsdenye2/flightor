@@ -48,7 +48,7 @@ function fail(message: string, code: string): Error {
   return error
 }
 
-function ipv4IsPublic(value: string): boolean {
+export function ipv4IsPublic(value: string): boolean {
   const parts = value.split('.')
   if (parts.length !== 4 || parts.some(part => !/^\d{1,3}$/.test(part) || Number(part) > 255)) return false
   const [a, b, c] = parts.map(Number) as [number, number, number]
