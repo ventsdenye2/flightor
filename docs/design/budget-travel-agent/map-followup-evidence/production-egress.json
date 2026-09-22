@@ -1,0 +1,22 @@
+{
+  "scope": "Unmodified production NominatimProvider with default Node fetch, not harness proxy; no production API running implied",
+  "node": "v22.21.0",
+  "call": {
+    "number": 16,
+    "startedAt": "2026-09-22T11:58:12.324Z",
+    "status": "failed",
+    "costUsd": 0,
+    "transport": "production-default-fetch",
+    "query": "Meiji Jingu Shrine, Tokyo",
+    "diagnostic": {
+      "name": "TimeoutError",
+      "errMsg": "The operation was aborted due to timeout",
+      "errCode": null,
+      "causeCode": null
+    },
+    "finishedAt": "2026-09-22T11:58:20.334Z",
+    "durationMs": 8005
+  },
+  "used": 16,
+  "limit": 24
+}

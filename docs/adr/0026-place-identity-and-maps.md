@@ -24,7 +24,9 @@
 
 H5 使用 Leaflet + HTTPS OSM 实际瓦片，保留署名/正常 Referer/缓存，8秒无成功瓦片后紧凑降级，不预下载。微信使用原生 Map，输入转 GCJ-02；只有 countryCode=CN 且在适用范围内才转换，JP/KR 等境外不偏移。服务端永远保留 WGS84，转换函数声明 inputSystem/displaySystem/converted，不重复转换。未开启实时定位。
 
-微信 `components/place-map` 是最小原生视图桥接：Taro 传递 JSON 字符串，原生组件解析后直接绑定 markers/polyline/include-points，事件回传稳定编号。没有地点查询或第二套业务状态。8秒未收到 updated 或 error 时收起；原生 updated 不是瓦片加载成功证明，平台可能静默显示空白底图，因此另提供显式“底图未加载？收起地图”。本轮东京模拟器底图仍未通过，不能据 SDK 回调/标记成功宣称地图底图可用。H5 已独立验证真实 OSM 瓦片。
+微信 `components/place-map` 是最小原生视图桥接：Taro 传递 JSON 字符串，原生组件绑定 markers/polyline，事件回传稳定编号。视野由显式 includePoints 调整：单次回调截止3秒，同一范围最多2次，失败保留有效中心/缩放；仅实际 success 记录成功范围，旧回调不能覆盖新范围。没有地点查询或第二套业务状态。8秒未收到 updated 只记录 unknown；updated、鉴权和标记交互都不认证底图可见。实际组件错误紧凑降级；用户“收起地图”只代表主动收起，不计修复成功。平台实测以[收尾记录](../design/budget-travel-agent/PLACES_MAP_FOLLOWUP_2026-09-22.md)为准，不追认旧截图。
+
+文字恢复不等待地点 GET：先展示当前 accepted 内容，再独立读取扩展；写回需同 owner/session、locale、请求代次、artifactId、内容 hash。失败保留文字，刷新只有 GET，不触发自动解析。地点解析、map-config、H5 tileload/tileerror、原生创建/鉴权/updated/交互及 includePoints 分层诊断；客户端有界内存环150条、原生50条，不持久记录凭证，缺失 errMsg/errCode 显式 null。Provider 失败在现有地点 JSON 中保留白名单 name/message/code/causeCode；不增加数据库表。
 
 日地图保持原行程编号（缺点不重排），marker 打开对应 activityId 的详情，列表点击高亮标记，日期/语言切换更新标记。连线是访问顺序示意，不是导航、距离或耗时；机场连线单独标注航空示意。无数据/地图错误紧凑提示，文字不依赖地图成功。
 

@@ -13,7 +13,7 @@ import { FlightSearchCard } from '../../components/artifacts/FlightSearchCard'
 import { FlightDetail } from '../../components/route/FlightDetail'
 import { resolveArtifactRenderer } from '../../components/artifacts/registry'
 import { ensureWorkspaceConversation, getCloudWorkspace, updateCloudTrip } from '../../services/workspaceService'
-import { loadProductionTrip, prepareProductionLocale, prepareProductionPlaces } from '../../services/productionTripService'
+import { loadProductionTrip, loadProductionPlaces, samePlacePublication, prepareProductionLocale, prepareProductionPlaces } from '../../services/productionTripService'
 import TripExperience from '../../features/ui-experience/TripExperience'
 import type { TripPresentation } from '../../features/ui-experience/presentation'
 import { safeSourceUrl } from '../../features/ui-experience/productionPresentation'
@@ -41,7 +41,17 @@ function RoutePage() {
   const [layoverPreference, setLayoverPreference] = useState<'airport_only' | 'consider_city'>('airport_only')
   const activeKey = useRef(key); activeKey.current = key
   const publicationRequests = useRef(new Set<string>())
+  const generation = useRef(0)
+  function supplementPlaces(loaded: Awaited<ReturnType<typeof loadProductionTrip>>, context: Parameters<typeof loadProductionTrip>[1], ticket: number) {
+    const revision = userStore.sessionRevision
+    void loadProductionPlaces(loaded, context).then(enriched => {
+      if (generation.current !== ticket || activeKey.current !== key || userStore.sessionRevision !== revision || userStore.profile?.uid !== ownerId) return
+      setState(previous => previous.key === key && samePlacePublication(previous.presentation, enriched.presentation)
+        ? { ...previous, presentation: enriched.presentation } : previous)
+    }).catch(() => { /* Extension diagnostics own failures; accepted text remains usable. */ })
+  }
   useEffect(() => {
+    const ticket = ++generation.current
     void Taro.setNavigationBarTitle({ title: t('trip.details') })
     let active = true
     setSaved(''); setSaving(false); setLayoverPreference('airport_only')
@@ -49,25 +59,29 @@ function RoutePage() {
     setState({ key })
     const context = { ownerId, sessionId: chatStore.currentSessionId, force: attempt > 0, locale }
     artifactService.fetchArtifact(artifactId, context).then(async artifact => {
-      if (!active) return
+      if (!active || generation.current !== ticket) return
       const resolution = resolveArtifactRenderer(artifact)
       if (!resolution.supported) {
         setState({ key, artifact })
       } else if (resolution.key === 'route' || resolution.key === 'travel_guide') {
         const loaded = await loadProductionTrip(artifactId, context)
-        if (active) setState({ key, artifact: loaded.route, presentation: loaded.presentation })
+        if (active && generation.current === ticket) {
+          setState({ key, artifact: loaded.route, presentation: loaded.presentation })
+          supplementPlaces(loaded, context, ticket)
+        }
       } else setState({ key, artifact, ...(resolution.key.startsWith('route_set:') ? { routes: readRouteArtifact(artifact) } : {}) })
-    }).catch(error => { if (active) setState({ key, error: error instanceof Error ? error.message : '加载失败，请重试' }) })
-    return () => { active = false }
+    }).catch(error => { if (active && generation.current === ticket) setState({ key, error: error instanceof Error ? error.message : '加载失败，请重试' }) })
+    return () => { active = false; generation.current++ }
   }, [key, attempt])
   const current = state.key === key ? state : undefined
   const artifact = current?.artifact
   async function preparePlaces(){
     if(!ownerId||placeRequests.current.has(key))return
     placeRequests.current.add(key);setPlacesAction({key,busy:true})
+    const ticket=++generation.current
     const revision=userStore.sessionRevision
     try {const loaded=await prepareProductionPlaces(artifactId,{ownerId,sessionId:chatStore.currentSessionId,locale})
-      if(activeKey.current===key&&userStore.sessionRevision===revision){setState({key,artifact:loaded.route,presentation:loaded.presentation});setPlacesAction({key,busy:false})}
+      if(generation.current===ticket&&activeKey.current===key&&userStore.sessionRevision===revision){setState({key,artifact:loaded.route,presentation:loaded.presentation});setPlacesAction({key,busy:false})}
     }catch{if(activeKey.current===key&&userStore.sessionRevision===revision)setPlacesAction({key,busy:false,error:t('trip.placesFailed')})}
     finally{placeRequests.current.delete(key)}
   }
@@ -75,10 +89,14 @@ function RoutePage() {
     if (!ownerId || publicationRequests.current.has(key)) return
     publicationRequests.current.add(key)
     const authRevision = userStore.sessionRevision
+    const ticket = ++generation.current
     setPublicationAction({ key, busy: true })
     try {
       const loaded = await prepareProductionLocale(artifactId, { ownerId, sessionId: chatStore.currentSessionId, locale }, retryRevision)
-      if (activeKey.current === key && userStore.sessionRevision === authRevision) setState({ key, artifact: loaded.route, presentation: loaded.presentation })
+      if (generation.current === ticket && activeKey.current === key && userStore.sessionRevision === authRevision) {
+        setState({ key, artifact: loaded.route, presentation: loaded.presentation })
+        supplementPlaces(loaded, { ownerId, sessionId: chatStore.currentSessionId, locale }, ticket)
+      }
     } catch {
       if (activeKey.current === key && userStore.sessionRevision === authRevision) setPublicationAction({ key, busy: false, error: t('trip.requestFailed') })
       return

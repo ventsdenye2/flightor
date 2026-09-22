@@ -1,3 +1,4 @@
+import { placeFailureDetail } from './diagnostics.js'
 import { createHash } from 'node:crypto'
 import type { ArtifactRecord } from '../artifacts/repository.js'
 import { publicationFor } from '../travel-guides/publication.js'
@@ -55,7 +56,7 @@ export class PlaceService {
         let query=this.queries.get(cacheKey)
         if(!query){query=this.provider.search(hint,signal).catch(error=>{
           signal.throwIfAborted()
-          return{status:'unavailable' as const,reason:error instanceof Error && error.name==='TimeoutError'?'timeout':'provider_failure',checkedAt:new Date().toISOString()}
+            return{status:'unavailable' as const,reason:error instanceof Error && error.name==='TimeoutError'?'timeout':'provider_failure',checkedAt:new Date().toISOString(),diagnostic:placeFailureDetail(error)}
         }).then(value=>this.repo.cache(cacheKey,value))
           this.queries.set(cacheKey,query);void query.finally(()=>{if(this.queries.get(cacheKey)===query)this.queries.delete(cacheKey)}).catch(()=>{})}
         result=await query

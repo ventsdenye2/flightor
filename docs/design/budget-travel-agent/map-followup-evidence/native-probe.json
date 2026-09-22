@@ -1,0 +1,1379 @@
+{
+  "scope": "Diagnostic page added only to current dist; saved coordinates; actual DevTools native basemap; no API fixture or POI queries; no physical device",
+  "cases": [
+    {
+      "city": "beijing",
+      "stage": "bare",
+      "route": "pages/map-probe/index",
+      "data": {
+        "stage": "bare",
+        "point": {
+          "id": "beijing",
+          "name": "PEK",
+          "latitude": 40.080947418094794,
+          "longitude": 116.60890850936424,
+          "countryCode": "CN",
+          "system": "WGS84",
+          "kind": "airport",
+          "source": "flightor-reference-data",
+          "inputSystem": "WGS84",
+          "displaySystem": "GCJ02",
+          "converted": true
+        },
+        "payload": "",
+        "label": "beijing / bare / airport",
+        "__webviewId__": 19
+      },
+      "events": [
+        {
+          "type": "updated",
+          "detail": null
+        }
+      ],
+      "componentDiagnostics": null,
+      "basemap": "requires_visual_inspection"
+    },
+    {
+      "city": "beijing",
+      "stage": "bridge",
+      "route": "pages/map-probe/index",
+      "data": {
+        "stage": "bridge",
+        "point": {
+          "id": "beijing",
+          "name": "PEK",
+          "latitude": 40.080947418094794,
+          "longitude": 116.60890850936424,
+          "countryCode": "CN",
+          "system": "WGS84",
+          "kind": "airport",
+          "source": "flightor-reference-data",
+          "inputSystem": "WGS84",
+          "displaySystem": "GCJ02",
+          "converted": true
+        },
+        "payload": "",
+        "label": "beijing / bridge / airport",
+        "__webviewId__": 21
+      },
+      "events": [
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "created",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": null,
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 587,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 591,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        }
+      ],
+      "componentDiagnostics": [
+        {
+          "stage": "created",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 587,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 591,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        }
+      ],
+      "basemap": "requires_visual_inspection"
+    },
+    {
+      "city": "beijing",
+      "stage": "markers",
+      "route": "pages/map-probe/index",
+      "data": {
+        "stage": "markers",
+        "point": {
+          "id": "beijing",
+          "name": "PEK",
+          "latitude": 40.080947418094794,
+          "longitude": 116.60890850936424,
+          "countryCode": "CN",
+          "system": "WGS84",
+          "kind": "airport",
+          "source": "flightor-reference-data",
+          "inputSystem": "WGS84",
+          "displaySystem": "GCJ02",
+          "converted": true
+        },
+        "payload": "{\"markers\":[{\"id\":1,\"latitude\":40.080947418094794,\"longitude\":116.60890850936424,\"title\":\"PEK\",\"iconPath\":\"/assets/ui-experience/marker.png\",\"width\":32,\"height\":40}],\"lines\":[],\"bounds\":[]}",
+        "label": "beijing / markers / airport",
+        "__webviewId__": 22
+      },
+      "events": [
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "created",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": null,
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 669,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 674,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 675,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        }
+      ],
+      "componentDiagnostics": [
+        {
+          "stage": "created",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 669,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 674,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 675,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        }
+      ],
+      "basemap": "requires_visual_inspection"
+    },
+    {
+      "city": "beijing",
+      "stage": "fit",
+      "route": "pages/map-probe/index",
+      "data": {
+        "stage": "fit",
+        "point": {
+          "id": "beijing",
+          "name": "PEK",
+          "latitude": 40.080947418094794,
+          "longitude": 116.60890850936424,
+          "countryCode": "CN",
+          "system": "WGS84",
+          "kind": "airport",
+          "source": "flightor-reference-data",
+          "inputSystem": "WGS84",
+          "displaySystem": "GCJ02",
+          "converted": true
+        },
+        "payload": "{\"markers\":[{\"id\":1,\"latitude\":40.080947418094794,\"longitude\":116.60890850936424,\"title\":\"PEK\",\"iconPath\":\"/assets/ui-experience/marker.png\",\"width\":32,\"height\":40}],\"lines\":[],\"bounds\":[{\"latitude\":40.07594741809479,\"longitude\":116.60390850936425},{\"latitude\":40.0859474180948,\"longitude\":116.61390850936424}]}",
+        "label": "beijing / fit / airport",
+        "__webviewId__": 23
+      },
+      "events": [
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "created",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": null,
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "includePoints.start",
+            "status": "pending",
+            "basemap": "unknown",
+            "detail": {
+              "attempt": 1
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 576,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 580,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 581,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "includePoints.success",
+            "status": "succeeded",
+            "basemap": "unknown",
+            "detail": {
+              "errMsg": "includeMapPoints:ok"
+            },
+            "errMsg": "includeMapPoints:ok",
+            "errCode": null
+          }
+        }
+      ],
+      "componentDiagnostics": [
+        {
+          "stage": "created",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "includePoints.start",
+          "status": "pending",
+          "basemap": "unknown",
+          "detail": {
+            "attempt": 1
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 576,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 580,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 581,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "includePoints.success",
+          "status": "succeeded",
+          "basemap": "unknown",
+          "detail": {
+            "errMsg": "includeMapPoints:ok"
+          },
+          "errMsg": "includeMapPoints:ok",
+          "errCode": null
+        }
+      ],
+      "basemap": "requires_visual_inspection"
+    },
+    {
+      "city": "tokyo",
+      "stage": "bare",
+      "route": "pages/map-probe/index",
+      "data": {
+        "stage": "bare",
+        "point": {
+          "id": "tokyo",
+          "name": "Meiji Jingu Main Shrine",
+          "placeId": "osm:way:469908925",
+          "kind": "venue",
+          "countryCode": "JP",
+          "system": "WGS84",
+          "latitude": 35.6748417,
+          "longitude": 139.6996266,
+          "inputSystem": "WGS84",
+          "displaySystem": "GCJ02",
+          "converted": false
+        },
+        "payload": "",
+        "label": "tokyo / bare / venue",
+        "__webviewId__": 24
+      },
+      "events": [
+        {
+          "type": "updated",
+          "detail": null
+        }
+      ],
+      "componentDiagnostics": null,
+      "basemap": "requires_visual_inspection"
+    },
+    {
+      "city": "tokyo",
+      "stage": "bridge",
+      "route": "pages/map-probe/index",
+      "data": {
+        "stage": "bridge",
+        "point": {
+          "id": "tokyo",
+          "name": "Meiji Jingu Main Shrine",
+          "placeId": "osm:way:469908925",
+          "kind": "venue",
+          "countryCode": "JP",
+          "system": "WGS84",
+          "latitude": 35.6748417,
+          "longitude": 139.6996266,
+          "inputSystem": "WGS84",
+          "displaySystem": "GCJ02",
+          "converted": false
+        },
+        "payload": "",
+        "label": "tokyo / bridge / venue",
+        "__webviewId__": 25
+      },
+      "events": [
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "created",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": null,
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 1145,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 1150,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        }
+      ],
+      "componentDiagnostics": [
+        {
+          "stage": "created",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 1145,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 1150,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        }
+      ],
+      "basemap": "requires_visual_inspection"
+    },
+    {
+      "city": "tokyo",
+      "stage": "markers",
+      "route": "pages/map-probe/index",
+      "data": {
+        "stage": "markers",
+        "point": {
+          "id": "tokyo",
+          "name": "Meiji Jingu Main Shrine",
+          "placeId": "osm:way:469908925",
+          "kind": "venue",
+          "countryCode": "JP",
+          "system": "WGS84",
+          "latitude": 35.6748417,
+          "longitude": 139.6996266,
+          "inputSystem": "WGS84",
+          "displaySystem": "GCJ02",
+          "converted": false
+        },
+        "payload": "{\"markers\":[{\"id\":1,\"latitude\":35.6748417,\"longitude\":139.6996266,\"title\":\"Meiji Jingu Main Shrine\",\"iconPath\":\"/assets/ui-experience/marker.png\",\"width\":32,\"height\":40}],\"lines\":[],\"bounds\":[]}",
+        "label": "tokyo / markers / venue",
+        "__webviewId__": 26
+      },
+      "events": [
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "created",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": null,
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 524,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 527,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 529,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        }
+      ],
+      "componentDiagnostics": [
+        {
+          "stage": "created",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 524,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 527,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 529,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        }
+      ],
+      "basemap": "requires_visual_inspection"
+    },
+    {
+      "city": "tokyo",
+      "stage": "fit",
+      "route": "pages/map-probe/index",
+      "data": {
+        "stage": "fit",
+        "point": {
+          "id": "tokyo",
+          "name": "Meiji Jingu Main Shrine",
+          "placeId": "osm:way:469908925",
+          "kind": "venue",
+          "countryCode": "JP",
+          "system": "WGS84",
+          "latitude": 35.6748417,
+          "longitude": 139.6996266,
+          "inputSystem": "WGS84",
+          "displaySystem": "GCJ02",
+          "converted": false
+        },
+        "payload": "{\"markers\":[{\"id\":1,\"latitude\":35.6748417,\"longitude\":139.6996266,\"title\":\"Meiji Jingu Main Shrine\",\"iconPath\":\"/assets/ui-experience/marker.png\",\"width\":32,\"height\":40}],\"lines\":[],\"bounds\":[{\"latitude\":35.6698417,\"longitude\":139.6946266},{\"latitude\":35.679841700000004,\"longitude\":139.70462659999998}]}",
+        "label": "tokyo / fit / venue",
+        "__webviewId__": 27
+      },
+      "events": [
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "created",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": null,
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "includePoints.start",
+            "status": "pending",
+            "basemap": "unknown",
+            "detail": {
+              "attempt": 1
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "includePoints.success",
+            "status": "succeeded",
+            "basemap": "unknown",
+            "detail": {
+              "errMsg": "includeMapPoints:ok"
+            },
+            "errMsg": "includeMapPoints:ok",
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 570,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 573,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        },
+        {
+          "type": "mapdiagnostic",
+          "detail": {
+            "stage": "updated",
+            "status": "observed",
+            "basemap": "unknown",
+            "detail": {
+              "type": "updated",
+              "timeStamp": 574,
+              "target": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "currentTarget": {
+                "id": "places",
+                "offsetLeft": 0,
+                "offsetTop": 48,
+                "dataset": {}
+              },
+              "mark": {},
+              "mut": false,
+              "_userTap": false,
+              "__evName": "updated"
+            },
+            "errMsg": null,
+            "errCode": null
+          }
+        }
+      ],
+      "componentDiagnostics": [
+        {
+          "stage": "created",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "includePoints.start",
+          "status": "pending",
+          "basemap": "unknown",
+          "detail": {
+            "attempt": 1
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "includePoints.success",
+          "status": "succeeded",
+          "basemap": "unknown",
+          "detail": {
+            "errMsg": "includeMapPoints:ok"
+          },
+          "errMsg": "includeMapPoints:ok",
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 570,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 573,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "stage": "updated",
+          "status": "observed",
+          "basemap": "unknown",
+          "detail": {
+            "type": "updated",
+            "timeStamp": 574,
+            "target": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "currentTarget": {
+              "id": "places",
+              "offsetLeft": 0,
+              "offsetTop": 48,
+              "dataset": {}
+            },
+            "mark": {},
+            "mut": false,
+            "_userTap": false,
+            "__evName": "updated"
+          },
+          "errMsg": null,
+          "errCode": null
+        }
+      ],
+      "basemap": "requires_visual_inspection"
+    }
+  ],
+  "errors": [],
+  "recordedAt": "2026-09-22T12:18:12.939Z",
+  "runtime": {
+    "build": {
+      "sha": "1e097c47712e1f224c297d199737b57bca3c05a2",
+      "gitSha": "1e097c47712e1f224c297d199737b57bca3c05a2",
+      "dirty": true,
+      "sourceFingerprint": "34756fb7ba9a04e3d2c8e867a208394f5e8347aba27d2cb911bb09d9f0cea7c4",
+      "builtAt": "2026-09-22T11:57:23.529Z",
+      "mode": "production",
+      "apiBaseUrl": "http://127.0.0.1:3000",
+      "diagnosticOnly": true
+    },
+    "appId": "wxdf9ff3c30a1d9549",
+    "SDKVersion": "3.17.0",
+    "platform": "devtools",
+    "version": "8.0.5"
+  }
+}

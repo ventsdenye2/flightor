@@ -4,14 +4,15 @@ import { displayPoint } from './coordinates'
 import type { TripMapProps } from './types'
 import { tripText } from '../../i18n/trip'
 import './map.scss'
+import {recordMapDiagnostic} from './diagnostics'
 declare global { namespace JSX { interface IntrinsicElements {
- 'place-map': {key:string;id:string;className:string;payload:string;onMapfailure:()=>void;onMapready:()=>void;onSelectplace:(event:{detail:{markerId:number}})=>void}
+ 'place-map': {key:string;id:string;className:string;payload:string;onMapfailure:(event:{detail:unknown})=>void;onMapdiagnostic:(event:{detail:{stage:string;status?:string}})=>void;onMapready:()=>void;onSelectplace:(event:{detail:{markerId:number}})=>void}
 } } }
 export default function TripMap({points,selectedId,onSelect,locale,orderLine,flightLines=[],mapKey}:TripMapProps){
  const [failed,setFailed]=useState(false)
- const rendered=useRef(false)
+ const componentUpdated=useRef(false)
  const id=`map-${mapKey.replace(/[^a-z0-9]/gi,'').slice(0,30)}`
- useEffect(()=>{setFailed(false);rendered.current=false;const timer=setTimeout(()=>{if(points.length&&!rendered.current)setFailed(true)},8000);return()=>clearTimeout(timer)},[mapKey,JSON.stringify(points)])
+ useEffect(()=>{setFailed(false);componentUpdated.current=false;const timer=setTimeout(()=>{if(points.length&&!componentUpdated.current)recordMapDiagnostic('native','update_timeout',null,'unknown')},8000);return()=>clearTimeout(timer)},[mapKey,JSON.stringify(points)])
  const shown=points.map(p=>displayPoint(p,'GCJ02'))
  const markers=shown.map((p,index)=>({id:index+1,latitude:p.latitude,longitude:p.longitude,title:p.name,
   iconPath:'/assets/ui-experience/marker.png',width:p.id===selectedId?40:32,height:p.id===selectedId?50:40,
@@ -23,10 +24,11 @@ export default function TripMap({points,selectedId,onSelect,locale,orderLine,fli
  if(!shown.length||failed)return <Text className='ux-map-compact'>{tripText(locale,failed?'trip.mapUnavailable':'trip.mapUnresolved')}</Text>
  return <View className='trip-map-frame' data-coordinate-system='GCJ02'>
   <place-map key={mapKey} id={id} className='trip-place-map' payload={JSON.stringify({markers,lines,bounds})}
-   onMapfailure={()=>setFailed(true)} onMapready={()=>{rendered.current=true}}
+   onMapdiagnostic={e=>recordMapDiagnostic('native',e.detail.stage,e.detail,e.detail.status)}
+   onMapfailure={e=>{recordMapDiagnostic('native','component_failure',e.detail,'failed');setFailed(true)}} onMapready={()=>{componentUpdated.current=true}}
    onSelectplace={e=>{const p=shown[Number(e.detail.markerId)-1];if(p)onSelect?.(p.id)}} />
   <Text className='trip-map-attribution'>© OpenStreetMap contributors · {tripText(locale,'trip.nativeMapCredit')}</Text>
   <Text className='trip-map-caption'>{tripText(locale,orderLine?'trip.mapOrder':'trip.mapOverviewNote')}</Text>
-  <Button className='ux-text-button trip-map-hide' onClick={()=>setFailed(true)}>{tripText(locale,'trip.mapHide')}</Button>
+  <Button className='ux-text-button trip-map-hide' onClick={()=>{recordMapDiagnostic('native','user_collapsed',null,'unknown');setFailed(true)}}>{tripText(locale,'trip.mapHide')}</Button>
  </View>
 }

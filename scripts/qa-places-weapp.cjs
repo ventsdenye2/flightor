@@ -1,7 +1,8 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict')
 const automator=require('../.tmp/wechat-sdk/node_modules/miniprogram-automator')
 const transport=JSON.parse(fs.readFileSync('backend/.demo/places-map-20260922/transport.json','utf8'))
-const output=path.resolve('output/weapp/places-map');fs.mkdirSync(output,{recursive:true})
+const followup=process.argv.includes('--followup')
+const output=path.resolve('output/weapp/'+(followup?'map-followup-production':'places-map'));fs.mkdirSync(output,{recursive:true})
 const report={scope:'Actual production WeChat DevTools native maps, SDK marker event + list tap; synthetic trip/text/login; fixture transport of fresh authenticated API reads of persisted live POI identities; not physical device or live WeChat HTTP acceptance',recordedAt:new Date().toISOString(),cases:[]}
 let mini,original,storage,guest=false,originalLocale
 const bounded=async(p,label)=>{let t;try{return await Promise.race([p,new Promise((_,reject)=>t=setTimeout(()=>reject(Error(label+' timeout')),25000))])}finally{clearTimeout(t)}}
@@ -13,6 +14,8 @@ async function navigate(url){const tab=/^\/pages\/(profile|plan|trips|explore)\/
 ;(async()=>{
  mini=await bounded(automator.connect({wsEndpoint:'ws://127.0.0.1:9432'}),'connect')
  const send=mini.connection.send.bind(mini.connection);mini.connection.send=(m,p)=>{report.lastMethod=m;return bounded(send(m,p),m)}
+ report.runtime=await mini.evaluate(()=>({build:globalThis.__FLIGHTOR_BUILD__,appId:wx.getAccountInfoSync().miniProgram.appId,SDKVersion:wx.getSystemInfoSync().SDKVersion}))
+ assert.equal(report.runtime.build.sourceFingerprint,JSON.parse(fs.readFileSync('dist/build-info.json')).sourceFingerprint)
  original=await mini.currentPage();originalLocale=await mini.evaluate(()=>wx.getStorageSync('flightor:locale')||'zh')
  guest=!await mini.evaluate(()=>!!wx.getStorageSync('flightor:profile'));if(await mini.evaluate(()=>wx.getStorageSync('flightor:profile')?.uid==='places-fixture')){guest=true;storage=JSON.parse(fs.readFileSync(path.join(output,'guest-storage-backup.json'),'utf8'))}
  if(guest&&!storage){
@@ -50,7 +53,7 @@ async function navigate(url){const tab=/^\/pages\/(profile|plan|trips|explore)\/
    const toggle=await page.$('.ux-locale-toggle'),label=await toggle.text()
    if((locale==='zh'&&label==='中文')||(locale==='en'&&label==='English')){await toggle.tap();await page.waitFor(900)}
    assert.ok(await page.$('.ux-publication-state--accepted'))
-   if(locale==='zh'){await(await page.$('.ux-prepare-places')).tap();await page.waitFor(1000)}
+   if(locale==='zh'&&!followup){await(await page.$('.ux-prepare-places')).tap();await page.waitFor(1000)}
    await shot(`${entry.id}-${locale}-overview`)
    await(await page.$$('.ux-tab'))[1].tap();await page.waitFor(300)
    for(let d=0;d<2;d++){
@@ -69,7 +72,7 @@ async function navigate(url){const tab=/^\/pages\/(profile|plan|trips|explore)\/
     }else assert.ok(await page.$('.ux-map-compact'))
     assert.equal(markers.length,(entry.id==='selfTicket'?[0,1]:[1,2])[d],'confirmed POIs must reach the native map')
     await page.waitFor(1000);await shot(`${entry.id}-${locale}-day${d+1}`)
-    states.push({locale,day:d+1,markers,text:await text(page,'.ux-day-content')})
+    states.push({locale,day:d+1,markers,text:await text(page,'.ux-day-content'),diagnostics:await mini.evaluate(()=>globalThis.__FLIGHTOR_MAP_DIAGNOSTICS__||[])})
     if(locale==='en'&&d===1&&markers.length){const hide=await page.$('.trip-map-hide');assert.ok(hide,'latest compact fallback action');await hide.tap();await page.waitFor(300);assert.ok(await page.$('.ux-map-compact'));await shot(`${entry.id}-en-map-collapsed`)}
    }
    await(await page.$$('.ux-tab'))[0].tap();await page.waitFor(200)
@@ -79,7 +82,7 @@ async function navigate(url){const tab=/^\/pages\/(profile|plan|trips|explore)\/
  }
  const after=await fetch(transport.baseUrl+'/fixture/metrics').then(r=>r.json());assert.equal(after.calls,before.calls)
  report.queriesBefore=before.calls;report.queriesAfter=after.calls;report.interactionChecksPassed=true
- report.basemap='not_passed: Tokyo native basemap is blank in visual inspection; marker/line rendering is separate'
+ report.basemap='requires independent visual inspection; marker/line rendering is separate'
 })().catch(async e=>{report.failure=e.stack;process.exitCode=1;console.error(e);if(mini)try{await shot(`failure-${Date.now()}`)}catch{}}).finally(async()=>{
  if(mini)try{
   report.requests=await mini.evaluate(()=>globalThis.__placesCalls||[])

@@ -1,0 +1,234 @@
+{
+  "scope": "Formal H5 with cached real POI API transport; deliberately injected extension/config/tile faults; no POI or model calls",
+  "cases": [
+    {
+      "fault": "places",
+      "calls": 1,
+      "posts": 0,
+      "acceptedText": true,
+      "diagnostics": [
+        {
+          "at": "2026-09-22T12:17:10.795Z",
+          "layer": "places",
+          "stage": "read",
+          "status": "pending",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:10.855Z",
+          "layer": "places",
+          "stage": "read",
+          "status": "failed",
+          "detail": {
+            "status": 503,
+            "code": "INJECTED_UNAVAILABLE",
+            "name": "ApiRequestError"
+          },
+          "errMsg": "Controlled map failure",
+          "errCode": "INJECTED_UNAVAILABLE"
+        }
+      ]
+    },
+    {
+      "fault": "map-config",
+      "calls": 1,
+      "posts": 0,
+      "acceptedText": true,
+      "diagnostics": [
+        {
+          "at": "2026-09-22T12:17:13.075Z",
+          "layer": "places",
+          "stage": "read",
+          "status": "pending",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:13.124Z",
+          "layer": "places",
+          "stage": "read",
+          "status": "succeeded",
+          "detail": {
+            "durationMs": 49
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:13.131Z",
+          "layer": "map-config",
+          "stage": "read",
+          "status": "pending",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:13.140Z",
+          "layer": "map-config",
+          "stage": "read",
+          "status": "failed",
+          "detail": {
+            "status": 503,
+            "code": "INJECTED_UNAVAILABLE",
+            "name": "ApiRequestError"
+          },
+          "errMsg": "Controlled map failure",
+          "errCode": "INJECTED_UNAVAILABLE"
+        },
+        {
+          "at": "2026-09-22T12:17:13.140Z",
+          "layer": "h5",
+          "stage": "creation",
+          "status": "failed",
+          "detail": {
+            "status": 503,
+            "code": "INJECTED_UNAVAILABLE",
+            "name": "ApiRequestError"
+          },
+          "errMsg": "Controlled map failure",
+          "errCode": "INJECTED_UNAVAILABLE"
+        }
+      ]
+    },
+    {
+      "fault": "tiles",
+      "calls": 1,
+      "posts": 0,
+      "acceptedText": true,
+      "diagnostics": [
+        {
+          "at": "2026-09-22T12:17:14.757Z",
+          "layer": "places",
+          "stage": "read",
+          "status": "pending",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:14.814Z",
+          "layer": "places",
+          "stage": "read",
+          "status": "succeeded",
+          "detail": {
+            "durationMs": 57
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:14.819Z",
+          "layer": "map-config",
+          "stage": "read",
+          "status": "pending",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:14.826Z",
+          "layer": "map-config",
+          "stage": "read",
+          "status": "succeeded",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:14.854Z",
+          "layer": "h5",
+          "stage": "fitBounds",
+          "status": "succeeded",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:14.867Z",
+          "layer": "h5-tiles",
+          "stage": "tileerror",
+          "status": "failed",
+          "detail": {
+            "error": {
+              "isTrusted": true
+            },
+            "coords": {
+              "x": 3637,
+              "y": 1612,
+              "z": 12
+            }
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:14.869Z",
+          "layer": "h5-tiles",
+          "stage": "tileerror",
+          "status": "failed",
+          "detail": {
+            "error": {
+              "isTrusted": true
+            },
+            "coords": {
+              "x": 3638,
+              "y": 1612,
+              "z": 12
+            }
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:14.870Z",
+          "layer": "h5-tiles",
+          "stage": "tileerror",
+          "status": "failed",
+          "detail": {
+            "error": {
+              "isTrusted": true
+            },
+            "coords": {
+              "x": 3637,
+              "y": 1613,
+              "z": 12
+            }
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:14.870Z",
+          "layer": "h5-tiles",
+          "stage": "tileerror",
+          "status": "failed",
+          "detail": {
+            "error": {
+              "isTrusted": true
+            },
+            "coords": {
+              "x": 3638,
+              "y": 1613,
+              "z": 12
+            }
+          },
+          "errMsg": null,
+          "errCode": null
+        },
+        {
+          "at": "2026-09-22T12:17:22.861Z",
+          "layer": "h5-tiles",
+          "stage": "timeout",
+          "status": "failed",
+          "detail": null,
+          "errMsg": null,
+          "errCode": null
+        }
+      ]
+    }
+  ]
+}

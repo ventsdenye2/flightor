@@ -15,6 +15,7 @@ export interface PlaceResolution {
   place?: Place
   candidates?: Array<Pick<Place, 'placeId' | 'name' | 'kind' | 'city' | 'countryCode'>>
   checkedAt: string
+  diagnostic?: {name:string|null;errMsg:string|null;errCode:string|null;causeCode:string|null}
 }
 export interface AirportPoint { id:string;name:string;latitude:number;longitude:number;countryCode:string;system:'WGS84';kind:'airport';source:'flightor-reference-data' }
 export interface PlaceEnrichment { contentVersion: string; activities: Record<string, { place: PlaceResolution; coordinates?: Place['coordinates'] }>; cities?: Place[]; flightPaths?:AirportPoint[][] }

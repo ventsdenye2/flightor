@@ -309,14 +309,14 @@ check('active planner receives the latest progress and removes it when finished'
   h.render()
   assert.equal(h.nodes().filter(node => node.type === 'PlannerProgress').length, 0)
 })
-function productionServiceHarness(artifacts, workspaceValue) {
+function productionServiceHarness(artifacts, workspaceValue, readPlaces=async()=>undefined) {
   const serviceFile = path.join(root, 'src/services/productionTripService.ts')
   const output = ts.transpileModule(fs.readFileSync(serviceFile, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText
   const serviceModule = { exports: {} }
   const calls = []
   const placeCalls = []
   vm.runInNewContext(output, { module: serviceModule, exports: serviceModule.exports, require: dependency => {
-    if (dependency === './placeService') return { readPlaceEnrichment:async id=>{placeCalls.push({method:'GET',id});return undefined},resolvePlaceEnrichment:async(id,contentVersion)=>{placeCalls.push({method:'POST',id,contentVersion});return {}} }
+    if (dependency === './placeService') return { readPlaceEnrichment:async id=>{placeCalls.push({method:'GET',id});return readPlaces(id)},resolvePlaceEnrichment:async(id,contentVersion)=>{placeCalls.push({method:'POST',id,contentVersion});return {}} }
     if (dependency === './artifactService') return { artifactService: { fetchArtifact: async id => { calls.push(id); const value = artifacts[id]; if (value instanceof Error) throw value; return value }, localizeArtifact: async (id, context) => { calls.push({ post: id, revision: context.retryRevision }); artifacts[id] = {...artifacts[id],payload:{...artifacts[id].payload,publication:{...artifacts[id].payload.publication,status:'accepted'}}}; return artifacts[id] } } }
     if (dependency === './workspaceService') return { getCloudWorkspace: async () => workspaceValue }
     if (dependency.endsWith('/i18n/trip')) return tripCopy.exports
@@ -324,7 +324,7 @@ function productionServiceHarness(artifacts, workspaceValue) {
     if (dependency.endsWith('/features/ui-experience/productionPresentation')) return { artifactToTripPresentation: (_route, _guide, _workspace, saved, locale) => ({ saved, publication: artifactToTripPresentation(_route, _guide, _workspace, saved, locale).publication }) }
     throw new Error(`Unexpected production service dependency: ${dependency}`)
   } }, { filename: serviceFile })
-  return { load: serviceModule.exports.loadProductionTrip, prepare: serviceModule.exports.prepareProductionLocale, preparePlaces:serviceModule.exports.prepareProductionPlaces, calls,placeCalls }
+  return { load: serviceModule.exports.loadProductionTrip, places:serviceModule.exports.loadProductionPlaces, same:serviceModule.exports.samePlacePublication, prepare: serviceModule.exports.prepareProductionLocale, preparePlaces:serviceModule.exports.prepareProductionPlaces, calls,placeCalls }
 }
 
 ;(async () => {
@@ -374,6 +374,21 @@ function productionServiceHarness(artifacts, workspaceValue) {
     data['guide-1']={...guideArtifact,payload:{...guideArtifact.payload,publication:{...publication,status:'preparing'}}}
     await assert.rejects(h.preparePlaces('guide-1',{locale:'zh'}),/PLACE_BASE_UNAVAILABLE/)
     assert.equal(h.placeCalls.filter(c=>c.method==='POST').length,1)
+  })
+  await checkAsync('accepted text resolves before slow places; stale hash cannot replace text or media',async()=>{
+    let release
+    const pending=new Promise(resolve=>{release=resolve})
+    const data={'route-1':routeArtifact,'guide-1':guideArtifact},h=productionServiceHarness(data,{...workspace,artifactRefs:[]},()=>pending)
+    const text=await h.load('guide-1',{locale:'zh'})
+    assert.equal(text.presentation.publication.status,'accepted');assert.equal(h.placeCalls.length,0)
+    const places=h.places(text,{locale:'zh'})
+    assert.equal(h.placeCalls.length,1)
+    release({contentVersion:'old-hash',activities:{}})
+    const enriched=await places
+    assert.equal(enriched.guide,text.guide)
+    const a={locale:'zh',publication:{status:'accepted',artifactId:'a',contentVersion:'v1'}}
+    assert.equal(h.same(a,a),true)
+    for(const b of [{...a,locale:'en'},{...a,publication:{...a.publication,contentVersion:'v2'}},{...a,publication:{...a.publication,artifactId:'b'}}])assert.equal(h.same(a,b),false)
   })
   console.log(`Production presentation behavior checks: ${passed} passed.`)
 })().catch(error => { console.error(error); process.exitCode = 1 })
