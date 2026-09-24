@@ -8,7 +8,7 @@ import { canRetryFinalVariant, type PublicationLocale } from './finalization-sch
 // Shared across request-scoped service instances; owner is part of the key.
 const pending = new Map<string, Promise<ArtifactRecord>>()
 export async function finalizeGuide(input: {
-  ownerId: string; record: ArtifactRecord; artifacts: ArtifactRepository; finalizer: GuideFinalizer
+  ownerId: string; record: ArtifactRecord; artifacts: ArtifactRepository; finalizer: Pick<GuideFinalizer, 'generate'>
   locale: PublicationLocale; requirements?: unknown; memoryEnabled?: boolean; localization?: boolean
   retryRevision?: number
   signal?: AbortSignal; timeoutMs?: number; assertCurrent: () => Promise<void>

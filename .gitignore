@@ -1,5 +1,6 @@
 dist/
 node_modules/
+.dsh-data/
 .DS_Store
 ._*
 .worktrees/

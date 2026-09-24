@@ -577,3 +577,8 @@ GET `/v1/map-config` 公开 OSM 瓦片模板和是否配置，不含 secret。�
 # 2026-09-22 发布后媒体端点
 
 认证 GET/POST `/v1/artifacts/:id/media` 不属于 Planner 工具表；GET仅返回当前accepted guideContentHash对应的已存活动媒体，POST `{contentVersion}` 才执行显式、有界Wikimedia补全。owner/Trip/航班/内容/活动保护复用地点快照，独立媒体事务不会改正文或地点。没有新增模型/搜索工具调用，详见[ADR0027](adr/0027-place-media.md)。
+# DSH 受控执行面（2026-09-24，实验分支）
+
+Agent API 依赖 `PlannerServicePort`，启动配置选择 legacy 或 DSH，客户端不能选引擎。DSH D1 只读工具白名单为 get_trip_context、get_trip_artifacts、read_artifact、resolve_location、get_user_memory、get_active_goal；由父进程执行现有领域工具，不调用旧 Planner/Runtime。没有研究综合或终稿调用。GET/publicationContext 不创建worker，显式本地化共用独立领域服务。
+
+实际 DSH 核心、worker 白名单及分阶段测试见 [实施记录](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)；后续写入/联网以该记录实际阶段为准，不将原附件的目标列表当已验证功能。

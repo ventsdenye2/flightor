@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import { describe, expect, it, vi } from 'vitest'
 import type { AppContext } from '../app/context.js'
 import { CloudPlannerService } from '../agent/cloud/service.js'
+import type { PlannerServicePort } from '../agent/planner-service.js'
 import type { AgentModelClient } from '../agent/runtime/model.js'
 import { AgentRuntime } from '../agent/runtime/runtime.js'
 import { createCoreToolRegistry } from '../agent/tools/core.js'
@@ -25,6 +26,37 @@ const env = parseEnv({
 const call = (id: string, name: string, args: unknown) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
 
 describe('authenticated cloud Agent route', () => {
+  it('accepts an independent service port and polls without executing another Agent turn', async () => {
+    const trips = new InMemoryTripRepository(), trip = await trips.create()
+    const conversationId = '6d356c33-0dc0-420d-920e-159e785125c8'
+    const runTurn = vi.fn().mockResolvedValue({ reply: 'An answer to this question.', tripVersion: 0, tripContext: trip.context,
+      artifactRefs: [], memoryChanged: false, warnings: [], stopReason: 'completed',
+      delivery: { status: 'not_requested', goals: [], artifactIds: [], missing: [], warnings: [] } })
+    const port: PlannerServicePort = {
+      validateTurn: vi.fn().mockResolvedValue(trip), runTurn,
+      publicationContext: vi.fn().mockResolvedValue({ tripContextVersion: 0, selectedFlightRevision: undefined }),
+      localizeGuide: vi.fn()
+    }
+    const app = Fastify()
+    await registerCloudAgentRoutes(app, { env } as unknown as AppContext, () => port)
+    const token = await issueAccessToken({ userId: 'port-owner', publicId: 'public-port' }, env)
+    const headers = { authorization: `Bearer ${token}` }
+    try {
+      const accepted = await app.inject({ method: 'POST', url: '/v1/agent/turns', headers,
+        payload: { tripId: trip.id, conversationId, message: 'Explain my current plan.', locale: 'en' } })
+      expect(accepted.statusCode).toBe(202)
+      const turnId = accepted.json().turnId
+      for (let index = 0; index < 3; index += 1) {
+        const snapshot = await app.inject({ method: 'GET', url: `/v1/agent/turns/${turnId}`, headers })
+        expect(snapshot.statusCode).toBe(200)
+        expect(snapshot.json()).toMatchObject({ status: 'completed', response: { reply: 'An answer to this question.' } })
+      }
+      expect(runTurn).toHaveBeenCalledTimes(1)
+      expect(port.validateTurn).toHaveBeenCalledTimes(1)
+      expect(port.publicationContext).toHaveBeenCalledTimes(3)
+      expect(port.localizeGuide).not.toHaveBeenCalled()
+    } finally { await app.close() }
+  })
   it('preserves explicit ticket arrangement notes in the readonly trip summary', async () => {
     const trips = new InMemoryTripRepository()
     const trip = await trips.create()

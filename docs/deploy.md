@@ -73,3 +73,14 @@ H5 使用真实OSM瓦片；微信原生Map不打包服务端Key、不申请实�
 先执行已有013及新014迁移，新增媒体绑定/缓存表；本轮仅隔离schema已迁移，正式库未执行。`MEDIA_USER_AGENT`为空时禁补全、GET仍读既存媒体；启用时设置可识别应用/联系信息。无需图片Key、无需对象存储。`MEDIA_PROXY_URL`仅供媒体HTTPS Agent，Node22.21+/24.5+，不改全局或Planner出口。API允许调用Wikimedia固定域名，客户端直读真实返回的thumb.wikimedia.org/upload.wikimedia.org HTTPS照片。许可、尺寸、缓存TTL和回滚见[ADR0027](adr/0027-place-media.md)。
 
 生产后端须配置微信request HTTPS域名，照片源须在目标网络可达并满足平台证书要求；若改为downloadFile需另配下载域名。既有开发urlCheck=false未修改，不能据开发模拟器推断生产通过。微信照片页面、真机和正式public库当前未验收；地图暂停排查、仍未解决。详见[验证与费用](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)。
+# DSH 实验引擎（2026-09-24，未部署）
+
+默认 `FLIGHTOR_AGENT_ENGINE=legacy`。设 `dsh` 后启动时选用独立 DSH worker；配置失败直接报错，不回落旧 Planner。先在 `backend/dsh-runtime` 执行 `npm ci --ignore-scripts`，Node 固定验证版 22.21.0；根前端无需变更。
+
+`DSH_MODEL_PROVIDER=openrouter|deepseek`，主模型由 `DSH_MODEL` 指定；OpenRouter 默认沿用 `PLANNER_MODEL`，官方默认 deepseek-v4-flash。对应凭证分别 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY`。官方主模型不要求 OpenRouter Key。显式本地化仍通过同一路由的有界编辑客户端，读取与轮询不启动 Agent。
+
+`DSH_SEARCH_PROVIDER=serpapi-raw|deepseek-official` 明确区分原始 SerpApi 和官方 Messages 搜索；后者必须单独设置 `DEEPSEEK_SEARCH_API_KEY`、`DEEPSEEK_SEARCH_BASE_URL`、`DEEPSEEK_SEARCH_MODEL`，不能把 OpenRouter Key 发给官方。未配置不可用，不静默替换。
+
+`DSH_DATA_DIRECTORY` 默认 `.dsh-data`，必须是私有持久磁盘并与业务数据库一起备份；单主机单 API 实例独占目录，最大活跃数默认4、空闲回收默认120秒（DSH_MAX_ACTIVE/DSH_IDLE_MS），不是性能保证。回滚将引擎设回 legacy 后重启，保留新会话数据，不删旧 Runtime。
+
+本轮可填写的本地忽略配置为 `backend/.env.dsh.local`，只用于本地验证进程显式加载，不会自动更改已有服务；真实测试需新授权预算，不沿用历史额度。阶段证据见 [DSH记录](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)。

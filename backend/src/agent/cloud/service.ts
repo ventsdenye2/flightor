@@ -15,22 +15,17 @@ import type { ConnectionSearchService, FlightRoutePlanner, RouteOptimizer } from
 import type { DestinationDiscoveryService } from '../../destinations/types.js'
 import type { TripRoutePlanner } from '../../trip-planning/types.js'
 import type { TravelGuideBuilder } from '../../travel-guides/artifact.js'
-import type { ArtifactType } from '../../artifacts/repository.js'
-import type { TripContext } from '../../trips/types.js'
 import type { ChatMessage } from '../runtime/model.js'
 import { AgentRuntime } from '../runtime/runtime.js'
 import type { GoalRepository, GoalRunRepository } from '../goals/repository.js'
 import type { GoalVerifierRegistry } from '../goals/verifier.js'
 import type { RouteGenerationDependencies } from '../../route-generation/service.js'
-import type { GoalDelivery } from '../goals/completion.js'
-import { emitActivity, type AgentActivityObserver } from '../runtime/activity.js'
-import type { SelectedFlightContext } from '../../workspaces/flight-selection.js'
+import { emitActivity } from '../runtime/activity.js'
+import { PlannerDomainService } from '../planner-domain-service.js'
+import type { PlannerServicePort, PlannerTurnInput, PlannerTurnResult, SelectedFlightReader } from '../planner-service.js'
+export type { SelectedFlightReader } from '../planner-service.js'
 import { preparePlanningContext } from './planning-context.js'
 import { observePlannerTurn, observeSpan, recordTurnOutcome, type PlannerObservation } from '../../lib/planner-observation.js'
-
-export interface SelectedFlightReader {
-  getSelectedFlight(tripId: string): Promise<SelectedFlightContext | null>
-}
 
 export interface CloudPlannerRepositories {
   trips: TripRepository
@@ -61,27 +56,9 @@ export interface CloudPlannerDependencies extends CloudPlannerRepositories {
   flightSelections?: SelectedFlightReader
 }
 
-export interface CloudPlannerTurnInput {
-  locale?: PublicationLocale
-  requestId: string
-  tripId: string
-  conversationId: string
-  message: string
-  generationId: string
-  signal?: AbortSignal
-  onActivity?: AgentActivityObserver
-}
-
-export interface CloudPlannerTurnResult {
-  reply: string
-  tripVersion: number
-  tripContext: TripContext
-  artifactRefs: Array<{ id: string; type: ArtifactType; schemaVersion: number }>
-  memoryChanged: boolean
-  warnings: string[]
-  stopReason: string
-  delivery: GoalDelivery
-}
+// Compatibility aliases for callers of the legacy implementation.
+export type CloudPlannerTurnInput = PlannerTurnInput
+export type CloudPlannerTurnResult = PlannerTurnResult
 
 const LEGACY_GOAL_PROTOCOL = `When the user changes travel conditions, persist the accepted Trip Context changes before declaring or resuming the matching Goal so its run uses the current version. If context changes after Goal activation, resume that Goal against the new version before researching or saving.
 For a request that asks to produce, save, or otherwise deliver a durable result, inspect the preloaded unfinished goals (use get_active_goal for omitted or changed state) and use resume_goal only for a goal that matches the current user objective; otherwise declare a typed Goal. Use whichever tools fit the evidence, then call finish_goal for structured completion feedback. If it reports partial or pending, you may continue gathering evidence and re-plan.`
@@ -102,8 +79,12 @@ function historyMessage(role: string, content: string): ChatMessage | undefined 
   return undefined
 }
 
-export class CloudPlannerService {
-  constructor(private readonly dependencies: CloudPlannerDependencies) {}
+export class CloudPlannerService implements PlannerServicePort {
+  private readonly domain: PlannerDomainService
+
+  constructor(private readonly dependencies: CloudPlannerDependencies) {
+    this.domain = new PlannerDomainService({ ...dependencies, createFinalizer: () => this.finalizer() })
+  }
 
   private finalizer() {
     const model = this.dependencies.runtime.publicationModel()
@@ -111,39 +92,15 @@ export class CloudPlannerService {
   }
 
   async localizeGuide(id: string, locale: PublicationLocale, retryRevision?: number) {
-    const record = await this.dependencies.artifacts.get(id)
-    if (!record || record.type !== 'travel_guide') throw new AppError('RESOURCE_NOT_FOUND', 'Guide not found', 404)
-    const assertCurrent = async () => {
-      const trip = await this.dependencies.trips.get(record.tripId)
-      const selected = await this.dependencies.flightSelections?.getSelectedFlight(record.tripId)
-      if (!trip || trip.version !== record.tripContextVersion || selected?.selection.revision !== (record.payload as { flightSelection?: { revision: number } }).flightSelection?.revision) {
-        throw new AppError('PUBLICATION_CONTENT_CHANGED', 'Trip or flight selection changed', 409)
-      }
-    }
-    return finalizeGuide({ ownerId: this.dependencies.ownerId ?? record.tripId, record, artifacts: this.dependencies.artifacts,
-      finalizer: this.finalizer(), locale, localization: true, assertCurrent,
-      ...(retryRevision === undefined ? {} : { retryRevision }) })
+    return this.domain.localizeGuide(id, locale, retryRevision)
   }
 
-  /** Owner-scoped repositories validate access before an asynchronous job is accepted. */
   async validateTurn(input: Pick<CloudPlannerTurnInput, 'tripId' | 'conversationId' | 'signal'>) {
-    input.signal?.throwIfAborted()
-    const trip = await this.dependencies.trips.getTrip(input.tripId)
-    input.signal?.throwIfAborted()
-    if (!trip) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
-    const conversation = await this.dependencies.conversations.get(input.conversationId)
-    input.signal?.throwIfAborted()
-    if (!conversation || conversation.tripId !== input.tripId) {
-      throw new AppError('RESOURCE_NOT_FOUND', 'Conversation was not found', 404)
-    }
-    return trip
+    return this.domain.validateTurn(input)
   }
 
-  /** Publication remains scoped to current domain versions, including later user edits. */
   async publicationContext(input: Pick<CloudPlannerTurnInput, 'tripId' | 'conversationId'>) {
-    const trip = await this.validateTurn(input)
-    const selected = await this.dependencies.flightSelections?.getSelectedFlight(input.tripId)
-    return { tripContextVersion: trip.context.version, selectedFlightRevision: selected?.selection.revision }
+    return this.domain.publicationContext(input)
   }
 
   async runTurn(input: CloudPlannerTurnInput): Promise<CloudPlannerTurnResult> {

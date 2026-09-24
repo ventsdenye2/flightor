@@ -1,9 +1,11 @@
 import { PublicResearchSourceReader } from '../research-agent/source-reader.js'
+import { createDshManager, createDshService } from '../agent/dsh/composition.js'
 import { presentArtifact } from '../artifacts/presentation.js'
 import type { FastifyInstance, FastifyBaseLogger } from 'fastify'
 import { v7 as uuidv7 } from 'uuid'
 import { z } from 'zod'
-import { CloudPlannerService, type CloudPlannerTurnResult } from '../agent/cloud/service.js'
+import { CloudPlannerService } from '../agent/cloud/service.js'
+import type { PlannerServicePort, PlannerTurnResult } from '../agent/planner-service.js'
 import { PLANNER_TURN_TIMEOUT_MS, PlannerTurnStore } from '../agent/cloud/turns.js'
 import { AgentRuntime } from '../agent/runtime/runtime.js'
 import { createPlannerToolRegistry } from '../agent/tools/core.js'
@@ -100,7 +102,7 @@ export const cloudAgentResponseSchema = z.object({
   delivery: goalDeliverySchema
 }).strict()
 
-export type CloudAgentServiceFactory = (trustedUserId: string) => CloudPlannerService
+export type CloudAgentServiceFactory = (trustedUserId: string) => PlannerServicePort
 
 function routeGenerationReady(context: TripContext): boolean {
   return evaluateRouteGenerationEligibility(context).eligible
@@ -131,7 +133,12 @@ export function presentationHint(type: ArtifactType): z.infer<typeof artifactPre
   return 'travel_guide'
 }
 
-function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAgentServiceFactory {
+function defaultFactory(context: AppContext, logger: FastifyBaseLogger, app: FastifyInstance): CloudAgentServiceFactory {
+  if (context.env.FLIGHTOR_AGENT_ENGINE === 'dsh') {
+    const sessions = createDshManager(context)
+    app.addHook('onClose', async () => { await sessions.close() })
+    return userId => createDshService(context, userId, sessions)
+  }
   return userId => {
     if (!context.env.OPENROUTER_API_KEY) throw new AppError('PROVIDER_NOT_CONFIGURED', 'OpenRouter is not configured', 503)
     const trips = new PostgresTripRepository(context.db, userId)
@@ -190,7 +197,7 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger): CloudAg
 export async function registerCloudAgentRoutes(
   app: FastifyInstance,
   context: AppContext,
-  serviceForUser: CloudAgentServiceFactory = defaultFactory(context, app.log)
+  serviceForUser: CloudAgentServiceFactory = defaultFactory(context, app.log, app)
 ): Promise<void> {
   const turns = new PlannerTurnStore<z.infer<typeof cloudAgentResponseSchema>>({
     onError: (error, turnId) => app.log.error({ err: error, turnId }, 'Planner turn failed')
@@ -282,7 +289,7 @@ export async function registerCloudAgentRoutes(
   })
 }
 
-function buildCloudAgentResponse(input: z.infer<typeof cloudAgentRequestSchema>, result: CloudPlannerTurnResult): z.infer<typeof cloudAgentResponseSchema> {
+function buildCloudAgentResponse(input: z.infer<typeof cloudAgentRequestSchema>, result: PlannerTurnResult): z.infer<typeof cloudAgentResponseSchema> {
     const ready = routeGenerationReady(result.tripContext)
     return cloudAgentResponseSchema.parse({
       conversationId: input.conversationId,

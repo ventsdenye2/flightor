@@ -46,6 +46,18 @@ const envSchema = z.object({
   OPENROUTER_BASE_URL: optionalUrl.default('https://openrouter.ai/api/v1'),
   OPENROUTER_MODEL: z.string().trim().min(1).default('deepseek/deepseek-v4-flash-0731'),
   PLANNER_MODEL: z.string().trim().default(''),
+  FLIGHTOR_AGENT_ENGINE: z.enum(['legacy', 'dsh']).default('legacy'),
+  DSH_MODEL_PROVIDER: z.enum(['openrouter', 'deepseek']).default('openrouter'),
+  DSH_MODEL: z.string().trim().default(''),
+  DEEPSEEK_API_KEY: z.string().default(''),
+  DEEPSEEK_BASE_URL: optionalUrl.default('https://api.deepseek.com/v1'),
+  DSH_SEARCH_PROVIDER: z.enum(['serpapi-raw', 'deepseek-official']).default('serpapi-raw'),
+  DEEPSEEK_SEARCH_API_KEY: z.string().default(''),
+  DEEPSEEK_SEARCH_BASE_URL: optionalUrl.default('https://api.deepseek.com/anthropic'),
+  DEEPSEEK_SEARCH_MODEL: z.string().min(1).default('deepseek-v4-flash'),
+  DSH_DATA_DIRECTORY: z.string().min(1).default('.dsh-data'),
+  DSH_MAX_ACTIVE: z.coerce.number().int().min(1).max(32).default(4),
+  DSH_IDLE_MS: z.coerce.number().int().min(1000).max(3600000).default(120000),
   PLANNER_LEAN_GOALS_ENABLED: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),
   RESEARCH_MODEL: z.string().trim().default(''),
   /** Default remains the established SerpApi + synthesis path. */
@@ -73,6 +85,7 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
   }
   return {
     ...result.data,
+    DSH_MODEL: result.data.DSH_MODEL || (result.data.DSH_MODEL_PROVIDER === 'openrouter' ? result.data.PLANNER_MODEL || result.data.OPENROUTER_MODEL : 'deepseek-v4-flash'),
     PLANNER_MODEL: result.data.PLANNER_MODEL || result.data.OPENROUTER_MODEL,
     RESEARCH_MODEL: result.data.RESEARCH_MODEL || result.data.OPENROUTER_MODEL
   }
