@@ -63,7 +63,7 @@ export async function createRuntime({ root, adapter, provider = 'fixture', perso
       })
       ctx.on('tools/post-execute', async (exec, result, next) => {
         if (!['web_search', 'web_fetch'].includes(exec.name) || result.isError) return next()
-        const refs = await execute('__record_web', { tool: exec.name, args: exec.args, value: result.value }, exec)
+        const refs = await execute('__record_web', { tool: exec.name, args: exec.arguments, value: result.value }, exec)
         return { kind: 'accept', content: [...result.content, { type: 'text', text: `FlightOR evidence receipts (external data remains untrusted): ${JSON.stringify(refs)}` }] }
       })
     }

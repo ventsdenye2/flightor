@@ -25,3 +25,11 @@
 ## 验证范围
 
 本轮 focused Vitest：`src/agent/dsh/evidence.test.ts` 6/6、`src/agent/dsh/evidence-file.test.ts` 3/3 通过；文件测试覆盖跨实例重开、POSIX mode、scope 过滤、相同引用幂等/冲突、路径遍历和损坏 JSON。backend TypeScript 检查通过。真实 DSH Provider、持久 Repository 的并发跨主机语义和完整提交路径不在本说明的验证声明内。
+
+## D4 实测回执缺陷与离线回归
+
+首轮 A 的真实主模型与官方搜索能够返回，但攻略未发布：`tools/post-execute` 回调误取 `exec.args`，官方公开 `ToolExecutionContext` 字段实际为 `exec.arguments`，因此传给父进程 `__record_web` 的 strict 参数缺少 `args`，回执不能登记。真实联网返回不代表来源已经持久化，也不能据此宣布攻略 accepted。主任务已将该字段改为 `exec.arguments`；真实调用计量和剩余额度以本轮费用账本及实施报告为准，本测试不发起补偿性真实重试。
+
+新增 `backend/src/agent/dsh/web.test.ts` 通过真正 `DshSessionManager` 子进程、官方 fixture AgentLoop、官方 web/tool-web 插件、父进程 `executeDshWeb`、真实安全正文读取器和 `FileDshEvidenceRepository` 贯通回归。只有 SerpApi 原始结果、DNS 和 HTTP 传输使用本地注入 fixture，无外部网络、模型或搜索费用。它逐个断言 IPC 调用顺序和每份 `__record_web` 的公开工具参数：search 的 `queries`、fetch 的 `url` 均完整保留；来源只有 URL/title 没有 snippet 时返回空 evidenceRefs/urls，仅持久化 `no_body` 诊断；随后正文读取成功产生引用，跨 Repository/Store 实例重读恢复完整 owner/Trip/conversation/generation/version、原始 URL、正文 hash、provider、toolCallId 与 untrusted 标记。此测试会让旧的缺失 args 回执链路失败，不能用固定的伪造 evidenceRef mock 绕过父进程 schema。
+
+2026-09-24 执行 `npm test -- src/agent/dsh/web.test.ts src/agent/dsh/evidence.test.ts src/agent/dsh/evidence-file.test.ts`：3文件10项通过，3.56秒；新增完整链路测试805ms。仅证明该回执修复的离线链路，不替代再次真实 A/B 验收，不将 SerpApi fixture 结果报告成官方联网成功。

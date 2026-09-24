@@ -1,6 +1,6 @@
 # DSH 后端实施记录
 
-状态：实施中，未声称真实 Provider 或 G1 通过。用户 2026-09-24 明确优先 DSH，取代旧 R/U 与条件 C1 前置；范围见 [原附件方案](DSH_IMPLEMENTATION_PLAN_2026-09-24.md)。
+状态：D0–D3后端实现与离线/数据库回归完成，D4真实模型与官方搜索接通，但双多轮首轮均失败，**D4未通过**。已修两处实测缺陷，修复后的完整真实双多轮待新预算安排；未部署、未关闭G1。用户2026-09-24明确优先DSH，取代旧R/U与条件C1前置；范围见[原附件方案](DSH_IMPLEMENTATION_PLAN_2026-09-24.md)。
 
 基线 `origin/main@8a83b032a8ee18097af62304d99df86f9a543489`，已 fetch。隔离工作树 `.worktrees/dsh-backend`，分支 `codex/dsh-backend`。原 main 的 `output/` 未跟踪内容保留；不合并或部署。
 
@@ -44,4 +44,43 @@ D2 提交 `52116d6`，包含联网写入所需的计量 IPC、会话安全基础
 
 ## D4
 
-独立 live runner dry-run 已核对冻结双对话、D+30/D+31日期、固定schema与新预算配置。执行入口及保留证据见 [D4 操作说明](DSH_LIVE_2026-09-24.md)。截至本节更新尚无真实模型/搜索调用，不能据本地适配器成功宣布官方联网或 G1 通过。
+独立live runner核对冻结双对话、D+30/D+31日期、固定schema与新预算后真实执行。A在96.542s首轮失败：来源桥接用了不存在的exec.args，修为官方exec.arguments并补完整文件证据链测试。B在67.582s首轮失败：已持久21份来源（3份正文可引用），但默认推理耗尽4096token；修为官方profile显式thinking disabled，并退休旧profile会话。本地HTTP断言修复通过，未重新执行真实双例。
+
+两例后续解释/局部修改/预算变更以及英文localization均未运行，不能把离线/数据库多轮作为真实对话通过。没有攻略accepted，没有宣布事实已核实。实际主模型13次加官方搜索10次，共23/48模型额度，10/12搜索；未知费用保守预留US$1.72，实际账单金额unknown，余US$0.28，原账本保留、无pending请求。详细双对话、各API/模型/搜索耗时见[D4记录](DSH_LIVE_2026-09-24.md)及[脱敏结果](DSH_LIVE_RESULTS_2026-09-24.json)。
+
+## 交付运行面
+
+固定DSH npm核心包均`0.1.7-rc.1`，Cordis`4.0.4`，zod`4.4.3`，完整传递依赖锁在backend/dsh-runtime/package-lock.json；验证Node22.21.0。显式插件白名单：`llm`、`session`、`session-projection`、`system-prompt`、`tools`（native）、`agent`、`session-persistence-jsonl`、`agent-loop`、`llm-pi-ai`、`web`、`tool-web`、`web-search-deepseek`（官方搜索路线）。SerpApi路线用FlightOR原始provider注册，不加载官方搜索插件。不加载完整sdk profile、shell/文件/Git/PTC/subagent、DSH Goal/Task/Todo、插件安装、session-log/inventory上传。
+
+模型可见工具15个：`get_trip_context`、`get_trip_artifacts`、`read_artifact`、`resolve_location`、`get_user_memory`、`get_active_goal`、`update_trip_context`、`search_flights`、`search_flexible_flights`、`confirm_flight_price`、`update_user_memory`、`start_route_generation`、`commit_travel_guide`、`web_search`、`web_fetch`。7个内部web/计量桥接名称不对模型开放。白名单、单worker单活跃turn及禁止旧Planner/Runtime由代码和测试围栏验证。
+
+| 阶段 | 开发/提交时点 | 可独立计量的验证耗时 |
+| --- | --- | --- |
+| D0 | 19:49–20:04:40，约15m40s | 最初核心2项0.751s；最终runtime4项1.937s |
+| D1 | 20:04:40–20:17:14，12m34s | API/service/config16项8.66s |
+| D2 | 20:17:14–21:05:50，48m36s，包含交错D3开发 | 组合发布56项4.57s；预算最终18项3.49s |
+| D3 | 与D2交错；21:07:33独立提交c04acea，不把1m43s提交间隔当完整开发耗时 | session15项20.05s；取消15项9s；DSH PG1项9.20s；前端17.585s |
+| D4 | 21:07后真实测试、诊断修复和交接 | A96.542s、B67.582s；最终全部DB40项42.39s；最终离线结果见下 |
+
+前端证明：与基线比较`git diff origin/main -- src package.json package-lock.json`为空；本批全部产品改动在backend，公开API schema未更改。原main及各既存worktree保留，没有强推、合并或部署。
+
+## 未解决项与回滚
+
+最小剩余事项是：为已修正适配器后的完整双多轮安排明确预算，并保留本批失败和账本；当前US$0.28余额不能按原规模重做两例。官方凭证现可用，无需另补Key。首次完整真实攻略/解释/局部修改/预算变更/英文localization仍待复验，H5/微信本轮未验证成功样本。地图底图原问题继续暂停，不能声明整个G1通过。
+
+运行限制：私有文件持久存储仅单主机/单API实例；无分布式租约；进程中断后的临时HTTP turn不自动重放，后续显式用户回合可冷resume持久上下文。Trip budget更新使旧材料过期，不能任意跨版本复用；这不是自动预算可行性证明。未知费用按预留计入，本批没有可靠供应商货币回执。
+
+启动：backend/dsh-runtime内`npm ci --ignore-scripts`，backend内`npm run build`，配置`FLIGHTOR_AGENT_ENGINE=dsh`及所选路由Key、持久数据目录、当前明确预算后启动后端；本地操作命令见[部署](../../deploy.md)与D4记录。回滚：设`FLIGHTOR_AGENT_ENGINE=legacy`并重启后端，保留数据库、.dsh-data及预算/失败记录；不需要改前端或执行数据回滚。关闭验证runner用SIGINT/SIGTERM；独立数据库的精确停止方式见[数据库报告](DSH_DATABASE_2026-09-24.md)。
+
+## 最终离线验证
+
+2026-09-24 21:43:38 起，在 `codex/dsh-backend` 工作树运行（HEAD `c04acea5f1305dac9e4e692be59eafb1f0702cd4`，包含本轮已修复而尚未提交的增量）。按要求顺序执行一次全量离线测试和一次构建，未重复全量。
+
+| 命令 | 实际结果 | 耗时 |
+| --- | --- | --- |
+| `cd backend; npm test -- --maxWorkers=2` | **117 文件、952 项全部通过**；退出码 0，无失败 | Vitest 116.90 秒；含 npm 启动的外层墙钟 119.642 秒 |
+| `cd backend; npm run build` | TypeScript 编译通过；退出码 0 | 外层墙钟 11.925 秒 |
+
+完整 stdout/stderr 留在忽略目录 `backend/.demo/dsh-final-offline-20260924/tests.log` 和 `build.log`；同目录 `tests.result.json`、`build.result.json` 保留命令、退出码及精确毫秒。此次结果覆盖此前失败修复后的实际全量状态；保留前文 949/1 失败记录，不用成功结果抹除历史。
+
+默认 Vitest 配置明确排除真实 PostgreSQL suites，关闭真实模型/航空/搜索凭证，DSH 使用 fixture 或本地 HTTP 适配器；本次没有真实 Provider 请求、模型/搜索费用为 0。数据库集成证据按前文独立报告评价；build 不代表部署、H5/微信真实验收或整个 G1 通过。

@@ -25,6 +25,7 @@ test('official model and search adapters use configured routes and meter before 
       return
     }
     assert.equal(req.url, '/v1/chat/completions')
+    assert.deepEqual(body.thinking, { type: 'disabled' })
     assert.equal(req.headers.authorization, 'Bearer local-model-fixture')
     assert.equal(meters.filter(value => value === '__model_admit').length, ++modelCalls)
     res.setHeader('content-type', 'text/event-stream')
@@ -64,6 +65,7 @@ test('official model and search adapters use configured routes and meter before 
     assert.equal(modelCalls, 2)
     assert.deepEqual(requests.map(req => req.path), ['/v1/chat/completions', '/anthropic/v1/messages', '/v1/chat/completions'])
     assert.equal(evidence[0].value.sources[0].snippet, 'Cultural exhibits.')
+    assert.deepEqual(evidence[0].args, { queries: ['museum'], maxResults: 1 })
     assert.equal(meters.filter(value => value === '__model_receipt').length, 2)
     assert.equal(meters.filter(value => value === '__search_receipt').length, 1)
     await call('close', {})

@@ -1,0 +1,421 @@
+{
+  "date": "2026-09-24",
+  "route": [
+    {
+      "sha": "c04acea5f1305dac9e4e692be59eafb1f0702cd4",
+      "startedAt": "2026-09-24T13:07:45.939Z",
+      "finishedAt": "2026-09-24T13:09:42.890Z",
+      "forbiddenCalls": []
+    },
+    {
+      "sha": "c04acea5f1305dac9e4e692be59eafb1f0702cd4",
+      "startedAt": "2026-09-24T13:12:21.670Z",
+      "finishedAt": "2026-09-24T13:13:30.800Z",
+      "forbiddenCalls": []
+    }
+  ],
+  "cases": {
+    "A": {
+      "messages": [
+        "机票自备，不查航班。2026-10-24到2026-10-25东京两天，两天合计1500元，文化和小吃，轻松一点，安排并保存。",
+        "为什么第二天上午推荐这个地方？只解释，不改行程。",
+        "第一天不动，只把第二天下午换成室内文化场所。",
+        "预算改成两天合计1200，不是每天；不要承诺未知费用肯定够。"
+      ],
+      "status": "failed",
+      "errorCode": "DSH_LIVE_TURN_INCOMPLETE",
+      "totalWallMs": 96542.2144,
+      "rounds": [
+        {
+          "index": 1,
+          "message": "机票自备，不查航班。2026-10-24到2026-10-25东京两天，两天合计1500元，文化和小吃，轻松一点，安排并保存。",
+          "status": "failed",
+          "reply": "本轮未完成，请重试。",
+          "stopReason": "model_failure",
+          "delivery": {
+            "status": "not_requested",
+            "artifactIds": [],
+            "missing": [],
+            "warnings": [],
+            "goals": []
+          },
+          "milestones": {
+            "apiAcceptedMs": 27.958300000002055,
+            "finalApiMs": 95969.52799999999
+          },
+          "pollStages": [
+            {
+              "stage": "thinking",
+              "elapsedMs": 1065.3143999999993
+            },
+            {
+              "stage": "researching",
+              "elapsedMs": 5131.430800000002
+            },
+            {
+              "stage": "thinking",
+              "elapsedMs": 11548.973999999998
+            },
+            {
+              "stage": "researching",
+              "elapsedMs": 12561.325
+            },
+            {
+              "stage": "thinking",
+              "elapsedMs": 19426.551000000003
+            },
+            {
+              "stage": "researching",
+              "elapsedMs": 21236.657799999997
+            },
+            {
+              "stage": "thinking",
+              "elapsedMs": 23284.662200000002
+            },
+            {
+              "stage": "researching",
+              "elapsedMs": 25321.7207
+            },
+            {
+              "stage": "thinking",
+              "elapsedMs": 32063.7666
+            },
+            {
+              "stage": "researching",
+              "elapsedMs": 35245.6562
+            },
+            {
+              "stage": "thinking",
+              "elapsedMs": 42583.576
+            },
+            {
+              "stage": "researching",
+              "elapsedMs": 49877.840299999996
+            },
+            {
+              "stage": "thinking",
+              "elapsedMs": 56493.45019999999
+            },
+            {
+              "stage": "finalizing",
+              "elapsedMs": 95969.5147
+            }
+          ],
+          "receipts": [
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 3293.2976999999996,
+              "usage": {
+                "promptTokens": 17072,
+                "completionTokens": 549,
+                "totalTokens": 17621
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 4914.6546,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 5651.0623,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 1665.5883999999987,
+              "usage": {
+                "promptTokens": 18712,
+                "completionTokens": 281,
+                "totalTokens": 18993
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 5988.939200000001,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 1414.1798000000017,
+              "usage": {
+                "promptTokens": 19613,
+                "completionTokens": 173,
+                "totalTokens": 19786
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 2242.673500000001,
+              "usage": {
+                "promptTokens": 24426,
+                "completionTokens": 291,
+                "totalTokens": 24717
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 6008.3978000000025,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 6713.786900000003,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 2101.285799999998,
+              "usage": {
+                "promptTokens": 25726,
+                "completionTokens": 317,
+                "totalTokens": 26043
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 6667.825500000006,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 6802.101000000002,
+              "usage": {
+                "promptTokens": 28826,
+                "completionTokens": 768,
+                "totalTokens": 29594
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 7016.5481,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 16814.904200000004,
+              "usage": {
+                "promptTokens": 30016,
+                "completionTokens": 2970,
+                "totalTokens": 32986
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 21922.371100000004,
+              "usage": {
+                "promptTokens": 33019,
+                "completionTokens": 4096,
+                "totalTokens": 37115
+              },
+              "reservedUsd": 0.04
+            }
+          ]
+        }
+      ],
+      "remainingTurns": "not_run_after_first_turn_failure",
+      "localization": null
+    },
+    "B": {
+      "messages": [
+        "请根据我已明确采用航班的所有航段与抵达时刻，安排并保存2026-10-24到2026-10-25东京两天行程，文化和小吃、轻松一点；全程合计4000元。不重新查票或更换航班，抵达前不要安排活动。",
+        "为什么第二天上午推荐这个地方？只解释，不改行程，也不要重查或更换航班。",
+        "第一天不动，只把第二天下午换成室内文化场所；已采用航班和其他日程保持不变。"
+      ],
+      "status": "failed",
+      "errorCode": "DSH_LIVE_TURN_INCOMPLETE",
+      "totalWallMs": 67582.0282,
+      "rounds": [
+        {
+          "index": 1,
+          "message": "请根据我已明确采用航班的所有航段与抵达时刻，安排并保存2026-10-24到2026-10-25东京两天行程，文化和小吃、轻松一点；全程合计4000元。不重新查票或更换航班，抵达前不要安排活动。",
+          "status": "failed",
+          "reply": "本轮未完成，请重试。",
+          "stopReason": "model_failure",
+          "delivery": {
+            "status": "not_requested",
+            "artifactIds": [],
+            "missing": [],
+            "warnings": [],
+            "goals": []
+          },
+          "milestones": {
+            "apiAcceptedMs": 23.60010000000011,
+            "finalApiMs": 67244.24650000001
+          },
+          "pollStages": [
+            {
+              "stage": "thinking",
+              "elapsedMs": 1065.156
+            },
+            {
+              "stage": "researching",
+              "elapsedMs": 6160.6955
+            },
+            {
+              "stage": "thinking",
+              "elapsedMs": 12273.2265
+            },
+            {
+              "stage": "researching",
+              "elapsedMs": 14306.221599999999
+            },
+            {
+              "stage": "thinking",
+              "elapsedMs": 21410.990299999998
+            },
+            {
+              "stage": "researching",
+              "elapsedMs": 34651.505900000004
+            },
+            {
+              "stage": "thinking",
+              "elapsedMs": 39741.4751
+            },
+            {
+              "stage": "finalizing",
+              "elapsedMs": 67244.1574
+            }
+          ],
+          "receipts": [
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 3773.0730999999996,
+              "usage": {
+                "promptTokens": 17411,
+                "completionTokens": 521,
+                "totalTokens": 17932
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 6985.610000000001,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 1419.1748000000007,
+              "usage": {
+                "promptTokens": 18818,
+                "completionTokens": 230,
+                "totalTokens": 19048
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 6946.2597000000005,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 13104.056100000002,
+              "usage": {
+                "promptTokens": 21423,
+                "completionTokens": 2243,
+                "totalTokens": 23666
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "search",
+              "provider": "deepseek-official",
+              "durationMs": 5461.372800000005,
+              "reservedUsd": 0.12
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 2535.128300000004,
+              "usage": {
+                "promptTokens": 27175,
+                "completionTokens": 370,
+                "totalTokens": 27545
+              },
+              "reservedUsd": 0.04
+            },
+            {
+              "kind": "model",
+              "provider": "deepseek",
+              "durationMs": 24689.9617,
+              "usage": {
+                "promptTokens": 32265,
+                "completionTokens": 4096,
+                "totalTokens": 36361
+              },
+              "reservedUsd": 0.04
+            }
+          ]
+        }
+      ],
+      "remainingTurns": "not_run_after_first_turn_failure",
+      "localization": null
+    }
+  },
+  "evidence": {
+    "records": 21,
+    "available": 3,
+    "fetchedBodies": 3,
+    "sourceUrls": [
+      "https://www.getyourguide.com/zh-cn/tokyo-l193/spiritual-tokyo-immersive-temple-experience-in-asakusa-and-ueno-t1302434/?ranking_uuid=255421d9-aa9e-48e6-beb7-d5ebead1f68d&q=%E4%B8%8A%E9%87%8E",
+      "https://tw.trip.com/moments/theme/poi-the-national-museum-of-western-art-94577-comprehensive-guides-993136/",
+      "https://tw.trip.com/moments/detail/tokyo-294-135852397",
+      "https://www.tokyometro.jp/tcn/ticket/airport_bus/index.html",
+      "https://www.japan-travel.cn/plan/airport-access/narita-airport/",
+      "https://k.sina.cn/article_6962199582_19efabc1e00101ligq.html",
+      "https://www.gotokyo.org/cn/plan/airport-access/narita-airport/index.html",
+      "https://www.gotokyo.org/tc/story/guide/old-school-tokyo-a-guide-to-the-citys-traditional-side/",
+      "https://tw.trip.com/moments/detail/tokyo-294-142140945/",
+      "https://k.sina.cn/article_6962199582_19efabc1e00101ligq.html?from=food",
+      "https://tw.trip.com/guide/transport/%E6%88%90%E7%94%B0%E6%A9%9F%E5%A0%B4%E4%BA%A4%E9%80%9A.html",
+      "https://japantravel.navitime.com/zh-cn/area/jp/guide/NTJhowto0212-zh-cn/",
+      "https://www.byfood.com/zh/partner/9868",
+      "https://k.sina.cn/article_6962199582_19efabc1e00101lvfc.html?from=food",
+      "https://www.klook.cn/zh-CN/activity/175169-explore-tokyo-s-history-on-foot-asakusa-kappabashi-ueno/",
+      "https://www.byfood.com/zh/tokyo-yakitori-food-tours",
+      "https://tw.trip.com/moments/detail/narita-56677-146827410/?locale=zh-TW&curr=TWD",
+      "https://jptb55.com/tag/%e4%b8%8b%e7%94%ba/",
+      "https://www.getyourguide.com/zh-cn/tokyo-l193/classic-meets-cool-a-perfect-8-hour-tokyo-city-walk-t1360548/?ranking_uuid=0b14074b-e283-49ec-8eb0-ad87566682ab&q=Walking+tours%2C+Tokyo&visitor-id=B00J2UBBUYVFJX45I1LXPAAEQKJHTZGI&locale_autoredirect_optout=true"
+    ]
+  },
+  "budget": {
+    "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+    "authorizedUsd": 2,
+    "maxModelCalls": 48,
+    "maxSearchCalls": 12,
+    "modelCalls": 23,
+    "searchCalls": 10,
+    "unknownReservedUsd": 1.72,
+    "actualCostUsd": null
+  },
+  "g1": "not_passed",
+  "frontendModified": false
+}

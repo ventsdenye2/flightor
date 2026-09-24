@@ -2,6 +2,8 @@
 
 2026-09-24。本轮用户已要求离线及数据库测试；这里只描述新建的测试环境与真实运行证据，不是生产迁移或 G1 放行。
 
+最终完整数据库回归：`npm run test:db -- --maxWorkers=1`，9文件40项全部通过，42.39s（21:13:05开始）。包含修复后的两项legacy workspace fixture与新增官方DSH worker多轮测试；独立随机schema，不复用D4 live schema，未调用外部Provider。以下初次37/39失败及定向复验仍保留原时点记录。
+
 ## 诊断与替代路径
 
 - 原 backend `.env`、`.env.demo` 和历史验收端口的 loopback 5432、55439、63432 均 ECONNREFUSED。

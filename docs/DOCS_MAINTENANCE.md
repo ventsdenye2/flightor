@@ -1,5 +1,9 @@
 # 文档维护规则与本轮清理记录
 
+## 2026-09-24 DSH 真实双对话 runner
+
+`backend/scripts/verify-dsh-live.mjs` 默认/`--dry-run` 只解析配置和保留账本，不连接数据库、不发模型/搜索请求。显式 `FLIGHTOR_BASE_ENV_PATH` 指定基础配置，叠加 `.env.dsh.local`；`--execute --case A|B` 才在本批2美元/48模型/12搜索围栏下执行附件§13.2冻结用例。连接从忽略的 `.demo/dsh-db-env.json` 读取，迁移只进固定 `dsh_live_20260924`（共享pg_trgm扩展沿用既有迁移），保留schema、state、同一`.dsh-data/budget.json`与失败。B为明确标注的合成航班，使用真实采用API，不查实时票价。正式认证API和真实DB保存/读取，GET不能增加账本；显式本地化单列耗时/费用。`--serve`保留loopback3024供H5只读，无harness nonce的写请求拒绝；`transport.private.json`含合成测试身份token，禁止提交/分享。失败/中断case不自动重新发首轮或改措辞；凭证、账本、操作方式与实测边界见[DSH live操作说明](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。本条仅记录新脚本职责，不能据dry-run认定真实Provider或G1通过。
+
 2026-09-22媒体维护脚本：`backend/scripts/media-validation.mjs`复用地点fixture helper，在独立loopback schema创建新的fixture攻略，正式媒体路由与真实PostgreSQL执行；默认禁新增出站，`--execute`才有界允许免费Wikimedia请求，不绕过旧账本/生产底稿保护。保留累计validation.json及失败，不写public。`test-media-postgres.mjs`使用唯一临时schema验证并发和版本保护，仅清理该schema。`qa-place-media-h5.cjs`用独立Chrome、3014真实媒体API、10087正式H5和明确fixture文字，检查真实原链解码/图像错误/版本产物并截图；需要代理时仅该浏览器配置，不改系统。`test-place-media-client.cjs`为离线并发合并与浏览状态回归。命令、失败和未测边界见[报告](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)。
 
 生效：2026-09-20，来源：用户明确要求“之后的每一次修改都要同步修改 docs”。仓库入口 [AGENTS](../AGENTS.md) 引用本规则。这里是仓库规则，不写入个人全局记忆。

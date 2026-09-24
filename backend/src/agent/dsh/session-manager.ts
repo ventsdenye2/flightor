@@ -175,7 +175,7 @@ export class DshSessionManager {
     input.signal?.throwIfAborted()
     await (this.ready ??= this.initialize())
     if (this.closed) throw failure('DSH_MANAGER_CLOSED', 'DSH is shutting down')
-    const profile = hash(['flightor-dsh-v1', this.config.route, this.config.web, this.config.metered === true, input.persona, input.tools])
+    const profile = hash(['flightor-dsh-v2-thinking-off', this.config.route, this.config.web, this.config.metered === true, input.persona, input.tools])
     const epochHash = hash(input.memoryEpoch)
     let worker = this.workers.get(scope)
     if (worker && (worker.dead || worker.profile !== profile || worker.epochHash !== epochHash)) {

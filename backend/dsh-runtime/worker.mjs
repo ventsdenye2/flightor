@@ -51,7 +51,9 @@ async function open(data) {
     const llm = await import('@deepseek-ai/dsh-llm-pi-ai')
     await ctx.plugin(llm, { providers: { [config.route.provider]: {
       apiKeyEnv: 'FLIGHTOR_DSH_MODEL_KEY', api: 'openai-completions', baseURL: config.route.baseURL,
-      models: [{ id: config.route.model, contextWindow: 131072, maxTokens: config.route.maxTokens, reasoningEfforts: false }],
+      models: [{ id: config.route.model, contextWindow: 131072, maxTokens: config.route.maxTokens,
+        reasoningEfforts: config.route.provider === 'deepseek' ? { off: null, high: 'high' } : false }],
+      ...(config.route.provider === 'deepseek' ? { reasoning: 'off', compat: { thinkingFormat: 'deepseek' } } : {}),
       retryPolicy: { mode: 'normal', maxRetries: 0 }, defaultMaxTokens: config.route.maxTokens, timeoutMs: 60000,
     } } })
   }
