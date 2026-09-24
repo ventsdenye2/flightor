@@ -26,6 +26,8 @@ interface TurnEntry<Response> {
   artifactSelections: Map<string, number | undefined>
   invalidatedArtifactIds: Set<string>
   expiresAt?: number
+  settled: Promise<void>
+  executionSettled: boolean
 }
 
 export interface PlannerTurnStoreOptions {
@@ -34,13 +36,15 @@ export interface PlannerTurnStoreOptions {
   /** Test override; production uses 315s including 15s of finalization headroom. */
   deadlineMs?: number
   onError?: (error: unknown, turnId: string) => void
+  /** DSH must keep cancellation nonterminal until parent domain writes drain. */
+  drainCancellation?: boolean
 }
 
 function stageForTool(tool: string): PlannerStage {
   if (tool === 'update_trip_context') return 'updating_trip'
   if (['search_flights', 'search_flexible_flights', 'search_connection_flights', 'confirm_flight_price', 'confirm_route_price', 'plan_flight_route', 'optimize_route'].includes(tool)) return 'searching_flights'
-  if (['web_research', 'research_destination', 'search_destinations', 'recommend_destinations'].includes(tool)) return 'researching'
-  if (['save_travel_guide', 'build_travel_guide', 'plan_trip_route'].includes(tool)) return 'building_itinerary'
+  if (['web_search', 'web_fetch', 'web_research', 'research_destination', 'search_destinations', 'recommend_destinations'].includes(tool)) return 'researching'
+  if (['commit_travel_guide', 'save_travel_guide', 'build_travel_guide', 'plan_trip_route'].includes(tool)) return 'building_itinerary'
   if (['finish_goal', 'start_route_generation'].includes(tool)) return 'finalizing'
   return 'thinking'
 }
@@ -70,6 +74,10 @@ export class PlannerTurnStore<Response> {
     if (this.closed) throw new AppError('AGENT_UNAVAILABLE', 'Planner is shutting down', 503)
     this.prune()
     if (scope) for (const entry of this.entries.values()) {
+      if (this.options.drainCancellation && !entry.executionSettled && entry.ownerId === ownerId
+        && entry.snapshot.tripId === scope.tripId && entry.snapshot.conversationId === scope.conversationId) {
+        throw new AppError('AGENT_BUSY', 'The prior conversation turn has not finished stopping', 409)
+      }
       if (entry.ownerId === ownerId && entry.snapshot.status === 'running'
         && entry.snapshot.tripId === scope.tripId && entry.snapshot.conversationId === scope.conversationId) {
         this.cancel(ownerId, entry.snapshot.turnId)
@@ -77,7 +85,7 @@ export class PlannerTurnStore<Response> {
     }
     // Completed results may be replaced. In-flight work is never displaced.
     while (this.entries.size >= this.maxEntries) {
-      const terminal = [...this.entries].find(([, entry]) => entry.snapshot.status !== 'running')
+      const terminal = [...this.entries].find(([, entry]) => entry.snapshot.status !== 'running' && entry.executionSettled)
       if (!terminal) throw new AppError('AGENT_BUSY', 'Planner is busy; try again later', 503)
       this.entries.delete(terminal[0])
     }
@@ -86,6 +94,7 @@ export class PlannerTurnStore<Response> {
     const controller = new AbortController()
     const entry: TurnEntry<Response> = {
       ownerId, controller, activeTools: new Map(), artifactSelections: new Map(), invalidatedArtifactIds: new Set(),
+      settled: Promise.resolve(), executionSettled: false,
       snapshot: { ...scope, turnId, status: 'running', stage: 'thinking', startedAt, updatedAt: startedAt, artifactRevision: 0, artifactRefs: [] },
       timer: setTimeout(() => {
         this.fail(entry, { code: 'AGENT_TURN_TIMEOUT', message: '本轮处理已超时，已保存的结果会保留。请重新打开行程查看。' })
@@ -95,15 +104,19 @@ export class PlannerTurnStore<Response> {
     entry.timer.unref?.()
     this.entries.set(turnId, entry)
     // Attach both settlement handlers before starting any model/provider work.
-    void Promise.resolve().then(() => {
+    entry.settled = Promise.resolve().then(() => {
       controller.signal.throwIfAborted()
       return execute(controller.signal, activity => this.observe(entry, activity))
     }).then(response => {
-      if (entry.snapshot.status !== 'running' || controller.signal.aborted) return
+      entry.executionSettled = true
+      if (entry.snapshot.status !== 'running') return
+      if (controller.signal.aborted) { this.fail(entry, this.cancelledError()); return }
       entry.snapshot = { ...entry.snapshot, status: 'completed', stage: 'finalizing', updatedAt: new Date().toISOString(), response }
       this.finish(entry)
     }, error => {
+      entry.executionSettled = true
       if (entry.snapshot.status !== 'running') return
+      if (controller.signal.aborted) { this.fail(entry, this.cancelledError()); return }
       this.fail(entry, publicError(error))
       try { this.options.onError?.(error, turnId) } catch { /* logging is best effort */ }
     })
@@ -121,10 +134,23 @@ export class PlannerTurnStore<Response> {
     const entry = this.entries.get(turnId)
     if (!entry || entry.ownerId !== ownerId) return undefined
     if (entry.snapshot.status === 'running') {
-      this.fail(entry, { code: 'AGENT_TURN_CANCELLED', message: '已停止本轮处理，已保存的结果仍可查看。' })
+      if (!this.options.drainCancellation) this.fail(entry, this.cancelledError())
       entry.controller.abort(new Error('Planner turn cancelled'))
     }
     return structuredClone(entry.snapshot)
+  }
+
+  /** Public cancellation acknowledgement waits for the actual service execution. */
+  async cancelAndWait(ownerId: string, turnId: string): Promise<PlannerTurnSnapshot<Response> | undefined> {
+    const snapshot = this.cancel(ownerId, turnId)
+    if (!snapshot) return undefined
+    const entry = this.entries.get(turnId)!
+    await entry.settled
+    return structuredClone(entry.snapshot)
+  }
+
+  private cancelledError(): PlannerTurnError {
+    return { code: 'AGENT_TURN_CANCELLED', message: '已停止本轮处理，已保存的结果仍可查看。' }
   }
 
   /** Called by the authenticated route after re-reading current domain versions. */
@@ -209,7 +235,7 @@ export class PlannerTurnStore<Response> {
 
   private prune(): void {
     for (const [id, entry] of this.entries) {
-      if (entry.snapshot.status !== 'running' && entry.expiresAt !== undefined && entry.expiresAt <= Date.now()) this.entries.delete(id)
+      if (entry.executionSettled && entry.snapshot.status !== 'running' && entry.expiresAt !== undefined && entry.expiresAt <= Date.now()) this.entries.delete(id)
     }
   }
 }

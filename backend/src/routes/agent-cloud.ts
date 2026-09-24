@@ -200,6 +200,7 @@ export async function registerCloudAgentRoutes(
   serviceForUser: CloudAgentServiceFactory = defaultFactory(context, app.log, app)
 ): Promise<void> {
   const turns = new PlannerTurnStore<z.infer<typeof cloudAgentResponseSchema>>({
+    drainCancellation: context.env.FLIGHTOR_AGENT_ENGINE === 'dsh',
     onError: (error, turnId) => app.log.error({ err: error, turnId }, 'Planner turn failed')
   })
   app.addHook('onClose', async () => { turns.close() })
@@ -266,7 +267,7 @@ export async function registerCloudAgentRoutes(
     reply.header('Cache-Control', 'no-store')
     const identity = await authenticateRequest(request, context)
     const { turnId } = z.object({ turnId: z.string().uuid() }).strict().parse(request.params)
-    const snapshot = turns.cancel(identity.userId, turnId)
+    const snapshot = await turns.cancelAndWait(identity.userId, turnId)
     if (!snapshot) throw new AppError('RESOURCE_NOT_FOUND', 'Planner turn was not found', 404)
     return reply.send(await currentSnapshot(identity.userId, turnId))
   })

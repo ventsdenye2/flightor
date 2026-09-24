@@ -24,6 +24,9 @@ import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, Unav
 import { MockAviationProvider } from '../aviation/providers/mock.js'
 import { MockFareProvider } from '../fares/providers/mock.js'
 import { PostgresWorkspaceRepository } from './postgres.js'
+import { travelGuideArtifactPayloadSchema } from '../travel-guides/artifact.js'
+import { publicationFor } from '../travel-guides/publication.js'
+import { sourceRef } from '../travel-guides/finalization.js'
 
 const databaseUrl = process.env.TEST_DATABASE_URL
 const suite = databaseUrl ? describe : describe.skip
@@ -112,10 +115,23 @@ suite('PostgreSQL workspace guide persistence and refresh', () => {
     }) } }
     const model: AgentModelClient = { complete: vi.fn()
       .mockImplementationOnce(async () => ({ message: { role: 'assistant', content: null, tool_calls: [call] } }))
-      .mockImplementationOnce(async messages => {
-        const response = JSON.parse(messages.at(-1)?.content ?? '{}')
-        expect(response.data.completion.status).toBe('satisfied')
-        return { message: { role: 'assistant', content: '已保存攻略。' } }
+      .mockImplementationOnce(async (messages, _model, options) => {
+        // This is the bounded publication editor, never a second runtime recap.
+        expect(options.tools).toEqual([])
+        expect(options.toolChoice).toBe('none')
+        expect(options.responseFormat.type).toBe('json_schema')
+        expect(messages.some((message: { role: string }) => message.role === 'tool')).toBe(false)
+        const input = JSON.parse(messages.at(-1)?.content ?? '{}')
+        expect(input.locale).toBe('zh')
+        const guide = travelGuideArtifactPayloadSchema.parse(input.guide)
+        return { message: { role: 'assistant', content: JSON.stringify({ issues: [], text: {
+          locale: 'zh', reply: '文化漫游安排已准备好，可以按每日主题查看。',
+          overview: '以博物馆文化参观为主，保留轻松游览的节奏，了解东京的文化氛围。',
+          days: guide.days.map(day => ({ day: day.day, theme: '博物馆文化漫游' })),
+          activities: guide.days.flatMap(day => day.items).map(item => ({ activityId: item.id,
+            name: '东京博物馆', introduction: '走进博物馆参观展陈，在馆内慢慢了解文化主题。',
+            recommendationReason: '呼应你的文化兴趣，同时为轻松参观留出空间。', sourceRefs: [sourceRef(item)] }))
+        } }) } }
       }) }
     const memory = new PostgresUserMemoryRepository(db, ownerId)
     const service = new CloudPlannerService({ ownerId, leanGoalsEnabled: true, trips, conversations, artifacts, memory,
@@ -126,14 +142,14 @@ suite('PostgreSQL workspace guide persistence and refresh', () => {
     const result = await service.runTurn({ requestId: `request-${withFlight ? 'flight' : 'self'}`, tripId: trip.id, conversationId: conversation.id,
       generationId: `generation-${withFlight ? 'flight' : 'self'}`, message: '请保存这份每日攻略' })
     expect(result).toMatchObject({ stopReason: 'completed', delivery: { status: 'satisfied', kind: 'travel_guide' } })
-    // A satisfied save now uses the server-owned publication reply shortcut;
-    // the model only emits the save tool call and is not asked for a second
-    // natural-language recap.
-    expect(model.complete).toHaveBeenCalledTimes(1)
+    // One Planner tool decision plus one bounded editor; no runtime prose recap.
+    expect(model.complete).toHaveBeenCalledTimes(2)
     expect(result.artifactRefs).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'travel_guide' })]))
     const guideId = result.artifactRefs.find(ref => ref.type === 'travel_guide')!.id
     const guide = await artifacts.get(guideId)
     expect(guide?.type).toBe('travel_guide')
+    expect(publicationFor(guide!)?.finalization?.variants.zh).toMatchObject({ status: 'accepted', observation: { calls: 1 } })
+    expect(result.reply).toBe('文化漫游安排已准备好，可以按每日主题查看。')
     const goal = (await goals.listForTrip(trip.id))[0]!
     expect(goal.parameters).toMatchObject({ researchTypes: ['activity', 'event'], requiredEvidenceTypes: ['activity'] })
     const run = (await runs.listForGoal(goal.id))[0]!

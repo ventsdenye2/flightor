@@ -8,6 +8,51 @@ const flush = async () => { await Promise.resolve(); await Promise.resolve(); aw
 describe('temporary Planner turn store', () => {
   afterEach(() => { vi.useRealTimers() })
 
+  it('keeps DSH cancellation nonterminal until writes drain, retains earlier commits and rejects a competing turn', async () => {
+    const store = new PlannerTurnStore<number>({ drainCancellation: true })
+    const scope = { tripId: uuidv7(), conversationId: uuidv7(), generationId: uuidv7() }
+    let observe!: AgentActivityObserver, signal!: AbortSignal, release!: (value: number) => void
+    const turn = store.start('owner', async (abort, observer) => { signal = abort; observe = observer; return new Promise(resolve => { release = resolve }) }, scope)
+    await flush()
+    const event = { type: 'artifact_committed' as const, ...scope,
+      artifact: { id: uuidv7(), type: 'travel_guide' as const, schemaVersion: 1, tripContextVersion: 0, presentationHint: 'travel_guide' as const } }
+    observe(event)
+    expect(await store.cancelAndWait('foreign', turn.turnId)).toBeUndefined()
+    expect(signal.aborted).toBe(false)
+    let acknowledged = false
+    const stopping = store.cancelAndWait('owner', turn.turnId).then(value => { acknowledged = true; return value })
+    await flush()
+    expect(signal.aborted).toBe(true)
+    expect(acknowledged).toBe(false)
+    expect(store.get('owner', turn.turnId)).toMatchObject({ status: 'running', artifactRefs: [event.artifact] })
+    expect(() => store.start('owner', async () => 5, { ...scope, generationId: uuidv7() })).toThrow('has not finished stopping')
+    observe({ ...event, artifact: { ...event.artifact, id: uuidv7() } })
+    release(3)
+    expect(await stopping).toMatchObject({ status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' }, artifactRefs: [event.artifact] })
+    expect(await store.cancelAndWait('owner', turn.turnId)).toMatchObject({ status: 'failed' })
+    const next = store.start('owner', async () => 7, { ...scope, generationId: uuidv7() })
+    await flush()
+    expect(store.get('owner', next.turnId)).toMatchObject({ status: 'completed', response: 7 })
+    store.close()
+  })
+
+  it('keeps the outer timeout but never treats it as a cancellation drain acknowledgement', async () => {
+    vi.useFakeTimers()
+    const store = new PlannerTurnStore<number>({ drainCancellation: true, deadlineMs: 100, maxEntries: 1 })
+    let release!: (value: number) => void
+    const turn = store.start('owner', async () => new Promise(resolve => { release = resolve }))
+    await flush()
+    let acknowledged = false
+    const stopping = store.cancelAndWait('owner', turn.turnId).then(value => { acknowledged = true; return value })
+    await vi.advanceTimersByTimeAsync(100)
+    expect(store.get('owner', turn.turnId)).toMatchObject({ status: 'failed', error: { code: 'AGENT_TURN_TIMEOUT' } })
+    expect(acknowledged).toBe(false)
+    expect(() => store.start('owner', async () => 1)).toThrow('Planner is busy')
+    release(3)
+    expect(await stopping).toMatchObject({ status: 'failed', error: { code: 'AGENT_TURN_TIMEOUT' } })
+    store.close()
+  })
+
   it('publishes a bounded deduplicated scoped snapshot and removes outdated Trip/flight refs', async () => {
     const store = new PlannerTurnStore<number>()
     const scope = { tripId: uuidv7(), conversationId: uuidv7(), generationId: uuidv7() }

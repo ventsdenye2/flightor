@@ -48,6 +48,22 @@ owner/session/request identity. A component-local clock updates elapsed time.
 
 ## Validation
 
+### 2026-09-24 amendment: DSH cancellation acknowledgement
+
+The cancel POST now awaits the service execution Promise before returning its
+acknowledgement. In DSH mode, an aborted generation remains `running` until its
+parent domain tool promises drain; no new public status/schema is added. Existing
+commits remain visible, late publications are fenced, and another turn for the
+same owner/Trip/conversation is rejected until execution has settled. Repeated
+cancellation waits on the same Promise. The 315-second outer deadline still
+reports timeout, but timeout is not proof that business writes have stopped;
+the cancel request does not acknowledge a completed drain before it happens.
+Terminal but undrained entries cannot be evicted. Legacy synchronous store
+cancellation remains compatible; its HTTP cancellation also waits for service
+settlement. This does not upgrade legacy runtime settlement to proof of arbitrary
+uncooperative provider side effects. DSH's actual parent tool drain is tested
+separately in [the session boundary report](../design/budget-travel-agent/DSH_SESSIONS_2026-09-24.md).
+
 ### 2026-09-20 amendment: committed results and cancellation (B4)
 
 The existing single-process resource now carries Trip/conversation/generation

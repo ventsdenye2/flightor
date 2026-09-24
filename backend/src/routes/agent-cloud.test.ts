@@ -26,6 +26,35 @@ const env = parseEnv({
 const call = (id: string, name: string, args: unknown) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
 
 describe('authenticated cloud Agent route', () => {
+  it('does not acknowledge DSH cancellation or accept a competing turn before the service drains', async () => {
+    const trips = new InMemoryTripRepository(), trip = await trips.create()
+    const conversationId = '6d356c33-0dc0-420d-920e-159e785125c8'
+    let release!: () => void, signal!: AbortSignal
+    const drained = new Promise<void>(resolve => { release = resolve })
+    const runTurn = vi.fn(async (input: { signal: AbortSignal }) => { signal = input.signal; await drained; throw new Error('Cancelled after write drain') })
+    const port: PlannerServicePort = { runTurn, validateTurn: vi.fn().mockResolvedValue(trip), localizeGuide: vi.fn(),
+      publicationContext: vi.fn().mockResolvedValue({ tripContextVersion: 0, selectedFlightRevision: undefined }) }
+    const app = Fastify()
+    await registerCloudAgentRoutes(app, { env: { ...env, FLIGHTOR_AGENT_ENGINE: 'dsh' } } as unknown as AppContext, () => port)
+    const token = await issueAccessToken({ userId: 'cancel-owner', publicId: 'public-cancel' }, env)
+    const headers = { authorization: `Bearer ${token}` }, payload = { tripId: trip.id, conversationId, message: 'Save my plan' }
+    try {
+      const accepted = await app.inject({ method: 'POST', url: '/v1/agent/turns', headers, payload })
+      const turnId = accepted.json().turnId
+      let acknowledged = false
+      const cancelled = app.inject({ method: 'POST', url: `/v1/agent/turns/${turnId}/cancel`, headers })
+        .then(response => { acknowledged = true; return response })
+      await vi.waitFor(() => { expect(signal.aborted).toBe(true) })
+      expect(acknowledged).toBe(false)
+      expect((await app.inject({ method: 'GET', url: `/v1/agent/turns/${turnId}`, headers })).json().status).toBe('running')
+      expect((await app.inject({ method: 'POST', url: '/v1/agent/turns', headers, payload })).statusCode).toBe(409)
+      expect(runTurn).toHaveBeenCalledTimes(1)
+      release()
+      const response = await cancelled
+      expect(response.statusCode).toBe(200)
+      expect(response.json()).toMatchObject({ status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' } })
+    } finally { release(); await app.close() }
+  })
   it('accepts an independent service port and polls without executing another Agent turn', async () => {
     const trips = new InMemoryTripRepository(), trip = await trips.create()
     const conversationId = '6d356c33-0dc0-420d-920e-159e785125c8'

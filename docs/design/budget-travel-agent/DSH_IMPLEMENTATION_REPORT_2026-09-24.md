@@ -28,6 +28,8 @@ D0 20:03 核心与独立 worker 两项测试通过（Node test 0.751s）：真�
 
 ## D3 实现与验证
 
+D2 提交 `52116d6`，包含联网写入所需的计量 IPC、会话安全基础与对应单测；D3 单独提交取消 API 和新增多轮/数据库/前端回归证据。
+
 与 D2 收尾交错执行，未伪造互不重叠的开发耗时。Session manager 持久 owner/Trip/conversation scope、profile 与 Memory epoch；warm followup、冷 resume、容量及空闲回收；退休旧会话后只注入当前数据库状态。Memory 关闭时不重新注入先前 assistant 的推断文字，只保留用户显式历史和当前受控领域上下文。
 
 取消先隔离 generation 并停止 worker，再等待父进程实际工具 Promise 完成，API 确认后方可开始竞争回合。重复 IPC 返回缓存结果，不重写领域数据；工具名/参数严格验证；root lock 的获取/回收/释放均受独占 guard 保护。局部攻略修改按 slot 服务端合并并比较受保护活动。最终引用核对 Trip 与 flight revision。详见 [会话](DSH_SESSIONS_2026-09-24.md)。
@@ -37,6 +39,8 @@ D0 20:03 核心与独立 worker 两项测试通过（Node test 0.751s）：真�
 21:02 定向收尾：新多轮 fixture 已修正为合法 ResearchArtifact（一致持久ID、完整verification），同时限制组合提交的公开引用为 flight_search/travel_guide，内部 route 不另发用户结果。实际 worker 执行发布→解释零新增攻略→冷 resume，两服务测试2/2通过（6.18s）。预算增加“任一正数调用上限达到后全部停止”断言，18/18通过（3.49s）；runtime全4项通过（2.207s），backend build通过。上述是失败修复后的定向证据，不改写此前全量失败记录。
 
 前端仅运行回归，零源码/依赖改动：conversation progress、session recovery、artifacts、production presentation 共161明确计数项和2媒体断言组通过（17.585s）；范围见[前端回归](DSH_FRONTEND_REGRESSION_2026-09-24.md)，不代替H5/微信真实验收。
+
+新增真实 PostgreSQL DSH 回归1/1通过（9.20s）：官方 fixture worker、真实 owner-scoped repos/JWT GET，完成保存→解释零写入→仅第二天下午替换→Trip总预算1200→冷恢复。两个Goal/Run满足、首次独立Finalizer/旧Runtime调用0，旧版本Artifact不可复用，GET blocked/stale投影不启动Agent。运行在独立随机schema，与D4固定schema分离，费用0。
 
 ## D4
 
