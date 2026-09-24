@@ -4,6 +4,8 @@
 
 按用户本次明确授权优先 DSH D0→D4，取消旧R/U与条件C1前置；原成果和历史账本保留。D0 `6fbd5c7` 实际核心AgentLoop与独立worker测试通过；D1 抽出PlannerServicePort、共享领域服务与配置分流，只读多轮通过真实DSH worker，旧Runtime调用0，GET不唤醒。4文件16项服务/端点/配置定向通过（8.66s）；核心/runtime另2项通过（0.751s）。Session生命周期扩展与后续联网/写入仍在实施，不预宣验收。对应合同见TOOLS/架构/部署及[实施记录](DSH_IMPLEMENTATION_REPORT_2026-09-24.md)。前端零修改，G1未放行。
 
+21:03 更新：D2 已接原始 web/evidence、单主Agent组合保存/正式文字、持久预算及独立官方DeepSeek配置；D3取消排空/IPC去重/Memory退休/冷resume/局部slot保护已实现。官方适配器本地HTTP组合与runtime4/4、预算18/18、session15/15、API取消15/15通过。全量后端949通过/1新增fixture失败，修复fixture与内部route引用后服务2/2定向通过；未抹去原失败或冒称最终全量重跑。真实PG旧回归37/39，陈旧Finalizer fixture修复后2/2通过。前端161项+2媒体组通过，源码不变。D4 dry-run核对新授权US$2/48模型/12搜索与固定账本；真实调用结果待后续记录，G1仍未通过。
+
 ## 2026-09-22：a67ed77 终稿三项收尾
 
 测试先行复现7个后端失败及前端blocked缓存失败后，修复显式有界技术重试/历史费用/迟到保护、practical日程角色和名称/部分占位检查。具体字段、红绿测与数据库证据见[收尾记录](FINALIZATION_FOLLOWUP_2026-09-22.md)及[ADR 0025](../../adr/0025-bounded-guide-finalization.md)。只提交本批修改；概览与景点卡片等待下一项需求，没有运行真实模型、模拟器或全量G1。

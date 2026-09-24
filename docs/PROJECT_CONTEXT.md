@@ -1,6 +1,6 @@
 # FlightOR 当前项目上下文
 
-2026-09-24 当前后端任务：按[DSH 实施方案](design/budget-travel-agent/DSH_IMPLEMENTATION_PLAN_2026-09-24.md) D0→D4 顺序执行；旧 R/U 与条件 C1 是历史规划/证据，不是本次前置。当前 G1 仍未通过，地图排查暂停。此处不预先标记任何 DSH 阶段为完成；阶段结果以 progress 与实施报告中的实际验证为准。
+2026-09-24 当前后端任务：按[DSH 实施方案](design/budget-travel-agent/DSH_IMPLEMENTATION_PLAN_2026-09-24.md)推进，旧 R/U 与条件 C1 是历史规划/证据，不是本次前置。DSH 已有 opt-in 后端路径，默认 `FLIGHTOR_AGENT_ENGINE=legacy`；在隔离分支实现受控 DSH worker、领域工具、combined guide commit、可选 web adapters 和持久预算。当前 DSH 阶段及离线、数据库、HTTP mock 与后续 live 验证边界见[实施报告](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)。这不代表已部署或真实 Provider 已验收。当前 G1 仍未通过，地图排查暂停。
 
 2026-09-22第四阶段：[真实景点图片](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)已接独立Wikimedia媒体API、迁移014、版本绑定缓存和正式封面/缩略图/详情；两景点H5真实照片闭环，微信页面/真机及正式public库未验收。显式补图，不改Planner/研究/终稿、不调用Nominatim。地图底图暂停排查、仍未解决。下文各阶段“图片未接”保留历史时点，当前合同以[ADR0027](adr/0027-place-media.md)为准。
 
@@ -16,7 +16,7 @@ G1 后续合同修复已增加可选 `requiredEvidenceTypes`，显式区分探�
 
 ## 当前主链
 
-`src/pages/plan/index.tsx` → `src/services/conversationService.ts` → 认证 `POST /v1/agent/turns` + GET 短轮询 → `backend/src/routes/agent-cloud.ts` → `CloudPlannerService` → `AgentRuntime` 的自主工具循环。同步 `POST /v1/agent/converse` 共用同一 Planner；旧 conversation-agent/cloud 代码不代表第二个当前主 Agent。
+`src/pages/plan/index.tsx` → `src/services/conversationService.ts` → 认证 `POST /v1/agent/turns` + GET 短轮询 → `backend/src/routes/agent-cloud.ts` → `PlannerServicePort`。默认 legacy 路径为 `CloudPlannerService` → `AgentRuntime`；显式配置 `FLIGHTOR_AGENT_ENGINE=dsh` 时选用官方 DSH worker。同步 `POST /v1/agent/converse` 使用相同服务选择；客户端不能选择引擎。旧 conversation-agent/cloud 代码不代表第二个当前主 Agent。
 
 前端 Taro + React + MobX；后端 Fastify + TypeScript，PostgreSQL/Kysely、Redis 和 Worker。AeroDataBox 为航空主能力，SerpApi 提供票价；Research 按明确配置选择既有搜索综合或原生联网适配器。OAG 可选。中国 LLM 约束继续有效，实际模型/路由以脱敏运行配置为准，不能仅据默认值声称正在使用某模型。
 

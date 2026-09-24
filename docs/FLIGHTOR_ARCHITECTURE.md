@@ -1084,6 +1084,34 @@ may call only `start_route_generation` to queue that composition, and only when
 the current user message unambiguously requests final generation; it cannot
 invoke the internal engine tools directly.
 
+### Opt-in DSH Planner
+
+The Agent API resolves a `PlannerServicePort` from server configuration. The
+default remains the legacy `CloudPlannerService` and `AgentRuntime`; setting
+`FLIGHTOR_AGENT_ENGINE=dsh` selects the official DSH worker for both turn
+routes. Clients cannot choose the engine. DSH owns its model loop and private
+session transport, while the API process executes the allowlisted FlightOR
+domain tools against the authenticated owner's repositories. It does not
+delegate through the legacy Planner or Runtime.
+
+The DSH model registry contains scoped Trip/Artifact/Memory reads, Trip and
+Memory updates, fare search/confirmation, explicit route-generation enqueue,
+and one combined `commit_travel_guide` operation. Internal flight path search
+and optimization stay behind route generation. When explicitly configured,
+`web_search` and `web_fetch` use one selected provider route; captured material
+is bound to the current owner, Trip, Conversation, generation and Trip version
+before it can support the combined guide commit. A durable local DSH budget
+must admit model/search calls before dispatch. The DSH worker exposes no shell,
+filesystem, Git, subagent, PTC or plugin-installation capability. Its single-
+host session directory and cancellation/drain limits are documented in
+[DSH sessions](design/budget-travel-agent/DSH_SESSIONS_2026-09-24.md), and
+provider routing in [deployment](deploy.md).
+
+This path is opt-in and not deployed. Offline fixtures and local HTTP adapter
+mocks do not establish successful live Provider calls, production operation,
+or G1 acceptance; the staged evidence boundary is in the
+[DSH implementation report](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md).
+
 Final generation is an authenticated explicit action, never an inferred
 conversational side effect. The product button uses this run resource:
 

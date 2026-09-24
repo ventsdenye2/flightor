@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { GuideFinalizer, sourceRef } from './finalization.js'
+import { GuideFinalizer, sourceRef, validateIntegratedFinalText } from './finalization.js'
 import { finalTextSchema, type FinalText } from './finalization-schema.js'
 import { travelGuideArtifactPayloadSchema } from './artifact.js'
 import { admittedResearch, buildGuidePublication, publicationFor, projectGuideRecord } from './publication.js'
-import { finalizeGuide } from './finalization-service.js'
+import { finalizeGuide, publishIntegratedGuide } from './finalization-service.js'
 import { InMemoryArtifactRepository, type ArtifactRecord } from '../artifacts/repository.js'
 import { mergeFinalVariant } from './finalization-storage.js'
 
@@ -26,6 +26,96 @@ function fixture(locale: 'zh' | 'en' = 'zh') {
   return { record, guide, research, text, input: { locale, guide, research, requirements: { message: '我想了解传统文化', excluded: ['shopping'] } } }
 }
 const response = (text: FinalText) => ({ message: { role: 'assistant' as const, content: JSON.stringify({ text, issues: [] }) } })
+
+describe('integrated main Agent publication', () => {
+  async function application(locale: 'zh' | 'en' = 'zh') {
+    const f = fixture(locale)
+    const artifacts = new InMemoryArtifactRepository('owner', new Set([f.record.tripId]))
+    for (const record of sample.researchArtifacts as ArtifactRecord[]) await artifacts.create({ ...record })
+    const record = await artifacts.create({ ...f.record, goalId: undefined, runId: undefined, sourceArtifactIds: [] })
+    const input = { ownerId: 'owner', record, artifacts, locale, text: f.text, memoryEnabled: true, assertCurrent: vi.fn(async () => {}) }
+    return { ...f, artifacts, record, input }
+  }
+  it.each(['zh', 'en'] as const)('publishes %s with zero additional model calls and preserves the domain payload', async locale => {
+    const f = await application(locale)
+    const save = vi.spyOn(f.artifacts, 'saveFinalVariant')
+    const [a, b] = await Promise.all([publishIntegratedGuide(f.input), publishIntegratedGuide(f.input)])
+    expect(a).toEqual(b)
+    const variant = publicationFor(a)!.finalization!.variants[locale]!
+    expect(variant).toMatchObject({ status: 'accepted', text: f.text, revision: 1,
+      observation: { calls: 0, knownCostUsdMicros: 0, unknownCostCalls: 0 } })
+    expect((a.payload as any).days).toEqual(f.guide.days)
+    expect(publicationFor(a)!.guideContentHash).toBe(publicationFor(f.record)!.guideContentHash)
+    await publishIntegratedGuide({ ...f.input, record: a, text: { invented: 'replacement' } })
+    expect(save).toHaveBeenCalledTimes(1)
+    expect((projectGuideRecord(a, locale).payload as any).publication.status).toBe('accepted')
+  })
+  it.each(['wrong_locale', 'foreign_prose', 'invented_source', 'identity', 'precise_price', 'precise_time', 'placeholder', 'invalid_schema'] as const)(
+    'keeps %s hidden and persists a concrete blocked variant', async failure => {
+      const f = await application()
+      let text: unknown = structuredClone(f.text)
+      const draft = text as FinalText
+      if (failure === 'wrong_locale') draft.locale = 'en'
+      if (failure === 'foreign_prose') text = { ...fixture('en').text, locale: 'zh' }
+      if (failure === 'invented_source') draft.activities[0]!.sourceRefs = ['invented-artifact/finding']
+      if (failure === 'identity') draft.activities[0]!.activityId = 'new-activity'
+      if (failure === 'precise_price') draft.activities[0]!.introduction = '寺院门票200元，可在寺院周边漫步。'
+      if (failure === 'precise_time') draft.overview = '步行15分钟即可到达，游览传统街区。'
+      if (failure === 'placeholder') draft.activities[0]!.name = '待核实'
+      if (failure === 'invalid_schema') text = { ...draft, accepted: true }
+      const saved = await publishIntegratedGuide({ ...f.input, text })
+      const variant = publicationFor(saved)!.finalization!.variants.zh!
+      expect(variant.status).toBe('blocked'); expect(variant.text).toBeNull()
+      expect(variant.issues.length).toBeGreaterThan(0)
+      if (failure === 'placeholder') expect(variant.issues[0]!.activityId).toBe(f.text.activities[0]!.activityId)
+      expect((projectGuideRecord(saved, 'zh').payload as any).days).toEqual([])
+    })
+  it('uses the same material and context gates as legacy, even if accepted text is supplied', async () => {
+    const f = fixture()
+    const missing = validateIntegratedFinalText({ ...f.input, research: [], accepted: f.text }, f.text)
+    expect(missing.issues[0]!.code).toBe('missing_material')
+    const item = f.guide.days[0]!.items[0]!
+    f.research.find(r => r.id === item.sourceArtifactId)!.findings.find(v => v.id === item.sourceFindingId)!.category = 'practical'
+    expect(validateIntegratedFinalText(f.input, f.text).issues[0]!.code).toBe('invalid_plan')
+    const other = fixture()
+    expect(validateIntegratedFinalText({ ...other.input, requirements: 'x'.repeat(180001) }, other.text).issues[0]!.code).toBe('context_budget')
+    expect(validateIntegratedFinalText({ ...other.input, omitted: ['material missing'] }, other.text).status).toBe('blocked')
+  })
+  it.each(['already_cancelled', 'cancel_before_save', 'trip_changed', 'flight_changed'] as const)('does not save after %s', async failure => {
+    const f = await application(), controller = new AbortController()
+    const save = vi.spyOn(f.artifacts, 'saveFinalVariant')
+    if (failure === 'already_cancelled') controller.abort(new Error('cancelled'))
+    let checks = 0
+    const assertCurrent = async () => {
+      if (++checks !== 3) return
+      if (failure === 'cancel_before_save') controller.abort(new Error('cancelled'))
+      else throw new Error(failure)
+    }
+    await expect(publishIntegratedGuide({ ...f.input, signal: controller.signal, assertCurrent })).rejects.toThrow(
+      failure.includes('cancel') ? 'cancelled' : failure)
+    expect(save).not.toHaveBeenCalled()
+    expect(publicationFor((await f.artifacts.get(f.record.id))!)!.finalization!.variants.zh).toBeUndefined()
+  })
+  it('rejects changed content and owner scope before publication', async () => {
+    const f = await application(), save = vi.spyOn(f.artifacts, 'saveFinalVariant')
+    const stale = structuredClone(f.record)
+    // Recompute the publication hash from its changed domain content as a separate snapshot.
+    const changedGuide = travelGuideArtifactPayloadSchema.parse(stale.payload)
+    changedGuide.days[0]!.theme = 'changed theme'
+    changedGuide.publication = { ...buildGuidePublication(stale, changedGuide, f.research), finalization: { version: 1, variants: {} } }
+    stale.payload = changedGuide
+    await expect(publishIntegratedGuide({ ...f.input, record: stale })).rejects.toThrow('Guide changed')
+    const foreign = new InMemoryArtifactRepository('other', new Set([f.record.tripId]))
+    await expect(publishIntegratedGuide({ ...f.input, ownerId: 'other', artifacts: foreign })).rejects.toThrow('Guide was not found')
+    expect(save).not.toHaveBeenCalled()
+  })
+  it('requires hidden publication storage rather than silently returning a legacy record', async () => {
+    const f = await application()
+    const old = structuredClone(f.record)
+    delete (old.payload as any).publication.finalization
+    await expect(publishIntegratedGuide({ ...f.input, record: old })).rejects.toThrow('requires a hidden guide draft')
+  })
+})
 
 describe('bounded finalization', () => {
   it.each(['travel', 'visit'] as const)('allows practical tasks on a %s day without treating them as cultural visits', async kind => {

@@ -83,7 +83,7 @@ function extractText(input: string, contentType: string): string {
     ? input.replace(/<!--[\s\S]*?-->/g, ' ').replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, ' ')
       .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, ' ').replace(/<[^>]*>/g, ' ')
     : input
-  return decodeEntities(source).replace(/\s+/g, ' ').trim().slice(0, MAX_TEXT_CHARS)
+  return decodeEntities(source).replace(/\s+/g, ' ').trim()
 }
 
 async function defaultRequest(options: Parameters<SourceRequest>[0]): Promise<SourceReaderResponse> {
@@ -137,8 +137,8 @@ export class PublicResearchSourceReader implements ResearchSourceReader {
         const pinned = addresses[0]!
         const response = await Promise.race([this.request({ hostname: pinned, servername: hostname, path: `${parsed.pathname}${parsed.search}`, signal: controller.signal }), interrupted])
         recordHttpStatus(response.statusCode)
-        if (response.statusCode >= 300 && response.statusCode < 400) throw fail('Source redirects are not followed', 'SOURCE_REDIRECT_REJECTED')
-        if (response.statusCode < 200 || response.statusCode >= 300) throw fail(`Source returned HTTP ${response.statusCode}`, 'SOURCE_HTTP_REJECTED')
+        if (response.statusCode >= 300 && response.statusCode < 400) throw Object.assign(fail('Source redirects are not followed', 'SOURCE_REDIRECT_REJECTED'), { statusCode: response.statusCode })
+        if (response.statusCode < 200 || response.statusCode >= 300) throw Object.assign(fail(`Source returned HTTP ${response.statusCode}`, 'SOURCE_HTTP_REJECTED'), { statusCode: response.statusCode })
         const contentEncoding = headerValue(response.headers, 'content-encoding')?.toLowerCase()
         if (contentEncoding && contentEncoding !== 'identity') throw fail('Compressed source responses are not accepted', 'SOURCE_ENCODING_REJECTED')
         const contentType = headerValue(response.headers, 'content-type')?.toLowerCase() ?? ''
@@ -155,8 +155,10 @@ export class PublicResearchSourceReader implements ResearchSourceReader {
           return Buffer.concat(chunks)
         }
         const body = await Promise.race([collectBody(), interrupted])
-        const text = extractText(body.toString('utf8'), contentType)
-        return { text, retrievedAt: this.now().toISOString(), contentHash: createHash('sha256').update(text, 'utf8').digest('hex') }
+        const fullText = extractText(body.toString('utf8'), contentType)
+        const text = fullText.slice(0, MAX_TEXT_CHARS)
+        return { text, retrievedAt: this.now().toISOString(), contentHash: createHash('sha256').update(text, 'utf8').digest('hex'),
+          url: parsed.toString(), statusCode: response.statusCode, truncated: fullText.length > MAX_TEXT_CHARS }
       } catch (error) {
         if (caller?.aborted) throw fail('Source request cancelled', 'SOURCE_CANCELLED')
         if (timedOut) throw fail('Source request timed out', 'SOURCE_TIMEOUT')

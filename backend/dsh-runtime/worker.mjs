@@ -30,6 +30,8 @@ async function open(data) {
     tools: z.array(z.object({ name: z.string().regex(/^[a-z][a-z0-9_]{0,63}$/), description: z.string(), rawSchema: z.record(z.string(), z.unknown()) }).strict()).max(32),
     route: z.object({ provider: z.enum(['openrouter', 'deepseek', 'fixture']), model: z.string().min(1), baseURL: z.url().optional(), maxTokens: z.number().int().min(256).max(16384).default(4096) }).strict(),
     fixture: z.array(z.unknown()).optional(),
+    web: z.object({ provider: z.enum(['serpapi-raw', 'deepseek-official']), baseURL: z.url().optional(), model: z.string().optional() }).strict().optional(),
+    metered: z.boolean().optional(),
   }).strict().parse(data)
   let adapter
   if (config.route.provider === 'fixture') {
@@ -38,19 +40,34 @@ async function open(data) {
     adapter = new FixtureAdapter(config.fixture ?? [])
   }
   ctx = await createRuntime({ ...config, adapter, provider: config.route.provider, execute: bridge })
+  ctx.on('tools/execute', async (exec, next) => {
+    if (!active || !['web_search', 'web_fetch'].includes(exec.name)) return next()
+    const toolCallId = `${active.generation}:web:${++serial}`
+    send({ kind: 'activity', generation: active.generation, type: 'tool_start', toolName: exec.name, toolCallId })
+    try { return await next() }
+    finally { send({ kind: 'activity', generation: active?.generation, type: 'tool_end', toolName: exec.name, toolCallId }) }
+  })
   if (!adapter) {
     const llm = await import('@deepseek-ai/dsh-llm-pi-ai')
     await ctx.plugin(llm, { providers: { [config.route.provider]: {
       apiKeyEnv: 'FLIGHTOR_DSH_MODEL_KEY', api: 'openai-completions', baseURL: config.route.baseURL,
       models: [{ id: config.route.model, contextWindow: 131072, maxTokens: config.route.maxTokens, reasoningEfforts: false }],
-      retryPolicy: { mode: 'normal', maxRetries: 0 }, defaultMaxTokens: config.route.maxTokens,
+      retryPolicy: { mode: 'normal', maxRetries: 0 }, defaultMaxTokens: config.route.maxTokens, timeoutMs: 60000,
     } } })
   }
   ctx.on('llm/stream', async function* (options, next) {
     if (!active || active.cancelled || ++active.calls > 12) throw new Error('DSH_MODEL_LIMIT')
     const started = performance.now()
+    const billingId = `${active.generation}:model:${active.calls}`
+    if (config.metered) {
+      const receipt = await bridge('__model_admit', { id: billingId }, { signal: options.signal })
+      if (!receipt?.ok) throw new Error('DSH_BUDGET_NOT_ADMITTED')
+    }
     send({ kind: 'activity', generation: active.generation, type: 'model_start' })
-    try { yield* next() } finally {
+    let usage, failed = false
+    try { for await (const chunk of next()) { if (chunk.type === 'usage') usage = chunk.usage; yield chunk } }
+    catch (error) { failed = true; throw error } finally {
+      if (config.metered && active && !active.cancelled) await bridge('__model_receipt', { id: billingId, durationMs: performance.now() - started, usage: usage ?? null, failed }, {})
       send({ kind: 'activity', generation: active?.generation, type: 'model_end', durationMs: performance.now() - started })
     }
   })
@@ -59,7 +76,7 @@ async function open(data) {
     : await ctx.agents.create({ sessionId: config.sessionId, agentOptions })
   // No unfinished inbox is replayed after process recovery.
   if (config.resume) await handle.agent.cancel({ kind: 'user' })
-  return { profile: PROFILE, plugins: CORE_PLUGINS, tools: ctx.tools.schemas().map(tool => tool.name), sessionId: config.sessionId, resumed: config.resume }
+  return { profile: PROFILE, plugins: [...CORE_PLUGINS, ...(!adapter ? ['llm-pi-ai'] : []), ...(config.web ? ['web', 'tool-web', ...(config.web.provider === 'deepseek-official' ? ['web-search-deepseek'] : [])] : [])], tools: ctx.tools.schemas().map(tool => tool.name), sessionId: config.sessionId, resumed: config.resume }
 }
 async function turn(data) {
   if (!handle) throw new Error('DSH_NOT_OPEN')

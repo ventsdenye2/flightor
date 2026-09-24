@@ -22,6 +22,11 @@ aborts active execution and retains committed refs. It does not cancel a persist
 Goal or undo a committed transaction. The client waits for acknowledgement before
 unlocking submissions. Scope, version reconciliation, compatibility and concurrency
 semantics are specified in [RUNTIME_PLAN §5](design/budget-travel-agent/RUNTIME_PLAN.md).
+In DSH mode the cancellation snapshot remains nonterminal until parent domain
+tool promises drain; the cancel POST awaits service settlement. The unchanged
+315-second outer timeout is a timeout, not proof of a completed cancellation.
+Another turn in the same owned conversation cannot begin while its predecessor
+is still draining. See [ADR 0015](adr/0015-transient-planner-progress.md).
 Its Planner registry is intentionally smaller than the complete deterministic
 Core Tool registry: conversation may gather facts, update Trip/Memory, search
 fares, research, and author daily travel guides. It may queue final route generation only
@@ -579,6 +584,12 @@ GET `/v1/map-config` 公开 OSM 瓦片模板和是否配置，不含 secret。�
 认证 GET/POST `/v1/artifacts/:id/media` 不属于 Planner 工具表；GET仅返回当前accepted guideContentHash对应的已存活动媒体，POST `{contentVersion}` 才执行显式、有界Wikimedia补全。owner/Trip/航班/内容/活动保护复用地点快照，独立媒体事务不会改正文或地点。没有新增模型/搜索工具调用，详见[ADR0027](adr/0027-place-media.md)。
 # DSH 受控执行面（2026-09-24，实验分支）
 
-Agent API 依赖 `PlannerServicePort`，启动配置选择 legacy 或 DSH，客户端不能选引擎。DSH D1 只读工具白名单为 get_trip_context、get_trip_artifacts、read_artifact、resolve_location、get_user_memory、get_active_goal；由父进程执行现有领域工具，不调用旧 Planner/Runtime。没有研究综合或终稿调用。GET/publicationContext 不创建worker，显式本地化共用独立领域服务。
+Agent API 依赖 `PlannerServicePort`，仅服务端 `FLIGHTOR_AGENT_ENGINE` 选择引擎，默认仍为 `legacy`，客户端不能选择。DSH 使用官方 worker/AgentLoop；父进程执行所有业务工具并沿用 owner、Trip version、Goal/Run、Artifact 和 publication 校验，不调用 `CloudPlannerService.runTurn` 或 `AgentRuntime.run`。
+
+DSH 模型可见的受控业务工具包括 `get_trip_context`、`get_trip_artifacts`、`read_artifact`、`resolve_location`、`get_user_memory`、`get_active_goal`、`update_trip_context`、`search_flights`、`search_flexible_flights`、`confirm_flight_price`、`update_user_memory`、`start_route_generation`，以及单一组合工具 `commit_travel_guide`。最终路线引擎仍只可由明确请求触发的 `start_route_generation` 排队；底层连接搜索、完整航线规划和 Pareto 优化不开放给会话模型。`commit_travel_guide` 需要 `travel_guide` intent，将当前版本 candidate/evidence、日程和 locale 文本一次提交；服务端复用保存校验、发布合同及 Goal verifier。失败结果不会被当作已接纳发布。首次提交不调用独立 ResearchAgent/synthesis 或 Finalizer；显式缺失语言的本地化仍走已有 bounded finalizer。
+
+组合配置提供选定 provider 后公开 `web_search` 和 `web_fetch`；当前 provider 由 `DSH_SEARCH_PROVIDER` 选定，默认 `serpapi-raw`，也可明确指定 `deepseek-official`。凭证缺失时调用失败，不静默切换。Web 插件内部的 `__web_search`、`__web_fetch`、`__record_web` 不向模型暴露，只能经白名单桥接；来源会写入当前 turn 的 owner/Trip/Conversation/version scope evidence store，再转换为既有 ResearchArtifact/Guide 引用。官方搜索使用独立 `DEEPSEEK_SEARCH_API_KEY` 与 Messages API 路由，不能借用或传递 OpenRouter 凭证。模型和搜索请求需先通过持久 DSH 预算 admission；达到金额/次数限制或预算未配置时请求被拒绝，不绕过预算继续执行。
+
+Shell、文件、Git、PTC、subagent、插件安装和用户全局 profile 不在 worker 插件或工具面中。Session JSONL 是内部会话存储，不是模型可调用的文件能力。GET/publicationContext 不启动 worker；取消确认会等待父进程实际业务工具 Promise drain。
 
 实际 DSH 核心、worker 白名单及分阶段测试见 [实施记录](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)；后续写入/联网以该记录实际阶段为准，不将原附件的目标列表当已验证功能。

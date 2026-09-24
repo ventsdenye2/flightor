@@ -1,4 +1,5 @@
 import { resolve } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import type { AppContext } from '../../app/context.js'
 import { AppError } from '../../lib/errors.js'
 import { PostgresTripRepository } from '../../trips/postgres.js'
@@ -21,6 +22,16 @@ import { OpenRouterClient } from '../../providers/openrouter/client.js'
 import { createRouteGenerationDependencies } from '../../route-generation/composition.js'
 import { DshSessionManager } from './session-manager.js'
 import { DshPlannerService } from './service.js'
+import { FileDshEvidenceRepository } from './evidence-file.js'
+import { FileDshBudget } from './budget.js'
+
+function budgetFor(context: AppContext) {
+  const env = context.env
+  if (env.DSH_AUTHORIZED_USD <= 0 || env.DSH_AUTHORIZED_MODEL_CALLS <= 0)
+    throw new AppError('DSH_BUDGET_REQUIRED', 'Configure a freshly authorized DSH budget before live execution', 503)
+  return new FileDshBudget({ path: resolve(env.DSH_BUDGET_PATH), authorizedUsd: env.DSH_AUTHORIZED_USD,
+    maxModelCalls: env.DSH_AUTHORIZED_MODEL_CALLS, maxSearchCalls: env.DSH_AUTHORIZED_SEARCH_CALLS })
+}
 
 export function createDshManager(context: AppContext): DshSessionManager {
   const env = context.env
@@ -30,6 +41,9 @@ export function createDshManager(context: AppContext): DshSessionManager {
   if (env.DSH_SEARCH_PROVIDER === 'deepseek-official' && !env.DEEPSEEK_SEARCH_API_KEY)
     throw new AppError('PROVIDER_NOT_CONFIGURED', 'DeepSeek official search requires its own explicit key', 503)
   return new DshSessionManager({ root: resolve(env.DSH_DATA_DIRECTORY),
+    metered: true,
+    web: { provider: env.DSH_SEARCH_PROVIDER, baseURL: env.DEEPSEEK_SEARCH_BASE_URL, model: env.DEEPSEEK_SEARCH_MODEL },
+    searchKey: env.DEEPSEEK_SEARCH_API_KEY,
     route: { provider: env.DSH_MODEL_PROVIDER, model: env.DSH_MODEL,
       baseURL: env.DSH_MODEL_PROVIDER === 'openrouter' ? env.OPENROUTER_BASE_URL : env.DEEPSEEK_BASE_URL, maxTokens: 4096 },
     modelKey: key, maxActive: env.DSH_MAX_ACTIVE, idleMs: env.DSH_IDLE_MS })
@@ -37,11 +51,15 @@ export function createDshManager(context: AppContext): DshSessionManager {
 
 export function createDshService(context: AppContext, userId: string, sessions: DshSessionManager): DshPlannerService {
   const env = context.env
+  const budget = budgetFor(context)
   const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))
   // Localization has a direct model client, never a hidden legacy Planner/Runtime.
   const localizationClient = env.DSH_MODEL_PROVIDER === 'openrouter' ? context.providers.openrouter : new OpenRouterClient({ ...env,
     OPENROUTER_API_KEY: env.DEEPSEEK_API_KEY, OPENROUTER_BASE_URL: env.DEEPSEEK_BASE_URL, OPENROUTER_MODEL: env.DSH_MODEL })
   return new DshPlannerService({ ownerId: userId, sessions,
+    budget, modelProvider: env.DSH_MODEL_PROVIDER,
+    web: { provider: env.DSH_SEARCH_PROVIDER, serpapi: context.providers.serpapi },
+    evidenceRepository: new FileDshEvidenceRepository(resolve(env.DSH_DATA_DIRECTORY, 'evidence')),
     trips: new PostgresTripRepository(context.db, userId), conversations: new PostgresConversationRepository(context.db, userId),
     artifacts: new PostgresArtifactRepository(context.db, userId), memory: new PostgresUserMemoryRepository(context.db, userId),
     flightSelections: new PostgresWorkspaceRepository(context.db, userId), goalRepository: new PostgresGoalRepository(context.db, userId),
@@ -51,6 +69,12 @@ export function createDshService(context: AppContext, userId: string, sessions: 
     flightRoutePlanner: new DeterministicFlightRoutePlanner(), routeOptimizer: new ParetoRouteOptimizer(),
     destinationDiscovery: new CatalogDestinationDiscoveryService({ aviation }), tripRoutePlanner: new DeterministicTripRoutePlanner(),
     travelGuideBuilder: new DeterministicTravelGuideBuilder(), routeGeneration: createRouteGenerationDependencies(context, userId),
-    createFinalizer: () => new GuideFinalizer(localizationClient, env.DSH_MODEL, { reasoning: { enabled: false, exclude: true } }),
+    createFinalizer: () => new GuideFinalizer({ complete: async (messages, model, options) => {
+      const id = `localize:${randomUUID()}`, started = performance.now()
+      await budget.admit('model', id, env.DSH_MODEL_PROVIDER)
+      let failed = true
+      try { const result = await localizationClient.complete(messages, model, options); failed = false; return result }
+      finally { await budget.settle(id, { durationMs: performance.now() - started, ...(failed ? { errorCode: 'LOCALIZATION_FAILURE' } : {}) }) }
+    } }, env.DSH_MODEL, { reasoning: { enabled: false, exclude: true } }),
   })
 }

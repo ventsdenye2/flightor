@@ -79,7 +79,9 @@ H5 使用真实OSM瓦片；微信原生Map不打包服务端Key、不申请实�
 
 `DSH_MODEL_PROVIDER=openrouter|deepseek`，主模型由 `DSH_MODEL` 指定；OpenRouter 默认沿用 `PLANNER_MODEL`，官方默认 deepseek-v4-flash。对应凭证分别 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY`。官方主模型不要求 OpenRouter Key。显式本地化仍通过同一路由的有界编辑客户端，读取与轮询不启动 Agent。
 
-`DSH_SEARCH_PROVIDER=serpapi-raw|deepseek-official` 明确区分原始 SerpApi 和官方 Messages 搜索；后者必须单独设置 `DEEPSEEK_SEARCH_API_KEY`、`DEEPSEEK_SEARCH_BASE_URL`、`DEEPSEEK_SEARCH_MODEL`，不能把 OpenRouter Key 发给官方。未配置不可用，不静默替换。
+`DSH_SEARCH_PROVIDER=serpapi-raw|deepseek-official` 明确区分原始 SerpApi 和官方 Messages 搜索；后者必须单独设置 `DEEPSEEK_SEARCH_API_KEY`、`DEEPSEEK_SEARCH_BASE_URL`、`DEEPSEEK_SEARCH_MODEL`，不能把 OpenRouter Key 发给官方。官方搜索 base URL 默认 `https://api.deepseek.com/anthropic/v1`，模型默认 `deepseek-v4-flash`；官方适配器调用对应 Messages 路径。主模型的官方兼容 API base URL 默认 `https://api.deepseek.com/v1`。未配置搜索 provider 时不公开联网工具；凭证、路由或预算缺失时直接失败，不静默替换。
+
+DSH 还要求正数 `DSH_AUTHORIZED_USD` 与 `DSH_AUTHORIZED_MODEL_CALLS`，以及 `DSH_BUDGET_PATH` 指向的本批持久账本；搜索次数由 `DSH_AUTHORIZED_SEARCH_CALLS` 限定。模型/搜索请求先进行预算 admission，再发出请求并记录有限回执。达到金额或次数上限后停止；不能换账本路径清零历史。
 
 `DSH_DATA_DIRECTORY` 默认 `.dsh-data`，必须是私有持久磁盘并与业务数据库一起备份；单主机单 API 实例独占目录，最大活跃数默认4、空闲回收默认120秒（DSH_MAX_ACTIVE/DSH_IDLE_MS），不是性能保证。回滚将引擎设回 legacy 后重启，保留新会话数据，不删旧 Runtime。
 

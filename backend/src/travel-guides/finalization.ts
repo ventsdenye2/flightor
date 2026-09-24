@@ -5,7 +5,7 @@ import { observeSpan } from '../lib/planner-observation.js'
 import type { TravelGuideArtifactPayload } from './artifact.js'
 import type { ResearchArtifact } from '../research-agent/types.js'
 import { hasClaimConflict } from '../research-agent/claim-evidence.js'
-import { finalResponseSchema, type FinalIssue, type FinalText, type FinalVariant, type PublicationLocale } from './finalization-schema.js'
+import { finalResponseSchema, finalTextSchema, type FinalIssue, type FinalText, type FinalVariant, type PublicationLocale } from './finalization-schema.js'
 
 export const FINALIZATION_CONTEXT_CHARS = 180_000
 export const FINALIZATION_TIMEOUT_MS = 90_000
@@ -61,6 +61,61 @@ export function textProblems(text: FinalText, input: FinalizationInput): string[
   return [...new Set(errors)]
 }
 
+const issue = (code: FinalIssue['code'], detail: string, activityId: string | null = null): FinalIssue => ({ code, detail, activityId })
+
+/** Shared deterministic plan/material gates; passing is not independent fact verification. */
+export function prepareFinalization(input: FinalizationInput): { content: string; omitted: string[]; issues: FinalIssue[] } {
+  const omitted = [...(input.omitted ?? [])]
+  const items = input.guide.days.flatMap(day => day.items)
+  const issues: FinalIssue[] = []
+  if (new Set(items.map(item => item.id)).size !== items.length || !items.length) {
+    issues.push(issue('invalid_plan', 'Activities must have unique stable identities and at least one visit.'))
+  }
+  if (!input.accepted) {
+    for (const day of input.guide.days) for (const item of day.items) {
+      const finding = input.research.find(r => r.id === item.sourceArtifactId)?.findings.find(f => f.id === item.sourceFindingId)
+      if (!finding?.sources.length) issues.push(issue('missing_material', 'The activity has no available source material.', item.id))
+      else if (finding.category === 'practical' && day.kind !== 'travel' && item.category !== 'practical' && item.category !== 'stopover') {
+        issues.push(issue('invalid_plan', 'Transport/practical material cannot establish a main visit.', item.id))
+      } else if (hasClaimConflict(finding.claimEvidence ?? [])) issues.push(issue('conflict', 'The referenced material contains conflicting claims.', item.id))
+    }
+  }
+  const data = input.accepted ? { locale: input.locale, accepted: input.accepted,
+    identities: items.map(item => ({ activityId: item.id, sourceRefs: [sourceRef(item)] })) } : {
+    locale: input.locale, requirements: input.requirements,
+    guide: { ...input.guide, publication: undefined }, research: input.research,
+    sourceBindings: items.map(item => ({ activityId: item.id, sourceRefs: [sourceRef(item)] }))
+  }
+  const content = JSON.stringify(data)
+  if (content.length > FINALIZATION_CONTEXT_CHARS) omitted.push('Complete finalization input exceeds 180000 characters; no source was silently truncated.')
+  if (omitted.length) issues.push(issue('context_budget', 'Complete material could not be included. Draft retained without a comprehensive review.'))
+  return { content, omitted, issues }
+}
+
+/** Accept only the main Agent's text, never its claimed publication status or observations. */
+export function validateIntegratedFinalText(input: FinalizationInput, value: unknown): FinalVariant {
+  const started = performance.now()
+  // Integrated first publication must validate research even if a caller supplies accepted text.
+  const { accepted: _accepted, ...initialInput } = input
+  const prepared = prepareFinalization(initialInput)
+  const issues = [...prepared.issues]
+  const parsed = finalTextSchema.safeParse(value)
+  if (input.signal?.aborted) issues.unshift(issue('cancelled', 'Publication was cancelled.'))
+  if (!parsed.success) issues.push(issue('format', 'Final text does not match the publication schema.'))
+  else {
+    const problems = textProblems(parsed.data, initialInput)
+    const placeholders = placeholderActivities(parsed.data).map(activity => issue('missing_material',
+      'Activity text is a placeholder; concrete place/action material is required.', activity.activityId))
+    issues.push(...placeholders)
+    if (problems.length && !placeholders.length) issues.push(issue(
+      problems.some(p => p.includes('language') || p.includes('locale')) ? 'language' : 'format', problems.join(', ')))
+  }
+  return { status: issues.length ? 'blocked' : 'accepted', text: issues.length || !parsed.success ? null : parsed.data,
+    issues, omitted: prepared.omitted, observation: { durationMs: performance.now() - started,
+      calls: 0, promptTokens: 0, completionTokens: 0, knownCostUsdMicros: 0, unknownCostCalls: 0,
+      failure: issues[0]?.code ?? null, repairReasons: [] } }
+}
+
 export class GuideFinalizer {
   constructor(private readonly client: AgentModelClient, private readonly model?: string,
     private readonly options: Pick<ChatOptions, 'reasoning'> = {},
@@ -70,42 +125,16 @@ export class GuideFinalizer {
     const started = performance.now()
     const observation: FinalVariant['observation'] = { durationMs: 0, calls: 0, promptTokens: 0,
       completionTokens: 0, knownCostUsdMicros: 0, unknownCostCalls: 0, failure: null, repairReasons: [] }
-    const omitted = [...(input.omitted ?? [])]
+    const prepared = prepareFinalization(input)
+    const { omitted, content } = prepared
     const finish = (text: FinalText | null, issues: FinalIssue[]): FinalVariant => {
       observation.durationMs = performance.now() - started
       observation.failure = issues[0]?.code ?? null
       try { this.observe?.({ ...observation }) } catch { /* Diagnostics cannot authorize or prevent publication. */ }
       return { status: text && issues.length === 0 ? 'accepted' : 'blocked', text: issues.length ? null : text, issues, omitted, observation }
     }
-    const issue = (code: FinalIssue['code'], detail: string, activityId: string | null = null): FinalIssue => ({ code, detail, activityId })
     const items = input.guide.days.flatMap(day => day.items)
-    if (new Set(items.map(item => item.id)).size !== items.length || !items.length) {
-      return finish(null, [issue('invalid_plan', 'Activities must have unique stable identities and at least one visit.')])
-    }
-    if (!input.accepted) {
-      const missing = items.flatMap(item => {
-        const finding = input.research.find(r => r.id === item.sourceArtifactId)?.findings.find(f => f.id === item.sourceFindingId)
-        if (!finding?.sources.length) return [issue('missing_material', 'The activity has no available source material.', item.id)]
-        const day = input.guide.days.find(day => day.items.some(value => value.id === item.id))!
-        if (finding.category === 'practical' && day.kind !== 'travel' && item.category !== 'practical' && item.category !== 'stopover') {
-          return [issue('invalid_plan', 'Transport/practical material cannot establish a main visit.', item.id)]
-        }
-        if (hasClaimConflict(finding.claimEvidence ?? [])) return [issue('conflict', 'The referenced material contains conflicting claims.', item.id)]
-        return []
-      })
-      if (missing.length) return finish(null, missing)
-    }
-    const data = input.accepted ? { locale: input.locale, accepted: input.accepted,
-      identities: items.map(item => ({ activityId: item.id, sourceRefs: [sourceRef(item)] })) } : {
-      locale: input.locale, requirements: input.requirements,
-      guide: { ...input.guide, publication: undefined }, research: input.research,
-      sourceBindings: items.map(item => ({ activityId: item.id, sourceRefs: [sourceRef(item)] }))
-    }
-    const content = JSON.stringify(data)
-    if (content.length > FINALIZATION_CONTEXT_CHARS || omitted.length) {
-      omitted.push(...(content.length > FINALIZATION_CONTEXT_CHARS ? ['Complete finalization input exceeds 180000 characters; no source was silently truncated.'] : []))
-      return finish(null, [issue('context_budget', 'Complete material could not be included. Draft retained without a comprehensive review.')])
-    }
+    if (prepared.issues.length) return finish(null, prepared.issues)
     const timeout = AbortSignal.timeout(Math.max(1, Math.min(FINALIZATION_TIMEOUT_MS, input.timeoutMs ?? FINALIZATION_TIMEOUT_MS)))
     const signal = input.signal ? AbortSignal.any([timeout, input.signal]) : timeout
     const messages: ChatMessage[] = [{ role: 'system', content: SYSTEM }, { role: 'user', content }]

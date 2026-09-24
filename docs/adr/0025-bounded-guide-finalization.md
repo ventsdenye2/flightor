@@ -1,5 +1,11 @@
 # ADR 0025：有界终稿与按语言发布
 
+2026-09-24 DSH 路线增量：首次攻略允许主 Agent 同次生成安排与当前语言 `FinalText`，由 `publishIntegratedGuide` 执行程序校验和 publication-only 保存，不额外调用 `GuideFinalizer`。legacy 及显式本地化保留原有有界编辑流程。下面 9 月 22 日的独立编辑调用记录属于 legacy 和当时验证，不能据此要求 DSH 再调用编辑模型。集成接口、校验能力与离线证据见 [DSH 集成发布记录](../design/budget-travel-agent/DSH_PUBLICATION_2026-09-24.md)。
+
+集成发布与 legacy 共享 `prepareFinalization` 中活动唯一身份、材料存在、practical 角色、结构化 claim 冲突、完整材料字符预算/omitted 检查，并共享 `textProblems` 的语言、日/活动顺序、精确来源绑定、占位、内部叙述、预算保证、价格/耗时及资源 URL 表达检查。集成只接受原始 `FinalText`，不接受模型提供的 accepted 状态、费用或观测；服务端根据校验结果生成 accepted/blocked。此状态表示满足发布程序合同，不是独立事实认证，也不新增第二次语义审查；主 Agent 仍须结合全部支持/反证完成语义判断，领域攻略 validator 仍在隐藏草稿保存前执行。
+
+`publishIntegratedGuide` 要求已存在的隐藏攻略、owner-scoped repository 以及必传 `assertCurrent` 回调。它复用来源加载、内容 hash、幂等和原子 `saveFinalVariant`，回调负责当前 owner/Trip/航班要求，保存前再次执行回调和取消检查，数据库仍执行版本和 revision 围栏。错误文本保存 blocked 且不公开散文；已接纳同语言结果只读复用，不覆盖。集成程序阶段 observation.calls=0，表示没有额外编辑调用，主 Agent 的实际模型费用仍由其执行链记录；不能据此把整个规划费用报告为零。局部修订生成新的领域草稿，不能借首次集成入口覆盖既有失败或接纳版本。
+
 2026-09-22 收尾：针对 `main@a67ed77` 的三项修复已通过定向离线与数据库回归，见[收尾记录](../design/budget-travel-agent/FINALIZATION_FOLLOWUP_2026-09-22.md)。本批不进入概览/卡片 UI、地图、图片或全量 G1 验收。
 
 2026-09-22，Accepted、已实现。用户授权发布末端局部修改；沿用主 Planner 模型、客户端、研究与 Goal/Run，不创建第二个 Agent。

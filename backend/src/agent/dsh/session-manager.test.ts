@@ -1,5 +1,7 @@
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
+import { spawnSync } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DshSessionManager, type DshSessionRun } from './session-manager.js'
@@ -20,6 +22,82 @@ afterEach(async () => {
 })
 
 describe('DSH session manager with actual official worker', () => {
+  it('passes metered model/search admission and receipts through the actual worker without exposing internal tools', async () => {
+    const { manager } = await setup([{ tool: 'web_search', args: { queries: ['Tokyo museum'] } }, { text: 'Source result' }],
+      { metered: true, web: { provider: 'serpapi-raw' } })
+    const execute = vi.fn(async (name: string, _args: unknown, callId: string) => {
+      if (name.endsWith('_admit')) return { ok: true, id: callId }
+      if (name.endsWith('_receipt')) return { ok: true }
+      if (name === '__web_search') return { sources: [{ url: 'https://example.com/museum', title: 'Museum', snippet: 'Cultural exhibits.' }], truncated: false }
+      if (name === '__record_web') return { evidenceRefs: ['evidence-1'], urls: [] }
+      throw Error('Unexpected tool')
+    })
+    const activity = vi.fn()
+    const tools = ['web_search', 'web_fetch'].map(name => ({ name, description: 'Read source', rawSchema: { type: 'object', properties: {} } }))
+    expect(await manager.run(input({ execute, tools, onActivity: activity }))).toMatchObject({ reply: 'Source result', cancelled: false, calls: 2 })
+    const names = execute.mock.calls.map(call => call[0])
+    expect(names.filter(name => name === '__model_admit')).toHaveLength(2)
+    expect(names.filter(name => name === '__model_receipt')).toHaveLength(2)
+    expect(names.filter(name => name === '__search_admit')).toHaveLength(1)
+    expect(names.filter(name => name === '__search_receipt')).toHaveLength(1)
+    expect(activity).toHaveBeenCalledWith(expect.objectContaining({ type: 'tool_start', toolName: 'web_search' }))
+    expect(activity).toHaveBeenCalledWith(expect.objectContaining({ type: 'tool_end', toolName: 'web_search' }))
+  }, 30000)
+
+  it('retires a persistent session when metering policy changes', async () => {
+    const { root, manager } = await setup([{ text: 'Unmetered fixture' }])
+    await manager.run(input()); await manager.close()
+    const mapping = (await readdir(root)).find(file => /^[0-9a-f]{64}\.json$/.test(file))!
+    const previous = JSON.parse(await readFile(join(root, mapping), 'utf8'))
+    const next = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [{ text: 'Metered fixture' }], metered: true }); managers.push(next)
+    expect(await next.run(input({ execute: async () => ({ ok: true }) }))).toMatchObject({ reply: 'Metered fixture', resumed: false })
+    const current = JSON.parse(await readFile(join(root, mapping), 'utf8'))
+    expect(current.sessionId).not.toBe(previous.sessionId)
+    expect(current.profile).not.toBe(previous.profile)
+  }, 30000)
+
+  it('serializes stale-lock reclamation so concurrent starters cannot remove the winning lock', async () => {
+    const { root, manager } = await setup([{ text: 'Winner' }])
+    const departed = spawnSync(process.execPath, ['-e', ''], { windowsHide: true, stdio: 'ignore' })
+    expect(departed.status).toBe(0)
+    const old = { pid: departed.pid, token: randomUUID() }
+    await writeFile(join(root, 'manager.lock'), JSON.stringify(old))
+    const other = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [{ text: 'Other winner' }] }); managers.push(other)
+    const results = await Promise.allSettled([manager.run(input()), other.run(input())])
+    expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1)
+    expect(results.filter(result => result.status === 'rejected')).toHaveLength(1)
+    const held = JSON.parse(await readFile(join(root, 'manager.lock'), 'utf8'))
+    expect(held.pid).toBe(process.pid); expect(held.token).not.toBe(old.token)
+    const loser = results[0]!.status === 'rejected' ? manager : other
+    await loser.close()
+    expect(JSON.parse(await readFile(join(root, 'manager.lock'), 'utf8'))).toEqual(held)
+  }, 30000)
+
+  it('fails closed on an orphaned acquisition guard without deleting either file', async () => {
+    const { root, manager } = await setup([{ text: 'Must not run' }])
+    const guard = JSON.stringify({ pid: 2147483647, token: randomUUID() })
+    await writeFile(join(root, 'manager.lock.guard'), guard)
+    await expect(manager.run(input())).rejects.toMatchObject({ code: 'DSH_DIRECTORY_LOCKED' })
+    expect(await readFile(join(root, 'manager.lock.guard'), 'utf8')).toBe(guard)
+  })
+
+  it.each([
+    ['__model_admit', { id: 'model-1', extra: true }],
+    ['__model_receipt', { id: 'model-1', durationMs: 2, failed: false, usage: { inputTokens: 1, outputTokens: 1, cacheReadTokens: -1 } }],
+    ['__search_admit', { url: 'https://example.com' }],
+    ['__search_receipt', { id: 'search-1', durationMs: -1, failed: false }]
+  ])('rejects malformed %s IPC before calling the meter', async (name, args) => {
+    const { root, manager } = await setup([]); await manager.close()
+    const workerPath = join(root, 'invalid-meter-worker.mjs')
+    await writeFile(workerPath, `process.on('message',m=>{
+      if(m.op==='open')process.send({kind:'result',id:m.id,ok:true,data:{profile:'flightor-dsh-v1',plugins:[],tools:[],sessionId:m.data.sessionId,resumed:m.data.resume}});
+      if(m.op==='turn')process.send({kind:'tool',id:'bad-meter',generation:m.data.generation,name:${JSON.stringify(name)},args:${JSON.stringify(args)}});
+    });process.on('disconnect',()=>process.exit(0));`)
+    const malformed = new DshSessionManager({ root, workerPath, route: { provider: 'fixture', model: 'fixture' }, fixture: [], metered: true }); managers.push(malformed)
+    const execute = vi.fn()
+    await expect(malformed.run(input({ execute }))).rejects.toMatchObject({ code: 'DSH_IPC_INVALID' })
+    expect(execute).not.toHaveBeenCalled()
+  }, 30000)
   it('runs a followup in one worker, then cold resumes the durable session', async () => {
     const { root, manager } = await setup([{ text: 'First answer' }, { text: 'Followup answer' }])
     const admitted = vi.fn().mockResolvedValue(undefined)
@@ -90,15 +168,46 @@ describe('DSH session manager with actual official worker', () => {
     const { root, manager } = await setup([{ text: 'unused' }])
     await manager.close()
     const workerPath = join(root, 'duplicate-worker.mjs')
-    await writeFile(workerPath, `let turn; process.on('message', m => {
+    await writeFile(workerPath, `let turn, tool, receipts=[]; process.on('message', m => {
       if(m.op==='open') process.send({kind:'result',id:m.id,ok:true,data:{profile:'flightor-dsh-v1',plugins:[],tools:m.data.tools.map(t=>t.name),sessionId:m.data.sessionId,resumed:m.data.resume}});
-      if(m.op==='turn'){turn=m; process.send({kind:'tool',id:'old',generation:'old-generation',name:'read_trip',args:{}}); const tool={kind:'tool',id:'call-1',generation:m.data.generation,name:'read_trip',args:{}}; process.send(tool);process.send(tool);}
-      if(m.op==='tool_result')process.send({kind:'result',id:turn.id,ok:true,data:{reply:'ok',reason:'stop',calls:1,cancelled:false}});
+      if(m.op==='turn'){turn=m; process.send({kind:'tool',id:'old',generation:'old-generation',name:'read_trip',args:{}}); tool={kind:'tool',id:'call-1',generation:m.data.generation,name:'read_trip',args:{}}; process.send(tool);process.send(tool);}
+      if(m.op==='tool_result'){receipts.push(m.data); if(receipts.length===2)process.send(tool); if(receipts.length===3)process.send({kind:'result',id:turn.id,ok:true,data:{reply:JSON.stringify(receipts),reason:'stop',calls:1,cancelled:false}});}
       if(m.op==='close'){process.send({kind:'result',id:m.id,ok:true,data:{closed:true}});process.disconnect();}
     }); process.on('disconnect',()=>process.exit(0));`)
     const separate = new DshSessionManager({ root, workerPath, route: { provider: 'fixture', model: 'fixture' }, fixture: [] }); managers.push(separate)
     const execute = vi.fn(async () => ({ city: 'Tokyo' }))
-    expect(await separate.run(input({ execute, tools: [{ name: 'read_trip', description: 'Read', rawSchema: { type: 'object', properties: {} } }] }))).toMatchObject({ reply: 'ok' })
+    const result = await separate.run(input({ execute, tools: [{ name: 'read_trip', description: 'Read', rawSchema: { type: 'object', properties: {} } }] }))
+    expect(JSON.parse(result.reply)).toEqual([{ city: 'Tokyo' }, { city: 'Tokyo' }, { city: 'Tokyo' }])
+    expect(execute).toHaveBeenCalledTimes(1)
+  }, 30000)
+
+  it('kills only an unresponsive cancelled worker and still waits for the parent tool to drain', async () => {
+    const { root, manager } = await setup([{ text: 'unused' }])
+    await manager.close()
+    const workerPath = join(root, 'unresponsive-worker.mjs')
+    await writeFile(workerPath, `process.on('message',m=>{
+      if(m.op==='open')process.send({kind:'result',id:m.id,ok:true,data:{profile:'flightor-dsh-v1',plugins:[],tools:m.data.tools.map(t=>t.name),sessionId:m.data.sessionId,resumed:m.data.resume}});
+      if(m.op==='turn')process.send({kind:'tool',id:'in-flight',generation:m.data.generation,name:'save_note',args:{keys:Object.keys(process.env)}});
+    });process.on('disconnect',()=>process.exit(0));`)
+    const separate = new DshSessionManager({ root, workerPath, route: { provider: 'fixture', model: 'fixture' }, fixture: [],
+      modelKey: 'private-fixture-key' }); managers.push(separate)
+    let begun!: () => void, release!: () => void
+    const started = new Promise<void>(resolve => { begun = resolve }), gate = new Promise<void>(resolve => { release = resolve })
+    const controller = new AbortController()
+    let settled = false, keys: string[] = []
+    const execute = vi.fn(async (_name, args: { keys: string[] }) => { keys = args.keys; begun(); await gate; return {} })
+    const running = separate.run(input({ execute, signal: controller.signal,
+      tools: [{ name: 'save_note', description: 'Save', rawSchema: { type: 'object', properties: {} } }] })).then(result => { settled = true; return result })
+    await started
+    expect(keys).toContain('FLIGHTOR_DSH_MODEL_KEY')
+    expect(keys).not.toContain('OPENROUTER_API_KEY')
+    expect(keys).not.toContain('HOME')
+    expect(keys).not.toContain('CODEX_HOME')
+    controller.abort()
+    await new Promise(resolve => setTimeout(resolve, 2200))
+    expect(settled).toBe(false)
+    release()
+    expect(await running).toMatchObject({ cancelled: true })
     expect(execute).toHaveBeenCalledTimes(1)
   }, 30000)
 })

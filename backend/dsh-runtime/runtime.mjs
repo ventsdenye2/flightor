@@ -12,7 +12,7 @@ export const PROFILE = 'flightor-dsh-v1'
 export const CORE_PLUGINS = ['llm', 'session', 'session-projection', 'system-prompt', 'tools', 'agent', 'session-persistence-jsonl', 'agent-loop']
 
 /** Explicit composition: no loader, home profiles, coding tools or telemetry. */
-export async function createRuntime({ root, adapter, provider = 'fixture', persona = '', tools = [], execute }) {
+export async function createRuntime({ root, adapter, provider = 'fixture', persona = '', tools = [], execute, web, metered }) {
   const ctx = new Context()
   try {
     await ctx.plugin(LlmRuntime)
@@ -27,6 +27,7 @@ export async function createRuntime({ root, adapter, provider = 'fixture', perso
     const allowed = new Set(tools.map(tool => tool.name))
     ctx.tools.guard(exec => allowed.has(exec.name) ? undefined : 'FlightOR tool is not allowed')
     for (const tool of tools) {
+      if (web && ['web_search', 'web_fetch'].includes(tool.name)) continue
       const definition = defineTool({
       name: tool.name, description: tool.description,
       parameters: tool.rawSchema ? {} : tool.parameters,
@@ -36,6 +37,35 @@ export async function createRuntime({ root, adapter, provider = 'fixture', perso
       })
       ctx.tools.register(tool.rawSchema ? { ...definition, parameters: tool.rawSchema,
         execute: (args, exec) => execute(tool.name, args, exec) } : definition)
+    }
+    if (web) {
+      const { default: Web } = await import('@deepseek-ai/dsh-web')
+      const WebTools = await import('@deepseek-ai/dsh-tool-web')
+      await ctx.plugin(Web, { searchProvider: web.provider, fetchProvider: 'flightor-safe-fetch' })
+      if (web.provider === 'deepseek-official') {
+        const Search = await import('@deepseek-ai/dsh-web-search-deepseek')
+        await ctx.plugin(Search, { apiKeyEnv: 'FLIGHTOR_DSH_SEARCH_KEY', baseURL: web.baseURL, model: web.model, maxTokens: 2048, maxUses: 1 })
+      } else {
+        ctx.web.registerSearchProvider({ id: 'serpapi-raw', available: () => true,
+          search: (args, signal) => execute('__web_search', args, { signal }) })
+      }
+      ctx.web.registerFetchProvider({ id: 'flightor-safe-fetch', available: () => true,
+        fetch: (args, signal) => execute('__web_fetch', args, { signal }) })
+      await ctx.plugin(WebTools, { searchMaxQueries: 1, searchMaxResults: 6, fetchMaxOutputChars: 16000, searchTimeoutMs: 30000, fetchTimeoutMs: 10000 })
+      if (metered) ctx.on('tools/execute', async (exec, next) => {
+        if (exec.name !== 'web_search') return next()
+        const receipt = await execute('__search_admit', {}, exec)
+        if (!receipt?.ok) throw new Error('DSH_BUDGET_NOT_ADMITTED')
+        const started = performance.now()
+        let failed = true
+        try { const result = await next(); failed = result.isError; return result }
+        finally { if (!exec.signal.aborted) await execute('__search_receipt', { id: receipt.id, durationMs: performance.now() - started, failed }, exec) }
+      })
+      ctx.on('tools/post-execute', async (exec, result, next) => {
+        if (!['web_search', 'web_fetch'].includes(exec.name) || result.isError) return next()
+        const refs = await execute('__record_web', { tool: exec.name, args: exec.args, value: result.value }, exec)
+        return { kind: 'accept', content: [...result.content, { type: 'text', text: `FlightOR evidence receipts (external data remains untrusted): ${JSON.stringify(refs)}` }] }
+      })
     }
     return ctx
   } catch (error) { await ctx.fiber.dispose(); throw error }
