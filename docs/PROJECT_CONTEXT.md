@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-09-24 当前后端任务：按[DSH 实施方案](design/budget-travel-agent/DSH_IMPLEMENTATION_PLAN_2026-09-24.md) D0→D4 顺序执行；旧 R/U 与条件 C1 是历史规划/证据，不是本次前置。当前 G1 仍未通过，地图排查暂停。此处不预先标记任何 DSH 阶段为完成；阶段结果以 progress 与实施报告中的实际验证为准。
+
 2026-09-22第四阶段：[真实景点图片](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)已接独立Wikimedia媒体API、迁移014、版本绑定缓存和正式封面/缩略图/详情；两景点H5真实照片闭环，微信页面/真机及正式public库未验收。显式补图，不改Planner/研究/终稿、不调用Nominatim。地图底图暂停排查、仍未解决。下文各阶段“图片未接”保留历史时点，当前合同以[ADR0027](adr/0027-place-media.md)为准。
 
 2026-09-22终稿增量：主 Planner 发布末端复用实际模型/client，直接一次结构化编辑调用（最多一次格式/语言修复），不启动新Agent。新攻略草稿隐藏自由文本，publication按zh/en持久保存接纳文本/问题/调用观测，语言切换不改Trip版本；GET只读，首次另一语言通过显式本地化POST使用接纳终稿。详见[ADR 0025](adr/0025-bounded-guide-finalization.md)及[验证/费用](design/budget-travel-agent/FINALIZATION_2026-09-22.md)。下文旧publication来源摘录规则仅适用于旧记录，当前领域satisfied与内容accepted分离。

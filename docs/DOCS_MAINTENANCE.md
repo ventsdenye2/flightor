@@ -57,7 +57,7 @@ G1 续跑：设置 `G1_RESUME_LEDGER_DIRECTORY` 指向本仓库 `backend/.demo/g
 | FLIGHTOR_ARCHITECTURE、TOOLS | 保留权威，补当前 checkpoint 与拟议边界；修迁移现状和 docs 位置 | 不把目标状态冒充实现，不在清理时删除业务不变量 |
 | ADR 0001–0017 | 保留已接受历史决策 | 后续 ADR 可以细化，不篡改旧决策当时的验证记录 |
 | ADR 0018 | 保留 Proposed 后续能力方向 | 明确完整队列/visits v2 非本轮前置 |
-| ADR 0019、RUNTIME_PLAN、DPS、EVALUATION | 当前拟议实施与测试入口 | 单一顺序：精简、跑通、测量、案例、评估、条件 DSH |
+| ADR 0019、RUNTIME_PLAN、DPS、EVALUATION | 当前拟议实施与测试入口 | 2026-09-24 起，本次授权的 DSH 工作以 D0→D4 为执行顺序；既有 R/U 与条件 C1 评估顺序保留为历史依据，不作前置 |
 | RAS、RDS、UX_REVIEW、progress | 保留需求/能力全景/诊断；删除重复阶段顺序，进度集中 | 避免多份“唯一计划”竞争 |
 | 6 份 HANDOFF、DEMO_STATUS、PHASE789_ACCEPTANCE、UI_PARITY_ACCEPTANCE | 原位标历史，不改原始结果 | 分支、端口、调用额度和设备证据只适用于记录当时 |
 | FLIGHT_FIRST_TASK、local-wechat-integration、链路探讨 | 原位标历史，链接当前入口 | 历史任务/讨论不等于当前执行授权或链路 |

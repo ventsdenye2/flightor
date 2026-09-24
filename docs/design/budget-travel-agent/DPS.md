@@ -1,4 +1,6 @@
-# DPS：精简流程 → 跑通 → 测量 → 案例评估 → DSH 决策
+# DPS：当前授权工作按 DSH D0→D4 执行
+
+2026-09-24：本次后端实施顺序以[DSH 实施方案](DSH_IMPLEMENTATION_PLAN_2026-09-24.md)的 D0→D4 为准。既有 B0–B5、G1、M1/M2、G2 与条件 C1 记录保留为历史实现、验收证据或先前决策背景；它们不构成本次 DSH 工作的前置门槛。G1 仍未通过，地图排查暂停。计划本身不代表阶段已实现或验证；阶段状态只按本次代码、测试和 progress/实施报告更新。
 
 2026-09-22用户明确启动第四阶段真实景点图片，允许独立于地图故障/第三阶段全平台/G1验收开发。已实现Wikimedia显式补全、独立持久缓存、正式三处图片呈现；双景点H5及离线/DB验证通过，微信待服务端口恢复后实际验收。此次不进入M1、不改Planner，证据与限制见[图片报告](PLACE_MEDIA_2026-09-22.md)。地图暂停排查、仍未解决。
 
@@ -21,15 +23,15 @@
 | B4 | R06 R07 R08 | `backend/src/agent/runtime/activity.ts`、`agent/cloud/turns.ts`、`src/services/conversationService.ts`、`src/stores/chatStore.ts`、正式 UI adapter | B3；已提交结果立即进入现有轮询，浏览与输入草稿不全局锁死 | 卡片先于最终复述可见；不发布未提交结果；切账号/修改无迟到污染 | 已实施；离线证据与真实 UI 验收边界见 progress |
 | B5 | R06 R09 | `backend/src/lib/planner-observation.ts`、`agent/runtime`、`providers/openrouter`、`src/services/plannerTelemetry.ts`、客户端渲染点 | B1–B4；基本测量不改变模型/路由 | usage/配置/路由指纹、保存/验收/首结果时刻；嵌套区间去重，未知费用 null | 已实施；离线证据见 progress，正式测量与平台 paint 未验收 |
 | G1 跑通 | R03 R09 | 既有 backend tests、PG suites、UI tests；单次 `backend/scripts/verify-g1-live.mjs`；`progress.md` | B1–B5；先离线，再两条有界真实链路 | 已选航班攻略及自备机票攻略保存、领域验收、刷新恢复；真实费用/失败明确 | 进行中：真实持久契约 2/2；旧日期问题已修复，最新价格时效质量未过，平台待验收 |
-| M1 运行测量 | R06 | 拟建 `backend/benchmarks/planner/runner.ts`、manifest/results | G1；实现 EVALUATION 的计时与固定输入 | 端到端与后端耗时区分；A/B 相同配置；先单请求，不混负载 | 待做 |
-| M2 多案例 | 全部 | 拟建 `backend/benchmarks/planner/cases.json` 与 fixtures；EVALUATION | M1；16 案例及 U12 三子案例；冻结事实与小批 live 分开 | 每例有预期、实际、错误、费用和证据；失败/超时入分母 | 待做 |
-| G2 评估 | 全部 | EVALUATION 的批次报告与 progress | M2；按预注册门槛评价性能/质量/返工/维护 | 明确保留 B、继续业务优化或试验 C；不默认接 DSH | 待做 |
-| C1 条件试验 | R06 R09 | 拟建隔离 `backend/benchmarks/planner/adapters/dsh.ts`，必要时 runtime adapter | 仅 G2 决定值得试验时执行；锁定 DSH commit | 同模型/资料/工具/verifier 的 B/C 对照，隔离/取消/回滚全部通过 | 未启动，条件任务 |
-| G3 迁移决策 | 全部 | 新 runtime ADR、架构/工具文档 | C1 结果支持时才进行 | 收益与迁移成本明确；接受后才实施生产替换 | 未启动，条件任务 |
+| M1 运行测量 | R06 | 拟建 `backend/benchmarks/planner/runner.ts`、manifest/results | 旧计划要求 G1；仅为先前评估路线 | 端到端与后端耗时区分；A/B 相同配置；先单请求，不混负载 | 旧路线待做；不是本次 DSH 前置 |
+| M2 多案例 | 全部 | 拟建 `backend/benchmarks/planner/cases.json` 与 fixtures；EVALUATION | 旧路线要求 M1；16 案例及 U12 三子案例 | 每例有预期、实际、错误、费用和证据；失败/超时入分母 | 旧路线待做；不是本次 DSH 前置 |
+| G2 评估 | 全部 | EVALUATION 的批次报告与 progress | 旧路线要求 M2 | 按预注册门槛评价性能/质量/返工/维护 | 旧路线待做；不是本次 DSH 前置 |
+| C1 条件试验 | R06 R09 | 拟建隔离 `backend/benchmarks/planner/adapters/dsh.ts`，必要时 runtime adapter | 旧路线要求 G2 决定后才试验 | 同模型/资料/工具/verifier 的 B/C 对照，隔离/取消/回滚全部通过 | 旧条件路线未启动；本次 D0→D4 由新授权覆盖其前置逻辑 |
+| G3 迁移决策 | 全部 | 新 runtime ADR、架构/工具文档 | C1 结果支持时才进行 | 收益与迁移成本明确；生产替换另需决定 | 旧路线未启动；本次实现不自动授权合并 main 或切默认 |
 
 表中以 `agent/`、`travel-guides/` 等开头的后端简写均相对 `backend/src/`。每项完成时同步更新实际文档和 progress，不能只勾状态。
 
-G1 后续修复：已增加显式必需证据类别，保留旧目标语义与不可变约束，见 [ADR 0021](../../adr/0021-guide-required-evidence.md)。离线与数据库记录在 [progress](progress.md)，修复后 live 和平台门槛仍未通过；不跳过 G1 进入 M1。
+G1 后续修复：已增加显式必需证据类别，保留旧目标语义与不可变约束，见 [ADR 0021](../../adr/0021-guide-required-evidence.md)。离线与数据库记录在 [progress](progress.md)，修复后 live 和平台门槛仍未通过；该既有状态不阻止本次按新授权执行 D0→D4，也不代表 G1 通过。
 
 ## 首轮不做
 

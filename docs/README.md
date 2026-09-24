@@ -6,6 +6,8 @@
 
 2026-09-22：[有界终稿 ADR 0025](adr/0025-bounded-guide-finalization.md) 已实现；[本轮验证及费用](design/budget-travel-agent/FINALIZATION_2026-09-22.md) 含真实中英终稿示例。新 Planner 攻略先保存隐藏草稿，接纳后按 locale 展示；未部署、未追认完整 G1 验收。
 
+2026-09-24：当前授权后端工作按 [DSH 实施方案](design/budget-travel-agent/DSH_IMPLEMENTATION_PLAN_2026-09-24.md) D0→D4 顺序推进；此前 R/U 与条件 C1 的评估顺序保留为历史决策，不构成本次前置。当前 G1 仍未通过，地图排查暂停。各阶段须以实际实现与验证记录为准，不能据计划声称完成。
+
 更新：2026-09-20。文档的“当前实现”“待实现方案”“历史证据”分开维护，不再以旧交接文件充当最新状态。
 
 ## 从这里开始
@@ -15,7 +17,7 @@
 - [攻略发布合同 ADR 0024](adr/0024-guide-publication-contract.md) 与 [G1 冻结验收 v1](design/budget-travel-agent/G1_PUBLICATION_RUBRIC_V1.md)：9月21日独立诊断后的修正范围，验证见 progress。
 
 - [当前项目上下文](PROJECT_CONTEXT.md)：代码现状与已知边界。
-- [当前架构修改方案](design/budget-travel-agent/RUNTIME_PLAN.md)：先精简现有流程，再跑通、测量、案例评估，最后决定是否试验 DSH。
+- [当前架构修改方案](design/budget-travel-agent/RUNTIME_PLAN.md)：当前 DSH 后端实施的状态入口；执行顺序见 DSH 实施方案及 DPS。
 - [唯一开发计划](design/budget-travel-agent/DPS.md)、[测试与评估协议](design/budget-travel-agent/EVALUATION.md)、[进度](design/budget-travel-agent/progress.md)。
 - [文档维护规则与清理记录](DOCS_MAINTENANCE.md)：每一次修改必须同步 docs；清理分类与历史入口。
 - [开发续作规则](CODEX_KICKOFF_PROMPT.md)。
