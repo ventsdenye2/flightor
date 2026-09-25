@@ -1,6 +1,6 @@
 # FlightOR 当前项目上下文
 
-2026-09-25 DSH正式H5续验仍未通过：官方模型和官方搜索最小probe已成功，但四次最小commit尝试均失败，尚无真实accepted攻略或H5攻略显示证据。已补官方thinking出站协议测试、`DSH_MODEL_MAX_TOKENS`显式配置、同账本显式本地化客户端、公开回复程序检查，以及来源/活动文字的精确修复反馈；不调用旧Planner或首次Finalizer。原始evidenceRef严格限当前generation，跨轮需使用持久ResearchArtifact的candidateRef。当前原账本保留全部失败和未知费用，累计91模型/32搜索、US$6.20未知预留，剩余US$0.80；当前累计32搜索上限已达到，下一付费probe及H5验收等待新增授权。以[现有D4报告](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)的逐尝试证据为准，前端源码未改、G1未放行。
+2026-09-25 DSH正式H5续验仍未通过：官方模型和官方搜索最小probe已成功，但四次最小commit尝试均失败，尚无真实accepted攻略或H5攻略显示证据。已补官方thinking出站协议测试、`DSH_MODEL_MAX_TOKENS`显式配置、同账本显式本地化客户端、公开回复程序检查，以及来源/活动文字的精确修复反馈；不调用旧Planner或首次Finalizer。原始evidenceRef严格限当前generation，跨轮需使用持久ResearchArtifact的candidateRef。原账本保留全部失败和未知费用。用户后续明确“之后不限预算”，已追加同批 unlimited 授权并继续最小保存与正式H5验收；旧91模型/32搜索和US$6.20预留仍保留为授权时点，当前累计值以D4报告及原账本为准。以[现有D4报告](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)的逐尝试证据为准，前端源码未改、G1未放行。
 
 2026-09-24 当前后端任务：按[DSH 实施方案](design/budget-travel-agent/DSH_IMPLEMENTATION_PLAN_2026-09-24.md)推进，旧 R/U 与条件 C1 是历史规划/证据，不是本次前置。DSH 已有 opt-in 后端路径，默认 `FLIGHTOR_AGENT_ENGINE=legacy`；在隔离分支实现受控 DSH worker、领域工具、combined guide commit、可选 web adapters 和持久预算。当前 DSH 阶段及离线、数据库、HTTP mock 与后续 live 验证边界见[实施报告](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)。这不代表已部署或真实 Provider 已验收。当前 G1 仍未通过，地图排查暂停。
 

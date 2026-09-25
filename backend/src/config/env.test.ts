@@ -9,6 +9,13 @@ const validEnv = {
 }
 
 describe('parseEnv', () => {
+  it('requires an explicit boolean for uncapped DSH authorization and defaults to bounded execution', () => {
+    expect(parseEnv(validEnv).DSH_BUDGET_UNLIMITED).toBe(false)
+    expect(parseEnv({ ...validEnv, DSH_BUDGET_UNLIMITED: 'true' }).DSH_BUDGET_UNLIMITED).toBe(true)
+    expect(parseEnv({ ...validEnv, DSH_BUDGET_UNLIMITED: 'false' }).DSH_BUDGET_UNLIMITED).toBe(false)
+    for (const value of ['1', 'yes', 'unlimited'])
+      expect(() => parseEnv({ ...validEnv, DSH_BUDGET_UNLIMITED: value })).toThrow('DSH_BUDGET_UNLIMITED')
+  })
   it('bounds the explicit DSH output limit without silently raising it', () => {
     expect(parseEnv(validEnv).DSH_MODEL_MAX_TOKENS).toBe(4096)
     expect(parseEnv({ ...validEnv, DSH_MODEL_MAX_TOKENS: '8192' }).DSH_MODEL_MAX_TOKENS).toBe(8192)

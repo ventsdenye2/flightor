@@ -62,6 +62,7 @@ const envSchema = z.object({
   DSH_AUTHORIZED_USD: z.coerce.number().nonnegative().default(0),
   DSH_AUTHORIZED_MODEL_CALLS: z.coerce.number().int().nonnegative().default(0),
   DSH_AUTHORIZED_SEARCH_CALLS: z.coerce.number().int().nonnegative().default(0),
+  DSH_BUDGET_UNLIMITED: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),
   DSH_BUDGET_PATH: z.string().min(1).default('.dsh-data/budget.json'),
   PLANNER_LEAN_GOALS_ENABLED: z.enum(['true', 'false']).default('false').transform(value => value === 'true'),
   RESEARCH_MODEL: z.string().trim().default(''),

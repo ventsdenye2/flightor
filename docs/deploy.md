@@ -83,6 +83,8 @@ H5 使用真实OSM瓦片；微信原生Map不打包服务端Key、不申请实�
 
 DSH 还要求正数 `DSH_AUTHORIZED_USD` 与 `DSH_AUTHORIZED_MODEL_CALLS`，以及 `DSH_BUDGET_PATH` 指向的本批持久账本；搜索次数由 `DSH_AUTHORIZED_SEARCH_CALLS` 限定。模型/搜索请求先进行预算 admission，再发出请求并记录有限回执。达到金额或次数上限后停止；不能换账本路径清零历史。
 
+2026-09-25：以上为默认有界模式。用户明确授权本任务“之后不限预算”后，可用 `FileDshBudget.authorizeUnlimited({ id, reference })` 向原账本追加审计 grant，然后设置 `DSH_BUDGET_UNLIMITED=true`。原数字配置仍须与原账本的历史 caps 完全一致；只修改环境变量而未追加 grant 会拒绝，不会自动改写授权。该模式取消本批累计金额/模型/搜索上限，`remainingUsdMicros=null` 表示无累计上限，仍逐请求持久记录次数、真实回执或未知费用预留。默认值仍为 false，单轮调用、工具/提交修复、超时及取消边界不变；它不充值、不自动无限重试，也不代表供应商账户余额足够。
+
 `DSH_DATA_DIRECTORY` 默认 `.dsh-data`，必须是私有持久磁盘并与业务数据库一起备份；单主机单 API 实例独占目录，最大活跃数默认4、空闲回收默认120秒（DSH_MAX_ACTIVE/DSH_IDLE_MS），不是性能保证。回滚将引擎设回 legacy 后重启，保留新会话数据，不删旧 Runtime。
 
 本轮可填写的本地忽略配置为 `backend/.env.dsh.local`，只用于本地验证进程显式加载，不会自动更改已有服务；真实测试需新授权预算，不沿用历史额度。阶段证据见 [DSH记录](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)。

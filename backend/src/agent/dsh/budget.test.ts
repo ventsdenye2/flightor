@@ -17,6 +17,41 @@ afterEach(async () => {
 })
 
 describe('file DSH authorization budget', () => {
+  it('requires an audited uncapped grant and preserves prior failures, caps and reservations across reloads', async () => {
+    const f = await fixture({ authorizedUsd: 0.12, maxModelCalls: 1, maxSearchCalls: 1 })
+    await f.budget.admit('search', 'old-search', 'deepseek-official')
+    await f.budget.settle('old-search', { durationMs: 1, errorCode: 'PROVIDER_FAILURE' })
+    const before = await f.budget.readSnapshot()
+    const beforeBytes = await readFile(f.options.path, 'utf8')
+    const unlimited = new FileDshBudget({ ...f.options, unlimited: true })
+    await expect(unlimited.readSnapshot()).rejects.toMatchObject({ code: 'DSH_BUDGET_AUTHORIZATION_MISMATCH' })
+    expect(await readFile(f.options.path, 'utf8')).toBe(beforeBytes)
+    const granted = await f.budget.authorizeUnlimited({ id: 'explicit-uncapped', reference: 'User authorized uncapped execution for this task' })
+    expect(granted).toMatchObject({ batchId: before.batchId, entries: before.entries, remainingUsdMicros: null,
+      unknownReservedUsdMicros: 120_000, overBudget: false, authorization: { ...before.authorization, unlimited: true } })
+    const stored = JSON.parse(await readFile(f.options.path, 'utf8'))
+    expect(stored.authorizationGrants).toEqual([expect.objectContaining({ id: 'explicit-uncapped', before: before.authorization,
+      after: { ...before.authorization, unlimited: true } })])
+    await expect(f.budget.admit('model', 'stale-config', 'deepseek')).rejects.toMatchObject({ code: 'DSH_BUDGET_AUTHORIZATION_MISMATCH' })
+    await unlimited.admit('model', 'new-model', 'deepseek')
+    await unlimited.settle('new-model', { durationMs: 2, actualCostUsd: 0.03 })
+    await unlimited.admit('search', 'new-search', 'deepseek-official')
+    await unlimited.settle('new-search', { durationMs: 3, errorCode: 'PROVIDER_FAILURE' })
+    expect(await new FileDshBudget({ ...f.options, unlimited: true }).readSnapshot()).toMatchObject({
+      batchId: before.batchId, modelCalls: 3, searchCalls: 2, knownCostUsdMicros: 30_000, unknownReservedUsdMicros: 240_000,
+      consumedUsdMicros: 270_000, remainingUsdMicros: null, pendingCalls: 0, overBudget: false })
+    await expect(unlimited.authorizeUnlimited({ id: 'explicit-uncapped', reference: 'Replay' })).rejects.toMatchObject({ code: 'DSH_BUDGET_GRANT_REPLAY' })
+  })
+  it('rejects uncapped authorization while calls are pending or the grant is malformed', async () => {
+    const f = await fixture()
+    await f.budget.admit('model', 'pending', 'deepseek')
+    await expect(f.budget.authorizeUnlimited({ id: 'uncapped', reference: 'Explicit grant' })).rejects.toMatchObject({ code: 'DSH_BUDGET_PENDING_CALLS' })
+    await f.budget.settle('pending', { durationMs: 1 })
+    const before = await readFile(f.options.path, 'utf8')
+    await expect(f.budget.authorizeUnlimited({ id: 'invalid id', reference: '' })).rejects.toMatchObject({ code: 'DSH_BUDGET_INVALID_GRANT' })
+    expect(await readFile(f.options.path, 'utf8')).toBe(before)
+    expect((await f.budget.readSnapshot()).authorization.unlimited).toBeUndefined()
+  })
   it('persists admission before the request and accumulates reloads without deriving money from usage', async () => {
     const f = await fixture()
     const first = await f.budget.admit('model', 'model-1', 'openrouter')
@@ -96,7 +131,7 @@ describe('file DSH authorization budget', () => {
     expect(after.entries).toEqual(before.entries)
     expect(after.authorization.maxModelCalls).toBe(before.authorization.maxModelCalls)
     expect(after.authorization.maxSearchCalls).toBe(before.authorization.maxSearchCalls + 6)
-    expect(after.remainingUsdMicros).toBe(before.remainingUsdMicros + 1_000_000)
+    expect(after.remainingUsdMicros).toBe(before.remainingUsdMicros! + 1_000_000)
   })
   it('refuses amounts beyond the cap and keeps an actual charge above the cap truthfully', async () => {
     const f = await fixture({ authorizedUsd: 0.1 })

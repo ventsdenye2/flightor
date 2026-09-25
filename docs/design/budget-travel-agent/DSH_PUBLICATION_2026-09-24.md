@@ -34,6 +34,12 @@
 
 同一次 IPC 重放/请求级幂等由执行器提供；该工具声明 state/非并行。领域写入与 publication 是分阶段提交，取消或文字失败可留下隐藏草稿与材料，但不会覆盖底稿或将 blocked 文字公开，也不自动回退调用其他引擎。
 
+### 明确休息日的输入合同（2026-09-25）
+
+组合工具的公开 `days[].items` schema 现在明确已有领域条件：没有来源活动的休息/交通日必须使用 `kind=rest/travel`、提供有实际安排含义的 `notes`，并且在符合用户请求时由已接受的 travel_guide intent 设置 `allowRestDays=true`。普通 visit 日仍需来源活动，至少一个实际活动的全攻略要求不变；服务端没有放宽 coverage validator 或自动改写意图。最小两日 probe 可以包含第一天文化景点和第二天休息，但不能省略这些条件。
+
+新增组合提交回归覆盖允许休息时 publication accepted/Goal satisfied，以及未允许休息、缺少休息说明时保持拒绝且无攻略写入。`npm test -- src/agent/dsh/commit-guide.test.ts`：17/17 通过，2.82 秒；首次沙箱内 esbuild spawn EPERM，允许启动离线测试子进程后通过。无付费调用，不是新真实 Provider 或 H5 验收。
+
 ## 验证
 
 - `npm run check`：通过。
@@ -54,6 +60,22 @@
 DSH persona明确：上轮未完成Goal与missingFromPreload/missingByDestination只是历史目标或材料库存，不能自动成为当前用户必需项。当前用户收窄目标时，由同一主Agent提交符合当前请求的新intent；只有参数匹配才能用goalRef，不能静默改写或降低旧Goal约束。这里不解析关键词、不改shared planning-context或legacy行为；也不声称仅靠提示词已证明真实模型行为达标。
 
 离线验证：`npm test -- src/agent/dsh/commit-guide.test.ts src/agent/dsh/multi-turn.test.ts src/agent/dsh/evidence.test.ts src/agent/dsh/evidence-file.test.ts`，4文件25项通过，7.69秒；`npm run check`通过。新增混合当前/旧generation来源拒绝且零Artifact写入、原Goal保持pending、精确去掉旧引用后同Goal accepted；真官方fixture worker验证错误详情经过执行器与IPC、一次改用持久candidateRef后发布、随后解释零新增写入及冷恢复。所有测试均离线，费用0，不替代真实重试。
+
+## 原始证据与 Goal 可信度合同（2026-09-25）
+
+第五次真实最小 commit probe（execution `1f188617-da9a-4f4b-9ea8-e0ecc8863430`）已取得 gotokyo 正文及可用 evidenceRef；26.600 秒、6 次主模型调用和 1 次官方搜索后仍未接纳，本次未知费用预留 US$0.36，累计98模型准入/33搜索/US$6.56未知预留。主 Agent 首次提交选择了 `allowPartial=false`，而 DSH 原始证据转换固定保留 `partially_verified`，因此领域 validator 正确返回 `verified_evidence`；已接受 Goal 随后不能在同轮降低要求。这次失败没有变成 accepted，不属于搜索或正文获取失败。
+
+`commit_travel_guide` 公开描述现明确：原始联网材料仅为带来源、未独立核实的参考；普通基于研究的旅行安排应在首次接受 intent 时设置 `allowPartial=true`，保留既有不确定性提示。若用户明确要求独立核实的事实，当前路径不能满足，应解释限制并澄清，不能提交或降低已接受 Goal。本变更不自动覆盖模型参数、不改证据状态、不降低 validator 或放松 Goal 不可变约束。
+
+新增回归验证 `allowPartial=false` 必须拒绝原始材料、无攻略 Artifact 写入且 Goal 保持 pending；同轮改成 true 继续因 `GOAL_INTENT_CONFLICT` 拒绝，原参数保持 false。既有普通研究提交成功测试继续覆盖 true 分支。`npm test -- src/agent/dsh/commit-guide.test.ts`：18/18 通过，7.40秒；无付费调用，不替代下一真实 probe 或 H5 验收。
+
+## 终稿金额表达反馈（2026-09-25）
+
+第六次真实最小 commit probe 获得可用来源且首次 intent 正确设置 `allowPartial=true`，但 overview 重复用户的 `1500元` 预算目标，现有发布表达检查返回 `excluded_precise_claim`。同轮模型只删去交通耗时，保留该金额，故第二次提交仍 blocked；本次33.785秒、7次主模型及1次搜索、US$0.40未知费用预留，原账本累计106模型准入/34搜索/US$6.96未知预留。不是 accepted。
+
+DSH工具描述及overview公开schema现与既有Finalizer指令对齐：终稿所有文字省略金额（包括预算目标），权威预算由现有UI独立展示；同时不写精确时刻、分钟/耗时等。`excluded_precise_claim`返回新增具体repairHint，明确检查reply、overview、每日主题和活动文字中的预算金额以及时刻/分钟，让同一主Agent仅修被拒文字。服务端不替换或裁剪文字、不追加LLM、不改validator或增加修复次数。
+
+新增离线用例复现预算目标被拒、隐藏blocked文本、Goal pending；主Agent输入删除金额后可在同Goal发布，活动和研究来源保持相同。`npm test -- src/agent/dsh/commit-guide.test.ts`：19/19通过，5.31秒；无付费调用，不替代真实重试或H5验收。
 
 ## 回滚与边界
 

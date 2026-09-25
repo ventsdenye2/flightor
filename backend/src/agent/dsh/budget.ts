@@ -15,7 +15,7 @@ const receiptSchema = z.object({ durationMs: z.number().finite().nonnegative(), 
   maxTokens: z.number().int().min(256).max(16384).optional(), thinking: z.literal('disabled').optional(),
   actualCostUsdMicros: micros.optional(), errorCode: z.string().regex(/^[A-Z][A-Z0-9_]{0,79}$/).optional() }).strict()
 const authorizationSchema = z.object({ authorizedUsdMicros: micros, maxModelCalls: micros, maxSearchCalls: micros,
-  modelReserveUsdMicros: micros.positive(), searchReserveUsdMicros: micros.positive() }).strict()
+  modelReserveUsdMicros: micros.positive(), searchReserveUsdMicros: micros.positive(), unlimited: z.literal(true).optional() }).strict()
 const entrySchema = z.object({ id: identifier, kind: z.enum(['model', 'search']), provider: providerSchema,
   admittedAt: z.iso.datetime(), reservedUsdMicros: micros.positive(), receipt: receiptSchema.optional(), settledAt: z.iso.datetime().optional() }).strict()
 const grantSchema = z.object({ id: identifier, grantedAt: z.iso.datetime(), reference: z.string().min(1).max(300),
@@ -28,7 +28,7 @@ type Ledger = z.infer<typeof ledgerSchema>
 export type DshBudgetEntry = z.infer<typeof entrySchema>
 export interface DshBudgetOptions {
   path: string; authorizedUsd: number; maxModelCalls: number; maxSearchCalls: number
-  modelReserveUsd?: number; searchReserveUsd?: number
+  modelReserveUsd?: number; searchReserveUsd?: number; unlimited?: boolean
 }
 export interface DshBudgetReceipt {
   durationMs: number
@@ -45,7 +45,7 @@ export interface DshBudgetSnapshot {
   version: 1; batchId: string; createdAt: string; updatedAt: string
   authorization: Ledger['authorization']; entries: DshBudgetEntry[]
   modelCalls: number; searchCalls: number; knownCostUsdMicros: number; unknownReservedUsdMicros: number
-  consumedUsdMicros: number; remainingUsdMicros: number; unknownCostCalls: number; pendingCalls: number; overBudget: boolean
+  consumedUsdMicros: number; remainingUsdMicros: number | null; unknownCostCalls: number; pendingCalls: number; overBudget: boolean
 }
 
 function error(code: string, message: string): never { throw new AppError(code, message, 409) }
@@ -74,8 +74,8 @@ function snapshot(ledger: Ledger): DshBudgetSnapshot {
   const consumedUsdMicros = knownCostUsdMicros + unknownReservedUsdMicros
   if (!Number.isSafeInteger(consumedUsdMicros)) error('DSH_BUDGET_CORRUPT', 'Budget totals exceed the supported integer range')
   return { ...structuredClone(ledger), modelCalls, searchCalls, knownCostUsdMicros, unknownReservedUsdMicros, consumedUsdMicros,
-    remainingUsdMicros: Math.max(0, ledger.authorization.authorizedUsdMicros - consumedUsdMicros), unknownCostCalls, pendingCalls,
-    overBudget: consumedUsdMicros > ledger.authorization.authorizedUsdMicros }
+    remainingUsdMicros: ledger.authorization.unlimited ? null : Math.max(0, ledger.authorization.authorizedUsdMicros - consumedUsdMicros), unknownCostCalls, pendingCalls,
+    overBudget: !ledger.authorization.unlimited && consumedUsdMicros > ledger.authorization.authorizedUsdMicros }
 }
 
 /** Local-host file ledger. No network calls, credentials, prompts or provider response bodies are accepted. */
@@ -88,7 +88,8 @@ export class FileDshBudget {
     this.path = resolve(options.path)
     const parsed = authorizationSchema.safeParse({ authorizedUsdMicros: usdMicros(options.authorizedUsd),
       maxModelCalls: options.maxModelCalls, maxSearchCalls: options.maxSearchCalls,
-      modelReserveUsdMicros: usdMicros(options.modelReserveUsd ?? 0.04), searchReserveUsdMicros: usdMicros(options.searchReserveUsd ?? 0.08) })
+      modelReserveUsdMicros: usdMicros(options.modelReserveUsd ?? 0.04), searchReserveUsdMicros: usdMicros(options.searchReserveUsd ?? 0.08),
+      ...(options.unlimited === true ? { unlimited: true } : {}) })
     if (!parsed.success || options.maxModelCalls + options.maxSearchCalls > 100_000) error('DSH_BUDGET_INVALID_CONFIGURATION', 'Budget call limits and reservations are invalid')
     this.authorization = parsed.data
   }
@@ -106,12 +107,12 @@ export class FileDshBudget {
       }
       const current = snapshot(ledger), counts = callCounts(kind, provider)
       const reservedUsdMicros = reservation(ledger.authorization, kind, provider)
-      if (current.modelCalls >= ledger.authorization.maxModelCalls
+      if (!ledger.authorization.unlimited && (current.modelCalls >= ledger.authorization.maxModelCalls
         || ledger.authorization.maxSearchCalls > 0 && current.searchCalls >= ledger.authorization.maxSearchCalls
-        || current.modelCalls + counts.model > ledger.authorization.maxModelCalls || current.searchCalls + counts.search > ledger.authorization.maxSearchCalls) {
+        || current.modelCalls + counts.model > ledger.authorization.maxModelCalls || current.searchCalls + counts.search > ledger.authorization.maxSearchCalls)) {
         error('DSH_BUDGET_CALL_LIMIT', 'The authorized model or search call limit would be exceeded')
       }
-      if (current.consumedUsdMicros + reservedUsdMicros > ledger.authorization.authorizedUsdMicros) {
+      if (!ledger.authorization.unlimited && current.consumedUsdMicros + reservedUsdMicros > ledger.authorization.authorizedUsdMicros) {
         error('DSH_BUDGET_AMOUNT_LIMIT', 'The authorized monetary budget cannot cover this request reservation')
       }
       const entry: DshBudgetEntry = { id, kind, provider, reservedUsdMicros, admittedAt: new Date().toISOString() }
@@ -141,6 +142,22 @@ export class FileDshBudget {
 
   readSnapshot(): Promise<DshBudgetSnapshot> {
     return this.transaction(async ledger => ({ value: snapshot(ledger), changed: false }))
+  }
+
+  /** Explicit user authorization only: keep all prior caps, grants, failures and reservations as audit history. */
+  authorizeUnlimited(grant: { id: string; reference: string }): Promise<DshBudgetSnapshot> {
+    return this.transaction(async ledger => {
+      if (ledger.authorizationGrants?.some(item => item.id === grant.id)) error('DSH_BUDGET_GRANT_REPLAY', 'This authorization grant is already recorded')
+      if (snapshot(ledger).pendingCalls) error('DSH_BUDGET_PENDING_CALLS', 'Settle active requests before recording a new grant')
+      if (ledger.authorization.unlimited) error('DSH_BUDGET_ALREADY_UNLIMITED', 'This batch already has an uncapped authorization')
+      const before = structuredClone(ledger.authorization)
+      const after = { ...before, unlimited: true as const }
+      const parsed = grantSchema.safeParse({ id: grant.id, reference: grant.reference, grantedAt: new Date().toISOString(), before, after })
+      if (!parsed.success) error('DSH_BUDGET_INVALID_GRANT', 'An uncapped authorization requires a bounded unique identity and explicit reference')
+      ledger.authorizationGrants = [...(ledger.authorizationGrants ?? []), parsed.data]
+      ledger.authorization = after
+      return { value: snapshot(ledger), changed: true }
+    })
   }
 
   /** Administrative operation only after a new explicit user grant. Never used by Agent/HTTP admission. */
@@ -196,7 +213,7 @@ export class FileDshBudget {
           error('DSH_BUDGET_CORRUPT', 'The existing budget history is inconsistent; it will not be reset')
         }
         const before = snapshot(ledger)
-        if (before.modelCalls > ledger.authorization.maxModelCalls || before.searchCalls > ledger.authorization.maxSearchCalls) error('DSH_BUDGET_CORRUPT', 'The existing budget history exceeds its authorized call counts')
+        if (!ledger.authorization.unlimited && (before.modelCalls > ledger.authorization.maxModelCalls || before.searchCalls > ledger.authorization.maxSearchCalls)) error('DSH_BUDGET_CORRUPT', 'The existing budget history exceeds its authorized call counts')
         const result = await operation(ledger)
         if (fresh || result.changed) {
           if (result.changed) ledger.updatedAt = new Date().toISOString()

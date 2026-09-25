@@ -26,10 +26,10 @@ import { FileDshBudget } from './budget.js'
 
 function budgetFor(context: AppContext) {
   const env = context.env
-  if (env.DSH_AUTHORIZED_USD <= 0 || env.DSH_AUTHORIZED_MODEL_CALLS <= 0)
+  if (!env.DSH_BUDGET_UNLIMITED && (env.DSH_AUTHORIZED_USD <= 0 || env.DSH_AUTHORIZED_MODEL_CALLS <= 0))
     throw new AppError('DSH_BUDGET_REQUIRED', 'Configure a freshly authorized DSH budget before live execution', 503)
   return new FileDshBudget({ path: resolve(env.DSH_BUDGET_PATH), authorizedUsd: env.DSH_AUTHORIZED_USD,
-    maxModelCalls: env.DSH_AUTHORIZED_MODEL_CALLS, maxSearchCalls: env.DSH_AUTHORIZED_SEARCH_CALLS })
+    maxModelCalls: env.DSH_AUTHORIZED_MODEL_CALLS, maxSearchCalls: env.DSH_AUTHORIZED_SEARCH_CALLS, unlimited: env.DSH_BUDGET_UNLIMITED })
 }
 
 export function createDshManager(context: AppContext): DshSessionManager {

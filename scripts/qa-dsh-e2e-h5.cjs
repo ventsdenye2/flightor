@@ -53,7 +53,7 @@ const statePath = path.join(directory, `browser-${caseId}.private.json`)
 const reportPath = path.join(output, `${runId}.json`)
 const report = { case: caseId, mode, startedAt: new Date().toISOString(), h5: baseUrl, api: transport.baseUrl,
   tripId: entry.tripId, conversationId: entry.conversationId, browser: 'installed Chrome, headed, isolated context',
-  timingEvidence: 'Node monotonic response observations and polled visible DOM; not browser paint timestamps',
+  timingEvidence: 'Node monotonic response observations and polled visible DOM; not browser paint timestamps. Readable-guide timing includes opening the result after terminal API/authoritative checks and is an observed upper bound, not the earliest possible guide paint.',
   timings: {}, events: [], screenshots: [], browserErrors: [], result: 'running' }
 const started = performance.now(), now = () => Math.round((performance.now() - started) * 1000) / 1000
 const write = () => fs.writeFileSync(reportPath, json(report))
@@ -84,7 +84,7 @@ function initialState() {
 ;(async () => {
   let browser, context, page, attemptPath
   const pendingResponses = new Set()
-  let accepted, terminal, postCount = 0, workspaceSeen = false, localizationResponse
+  let accepted, terminal, postCount = 0, workspaceSeen = false, localizationResponse, chineseRestoreBoundary
   try {
     report.budgetBefore = budgetSnapshot()
     browser = await chromium.launch({ channel: 'chrome', headless: false })
@@ -175,7 +175,8 @@ function initialState() {
       const workspace = await readApi(`/v1/trips/${encodeURIComponent(entry.tripId)}/workspace?conversationId=${encodeURIComponent(entry.conversationId)}&locale=zh`)
       assert.equal(workspace.trip?.id, entry.tripId, 'Authoritative Trip mismatch')
       assert.equal(workspace.conversationId, entry.conversationId, 'Authoritative conversation mismatch')
-      const ref = [...workspace.artifactRefs].reverse().find(item => item.type === 'travel_guide')
+      // Workspace returns artifacts newest first; reversing would validate the old guide after a slot edit.
+      const ref = workspace.artifactRefs.find(item => item.type === 'travel_guide')
       const guide = ref ? (await readApi(`/v1/artifacts/${encodeURIComponent(ref.id)}?locale=zh`)).artifact : undefined
       const route = guide?.payload?.routeArtifactId ? (await readApi(`/v1/artifacts/${encodeURIComponent(guide.payload.routeArtifactId)}?locale=zh`)).artifact : undefined
       const flight = workspace.trip.selectedFlight ? (await readApi(`/v1/artifacts/${encodeURIComponent(workspace.trip.selectedFlight.artifactId)}?locale=zh`)).artifact : undefined
@@ -188,7 +189,8 @@ function initialState() {
     const inspectGuide = async label => {
       await page.locator('.ux-publication-state--accepted').waitFor()
       report.timings.guideVisibleMs ??= now()
-      const content = { overview: await page.locator('.ux-published').innerText(), days: [], details: [], activities: [] }
+      const content = { overview: await page.locator('.ux-published').innerText(),
+        summary: await page.locator('.ux-trip-overview').innerText(), days: [], details: [], activities: [] }
       await screenshot(`${label}-overview`)
       await page.locator('.ux-tabs .ux-tab').nth(1).click()
       const count = await page.locator('.ux-day-chip').count()
@@ -223,6 +225,7 @@ function initialState() {
       await page.locator('.ux-published').waitFor()
       report.beforeRefreshText = await page.locator('body').innerText()
       if (localize) {
+        report.chineseGuideBeforeLocalization = await inspectGuide('chinese-before-localization')
         await page.locator('.ux-locale-toggle').filter({ hasText: 'English' }).click()
         await page.locator('.ux-prepare-locale').waitFor()
         attemptPath = path.join(directory, `h5-${caseId}-localize.attempt.private.json`)
@@ -237,6 +240,21 @@ function initialState() {
         const english = (await readApi(`/v1/artifacts/${encodeURIComponent(report.authoritativeBefore.guide.id)}?locale=en`)).artifact
         report.localizationAssertions = assertLocalization(report.authoritativeBefore, report.authoritativeAfter, english,
           report.budgetBefore, budgetSnapshot(), report.events)
+        // The existing locale toggle must restore the accepted Chinese variant
+        // without another localization POST, main turn or paid request.
+        chineseRestoreBoundary = { eventIndex: report.events.length, budget: budgetSnapshot() }
+        report.timings.chineseRestoreClickedMs = now()
+        await page.locator('.ux-locale-toggle').filter({ hasText: '中文' }).click()
+        await page.locator('.ux-locale-toggle').filter({ hasText: 'English' }).waitFor()
+        report.chineseGuideRestored = await inspectGuide('chinese-restored')
+        report.timings.chineseRestoredMs = now()
+        assert.equal(report.chineseGuideRestored.summary, report.chineseGuideBeforeLocalization.summary, 'Chinese restoration changed the original overview')
+        assert.deepEqual(report.chineseGuideRestored.activities, report.chineseGuideBeforeLocalization.activities, 'Chinese restoration changed activity identities/order/times/names')
+        assert.deepEqual(report.chineseGuideRestored.details.map(item => item.prose), report.chineseGuideBeforeLocalization.details.map(item => item.prose), 'Chinese restoration changed introductions/recommendation reasons')
+        report.authoritativeAfterChineseRestore = await authoritative()
+        assert.deepEqual(report.authoritativeAfterChineseRestore, report.authoritativeAfter, 'Chinese restoration changed the accepted guide/Trip/route/flight')
+        assert.equal(acceptedGuide(report.authoritativeAfterChineseRestore).payload.publication.locale, 'zh', 'Restored accepted publication is not Chinese')
+        report.chineseRestoreAssertions = { sameGuide: true, sameChineseOverviewAndActivities: true, mutations: 0, modelCalls: 0, searchCalls: 0 }
       } else {
         report.guideBeforeRefresh = await inspectGuide('before-refresh')
         await page.reload({ waitUntil: 'domcontentloaded' })
@@ -331,6 +349,10 @@ function initialState() {
       if (report.result === 'observed' && !execute) {
         assert.deepEqual(report.budgetAfter, report.budgetBefore, 'Late read-only activity changed budget accounting')
         assert.equal(report.events.filter(event => event.type === 'request' && !['GET', 'HEAD', 'OPTIONS'].includes(event.method)).length, 0, 'Late read-only API mutation observed')
+      }
+      if (report.result === 'observed' && chineseRestoreBoundary) {
+        assert.deepEqual(report.budgetAfter, chineseRestoreBoundary.budget, 'Chinese restoration started paid model/search activity')
+        assert.equal(report.events.slice(chineseRestoreBoundary.eventIndex).filter(event => event.type === 'request' && !['GET', 'HEAD', 'OPTIONS'].includes(event.method)).length, 0, 'Chinese restoration made an API mutation')
       }
     } catch (error) {
       if (report.result === 'observed') { report.result = 'failed'; report.failure = sanitize(error.stack || String(error)); process.exitCode = 1 }

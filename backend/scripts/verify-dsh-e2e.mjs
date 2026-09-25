@@ -47,7 +47,7 @@ function readBudget(file) {
     return counts
   }, { model: 0, search: 0, usdMicros: 0, pending: 0 })
   return { batchId: value.batchId, authorization: value.authorization, ...calls,
-    remainingUsdMicros: value.authorization.authorizedUsdMicros - calls.usdMicros }
+    remainingUsdMicros: value.authorization.unlimited === true ? null : value.authorization.authorizedUsdMicros - calls.usdMicros }
 }
 function capacity(kind) {
   const current = readBudget(budgetPath)
@@ -55,6 +55,8 @@ function capacity(kind) {
   if (priorState?.budgetBatchId && priorState.budgetBatchId !== current.batchId) throw Error('DSH_E2E_BUDGET_BATCH_CHANGED')
   if (current.pending) throw Error('DSH_E2E_BUDGET_PENDING_ENTRY')
   const a = current.authorization
+  if ((a.unlimited === true) !== (settings.DSH_BUDGET_UNLIMITED === 'true')) throw Error('DSH_E2E_BUDGET_AUTHORIZATION_MISMATCH')
+  if (a.unlimited === true) return
   const officialSearch = kind !== 'model' && settings.DSH_SEARCH_PROVIDER === 'deepseek-official'
   const neededUsd = kind === 'commit' ? a.modelReserveUsdMicros + (officialSearch ? a.searchReserveUsdMicros : 0)
     : kind === 'search' ? a.searchReserveUsdMicros + (officialSearch ? a.modelReserveUsdMicros : 0) : a.modelReserveUsdMicros

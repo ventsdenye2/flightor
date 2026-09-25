@@ -1,6 +1,12 @@
 # 文档维护规则与本轮清理记录
 
+2026-09-25：H5 DSH验收脚本按正式workspace的`id desc`顺序取最新攻略，不再反转成最旧攻略；否则局部编辑/预算修改后的断言会错误检查旧版本。此为验收读取修正，未改正式前端或API排序。
+
 ## 2026-09-25 DSH 正式 H5 续验脚本
+
+`qa-dsh-e2e-h5.cjs --execute --localize --case A|B` 在同一真实浏览器会话内先留存中文概览、活动名称/身份/时间及简介/推荐理由，再显式生成英文，随后点击现有“中文”切换按钮。恢复后逐项比对原中文文字和权威攻略/Trip/route/flight快照，检查切回期间零API写入、零模型和搜索调用，保留中文恢复截图；不新增前端代码或自动重试。此脚本增量只完成语法与既有4项离线断言验证，实际中英切换结果须由真实执行另行记录。`clickToReadableGuideMs` 当前在终态API和权威GET后打开攻略才观测，是包含这些检查及打开动作的可读内容耗时上界，不代表最早渲染/paint时刻；报告中显式标注该限制。
+
+2026-09-25新增明确不限预算授权：`verify-dsh-e2e.mjs`仍要求原batch、零pending及配置/账本模式一致；仅原账本已追加`authorizeUnlimited`审计grant且显式`DSH_BUDGET_UNLIMITED=true`时跳过累计capacity判断。dry-run持续显示完整历史次数/费用及`remainingUsdMicros=null`，不能以空值当零费用；旧数字上限和失败记录保留为历史。单次显式probe、顺序门禁和单轮限制不变。预算与配置离线测试32/32通过（3.91s），覆盖环境变量单独切换被拒、grant前后历史一致、超旧上限仍逐调用计账、重启恢复及pending/replay保护；backend build、runner语法与diff检查通过。初次测试仅因沙箱拒绝esbuild子进程而未启动，授权重跑通过；这不构成真实Provider或H5通过。
 
 续验runner逐启动写入`server-<uuid>.jsonl`：实际安装的legacy/Research/首次Finalizer/票价守卫、HTTP路径/方法/状态/时间及关闭时违规调用计数。缺失待守卫方法时启动失败，不能静默跳过。审计不含请求头、Key、正文或查询参数，失败/进程中断前的已写记录保留；未来H5 PASS须同时检查该审计和worker observer，不能用静态代码断言代替实际路径证据。
 

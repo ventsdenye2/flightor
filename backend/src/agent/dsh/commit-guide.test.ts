@@ -49,6 +49,60 @@ async function fixture() {
 }
 
 describe('DSH combined guide commit', () => {
+  it('explains that budget targets are excluded from publication prose and accepts a text-only repair', async () => {
+    const f = await fixture()
+    f.input.text.overview = 'Your two-day budget target is 1500元 in total, with a relaxed cultural itinerary.'
+    await expect(f.execute()).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      issues: expect.arrayContaining([expect.objectContaining({ code: 'format', detail: 'excluded_precise_claim' })]),
+      repairHint: expect.stringContaining('including the user budget target')
+    } })
+    const blocked = (await f.artifacts.listForTrip(f.trip.id)).find(record => record.type === 'travel_guide')!
+    expect(publicationFor(blocked)!.finalization!.variants.en).toMatchObject({ status: 'blocked', text: null })
+    expect((await f.goals.get(f.context.activeGoalId!))!.status).toBe('pending')
+    f.input.text.overview = 'Explore traditional culture with a relaxed two-day itinerary.'
+    const result = await f.execute()
+    expect(result).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    const accepted = (await f.artifacts.get(result.artifact.id))!
+    expect(travelGuideArtifactPayloadSchema.parse(accepted.payload).days).toEqual(travelGuideArtifactPayloadSchema.parse(blocked.payload).days)
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'research')).toHaveLength(1)
+  })
+
+  it('rejects partial raw evidence under a verified-only Goal and forbids weakening that accepted Goal', async () => {
+    const f = await fixture()
+    const strictIntent = { ...intent, parameters: { ...intent.parameters, allowPartial: false } }
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...f.input, intent: strictIntent }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: { issues: expect.arrayContaining(['verified_evidence']) } })
+    expect((await f.goals.get(f.context.activeGoalId!))!).toMatchObject({ status: 'pending', parameters: { allowPartial: false } })
+    await expect(f.execute()).rejects.toMatchObject({ code: 'GOAL_INTENT_CONFLICT' })
+    const records = await f.artifacts.listForTrip(f.trip.id)
+    expect(records.filter(record => record.type === 'travel_guide')).toHaveLength(0)
+    expect(records.filter(record => record.type === 'research')).toHaveLength(1)
+    expect((await f.goals.get(f.context.activeGoalId!))!).toMatchObject({ status: 'pending', parameters: { allowPartial: false } })
+  })
+
+  it.each(['accepted_rest', 'rest_not_allowed', 'missing_rest_notes'] as const)('preserves the domain contract for an empty second day: %s', async mode => {
+    const f = await fixture()
+    const input = structuredClone(f.input)
+    input.candidates = input.candidates!.slice(0, 1)
+    input.days[1] = { day: 2, cityId: city.id, kind: 'rest', theme: 'Rest at your own pace', items: [],
+      ...(mode === 'missing_rest_notes' ? {} : { notes: 'Leave this day free to rest according to your energy.' }) }
+    input.text.days[1] = { day: 2, theme: 'Rest at your own pace' }
+    input.text.activities = input.text.activities.slice(0, 1)
+    const restIntent = { ...intent, parameters: { ...intent.parameters, allowRestDays: mode !== 'rest_not_allowed' } }
+    const execute = () => f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: restIntent }), f.context, new AbortController().signal) as Promise<any>
+    if (mode === 'accepted_rest') {
+      const result = await execute()
+      expect(result).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+      const guide = (await f.artifacts.get(result.artifact.id))!
+      expect(travelGuideArtifactPayloadSchema.parse(guide.payload).days[1]).toMatchObject({ kind: 'rest', items: [], notes: input.days[1].notes })
+      expect(publicationFor(guide)!.finalization!.variants.en).toMatchObject({ status: 'accepted', text: { days: input.text.days } })
+    } else {
+      await expect(execute()).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: { issues: expect.arrayContaining(['guide_daily_activity_coverage']) } })
+      expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'travel_guide')).toHaveLength(0)
+      expect((await f.goals.get(f.context.activeGoalId!))!.status).toBe('pending')
+    }
+  })
+
   it('identifies stale raw evidence without revealing its scope and accepts a precise current-evidence repair', async () => {
     const f = await fixture()
     const priorStore = new DshEvidenceStore({ ...f.evidenceScope, generationId: randomUUID() }, { repository: f.evidenceRepository })

@@ -25,7 +25,8 @@ const key = z.string().trim().min(1).max(120)
 const slot = z.enum(['morning', 'afternoon', 'evening', 'flexible'])
 const choice = authoredGuideInputSchema.shape.days.element.shape.items.element.omit({ researchIndex: true, findingId: true })
   .extend({ activityKey: key, candidateKey: key.optional(), candidateRef: z.string().min(1).max(160).optional() }).strict()
-const daySchema = authoredGuideInputSchema.shape.days.element.extend({ items: z.array(choice).max(6) }).strict()
+const daySchema = authoredGuideInputSchema.shape.days.element.extend({ items: z.array(choice).max(6)
+  .describe('A visit day needs sourced activities. An intentionally empty rest or travel day requires kind rest/travel, meaningful notes describing that day, and allowRestDays=true in the accepted travel_guide intent; use this only when compatible with the user request.') }).strict()
 const activityTextSchema = finalTextSchema.shape.activities.element.omit({ activityId: true, sourceRefs: true }).extend({ activityKey: key }).strict()
 export const commitGuideInputSchema = z.object({
   candidates: z.array(z.object({ key, evidenceRefs: z.array(z.string().uuid()).min(1).max(20)
@@ -35,7 +36,9 @@ export const commitGuideInputSchema = z.object({
   days: z.array(daySchema).min(1).max(60),
   supportingRefs: z.array(z.string().min(1).max(160)).max(50).optional(),
   supportingCandidateKeys: z.array(key).max(50).optional(),
-  text: finalTextSchema.omit({ locale: true, activities: true }).extend({ activities: z.array(activityTextSchema).max(360)
+  text: finalTextSchema.omit({ locale: true, activities: true }).extend({
+    overview: finalTextSchema.shape.overview.describe('Current-locale itinerary overview. Omit all monetary amounts, including the user budget target: the UI displays the authoritative budget separately. No ticket prices, clock times, exact minutes/durations or budget guarantees. The same restriction applies to every text field.'),
+    activities: z.array(activityTextSchema).max(360)
     .describe('Exactly one text entry for each scheduled days[].items[].activityKey. For slot edits include only replacement activity keys, never protected activities. Supplemental/practical candidates belong in supportingCandidateKeys (or supportingRefs), not text.activities.') }).strict(),
   baseGuideId: z.string().uuid().optional(), expectedContentHash: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   replaceSlots: z.array(z.object({ day: z.number().int().min(1).max(60), slot }).strict()).min(1).max(240).optional()
@@ -109,7 +112,7 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
     activityBindings: z.array(z.object({ activityKey: z.string(), activityId: z.string(), sourceRefs: z.array(z.string()) }).strict()) }).strict()
   const tool: AgentTool<CommitGuideInput, z.infer<typeof outputSchema>> = {
     name: 'commit_travel_guide',
-    description: 'Commit an evidence-backed itinerary and its final text together. New candidates select opaque evidenceRefs from web_search/web_fetch and trusted locationId; existing candidateRef may be reused without new research. Each day item and text activity share a unique activityKey; do not invent source IDs. Text must be in the current locale, with concrete place/action and preference-based reasons, no prices, exact duration, opening hours, budget guarantees or verified-fact claims. To modify only a slot, pass current baseGuideId/expectedContentHash/replaceSlots and only replacement items; the server preserves every other slot and its text. Required Goal intent is accepted before writes; completion happens only after publication accepts.',
+    description: 'Commit an evidence-backed itinerary and its final text together. New candidates select opaque evidenceRefs from web_search/web_fetch and trusted locationId; existing candidateRef may be reused without new research. Raw web evidence is converted to partially_verified, reference-only material, never independent fact verification. For an ordinary research-backed itinerary, set intent.parameters.allowPartial=true before accepting the first durable Goal; this keeps the source uncertainty visible and does not relax daily/category/publication checks. If the user explicitly requires independently verified facts, this raw-evidence path cannot satisfy that requirement: explain the limitation and clarify instead of committing or changing the accepted constraints. Never weaken an already accepted Goal after a rejection. Each day item and text activity share a unique activityKey; do not invent source IDs. Text must be in the current locale, with concrete place/action and preference-based reasons. Omit ALL monetary amounts from reply, overview, day themes and activity text, including the user budget target, because the UI displays budget separately. No prices, clock times, exact minutes/durations, opening hours, budget guarantees or verified-fact claims. To modify only a slot, pass current baseGuideId/expectedContentHash/replaceSlots and only replacement items; the server preserves every other slot and its text. Required Goal intent is accepted before writes; completion happens only after publication accepts.',
     inputSchema: commitGuideInputSchema, outputSchema, costClass: 'cheap', costUnits: 1, sideEffect: 'state', parallelSafe: false, timeoutMs: 30_000, provider: 'travel_guide',
     async execute(input, context, signal) {
       if (!context.ownerId) throw new AppError('UNAUTHORIZED', 'An authenticated owner is required', 401)
@@ -190,7 +193,10 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         ...(options.memoryEnabled === undefined ? {} : { memoryEnabled: options.memoryEnabled }), signal, assertCurrent: () => checkpoint(scope) })
       const publication = publicationFor(published)
       const variant = publication?.finalization?.variants[options.locale]
-      if (variant?.status !== 'accepted') fail('The final text requires revision', { artifactId: published.id, issues: variant?.issues ?? [] })
+      if (variant?.status !== 'accepted') fail('The final text requires revision', { artifactId: published.id, issues: variant?.issues ?? [],
+        ...(variant?.issues.some(issue => issue.detail.split(', ').includes('excluded_precise_claim')) ? {
+          repairHint: 'Remove ALL monetary amounts, including the user budget target (for example 1500元), from text.reply, text.overview, text.days[].theme and every text.activities field. The UI displays the authoritative budget separately. Also remove clock times and exact minutes/durations. Keep the itinerary, evidence bindings and accepted Goal unchanged; repair only the rejected presentation text.'
+        } : {}) })
       await checkpoint(scope)
       context.onArtifactCommitted?.(published)
       return { status: 'accepted', artifact: saved.artifact, reply: variant.text!.reply, warnings: saved.warnings,
