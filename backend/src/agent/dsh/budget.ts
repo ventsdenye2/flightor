@@ -11,13 +11,17 @@ const identifier = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/)
 const providerSchema = z.string().regex(/^[a-z][a-z0-9_-]{0,63}$/)
 const usageSchema = z.object({ promptTokens: micros.optional(), completionTokens: micros.optional(), totalTokens: micros.optional() }).strict()
 const receiptSchema = z.object({ durationMs: z.number().finite().nonnegative(), usage: usageSchema.optional(),
+  finishReason: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/).optional(), model: z.string().min(1).max(200).optional(),
+  maxTokens: z.number().int().min(256).max(16384).optional(), thinking: z.literal('disabled').optional(),
   actualCostUsdMicros: micros.optional(), errorCode: z.string().regex(/^[A-Z][A-Z0-9_]{0,79}$/).optional() }).strict()
 const authorizationSchema = z.object({ authorizedUsdMicros: micros, maxModelCalls: micros, maxSearchCalls: micros,
   modelReserveUsdMicros: micros.positive(), searchReserveUsdMicros: micros.positive() }).strict()
 const entrySchema = z.object({ id: identifier, kind: z.enum(['model', 'search']), provider: providerSchema,
   admittedAt: z.iso.datetime(), reservedUsdMicros: micros.positive(), receipt: receiptSchema.optional(), settledAt: z.iso.datetime().optional() }).strict()
+const grantSchema = z.object({ id: identifier, grantedAt: z.iso.datetime(), reference: z.string().min(1).max(300),
+  before: authorizationSchema, after: authorizationSchema }).strict()
 const ledgerSchema = z.object({ version: z.literal(1), batchId: z.string().uuid(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
-  authorization: authorizationSchema, entries: z.array(entrySchema).max(100_000) }).strict()
+  authorization: authorizationSchema, authorizationGrants: z.array(grantSchema).max(100).optional(), entries: z.array(entrySchema).max(100_000) }).strict()
 const lockSchema = z.object({ version: z.literal(1), token: z.string().uuid(), pid: z.number().int().positive(),
   host: z.string().min(1).max(253), createdAt: z.iso.datetime() }).strict()
 type Ledger = z.infer<typeof ledgerSchema>
@@ -28,6 +32,10 @@ export interface DshBudgetOptions {
 }
 export interface DshBudgetReceipt {
   durationMs: number
+  finishReason?: string
+  model?: string
+  maxTokens?: number
+  thinking?: 'disabled'
   usage?: { promptTokens?: number | undefined; completionTokens?: number | undefined; totalTokens?: number | undefined }
   /** Only a real monetary receipt; token usage or rate estimates must not populate this. */
   actualCostUsd?: number
@@ -133,6 +141,25 @@ export class FileDshBudget {
 
   readSnapshot(): Promise<DshBudgetSnapshot> {
     return this.transaction(async ledger => ({ value: snapshot(ledger), changed: false }))
+  }
+
+  /** Administrative operation only after a new explicit user grant. Never used by Agent/HTTP admission. */
+  extendAuthorization(grant: { id: string; reference: string; additionalUsd: number; additionalModelCalls: number; additionalSearchCalls: number }): Promise<DshBudgetSnapshot> {
+    return this.transaction(async ledger => {
+      if (ledger.authorizationGrants?.some(item => item.id === grant.id)) error('DSH_BUDGET_GRANT_REPLAY', 'This authorization grant is already recorded')
+      if (snapshot(ledger).pendingCalls) error('DSH_BUDGET_PENDING_CALLS', 'Settle active requests before recording a new grant')
+      if (!(grant.additionalUsd > 0) || !Number.isSafeInteger(grant.additionalModelCalls) || grant.additionalModelCalls < 0
+        || !Number.isSafeInteger(grant.additionalSearchCalls) || grant.additionalSearchCalls < 0)
+        error('DSH_BUDGET_INVALID_GRANT', 'A grant must explicitly add positive money and nonnegative model/search capacity')
+      const before = structuredClone(ledger.authorization)
+      const after = { ...before, authorizedUsdMicros: before.authorizedUsdMicros + usdMicros(grant.additionalUsd),
+        maxModelCalls: before.maxModelCalls + grant.additionalModelCalls, maxSearchCalls: before.maxSearchCalls + grant.additionalSearchCalls }
+      const parsed = grantSchema.safeParse({ id: grant.id, reference: grant.reference, grantedAt: new Date().toISOString(), before, after })
+      if (!parsed.success || after.maxModelCalls + after.maxSearchCalls > 100_000) error('DSH_BUDGET_INVALID_GRANT', 'Invalid authorization grant')
+      ledger.authorizationGrants = [...(ledger.authorizationGrants ?? []), parsed.data]
+      ledger.authorization = after
+      return { value: snapshot(ledger), changed: true }
+    })
   }
 
   private transaction<T>(operation: (ledger: Ledger) => Promise<{ value: T; changed: boolean }>): Promise<T> {

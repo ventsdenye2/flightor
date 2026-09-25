@@ -58,18 +58,26 @@ async function open(data) {
     } } })
   }
   ctx.on('llm/stream', async function* (options, next) {
-    if (!active || active.cancelled || ++active.calls > 12) throw new Error('DSH_MODEL_LIMIT')
+    if (!active || active.cancelled || active.calls >= 12) throw new Error('DSH_MODEL_LIMIT')
     const started = performance.now()
-    const billingId = `${active.generation}:model:${active.calls}`
+    const billingId = `${active.generation}:model:${active.calls + 1}`
     if (config.metered) {
       const receipt = await bridge('__model_admit', { id: billingId }, { signal: options.signal })
       if (!receipt?.ok) throw new Error('DSH_BUDGET_NOT_ADMITTED')
     }
+    active.calls += 1
     send({ kind: 'activity', generation: active.generation, type: 'model_start' })
-    let usage, failed = false
-    try { for await (const chunk of next()) { if (chunk.type === 'usage') usage = chunk.usage; yield chunk } }
+    let usage, finishReason, failed = false
+    try { for await (const chunk of next()) {
+      if (chunk.type === 'usage') usage = chunk.usage
+      if (chunk.type === 'finish') { finishReason = chunk.reason.kind; failed = ['error', 'aborted'].includes(finishReason) }
+      yield chunk
+    } }
     catch (error) { failed = true; throw error } finally {
-      if (config.metered && active && !active.cancelled) await bridge('__model_receipt', { id: billingId, durationMs: performance.now() - started, usage: usage ?? null, failed }, {})
+      if (config.metered && active && !active.cancelled) await bridge('__model_receipt', { id: billingId,
+        durationMs: performance.now() - started, usage: usage ?? null, failed,
+        ...(finishReason ? { finishReason } : {}), model: config.route.model, maxTokens: config.route.maxTokens,
+        ...(config.route.provider === 'deepseek' ? { thinking: 'disabled' } : {}) }, {})
       send({ kind: 'activity', generation: active?.generation, type: 'model_end', durationMs: performance.now() - started })
     }
   })

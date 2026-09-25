@@ -39,7 +39,7 @@ export async function createRuntime({ root, adapter, provider = 'fixture', perso
         execute: (args, exec) => execute(tool.name, args, exec) } : definition)
     }
     if (web) {
-      const { default: Web } = await import('@deepseek-ai/dsh-web')
+      const { default: Web, WebError } = await import('@deepseek-ai/dsh-web')
       const WebTools = await import('@deepseek-ai/dsh-tool-web')
       await ctx.plugin(Web, { searchProvider: web.provider, fetchProvider: 'flightor-safe-fetch' })
       if (web.provider === 'deepseek-official') {
@@ -50,8 +50,34 @@ export async function createRuntime({ root, adapter, provider = 'fixture', perso
           search: (args, signal) => execute('__web_search', args, { signal }) })
       }
       ctx.web.registerFetchProvider({ id: 'flightor-safe-fetch', available: () => true,
-        fetch: (args, signal) => execute('__web_fetch', args, { signal }) })
+        fetch: async (args, signal) => {
+          const result = await execute('__web_fetch', args, { signal })
+          if (result?.error) {
+            const code = /^SOURCE_[A-Z_]{1,64}$/.test(result.error?.code ?? '') ? result.error.code : 'SOURCE_FETCH_FAILED'
+            const hint = typeof result.error?.hint === 'string' && result.error.hint.length <= 240
+              ? result.error.hint : 'The source fetch failed and supplies no evidence. Use another retrieved source.'
+            throw new WebError(hint, code)
+          }
+          return result
+        } })
       await ctx.plugin(WebTools, { searchMaxQueries: 1, searchMaxResults: 6, fetchMaxOutputChars: 16000, searchTimeoutMs: 30000, fetchTimeoutMs: 10000 })
+      // Public hooks narrow the official tool contract without replacing its implementation.
+      ctx.on('system-prompt/assemble', async (_assembly, _context, next) => {
+        const assembly = await next()
+        return { ...assembly, tools: assembly.tools.map(tool => tool.name !== 'web_search' ? tool : {
+          ...tool, parameters: { ...tool.parameters, properties: { ...tool.parameters.properties,
+            queries: { ...tool.parameters.properties.queries, minItems: 1, maxItems: 1 } } }
+        }) }
+      })
+      ctx.on('tools/pre-execute', async (exec, next) => {
+        if (exec.name === 'web_search') {
+          const queries = exec.arguments?.queries
+          if (!Array.isArray(queries) || queries.length !== 1 || typeof queries[0] !== 'string' || !queries[0].trim()) {
+            return { kind: 'deny', reason: 'web_search requires exactly one non-empty query. This invalid call did not start search or reserve search budget.' }
+          }
+        }
+        return next()
+      })
       if (metered) ctx.on('tools/execute', async (exec, next) => {
         if (exec.name !== 'web_search') return next()
         const receipt = await execute('__search_admit', {}, exec)

@@ -57,6 +57,47 @@ describe('file DSH authorization budget', () => {
     await expect(f.budget.admit('model', 'model-2', 'openrouter')).rejects.toMatchObject({ code: 'DSH_BUDGET_CALL_LIMIT' })
     expect(await f.budget.readSnapshot()).toMatchObject({ modelCalls: 1, consumedUsdMicros: 40_000, knownCostUsdMicros: 0, unknownCostCalls: 1 })
   })
+  it('retains output-limit diagnostics and unknown reservation across reopening', async () => {
+    const f = await fixture()
+    await f.budget.admit('model', 'length-1', 'deepseek')
+    await f.budget.settle('length-1', { durationMs: 80, finishReason: 'max-tokens', model: 'deepseek-v4-flash',
+      maxTokens: 4096, thinking: 'disabled', errorCode: 'MODEL_OUTPUT_LIMIT',
+      usage: { promptTokens: 700, completionTokens: 4096, totalTokens: 4796 } })
+    const reopened = await new FileDshBudget(f.options).readSnapshot()
+    expect(reopened).toMatchObject({ modelCalls: 1, pendingCalls: 0, unknownReservedUsdMicros: 40_000 })
+    expect(reopened.entries[0]?.receipt).toMatchObject({ finishReason: 'max-tokens', thinking: 'disabled', maxTokens: 4096,
+      errorCode: 'MODEL_OUTPUT_LIMIT', usage: { completionTokens: 4096 } })
+  })
+  it('appends an explicit grant without resetting failed entries, cost or batch identity', async () => {
+    const f = await fixture()
+    await f.budget.admit('model', 'old-failure', 'deepseek')
+    await f.budget.settle('old-failure', { durationMs: 1, errorCode: 'PROVIDER_FAILURE' })
+    const before = await f.budget.readSnapshot()
+    const granted = await f.budget.extendAuthorization({ id: 'user-grant-1', reference: 'Explicit isolated test grant',
+      additionalUsd: 3, additionalModelCalls: 48, additionalSearchCalls: 12 })
+    expect(granted.batchId).toBe(before.batchId)
+    expect(granted.entries).toEqual(before.entries)
+    expect(granted.unknownReservedUsdMicros).toBe(before.unknownReservedUsdMicros)
+    expect(granted.authorization.authorizedUsdMicros).toBe(before.authorization.authorizedUsdMicros + 3_000_000)
+    const reopened = new FileDshBudget({ ...f.options, authorizedUsd: f.options.authorizedUsd + 3,
+      maxModelCalls: f.options.maxModelCalls + 48, maxSearchCalls: f.options.maxSearchCalls + 12 })
+    expect((await reopened.readSnapshot()).entries).toEqual(before.entries)
+    await expect(f.budget.admit('model', 'stale-config', 'deepseek')).rejects.toThrow()
+    await expect(reopened.extendAuthorization({ id: 'user-grant-1', reference: 'Replay', additionalUsd: 3,
+      additionalModelCalls: 48, additionalSearchCalls: 12 })).rejects.toMatchObject({ code: 'DSH_BUDGET_GRANT_REPLAY' })
+  })
+  it('can add explicitly authorized money/search capacity without increasing an unused model cap', async () => {
+    const f = await fixture()
+    await f.budget.admit('model', 'preserved-failure', 'deepseek')
+    await f.budget.settle('preserved-failure', { durationMs: 1, errorCode: 'PROVIDER_FAILURE' })
+    const before = await f.budget.readSnapshot()
+    const after = await f.budget.extendAuthorization({ id: 'search-grant', reference: 'Explicit fixture grant without added model calls',
+      additionalUsd: 1, additionalModelCalls: 0, additionalSearchCalls: 6 })
+    expect(after.entries).toEqual(before.entries)
+    expect(after.authorization.maxModelCalls).toBe(before.authorization.maxModelCalls)
+    expect(after.authorization.maxSearchCalls).toBe(before.authorization.maxSearchCalls + 6)
+    expect(after.remainingUsdMicros).toBe(before.remainingUsdMicros + 1_000_000)
+  })
   it('refuses amounts beyond the cap and keeps an actual charge above the cap truthfully', async () => {
     const f = await fixture({ authorizedUsd: 0.1 })
     await f.budget.admit('model', 'model-1', 'openrouter')

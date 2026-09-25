@@ -20,7 +20,15 @@
 
 日程通过未包装的 `saveTravelGuideTool` 写入隐藏攻略后才调用集成 publication。只有 publication accepted 才返回成功并进入共享 Goal completion；日程拒绝或文字 blocked 抛出 `DSH_GUIDE_NEEDS_REVISION`，details 保留具体修正反馈，Goal 不能因此提前 satisfied。执行器须把此有界反馈传回同一主 Agent，并执行全轮的修复次数上限；本工具不自行重试。主 Agent 的实际成本与源查询数另行计量，工具调用不能当作事实认证。
 
-执行器最多接受两次组合提交（一次修复）。失败回复只有在本轮确实写入攻略 Artifact 后才能称草稿已保存；在意图/参数/来源检查前失败则只报告未能发布。解释回合保留当前问题的模型回答，不套用保存确认。最终返回引用同时核对当前 Trip version、接纳语言和 flight revision，取消后不追加成功回复。
+2026-09-25真实commit探针暴露一次可修输入错误：模型把6个已安排活动与2个辅助practical候选都写进text.activities，严格exact-cover校验正确拒绝，但原错误没有details且执行器未传递message，主模型只得到错误code而无法定位。现保留原校验，给此错误增加`activity_text_exact_cover`结构化详情：required/submitted/unexpected/missing/duplicateActivityKeys及repairHint；text.activities的公开schema同时说明只能写已安排活动，局部修改只写替换活动，practical/辅助候选放supportingCandidateKeys或supportingRefs，不需要活动展示文字。执行器只对服务端`DSH_GUIDE_NEEDS_REVISION`将message并入details.hint，已有结构化详情保留；其他provider/runtime错误不因本修复暴露任意message。该反馈仅供主模型修复，不进入公开回复，不增加提交次数或降低领域/publication校验。
+
+执行器最多接受两次组合提交（一次修复）。失败回复只有在本轮确实写入攻略 Artifact 后才能称草稿已保存；在意图/参数/来源检查前失败则只报告未能发布。组合提交成功后，执行器从已保存 Artifact 的当前语言 accepted variant 读取 reply，而不是采纳工具回包的任意 reply 字符串或主模型后续自由文本；该回复与 publication 公共投影一致。最终返回引用同时核对当前 Trip version、接纳语言和 flight revision，取消后不追加成功回复。
+
+### 解释和澄清的轻量公开边界
+
+无组合提交的回合继续回答当前问题，不套用“攻略已保存”。`publicProseProblems` 抽取原 finalization 的纯程序表达检查，攻略仍保留原有身份、来源、语言长度与发布要求；DSH 解释/澄清调用 shortReply 模式，允许“哪一天？”等简短回复和原语言地点名称。边界拦截错误语言、内部旁白/调试/系统提示词/工具名、内部 UUID/hash/地点身份、无支持的精确价格、营业时间、交通耗时、免费/全年开放及预算保证。它不是事实验证器或复杂语义 critic，不追加 LLM 或自动修复调用。
+
+普通回复可复述当前权威 Trip 的两天总预算，例如 `Your current budget is CNY 1200 in total for two days.` 或“总预算是1200元”；仅对明确预算短句中与当前 amount/currency 完全相同且 scope=trip 的金额放行。它不放行不同金额、门票/费用声明或预算可满足保证。检查失败时，原自由文字既不返回也不写入公开 Conversation；替换成当前语言固定提示“这次未能给出合适的说明，请换一种方式描述你想了解的问题。”或对应英文，并在原有 warnings/消息 metadata 中记录 `dsh_reply_withheld`。不修改 Trip/Artifact/Goal/Run、不伪造保存或 accepted，前端和公开 API schema 不变。
 
 局部修改必须提供 `baseGuideId`、`expectedContentHash` 与 `replaceSlots[{day,slot}]`，slot 为 morning/afternoon/evening/flexible。服务器读取同 owner/Trip/version 的已接纳底稿，核对内容 hash 和当前已采用航班，要求指定槽位原本存在。输入 days 仅允许修改这些槽位的 items；越界槽位和重写受保护活动文字直接拒绝。其余活动、顺序、日城市/kind/theme/notes、辅助证据及对应接纳文字从底稿恢复，不使用模型提供的替代元数据；新保存结果还逐项比较受保护活动，意外变化不得发布。因此“仅修改第二天下午”不会靠 prompt 保护第一天和第二天上午。日期/预算/航班继续从当前权威 Trip/workspace 生成，旧攻略保持原样，修改产生新的攻略 Artifact/content hash。
 
@@ -32,8 +40,20 @@
 - `npm test -- src/travel-guides/finalization.test.ts src/agent/cloud/finalization.test.ts`：44/44，通过，Vitest 3.33 秒。其中新增 17 项覆盖中英集成发布、零独立模型调用、幂等、隐藏错误语言/来源/活动身份/无依据价格与耗时/占位/schema、材料缺失/practical/字符预算/omitted、已取消和保存前取消、Trip/航班回调变更、内容 hash 和 owner 范围、要求隐藏草稿。其余为 legacy 回归。
 - 组合工具接续：`npm test -- src/agent/dsh/commit-guide.test.ts src/travel-guides/finalization.test.ts src/agent/cloud/finalization.test.ts`，56/56，通过，4.57 秒。新增 12 项执行真实领域保存与共享 completion（内存仓库），验证 publication 后才 satisfied、研究只保存一次、无独立研究、失败保持 pending、复用候选零新增研究、第二天下午局部修改保护、hash/越界 slot/受保护文字拒绝、错误证据/地点、取消、过期执行、真实 Trip 版本变化及航班守卫。
 - 初次运行在沙箱内因 esbuild 子进程 `spawn EPERM` 未启动；授权同一离线命令后，首次 43/44（变更 hash 测试误加非法 summary 字段）失败，修正 fixture 后以上 44/44 通过。没有压低断言或绕过发布校验。
+- 公开回复边界：`npm test -- src/agent/dsh/reply.test.ts src/agent/dsh/service.test.ts src/agent/dsh/multi-turn.test.ts src/travel-guides/finalization.test.ts src/agent/cloud/finalization.test.ts`，最终5文件77项通过，9.56秒；其中30项纯表达用例、真实官方 fixture worker 的拒绝/中文简短澄清/持久公开消息与零额外调用验证，以及成功发布后恶意 debug/价格/预算保证自由文字必须被 accepted reply 覆盖的多轮回归。此前74项通过后新增混合错语言、think标签及总预算不得改成per-day共3项，再跑上述最终结果。`npm run check` 通过；首次类型检查指出 exactOptionalPropertyTypes 的可选预算 undefined，改为显式 null 后通过。无付费调用。
+- exact-cover有界修复：`npm test -- src/agent/dsh/commit-guide.test.ts src/agent/dsh/multi-turn.test.ts src/agent/dsh/service.test.ts`，3文件16项通过，7.35秒；新增practical文字误入activities用例确认首败无Artifact写入且Goal pending，删去多余文字后保留两个supporting候选并发布accepted；真实官方fixture worker多轮用例确认结构化详情及hint穿过service/IPC、只修一次即可发布，后续自由文字仍不能覆盖accepted reply。`npm run check`通过。此为离线修复验证，不声称真实commit重试已通过，费用0。
 
 以上均为离线内存仓库及确定性模型 fixture，不代表新的 PostgreSQL/真实模型/搜索验证；费用为本子任务无外部调用。集成 variant 的调用数为 0 只计本程序阶段，实际主 Agent 成本必须保留于其独立观测。
+
+## 跨轮原始来源引用的精确修复（2026-09-25）
+
+真实execution `5806fe88-98a9-472b-820b-a661691774c5` 已调用组合提交，但一个候选混合本轮来源与上一generation的原始evidenceRef。Store按generation拒绝旧引用是正确边界；原转换抛出普通Error，执行器只回传`DSH_TOOL_FAILURE`，下一模型准入又被本轮次数上限拒绝，故没有发布。这次失败与exact-cover错误不同，不能算作真实accepted。
+
+组合工具现在在保存ResearchArtifact前检查提交的每个引用，失败返回`DSH_GUIDE_NEEDS_REVISION`及`candidate_evidence_unavailable`详情，逐候选列出提交中不可用的引用；不读取或披露其他owner/Trip/generation的元数据。repairHint要求仅在剩余当前证据足以支持该候选时删去旧引用，否则获取本轮材料，或改用已有ResearchArtifact的candidateRef。公开schema也说明原始引用限当前轮及最新Trip版本。隔离、已有Goal约束、publication检查与最多一次修复均不变，服务端不自动删除引用、迁移来源或降级验证。
+
+DSH persona明确：上轮未完成Goal与missingFromPreload/missingByDestination只是历史目标或材料库存，不能自动成为当前用户必需项。当前用户收窄目标时，由同一主Agent提交符合当前请求的新intent；只有参数匹配才能用goalRef，不能静默改写或降低旧Goal约束。这里不解析关键词、不改shared planning-context或legacy行为；也不声称仅靠提示词已证明真实模型行为达标。
+
+离线验证：`npm test -- src/agent/dsh/commit-guide.test.ts src/agent/dsh/multi-turn.test.ts src/agent/dsh/evidence.test.ts src/agent/dsh/evidence-file.test.ts`，4文件25项通过，7.69秒；`npm run check`通过。新增混合当前/旧generation来源拒绝且零Artifact写入、原Goal保持pending、精确去掉旧引用后同Goal accepted；真官方fixture worker验证错误详情经过执行器与IPC、一次改用持久candidateRef后发布、随后解释零新增写入及冷恢复。所有测试均离线，费用0，不替代真实重试。
 
 ## 回滚与边界
 

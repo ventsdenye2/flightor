@@ -28,13 +28,15 @@ const choice = authoredGuideInputSchema.shape.days.element.shape.items.element.o
 const daySchema = authoredGuideInputSchema.shape.days.element.extend({ items: z.array(choice).max(6) }).strict()
 const activityTextSchema = finalTextSchema.shape.activities.element.omit({ activityId: true, sourceRefs: true }).extend({ activityKey: key }).strict()
 export const commitGuideInputSchema = z.object({
-  candidates: z.array(z.object({ key, evidenceRefs: z.array(z.string().uuid()).min(1).max(20),
+  candidates: z.array(z.object({ key, evidenceRefs: z.array(z.string().uuid()).min(1).max(20)
+    .describe('Only evidenceRefs returned in this current turn after the latest Trip update. Raw refs from earlier turns are unavailable; reuse persisted research through candidateRef instead.'),
     title: z.string().trim().min(1).max(240), summary: z.string().trim().min(1).max(1500),
     category: researchTypeSchema, locationId: z.string().min(1).max(160) }).strict()).min(1).max(50).optional(),
   days: z.array(daySchema).min(1).max(60),
   supportingRefs: z.array(z.string().min(1).max(160)).max(50).optional(),
   supportingCandidateKeys: z.array(key).max(50).optional(),
-  text: finalTextSchema.omit({ locale: true, activities: true }).extend({ activities: z.array(activityTextSchema).max(360) }).strict(),
+  text: finalTextSchema.omit({ locale: true, activities: true }).extend({ activities: z.array(activityTextSchema).max(360)
+    .describe('Exactly one text entry for each scheduled days[].items[].activityKey. For slot edits include only replacement activity keys, never protected activities. Supplemental/practical candidates belong in supportingCandidateKeys (or supportingRefs), not text.activities.') }).strict(),
   baseGuideId: z.string().uuid().optional(), expectedContentHash: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   replaceSlots: z.array(z.object({ day: z.number().int().min(1).max(60), slot }).strict()).min(1).max(240).optional()
 }).strict()
@@ -122,7 +124,18 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       if (new Set(days.map(day => day.day)).size !== days.length || new Set(decisions.map(item => item.activityKey)).size !== decisions.length) fail('Days and activity keys must be unique')
       const authoredTexts = new Map(input.text.activities.map(item => [item.activityKey, item]))
       const needsText = decisions.filter(item => !protectedGuide?.protectedText.has(item.activityKey))
-      if (authoredTexts.size !== input.text.activities.length || authoredTexts.size !== needsText.length || needsText.some(item => !authoredTexts.has(item.activityKey))) fail('Text must cover exactly the submitted activities; protected activities cannot be rewritten')
+      if (authoredTexts.size !== input.text.activities.length || authoredTexts.size !== needsText.length || needsText.some(item => !authoredTexts.has(item.activityKey))) {
+        const requiredActivityKeys = needsText.map(item => item.activityKey)
+        const submittedActivityKeys = input.text.activities.map(item => item.activityKey)
+        const required = new Set(requiredActivityKeys)
+        fail('Text must cover exactly the submitted activities; protected activities cannot be rewritten', {
+          code: 'activity_text_exact_cover', requiredActivityKeys, submittedActivityKeys,
+          unexpectedActivityKeys: [...authoredTexts.keys()].filter(value => !required.has(value)),
+          missingActivityKeys: requiredActivityKeys.filter(value => !authoredTexts.has(value)),
+          duplicateActivityKeys: [...new Set(submittedActivityKeys.filter((value, index) => submittedActivityKeys.indexOf(value) !== index))],
+          repairHint: 'Write text.activities only for the required scheduled activityKeys, exactly once each. Remove unexpected entries. Put supplemental/practical candidates in supportingCandidateKeys (or supportingRefs); they need no text.activities entry. Keep protected activities unchanged.'
+        })
+      }
       if (input.candidates && new Set(input.candidates.map(item => item.key)).size !== input.candidates.length) fail('Candidate keys must be unique')
       const candidateRefs = new Map<string, string>()
       if (input.candidates) {
@@ -130,6 +143,15 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         if (!goal || goal.kind !== 'travel_guide') fail('A current travel guide Goal is required')
         const parameters = travelGuideGoalParametersSchema.parse(goal.parameters)
         const candidates = input.candidates.map(({ locationId, ...candidate }) => ({ ...candidate, location: canonicalResolvedLocation(scopedContext, locationId) }))
+        const unavailableCandidates = (await Promise.all(candidates.map(async candidate => {
+          const records = await Promise.all(candidate.evidenceRefs.map(ref => options.evidenceStore.get(ref)))
+          return { candidateKey: candidate.key, unavailableEvidenceRefs: candidate.evidenceRefs.filter((_ref, index) =>
+            !records[index] || records[index]!.status !== 'available') }
+        }))).filter(candidate => candidate.unavailableEvidenceRefs.length > 0)
+        if (unavailableCandidates.length > 0) fail('Candidate evidence must be available in the current turn and Trip context', {
+          code: 'candidate_evidence_unavailable', candidates: unavailableCandidates,
+          repairHint: 'Use only evidenceRefs returned in this turn after the latest Trip update. Remove unavailable refs only when the remaining current evidence supports the candidate; otherwise fetch supporting material in this turn. For persisted research from earlier turns, use its candidateRef instead. Do not invent refs or weaken the accepted Goal.'
+        })
         const brief = { destinations: [...new Map(candidates.map(item => [item.location.id, item.location])).values()],
           interests: scope.tripContext.interests, questions: parameters.questions, researchTypes: parameters.researchTypes,
           ...(tripTravelWindow(scope.tripContext) ? { travelWindow: tripTravelWindow(scope.tripContext)! } : {}), maxResults: 50 }

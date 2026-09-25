@@ -86,6 +86,20 @@ function extractText(input: string, contentType: string): string {
   return decodeEntities(source).replace(/\s+/g, ' ').trim()
 }
 
+/** Recognize short, explicit access-challenge shells, not arbitrary mentions of CAPTCHA. */
+function isChallengePage(raw: string, text: string, contentType: string): boolean {
+  if (text.length > 1_000) return false
+  if (/^Request unsuccessful\.\s*Incapsula incident ID:\s*[\w-]+\s*$/i.test(text)) return true
+  if (!contentType.includes('html')) return false
+  if (/<iframe\b[^>]*\bsrc=["'][^"']*\/_Incapsula_Resource\?/i.test(raw)) return true
+  if (/<title[^>]*>\s*Just a moment(?:\.\.\.)?\s*<\/title>/i.test(raw)
+    && raw.includes('/cdn-cgi/challenge-platform/') && raw.includes('_cf_chl_opt')) return true
+  return /<title[^>]*>\s*(?:Security check|Human verification|Verify you are human)\s*<\/title>/i.test(raw)
+    && /<form\b[^>]*\bid=["']challenge-form["']/i.test(raw)
+    && /\bclass=["'][^"']*\b(?:g-recaptcha|h-captcha)\b[^"']*["']/i.test(raw)
+    && /\bdata-sitekey=["'][^"']+["']/i.test(raw)
+}
+
 async function defaultRequest(options: Parameters<SourceRequest>[0]): Promise<SourceReaderResponse> {
   return await new Promise((resolve, reject) => {
     const request = httpsRequest({ hostname: options.hostname, servername: options.servername, port: 443,
@@ -111,7 +125,7 @@ export class PublicResearchSourceReader implements ResearchSourceReader {
     this.timeoutMs = options.timeoutMs ?? TIMEOUT_MS
   }
 
-  async read(url: string, options: { signal?: AbortSignal } = {}) {
+  async read(url: string, options: { signal?: AbortSignal; rejectChallengePage?: boolean } = {}) {
     return observeSpan('http', 'research-source-read', async () => {
       let parsed: URL
       try { parsed = new URL(url) } catch { throw fail('Source URL is invalid', 'SOURCE_URL_INVALID') }
@@ -155,7 +169,11 @@ export class PublicResearchSourceReader implements ResearchSourceReader {
           return Buffer.concat(chunks)
         }
         const body = await Promise.race([collectBody(), interrupted])
-        const fullText = extractText(body.toString('utf8'), contentType)
+        const rawText = body.toString('utf8')
+        const fullText = extractText(rawText, contentType)
+        if (options.rejectChallengePage && isChallengePage(rawText, fullText, contentType)) {
+          throw fail('Source returned an access challenge instead of page content', 'SOURCE_CHALLENGE_REJECTED')
+        }
         const text = fullText.slice(0, MAX_TEXT_CHARS)
         return { text, retrievedAt: this.now().toISOString(), contentHash: createHash('sha256').update(text, 'utf8').digest('hex'),
           url: parsed.toString(), statusCode: response.statusCode, truncated: fullText.length > MAX_TEXT_CHARS }

@@ -1,0 +1,372 @@
+{
+  "baselineSha": "765f3acf65faf5aa23f5c0029f123b02018aee59",
+  "status": "FAIL: no real accepted guide or paid H5 flow yet",
+  "probes": [
+    {
+      "kind": "model",
+      "status": "failed",
+      "recordedAt": "2026-09-24T15:54:36.480Z",
+      "errorCode": "DSH_E2E_MODEL_FAILED",
+      "durationMs": 1079.8197999999998,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 23,
+        "search": 10,
+        "usdMicros": 1720000,
+        "pending": 0,
+        "remainingUsdMicros": 3280000
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 23,
+        "search": 10,
+        "usdMicros": 1720000,
+        "pending": 0,
+        "remainingUsdMicros": 3280000
+      },
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "execution": null
+    },
+    {
+      "kind": "model",
+      "status": "passed",
+      "recordedAt": "2026-09-24T15:55:33.403Z",
+      "durationMs": 2797.9182,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 23,
+        "search": 10,
+        "usdMicros": 1720000,
+        "pending": 0,
+        "remainingUsdMicros": 3280000
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 25,
+        "search": 10,
+        "usdMicros": 1800000,
+        "pending": 0,
+        "remainingUsdMicros": 3200000
+      },
+      "reply": "你的当前行程目的地是日本东京（TYO）。",
+      "stopReason": "responded",
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "execution": {
+        "reason": "completed",
+        "calls": 2,
+        "resumed": false
+      }
+    },
+    {
+      "kind": "search",
+      "status": "failed",
+      "recordedAt": "2026-09-24T15:56:22.116Z",
+      "errorCode": "DSH_E2E_SEARCH_INCOMPLETE_REPLY",
+      "durationMs": 13077.5313,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 25,
+        "search": 10,
+        "usdMicros": 1800000,
+        "pending": 0,
+        "remainingUsdMicros": 3200000
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 30,
+        "search": 11,
+        "usdMicros": 2080000,
+        "pending": 0,
+        "remainingUsdMicros": 2920000
+      },
+      "provider": "deepseek-official",
+      "model": "deepseek-v4-flash",
+      "execution": {
+        "reason": "completed",
+        "calls": 4,
+        "resumed": false
+      }
+    },
+    {
+      "kind": "search",
+      "status": "passed",
+      "recordedAt": "2026-09-24T15:59:45.149Z",
+      "durationMs": 10039.143,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 30,
+        "search": 11,
+        "usdMicros": 2080000,
+        "pending": 0,
+        "remainingUsdMicros": 2920000
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 35,
+        "search": 12,
+        "usdMicros": 2360000,
+        "pending": 0,
+        "remainingUsdMicros": 2640000
+      },
+      "reply": "浅草寺是东京最古老的寺院，相传始于公元七世纪在隅田川中发现观音像而建，雷门的大灯笼、五重塔与仲见世的商铺街巷共同营造出浓郁的江户风情，寺内主殿供奉观音，还可求签祈福，是感受东京传统文化与市井小吃气氛的代表性去处。",
+      "stopReason": "responded",
+      "provider": "deepseek-official",
+      "model": "deepseek-v4-flash",
+      "execution": {
+        "reason": "completed",
+        "calls": 4,
+        "resumed": false
+      }
+    },
+    {
+      "kind": "commit",
+      "status": "failed",
+      "recordedAt": "2026-09-24T16:01:57.062Z",
+      "durationMs": 66330.1868,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 35,
+        "search": 12,
+        "usdMicros": 2360000,
+        "pending": 0,
+        "remainingUsdMicros": 2640000
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 48,
+        "search": 16,
+        "usdMicros": 3200000,
+        "pending": 0,
+        "remainingUsdMicros": 1800000
+      },
+      "turnId": "01a0d425-ee36-7609-acac-089cc3d25772",
+      "errorCode": "DSH_E2E_COMMIT_NOT_ACCEPTED"
+    },
+    {
+      "kind": "commit",
+      "status": "failed",
+      "recordedAt": "2026-09-24T16:10:10.166Z",
+      "durationMs": 100434.26120000001,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 48,
+        "search": 16,
+        "usdMicros": 3200000,
+        "pending": 0,
+        "remainingUsdMicros": 1800000
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 56,
+        "search": 19,
+        "usdMicros": 3760000,
+        "pending": 0,
+        "remainingUsdMicros": 1240000
+      },
+      "turnId": "01a0d42c-ef52-729f-ada5-e31e5da1ad58",
+      "errorCode": "DSH_E2E_COMMIT_NOT_ACCEPTED"
+    },
+    {
+      "kind": "commit",
+      "status": "failed",
+      "recordedAt": "2026-09-25T01:38:43.684Z",
+      "durationMs": 61946.731,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 56,
+        "search": 19,
+        "usdMicros": 3760000,
+        "pending": 0,
+        "remainingUsdMicros": 1240000
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 5000000,
+          "maxModelCalls": 96,
+          "maxSearchCalls": 24,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 72,
+        "search": 23,
+        "usdMicros": 4720000,
+        "pending": 0,
+        "remainingUsdMicros": 280000
+      },
+      "turnId": "01a0d636-0d98-7076-b1b6-1e750161a9b0",
+      "errorCode": "DSH_E2E_COMMIT_NOT_ACCEPTED"
+    },
+    {
+      "kind": "commit",
+      "status": "failed",
+      "recordedAt": "2026-09-25T01:58:29.750Z",
+      "durationMs": 75155.9717,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 7000000,
+          "maxModelCalls": 128,
+          "maxSearchCalls": 32,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 72,
+        "search": 23,
+        "usdMicros": 4720000,
+        "pending": 0,
+        "remainingUsdMicros": 2280000
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 7000000,
+          "maxModelCalls": 128,
+          "maxSearchCalls": 32,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000
+        },
+        "model": 91,
+        "search": 32,
+        "usdMicros": 6200000,
+        "pending": 0,
+        "remainingUsdMicros": 800000
+      },
+      "turnId": "01a0d647-f319-77fd-8b76-2c5b8291994e",
+      "errorCode": "DSH_E2E_COMMIT_NOT_ACCEPTED"
+    }
+  ],
+  "observations": [
+    {
+      "file": "5806fe88-98a9-472b-820b-a661691774c5.jsonl",
+      "sha256": "69d85585e9b48d66f8c8807fb2839ac77bceedffa80f346a5e909ab51dfd7cad",
+      "events": 156
+    },
+    {
+      "file": "9052d200-0b3c-4eba-bef7-f6ed26c590bd.jsonl",
+      "sha256": "75c8c38a5e1fc1f27d130d5b0aba0b296a28aa64577e9592c5493e393068760e",
+      "events": 74
+    },
+    {
+      "file": "9dc53b04-b873-475f-9f1f-31bc9c97e2ff.jsonl",
+      "sha256": "8edca1cb3d76037fa1e0a2d30ad4fcc5132b7a0c63cc94aff319722a4f9231b0",
+      "events": 120
+    },
+    {
+      "file": "a8bb0950-7de6-4d31-b0e7-8fdf68507bc9.jsonl",
+      "sha256": "332f765482dd07fcf9603dea548ba43a97696fcb9e3a00e40d64749b87580b5b",
+      "events": 44
+    },
+    {
+      "file": "ac1ec4de-daca-4e08-88ed-db85b136c1f9.jsonl",
+      "sha256": "17214ef0c2cfe4d4b2279621f8a2d0aad320a78e7c2e5efd8617025d8a77d745",
+      "events": 18
+    },
+    {
+      "file": "ac5923dc-befd-492c-8cfc-52972b4908af.jsonl",
+      "sha256": "ebb95aadf8ed4043a54fe238f0bd7da05b756b30f37a6bc6f6d5dca13375a636",
+      "events": 192
+    },
+    {
+      "file": "bdafd450-d898-4459-b2db-3e189dcaaf8a.jsonl",
+      "sha256": "6c2d36668b265db76ef5285840b1c74a1ec668a41b03ad38945c8f06967b65c8",
+      "events": 44
+    }
+  ],
+  "h5Screenshot": "read-only preparation; never evidence of generation or accepted guide",
+  "knownCostStatus": "No trusted monetary receipts; retain all reservations",
+  "paidH5": "not_run"
+}

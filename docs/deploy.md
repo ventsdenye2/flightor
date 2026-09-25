@@ -77,7 +77,7 @@ H5 使用真实OSM瓦片；微信原生Map不打包服务端Key、不申请实�
 
 默认 `FLIGHTOR_AGENT_ENGINE=legacy`。设 `dsh` 后启动时选用独立 DSH worker；配置失败直接报错，不回落旧 Planner。先在 `backend/dsh-runtime` 执行 `npm ci --ignore-scripts`，Node 固定验证版 22.21.0；根前端无需变更。
 
-`DSH_MODEL_PROVIDER=openrouter|deepseek`，主模型由 `DSH_MODEL` 指定；OpenRouter 默认沿用 `PLANNER_MODEL`，官方默认 deepseek-v4-flash。对应凭证分别 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY`。官方主模型不要求 OpenRouter Key。官方主Agent通过 `llm-pi-ai` 的 reasoning=off 与 DeepSeek thinkingFormat 明确发送 `thinking: disabled`，固定4096输出上限；不能仅把模型声明为不支持推理，因为远端默认仍可能启用。该改动会退休旧profile历史。显式本地化仍通过同一路由的有界编辑客户端，读取与轮询不启动 Agent。
+`DSH_MODEL_PROVIDER=openrouter|deepseek`，主模型由 `DSH_MODEL` 指定；OpenRouter 默认沿用 `PLANNER_MODEL`，官方默认 deepseek-v4-flash。对应凭证分别 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY`。官方主模型不要求 OpenRouter Key。官方主Agent通过 `llm-pi-ai` 的 reasoning=off 与 DeepSeek thinkingFormat 明确发送 `thinking: disabled`，由 `DSH_MODEL_MAX_TOKENS` 显式限制输出（默认4096，允许256–16384；只有诊断真实输出触顶后才手动调整并记录）；不能仅把模型声明为不支持推理，因为远端默认仍可能启用。该改动会退休旧profile历史。显式本地化仍通过同一路由的有界编辑客户端，读取与轮询不启动 Agent。
 
 `DSH_SEARCH_PROVIDER=serpapi-raw|deepseek-official` 明确区分原始 SerpApi 和官方 Messages 搜索，默认serpapi-raw；后者必须单独设置 `DEEPSEEK_SEARCH_API_KEY`、`DEEPSEEK_SEARCH_BASE_URL`、`DEEPSEEK_SEARCH_MODEL`，不能把 OpenRouter Key 发给官方。官方搜索 base URL 默认 `https://api.deepseek.com/anthropic/v1`，模型默认 `deepseek-v4-flash`；官方适配器调用对应 Messages 路径。主模型的官方兼容 API base URL 默认 `https://api.deepseek.com/v1`。生产组合公开两个web工具，凭证、路由或预算缺失时请求失败，不静默替换；离线service可不注入web能力。
 
@@ -86,3 +86,5 @@ DSH 还要求正数 `DSH_AUTHORIZED_USD` 与 `DSH_AUTHORIZED_MODEL_CALLS`，以�
 `DSH_DATA_DIRECTORY` 默认 `.dsh-data`，必须是私有持久磁盘并与业务数据库一起备份；单主机单 API 实例独占目录，最大活跃数默认4、空闲回收默认120秒（DSH_MAX_ACTIVE/DSH_IDLE_MS），不是性能保证。回滚将引擎设回 legacy 后重启，保留新会话数据，不删旧 Runtime。
 
 本轮可填写的本地忽略配置为 `backend/.env.dsh.local`，只用于本地验证进程显式加载，不会自动更改已有服务；真实测试需新授权预算，不沿用历史额度。阶段证据见 [DSH记录](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)。
+
+预算授权追加必须来自当前明确用户授权：管理代码可用 `FileDshBudget.extendAuthorization` 将新增额度及调用上限连同grant ID/引用/前后限制追加进原账本。它不出现在Agent工具/API调用中，不能自动取得额度；entries、batchId、未知预留保持不变，重复grant与pending请求拒绝。追加后配置必须匹配新的累计上限，旧配置仍被拒绝。

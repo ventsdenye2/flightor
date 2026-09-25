@@ -18,6 +18,9 @@ const tokenCount = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)
 const usageSchema = z.object({ inputTokens: tokenCount, outputTokens: tokenCount, totalTokens: tokenCount.optional(),
   cacheReadTokens: tokenCount.optional(), cacheWriteTokens: tokenCount.optional(), reasoningTokens: tokenCount.optional() }).strict()
 const receiptBase = { id: billingId, durationMs: z.number().finite().nonnegative().max(3600000), failed: z.boolean() }
+const modelReceipt = { finishReason: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/).optional(),
+  model: z.string().min(1).max(200).optional(), maxTokens: z.number().int().min(256).max(16384).optional(),
+  thinking: z.literal('disabled').optional() }
 const resultSchema = z.object({ reply: z.string().max(500000), reason: z.string().max(100), calls: z.number().int().min(0).max(13), cancelled: z.boolean() }).strict()
 const activitySchema = z.union([
   z.object({ kind: z.literal('activity'), generation: id.optional(), type: z.enum(['model_start', 'model_end']), durationMs: z.number().nonnegative().optional() }).strict(),
@@ -26,7 +29,7 @@ const activitySchema = z.union([
 const messageSchema = z.union([
   z.object({ kind: z.literal('tool'), id, generation: id, name: z.union([toolSchema.shape.name, z.enum(internalWebTools)]), args: z.unknown() }).strict(),
   z.object({ kind: z.literal('tool'), id, generation: id, name: z.literal('__model_admit'), args: z.object({ id: billingId }).strict() }).strict(),
-  z.object({ kind: z.literal('tool'), id, generation: id, name: z.literal('__model_receipt'), args: z.object({ ...receiptBase, usage: usageSchema.nullable() }).strict() }).strict(),
+  z.object({ kind: z.literal('tool'), id, generation: id, name: z.literal('__model_receipt'), args: z.object({ ...receiptBase, ...modelReceipt, usage: usageSchema.nullable() }).strict() }).strict(),
   z.object({ kind: z.literal('tool'), id, generation: id, name: z.literal('__search_admit'), args: z.object({}).strict() }).strict(),
   z.object({ kind: z.literal('tool'), id, generation: id, name: z.literal('__search_receipt'), args: z.object(receiptBase).strict() }).strict(),
   z.object({ kind: z.literal('result'), id, ok: z.boolean(), data: z.unknown().optional(), error: z.string().max(500).optional() }).strict(),
@@ -73,6 +76,7 @@ interface Active {
 }
 interface Worker {
   child: ChildProcess
+  exited: Promise<void>
   pending: Map<string, Pending>
   profile: string
   epochHash: string
@@ -253,7 +257,8 @@ export class DshSessionManager {
     const workerPath = this.config.workerPath ?? fileURLToPath(new URL('../../../dsh-runtime/worker.mjs', import.meta.url))
     const options: ForkOptions & { windowsHide: boolean } = { cwd: dirname(workerPath), env, execArgv: [], windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] }
     const child = fork(workerPath, [], options)
-    const worker: Worker = { child, pending: new Map(), profile, epochHash, resumed, dead: false }
+    const exited = new Promise<void>(resolveExit => child.once('close', () => resolveExit()))
+    const worker: Worker = { child, exited, pending: new Map(), profile, epochHash, resumed, dead: false }
     child.on('message', raw => { this.message(worker, raw) })
     child.on('error', () => { this.retire(worker, failure('DSH_WORKER_FAILURE', 'DSH worker failed')) })
     child.on('exit', () => { this.retire(worker, failure('DSH_WORKER_EXITED', 'DSH worker exited')) })
@@ -271,7 +276,7 @@ export class DshSessionManager {
       await open(temporary, 'wx', 0o600).then(async file => { try { await file.writeFile(JSON.stringify({ version: 1, sessionId, epochHash, profile })) } finally { await file.close() } })
       await rename(temporary, path)
       return worker
-    } catch (error) { this.retire(worker, failure('DSH_WORKER_OPEN_FAILED', 'DSH session could not be opened')); throw error }
+    } catch (error) { this.retire(worker, failure('DSH_WORKER_OPEN_FAILED', 'DSH session could not be opened')); await worker.exited; throw error }
   }
 
   private message(worker: Worker, raw: unknown) {
@@ -354,6 +359,8 @@ export class DshSessionManager {
     if (worker.active) await this.cancel(worker, worker.active)
     try { if (!worker.dead) await this.request(worker, 'close', {}, 2000) } catch { /* bounded disposal */ }
     this.retire(worker, failure('DSH_WORKER_CLOSED', 'DSH worker closed'))
+    // Do not release session-directory ownership while the child can still hold/write files.
+    await worker.exited
   }
 
   async close(): Promise<void> {

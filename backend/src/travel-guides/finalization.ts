@@ -45,19 +45,54 @@ export function textProblems(text: FinalText, input: FinalizationInput): string[
   const bodies = [text.reply, text.overview, ...text.days.map(day => day.theme),
     ...text.activities.flatMap(item => [item.introduction, item.recommendationReason])]
   const visibleFields = [...bodies, ...text.activities.map(item => item.name)]
-  const prose = visibleFields.join('\n')
   if (placeholderActivities(text).length) errors.push('placeholder_content')
+  errors.push(...publicProseProblems(visibleFields, input.locale, { languageBodies: bodies }))
+  return [...new Set(errors)]
+}
+
+/** Expression checks only: no factual certification, model call or semantic critic. */
+export function publicProseProblems(fields: string[], locale: PublicationLocale, options: {
+  languageBodies?: string[]
+  shortReply?: boolean
+  budget?: { amount: number; currency: string; scope?: string } | null
+} = {}): string[] {
+  const errors: string[] = []
+  const prose = fields.join('\n')
   if (/(?:I (?:will|should|need to) (?:now |next )?(?:summarize|respond|finalize)|as an AI|tool_call|save_travel_guide|接下来我(?:将|会).*总结|现在我(?:将|来).*总结|内部审核|模型已验证)/i.test(prose)) errors.push('internal_narration')
   if (/(?:guarantee.{0,30}budget|within (?:your|the) budget|保证.{0,20}预算|预算内|不会超支)/i.test(prose)) errors.push('budget_guarantee')
-  if (/(?:[$€£¥￥]\s*\d|\d+\s*(?:元|日元|美元|minutes?\b|分钟)|\b\d{1,2}:\d{2}\b|(?:ticket|admission|门票).{0,20}\d)/i.test(prose)) errors.push('excluded_precise_claim')
+  // A short answer may repeat the authoritative total budget, but never a price or affordability claim.
+  let claimProse = prose
+  if (options.shortReply && options.budget?.scope === 'trip') {
+    const budget = options.budget
+    const amount = String(budget.amount).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const currency = budget.currency === 'CNY' ? '(?:CNY|人民币|元)' : budget.currency === 'USD' ? '(?:USD|美元)' : '(?:EUR|欧元)'
+    const money = new RegExp(`(?:${currency}\\s*${amount}(?![\\d.])|(?<![\\d.])${amount}\\s*${currency})`, 'gi')
+    claimProse = prose.split(/(?<=[.!?,;。！？，；\n])/).map(sentence =>
+      /(?:total budget|budget.{0,100}(?:in total|both days|whole trip)|总预算|预算(?:目标|是|为).{0,30}(?:合计|两天|全程))/i.test(sentence)
+      && !/(?:per day|daily|每天|每日|一天)/i.test(sentence)
+      && !/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(sentence)
+        ? sentence.replace(money, 'budget target') : sentence).join('')
+  }
+  if (/(?:[$€£¥￥]\s*\d|\d+\s*(?:元|日元|美元|minutes?\b|分钟)|\b\d{1,2}:\d{2}\b|(?:ticket|admission|门票).{0,20}\d)/i.test(claimProse)) errors.push('excluded_precise_claim')
   if (/(?:free admission|always open|open year.round|全年开放|始终对公众开放|免费参观|门票.{0,8}(?:免费|收费))/i.test(prose)) errors.push('excluded_admission_or_hours')
   if (/(?:https?:\/\/|latitude|longitude)/i.test(prose)) errors.push('unsupported_asset_or_url')
+  if (options.shortReply) {
+    if (/(?:\b(?:debug|stack\s?trace|system prompt|chain.of.thought|AgentLoop|DSH|JSON|UUID)\b|\b(?:tool|artifact|candidate|evidence|goal|run|generation|session)(?:_?(?:id|ref|refs)|CallId)\b|\b(?:commit_travel_guide|web_search|web_fetch|update_trip_context|read_artifact|get_trip_context)\b|内部(?:流程|推理|工具)|系统提示词|调试信息|工具调用)/i.test(prose)) errors.push('internal_metadata')
+    if (/(?:\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b|\b[0-9a-f]{64}\b|\b(?:city|airport):[A-Z0-9_-]+\b)/i.test(prose)) errors.push('internal_identity')
+    if (/\b(?:get|read|update|search|confirm|start|commit|save|resolve)_[a-z_]+\b/i.test(prose)) errors.push('internal_metadata')
+    if (/(?:<\/?(?:think|analysis)>|(?:^|\n)\s*(?:analysis|reasoning|assistant|system)\s*:)/i.test(prose)) errors.push('internal_metadata')
+    if (/(?:\b(?:CNY|USD|EUR|JPY)\s*\d|\d\s*(?:CNY|USD|EUR|JPY)\b|\b(?:costs?|priced? at|fare is)\s+\d|\d+(?:\.\d+)?\s*(?:hours?|hrs?|小时)\b|\b(?:opens?|closes?)\s+(?:at\s+)?\d|(?:营业|开放|闭馆|开馆).{0,8}\d|\d+点.{0,8}(?:营业|开放|闭馆|开馆))/i.test(claimProse)) errors.push('excluded_precise_claim')
+    if (/(?:\b(?:under|below|within) (?:your |the )?(?:total )?budget\b|保证.{0,20}(?:不超|花费)|一定.{0,10}(?:够用|不超))/i.test(prose)) errors.push('budget_guarantee')
+  }
   // Detect prose in the wrong language; do not strip characters or forbid names.
-  const languageProse = bodies.join('\n') // Original place names remain valid in either locale.
+  const languageProse = (options.languageBodies ?? fields).join('\n')
   const han = (languageProse.match(/[\u3400-\u9fff]/g) ?? []).length
   const latin = (languageProse.match(/[A-Za-z]/g) ?? []).length
-  if (input.locale === 'zh' && han < 12 || input.locale === 'en' && (latin < 30 || han > Math.max(16, latin / 4))) errors.push('language')
-  if (input.locale === 'zh' && visibleFields.some(value => /[A-Za-z]+(?:[ ,]+[A-Za-z]+){14}/.test(value))) errors.push('duplicated_or_foreign_prose')
+  if (locale === 'zh' && han < (options.shortReply ? 1 : 12)
+    || locale === 'en' && (latin < (options.shortReply ? 1 : 30) || han > (options.shortReply ? Math.max(2, latin / 4) : Math.max(16, latin / 4)))) errors.push('language')
+  if (options.shortReply && locale === 'zh' && latin > Math.max(24, han * 4)) errors.push('language')
+  if (locale === 'zh' && fields.some(value => /[A-Za-z]+(?:[ ,]+[A-Za-z]+){14}/.test(value))) errors.push('duplicated_or_foreign_prose')
+  if (!prose.trim()) errors.push('empty_reply')
   return [...new Set(errors)]
 }
 

@@ -1,0 +1,25 @@
+DSH E2E: FAIL
+
+Frontend send: FAIL (not run; commit probe gate)
+Official API: PASS (authenticated probe POST/poll)
+DSH engine: PASS
+DeepSeek model: PASS
+DeepSeek search: PASS
+Evidence: PASS (earlier real search probe)
+Guide commit: FAIL
+Publication accepted: FAIL
+Frontend rendered: FAIL (accepted guide absent)
+Follow-up explanation: FAIL (live H5 not run)
+Local edit: FAIL (live H5 not run)
+Refresh restore: FAIL (accepted guide absent)
+English localization: FAIL (live H5 not run)
+
+click -> accepted UI: N/A
+model calls (cumulative budget admissions): 91
+search calls (cumulative budget admissions): 32
+last probe actual main model HTTP: 10
+last probe actual official search HTTP: 8 (9 admissions; one invalid query)
+known cost: unavailable (no trusted monetary receipts)
+unknown/reserved cost: US$6.20
+remaining authorized amount: US$0.80
+search capacity: 0; all paid routes stopped

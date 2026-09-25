@@ -590,6 +590,10 @@ DSH 模型可见的受控业务工具包括 `get_trip_context`、`get_trip_artif
 
 组合配置提供选定 provider 后公开 `web_search` 和 `web_fetch`；当前 provider 由 `DSH_SEARCH_PROVIDER` 选定，默认 `serpapi-raw`，也可明确指定 `deepseek-official`。凭证缺失时调用失败，不静默切换。Web 插件内部的 `__web_search`、`__web_fetch`、`__record_web` 不向模型暴露，只能经白名单桥接；来源会写入当前 turn 的 owner/Trip/Conversation/version scope evidence store，再转换为既有 ResearchArtifact/Guide 引用。官方搜索使用独立 `DEEPSEEK_SEARCH_API_KEY` 与 Messages API 路由，不能借用或传递 OpenRouter 凭证。模型和搜索请求需先通过持久 DSH 预算 admission；达到金额/次数限制或预算未配置时请求被拒绝，不绕过预算继续执行。
 
+`commit_travel_guide` 的原始evidenceRefs仅限当前generation与最新Trip版本，跨轮复用走持久ResearchArtifact的candidateRef。不可用来源返回`DSH_GUIDE_NEEDS_REVISION`及`candidate_evidence_unavailable`候选/引用详情，供同一主Agent在既定一次修复限额内修正；服务端不自动删除来源或扩大读取scope。DSH只把上轮未完成Goal及库存缺口视为历史数据，当前较窄请求需匹配的新intent，不能静默降低旧Goal参数。详见[组合发布边界](design/budget-travel-agent/DSH_PUBLICATION_2026-09-24.md)。
+
+DSH `web_search` 的实际模型schema通过官方prompt assembly钩子限制单query，公开pre-execute钩子在预算准入前拒绝空/多query等不可执行参数，历史预留不改。DSH `web_fetch`对明确短Incapsula/Cloudflare/captcha挑战壳返回`SOURCE_CHALLENGE_REJECTED`，不产出可用来源，不绕过站点保护；通用reader仅此DSH调用启用检测，legacy默认关闭。具体识别条件和离线验证见[来源适配边界](design/budget-travel-agent/DSH_EVIDENCE_2026-09-24.md)。
+
 Shell、文件、Git、PTC、subagent、插件安装和用户全局 profile 不在 worker 插件或工具面中。Session JSONL 是内部会话存储，不是模型可调用的文件能力。GET/publicationContext 不启动 worker；取消确认会等待父进程实际业务工具 Promise drain。
 
 实际 DSH 核心、worker 白名单及分阶段测试见 [实施记录](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)；后续写入/联网以该记录实际阶段为准，不将原附件的目标列表当已验证功能。

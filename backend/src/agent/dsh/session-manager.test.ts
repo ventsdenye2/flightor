@@ -22,6 +22,20 @@ afterEach(async () => {
 })
 
 describe('DSH session manager with actual official worker', () => {
+  it('counts only admitted model dispatches when a turn or budget limit stops the real loop', async () => {
+    const { manager } = await setup(Array.from({ length: 13 }, () => ({ tool: 'read_trip' })), { metered: true })
+    const execute = vi.fn(async (name: string) => name === '__model_admit' || name === '__model_receipt' ? { ok: true } : { city: 'Tokyo' })
+    const tools = [{ name: 'read_trip', description: 'Read trip', rawSchema: { type: 'object', properties: {}, additionalProperties: false } }]
+    expect(await manager.run(input({ execute, tools }))).toMatchObject({ calls: 12, reason: 'error' })
+    expect(execute.mock.calls.filter(([name]) => name === '__model_admit')).toHaveLength(12)
+    expect(execute.mock.calls.filter(([name]) => name === '__model_receipt')).toHaveLength(12)
+    expect(execute.mock.calls.filter(([name]) => name === 'read_trip')).toHaveLength(12)
+    const denied = await setup([{ text: 'Must never dispatch' }], { metered: true })
+    const rejectAdmission = vi.fn(async () => ({ ok: false }))
+    expect(await denied.manager.run(input({ execute: rejectAdmission }))).toMatchObject({ calls: 0, reason: 'error', reply: '' })
+    expect(rejectAdmission).toHaveBeenCalledTimes(1)
+  }, 30_000)
+
   it('passes metered model/search admission and receipts through the actual worker without exposing internal tools', async () => {
     const { manager } = await setup([{ tool: 'web_search', args: { queries: ['Tokyo museum'] } }, { text: 'Source result' }],
       { metered: true, web: { provider: 'serpapi-raw' } })

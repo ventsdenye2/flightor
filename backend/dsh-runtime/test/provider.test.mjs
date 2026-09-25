@@ -6,9 +6,10 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-test('official model and search adapters use configured routes and meter before HTTP', { timeout: 20000 }, async () => {
+for (const terminal of ['stop', 'length']) test(`official HTTP body, evidence and metering (${terminal})`, { timeout: 20000 }, async () => {
+  const maxTokens = terminal === 'stop' ? 4096 : 8192
   const root = await mkdtemp(join(tmpdir(), 'dsh-provider-'))
-  const meters = [], requests = [], evidence = []
+  const meters = [], requests = [], evidence = [], modelReceipts = []
   let modelCalls = 0
   const server = createServer(async (req, res) => {
     let raw = ''; for await (const part of req) raw += part
@@ -26,6 +27,12 @@ test('official model and search adapters use configured routes and meter before 
     }
     assert.equal(req.url, '/v1/chat/completions')
     assert.deepEqual(body.thinking, { type: 'disabled' })
+    assert.equal(body.model, 'deepseek-v4-flash')
+    assert.equal(body.max_tokens, maxTokens)
+    assert.equal(body.reasoning, undefined)
+    const searchQueries = body.tools.find(tool => tool.function.name === 'web_search').function.parameters.properties.queries
+    assert.equal(searchQueries.minItems, 1)
+    assert.equal(searchQueries.maxItems, 1)
     assert.equal(req.headers.authorization, 'Bearer local-model-fixture')
     assert.equal(meters.filter(value => value === '__model_admit').length, ++modelCalls)
     res.setHeader('content-type', 'text/event-stream')
@@ -33,7 +40,7 @@ test('official model and search adapters use configured routes and meter before 
     chunk({ role: 'assistant' })
     if (modelCalls === 1) chunk({ tool_calls: [{ index: 0, id: 'search-one', type: 'function', function: { name: 'web_search', arguments: JSON.stringify({ queries: ['museum'], maxResults: 1 }) } }] })
     else chunk({ content: 'Official adapter route exercised locally.' })
-    res.write(`data: ${JSON.stringify({ id: 'local', object: 'chat.completion.chunk', choices: [{ index: 0, delta: {}, finish_reason: modelCalls === 1 ? 'tool_calls' : 'stop' }], usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 } })}\n\n`)
+    res.write(`data: ${JSON.stringify({ id: 'local', object: 'chat.completion.chunk', choices: [{ index: 0, delta: {}, finish_reason: modelCalls === 1 ? 'tool_calls' : terminal }], usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 } })}\n\n`)
     res.end('data: [DONE]\n\n')
   })
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -46,6 +53,7 @@ test('official model and search adapters use configured routes and meter before 
   child.on('message', message => {
     if (message.kind === 'tool') {
       let data = { ok: true, id: message.args.id ?? message.id }
+      if (message.name === '__model_receipt') modelReceipts.push(message.args)
       if (message.name.startsWith('__model_') || message.name.startsWith('__search_')) meters.push(message.name)
       else if (message.name === '__record_web') { evidence.push(message.args); data = { evidenceRefs: ['fixture-source'] } }
       else data = { error: 'unexpected tool' }
@@ -56,17 +64,24 @@ test('official model and search adapters use configured routes and meter before 
   const call = (op, data) => new Promise((resolve, reject) => { const id = String(++serial); pending.set(id, { resolve, reject }); child.send({ id, op, data }) })
   try {
     await call('open', { root, sessionId: 'provider-test', resume: false, persona: 'Research with web_search.', metered: true,
-      route: { provider: 'deepseek', model: 'deepseek-v4-flash', baseURL: `${base}/v1` },
+      route: { provider: 'deepseek', model: 'deepseek-v4-flash', baseURL: `${base}/v1`, maxTokens },
       web: { provider: 'deepseek-official', model: 'deepseek-v4-flash', baseURL: `${base}/anthropic/v1` },
       tools: [{ name: 'web_search', description: 'Search', rawSchema: {} }, { name: 'web_fetch', description: 'Fetch', rawSchema: {} }] })
     const result = await call('turn', { generation: 'local-provider', message: 'Find museum', snapshot: '{}' })
-    assert.equal(result.reason, 'completed', JSON.stringify(result) + stderr)
+    assert.equal(result.reason, terminal === 'stop' ? 'completed' : 'max-tokens', JSON.stringify(result) + stderr)
     assert.equal(result.reply, 'Official adapter route exercised locally.')
     assert.equal(modelCalls, 2)
     assert.deepEqual(requests.map(req => req.path), ['/v1/chat/completions', '/anthropic/v1/messages', '/v1/chat/completions'])
     assert.equal(evidence[0].value.sources[0].snippet, 'Cultural exhibits.')
     assert.deepEqual(evidence[0].args, { queries: ['museum'], maxResults: 1 })
     assert.equal(meters.filter(value => value === '__model_receipt').length, 2)
+    assert.deepEqual(modelReceipts.map(value => value.finishReason), ['tool-calls', terminal === 'stop' ? 'stop' : 'max-tokens'])
+    for (const value of modelReceipts) {
+      assert.equal(value.failed, false)
+      assert.equal(value.maxTokens, maxTokens)
+      assert.equal(value.thinking, 'disabled')
+      assert.equal(value.usage.outputTokens, 20)
+    }
     assert.equal(meters.filter(value => value === '__search_receipt').length, 1)
     await call('close', {})
   } finally {

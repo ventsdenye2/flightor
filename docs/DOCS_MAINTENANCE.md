@@ -1,5 +1,19 @@
 # 文档维护规则与本轮清理记录
 
+## 2026-09-25 DSH 正式 H5 续验脚本
+
+续验runner逐启动写入`server-<uuid>.jsonl`：实际安装的legacy/Research/首次Finalizer/票价守卫、HTTP路径/方法/状态/时间及关闭时违规调用计数。缺失待守卫方法时启动失败，不能静默跳过。审计不含请求头、Key、正文或查询参数，失败/进程中断前的已写记录保留；未来H5 PASS须同时检查该审计和worker observer，不能用静态代码断言代替实际路径证据。
+
+预算管理的显式grant允许`additionalModelCalls=0`，以便模型次数仍充足时只按用户新授权追加金额/搜索，不擅自提高模型上限。没有新的明确授权时不得调用该管理方法；旧entries、batch及未知预留仍完全保留。该能力本身不代表额度已经增加。
+
+四次失败后收紧最小commit probe：新的显式重试创建保留的`COMMIT-<attempt>`独立测试Trip/会话，只含文化兴趣和“一处景点、另一天自由休息”的冻结请求，避免旧失败Goal及原A用例的小吃兴趣污染最小提交测试。仍使用原目录、schema、预算batch和所有旧attempt，不删除/改写旧Goal或费用；这仅验证冷启动最小发布，不能替代正式A会话的warm followup/局部编辑。任何付费重试仍须原账本存在足够且当前明确授权的额度；probe绝不注入网页URL、正文、证据或固定攻略。
+
+`backend/scripts/verify-dsh-e2e.mjs` 默认/`--dry-run`只读核对原账本；通过显式`--execute --model|--search|--commit`按顺序运行独立真实probe，失败保留且重试必须显式`--retry-failed`。三项通过后`--serve --execute`才开放3025正式认证写API。所有数据仅进入保留的`dsh_e2e_20260924`隔离schema，沿用原`.dsh-data/budget.json`，不重置旧失败、未知费用或预算批次。用户两次新增US$3/48模型/12搜索及US$2/32模型/8搜索授权均以追加grant记录，当前累计上限US$7/128模型/32搜索；上限不是未来授权。
+
+`scripts/qa-dsh-e2e-h5.cjs`使用已安装Chrome和正式H5；`--prepare --case A`只读检查，`--execute --case A --round 1`起通过真实输入框发送，`--restore`检查恢复，`--execute --localize`执行现有显式语言生成。只装载隔离用户的真实token和会话存储，不拦截API、不mock模型；每次发送保留独占attempt文件，失败后先核查已有turn，不能删除文件来盲目重发。私有transport/browser storage含token，禁止提交。脱敏报告和截图留在`output/playwright/dsh-e2e-20260924`，可分享证据选择性归入现有DSH报告目录。
+
+`backend/scripts/dsh-e2e-observation.mjs`仅观察实际DSH运行，逐执行保留JSONL时间、工具名、调用回执和session/profile；不记录Key、模型推理或网页正文，不改变执行结果。真实结果、失败原因、调用总量和平台验收结论增量维护在[既有DSH D4报告](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。只读页面、probe和正式H5多轮验收分开认定。
+
 ## 2026-09-24 DSH 真实双对话 runner
 
 `backend/scripts/verify-dsh-live.mjs` 默认/`--dry-run` 只解析配置和保留账本，不连接数据库、不发模型/搜索请求。显式 `FLIGHTOR_BASE_ENV_PATH` 指定基础配置，叠加 `.env.dsh.local`；`--execute --case A|B` 才在本批2美元/48模型/12搜索围栏下执行附件§13.2冻结用例。连接从忽略的 `.demo/dsh-db-env.json` 读取，迁移只进固定 `dsh_live_20260924`（共享pg_trgm扩展沿用既有迁移），保留schema、state、同一`.dsh-data/budget.json`与失败。B为明确标注的合成航班，使用真实采用API，不查实时票价。正式认证API和真实DB保存/读取，GET不能增加账本；显式本地化单列耗时/费用。`--serve`保留loopback3024供H5只读，无harness nonce的写请求拒绝；`transport.private.json`含合成测试身份token，禁止提交/分享。失败/中断case不自动重新发首轮或改措辞；凭证、账本、操作方式与实测边界见[DSH live操作说明](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。本条仅记录新脚本职责，不能据dry-run认定真实Provider或G1通过。
@@ -104,3 +118,7 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 
 `backend/scripts/probe-place-egress.mjs --execute --request-proxy` 使用服务端PLACES_PROXY_URL和原账本独占锁；PLACES_PROBE_LEDGER_DIRECTORY可指向原目录。一次执行仅一次解析，TLS正常。旧24次账本兼容，用户明确取消次数后才使用limit=null且unlimitedPlaceCalls=true；不是自动无限重试。places-live-server同样读取此授权标识，未启动新的harness。用户要求重置USD2后采用有哈希链接的历史归档，新批次费用0，未删除旧记录。具体验证见[报告](design/budget-travel-agent/MAP_CLOSEOUT_2026-09-22.md)。
 `test-place-media-stale.cjs` 使用延迟媒体 Promise 驱动实际 RoutePage hooks，离线验证账号、会话、行程、请求代次和内容版本切换后旧结果被忽略；与 media-client 一并纳入 `npm run test:production-presentation`，不发外部请求。
+
+2026-09-25 H5 DSH 单轮验收脚本增加权威 GET 快照与 `scripts/dsh-h5-assertions.cjs` 断言辅助：同一 session、局部修改不变区域、权威总预算、英文仅本地化调用及恢复零付费副作用。`node scripts/test-dsh-h5-assertions.cjs` 为纯离线断言/反例测试，不启动浏览器或供应商；3/3 通过。真实执行仍只由 `qa-dsh-e2e-h5.cjs --execute` 显式单次触发并受后端 gate 约束；离线通过不代表当前 commit probe 或真实多轮通过。具体边界见 [DSH live记录](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。
+
+2026-09-25：DSH H5 harness 兼容正式前端省略完全空会话的缓存行为；仅在保留原私有状态备份且真实 GET 确认同 scope 云端消息/产物全空后恢复原空身份壳。新增反例后离线4/4通过，真实headed Chrome `--prepare --case A`只读通过、账本哈希和调用数不变；不改前端，不覆盖已有对话，不推断付费验收通过。

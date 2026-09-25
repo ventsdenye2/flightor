@@ -8,7 +8,7 @@ import { travelGuideArtifactPayloadSchema } from '../../travel-guides/artifact.j
 import { createDefaultGoalVerifierRegistry } from '../goals/default-verifiers.js'
 import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repository.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
-import { DshEvidenceStore } from './evidence.js'
+import { DshEvidenceStore, InMemoryDshEvidenceRepository } from './evidence.js'
 import { createCommitGuideTool, type CommitGuideInput } from './commit-guide.js'
 
 const city = { id: 'city:TYO', type: 'city' as const, name: 'Tokyo', countryCode: 'JP', cityCode: 'TYO' }
@@ -25,7 +25,9 @@ async function fixture() {
   const context = { ownerId, tripId, conversationId, generationId, requestId: randomUUID(), trips, artifacts,
     resolvedLocations: new Map(), goalRepository: goals, goalRunRepository: runs, goalVerifiers: createDefaultGoalVerifierRegistry(),
     isGenerationCurrent: () => true, research: { research: vi.fn(() => { throw new Error('Independent ResearchAgent forbidden') }) } } as unknown as ToolExecutionContext
-  const store = new DshEvidenceStore({ ownerId, tripId, conversationId, generationId, tripContextVersion: 1 })
+  const evidenceScope = { ownerId, tripId, conversationId, generationId, tripContextVersion: 1 }
+  const evidenceRepository = new InMemoryDshEvidenceRepository()
+  const store = new DshEvidenceStore(evidenceScope, { repository: evidenceRepository })
   const evidence = await store.recordSearch({ sources: [{ url: 'https://www.gotokyo.org/en/spot/15/index.html', title: 'Tokyo temples',
     snippet: 'Visit the temple grounds and appreciate traditional architecture and neighborhood culture.' }] }, 'fixture-raw-search', 'search-1')
   const tool = createCommitGuideTool({ evidenceStore: store, locale: 'en', memoryEnabled: true })
@@ -43,10 +45,55 @@ async function fixture() {
         introduction: 'Explore the temple grounds and appreciate the traditional architecture.', recommendationReason: 'This visit responds to your cultural interests at a relaxed pace.' })) }
   }
   const execute = (value: CommitGuideInput = input, ctx = context) => tool.execute(tool.inputSchema.parse({ ...value, intent }), ctx, new AbortController().signal) as Promise<any>
-  return { trip, trips, context, store, tool, input, artifacts, goals, runs, execute, evidence }
+  return { trip, trips, context, store, tool, input, artifacts, goals, runs, execute, evidence, evidenceScope, evidenceRepository }
 }
 
 describe('DSH combined guide commit', () => {
+  it('identifies stale raw evidence without revealing its scope and accepts a precise current-evidence repair', async () => {
+    const f = await fixture()
+    const priorStore = new DshEvidenceStore({ ...f.evidenceScope, generationId: randomUUID() }, { repository: f.evidenceRepository })
+    const stale = await priorStore.recordSearch({ sources: [{ url: 'https://www.gotokyo.org/en/spot/15/index.html', title: 'Earlier culture evidence',
+      snippet: 'The temple grounds offer traditional architecture.' }] }, 'fixture-raw-search', 'prior-search')
+    f.input.candidates![0]!.evidenceRefs = [...f.evidence.evidenceRefs, ...stale.evidenceRefs]
+    await expect(f.execute()).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'candidate_evidence_unavailable', candidates: [{ candidateKey: 'temple', unavailableEvidenceRefs: stale.evidenceRefs }],
+      repairHint: expect.stringContaining('candidateRef')
+    } })
+    expect(await f.store.get(stale.evidenceRefs[0]!)).toBeNull()
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+    const goalId = f.context.activeGoalId!
+    expect((await f.goals.get(goalId))!.status).toBe('pending')
+    f.input.candidates![0]!.evidenceRefs = f.evidence.evidenceRefs
+    const result = await f.execute()
+    expect(result).toMatchObject({ status: 'accepted', acceptedGoal: { goalId }, completion: { status: 'satisfied' } })
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'research')).toHaveLength(1)
+  })
+
+  it('returns actionable exact-cover feedback for supplemental practical text and accepts the corrected scheduled-only text', async () => {
+    const f = await fixture()
+    const input = structuredClone(f.input)
+    for (const key of ['rail', 'lodging']) {
+      input.candidates!.push({ ...input.candidates![0]!, key, category: 'practical', title: `Tokyo ${key} guidance`, summary: 'Read practical travel guidance before departure.' })
+      input.text.activities.push({ ...input.text.activities[0]!, activityKey: key })
+    }
+    input.supportingCandidateKeys = ['rail', 'lodging']
+    const practicalIntent = { ...intent, parameters: { ...intent.parameters, researchTypes: ['activity', 'practical'] } }
+    const execute = () => f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: practicalIntent }), f.context, new AbortController().signal) as Promise<any>
+    await expect(execute()).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'activity_text_exact_cover', requiredActivityKeys: ['a', 'b', 'c'], submittedActivityKeys: ['a', 'b', 'c', 'rail', 'lodging'],
+      unexpectedActivityKeys: ['rail', 'lodging'], missingActivityKeys: [], duplicateActivityKeys: [],
+      repairHint: expect.stringContaining('supportingCandidateKeys')
+    } })
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+    expect((await f.goals.get(f.context.activeGoalId!))!.status).toBe('pending')
+    input.text.activities = input.text.activities.filter(item => !['rail', 'lodging'].includes(item.activityKey))
+    const result = await execute()
+    expect(result).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    const guide = travelGuideArtifactPayloadSchema.parse((await f.artifacts.get(result.artifact.id))!.payload)
+    expect(guide.days.flatMap(day => day.items)).toHaveLength(3)
+    expect(guide.supportingEvidence).toHaveLength(2)
+  })
+
   it('saves one research artifact and publishes before completing the accepted Goal, without independent research', async () => {
     const f = await fixture()
     const result = await f.execute()

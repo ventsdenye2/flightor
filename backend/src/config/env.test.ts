@@ -9,6 +9,12 @@ const validEnv = {
 }
 
 describe('parseEnv', () => {
+  it('bounds the explicit DSH output limit without silently raising it', () => {
+    expect(parseEnv(validEnv).DSH_MODEL_MAX_TOKENS).toBe(4096)
+    expect(parseEnv({ ...validEnv, DSH_MODEL_MAX_TOKENS: '8192' }).DSH_MODEL_MAX_TOKENS).toBe(8192)
+    for (const value of ['0', '255', '16385', '4096.5', 'unlimited'])
+      expect(() => parseEnv({ ...validEnv, DSH_MODEL_MAX_TOKENS: value })).toThrow('DSH_MODEL_MAX_TOKENS')
+  })
   it('keeps the lean Goal protocol opt-in and rejects ambiguous flag values', () => {
     expect(parseEnv(validEnv).PLANNER_LEAN_GOALS_ENABLED).toBe(false)
     expect(parseEnv({ ...validEnv, PLANNER_LEAN_GOALS_ENABLED: 'true' }).PLANNER_LEAN_GOALS_ENABLED).toBe(true)

@@ -1,6 +1,8 @@
 # DSH 后端实施记录
 
-状态：D0–D3后端实现与离线/数据库回归完成，D4真实模型与官方搜索接通，但双多轮首轮均失败，**D4未通过**。已修两处实测缺陷，修复后的完整真实双多轮待新预算安排；未部署、未关闭G1。用户2026-09-24明确优先DSH，取代旧R/U与条件C1前置；范围见[原附件方案](DSH_IMPLEMENTATION_PLAN_2026-09-24.md)。
+状态：D0–D3后端实现与离线/数据库回归完成。D4原始A/B首轮均失败；之后基于新追加授权的模型与官方搜索探针通过，但4次正式commit探针仍没有accepted攻略，**D4仍未通过**。H5仅完成真实只读prepare，无真实浏览器发送或accepted结果。未部署、未关闭G1。用户2026-09-24明确优先DSH，取代旧R/U与条件C1前置；范围见[原附件方案](DSH_IMPLEMENTATION_PLAN_2026-09-24.md)。
+
+2026-09-25 09:58：新增US$2/32模型/8搜索授权已审计追加原账本，累计上限US$7/128模型/32搜索。第四probe因无有效正文持续研究，累计32搜索上限触发，保守占用US$6.20、余US$0.80；主模型10次、搜索准入9次（实际官方HTTP8次）、fetch11次，75.156秒，无commit。免费HTTP诊断确认200拦截页及可用JNTO对照，下一probe范围与旧失败Goal隔离；详细标识、失败分布及仍未通过边界见[D4 checkpoint](DSH_LIVE_2026-09-24.md)。修复后合并离线160项、独立PostgreSQL1项、build通过，前端源码diff为0。worker计数不再包含被拒绝的第13尝试，关闭等待子进程真实退出后释放目录锁。
 
 基线 `origin/main@8a83b032a8ee18097af62304d99df86f9a543489`，已 fetch。隔离工作树 `.worktrees/dsh-backend`，分支 `codex/dsh-backend`。原 main 的 `output/` 未跟踪内容保留；不合并或部署。
 
@@ -84,3 +86,36 @@ D2 提交 `52116d6`，包含联网写入所需的计量 IPC、会话安全基础
 完整 stdout/stderr 留在忽略目录 `backend/.demo/dsh-final-offline-20260924/tests.log` 和 `build.log`；同目录 `tests.result.json`、`build.result.json` 保留命令、退出码及精确毫秒。此次结果覆盖此前失败修复后的实际全量状态；保留前文 949/1 失败记录，不用成功结果抹除历史。
 
 默认 Vitest 配置明确排除真实 PostgreSQL suites，关闭真实模型/航空/搜索凭证，DSH 使用 fixture 或本地 HTTP 适配器；本次没有真实 Provider 请求、模型/搜索费用为 0。数据库集成证据按前文独立报告评价；build 不代表部署、H5/微信真实验收或整个 G1 通过。
+
+## 显式本地化的 Provider 协议与计量补强
+
+DSH 显式本地化采用独立 `createDshLocalizationClient`：官方 DeepSeek 直接发送 `thinking: { type: "disabled" }` 和 `response_format: { type: "json_object" }`，将既有输出 JSON schema 加入 system 约束，再由原 GuideFinalizer 执行结构、身份和语言校验。官方请求不发送 OpenRouter 的 `reasoning`、`provider` 路由或工具字段；OpenRouter 路线保留既有 `reasoning.enabled=false`、`json_schema` 和网关路由语义。首次攻略仍由主 Agent 输出，不增加 Finalizer 调用。
+
+每次显式本地化及其唯一允许的格式/语言修复在 HTTP 前写入同一 FileDshBudget admission；达到当前预算或次数上限即阻止后续请求。完成后记录 token、finish reason、实际 model/maxTokens/thinking 配置；仅供应商真实货币回执可结算费用，缺失费用或失败均保留预留，不推算账单。已取消请求不申请预算或发出 HTTP。测试仅向随机端口的 127.0.0.1 HTTP fixture 发送请求，不调用真实供应商。
+
+验证：2026-09-24 23:26，四个目标套件共 **81/81** 通过（localization HTTP 5、OpenRouter 15、Finalizer 43、budget 18），Vitest 4.18 秒；`npm run check` 通过（9.87 秒）。本地 HTTP 测试逐项核对官方出站 thinking/json_object、OpenRouter 兼容、token/finish reason 和已知费用入账、预算拒绝不出站、失败保留预留、预先取消零请求。没有真实费用。本轮是上述全量验证之后的增量定向验证，不将前述 952 项全量结果改写为本增量全量通过。
+
+## 2026-09-24 正式 H5 闭环续验：调用前修复与准备
+
+续验基线为 `765f3acf65faf5aa23f5c0029f123b02018aee59`。重新 fetch 后远端 DSH 分支一致，`origin/main=8a83b032a8ee18097af62304d99df86f9a543489`；独立 worktree 继续开发，主目录原有配置改动与 output 保留。
+
+- `DSH_MODEL_MAX_TOKENS` 替代 composition 的硬编码，默认仍4096、范围256–16384；未执行任何真实升档。worker 回执保存 model/maxTokens/thinking/finishReason/输入输出token。`max-tokens` 单独记录为 `MODEL_OUTPUT_LIMIT`，不当作 Provider 故障；不会自动重试或放大。
+- 独立 worker 的本地 HTTP 纵向测试实际检查 `/v1/chat/completions` body：`model=deepseek-v4-flash`、`max_tokens=4096`/测试覆盖8192、`thinking={type:disabled}`，无 OpenRouter reasoning 字段。正常 stop 与 length 两种响应均通过，后者保持 max-tokens 终止原因；测试只访问 loopback，不代表远端复验。
+- 官方显式本地化与公开回复边界详见本报告前段和 [发布合同](DSH_PUBLICATION_2026-09-24.md)。未增加审核 LLM、独立研究或首次 Finalizer。
+- 本批定向12文件144项通过（26.95s，随后新增回执恢复用例另跑19项budget+6项legacy共25项通过，3.88s）；DSH PostgreSQL单个多轮综合用例通过（8.19s）；backend类型/构建通过。正式H5源码无改动，原有H5构建通过（webpack25.45s，两项原有bundle大小警告）；Chrome已打开真实规划页并核对输入框。这些结果均不证明accepted UI闭环成功。
+
+旧账本仍保留23次模型/10次搜索、US$1.72未知费用预留，当前剩余US$0.28；未修改授权或发起新的付费调用。正式H5验收状态必须在后续实际点击、真实Provider、accepted持久化及页面截图齐备后更新，不能由上述测试推断PASS。
+
+2026-09-24 本轮新增授权已明确收到：在旧账本上追加US$3、48模型、12搜索，累计US$5/96模型/24搜索。`FileDshBudget.extendAuthorization`仅供显式管理调用，不在Agent工具或HTTP自动准入路径；记录grant ID、授权引用、前后限制和时间，保留batchId、全部旧entries及未知预留，拒绝重复grant、pending请求和旧配置继续写入。此授权追加后实测旧entries完全相同，仍23模型/10搜索/US$1.72未知预留，可用US$3.28。追加持久化回归20/20通过（1.76s），独立runtime5/5通过（2.62s）。这不是费用归零，也不代表实际计费为零。
+
+## 2026-09-25 保留的后续真实探针
+
+从独立工作树基线 `765f3acf65faf5aa23f5c0029f123b02018aee59` 的真实私有state与安全observer记录核对：model只读探针通过，2次模型完成、调用`get_trip_context`，DSH manager `completed`，API语义为`responded`，耗时2.798s。官方DeepSeek搜索探针通过，4次模型完成、1次官方搜索，实际`web_search`后`web_fetch`，最终有1个可用持久evidenceRef，manager `completed`/`responded`，耗时10.039s。搜索返回的6个候选URL自身没有正文evidenceRef；被抓取正文才产生可用引用。未将这些探针当作攻略保存或质量验收。
+
+账本仍是既有batch `d1a2aef6-d04d-4c44-9d22-6b1892226f95`：本次追加前保留23模型/10搜索及US$1.72未知预留；授权累计US$5、96模型、24搜索。当前累计72模型/23搜索、US$4.72均为已知金额或未知费用预留的保守占用（其中供应商实际美元金额仍unknown）、pending=0，剩余US$0.28。model探针前后23/10→25/10及US$1.72→1.80；首次失败的搜索探针对应25/10→30/11，安全observer `bdafd450-d898-4459-b2db-3e189dcaaf8a.jsonl`记录4个模型receipt和1个搜索receipt，但其回复被截留；之后的官方搜索探针通过，账本快照30/11→35/12及US$2.08→2.36。第三commit尝试开始56/19、US$3.76，结束72/23、US$4.72；其单轮增量16模型/4搜索、US$0.96预留。
+
+三个独立真实commit尝试均产生终态API turn，但没有任何Artifact引用或accepted攻略：首轮66.318s、`goal_partial/partial`；第二轮100.423s、`model_failure/not_requested`；第三轮61.933s、`model_failure/partial`。第三轮model invocation 12产生的`commit_travel_guide`调用以`DSH_TOOL_FAILURE`失败；随后model invocation 13因调用上限被阻止，manager以`reason=error`结束。runner没有将HTTP completed误判为成功。相关修复仍在主任务处理中，不在这里追认通过。
+
+同批配置为DeepSeek `deepseek-v4-flash`、`thinking=disabled`、请求参数`max_tokens=4096`。4096是单次输出配置，不是供应商额度/实际token消耗上限，也不提供真实美元计费上限；账本没有可信货币回执，未知费用继续以reserved计入。H5只读准备有三个独立结果：9/24 23:47准备通过，workspace GET可用、输入框就绪、4项观测事件、0次POST、0个浏览器错误且前后账本SHA256一致；9/25 09:50准备在打开页面前因保存的浏览器current Trip断言失败，0项事件/POST，预算SHA256不变；9/25 09:53仅恢复同一空会话壳后准备通过，输入框就绪、3次真实workspace GET、0次POST/其他mutation、0个pageerror且前后账本SHA256一致。三次均未点击发送，没有accepted UI证据。观察和三次commit失败日志留在忽略目录 `backend/.demo/dsh-e2e-20260924/`，文档仅记录脱敏指标，不收录token、原始session/CoT或页面正文。
+
+本记录只反映`state.private.json`及append-only安全observer中当前保留的证据；D3/D4早期全量/定向测试数量仍按各自时间点报告，不由这些真实探针改写。H5断言套件3/3及observer fixture套件1/1是离线验证，不代表真实commit或真实H5发送通过。

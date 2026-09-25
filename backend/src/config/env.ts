@@ -49,6 +49,7 @@ const envSchema = z.object({
   FLIGHTOR_AGENT_ENGINE: z.enum(['legacy', 'dsh']).default('legacy'),
   DSH_MODEL_PROVIDER: z.enum(['openrouter', 'deepseek']).default('openrouter'),
   DSH_MODEL: z.string().trim().default(''),
+  DSH_MODEL_MAX_TOKENS: z.coerce.number().int().min(256).max(16384).default(4096),
   DEEPSEEK_API_KEY: z.string().default(''),
   DEEPSEEK_BASE_URL: optionalUrl.default('https://api.deepseek.com/v1'),
   DSH_SEARCH_PROVIDER: z.enum(['serpapi-raw', 'deepseek-official']).default('serpapi-raw'),
