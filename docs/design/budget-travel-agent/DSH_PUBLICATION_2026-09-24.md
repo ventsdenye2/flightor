@@ -172,3 +172,20 @@ B09:19实际失败先复用了warm历史中的旧版本candidateRef，现有保�
 未改公开HTTP合同、Artifact内容或保存校验；owner认证仓库与Trip匹配仍在任何内容/复用状态返回之前执行。定向回归3文件77/77通过（8.37秒）：authored guide30、旧Runtime44、正式cloud-state3；新增当前候选与状态一致、Trip升版后历史正文不变/候选消失/明确警告，以及跨owner/Trip不暴露正文或状态。backend TypeScript检查通过，无真实Provider调用。该工具提示本身不代表后续B accepted或多轮验收通过。
 
 2026-09-26 B09:31真实提交首轮重复候选、第二轮预算金额文案拒绝、第三轮修复次数拦截。组合工具现仅在领域拒绝反馈中复用publicProseProblems，一并给出presentationIssues和对应修复提示，使一次修复同时处理候选与文案问题；不改变保存或最终publication校验、不新增LLM或增加commit上限。新增回归验证双问题首次同时报告、无攻略保存，并在同Goal一次修复后真实accepted/satisfied。真实续验结果仍需单独记录。
+
+## 2026-09-26 正式图片按钮诊断边界
+
+B攻略`01a0dd2b-9099-706d-bd2e-5cbc37fd25f6`的文字已accepted，图片是独立enrichment。此前页面仅GET media，返回200且activities为空，未自动搜索照片。10:07实际点击现有“补全 / 重试图片”后，隔离验收runner把media POST挡成403 `DSH_E2E_READ_ONLY`；已在原serve-execute及全部probe门禁内精确允许UUID artifact的media POST，并补本隔离进程缺省MEDIA_USER_AGENT。没有修改产品UI、用户base env或全局代理。
+
+10:11重启加载后再显式点击一次，正式media POST返回200，但全部4项`mediaStatus=empty`、`media=null`，真实照片DOM=0。只读原测试schema所得持久原因如下：
+
+| 当前活动 | 媒体原因 | 含义 |
+| --- | --- | --- |
+| 上野恩赐公园一带的文化散步 | source_identity_required | 尚无已解析POI，来源也不是唯一可核对的Wikipedia实体页 |
+| 上野站旁的露天市场小吃 | source_identity_required | 同上，不能按名称搜索随意选图 |
+| 浅草寺与雷门 | ambiguous_or_unsupported | 当前组合地点命名触发现有多个地点/不支持身份保护 |
+| 上野室内文化场馆 | source_identity_required | 尚无已解析POI或唯一Wikipedia实体来源 |
+
+这些结果在Wikimedia网络读取前返回；没有Wikimedia请求，也没有远程照片下载或解码失败，不能靠重试网络解决。保留严格实体匹配、许可和原图校验，不新增POI实施或替换随意图片。**runner的403已修，照片实际显示仍未成功**；accepted文字与整个DSH主链不因图片缺失而失效。两个按钮动作各仅1个media POST，0新Agent turn/模型/搜索；各自动作前后原账本完全相等，Trip、guide、route、flight不变。
+
+原证据留在`output/playwright/dsh-e2e-20260924`：`B-media-2026-09-26T10-07-37-491Z.json`（403及页面错误截图）、`B-media-2026-09-26T10-11-36-357Z.json`（200空结果、图片网络/解码观测及截图）与同名前缀`-reasons.json`（只读DB原因）。由既有D4报告归档，不改写前次失败、不给空结果标记图片PASS。

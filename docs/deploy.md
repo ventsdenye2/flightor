@@ -90,3 +90,12 @@ DSH 还要求正数 `DSH_AUTHORIZED_USD` 与 `DSH_AUTHORIZED_MODEL_CALLS`，以�
 本轮可填写的本地忽略配置为 `backend/.env.dsh.local`，只用于本地验证进程显式加载，不会自动更改已有服务；真实测试需新授权预算，不沿用历史额度。阶段证据见 [DSH记录](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)。
 
 预算授权追加必须来自当前明确用户授权：管理代码可用 `FileDshBudget.extendAuthorization` 将新增额度及调用上限连同grant ID/引用/前后限制追加进原账本。它不出现在Agent工具/API调用中，不能自动取得额度；entries、batchId、未知预留保持不变，重复grant与pending请求拒绝。追加后配置必须匹配新的累计上限，旧配置仍被拒绝。
+
+
+### 2026-09-26 DSH 本地预算文件瞬态错误
+
+`FileDshBudget` 仅对已经写完并fsync的临时账本执行原子rename时遇到EPERM/EBUSY，使用同一个临时文件、同一持有锁最多尝试3次，间隔25ms/75ms；不重跑transaction/admit、不重复准入、不重新初始化batch或清空entries。其他错误或文件操作不自动重试；持续rename失败保留原账本内容并拒绝准入，因此Provider调用必须继续等待admit成功。未知费用与历史失败仍保留。
+
+文件操作的失败现在以`DSH_BUDGET_FS_<操作>_<errno>`定位，例如`DSH_BUDGET_FS_LEDGER_RENAME_EPERM`或`DSH_BUDGET_FS_LOCK_OPEN_EPERM`；错误消息/details只有操作名、系统错误码和尝试次数，不含路径、Key、请求或账本正文。EEXIST/ENOENT仍用于原有创建/读取分支。现存锁拒绝、损坏账本拒绝、释放前token所有权验证均不变；不会自动删除其他进程锁或把EPERM当作账本不存在。临时文件清理仍仅限本次随机临时文件。
+
+该处理来自一次真实B准入EPERM，但旧日志只有错误码，不能据此确定当时是rename或其他syscall。27/27离线预算测试通过（2.77秒），包含rename瞬态恢复只准入一次、持续失败原账本逐字节不变且Provider未调用、EIO不重试及已有锁/损坏/授权回归；不代表重跑真实B已成功。

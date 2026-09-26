@@ -1,8 +1,46 @@
 # 文档维护规则与本轮清理记录
 
+2026-09-25：最小commit真实通过后，runner曾用API的`status=completed`覆盖probe的`status=passed`，导致浏览器写入gate错误关闭。现将API终态独立为`turnStatus`，probe状态最后写入；当前已验收commit回执按同一turn的satisfied、真实GET保存的accepted Artifact及GET账本不变证据修正状态，原attempt保留且追加纠正原因。不修改Artifact或publication，不重新收费跑已通过probe。
+
 2026-09-25：H5 DSH验收脚本按正式workspace的`id desc`顺序取最新攻略，不再反转成最旧攻略；否则局部编辑/预算修改后的断言会错误检查旧版本。此为验收读取修正，未改正式前端或API排序。
 
 ## 2026-09-25 DSH 正式 H5 续验脚本
+
+显式`--execute --media --case A|B --reopen-trip`是独立图片诊断模式：从真实My Trips打开当前accepted攻略，只点击一次既有“补全 / 重试图片”，保存media GET前后、唯一media POST状态/错误、图片解码尺寸及截图。严格检查Trip/攻略/路线/航班不变、无Agent turn且账本完全不变（含迟到事件），不用Planner或搜索Agent，不自动重试，不改用户冻结对话。接口拒绝记作`mediaDiagnosis.outcome=endpoint_rejected`，报告`observed`只代表诊断完成，不能据此声称图片成功；配置/网络修复需另次明确执行并保留前次。语法检查通过；真实响应后增量记既有DSH报告。
+
+10:07图片真实按钮诊断：唯一media POST被隔离runner自身白名单返回403 `DSH_E2E_READ_ONLY`，未到媒体路由/Provider，0Agent且原账本SHA和内容不变；截图/原报告保留。最小runner配置修正仅在原`--serve --execute`与全部probe通过门禁内允许精确UUID artifact `/media` POST，并给本隔离进程缺省`MEDIA_USER_AGENT=FlightOR/0.1 (local DSH acceptance)`，原env显式值优先；不修改base env、产品UI、全局代理或自动触发补图。语法检查通过，修复后实测另记，不把该403解释为Wikimedia或图片解码失败。
+
+10:11修复后同一正式B页面再显式点击一次：media POST 200，4个活动均empty，照片DOM与外部照片请求均0；只读DB原因是3项`source_identity_required`、1项`ambiguous_or_unsupported`，均在Wikimedia网络读取前返回，不是下载/解码错误。完整映射见[DSH发布说明](design/budget-travel-agent/DSH_PUBLICATION_2026-09-24.md)。正式API gate/config问题已修，但照片显示仍未成功；没有新增地点解析、猜测图片或绕过身份约束。两次动作各仅1个media POST，0Agent、0模型/搜索，Trip/guide/flight不变且账本完全相等。原10:07/10:11报告、截图与第二次DB原因文件均保留。
+
+新公开产物出口的预算文案验收动态导入已构建后端`publicProseProblems`，仅取其`budget_guarantee`分类，不复制另一套语义正则、不宣称费用已验证。检查首轮/局部编辑的新publication.reply、overview、最终API答复及实际概览，预算确认的新reply和显式本地化后的英文；不对旧before基线新增门槛，允许以不合格旧稿为局部修复基线。15项离线断言通过，包含09:50真实漏检“整体预算仍在既定总额内”的reply/overview/额外公开文字反例、中英同义保证及谨慎预算说明正例；测试需先backend build。脚本语法通过。旧B1报告和accepted状态不改写，该历史文案不能据旧脚本成功声称已通过预算公开文字要求。
+
+`--restore --case A|B --reopen-trip --restore-languages`用于当前攻略已含接纳英文时的纯读取验收：先完成既有刷新/回复/活动恢复，再GET确认同guideId/hash的en publication accepted及活动时段/来源一致；实际点击English，要求现有accepted正文和活动显示且没有生成按钮，再点击中文，逐项对比原中文概览、活动名称/身份/时间和详情，并保存三语言状态截图。整个模式保持零API mutation、零账本变化，绝不点击生成。预算派生攻略已按领域代码继承并重验accepted variants，因此09:30新版生成入口因当前v4已有accepted英文而发送前拒绝是正确防重，不需要新增收费生成。14项离线断言覆盖已有英文的身份/时段/来源/状态负例，语法/diff检查通过；此脚本批次不冒称真实语言恢复通过，实际运行由主验收单列。
+
+只读`--restore --reopen-trip`及`--prepare --reopen-trip`进入正式My Trips后，等待实际`.pl-result`与`.pl-reply-copy`显示，保存`restoredPlannerReply`和截图。当前末条assistant为`completed/satisfied/trip_context_update`时，显示文字须与fresh workspace的当前content完全一致（只正规化Markdown粗体与空白），且两者不能等于旧publication.reply；历史接口若仍覆盖预算答复，验收明确失败，不通过延长等待或改断言绕过。保留零POST/零账本增量及迟到活动检查。显式`--execute --localize --case A|B --localize-new-version-after <原成功localize报告>`仅允许同Trip/会话的不同当前accepted guide且正式en GET未accepted；核验原独占attempt、原真实一次localization POST及中文恢复成功，记录原报告SHA，按当前guideId生成独占后继attempt。点击前核对浏览器打开的artifactId等于当前攻略，所有旧attempt保留；同artifact或已有accepted英文拒绝，不自动retry。13项离线断言含历史覆盖和新版本入口反例、语法检查通过；本批未运行浏览器或Provider，真实验收另记。
+
+B首轮09:05真实失败的`completed/responded/not_requested`仅在回复精确为“本轮未能发布攻略，请确认当前条件后重试。”、全部交付产物/Goal数组为空、Trip/summary/refs/完整航班前后不变且没有攻略时，才进入幂等冲突核验。脚本读取原批次唯一同generation的真实observer，校验scope、连续sequence、终态completed及execution_closed，并要求两次commit（初次加同turn一次重试）均明确返回`GOAL_IDEMPOTENCY_CONFLICT`、无任何产物结果；将observer路径/SHA及两次尝试写入后继报告。原SHA谱系、重启404旧进程证明、fresh workspace/flight与无accepted门槛继续生效，没有通用not_requested首轮例外。11项离线断言及脚本语法/diff通过，真实保留observer零调用核验通过；`node --test`最初被沙箱spawn EPERM阻断后以`node scripts/test-dsh-h5-assertions.cjs`同一测试文件通过，未执行浏览器或Provider。
+
+B1发生“trip_context_update子目标satisfied，主模型随后model_failure且无accepted攻略”的已观察故障时，原`--retry-terminal`只增加精确窄例外：失败断言为`Current authoritative guide is not accepted`、warnings同时有model_incomplete/reply_withheld、turn/response/delivery均无产物、采用航班及完整fixture前后不变。不能把子目标完成等同用户攻略交付；其他satisfied、其他case/round、已accepted或航班变化仍拒绝。重启证明及fresh Trip/summary/messages/refs/flight与最新失败after一致检查继续保留。10项离线正反例和脚本语法/diff通过，无真实调用。
+
+B首轮已观察到的`completed/model_failure`且`partial/travel_guide`、missing精确为`accepted_publication`可通过原`--retry-terminal`显式续验；重启404分支仅为该B1组合增加窄入口。前驱与fresh GET不得有accepted攻略，Trip/summary/flight全部segments/messages/refs须与失败报告一致，继续要求SHA谱系、旧进程退出证明和原attempt保留。其他case/round、其他missing、运行中或已satisfied/accepted均不借此放行。9项离线断言覆盖组合正反例，语法/diff通过，未触发B重试。
+
+预算确认入口还允许引用“现有accepted/1200攻略未变、同值确认被`dsh_reply_withheld`拦截”的后继报告；SHA链逐级回到原partial receipt、再到真实1500→1200更新，不删除任何失败。最终明确区分`setter_confirmed`（真实trip_context_update satisfied）与`no_op_confirmed`（真实not_requested/responded、无withheld、无Goal/产物、新旧Trip/summary/activities/route/flight/refs完全不变、当前accepted版本、0搜索）。后者要求真实DOM回复明确1200总预算且不重复旧publication回复，绝不伪造satisfied或强制增加版本。报告中的最初预算setter、派生攻略恢复及本次同值答复保留为不同真实运行，不能合并冒充一次成功。8项纯离线断言及语法检查覆盖该分支；真实运行另记。
+
+若预算派生已生成当前版本accepted攻略，但正式turn仅为`partial/trip_context_update`且missing精确为`trip_field:budget`，必须使用独立的`--execute --case A --round 4 --retry-budget-confirm <partial-report.json>`，不能放宽旧blocked/stale恢复入口。新入口追溯并校验原1500→1200报告SHA链、accepted派生攻略对原稿的活动/时段/顺序/正文逐项继承、仅source artifact ID映射而原finding/公开证据不变、route/flight保持。发送前真实GET须仍为同Trip/当前accepted guide/hash/plan/sources；只允许显式本地化导致的publication元数据及updatedAt变化，不容许消息、偏好或其他产物变动。仍用原冻结预算句通过输入框单次发送、保留所有attempt，结果先要求delivery satisfied再读取正常回复，避免把partial页面缺少回复节点误诊成浏览器超时。本入口7项离线断言/反例、语法和已有真实报告零调用复核通过；不是新的真实验收结果。
+
+预算修复续验如出现新的已结束`not_requested/responded`且`dsh_reply_withheld`、没有执行更新的真实失败，`--retry-budget-update`可显式引用这份最新前驱。脚本逐个验证保留报告的SHA链（最多16层、拒绝循环/改写），追溯原1500预算/accepted攻略的变更前快照；每次未执行更新的后继必须Trip/summary/攻略/route/flight/refs在自身前后完全不变，当前真实GET仍须等于最新前驱。最终1200及accepted断言始终相对原预算变更前基线，不把最近一次已1200的失败误当新原点。仅扩展该已观察到的withheld无动作失败，其他终态或状态变化拒绝；保留所有原attempt，不自动重复发送。纯离线6项中的新增正反例和语法通过，未触发调用。
+
+预算第四轮存在“Trip已更新1200总额且trip_context_update satisfied，但旧攻略仅因context version变化blocked/stale”的已证实故障时，可用`--execute --case A --round 4 --retry-budget-update <failed-round-4-report.json>`显式续验，重启时沿用`--restart-evidence`。它只接受已结束的同scope冻结消息、1200 CNY/trip/两天、无新增artifact/路线/航班变化、原accepted攻略现在同ID blocked且含stale问题；当前权威GET快照必须与前驱终态完全一致，保留原attempt并产生SHA谱系后继。其他satisfied结果仍不能借此重发。预算notes检查动态导入已构建后端的纯`budgetNotesEquivalent`，仅按同一领域规则允许预算口径/谨慎说明，不复制另一套语义白名单；其他Trip字段保持严格。最终检查从原预算变更前快照对照新结果，仍要求当前攻略accepted与1200总额，不将重复更新API成功当修复通过。入口/反例6项离线断言及语法通过，尚不代表真实预算恢复成功。
+
+B隔离已采用fixture入口可用`--prepare --case B --reopen-trip`，之后`--execute --case B --round 1 --reopen-trip`：直接打开正式“我的行程”列表，以真实workspace标题定位唯一卡片并点击“继续安排”，由正式`openCloudWorkspace`恢复已有Trip/会话/flight引用；入口阶段只允许GET，不注入虚构聊天或再创建会话。此前`--restore --reopen-trip`行为不变。B首轮及局部修改的权威断言比较采用选择/revision、完整flight artifact及全部segments，并核对guide引用同offer和抵达时间；按现有领域slot规则检查抵达前日期无活动、12:30抵达当天无morning安排，明确不据粗时段推断精确交通耗时。新增反例覆盖改revision、改segment、伪造guide抵达时间、提前上午活动及跨日提前安排；纯离线断言5/5与脚本语法通过。未执行B真实Provider或浏览器，不将fixture航班描述为真实票价。
+
+已有正式H5发送且后端satisfied/accepted、但页面显示失败时，用`--restore --case A|B --reopen-trip --render-after <failed-ui-report.json>`只读复验同一攻略：原失败报告须包含真实POST和accepted权威产物，复验匹配guide ID/contentHash；从“我的行程”真实DOM中确认唯一同名Trip并点击“继续安排”，核实正式workspace GET回到同Trip/会话后再打开结果，避免修改或注入缓存来掩盖问题。权威攻略选择遵循公开workspace旧→新顺序与正式UI的last-wins规则。保留列表、概览、两天及全部详情截图，刷新比对并检查零API mutation/零账本增量。`originalClickToRecoveredGuideMs`由原报告UTC起点+点击偏移及本次可读DOM时间计算，明确包含排障、修复、重启和空闲时间，是恢复后首次观测的跨运行耗时估计，不能称为无中断首轮延迟；原失败报告不改写。入口仅完成语法和既有4项离线断言检查，真实恢复以运行证据为准。
+
+终态恢复核验使用原报告保存的权威workspace assistant ID/正文，与fresh GET逐项比较；不把公开`terminal.response.reply`当作持久Conversation正文。未完成交付时这两者可采用不同安全投影，不能因此误判云历史变化。整份messages/artifactRefs/Trip一致性、已退出进程、已知终态及无accepted攻略的门槛不变；这项脚本纠正只消除发送前的错误拒绝，不删除真实失败记录或改业务发布规则。
+
+明确诊断并修复后，可用`--execute --case A|B --round 1 --retry-terminal <failed-report.json>`重新从正式输入框发冻结首轮请求。入口拒绝运行中/模糊报告、已有satisfied交付或accepted攻略；检查原POST恰好一次、最终turn scope/status、保留attempt谱系，并真实GET旧turn和workspace中的全部攻略，再生成前驱SHA绑定的独占后继attempt，不删除失败或自动重发。若为加载修复而重启后端使内存turn GET404，仅可追加`--restart-evidence <json>`：含前驱报告SHA/turnId、已退出旧PID及旧lock已消失的实测证明和时间；脚本再次核验PID为ESRCH、仅允许原completed/not_requested/model_failure或completed/partial/goal_partial两种已知未交付结果，保留其真实research与隐藏draft记录；fresh workspace的完整messages（含末尾真实user/assistant ID/文字）、artifactRefs、Trip必须逐项等于原终态快照且无accepted攻略。其他404不放行；真实持久状态变化或旧进程仍在则拒绝。这是保留原会话的显式单次续验，不是持久TurnStore实现或生产自动重试。新增恢复入口已作语法检查，旧4项离线断言仍通过；真正发送/Provider结果另记D4证据。
+
+H5 首轮在会话 bootstrap 之前失败时，`--hydrate-existing --execute --case A --round 1 --retry-before-turn <closed-failed-report.json>` 是单独显式恢复入口：必须读取原批次已结束的失败报告，核对同Trip/会话/原消息、`postCount=0`且网络事件中没有Agent turn POST或turnId，保留原attempt并用前驱SHA生成独占后继attempt。只允许真实workspace GET中的唯一一对“读取当前目的地和日期、不修改/搜索/保存”的已完成准备对话，无产物/路线生成；按现有`openCloudWorkspace`的messages/timeline映射缓存，并备份原私有storage，不注入虚构回复/攻略或替代正式发送。准备对话是单列真实API准备步骤，不能作为正式H5闭环证据；运行中的报告、曾发Agent请求或其他云对话均拒绝重试。本批只作脚本语法与既有离线断言检查，真实恢复效果以随后报告为准。bootstrap API明确报错时脚本立即记录失败，不继续空等整轮超时。
 
 `qa-dsh-e2e-h5.cjs --execute --localize --case A|B` 在同一真实浏览器会话内先留存中文概览、活动名称/身份/时间及简介/推荐理由，再显式生成英文，随后点击现有“中文”切换按钮。恢复后逐项比对原中文文字和权威攻略/Trip/route/flight快照，检查切回期间零API写入、零模型和搜索调用，保留中文恢复截图；不新增前端代码或自动重试。此脚本增量只完成语法与既有4项离线断言验证，实际中英切换结果须由真实执行另行记录。`clickToReadableGuideMs` 当前在终态API和权威GET后打开攻略才观测，是包含这些检查及打开动作的可读内容耗时上界，不代表最早渲染/paint时刻；报告中显式标注该限制。
 
@@ -128,3 +166,8 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 2026-09-25 H5 DSH 单轮验收脚本增加权威 GET 快照与 `scripts/dsh-h5-assertions.cjs` 断言辅助：同一 session、局部修改不变区域、权威总预算、英文仅本地化调用及恢复零付费副作用。`node scripts/test-dsh-h5-assertions.cjs` 为纯离线断言/反例测试，不启动浏览器或供应商；3/3 通过。真实执行仍只由 `qa-dsh-e2e-h5.cjs --execute` 显式单次触发并受后端 gate 约束；离线通过不代表当前 commit probe 或真实多轮通过。具体边界见 [DSH live记录](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。
 
 2026-09-25：DSH H5 harness 兼容正式前端省略完全空会话的缓存行为；仅在保留原私有状态备份且真实 GET 确认同 scope 云端消息/产物全空后恢复原空身份壳。新增反例后离线4/4通过，真实headed Chrome `--prepare --case A`只读通过、账本哈希和调用数不变；不改前端，不覆盖已有对话，不推断付费验收通过。
+
+2026-09-26真实多轮故障后，显式retry-terminal扩展到第2/3轮：只允许已结束失败验收且原正式API未satisfied，原前后accepted攻略及Trip逐项不变，fresh恢复时再次检查同一base。第3轮持久消息必须完全不变；解释重测允许后续追加消息但旧前缀不可变。重启404还须原PID退出/hash绑定证明，增加已知not_requested/responded终态支持。保留旧attempt并独占新前驱SHA文件，不自动重发。该恢复脚本不放宽领域validator或付费单轮次数。
+多轮显式重测可在原历史后追加完整只解释对话；每一对均须user/assistant、responded/not_requested且artifactRefs空，原历史前缀、完整Trip、accepted base及所有引用必须不变。未完成或有写入的插入回合拒绝。
+
+2026-09-26 B航班入口准备：verify-dsh-e2e --prepare-b检查同A的首轮真实satisfied/accepted及解释、局改、预算、恢复、英文各已有成功H5证据才创建B。只在原schema和账本，隔离身份/Trip，航班明确synthetic，去掉bookingURL，通过正式PATCH采用及独立GET核对revision。setup门禁仅临时允许该Trip PATCH；启动保留B后只读恢复既有选择，不能改选。夹具创建意图先写本地状态，重启按固定artifactID恢复，不再次搜索票价；网页规划仍须正式输入框。未实际运行前不能宣称B已验收。

@@ -25,7 +25,8 @@ const budgetSnapshot = readBudget(budgetPath)
 const executeModel = process.argv.includes('--model')
 const executeSearch = process.argv.includes('--search')
 const executeCommit = process.argv.includes('--commit')
-const prepare = process.argv.includes('--prepare')
+const prepareB = process.argv.includes('--prepare-b')
+const prepare = process.argv.includes('--prepare') || prepareB
 const serve = process.argv.includes('--serve')
 const browserExecute = process.argv.includes('--execute') && serve
 const execute = executeModel || executeSearch || executeCommit
@@ -103,6 +104,7 @@ function acquireLock() {
 }
 Object.assign(process.env, settings, { NODE_ENV: 'development', HOST: '127.0.0.1', DATABASE_URL: connectionUrl,
   REDIS_ENABLED: 'false', FLIGHTOR_AGENT_ENGINE: 'dsh', DSH_BUDGET_PATH: budgetPath,
+  MEDIA_USER_AGENT: settings.MEDIA_USER_AGENT || process.env.MEDIA_USER_AGENT || 'FlightOR/0.1 (local DSH acceptance)',
   DSH_DATA_DIRECTORY: path.join(root, '.dsh-data'), LOG_LEVEL: 'error' })
 const { parseEnv } = await import('../dist/config/env.js')
 const env = parseEnv(process.env)
@@ -123,6 +125,7 @@ function recordEvent(event) {
 }
 const localizationRequest = new AsyncLocalStorage()
 let setupWritesAllowed = true
+let setupAdoptionTrip
 let probeCommitAllowed = executeCommit
 function forbidden(name) { recordEvent({ type: 'forbidden', name, at: new Date().toISOString() }); throw Error(`DSH_E2E_FORBIDDEN_${name}`) }
 async function installGuards() {
@@ -151,7 +154,7 @@ async function http(method, url, token, body) {
 }
 function saveProbeResult(state, kind, status, details) {
   if (status === 'passed' && observation.writeFailures) throw Error('DSH_E2E_OBSERVATION_WRITE_FAILED')
-  state.probes[kind] = { status, recordedAt: new Date().toISOString(), ...details }
+  state.probes[kind] = { ...details, status, recordedAt: new Date().toISOString() }
   state.probeAttempts = [...(state.probeAttempts ?? []), { kind, ...state.probes[kind] }]
   writePrivate(statePath, state)
   writePrivate(path.join(directory, 'report.private.json'), { schema, cases: Object.entries(state.cases).map(([id, value]) => ({ id, ...value })), probes: state.probes })
@@ -254,8 +257,10 @@ try {
     if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) return
     const pathOnly = request.url.split('?')[0]
     if (request.method === 'POST' && /^\/v1\/agent\/turns\/[^/]+\/cancel$/.test(pathOnly)) return
+    if (setupWritesAllowed && setupAdoptionTrip && request.method === 'PATCH' && pathOnly === `/v1/trips/${setupAdoptionTrip}`) return
     if (setupWritesAllowed && (request.method === 'POST' && ['/v1/trips', '/v1/conversations'].includes(pathOnly))) return
     const writesPlan = pathOnly === '/v1/agent/turns' || pathOnly === '/v1/agent/converse' || pathOnly.endsWith('/localization')
+      || request.method === 'POST' && /^\/v1\/artifacts\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/media$/i.test(pathOnly)
     if (executeCommit && probeCommitAllowed && request.method === 'POST' && pathOnly === '/v1/agent/turns') { probeCommitAllowed = false; return }
     if (!browserExecute || !probesPassed || !writesPlan) return reply.code(403).send({ error: { code: 'DSH_E2E_READ_ONLY' } })
   })
@@ -290,6 +295,78 @@ try {
   setupWritesAllowed = false
   const entries = [{ id: 'A', tripId, conversationId, token, user: { publicId: identity.publicId, nickname: identity.nickname },
     localStorage: { profile: { uid: identity.publicId, nickname: identity.nickname, avatarUrl: identity.avatarUrl, loginMethod: 'local' }, access_token: token, refresh_token: '' } }]
+
+  if (prepareB) {
+    const reportRoot = path.resolve(root, '../output/playwright/dsh-e2e-20260924')
+    const reports = fs.readdirSync(reportRoot).filter(name => /^A-.*\.json$/.test(name) && !name.includes('restart-proof'))
+      .map(name => ({ name, value: JSON.parse(fs.readFileSync(path.join(reportRoot, name), 'utf8')) }))
+      .filter(({ value }) => value.tripId === state.cases.A.tripId && value.conversationId === state.cases.A.conversationId)
+    const passed = mode => reports.some(({ value }) => value.mode === mode && value.result === 'observed' && !value.failure)
+    const initial = reports.some(({ value }) => value.mode === 'round-1' && value.terminal?.response?.delivery?.status === 'satisfied'
+      && value.authoritativeAfter?.guide?.payload?.publication?.status === 'accepted')
+    if (!initial || !['round-2', 'round-3', 'round-4', 'restore', 'localize'].every(passed)) throw Error('DSH_E2E_A_FULL_FRONTEND_ACCEPTANCE_REQUIRED')
+  }
+  if (prepareB || state.cases.B) {
+    const bIdentity = await identityRepository.resolveWechat({ providerSubject: 'flightor-dsh-e2e-20260924-B', nickname: 'DSH E2E B', avatarUrl: '' })
+    const bToken = await issueAccessToken(bIdentity, env)
+    secretValues.push(bToken)
+    let b = state.cases.B
+    setupWritesAllowed = true
+    if (!b) {
+      const created = await http('POST', `${baseUrl}/v1/trips`, bToken, { title: 'DSH E2E B adopted flight Tokyo', initial_context: {
+        origin, destinationIntent: { mode: 'explicit', required: [city], preferred: [], excluded: [] },
+        departureWindow: { from: travelFrom, to: travelFrom, precision: 'exact' }, travelDays: 2,
+        budget: { amount: 4000, currency: 'CNY', scope: 'trip' }, interests: ['文化', '小吃'], pace: 'relaxed',
+        notes: ['隔离验收合成航班fixture；只用已明确采用航班，不查票或换票。'] } })
+      b = state.cases.B = { tripId: created.trip.id, ownerPublicId: bIdentity.publicId }
+      writePrivate(statePath, state)
+    }
+    if (b.ownerPublicId !== bIdentity.publicId) throw Error('DSH_E2E_B_OWNER_CHANGED')
+    if (!b.conversationId) {
+      b.conversationId = (await http('POST', `${baseUrl}/v1/conversations`, bToken, { trip_id: b.tripId })).conversation.id
+      writePrivate(statePath, state)
+    }
+    const workspace = await http('GET', `${baseUrl}/v1/trips/${b.tripId}/workspace`, bToken)
+    if (!b.flightFixture && workspace.trip.selectedFlight) throw Error('DSH_E2E_B_UNEXPECTED_SELECTION')
+    const { PostgresArtifactRepository } = await import('../dist/artifacts/postgres.js')
+    const bArtifacts = new PostgresArtifactRepository(db, bIdentity.userId)
+    if (!b.flightFixture) {
+      const sample = JSON.parse(fs.readFileSync(path.join(root, 'test/fixtures/g1-publication-v1-original-samples.json'), 'utf8'))
+        .cases.find(value => value.id === 'selectedFlight').legacy.selectedFlightArtifact.payload
+      const offer = structuredClone(sample.offers.find(value => value.transferType === 'direct' && value.segments.length === 1))
+      if (!offer) throw Error('DSH_E2E_B_FIXTURE_MISSING')
+      offer.id = `fixture-direct-PEK-NRT-${travelFrom}`; delete offer.bookingUrl
+      offer.segments = offer.segments.map(segment => ({ ...segment, departsAt: `${travelFrom} 08:00`, arrivesAt: `${travelFrom} 12:30` }))
+      const artifactId = randomUUID(), checkedAt = new Date().toISOString()
+      const verification = { status: 'verified', checkedAt, confidence: 1, sources: [{ provider: 'synthetic-dsh-acceptance-fixture', reference: 'fixture-not-live-price' }] }
+      b.flightFixture = { artifactId, offerId: offer.id, provenance: 'synthetic, not a live fare or booking', segments: offer.segments,
+        createInput: { id: artifactId, tripId: b.tripId, conversationId: b.conversationId, tripContextVersion: workspace.trip.contextVersion,
+          type: 'flight_search', schemaVersion: 1, sourceArtifactIds: [],
+          payload: { id: artifactId, type: 'flight_search', query: { ...sample.query, departureDate: travelFrom }, offers: [offer],
+            provider: 'synthetic-dsh-acceptance-fixture', checkedAt, verification }, verification } }
+      writePrivate(statePath, state)
+    }
+    if (!await bArtifacts.get(b.flightFixture.artifactId)) await bArtifacts.create(b.flightFixture.createInput)
+    if (!workspace.trip.selectedFlight) {
+      setupAdoptionTrip = b.tripId
+      const adopted = await http('PATCH', `${baseUrl}/v1/trips/${b.tripId}`, bToken, { expectedVersion: workspace.trip.version,
+        selectedFlight: { kind: 'offer', artifactId: b.flightFixture.artifactId, offerId: b.flightFixture.offerId, layoverPreference: 'airport_only' } })
+      setupAdoptionTrip = undefined
+      b.selection = adopted.trip.selectedFlight
+      writePrivate(statePath, state)
+    } else {
+      if (workspace.trip.selectedFlight.artifactId !== b.flightFixture.artifactId || workspace.trip.selectedFlight.offerId !== b.flightFixture.offerId)
+        throw Error('DSH_E2E_B_SELECTION_CHANGED')
+      b.selection ??= workspace.trip.selectedFlight
+    }
+    const verified = await http('GET', `${baseUrl}/v1/trips/${b.tripId}/workspace`, bToken)
+    if (JSON.stringify(verified.trip.selectedFlight) !== JSON.stringify(b.selection)) throw Error('DSH_E2E_B_ADOPTION_READBACK_MISMATCH')
+    setupWritesAllowed = false
+    writePrivate(statePath, state)
+    entries.push({ id: 'B', tripId: b.tripId, conversationId: b.conversationId, token: bToken,
+      user: { publicId: bIdentity.publicId, nickname: bIdentity.nickname },
+      localStorage: { profile: { uid: bIdentity.publicId, nickname: bIdentity.nickname, loginMethod: 'local' }, access_token: bToken, refresh_token: '' } })
+  }
   const transportPath = path.join(directory, 'transport.private.json')
   writePrivate(transportPath, { baseUrl, entries, schema, budgetPath,
     browserContract: 'Use real fetch/XHR from H5 origin with Authorization bearer token; direct app.inject is not accepted as E2E evidence.' })
@@ -323,7 +400,7 @@ try {
         turn = await http('GET', `${baseUrl}/v1/agent/turns/${accepted.turnId}`, target.token)
         if (Date.now() > deadline) throw Error('DSH_E2E_COMMIT_POLL_DEADLINE')
       } while (!['completed', 'failed', 'cancelled'].includes(turn.status))
-      const evidence = { status: turn.status, delivery: turn.response?.delivery?.status, artifactRefs: turn.response?.artifactRefs ?? [], stopReason: turn.response?.stopReason }
+      const evidence = { turnStatus: turn.status, delivery: turn.response?.delivery?.status, artifactRefs: turn.response?.artifactRefs ?? [], stopReason: turn.response?.stopReason }
       writePrivate(path.join(directory, `commit-${accepted.turnId}.json`), { accepted, turn, durationMs: performance.now() - commitStarted })
       if (turn.status !== 'completed' || turn.response?.delivery?.status !== 'satisfied' || !evidence.artifactRefs.some(ref => ref.type === 'travel_guide')) throw Error('DSH_E2E_COMMIT_NOT_ACCEPTED')
       const ref = evidence.artifactRefs.find(ref => ref.type === 'travel_guide')
