@@ -70,3 +70,7 @@ enrichment 是后续素材服务的独立响应扩展位置，本轮没有 Provi
 [H5请求断言](publication-ui-evidence/playwright-report.json)、[微信文字/恢复/请求断言](publication-ui-evidence/weapp-report.json)、[147项前端离线检查输出](publication-ui-evidence/offline-report.json)。最终页面批次为 2026-09-22 13:37–13:41（Asia/Shanghai）；微信构建指纹 `ef2c5a7b8fbc64df13f3558fc847b6a618fde6306bf3ff941945eb208695d7cb`。构建来自保留其他任务未提交修改的工作区；本提交只纳入本轮文件/文档增量。截图人工复核通过，微信为模拟器截图，不是真机。
 
 命令：先 `npm run build:h5`、`npm run build:weapp`；H5使用已启动的 `node scripts/serve-h5.cjs`，然后分别运行 `node scripts/qa-publication-ui-h5.cjs` 与 `node scripts/qa-publication-ui-weapp.cjs`。微信须已有登录/9432自动化连接，脚本不重装 SDK 或修改身份。不要与其他微信 mock/真实规划同时执行。
+
+
+2026-09-26用户明确批准DSH验收中唯一前端例外：Plan页存在旧攻略时，纯解释（stopReason=responded、delivery=not_requested）显示当前会话的同locale回复，不再被旧publication.reply覆盖。攻略提交仍显示accepted publication.reply；异语言旧回复仍不展示。不改页面布局、交互或API字段。真实暴露案例的API已回答谷根千原因且无搜索/写入，旧页面却重复保存文字；对应组件回归覆盖解释、locale保护和提交尾句隔离，真实重测另记DSH D4。
+本批实际Plan组件离线hook集成13/13通过；正式H5构建成功（Webpack62.721s，既有体积警告）。该构建尚不等于解释页面已验收，以真实D4回合为准。

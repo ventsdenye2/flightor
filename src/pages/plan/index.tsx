@@ -164,7 +164,9 @@ function PlanPage() {
       productionCancelling={chatStore.turnCancelling}
       locale={locale}
       productionError={productionError || chatStore.multiError}
-      productionReply={productionRef?.type === 'travel_guide' ? (productionResult?.key === resultKey ? productionResult.reply : undefined)
+      productionReply={lastTurn?.delivery?.status === 'not_requested' && lastTurn?.stopReason === 'responded'
+        ? (lastTurn.assistant?.locale && lastTurn.assistant.locale !== locale ? undefined : lastTurn.assistant?.content)
+        : productionRef?.type === 'travel_guide' ? (productionResult?.key === resultKey ? productionResult.reply : undefined)
         : lastTurn?.assistant?.locale && lastTurn.assistant.locale !== locale ? undefined : lastTurn?.assistant?.content}
       productionPrompt={lastTurn?.user.content}
       productionResultAvailable={Boolean(result)}

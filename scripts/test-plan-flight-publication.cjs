@@ -48,6 +48,7 @@ function harness() {
     refreshWorkspace: async () => {}, send: async () => true, cancelTurn: async () => {} }
   const userStore = { profile: { uid: 'owner-1' }, sessionRevision: 1 }
   const requests = []
+  let guideTransport = async () => { throw new Error('Unexpected guide load') }
   let transport = async id => artifact(id, chatStore.tripId)
   let workspace = async () => ({ trip: { id: chatStore.tripId, selectedFlight: { kind: 'offer', artifactId: 'A', offerId: 'offer-A', revision: 1 } } })
   const stubs = {
@@ -62,7 +63,7 @@ function harness() {
     '../../components/common/LoginSheet': { __esModule: true, default: 'LoginSheet' },
     '../../features/ui-experience/PlannerPage': { __esModule: true, default: 'PlannerPage' },
     '../../features/ui-experience/FlightDecisionPanel': { FlightDecisionPanel: 'FlightDecisionPanel' },
-    '../../services/productionTripService': { loadProductionTrip: async () => { throw new Error('Unexpected guide load') } },
+    '../../services/productionTripService': { loadProductionTrip: (...args) => guideTransport(...args) },
     '../../services/plannerTelemetry': { plannerTelemetry: { now: () => 100 } },
     '../../components/artifacts/payload': { record: value => value && typeof value === 'object' ? value : undefined,
       displayOffers: payload => payload.offers ?? [], displayOfferById: (payload, id) => payload.offers?.find(offer => offer.id === id) },
@@ -85,7 +86,7 @@ function harness() {
     throw new Error('Unstable render')
   }
   return { chatStore, userStore, requests, render, show: () => show(), setTransport: value => { transport = value },
-    setWorkspace: value => { workspace = value }, planner: tree => collect(tree, 'PlannerPage')[0],
+    setGuide: value => { guideTransport = value }, setWorkspace: value => { workspace = value }, planner: tree => collect(tree, 'PlannerPage')[0],
     panels: tree => collect(collect(tree, 'PlannerPage')[0]?.props.flightDecision, 'FlightDecisionPanel') }
 }
 
@@ -98,6 +99,23 @@ async function selectedHarness() {
 }
 
 async function main() {
+  await test('current explanation overrides old publication reply without changing the guide; commits retain accepted reply', async () => {
+    const h = harness()
+    h.chatStore.artifactRefs = [{ id: 'guide', type: 'travel_guide', schemaVersion: 1 }]
+    h.setGuide(async () => ({ guide: { id: 'guide', payload: { publication: { reply: '攻略已保存。' } } },
+      presentation: { destination: 'Tokyo', route: [], days: [], publication: { status: 'accepted' } } }))
+    h.chatStore.timeline = [{ user: { content: '为什么推荐？' }, assistant: { content: '谷根千适合慢慢看老街文化。', locale: 'zh' },
+      stopReason: 'responded', delivery: { status: 'not_requested' }, artifactRefs: [] }]
+    h.render(); await flush()
+    assert.equal(h.planner(h.render()).props.productionReply, '谷根千适合慢慢看老街文化。')
+    h.chatStore.timeline[0].assistant.locale = 'en'
+    assert.equal(h.planner(h.render()).props.productionReply, undefined)
+    h.chatStore.timeline[0].assistant = { content: '未经接纳的模型尾句', locale: 'zh' }
+    h.chatStore.timeline[0].stopReason = 'completed'
+    h.chatStore.timeline[0].delivery = { status: 'satisfied' }
+    assert.equal(h.planner(h.render()).props.productionReply, '攻略已保存。')
+  })
+
   await test('adopted A and newly published B both load and render before final reply', async () => {
     const h = await selectedHarness()
     h.chatStore.isThinking = true
