@@ -1,25 +1,29 @@
-DSH E2E: FAIL
+DSH E2E: PASS (scoped formal-H5 acceptance after retained failures and repairs; not G1)
 
-Frontend send: FAIL (not run; commit probe gate)
-Official API: PASS (authenticated probe POST/poll)
+Frontend send: PASS
+Official API: PASS
 DSH engine: PASS
 DeepSeek model: PASS
 DeepSeek search: PASS
-Evidence: PASS (earlier real search probe)
-Guide commit: FAIL
-Publication accepted: FAIL
-Frontend rendered: FAIL (accepted guide absent)
-Follow-up explanation: FAIL (live H5 not run)
-Local edit: FAIL (live H5 not run)
-Refresh restore: FAIL (accepted guide absent)
-English localization: FAIL (live H5 not run)
+Evidence: PASS
+Guide commit: PASS
+Publication accepted: PASS
+Frontend rendered: PASS
+Follow-up explanation: PASS
+Local edit: PASS
+Refresh restore: PASS
+English localization: PASS
 
-click -> accepted UI: N/A
-model calls (cumulative budget admissions): 91
-search calls (cumulative budget admissions): 32
-last probe actual main model HTTP: 10
-last probe actual official search HTTP: 8 (9 admissions; one invalid query)
-known cost: unavailable (no trusted monetary receipts)
-unknown/reserved cost: US$6.20
-remaining authorized amount: US$0.80
-search capacity: 0; all paid routes stopped
+click -> accepted UI: 26114.621 ms (latest B slot edit; first B accepted retry 27713.109 ms)
+A original click -> recovered accepted UI: 63363467 ms (includes overnight interruption/repair; not continuous success)
+model calls: 5 main in latest B edit; cumulative ledger admissions 258 includes 68 search calls and localization
+search calls: 1 latest B edit; cumulative 68
+web_fetch calls: 2 latest B edit
+commit calls: 2 latest B edit; needs_revision: 1
+known cost: unavailable (no trusted monetary receipt; recorded known component is 0, not free usage)
+unknown/reserved cost: US$15.76 cumulative; US$0.32 latest B edit
+Fixture: B adopted synthetic flight; no real airfare purchase
+Real: formal H5/API, DSH, official DeepSeek model/search, evidence, guide and publication
+Backend code SHA: bf42bf80283ba39f062c37db79d9d0a92bd20f32
+Runner code SHA: be8b8937a1e787ca79012bf8c92495f5ac3f4d6b
+Evidence delivery SHA: see the commit containing this record and final task reply / remote branch HEAD

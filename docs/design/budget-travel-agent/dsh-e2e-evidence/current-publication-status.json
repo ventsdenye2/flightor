@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-09-26T10:17:50.799Z",
+  "source": "PostgreSQL read-only transaction",
+  "schema": "dsh_e2e_20260924",
+  "transactionReadOnly": true,
+  "artifacts": [
+    {
+      "case": "A",
+      "artifact_id": "01a0dce0-8bfb-711a-b770-1a2d0f7644e6",
+      "trip_id": "01a0d418-5576-74a6-b4d4-93925323af68",
+      "artifact_trip_context_version": 4,
+      "current_trip_context_version": 4,
+      "guide_content_hash": "23874cafcfbf4a0c7106de744dbd69d6a33acb11c2ea00c3df5797d612bb5d52",
+      "zh_status": "accepted",
+      "en_status": "accepted"
+    },
+    {
+      "case": "B",
+      "artifact_id": "01a0dd2b-9099-706d-bd2e-5cbc37fd25f6",
+      "trip_id": "01a0dce3-0045-7154-873a-97fb51f9b423",
+      "artifact_trip_context_version": 1,
+      "current_trip_context_version": 1,
+      "guide_content_hash": "7e4ef89a4f7915537e681282c3aff9e42fed96c5053d3a6fb3dd4f6ecf9202ae",
+      "zh_status": "accepted",
+      "en_status": null
+    }
+  ]
+}

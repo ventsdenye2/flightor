@@ -1,0 +1,3542 @@
+{
+  "version": 1,
+  "status": "FAIL: latest backend guide accepted; frontend opened non-accepted draft",
+  "checkpoint": "2026-09-25T14:00:52.708Z",
+  "attempts": [
+    {
+      "case": "A",
+      "mode": "round-1",
+      "startedAt": "2026-09-25T13:37:52.335Z",
+      "finishedAt": "2026-09-25T13:39:07.463Z",
+      "tripId": "01a0d418-5576-74a6-b4d4-93925323af68",
+      "conversationId": "01a0d418-5593-7374-bc52-30506999e1b0",
+      "browser": "installed Chrome, headed, isolated context",
+      "timingEvidence": "Node monotonic response observations and polled visible DOM; not browser paint timestamps. Readable-guide timing includes opening the result after terminal API/authoritative checks and is an observed upper bound, not the earliest possible guide paint.",
+      "timings": {
+        "readyMs": 5132.566,
+        "clickedMs": 5621.733,
+        "postObservedMs": 5804.333,
+        "apiPostResponseMs": 5806.276,
+        "apiAcceptedMs": 5806.276,
+        "firstVisibleProgressMs": 5837.36,
+        "firstProgressApiMs": 5855.386,
+        "terminalApiMs": 73822.36,
+        "finalUiObservedMs": 74731.552,
+        "clickToAckMs": 184.54299999999967,
+        "clickToFinalUiMs": 69109.81899999999
+      },
+      "browserErrors": [],
+      "result": "failed",
+      "message": "机票我已经准备好了，不用查航班。\n帮我安排东京两天旅行，喜欢文化和小吃，节奏轻松。\n两天游玩预算目标1500元人民币。\n请研究合适的地方并保存攻略。",
+      "postCount": 1,
+      "visibleText": "FlightOR\n重新输入\n我的旅行需求\n机票我已经准备好了，不用查航班。\n帮我安排东京两天旅行，喜欢文化和小吃，节奏轻松。\n两天游玩预算目标1500元人民币。\n请研究合适的地方并保存攻略。\nFlightOR\n我的旅行规划\n本次规划未完成\n这次未能给出合适的说明，请换一种方式描述你想了解的问题。\n重新规划\n修改想法\n\n规划\n\n探索\n\n行程\n\n我的",
+      "plannerVisibleText": "FlightOR\n重新输入\n我的旅行需求\n机票我已经准备好了，不用查航班。\n帮我安排东京两天旅行，喜欢文化和小吃，节奏轻松。\n两天游玩预算目标1500元人民币。\n请研究合适的地方并保存攻略。\nFlightOR\n我的旅行规划\n本次规划未完成\n这次未能给出合适的说明，请换一种方式描述你想了解的问题。\n重新规划\n修改想法\n\n规划\n\n探索\n\n行程\n\n我的",
+      "failureSummary": "AssertionError [ERR_ASSERTION]: Guide delivery is not satisfied\n+ actual - expected\n\n+ 'not_requested'\n- 'satisfied'",
+      "events": [
+        {
+          "type": "request",
+          "atMs": 4614.766,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "request",
+          "atMs": 4621.514,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 4760.972,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 4768.174,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 5104.237,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 5124.765,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 5804.333,
+          "method": "POST",
+          "path": "/v1/agent/turns"
+        },
+        {
+          "type": "request",
+          "atMs": 5806.65,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 5806.276,
+          "method": "POST",
+          "path": "/v1/agent/turns",
+          "status": 202
+        },
+        {
+          "type": "response",
+          "atMs": 5855.386,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 7921.372,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 7931.341,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 9935.739,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 9958.011,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 12026.596,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 12110.448,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 14181.152,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 14226.372,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 16262.364,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 16314.389,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 18415.371,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 18446.634,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 20456.52,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 20468.667,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 22465.742,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 22584.627,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 24590.999,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 24645.563,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 26728.322,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 26790.126,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 28744.257,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 29220.828,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 31028.337,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 31070.435,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 33073.673,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 33084.024,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 35118.783,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 35131.779,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 37106.851,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 37119.442,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 39123.615,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 39136.11,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 41144.85,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 41320.005,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 43323.414,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 43338.914,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 45346.307,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 45356.858,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 47358.126,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 47370.388,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 49375.159,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 49403.935,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 51407.943,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 51420.095,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 53521.045,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 53541.389,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 55461.992,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 55541.8,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 57553.997,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 57564.819,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 59566.223,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 59578.536,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 61581.453,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 61600.534,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 63599.603,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 63620.681,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 65620.533,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 65638.761,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 67643.882,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 67656.944,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 69671.843,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 69692.597,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 71685.373,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "response",
+          "atMs": 71712.172,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 73772.184,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab"
+        },
+        {
+          "type": "request",
+          "atMs": 73835.72,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 73822.36,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8c9-7b66-715a-8f54-04b30a630eab",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 74611.213,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 74738.423,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 74764.783,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        }
+      ],
+      "budgetBefore": {
+        "modelCalls": 113,
+        "searchCalls": 35,
+        "entries": 113,
+        "sha256": "e99fa14d8d50aaa887985363f3bbc79ad2f880d01cb22ddb1e60401cf756084e",
+        "knownCostUsdMicros": 0,
+        "unknownReservedUsdMicros": 7320000,
+        "knownActualCostStatus": "unknown unless monetary receipt exists",
+        "unlimited": true
+      },
+      "budgetAfter": {
+        "modelCalls": 136,
+        "searchCalls": 46,
+        "entries": 136,
+        "sha256": "d4a7332bf17486a2ac03853de4dfe8e74d3d066f40a4c2f8aa95fd236bae9883",
+        "knownCostUsdMicros": 0,
+        "unknownReservedUsdMicros": 9120000,
+        "knownActualCostStatus": "unknown unless monetary receipt exists",
+        "unlimited": true
+      },
+      "terminal": {
+        "turnId": "01a0d8c9-7b66-715a-8f54-04b30a630eab",
+        "generationId": "01a0d8c9-7b66-715a-8f54-0052874c54c7",
+        "status": "completed",
+        "stage": "finalizing",
+        "startedAt": "2026-09-25T13:37:58.118Z",
+        "updatedAt": "2026-09-25T13:39:05.645Z",
+        "artifactRevision": 0,
+        "artifactRefs": [],
+        "response": {
+          "reply": "这次未能给出合适的说明，请换一种方式描述你想了解的问题。",
+          "stopReason": "model_failure",
+          "delivery": {
+            "status": "not_requested",
+            "artifactIds": [],
+            "missing": [],
+            "warnings": [],
+            "goals": []
+          },
+          "warnings": [
+            "dsh_model_incomplete",
+            "dsh_reply_withheld"
+          ],
+          "artifactRefs": []
+        }
+      },
+      "metrics": {
+        "mainModelCalls": 12,
+        "officialSearchCalls": 11,
+        "webFetchCalls": 13,
+        "commitAttempts": 0,
+        "needsRevision": 0,
+        "maxTokens": [
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096
+        ],
+        "finishReasons": [
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls"
+        ],
+        "modelReceipts": [
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:1",
+            "durationMs": 1700.0494999999937,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 816,
+              "outputTokens": 129,
+              "totalTokens": 18481,
+              "cacheReadTokens": 17536
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:2",
+            "durationMs": 1237.9964000000036,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 1046,
+              "outputTokens": 108,
+              "totalTokens": 19586,
+              "cacheReadTokens": 18432
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:3",
+            "durationMs": 1401.614499999996,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 155,
+              "outputTokens": 120,
+              "totalTokens": 19859,
+              "cacheReadTokens": 19584
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:4",
+            "durationMs": 987.824700000012,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 930,
+              "outputTokens": 114,
+              "totalTokens": 20884,
+              "cacheReadTokens": 19840
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:5",
+            "durationMs": 2229.6022999999986,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 210,
+              "outputTokens": 109,
+              "totalTokens": 21055,
+              "cacheReadTokens": 20736
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:6",
+            "durationMs": 850.5198999999993,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 945,
+              "outputTokens": 98,
+              "totalTokens": 22035,
+              "cacheReadTokens": 20992
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:7",
+            "durationMs": 785.6197999999858,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 1662,
+              "outputTokens": 99,
+              "totalTokens": 23777,
+              "cacheReadTokens": 22016
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:8",
+            "durationMs": 896.7808000000077,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 950,
+              "outputTokens": 94,
+              "totalTokens": 24724,
+              "cacheReadTokens": 23680
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:9",
+            "durationMs": 1445.2700000000186,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 2735,
+              "outputTokens": 92,
+              "totalTokens": 27531,
+              "cacheReadTokens": 24704
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:10",
+            "durationMs": 953.034799999994,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 916,
+              "outputTokens": 98,
+              "totalTokens": 28534,
+              "cacheReadTokens": 27520
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:11",
+            "durationMs": 1254.6998000000021,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 1852,
+              "outputTokens": 100,
+              "totalTokens": 30368,
+              "cacheReadTokens": 28416
+            }
+          },
+          {
+            "id": "01a0d8c9-7b66-715a-8f54-0052874c54c7:model:12",
+            "durationMs": 966.0313000000024,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 2723,
+              "outputTokens": 102,
+              "totalTokens": 33161,
+              "cacheReadTokens": 30336
+            }
+          }
+        ],
+        "clickToApiFinalMs": 68200.62700000001,
+        "clickToFirstProgressMs": 215.6269999999995,
+        "clickToResultCardMs": null,
+        "clickToAcceptedReadableUiMs": null
+      },
+      "execution": {
+        "executionId": "022eda27-e1a6-4d86-982d-ddc99eaa883d",
+        "generationId": "01a0d8c9-7b66-715a-8f54-0052874c54c7",
+        "tripId": "01a0d418-5576-74a6-b4d4-93925323af68",
+        "conversationId": "01a0d418-5593-7374-bc52-30506999e1b0",
+        "sequence": 236,
+        "at": "2026-09-25T13:39:05.621Z",
+        "elapsedMs": 67389.3952,
+        "type": "execution_result",
+        "reason": "error",
+        "calls": 12,
+        "resumed": false,
+        "rehydrated": false,
+        "cancelled": false
+      },
+      "session": {
+        "executionId": "022eda27-e1a6-4d86-982d-ddc99eaa883d",
+        "generationId": "01a0d8c9-7b66-715a-8f54-0052874c54c7",
+        "tripId": "01a0d418-5576-74a6-b4d4-93925323af68",
+        "conversationId": "01a0d418-5593-7374-bc52-30506999e1b0",
+        "sequence": 237,
+        "at": "2026-09-25T13:39:05.622Z",
+        "elapsedMs": 67390.2537,
+        "type": "session_mapping",
+        "sessionId": "6ff34392-9b16-4750-80cb-4f5940de1b5d",
+        "profile": "8cac59fe5ec3b863a37ab9a53e1c09a9cf3fa803e75314aa27ad04586323f932",
+        "epochHash": "97bb8a400a8341d1d60cf4b07f665eb759c0d382e49e4a3c7d9bd1fb6e5725d5"
+      },
+      "stages": [
+        {
+          "type": "execution_start",
+          "at": "2026-09-25T13:37:58.257Z",
+          "elapsedMs": 26.932900000014342
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:00.174Z",
+          "elapsedMs": 1944.0822000000044
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:00.206Z",
+          "elapsedMs": 1975.8938999999955
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:05.407Z",
+          "elapsedMs": 7176.4326
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:05.936Z",
+          "elapsedMs": 7705.79270000002
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:11.759Z",
+          "elapsedMs": 13528.5429
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:11.808Z",
+          "elapsedMs": 13577.480899999995
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:17.045Z",
+          "elapsedMs": 18814.14730000001
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:17.505Z",
+          "elapsedMs": 19274.525500000018
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:23.132Z",
+          "elapsedMs": 24901.607300000003
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:23.272Z",
+          "elapsedMs": 25041.14380000002
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:29.736Z",
+          "elapsedMs": 31506.004000000015
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:30.158Z",
+          "elapsedMs": 31927.194300000003
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:35.587Z",
+          "elapsedMs": 37356.548299999995
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:35.613Z",
+          "elapsedMs": 37382.3033
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:42.191Z",
+          "elapsedMs": 43960.60750000001
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:43.217Z",
+          "elapsedMs": 44987.058099999995
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:49.313Z",
+          "elapsedMs": 51082.2445
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:49.335Z",
+          "elapsedMs": 51104.31
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:54.183Z",
+          "elapsedMs": 55951.038700000005
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:54.199Z",
+          "elapsedMs": 55967.499899999995
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:38:57.968Z",
+          "elapsedMs": 59736.77370000002
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:39:02.589Z",
+          "elapsedMs": 64357.41340000002
+        },
+        {
+          "type": "execution_result",
+          "at": "2026-09-25T13:39:05.621Z",
+          "elapsedMs": 67389.3952
+        }
+      ],
+      "evidence": [
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "2612caef-b613-4cbf-8e9b-9dcc7885ca5e"
+          ],
+          "urls": [
+            "https://olachill.com/zh/blog/itineraries/tokyo-asakusa-ueno"
+          ]
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "8eb6afdd-ce91-41b9-a6c8-92eba9d2218e"
+          ],
+          "urls": [
+            "https://www.japan-guide.com/e/e3068.html"
+          ]
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "c705305a-c39a-43fc-befa-2c2007dcfde8"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/en/spot/15/"
+          ]
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "20c0cd97-d909-416d-adc2-3b07d8a687f4"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/en/destinations/northern-tokyo/yanaka-and-nezu/"
+          ]
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "26039926-5fbd-4b0c-bc76-b085ebe0e8b6"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/en/spot/123/index.html"
+          ]
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "34db6ac9-245b-4028-89fa-c0fda2a3604c"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/en/destinations/central-tokyo/tsukiji/"
+          ]
+        }
+      ],
+      "screenshots": [
+        "A-round-1-2026-09-25T13-37-52-334Z-failure.png"
+      ]
+    },
+    {
+      "case": "A",
+      "mode": "round-1",
+      "startedAt": "2026-09-25T13:45:17.816Z",
+      "finishedAt": "2026-09-25T13:46:24.055Z",
+      "tripId": "01a0d418-5576-74a6-b4d4-93925323af68",
+      "conversationId": "01a0d418-5593-7374-bc52-30506999e1b0",
+      "browser": "installed Chrome, headed, isolated context",
+      "timingEvidence": "Node monotonic response observations and polled visible DOM; not browser paint timestamps. Readable-guide timing includes opening the result after terminal API/authoritative checks and is an observed upper bound, not the earliest possible guide paint.",
+      "timings": {
+        "readyMs": 2864.371,
+        "clickedMs": 3055.556,
+        "postObservedMs": 3105.127,
+        "apiPostResponseMs": 3110.934,
+        "apiAcceptedMs": 3110.934,
+        "firstVisibleProgressMs": 3125.249,
+        "firstProgressApiMs": 3130.839,
+        "terminalApiMs": 65618.997,
+        "finalUiObservedMs": 66068.185,
+        "clickToAckMs": 55.378000000000156,
+        "clickToFinalUiMs": 63012.629
+      },
+      "browserErrors": [],
+      "result": "failed",
+      "message": "机票我已经准备好了，不用查航班。\n帮我安排东京两天旅行，喜欢文化和小吃，节奏轻松。\n两天游玩预算目标1500元人民币。\n请研究合适的地方并保存攻略。",
+      "postCount": 1,
+      "visibleText": "FlightOR\n重新输入\n我的旅行需求\n机票我已经准备好了，不用查航班。\n帮我安排东京两天旅行，喜欢文化和小吃，节奏轻松。\n两天游玩预算目标1500元人民币。\n请研究合适的地方并保存攻略。\nFlightOR\n我的旅行规划\n本次规划未完成\n本轮未能发布攻略，请确认当前条件后重试。\n重新规划\n修改想法\n\n规划\n\n探索\n\n行程\n\n我的",
+      "plannerVisibleText": "FlightOR\n重新输入\n我的旅行需求\n机票我已经准备好了，不用查航班。\n帮我安排东京两天旅行，喜欢文化和小吃，节奏轻松。\n两天游玩预算目标1500元人民币。\n请研究合适的地方并保存攻略。\nFlightOR\n我的旅行规划\n本次规划未完成\n本轮未能发布攻略，请确认当前条件后重试。\n重新规划\n修改想法\n\n规划\n\n探索\n\n行程\n\n我的",
+      "failureSummary": "AssertionError [ERR_ASSERTION]: Guide delivery is not satisfied\n+ actual - expected\n\n+ 'partial'\n- 'satisfied'",
+      "events": [
+        {
+          "type": "request",
+          "atMs": 2176.298,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "request",
+          "atMs": 2180.581,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 2601.404,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 2626.859,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 2835.462,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 2860.34,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 3105.127,
+          "method": "POST",
+          "path": "/v1/agent/turns"
+        },
+        {
+          "type": "request",
+          "atMs": 3113.661,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 3110.934,
+          "method": "POST",
+          "path": "/v1/agent/turns",
+          "status": 202
+        },
+        {
+          "type": "response",
+          "atMs": 3130.839,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 5135.219,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 5145.126,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 7147.125,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 7156.243,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 9159.773,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 9172.123,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 11175.973,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 11184.91,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 13188.657,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 13201.686,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 15205.71,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 15219.089,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 17221.923,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 17238.444,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 19243.123,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 19255.83,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 21259.829,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 21272.226,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 23276.006,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 23285.9,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 25307.951,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 25310.977,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 27306.567,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 27318.564,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 29326.599,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 29336.57,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 31339.526,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 31352.102,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 33355.67,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 33367.322,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 35372.994,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 35381.748,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 37384.753,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 37394.128,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 39398.505,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 39411.132,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 41414.672,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 41428.76,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 43434.514,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 43444.303,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 45447.444,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 45464.559,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 47467.818,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 47476.709,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 49479.858,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 49489.469,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 51493.033,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 51506.336,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 53509.476,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 53518.796,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 55522.398,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 55534.869,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 57543.305,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 57555.686,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 59559.508,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 59572.811,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 61577.03,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 61588.31,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 63594.942,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "response",
+          "atMs": 63608.301,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 65609.608,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b"
+        },
+        {
+          "type": "request",
+          "atMs": 65625.75,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 65618.997,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 65889.896,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 66071.392,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 66100.816,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        }
+      ],
+      "budgetBefore": {
+        "modelCalls": 136,
+        "searchCalls": 46,
+        "entries": 136,
+        "sha256": "d4a7332bf17486a2ac03853de4dfe8e74d3d066f40a4c2f8aa95fd236bae9883",
+        "knownCostUsdMicros": 0,
+        "unknownReservedUsdMicros": 9120000,
+        "knownActualCostStatus": "unknown unless monetary receipt exists",
+        "unlimited": true
+      },
+      "budgetAfter": {
+        "modelCalls": 151,
+        "searchCalls": 50,
+        "entries": 151,
+        "sha256": "cdcfafc00bb3c821e3294253a1d1313ca84bc58707d3a3abc575a72e1b13ef8d",
+        "knownCostUsdMicros": 0,
+        "unknownReservedUsdMicros": 10040000,
+        "knownActualCostStatus": "unknown unless monetary receipt exists",
+        "unlimited": true
+      },
+      "terminal": {
+        "turnId": "01a0d8d0-3d16-73cf-aee0-7879c88a111b",
+        "generationId": "01a0d8d0-3d15-710b-a948-134843641797",
+        "status": "completed",
+        "stage": "finalizing",
+        "startedAt": "2026-09-25T13:45:20.918Z",
+        "updatedAt": "2026-09-25T13:46:21.458Z",
+        "artifactRevision": 0,
+        "artifactRefs": [],
+        "response": {
+          "reply": "本轮未能发布攻略，请确认当前条件后重试。",
+          "stopReason": "goal_partial",
+          "delivery": {
+            "status": "partial",
+            "goalId": "01a0d8d0-f83b-77a4-826a-6ac0606c2b43",
+            "kind": "travel_guide",
+            "artifactIds": [],
+            "missing": [
+              "accepted_publication"
+            ],
+            "warnings": [],
+            "goals": [
+              {
+                "status": "partial",
+                "artifactIds": [],
+                "missing": [
+                  "accepted_publication"
+                ],
+                "warnings": [],
+                "goalId": "01a0d8d0-f83b-77a4-826a-6ac0606c2b43",
+                "kind": "travel_guide"
+              }
+            ]
+          },
+          "warnings": [],
+          "artifactRefs": []
+        }
+      },
+      "metrics": {
+        "mainModelCalls": 11,
+        "officialSearchCalls": 4,
+        "webFetchCalls": 9,
+        "commitAttempts": 3,
+        "needsRevision": 1,
+        "maxTokens": [
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096
+        ],
+        "finishReasons": [
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "stop"
+        ],
+        "modelReceipts": [
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:1",
+            "durationMs": 1984.2071999999998,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 17618,
+              "outputTokens": 135,
+              "totalTokens": 18009,
+              "cacheReadTokens": 256
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:2",
+            "durationMs": 1373.6328000000012,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 857,
+              "outputTokens": 121,
+              "totalTokens": 18898,
+              "cacheReadTokens": 17920
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:3",
+            "durationMs": 1244.8466999999982,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 506,
+              "outputTokens": 143,
+              "totalTokens": 19465,
+              "cacheReadTokens": 18816
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:4",
+            "durationMs": 1162.5504999999976,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 1875,
+              "outputTokens": 121,
+              "totalTokens": 21452,
+              "cacheReadTokens": 19456
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:5",
+            "durationMs": 1162.0355000000018,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 2311,
+              "outputTokens": 125,
+              "totalTokens": 23812,
+              "cacheReadTokens": 21376
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:6",
+            "durationMs": 1154.9591999999975,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 6097,
+              "outputTokens": 133,
+              "totalTokens": 30038,
+              "cacheReadTokens": 23808
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:7",
+            "durationMs": 993.1589999999997,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 475,
+              "outputTokens": 123,
+              "totalTokens": 30550,
+              "cacheReadTokens": 29952
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:8",
+            "durationMs": 10551.926,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 3819,
+              "outputTokens": 2072,
+              "totalTokens": 36355,
+              "cacheReadTokens": 30464
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:9",
+            "durationMs": 4297.1510999999955,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 2612,
+              "outputTokens": 976,
+              "totalTokens": 38020,
+              "cacheReadTokens": 34432
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:10",
+            "durationMs": 5601.381099999999,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 957,
+              "outputTokens": 1516,
+              "totalTokens": 39593,
+              "cacheReadTokens": 37120
+            }
+          },
+          {
+            "id": "01a0d8d0-3d15-710b-a948-134843641797:model:11",
+            "durationMs": 2484.6853000000046,
+            "failed": false,
+            "finishReason": "stop",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 202,
+              "outputTokens": 435,
+              "totalTokens": 40061,
+              "cacheReadTokens": 39424
+            }
+          }
+        ],
+        "clickToApiFinalMs": 62563.441000000006,
+        "clickToFirstProgressMs": 69.69299999999976,
+        "clickToResultCardMs": null,
+        "clickToAcceptedReadableUiMs": null
+      },
+      "execution": {
+        "executionId": "2ebd27ec-3786-4608-8004-59ccf96195db",
+        "generationId": "01a0d8d0-3d15-710b-a948-134843641797",
+        "tripId": "01a0d418-5576-74a6-b4d4-93925323af68",
+        "conversationId": "01a0d418-5593-7374-bc52-30506999e1b0",
+        "sequence": 162,
+        "at": "2026-09-25T13:46:21.430Z",
+        "elapsedMs": 60452.3348,
+        "type": "execution_result",
+        "reason": "completed",
+        "calls": 11,
+        "resumed": false,
+        "rehydrated": false,
+        "cancelled": false
+      },
+      "session": {
+        "executionId": "2ebd27ec-3786-4608-8004-59ccf96195db",
+        "generationId": "01a0d8d0-3d15-710b-a948-134843641797",
+        "tripId": "01a0d418-5576-74a6-b4d4-93925323af68",
+        "conversationId": "01a0d418-5593-7374-bc52-30506999e1b0",
+        "sequence": 163,
+        "at": "2026-09-25T13:46:21.431Z",
+        "elapsedMs": 60453.29359999999,
+        "type": "session_mapping",
+        "sessionId": "bea8c8ee-9b6d-4168-9465-729349a7cb81",
+        "profile": "7d491ef9d3cf70091b93036be4a41c9f6552275085190ff83b79586230a73700",
+        "epochHash": "97bb8a400a8341d1d60cf4b07f665eb759c0d382e49e4a3c7d9bd1fb6e5725d5"
+      },
+      "stages": [
+        {
+          "type": "execution_start",
+          "at": "2026-09-25T13:45:20.979Z",
+          "elapsedMs": 1.8809999999939464
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:45:24.375Z",
+          "elapsedMs": 3398.366399999999
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:45:33.222Z",
+          "elapsedMs": 12244.444499999998
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:45:34.763Z",
+          "elapsedMs": 13785.834099999993
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:45:40.454Z",
+          "elapsedMs": 19476.449699999997
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:45:44.351Z",
+          "elapsedMs": 23374.075599999996
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:45:49.338Z",
+          "elapsedMs": 28361.300299999988
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:45:52.676Z",
+          "elapsedMs": 31698.72230000001
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:45:56.689Z",
+          "elapsedMs": 35711.38220000001
+        },
+        {
+          "type": "tool_start",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T13:46:08.813Z",
+          "elapsedMs": 47835.52500000001
+        },
+        {
+          "type": "tool_end",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T13:46:08.938Z",
+          "elapsedMs": 47960.85830000001,
+          "durationMs": 125.40740000002552,
+          "errorCode": "DSH_GUIDE_NEEDS_REVISION",
+          "revisionReasons": [
+            "guide_duplicate_evidence"
+          ]
+        },
+        {
+          "type": "tool_start",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T13:46:13.266Z",
+          "elapsedMs": 52289.17049999999
+        },
+        {
+          "type": "tool_end",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T13:46:13.268Z",
+          "elapsedMs": 52291.349,
+          "durationMs": 2.389100000000326,
+          "errorCode": "INVALID_ARGUMENTS",
+          "revisionReasons": []
+        },
+        {
+          "type": "tool_start",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T13:46:18.899Z",
+          "elapsedMs": 57921.9911
+        },
+        {
+          "type": "tool_end",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T13:46:18.901Z",
+          "elapsedMs": 57923.489400000006,
+          "durationMs": 1.60120000000461,
+          "errorCode": "DSH_REPAIR_LIMIT",
+          "revisionReasons": []
+        },
+        {
+          "type": "execution_result",
+          "at": "2026-09-25T13:46:21.430Z",
+          "elapsedMs": 60452.3348
+        }
+      ],
+      "evidence": [
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "9b7edc66-d889-486b-a289-876f388810d2"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/book/list/11790/"
+          ]
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "6e527a9c-5bf5-4351-a1d4-05f3ef225399"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/book/list/11790/"
+          ]
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "59ee4698-b77d-4a68-9553-bd952aed20ac"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/fr/destinations/eastern-tokyo/asakusa/"
+          ]
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "bdd57d48-3b87-44f0-8b37-8a31b8b00619"
+          ],
+          "urls": [
+            "https://www.japan.travel/en/spot/1696/"
+          ]
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "2a5f7b6f-6e2e-4416-b604-6f4e592c78b9"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/en/destinations/northern-tokyo/ueno/"
+          ]
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "63a68fb6-4441-4497-823d-bea3fe3b3512"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/en/spot/71/index.html"
+          ]
+        }
+      ],
+      "screenshots": [
+        "A-round-1-2026-09-25T13-45-17-814Z-failure.png"
+      ]
+    },
+    {
+      "case": "A",
+      "mode": "round-1",
+      "startedAt": "2026-09-25T13:59:21.418Z",
+      "finishedAt": "2026-09-25T14:00:52.708Z",
+      "tripId": "01a0d418-5576-74a6-b4d4-93925323af68",
+      "conversationId": "01a0d418-5593-7374-bc52-30506999e1b0",
+      "browser": "installed Chrome, headed, isolated context",
+      "timingEvidence": "Node monotonic response observations and polled visible DOM; not browser paint timestamps. Readable-guide timing includes opening the result after terminal API/authoritative checks and is an observed upper bound, not the earliest possible guide paint.",
+      "timings": {
+        "readyMs": 9386.721,
+        "clickedMs": 9844.617,
+        "postObservedMs": 9909.304,
+        "firstVisibleProgressMs": 9931.387,
+        "apiPostResponseMs": 9923.24,
+        "apiAcceptedMs": 9923.24,
+        "firstProgressApiMs": 9961.433,
+        "firstVisibleResultCardMs": 72389.357,
+        "terminalApiMs": 75629.932,
+        "finalUiObservedMs": 75886.925,
+        "clickToAckMs": 78.62299999999959,
+        "clickToFinalUiMs": 66042.308
+      },
+      "browserErrors": [],
+      "result": "failed",
+      "message": "机票我已经准备好了，不用查航班。\n帮我安排东京两天旅行，喜欢文化和小吃，节奏轻松。\n两天游玩预算目标1500元人民币。\n请研究合适的地方并保存攻略。",
+      "postCount": 1,
+      "visibleText": "旅行详情\nEnglish\n已保存\nTokyo\nTokyo\n2026-10-24 · 2 天\n预算目标 · 全程\nCNY 1,500\n行程总额目标，不代表已核定花费。\n当前语言生成未完成\n已保存的其他语言版本仍可查看。\n终稿生成遇到技术问题。\n当前无法重试，请回到规划记录处理。\n刷新状态\n返回规划记录\n概览\n每日行程\n航班\n机票自备\n来源与署名",
+      "plannerVisibleText": "FlightOR\n重新输入\n我的旅行需求\n机票我已经准备好了，不用查航班。\n帮我安排东京两天旅行，喜欢文化和小吃，节奏轻松。\n两天游玩预算目标1500元人民币。\n请研究合适的地方并保存攻略。\nFlightOR\n我的旅行规划\nTokyo · 2 天\n已保存\n我的旅行安排\nTokyo\n价格待确认\n价格待确认\n查看行程\n当前语言生成未完成\n已保存的其他语言版本仍可查看。\n当前语言生成未完成\n修改我的想法\n查看航班\n\n规划\n\n探索\n\n行程\n\n我的",
+      "failureSummary": "locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.ux-publication-state--accepted') to be visible\u001b[22m\n\n    at inspectGuide (D:\\FunnyProject\\flightor-repo\\.worktrees\\dsh-backend\\scripts\\qa-dsh-e2e-h5.cjs:324:61)",
+      "events": [
+        {
+          "type": "request",
+          "atMs": 8042.665,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "request",
+          "atMs": 8047.845,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 9093.191,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 9117.772,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 9369.835,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 9382.847,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 9909.304,
+          "method": "POST",
+          "path": "/v1/agent/turns"
+        },
+        {
+          "type": "request",
+          "atMs": 9928.122,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 9923.24,
+          "method": "POST",
+          "path": "/v1/agent/turns",
+          "status": 202
+        },
+        {
+          "type": "response",
+          "atMs": 9961.433,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 12061.989,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 12108.338,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 14109.938,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 14117.573,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 16130.934,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 16164.286,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 18209.854,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 18247.449,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 20242.222,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 20248.778,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 22260.998,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 22329.862,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 24328.537,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 24356.18,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 26358.856,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 26371.456,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 28381.618,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 28416.64,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 30417.951,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 30434.101,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 32467.564,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 32487.168,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 34486.224,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 34512.952,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 36514.445,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 36535.252,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 38568.836,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 38573.241,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 40585.225,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 40696.834,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 42716.861,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 42719.494,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 44787.799,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 44820.263,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 46855.198,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 46917.705,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 49008.288,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 49013.734,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 50934.028,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 50942.464,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 52942.841,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 52956.141,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 54960.527,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 54969.953,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 56972.616,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 57001.321,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 59016.552,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 59043.437,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 61083.373,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 61105.848,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 63121.597,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 63143.063,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 65180.125,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 65204.557,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 67287.562,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 67313.363,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 69655.088,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 69668.472,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 71559.736,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "request",
+          "atMs": 71606.034,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-2690-7589-b437-e2adc39ad11a"
+        },
+        {
+          "type": "response",
+          "atMs": 71605.68,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 71686.705,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-267b-770d-8efe-1d3f65ef0a85"
+        },
+        {
+          "type": "request",
+          "atMs": 71691.874,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 71672.12,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-2690-7589-b437-e2adc39ad11a",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 71732.401,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-267b-770d-8efe-1d3f65ef0a85",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 72158.227,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 73601.957,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "response",
+          "atMs": 73613.66,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 75619.505,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f"
+        },
+        {
+          "type": "request",
+          "atMs": 75642.603,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 75629.932,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 75831.194,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-0322-76b9-9d9b-1a8a41a94cc5"
+        },
+        {
+          "type": "request",
+          "atMs": 75860.18,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-0322-76b9-9d9b-1a8a41a94cc5"
+        },
+        {
+          "type": "response",
+          "atMs": 75701.526,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 75890.796,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 75919.165,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-0322-76b9-9d9b-1a8a41a94cc5",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 75940.689,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-02da-715f-a338-97aa9f3e98d5"
+        },
+        {
+          "type": "request",
+          "atMs": 75954.858,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 75920.565,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-0322-76b9-9d9b-1a8a41a94cc5",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 75968.309,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-02da-715f-a338-97aa9f3e98d5",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 76012.948,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 76015.764,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 76067.585,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-2690-7589-b437-e2adc39ad11a"
+        },
+        {
+          "type": "response",
+          "atMs": 76071.372,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-2690-7589-b437-e2adc39ad11a",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 76081.513,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-267b-770d-8efe-1d3f65ef0a85"
+        },
+        {
+          "type": "response",
+          "atMs": 76087.18,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-267b-770d-8efe-1d3f65ef0a85",
+          "status": 200
+        },
+        {
+          "type": "request",
+          "atMs": 76246.524,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-0322-76b9-9d9b-1a8a41a94cc5"
+        },
+        {
+          "type": "request",
+          "atMs": 76254.048,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-0322-76b9-9d9b-1a8a41a94cc5"
+        },
+        {
+          "type": "request",
+          "atMs": 76280.501,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace"
+        },
+        {
+          "type": "response",
+          "atMs": 76253.843,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-0322-76b9-9d9b-1a8a41a94cc5",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 76280.262,
+          "method": "GET",
+          "path": "/v1/artifacts/01a0d8de-0322-76b9-9d9b-1a8a41a94cc5",
+          "status": 200
+        },
+        {
+          "type": "response",
+          "atMs": 76312.766,
+          "method": "GET",
+          "path": "/v1/trips/01a0d418-5576-74a6-b4d4-93925323af68/workspace",
+          "status": 200
+        }
+      ],
+      "budgetBefore": {
+        "modelCalls": 151,
+        "searchCalls": 50,
+        "entries": 151,
+        "sha256": "cdcfafc00bb3c821e3294253a1d1313ca84bc58707d3a3abc575a72e1b13ef8d",
+        "knownCostUsdMicros": 0,
+        "unknownReservedUsdMicros": 10040000,
+        "knownActualCostStatus": "unknown unless monetary receipt exists",
+        "unlimited": true
+      },
+      "budgetAfter": {
+        "modelCalls": 163,
+        "searchCalls": 53,
+        "entries": 163,
+        "sha256": "2f5be864d93c870cf42af603a8dd8d2528c2403347c8d6dd3d2c0de24b3615df",
+        "knownCostUsdMicros": 0,
+        "unknownReservedUsdMicros": 10760000,
+        "knownActualCostStatus": "unknown unless monetary receipt exists",
+        "unlimited": true
+      },
+      "terminal": {
+        "turnId": "01a0d8dd-3709-746b-b538-a4ce7ebe081f",
+        "generationId": "01a0d8dd-3708-736a-a1d6-f012bc92c826",
+        "status": "completed",
+        "stage": "finalizing",
+        "startedAt": "2026-09-25T13:59:31.337Z",
+        "updatedAt": "2026-09-25T14:00:36.295Z",
+        "artifactRevision": 1,
+        "artifactRefs": [
+          {
+            "id": "01a0d8de-2690-7589-b437-e2adc39ad11a",
+            "type": "travel_guide",
+            "schemaVersion": 1,
+            "tripContextVersion": 1,
+            "presentationHint": "travel_guide"
+          }
+        ],
+        "response": {
+          "reply": "东京两天攻略已按文化＋小吃、节奏轻松的方向排好并保存：第一天走浅草寺、仲见世与浅草小吃，第二天慢逛谷根千老街与根津神社。",
+          "stopReason": "completed",
+          "delivery": {
+            "status": "satisfied",
+            "goalId": "01a0d8d0-f83b-77a4-826a-6ac0606c2b43",
+            "kind": "travel_guide",
+            "artifactIds": [
+              "01a0d8de-2690-7589-b437-e2adc39ad11a"
+            ],
+            "missing": [],
+            "warnings": [
+              "evidence_partially_verified"
+            ],
+            "goals": [
+              {
+                "status": "satisfied",
+                "artifactIds": [
+                  "01a0d8de-2690-7589-b437-e2adc39ad11a"
+                ],
+                "missing": [],
+                "warnings": [
+                  "evidence_partially_verified"
+                ],
+                "goalId": "01a0d8d0-f83b-77a4-826a-6ac0606c2b43",
+                "kind": "travel_guide"
+              }
+            ]
+          },
+          "warnings": [],
+          "artifactRefs": [
+            {
+              "id": "01a0d8de-2690-7589-b437-e2adc39ad11a",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "presentationHint": "travel_guide"
+            }
+          ]
+        }
+      },
+      "metrics": {
+        "mainModelCalls": 9,
+        "officialSearchCalls": 3,
+        "webFetchCalls": 5,
+        "commitAttempts": 2,
+        "needsRevision": 1,
+        "maxTokens": [
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096
+        ],
+        "finishReasons": [
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "tool-calls",
+          "stop"
+        ],
+        "modelReceipts": [
+          {
+            "id": "01a0d8dd-3708-736a-a1d6-f012bc92c826:model:1",
+            "durationMs": 2057.5411,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 17262,
+              "outputTokens": 105,
+              "totalTokens": 18391,
+              "cacheReadTokens": 1024
+            }
+          },
+          {
+            "id": "01a0d8dd-3708-736a-a1d6-f012bc92c826:model:2",
+            "durationMs": 1133.8405999999995,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 1138,
+              "outputTokens": 132,
+              "totalTokens": 19574,
+              "cacheReadTokens": 18304
+            }
+          },
+          {
+            "id": "01a0d8dd-3708-736a-a1d6-f012bc92c826:model:3",
+            "durationMs": 1044.8129999999983,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 2881,
+              "outputTokens": 105,
+              "totalTokens": 22442,
+              "cacheReadTokens": 19456
+            }
+          },
+          {
+            "id": "01a0d8dd-3708-736a-a1d6-f012bc92c826:model:4",
+            "durationMs": 1149.325499999999,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 2870,
+              "outputTokens": 76,
+              "totalTokens": 25346,
+              "cacheReadTokens": 22400
+            }
+          },
+          {
+            "id": "01a0d8dd-3708-736a-a1d6-f012bc92c826:model:5",
+            "durationMs": 1360.4716999999982,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 408,
+              "outputTokens": 53,
+              "totalTokens": 25805,
+              "cacheReadTokens": 25344
+            }
+          },
+          {
+            "id": "01a0d8dd-3708-736a-a1d6-f012bc92c826:model:6",
+            "durationMs": 854.8502999999982,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 150,
+              "outputTokens": 60,
+              "totalTokens": 25938,
+              "cacheReadTokens": 25728
+            }
+          },
+          {
+            "id": "01a0d8dd-3708-736a-a1d6-f012bc92c826:model:7",
+            "durationMs": 11354.337200000002,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 6905,
+              "outputTokens": 2425,
+              "totalTokens": 35186,
+              "cacheReadTokens": 25856
+            }
+          },
+          {
+            "id": "01a0d8dd-3708-736a-a1d6-f012bc92c826:model:8",
+            "durationMs": 8439.838000000003,
+            "failed": false,
+            "finishReason": "tool-calls",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 2644,
+              "outputTokens": 2395,
+              "totalTokens": 37679,
+              "cacheReadTokens": 32640
+            }
+          },
+          {
+            "id": "01a0d8dd-3708-736a-a1d6-f012bc92c826:model:9",
+            "durationMs": 2481.1313999999984,
+            "failed": false,
+            "finishReason": "stop",
+            "model": "deepseek-v4-flash",
+            "maxTokens": 4096,
+            "thinking": "disabled",
+            "usage": {
+              "inputTokens": 830,
+              "outputTokens": 350,
+              "totalTokens": 38812,
+              "cacheReadTokens": 37632
+            }
+          }
+        ],
+        "clickToApiFinalMs": 65785.315,
+        "clickToFirstProgressMs": 86.77000000000044,
+        "clickToResultCardMs": 62544.740000000005,
+        "clickToAcceptedReadableUiMs": null
+      },
+      "execution": {
+        "executionId": "7a77ebf9-64dc-430f-a6e1-e057c028a431",
+        "generationId": "01a0d8dd-3708-736a-a1d6-f012bc92c826",
+        "tripId": "01a0d418-5576-74a6-b4d4-93925323af68",
+        "conversationId": "01a0d418-5593-7374-bc52-30506999e1b0",
+        "sequence": 116,
+        "at": "2026-09-25T14:00:35.927Z",
+        "elapsedMs": 64364.9437,
+        "type": "execution_result",
+        "reason": "completed",
+        "calls": 9,
+        "resumed": false,
+        "rehydrated": false,
+        "cancelled": false
+      },
+      "session": {
+        "executionId": "7a77ebf9-64dc-430f-a6e1-e057c028a431",
+        "generationId": "01a0d8dd-3708-736a-a1d6-f012bc92c826",
+        "tripId": "01a0d418-5576-74a6-b4d4-93925323af68",
+        "conversationId": "01a0d418-5593-7374-bc52-30506999e1b0",
+        "sequence": 117,
+        "at": "2026-09-25T14:00:35.928Z",
+        "elapsedMs": 64365.94030000002,
+        "type": "session_mapping",
+        "sessionId": "02ec062f-eddf-4857-8206-90c980df50f0",
+        "profile": "30bfe82caaaf3c1af73fcfd525b91999fecda17faaecf1556dadb88afed8bd6c",
+        "epochHash": "97bb8a400a8341d1d60cf4b07f665eb759c0d382e49e4a3c7d9bd1fb6e5725d5"
+      },
+      "stages": [
+        {
+          "type": "execution_start",
+          "at": "2026-09-25T13:59:31.564Z",
+          "elapsedMs": 2.29670000000624
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:59:36.506Z",
+          "elapsedMs": 4944.080699999991
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:59:44.569Z",
+          "elapsedMs": 13007.380900000047
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:59:46.748Z",
+          "elapsedMs": 15185.635700000043
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:59:52.017Z",
+          "elapsedMs": 20455.307700000005
+        },
+        {
+          "type": "activity",
+          "activity": "tool_start",
+          "toolName": "web_search",
+          "at": "2026-09-25T13:59:56.835Z",
+          "elapsedMs": 25273.27900000004
+        },
+        {
+          "type": "activity",
+          "activity": "tool_end",
+          "toolName": "web_search",
+          "at": "2026-09-25T14:00:04.294Z",
+          "elapsedMs": 32732.05250000005
+        },
+        {
+          "type": "tool_start",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T14:00:23.140Z",
+          "elapsedMs": 51577.92350000003
+        },
+        {
+          "type": "tool_end",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T14:00:23.811Z",
+          "elapsedMs": 52248.47289999999,
+          "durationMs": 670.5762000000104,
+          "errorCode": "DSH_GUIDE_NEEDS_REVISION",
+          "revisionReasons": [
+            "format"
+          ]
+        },
+        {
+          "type": "tool_start",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T14:00:32.474Z",
+          "elapsedMs": 60911.50719999999
+        },
+        {
+          "type": "tool_end",
+          "toolName": "commit_travel_guide",
+          "at": "2026-09-25T14:00:33.410Z",
+          "elapsedMs": 61847.532600000035,
+          "durationMs": 935.9000999999698,
+          "status": "accepted",
+          "revisionReasons": [],
+          "artifactId": "01a0d8de-2690-7589-b437-e2adc39ad11a"
+        },
+        {
+          "type": "execution_result",
+          "at": "2026-09-25T14:00:35.927Z",
+          "elapsedMs": 64364.9437
+        }
+      ],
+      "evidence": [
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "9768d947-90da-42b1-bd60-3c370f3a42e9"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/jp/story/guide/old-school-tokyo-a-guide-to-the-citys-traditional-side/index.html"
+          ]
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "4756b31c-0e70-41c8-9c7a-13fbfe3c1f45"
+          ],
+          "urls": [
+            "https://www.gotokyo.org/book/feature/17529/"
+          ]
+        },
+        {
+          "webTool": "web_search",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [],
+          "urls": []
+        },
+        {
+          "webTool": "web_fetch",
+          "evidenceRefs": [
+            "7b0d1aa6-30f0-43b8-945d-c7dc5818efb1"
+          ],
+          "urls": [
+            "https://travel.jr-central.co.jp/plan/area/tokyo/kankospot/asakusa/"
+          ]
+        }
+      ],
+      "screenshots": [
+        "A-round-1-2026-09-25T13-59-21-417Z-planner-final.png",
+        "A-round-1-2026-09-25T13-59-21-417Z-failure.png"
+      ],
+      "acceptedGuide": {
+        "id": "01a0d8de-2690-7589-b437-e2adc39ad11a",
+        "createdAt": "2026-09-25T14:00:32.669Z",
+        "tripContextVersion": 1,
+        "sourceArtifactIds": [
+          "01a0d8de-267b-770d-8efe-1d3f65ef0a85",
+          "c57976c7-6faf-47c9-a743-338b0405d7f8"
+        ],
+        "publication": {
+          "status": "accepted",
+          "locale": "zh",
+          "reply": "东京两天攻略已按文化＋小吃、节奏轻松的方向排好并保存：第一天走浅草寺、仲见世与浅草小吃，第二天慢逛谷根千老街与根津神社。",
+          "overview": "这份两天安排把重心放在东京「下町」的江户文化与街区小吃上，适合节奏轻松的玩法。第一天集中在浅草：从浅草寺与仲见世开始感受门前町氛围，再沿街尝现做点心与名物小吃，午后可上展望露台歇脚。第二天转到谷中、根津、千駄木一带，窄巷、老木屋与上百座寺院构成安静的散步环境，谷中银座商店街提供当地甜点与炸物小吃，最后以根津神社收尾。两天动线短、以步行衔接，符合你偏向文化体验和小吃、不赶行程的期待。",
+          "guideContentHash": "a9f02e69a8306bea5055e181176be83be65683f239d4e5c1c276fbb62cc68ed0",
+          "budgetAssessment": {
+            "status": "undetermined",
+            "knownSubtotal": null,
+            "scopeCoverage": "incomplete",
+            "notice": "预算为目标口径，尚未核定总费用。"
+          },
+          "evidenceCoverage": "partial",
+          "issues": []
+        },
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "8",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "latitude": 35.772,
+              "longitude": 140.3929
+            },
+            "kind": "visit",
+            "theme": "浅草寺与仲见世：江户下町的文化与小吃",
+            "items": [
+              {
+                "id": "guide_e334bec9a0ffb4cbb590283b",
+                "title": "浅草寺参拜",
+                "description": "东京都内历史最悠久的寺院，据传始建于七世纪。从雷门经参道走向宝藏门与本堂，沿途可见五重塔等建筑。",
+                "planningNote": "作为江户文化的起点，最能体现你想体验的传统氛围；早上前往人流较少，走起来符合轻松节奏。",
+                "recommendationReason": "作为江户文化的起点，最能体现你想体验的传统氛围；早上前往人流较少，走起来符合轻松节奏。",
+                "city": {
+                  "id": "8",
+                  "type": "city",
+                  "name": "Tokyo",
+                  "countryCode": "JP",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929
+                },
+                "category": "activity",
+                "reason": "interest_match",
+                "timeOfDay": "morning",
+                "sourceArtifactId": "c57976c7-6faf-47c9-a743-338b0405d7f8",
+                "sourceFindingId": "c_sensoji"
+              },
+              {
+                "id": "guide_a2e9baa5fe514e990acfd0e2",
+                "title": "仲见世商店街边走边吃",
+                "description": "连接雷门与宝藏门的古老商店街，聚集约九十家店铺，售卖人形烧、煎饼、雷おこし等传统点心和和杂货。",
+                "planningNote": "一片街区就能同时满足文化与小吃的两个偏好，点心分量小，适合不赶时间地边逛边尝。",
+                "recommendationReason": "一片街区就能同时满足文化与小吃的两个偏好，点心分量小，适合不赶时间地边逛边尝。",
+                "city": {
+                  "id": "8",
+                  "type": "city",
+                  "name": "Tokyo",
+                  "countryCode": "JP",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929
+                },
+                "category": "activity",
+                "reason": "interest_match",
+                "timeOfDay": "morning",
+                "sourceArtifactId": "c57976c7-6faf-47c9-a743-338b0405d7f8",
+                "sourceFindingId": "c_nakamise"
+              },
+              {
+                "id": "guide_5f951c154052815819a0f85d",
+                "title": "浅草名物炸肉饼小吃",
+                "description": "浅草一带的经典街头小吃，外皮酥脆、内里多汁，通常买一份站着吃完继续走。",
+                "planningNote": "正好对上你对小吃的兴趣，作为午后补充体力的轻食，不打断散步节奏。",
+                "recommendationReason": "正好对上你对小吃的兴趣，作为午后补充体力的轻食，不打断散步节奏。",
+                "city": {
+                  "id": "8",
+                  "type": "city",
+                  "name": "Tokyo",
+                  "countryCode": "JP",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929
+                },
+                "category": "activity",
+                "reason": "interest_match",
+                "timeOfDay": "afternoon",
+                "sourceArtifactId": "c57976c7-6faf-47c9-a743-338b0405d7f8",
+                "sourceFindingId": "c_mencchi"
+              },
+              {
+                "id": "guide_f2e3dd254330dbc510b5f549",
+                "title": "浅草文化观光中心展望露台",
+                "description": "位于雷门前的观光信息据点，提供多种语言的旅游咨询，顶层露台可俯瞰浅草街景与东京晴空塔。",
+                "planningNote": "轻松行程里需要一个随时可以坐下喘口气的地方，这里既能休息又能拿地图，帮第二天定路线。",
+                "recommendationReason": "轻松行程里需要一个随时可以坐下喘口气的地方，这里既能休息又能拿地图，帮第二天定路线。",
+                "city": {
+                  "id": "8",
+                  "type": "city",
+                  "name": "Tokyo",
+                  "countryCode": "JP",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929
+                },
+                "category": "activity",
+                "reason": "interest_match",
+                "timeOfDay": "flexible",
+                "sourceArtifactId": "c57976c7-6faf-47c9-a743-338b0405d7f8",
+                "sourceFindingId": "c_center"
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "8",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "latitude": 35.772,
+              "longitude": 140.3929
+            },
+            "kind": "visit",
+            "theme": "谷根千老街与根津神社慢行",
+            "items": [
+              {
+                "id": "guide_866f3a3d51ba59b71f985513",
+                "title": "谷根千老街漫步",
+                "description": "上野北侧的谷中、根津、千駄木一带，窄巷与低层老屋交错，散布着上百座寺院和改建成店铺的木造建筑。",
+                "planningNote": "与浅草的喧闹形成对比，安静又有生活感的江户韵味，正适合你想要的慢走式文化体验。",
+                "recommendationReason": "与浅草的喧闹形成对比，安静又有生活感的江户韵味，正适合你想要的慢走式文化体验。",
+                "city": {
+                  "id": "8",
+                  "type": "city",
+                  "name": "Tokyo",
+                  "countryCode": "JP",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929
+                },
+                "category": "activity",
+                "reason": "interest_match",
+                "timeOfDay": "morning",
+                "sourceArtifactId": "c57976c7-6faf-47c9-a743-338b0405d7f8",
+                "sourceFindingId": "c_yanesen"
+              },
+              {
+                "id": "guide_90c8d41d2b4e5f2f8d6aca39",
+                "title": "谷中银座商店街寻味小吃",
+                "description": "谷根千地区的主要商店街，可吃到当地甜点、炸肉饼与可乐饼等小食，也有工房与伴手礼老铺。",
+                "planningNote": "延续你对小吃的兴趣，用本地小店的味道收住这一天的文化散步，边走边吃不用特意安排正餐。",
+                "recommendationReason": "延续你对小吃的兴趣，用本地小店的味道收住这一天的文化散步，边走边吃不用特意安排正餐。",
+                "city": {
+                  "id": "8",
+                  "type": "city",
+                  "name": "Tokyo",
+                  "countryCode": "JP",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929
+                },
+                "category": "activity",
+                "reason": "interest_match",
+                "timeOfDay": "morning",
+                "sourceArtifactId": "c57976c7-6faf-47c9-a743-338b0405d7f8",
+                "sourceFindingId": "c_yanaka_ginza"
+              },
+              {
+                "id": "guide_e20f288e33f2a98a076b0bbc",
+                "title": "根津神社参拜",
+                "description": "谷根千一带历史悠久的古社，是当地散步路线上的文化地标，境内气氛沉静。",
+                "planningNote": "作为两天行程的收尾，用一处安静的参拜点把文化主题走完整，也给返程前留出从容时间。",
+                "recommendationReason": "作为两天行程的收尾，用一处安静的参拜点把文化主题走完整，也给返程前留出从容时间。",
+                "city": {
+                  "id": "8",
+                  "type": "city",
+                  "name": "Tokyo",
+                  "countryCode": "JP",
+                  "cityCode": "TYO",
+                  "latitude": 35.772,
+                  "longitude": 140.3929
+                },
+                "category": "activity",
+                "reason": "interest_match",
+                "timeOfDay": "afternoon",
+                "sourceArtifactId": "c57976c7-6faf-47c9-a743-338b0405d7f8",
+                "sourceFindingId": "c_nezujinja"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "022eda27-e1a6-4d86-982d-ddc99eaa883d.jsonl",
+      "sha256": "14ef501f807634eb58e40c0737e8da9d461f58f4eade943983b525d05b50cb64",
+      "events": 238
+    },
+    {
+      "file": "A-round-1-2026-09-25T13-37-52-334Z-failure.png",
+      "sha256": "432f1f494610eb262793801925a80ed4667c21c13c00dfbabddf79367ed151ea",
+      "kind": "actual_browser_screenshot"
+    },
+    {
+      "file": "2ebd27ec-3786-4608-8004-59ccf96195db.jsonl",
+      "sha256": "f0f88e81de3eec571dd49451c9db232c01ce7008b336ca878eb7fce9ad8500f4",
+      "events": 164
+    },
+    {
+      "file": "A-round-1-2026-09-25T13-45-17-814Z-failure.png",
+      "sha256": "036ef51b20f5d540f40791605b9f5aa8863a2054a9e629be831362c546c54e99",
+      "kind": "actual_browser_screenshot"
+    },
+    {
+      "file": "7a77ebf9-64dc-430f-a6e1-e057c028a431.jsonl",
+      "sha256": "0d0cdcfd2f148cdf1c9efcffa3e55ce8e2886aa84ed713788e030dae1589fab6",
+      "events": 118
+    },
+    {
+      "file": "A-round-1-2026-09-25T13-59-21-417Z-planner-final.png",
+      "sha256": "18373473bbb69ae6b89742c275deb06a5a7293f81b0411cf9a0ed18cffee87de",
+      "kind": "actual_browser_screenshot"
+    },
+    {
+      "file": "A-round-1-2026-09-25T13-59-21-417Z-failure.png",
+      "sha256": "4b26940a3fd7083ffac29f8728038eab4d326c977fdc4b883b2995d09e6529c8",
+      "kind": "actual_browser_screenshot"
+    }
+  ]
+}

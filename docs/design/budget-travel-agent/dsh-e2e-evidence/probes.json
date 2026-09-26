@@ -1,6 +1,6 @@
 {
   "baselineSha": "765f3acf65faf5aa23f5c0029f123b02018aee59",
-  "status": "FAIL: no real accepted guide or paid H5 flow yet",
+  "status": "FAIL: real recovery, explanation and local edit passed; budget follow-up and localization unfinished",
   "probes": [
     {
       "kind": "model",
@@ -327,6 +327,144 @@
       },
       "turnId": "01a0d647-f319-77fd-8b76-2c5b8291994e",
       "errorCode": "DSH_E2E_COMMIT_NOT_ACCEPTED"
+    },
+    {
+      "kind": "commit",
+      "status": "failed",
+      "recordedAt": "2026-09-25T13:18:49.931Z",
+      "probeCaseId": "COMMIT-5",
+      "durationMs": 26600.3073,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 7000000,
+          "maxModelCalls": 128,
+          "maxSearchCalls": 32,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000,
+          "unlimited": true
+        },
+        "model": 91,
+        "search": 32,
+        "usdMicros": 6200000,
+        "pending": 0,
+        "remainingUsdMicros": null
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 7000000,
+          "maxModelCalls": 128,
+          "maxSearchCalls": 32,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000,
+          "unlimited": true
+        },
+        "model": 98,
+        "search": 33,
+        "usdMicros": 6560000,
+        "pending": 0,
+        "remainingUsdMicros": null
+      },
+      "turnId": "01a0d8b7-8e71-753f-a83e-0fd522e4a090",
+      "errorCode": "DSH_E2E_COMMIT_NOT_ACCEPTED"
+    },
+    {
+      "kind": "commit",
+      "status": "failed",
+      "recordedAt": "2026-09-25T13:24:08.686Z",
+      "probeCaseId": "COMMIT-6",
+      "durationMs": 33785.2694,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 7000000,
+          "maxModelCalls": 128,
+          "maxSearchCalls": 32,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000,
+          "unlimited": true
+        },
+        "model": 98,
+        "search": 33,
+        "usdMicros": 6560000,
+        "pending": 0,
+        "remainingUsdMicros": null
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 7000000,
+          "maxModelCalls": 128,
+          "maxSearchCalls": 32,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000,
+          "unlimited": true
+        },
+        "model": 106,
+        "search": 34,
+        "usdMicros": 6960000,
+        "pending": 0,
+        "remainingUsdMicros": null
+      },
+      "turnId": "01a0d8bc-4f83-76da-9544-d146a32550e9",
+      "errorCode": "DSH_E2E_COMMIT_NOT_ACCEPTED"
+    },
+    {
+      "kind": "commit",
+      "status": "completed",
+      "recordedAt": "2026-09-25T13:28:41.982Z",
+      "probeCaseId": "COMMIT-7",
+      "durationMs": 24909.8096,
+      "beforeBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 7000000,
+          "maxModelCalls": 128,
+          "maxSearchCalls": 32,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000,
+          "unlimited": true
+        },
+        "model": 106,
+        "search": 34,
+        "usdMicros": 6960000,
+        "pending": 0,
+        "remainingUsdMicros": null
+      },
+      "afterBudget": {
+        "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+        "authorization": {
+          "authorizedUsdMicros": 7000000,
+          "maxModelCalls": 128,
+          "maxSearchCalls": 32,
+          "modelReserveUsdMicros": 40000,
+          "searchReserveUsdMicros": 80000,
+          "unlimited": true
+        },
+        "model": 112,
+        "search": 35,
+        "usdMicros": 7280000,
+        "pending": 0,
+        "remainingUsdMicros": null
+      },
+      "turnId": "01a0d8c0-9dbd-732b-98a0-fb4e4f8dbafb",
+      "delivery": "satisfied",
+      "artifactRefs": [
+        {
+          "id": "01a0d8c0-f4dc-733d-bfff-5a848688c27a",
+          "type": "travel_guide",
+          "schemaVersion": 1,
+          "presentationHint": "travel_guide"
+        }
+      ],
+      "stopReason": "completed",
+      "artifactId": "01a0d8c0-f4dc-733d-bfff-5a848688c27a",
+      "contentHash": "84ed95b7f2b74a90fca37f1d168acd6a52d03c25a9cdd31edd0f2255d21137d4",
+      "publicReply": "已按你的要求保存了这份最小攻略：只研究浅草寺一个文化景点，第一天参观，第二天自由休息，不含航班、交通票券、小吃价格与预算可行性内容。",
+      "getBudgetUnchanged": true,
+      "engine": "dsh",
+      "transport": "authenticated loopback POST + GET polling"
     }
   ],
   "observations": [
@@ -364,9 +502,276 @@
       "file": "bdafd450-d898-4459-b2db-3e189dcaaf8a.jsonl",
       "sha256": "6c2d36668b265db76ef5285840b1c74a1ec668a41b03ad38945c8f06967b65c8",
       "events": 44
+    },
+    {
+      "file": "1f188617-da9a-4f4b-9ea8-e0ecc8863430.jsonl",
+      "sha256": "1d114e2cb975d73f16f35e8b9c8a64644d74d4ee827f885671b74a617c482007",
+      "events": 68
+    },
+    {
+      "file": "c2673831-3869-4744-83d9-5814176335ab.jsonl",
+      "sha256": "c8e831ba671efcc0d953778f7659a71ddd2d564f6b2ec5e912f5ee8904df3f39",
+      "events": 70
+    },
+    {
+      "file": "3b70701c-a92d-4840-9189-a162af365b7e.jsonl",
+      "sha256": "88f2830dcc145d9a4b0c95e77d347e85241b7c686cc55b61be0eaa8f31a38b3d",
+      "events": 60
+    },
+    {
+      "file": "022eda27-e1a6-4d86-982d-ddc99eaa883d.jsonl",
+      "sha256": "14ef501f807634eb58e40c0737e8da9d461f58f4eade943983b525d05b50cb64",
+      "events": 238
+    },
+    {
+      "file": "2ebd27ec-3786-4608-8004-59ccf96195db.jsonl",
+      "sha256": "f0f88e81de3eec571dd49451c9db232c01ce7008b336ca878eb7fce9ad8500f4",
+      "events": 164
+    },
+    {
+      "file": "7a77ebf9-64dc-430f-a6e1-e057c028a431.jsonl",
+      "sha256": "0d0cdcfd2f148cdf1c9efcffa3e55ce8e2886aa84ed713788e030dae1589fab6",
+      "events": 118
+    },
+    {
+      "file": "1185a40a-92b9-4e81-858d-0ae3021d6cca.jsonl",
+      "sha256": "f18efc4160ba98b2a884b141806374a6ca8c4eb4e8b76a4be84d3350c0599d23",
+      "events": 10
+    },
+    {
+      "file": "856669b6-b4a3-4a5d-9e9d-013800e63872.jsonl",
+      "sha256": "55c6e012e8c597ec74e22952c19e791b9760fd9511a992a23885f8311dcb81c3",
+      "events": 10
+    },
+    {
+      "file": "9e865646-ef4c-4a32-82dc-2c22068598ce.jsonl",
+      "sha256": "fe2ef6c275cd448527b7b1e3bbc83823a474f7b0ecbcd74e0a917b70114b7312",
+      "events": 50
+    },
+    {
+      "file": "8a482d9e-2eb4-4005-9a35-ad068c28d2dd.jsonl",
+      "sha256": "24f6d25ea345a41d4783235d5dfd0b12ced2a9f1235409d5e07f4f6aef00a4fd",
+      "events": 86
+    },
+    {
+      "file": "eeb0b6b3-0570-4377-9d88-ac788d3b3b46.jsonl",
+      "sha256": "f433f9d1116c1c6cb9743662012c91815bbf0caa9160678275d907de6a25b198",
+      "events": 18
     }
   ],
   "h5Screenshot": "read-only preparation; never evidence of generation or accepted guide",
   "knownCostStatus": "No trusted monetary receipts; retain all reservations",
-  "paidH5": "not_run"
+  "paidH5": "accepted guide readable after recovery; explanation and local edit passed; budget round and localization incomplete",
+  "evidenceCheckpoint": "COMMIT-7 2026-09-25T13:28:41.982Z; H5 run excluded from this probe snapshot",
+  "minimumAcceptedGuide": {
+    "id": "01a0d8c0-f4dc-733d-bfff-5a848688c27a",
+    "tripId": "01a0d8c0-9d8c-767e-8fa4-43696a53d398",
+    "conversationId": "01a0d8c0-9da5-736c-a633-dc64153406a9",
+    "sourceArtifactIds": [
+      "01a0d8c0-f4cf-762b-bc36-8c9fba15d71d",
+      "a6f757d3-07a0-4c36-82b4-5a20c84535f7"
+    ],
+    "createdAt": "2026-09-25T13:28:39.396Z",
+    "contentHash": "84ed95b7f2b74a90fca37f1d168acd6a52d03c25a9cdd31edd0f2255d21137d4",
+    "publicationStatus": "accepted",
+    "deliveryStatus": "satisfied",
+    "text": {
+      "days": [
+        {
+          "day": 1,
+          "theme": "浅草寺：东京下町的观音信仰中心"
+        },
+        {
+          "day": 2,
+          "theme": "自由休息日"
+        }
+      ],
+      "reply": "已按你的要求保存了这份最小攻略：只研究浅草寺一个文化景点，第一天参观，第二天自由休息，不含航班、交通票券、小吃价格与预算可行性内容。",
+      "locale": "zh",
+      "overview": "两天的东京行以浅草寺为核心，节奏放松。第一天把时间交给浅草寺：从雷门穿入，沿仲见世前行，抵达本堂参拜与细看堂宇，可以放心从上午待到午后，不额外添加景点。第二天完全留白，作为自由休息日。两天的消费目标仅作参考，不研究也不保证任何具体花费够用。",
+      "activities": [
+        {
+          "name": "浅草寺（雷门·仲见世·本堂）",
+          "activityId": "guide_9cd7bd77ce06f41da26a9293",
+          "sourceRefs": [
+            "a6f757d3-07a0-4c36-82b4-5a20c84535f7/sensoji-temple"
+          ],
+          "introduction": "浅草寺是东京最具代表性的寺院，据传始于公元628年，渔民在隅田川中感得观音像后建寺供养，此后主殿历经多次烧毁与重建。从雷门出发，穿过悬挂巨型红灯笼的入口，经仲见世通进入境内，可以看到宝藏门、五重塔，并最终抵达供奉观音的本堂。本堂内外阵空间开阔，抬头可见天花上的龙与天人之图，是体会江户以来下町信仰氛围的核心所在。",
+          "recommendationReason": "你指定的唯一文化景点，也正好契合你对「文化」的兴趣：一处在历史中反复重建、至今仍是信仰与市井生活交汇的寺院，适合慢慢看建筑、参拜与庭院，而不必赶场。"
+        }
+      ]
+    },
+    "budgetAssessment": {
+      "notice": "已记录行程总预算目标 1500 CNY。费用与人数口径尚未完整核实，目前不能确认总支出是否满足预算。",
+      "status": "undetermined",
+      "knownSubtotal": null,
+      "scopeCoverage": "incomplete"
+    },
+    "verificationStatus": "partially_verified",
+    "finalizationObservation": {
+      "calls": 0,
+      "failure": null,
+      "durationMs": 0.6427000000003318,
+      "promptTokens": 0,
+      "repairReasons": [],
+      "completionTokens": 0,
+      "unknownCostCalls": 0,
+      "knownCostUsdMicros": 0
+    },
+    "metrics": {
+      "mainModelCalls": 5,
+      "officialSearchCalls": 1,
+      "webFetchCalls": 2,
+      "commitCalls": 2,
+      "needsRevision": 1,
+      "inputTokens": [
+        16773,
+        504,
+        5046,
+        277,
+        482
+      ],
+      "cacheReadTokens": [
+        896,
+        17792,
+        18304,
+        24192,
+        25216
+      ],
+      "outputTokens": [
+        149,
+        93,
+        940,
+        838,
+        163
+      ],
+      "finishReasons": [
+        "tool-calls",
+        "tool-calls",
+        "tool-calls",
+        "tool-calls",
+        "stop"
+      ],
+      "modelMaxTokens": 4096,
+      "thinking": "disabled",
+      "execution": {
+        "executionId": "3b70701c-a92d-4840-9189-a162af365b7e",
+        "generationId": "01a0d8c0-9dbc-73ff-8c4a-ab2503e9b8dd",
+        "tripId": "01a0d8c0-9d8c-767e-8fa4-43696a53d398",
+        "conversationId": "01a0d8c0-9da5-736c-a633-dc64153406a9",
+        "sequence": 58,
+        "at": "2026-09-25T13:28:41.369Z",
+        "elapsedMs": 24249.8247,
+        "type": "execution_result",
+        "reason": "completed",
+        "calls": 5,
+        "resumed": false,
+        "rehydrated": false,
+        "cancelled": false
+      },
+      "session": {
+        "executionId": "3b70701c-a92d-4840-9189-a162af365b7e",
+        "generationId": "01a0d8c0-9dbc-73ff-8c4a-ab2503e9b8dd",
+        "tripId": "01a0d8c0-9d8c-767e-8fa4-43696a53d398",
+        "conversationId": "01a0d8c0-9da5-736c-a633-dc64153406a9",
+        "sequence": 59,
+        "at": "2026-09-25T13:28:41.370Z",
+        "elapsedMs": 24250.623799999998,
+        "type": "session_mapping",
+        "sessionId": "61ae1e96-348d-40c9-8210-7bec10ae471f",
+        "profile": "8cac59fe5ec3b863a37ab9a53e1c09a9cf3fa803e75314aa27ad04586323f932",
+        "epochHash": "97bb8a400a8341d1d60cf4b07f665eb759c0d382e49e4a3c7d9bd1fb6e5725d5"
+      }
+    },
+    "stages": [
+      {
+        "type": "execution_start",
+        "at": "2026-09-25T13:28:17.121Z",
+        "elapsedMs": 1.672900000000027
+      },
+      {
+        "type": "activity",
+        "activity": "tool_start",
+        "toolName": "web_search",
+        "at": "2026-09-25T13:28:19.971Z",
+        "elapsedMs": 2851.8405000000002
+      },
+      {
+        "type": "activity",
+        "activity": "tool_end",
+        "toolName": "web_search",
+        "at": "2026-09-25T13:28:26.327Z",
+        "elapsedMs": 9207.443800000001
+      },
+      {
+        "type": "tool_start",
+        "toolName": "commit_travel_guide",
+        "at": "2026-09-25T13:28:35.894Z",
+        "elapsedMs": 18774.3865
+      },
+      {
+        "type": "tool_end",
+        "toolName": "commit_travel_guide",
+        "at": "2026-09-25T13:28:36.106Z",
+        "elapsedMs": 18986.799899999998,
+        "errorCode": "DSH_GUIDE_NEEDS_REVISION"
+      },
+      {
+        "type": "tool_start",
+        "toolName": "commit_travel_guide",
+        "at": "2026-09-25T13:28:39.339Z",
+        "elapsedMs": 22219.4934
+      },
+      {
+        "type": "tool_end",
+        "toolName": "commit_travel_guide",
+        "at": "2026-09-25T13:28:39.848Z",
+        "elapsedMs": 22728.691,
+        "status": "accepted"
+      },
+      {
+        "type": "execution_result",
+        "at": "2026-09-25T13:28:41.369Z",
+        "elapsedMs": 24249.8247
+      }
+    ],
+    "evidence": [
+      {
+        "tool": "web_search",
+        "evidenceRefs": [],
+        "urls": []
+      },
+      {
+        "tool": "web_fetch",
+        "evidenceRefs": [
+          "c1f6ee7a-32e8-44f3-ad6b-3187757c34f9"
+        ],
+        "urls": [
+          "https://www.senso-ji.jp/guide/guide04.html"
+        ]
+      },
+      {
+        "tool": "web_fetch",
+        "evidenceRefs": [
+          "1d3f6bbb-a7e6-4421-859a-3fc1ebdd3282"
+        ],
+        "urls": [
+          "https://www.japan-travel.cn/spot/1691/"
+        ]
+      }
+    ]
+  },
+  "latestProbeResult": {
+    "kind": "commit",
+    "status": "passed",
+    "turnStatus": "completed",
+    "turnId": "01a0d8c0-9dbd-732b-98a0-fb4e4f8dbafb",
+    "harnessCorrection": {
+      "at": "2026-09-25T13:34:07.053Z",
+      "reason": "Probe passed was overwritten by HTTP turn completed; existing artifact/GET evidence verified. Original probeAttempt retained."
+    },
+    "originalAttemptStatus": "completed"
+  },
+  "h5Evidence": "h5-round1-attempts.json",
+  "h5MultiturnEvidence": "h5-multiturn-attempts.json"
 }

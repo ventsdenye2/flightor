@@ -1,8 +1,14 @@
 # 当前进度与验证
 
-## 2026-09-24 DSH 实施
+2026-09-26 18:04最终功能验收：**DSH正式H5 E2E PASS（限定本次后端替换，G1仍未放行）**。A自备机票的解释/局部修改/全程1200预算/刷新/显式官方英文与恢复已验；B先通过正式API采用synthetic fixture航班，再真实H5规划、解释、slot修改和刷新通过。B最新修改5主模型/1官方搜索/2fetch/2commit，一次修复后accepted+satisfied并可读，点击→UI26.115s，第一天/其他slot/航班revision不变；刷新零调用。B初版预算保证错误与全部失败不追认，最新公开文字无该保证；人流推论/事实时效仍有内容质量限制。实际官方DeepSeek模型及搜索，不是mock攻略；原账本258模型准入/68搜索、US$15.76未知预留、pending0/unlimited，不是实际支出。27份运行日志违规旧Planner/Runtime/Research/非本地化Finalizer调用0（23份有guard，其余无HTTP）。后端代码commit bf42bf80283ba39f062c37db79d9d0a92bd20f32；前端授权最小修复8233a84/8626876；runner/harness代码commit be8b8937a1e787ca79012bf8c92495f5ac3f4d6b；报告与证据由包含本记录的后续docs提交交付，最终交付SHA见任务最终回复/远端分支HEAD。原工作区main=8a83b03及未提交内容保留。证据见[实施报告](DSH_IMPLEMENTATION_REPORT_2026-09-24.md)和[D4报告](DSH_LIVE_2026-09-24.md)。
 
-最终交接：D0–D3已实现，D4真实官方模型/搜索可达，但两条对话首轮都失败，未通过完整多轮。来源桥接及默认推理配置缺陷已修，修复后本地/数据库回归通过；完整真实重测仍待预算安排。23/48模型（含10搜索）、10/12搜索，未知费用预留US$1.72；不报成实际花费，也未清零账本。最终数据库9文件40项通过（42.39s），最终离线117文件952项通过（116.90s）；阶段耗时见[总报告](DSH_IMPLEMENTATION_REPORT_2026-09-24.md)，双例失败正文/时序见[D4结果](DSH_LIVE_2026-09-24.md)。前端未改、main未改、没有部署或合并；G1仍未通过。以下21:03及更早内容保留为中途记录。
+2026-09-26同值Trip setter回执：既有Run working set新增服务器写入的可选版本/字段hash回执，修复显式重复设置被字段差异误判未交付；保留旧无回执校验和取消/owner/version/CAS保护。4文件72项离线回归通过（9.52秒），backend类型检查通过；无新Provider/H5调用。设计与负例见[DSH发布说明](DSH_PUBLICATION_2026-09-24.md)。
+
+## 2026-09-26 DSH 实施与正式 H5 续验
+
+2026-09-26 17:51 DSH验收快照：A自备机票完整能力经真实失败/修复/恢复已验收。B先正式采用synthetic fixture机票，再真实H5官方链路，第七次发送首次accepted/satisfied并显示两天5项活动，点击→可读27.713s；4主模型0搜索0fetch，复用09:31同B会话真实官方搜索/正文研究，不冒称成功轮新搜索。当前accepted reply仍有“整体预算仍在既定总额内”的无依据预算保证（budgetAssessment undetermined），已发现并继续修复；B后续解释/slot修改/恢复尚待完成，因此整体E2E仍FAIL。Artifact/source/evidence谱系与前六次失败保留。独立codex/dsh-backend、前端最小扩展commit8626876，其余后端修复未提交；main/用户原工作区保留。原账本251模型准入/67搜索、US$15.40未知预留、pending0/unlimited，不是实付账单。地图不阻塞、G1未放行。阶段证据见[总报告](DSH_IMPLEMENTATION_REPORT_2026-09-24.md)与[D4结果](DSH_LIVE_2026-09-24.md)。
+
+2026-09-24历史交接快照：当时原始A/B两条对话首轮均失败，来源桥接与默认thinking配置修复后本地/数据库回归通过，完整重测等待当时的新预算。该时点23/48模型（含10搜索）、10/12搜索、US$1.72未知预留不是今天的累计费用，也不是实际账单。该时点数据库9文件40项通过（42.39s）、离线117文件952项通过（116.90s）保留为历史验证，不将其当作后续变更重新全量通过。以下21:03及更早内容同为当日中途记录。
 
 按用户本次明确授权优先 DSH D0→D4，取消旧R/U与条件C1前置；原成果和历史账本保留。D0 `6fbd5c7` 实际核心AgentLoop与独立worker测试通过；D1 抽出PlannerServicePort、共享领域服务与配置分流，只读多轮通过真实DSH worker，旧Runtime调用0，GET不唤醒。4文件16项服务/端点/配置定向通过（8.66s）；核心/runtime另2项通过（0.751s）。Session生命周期扩展与后续联网/写入仍在实施，不预宣验收。对应合同见TOOLS/架构/部署及[实施记录](DSH_IMPLEMENTATION_REPORT_2026-09-24.md)。前端零修改，G1未放行。
 
@@ -338,3 +344,5 @@ H5 收尾补充：计时包装直接调用 Taro 的一次构建在 loader 阶段
 2026-09-24 DSH正式H5续验准备时点：在765f3ac基线修复显式本地化的官方HTTP协议、公开解释表达边界，主worker输出上限改为DSH_MODEL_MAX_TOKENS（默认4096）；回执区分输出触顶与Provider故障。定向离线、DSH PostgreSQL和正式H5构建通过；Chrome只读打开规划页，不代表真实accepted UI成功。当时旧23模型/10搜索/US$1.72未知预留账本不变。实际执行与费用门禁统一维护在既有[DSH报告](DSH_LIVE_2026-09-24.md)，未新增“最新情况”文档，未宣布G1通过。
 
 2026-09-25续作：fetch确认远端/HEAD仍765f3acf，主工作区改动保留。真实model/search probe通过；三次commit失败分别为活动文字exact-cover、Provider连接中断、旧generation原始来源混入当前候选。针对性修复保持validator、来源隔离和一次修复上限，未伪造accepted；修复后的最后一次真实重试尚待新增预算授权。累计72模型/23搜索、US$4.72未知预留，剩余US$0.28/1搜索；此前所有失败原样保留。来源修复25项通过，worker计数/关闭16项通过（一次Windows关闭文件句柄EBUSY修复后复验），独立PostgreSQL多轮综合1项通过8.13秒，backend构建通过。真实前端发送、accepted显示、后续多轮与中英恢复尚未通过，不用这些离线/数据库结果代替H5验收。
+
+2026-09-26Trip setter回执PG补验：真实同值写入、持久回执和新repository共享completion完成通过；新增竞争预算修改负例先失败后定位修复，已有回执失配不再回落legacy差异。Goal PostgreSQL 12/12（7.14秒）、定向离线72/72（6.46秒）通过，原E2E schema及Provider不受影响。详见[DSH发布说明](DSH_PUBLICATION_2026-09-24.md)。

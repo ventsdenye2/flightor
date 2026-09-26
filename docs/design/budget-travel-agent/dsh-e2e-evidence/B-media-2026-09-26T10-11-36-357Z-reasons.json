@@ -1,0 +1,30 @@
+{
+  "readAt": "2026-09-26T10:12:53.029Z",
+  "guideId": "01a0dd2b-9099-706d-bd2e-5cbc37fd25f6",
+  "rows": [
+    {
+      "activity_id": "guide_77489822c634e8e0edbdf220",
+      "status": "empty",
+      "reason": "source_identity_required",
+      "checked_at": "2026-09-26T10:11:42.661Z"
+    },
+    {
+      "activity_id": "guide_22fbd24232f8437b0dd83ff9",
+      "status": "empty",
+      "reason": "source_identity_required",
+      "checked_at": "2026-09-26T10:11:42.683Z"
+    },
+    {
+      "activity_id": "guide_58669c7011d88e7e527da74a",
+      "status": "empty",
+      "reason": "ambiguous_or_unsupported",
+      "checked_at": "2026-09-26T10:11:42.694Z"
+    },
+    {
+      "activity_id": "guide_ba18fa6fbb39c840137fecbc",
+      "status": "empty",
+      "reason": "source_identity_required",
+      "checked_at": "2026-09-26T10:11:42.708Z"
+    }
+  ]
+}
