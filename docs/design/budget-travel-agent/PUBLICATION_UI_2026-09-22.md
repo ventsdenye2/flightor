@@ -6,6 +6,8 @@
 
 ## 展示合同
 
+2026-09-26后端恢复修正：workspace取最新100条Artifact窗口，公开引用按旧→新排序；未公布且无accepted语言的初始终稿草稿不作为结果卡片引用。另一语言已accepted或历史assistant已公布的失败终稿仍保留本地化/重试入口。前端仍选择最后一个攻略引用，源码不变；详细问题和数据库回归见[DSH发布记录](DSH_PUBLICATION_2026-09-24.md)。
+
 正式页面只显示当前 Trip/已选航班版本、目标 locale、accepted publication 的 overview、每日 theme 及稳定 activityId 的 title/description/recommendationReason。不拼原始 summary、研究摘要、取证摘录或旧版公开正文。旧版、过期、准备、技术失败、材料需修订分开显示；领域 satisfied 不授权内容发布。
 
 读取页面/刷新/tab 不生成终稿；缺失语言与技术重试均由明确点击触发，重试须同时 canLocalize、canRetry 和当前 revision。结果按 locale 缓存，切换后旧请求不能更新当前选择。具体失败用现有 issue code 本地化短提示，保留活动身份；原 detail 和研究继续保留后端审计。
@@ -74,3 +76,7 @@ enrichment 是后续素材服务的独立响应扩展位置，本轮没有 Provi
 
 2026-09-26用户明确批准DSH验收中唯一前端例外：Plan页存在旧攻略时，纯解释（stopReason=responded、delivery=not_requested）显示当前会话的同locale回复，不再被旧publication.reply覆盖。攻略提交仍显示accepted publication.reply；异语言旧回复仍不展示。不改页面布局、交互或API字段。真实暴露案例的API已回答谷根千原因且无搜索/写入，旧页面却重复保存文字；对应组件回归覆盖解释、locale保护和提交尾句隔离，真实重测另记DSH D4。
 本批实际Plan组件离线hook集成13/13通过；正式H5构建成功（Webpack62.721s，既有体积警告）。该构建尚不等于解释页面已验收，以真实D4回合为准。
+
+2026-09-26用户进一步明确批准同一字段选择扩展：`trip_context_update/satisfied`且`stopReason=completed`的预算保存回合也展示当前同locale会话回复，避免旧局部修改的publication.reply覆盖预算确认。仅扩展该条件；解释规则、攻略提交取接纳publication.reply、异语言保护均保持。新增实际Plan组件用例覆盖成功预算确认、locale不匹配、partial/blocked/model_failure及travel_guide提交；运行结果与真实H5恢复证据另记DSH报告，不将代码修改认定为页面通过。
+
+本次条件扩展实际Plan组件14/14通过，正式H5构建31.335秒（既有体积警告）。A真实只读恢复报告A-restore-2026-09-26T09-28-43-814Z在后端历史投影配套修复后显示本轮“两天合计1200元”预算正文，刷新恢复攻略一致，0POST且原账本SHA不变；已人工查看restored-planner-reply截图。仅该字段行为通过，不代替B全流程或G1内容验收。

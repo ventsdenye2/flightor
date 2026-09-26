@@ -116,6 +116,31 @@ async function main() {
     assert.equal(h.planner(h.render()).props.productionReply, '攻略已保存。')
   })
 
+  await test('completed budget update uses current confirmation with locale and guide-commit guards', async () => {
+    const h = harness()
+    h.chatStore.artifactRefs = [{ id: 'guide', type: 'travel_guide', schemaVersion: 1 }]
+    h.setGuide(async () => ({ guide: { id: 'guide', payload: { publication: { reply: '第二天下午已修改。' } } },
+      presentation: { destination: 'Tokyo', route: [], days: [], publication: { status: 'accepted' } } }))
+    h.chatStore.timeline = [{ user: { content: '预算改为两天合计1200元。' },
+      assistant: { content: '预算目标已保存为两天合计1200元，不承诺未知费用一定够。', locale: 'zh' },
+      stopReason: 'completed', delivery: { kind: 'trip_context_update', status: 'satisfied' }, artifactRefs: [] }]
+    h.render(); await flush()
+    assert.equal(h.planner(h.render()).props.productionReply, h.chatStore.timeline[0].assistant.content)
+    h.chatStore.timeline[0].assistant.locale = 'en'
+    assert.equal(h.planner(h.render()).props.productionReply, undefined)
+    h.chatStore.timeline[0].assistant.locale = 'zh'
+    for (const status of ['partial', 'blocked']) {
+      h.chatStore.timeline[0].delivery.status = status
+      assert.equal(h.planner(h.render()).props.productionReply, '第二天下午已修改。')
+    }
+    h.chatStore.timeline[0].delivery = { kind: 'trip_context_update', status: 'satisfied' }
+    h.chatStore.timeline[0].stopReason = 'model_failure'
+    assert.equal(h.planner(h.render()).props.productionReply, '第二天下午已修改。')
+    h.chatStore.timeline[0].stopReason = 'completed'
+    h.chatStore.timeline[0].delivery.kind = 'travel_guide'
+    assert.equal(h.planner(h.render()).props.productionReply, '第二天下午已修改。')
+  })
+
   await test('adopted A and newly published B both load and render before final reply', async () => {
     const h = await selectedHarness()
     h.chatStore.isThinking = true
