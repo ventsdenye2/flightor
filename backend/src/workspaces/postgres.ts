@@ -13,6 +13,7 @@ import { createDefaultGoalVerifierRegistry } from '../agent/goals/default-verifi
 import { PostgresTripRepository } from '../trips/postgres.js'
 import { PostgresArtifactRepository } from '../artifacts/postgres.js'
 import { projectHistoricalGuideMessages } from '../travel-guides/publication-history.js'
+import { guidePublicationSchema } from '../travel-guides/publication-schema.js'
 import { type WorkspacePatch, type WorkspaceRepository, type WorkspaceTrip, type TripWorkspace, type WorkspaceMessage } from './types.js'
 import {
   assertFlightChoice, legacySavedRoute, readSavedFlightSelection, sameFlightChoice,
@@ -46,19 +47,33 @@ export class PostgresWorkspaceRepository implements WorkspaceRepository {
     const [contextRow, conversationRows, artifacts] = await Promise.all([
       this.db.selectFrom('trip_context_versions').select('context_json').where('trip_id', '=', trip.id).where('version', '=', trip.current_context_version).executeTakeFirstOrThrow(),
       this.db.selectFrom('conversations').selectAll().where('trip_id', '=', trip.id).where('user_id', '=', this.userId).orderBy('updated_at', 'desc').orderBy('id', 'desc').limit(50).execute(),
-      this.db.selectFrom('artifacts').select(['public_id', 'type', 'schema_version']).where('trip_id', '=', trip.id).where('user_id', '=', this.userId).orderBy('id', 'desc').limit(100).execute()
+      this.db.selectFrom('artifacts').select(['public_id', 'type', 'schema_version', 'payload_json']).where('trip_id', '=', trip.id).where('user_id', '=', this.userId).orderBy('id', 'desc').limit(100).execute()
     ])
     const conversations = conversationRows.map(row => ({ id: row.public_id, tripId, title: row.title, status: row.status, createdAt: iso(row.created_at), updatedAt: iso(row.updated_at) }))
     const selected = conversationId ? conversations.find(c => c.id === conversationId) : conversations[0]
     if (conversationId && !selected) throw notFound()
-    const artifactRefs = artifacts.filter(a => ARTIFACT_TYPES.includes(a.type as ArtifactType)).map(a => ({ id: a.public_id, type: a.type as ArtifactType, schemaVersion: a.schema_version, presentationHint: presentationHint(a.type as ArtifactType) }))
+    const rows = selected ? await new PostgresConversationRepository(this.db, this.userId).listMessages(selected.id, 100) : []
+    const publicRows = rows.filter(m => m.role === 'user' || m.role === 'assistant')
+    const announcedRefs = new Set(publicRows.filter(m => m.role === 'assistant').flatMap(m =>
+      Array.isArray(m.metadata.artifact_refs) ? m.metadata.artifact_refs.filter((id): id is string => typeof id === 'string') : []))
+    // Result consumers append references and select the last one. Keep the newest
+    // bounded window, but expose its visible artifacts in creation order.
+    const artifactRefs = [...artifacts].reverse().filter(a => {
+      if (!ARTIFACT_TYPES.includes(a.type as ArtifactType)) return false
+      if (a.type !== 'travel_guide' || announcedRefs.has(a.public_id)) return true
+      const payload = json(a.payload_json) as { publication?: unknown } | null
+      const publication = guidePublicationSchema.safeParse(payload?.publication)
+      // An initial, unannounced finalization draft is internal. A guide accepted
+      // in another locale stays reachable for explicit localization or retry.
+      return !publication.success || !publication.data.finalization
+        || Object.values(publication.data.finalization.variants).some(variant => variant?.status === 'accepted')
+    }).map(a => ({ id: a.public_id, type: a.type as ArtifactType, schemaVersion: a.schema_version, presentationHint: presentationHint(a.type as ArtifactType) }))
     const refsById = new Map(artifactRefs.map(a => [a.id, a]))
     const messages: WorkspaceMessage[] = []
     if (selected) {
-      const rows = await new PostgresConversationRepository(this.db, this.userId).listMessages(selected.id, 100)
-      const publicRows = rows.filter(m => m.role === 'user' || m.role === 'assistant')
       const projectedRows = await projectHistoricalGuideMessages(publicRows, {
         tripId, conversationId: selected.id, locale, tripContextVersion: trip.current_context_version,
+        budget: tripContextSchema.parse(json(contextRow.context_json)).budget ?? null,
         checkFlightSelection: true, flightSelectionRevision: readSavedFlightSelection(json(trip.saved_route_json))?.revision,
         artifacts: new PostgresArtifactRepository(this.db, this.userId)
       })

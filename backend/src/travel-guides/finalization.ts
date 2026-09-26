@@ -60,6 +60,11 @@ export function publicProseProblems(fields: string[], locale: PublicationLocale,
   const prose = fields.join('\n')
   if (/(?:I (?:will|should|need to) (?:now |next )?(?:summarize|respond|finalize)|as an AI|tool_call|save_travel_guide|接下来我(?:将|会).*总结|现在我(?:将|来).*总结|内部审核|模型已验证)/i.test(prose)) errors.push('internal_narration')
   if (/(?:guarantee.{0,30}budget|within (?:your|the) budget|保证.{0,20}预算|预算内|不会超支)/i.test(prose)) errors.push('budget_guarantee')
+  // A target is not proof that costs fit it, even without a number or the word
+  // "guarantee". Keep these finite affirmative forms shared by all public fields.
+  if (/(?:预算|费用|花费|支出|开销)(?:仍然|仍|依然|还|已经|已|全部|都|均|将|预计|完全|能够|能|可以|可|会)*(?:保持|控制)?(?:在|低于|不超过|未超出|不会超出|不会超过)(?:你的|您的|既定|设定|原定|约定|给定|目标)*(?:预算(?:范围|总额|上限)?|总额|限额|上限)(?:之)?内?/.test(prose)
+    || /(?:符合|满足)(?:你的|您的|既定|设定|原定|目标|总)*预算(?:目标|要求)?|预算(?:肯定|一定|绝对|完全|已经|已|是|很)*(?:足够|够用|充足)/.test(prose)
+    || /\b(?:under|below|within) (?:your |the |our )?(?:(?:allocated|agreed|planned|set|total) )*(?:budget|total|amount|limit)\b|\bbudget (?:is |will be )?(?:certainly |definitely )?(?:enough|sufficient)\b/i.test(prose)) errors.push('budget_guarantee')
   // A short answer may repeat the authoritative total budget, but never a price or affordability claim.
   let claimProse = prose
   if (options.shortReply && options.budget?.scope === 'trip') {
@@ -67,7 +72,15 @@ export function publicProseProblems(fields: string[], locale: PublicationLocale,
     const amount = String(budget.amount).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const currency = budget.currency === 'CNY' ? '(?:CNY|人民币|元)' : budget.currency === 'USD' ? '(?:USD|美元)' : '(?:EUR|欧元)'
     const money = new RegExp(`(?:${currency}\\s*${amount}(?![\\d.])|(?<![\\d.])${amount}\\s*${currency})`, 'gi')
-    claimProse = prose.split(/(?<=[.!?,;。！？，；\n])/).map(sentence =>
+    // Repeating the authoritative amount to reject a daily interpretation is
+    // not a new price. Require an explicit total-budget statement and keep
+    // any ticket/cost clause subject to the ordinary precise-claim check.
+    const hasTotalBudget = /(?:total budget|budget.{0,100}(?:in total|both days|whole trip)|总预算|预算(?:目标|是|为).{0,30}(?:合计|两天|全程))/i.test(prose)
+    const negativeDaily = new RegExp(`(?:不是|并非|而非)\\s*(?:每天|每日)\\s*(?:${currency}\\s*${amount}(?![\\d.])|(?<![\\d.])${amount}\\s*${currency})(?:人民币)?|\\bnot\\s+(?:${currency}\\s*${amount}(?![\\d.])|(?<![\\d.])${amount}\\s*${currency})\\s+per day\\b`, 'gi')
+    const budgetProse = prose.split(/(?<=[.!?,;。！？，；\n])/).map(sentence => hasTotalBudget
+      && !/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(sentence)
+        ? sentence.replace(negativeDaily, 'not a daily budget') : sentence).join('')
+    claimProse = budgetProse.split(/(?<=[.!?,;。！？，；\n])/).map(sentence =>
       /(?:total budget|budget.{0,100}(?:in total|both days|whole trip)|总预算|预算(?:目标|是|为).{0,30}(?:合计|两天|全程))/i.test(sentence)
       && !/(?:per day|daily|每天|每日|一天)/i.test(sentence)
       && !/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(sentence)

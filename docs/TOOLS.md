@@ -129,6 +129,16 @@ for supported current-version research. These locators are derived from stored
 evidence and authenticated context, are stable across process restarts, and do
 not grant access or certify freshness. Duplicate finding IDs cannot be selected.
 
+Research `read_artifact` output also includes `researchReuse`: `status` is
+`current_candidates`, `historical_only` (a different Trip Context version), or
+`unavailable` (missing context/version or unsupported research). It reports
+`sourceTripContextVersion` and `currentTripContextVersion` (null when unknown),
+plus a server-authored notice. Historical content stays readable, but has no
+`candidates` and explicitly forbids reusing old-message candidateRefs for a new
+guide. Only locators in current candidate output may be selected; publication
+and source-version checks still decide acceptance. These are model-facing tool
+fields, not a change to the public Artifact HTTP response or an ownership bypass.
+
 `save_travel_guide` accepts full `days` with cityId/kind/theme/notes and items
 with candidateRef/timeOfDay/planningNote/requestedActivityIds. Legacy item
 researchIndex/findingId plus top-level researchArtifactIds remains valid; do not
@@ -267,6 +277,8 @@ route generation. Tools never supply their own duplicate lineage-write policy.
   a structured tool error. It never fabricates an empty persisted trip.
 
 ### `update_trip_context`
+
+2026-09-26：同值显式设置通过真实 setter 写入新 Trip 版本后，服务器将实际提交字段的 canonical SHA-256、owner/Trip/run/generation/写入版本作为可选 `tripUpdateReceipt` 保存在既有 Run working set；先独立读回与预期 patch 全量比对。该回执不是模型入参、不修改已接受 Goal 参数。完成验证仅在回执作用域、当前版本及全部请求字段 hash 一致时确认同值更新；完全无回执的历史记录沿用既有字段差异规则；已有回执却scope、版本、值或字段覆盖不匹配则返回pending / trip_update_receipt_stale，不回落差异规则。不能把当前字段存在当作保存完成。取消、版本竞争或 owner 不一致不能生成有效回执；最终完成仍经共享 verifier 与原子 completion。
 
 - Status: **Implemented** (Phase 2 PostgreSQL optimistic concurrency + in-memory test seam)
 - Purpose: Apply explicit, trip-local user constraints and preferences.
@@ -588,12 +600,20 @@ Agent API 依赖 `PlannerServicePort`，仅服务端 `FLIGHTOR_AGENT_ENGINE` 选
 
 DSH 模型可见的受控业务工具包括 `get_trip_context`、`get_trip_artifacts`、`read_artifact`、`resolve_location`、`get_user_memory`、`get_active_goal`、`update_trip_context`、`search_flights`、`search_flexible_flights`、`confirm_flight_price`、`update_user_memory`、`start_route_generation`，以及单一组合工具 `commit_travel_guide`。最终路线引擎仍只可由明确请求触发的 `start_route_generation` 排队；底层连接搜索、完整航线规划和 Pareto 优化不开放给会话模型。`commit_travel_guide` 需要 `travel_guide` intent，将当前版本 candidate/evidence、日程和 locale 文本一次提交；服务端复用保存校验、发布合同及 Goal verifier。失败结果不会被当作已接纳发布。首次提交不调用独立 ResearchAgent/synthesis 或 Finalizer；显式缺失语言的本地化仍走已有 bounded finalizer。
 
+公开表达中的预算保证不是仅检查金额或“保证”字样。共享`publicProseProblems`也拒绝“整体预算仍在既定总额内”“费用控制在预算范围内”“开销不会超出预算上限”“符合/满足预算要求”及英文`within the allocated total`等有限等价表达；reply、overview、每日theme与活动name/introduction/recommendationReason统一检查。明确预算仅为目标、实际费用待核实的谨慎说明可保留。它仍是纯程序表达围栏，不能证明预算可满足；既有accepted内容不因升级而原地重写，修正文案须经真实新回合提交新版本并重新发布验收。
+
 组合配置提供选定 provider 后公开 `web_search` 和 `web_fetch`；当前 provider 由 `DSH_SEARCH_PROVIDER` 选定，默认 `serpapi-raw`，也可明确指定 `deepseek-official`。凭证缺失时调用失败，不静默切换。Web 插件内部的 `__web_search`、`__web_fetch`、`__record_web` 不向模型暴露，只能经白名单桥接；来源会写入当前 turn 的 owner/Trip/Conversation/version scope evidence store，再转换为既有 ResearchArtifact/Guide 引用。官方搜索使用独立 `DEEPSEEK_SEARCH_API_KEY` 与 Messages API 路由，不能借用或传递 OpenRouter 凭证。模型和搜索请求需先通过持久 DSH 预算 admission；达到金额/次数限制或预算未配置时请求被拒绝，不绕过预算继续执行。
 
-`commit_travel_guide` 的原始evidenceRefs仅限当前generation与最新Trip版本，跨轮复用走持久ResearchArtifact的candidateRef。不可用来源返回`DSH_GUIDE_NEEDS_REVISION`及`candidate_evidence_unavailable`候选/引用详情，供同一主Agent在既定一次修复限额内修正；服务端不自动删除来源或扩大读取scope。DSH只把上轮未完成Goal及库存缺口视为历史数据，当前较窄请求需匹配的新intent，不能静默降低旧Goal参数。详见[组合发布边界](design/budget-travel-agent/DSH_PUBLICATION_2026-09-24.md)。
+`commit_travel_guide` 的原始evidenceRefs仅限当前generation与最新Trip版本，跨轮复用走持久ResearchArtifact的candidateRef。不可用来源返回`DSH_GUIDE_NEEDS_REVISION`及`candidate_evidence_unavailable`候选/引用详情，供同一主Agent在既定一次修复限额内修正；服务端不自动删除来源或扩大读取scope。DSH只把上轮未完成Goal及库存缺口视为历史数据，当前较窄请求需匹配的新intent，不能静默降低旧Goal参数。仅DSH模型可见的commit JSON Schema增加`anyOf`要求每次完整提交携带`intent`或`goalRef`；新turn提交新intent或合法可恢复goalRef，修复重复相同已接纳intent/引用同Goal。共享runtime仍兼容已绑定Goal的省略参数调用，legacy工具schema和公开API不变；重复相同intent不新建Goal，改约束仍被拒绝。DSH实例描述移除共享wrapper的“后续不必重复”提示，snapshot最后的turnState明确本轮acceptedGoal为空、旧raw refs无效，仅用当前snapshot/read_artifact候选或本轮联网证据；不自动代写intent/引用，不调整循环限额。详见[组合发布边界](design/budget-travel-agent/DSH_PUBLICATION_2026-09-24.md)。
 
 DSH `web_search` 的实际模型schema通过官方prompt assembly钩子限制单query，公开pre-execute钩子在预算准入前拒绝空/多query等不可执行参数，历史预留不改。DSH `web_fetch`对明确短Incapsula/Cloudflare/captcha挑战壳返回`SOURCE_CHALLENGE_REJECTED`，不产出可用来源，不绕过站点保护；通用reader仅此DSH调用启用检测，legacy默认关闭。具体识别条件和离线验证见[来源适配边界](design/budget-travel-agent/DSH_EVIDENCE_2026-09-24.md)。
 
 Shell、文件、Git、PTC、subagent、插件安装和用户全局 profile 不在 worker 插件或工具面中。Session JSONL 是内部会话存储，不是模型可调用的文件能力。GET/publicationContext 不启动 worker；取消确认会等待父进程实际业务工具 Promise drain。
 
 实际 DSH 核心、worker 白名单及分阶段测试见 [实施记录](design/budget-travel-agent/DSH_IMPLEMENTATION_REPORT_2026-09-24.md)；后续写入/联网以该记录实际阶段为准，不将原附件的目标列表当已验证功能。
+
+
+2026-09-26 DSH durable Goal identity：DSH工具上下文的requestId独立于可能重复的Fastify HTTP request.id，固定为owner/Trip/conversation/服务端generation的SHA-256标识；同scope/generation重放稳定，新generation隔离。HTTP ID保留审计metadata，旧legacy和Goal参数指纹/owner/version检查不变。原因及真实DB证据见[DSH发布说明](design/budget-travel-agent/DSH_PUBLICATION_2026-09-24.md)。
+
+
+2026-09-26 DSH预算历史回复：正式workspace/messages只读投影区分成功trip_context_update回复与guide交付；前者即使附带预算衔接攻略，也在当前语言/权威预算的纯程序检查通过后保留其自身确认正文，后者仍取accepted publication.reply。错误语言、内部信息或无依据金额/保证不能绕过检查；legacy规则不放开。验收见[DSH发布说明](design/budget-travel-agent/DSH_PUBLICATION_2026-09-24.md)。

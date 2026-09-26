@@ -98,7 +98,16 @@ export type GoalLocationHandle = z.infer<typeof goalLocationHandleSchema>
 
 export const goalWorkingSetSchema = z.object({
   artifactRefs: z.array(goalArtifactRefSchema).max(100),
-  locationHandles: z.array(goalLocationHandleSchema).max(100)
+  locationHandles: z.array(goalLocationHandleSchema).max(100),
+  // Written only after the server setter commits and reads back the canonical Trip.
+  tripUpdateReceipt: z.object({
+    ownerId: z.string().min(1).max(160),
+    tripId: z.string().min(1).max(160),
+    runId: z.string().uuid(),
+    generationId: z.string().min(1).max(160),
+    contextVersion: z.number().int().nonnegative(),
+    fieldHashes: z.partialRecord(tripContextUpdateGoalParametersSchema.shape.fields.element, z.string().regex(/^[a-f0-9]{64}$/))
+  }).strict().optional()
 }).strict().superRefine((value, context) => {
   const artifactIds = new Set<string>()
   value.artifactRefs.forEach((ref, index) => {

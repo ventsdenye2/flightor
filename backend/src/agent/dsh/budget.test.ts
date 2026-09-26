@@ -1,9 +1,20 @@
 import { randomUUID } from 'node:crypto'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir, hostname } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FileDshBudget, type DshBudgetOptions } from './budget.js'
+
+const filesystemFault = vi.hoisted(() => ({ renameCodes: [] as string[], renameCalls: 0 }))
+vi.mock('node:fs/promises', async importOriginal => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>()
+  return { ...actual, rename: async (...args: Parameters<typeof actual.rename>) => {
+    filesystemFault.renameCalls++
+    const code = filesystemFault.renameCodes.shift()
+    if (code) throw Object.assign(new Error('Simulated failure at private-ledger-path'), { code })
+    return actual.rename(...args)
+  } }
+})
 
 const directories: string[] = []
 async function fixture(overrides: Partial<Omit<DshBudgetOptions, 'path'>> = {}) {
@@ -13,10 +24,56 @@ async function fixture(overrides: Partial<Omit<DshBudgetOptions, 'path'>> = {}) 
   return { options, budget: new FileDshBudget(options), directory }
 }
 afterEach(async () => {
+  filesystemFault.renameCodes = []; filesystemFault.renameCalls = 0
   for (const directory of directories.splice(0)) await rm(directory, { recursive: true, force: true })
 })
 
 describe('file DSH authorization budget', () => {
+  it.each(['EPERM', 'EBUSY'])('retries a transient atomic rename %s without duplicating admission', async code => {
+    const f = await fixture()
+    const initial = await f.budget.readSnapshot()
+    filesystemFault.renameCalls = 0
+    filesystemFault.renameCodes = [code]
+    const admitted = await f.budget.admit('model', 'rename-retry', 'deepseek')
+    expect(filesystemFault.renameCalls).toBe(2)
+    expect(await f.budget.admit('model', 'rename-retry', 'deepseek')).toEqual(admitted)
+    expect(await f.budget.readSnapshot()).toMatchObject({ batchId: initial.batchId, modelCalls: 1, pendingCalls: 1,
+      entries: [admitted], unknownReservedUsdMicros: 40_000 })
+    expect(await readdir(f.directory)).toEqual(['ledger.json'])
+  })
+
+  it('fails closed after three denied renames, preserves the old ledger and never reaches the provider', async () => {
+    const f = await fixture()
+    await f.budget.admit('model', 'old-failure', 'deepseek')
+    await f.budget.settle('old-failure', { durationMs: 1, errorCode: 'PROVIDER_FAILURE' })
+    const original = await readFile(f.options.path, 'utf8')
+    filesystemFault.renameCalls = 0
+    filesystemFault.renameCodes = ['EPERM', 'EPERM', 'EPERM', 'EPERM']
+    const provider = vi.fn()
+    const request = async () => { await f.budget.admit('model', 'denied', 'deepseek'); return provider() }
+    await expect(request()).rejects.toMatchObject({ code: 'DSH_BUDGET_FS_LEDGER_RENAME_EPERM',
+      message: 'Budget file operation LEDGER_RENAME failed after 3 attempt(s)',
+      details: { operation: 'LEDGER_RENAME', systemCode: 'EPERM', attempts: 3 } })
+    expect(filesystemFault.renameCalls).toBe(3)
+    expect(provider).not.toHaveBeenCalled()
+    expect(await readFile(f.options.path, 'utf8')).toBe(original)
+    expect(await readdir(f.directory)).toEqual(['ledger.json'])
+    filesystemFault.renameCodes = []
+    expect(await f.budget.readSnapshot()).toMatchObject({ modelCalls: 1, pendingCalls: 0 })
+  })
+
+  it('does not retry an unrelated rename error', async () => {
+    const f = await fixture()
+    await f.budget.readSnapshot()
+    const original = await readFile(f.options.path, 'utf8')
+    filesystemFault.renameCalls = 0
+    filesystemFault.renameCodes = ['EIO']
+    await expect(f.budget.admit('model', 'io-error', 'deepseek')).rejects.toMatchObject({ code: 'DSH_BUDGET_FS_LEDGER_RENAME_EIO',
+      details: { operation: 'LEDGER_RENAME', systemCode: 'EIO', attempts: 1 } })
+    expect(filesystemFault.renameCalls).toBe(1)
+    expect(await readFile(f.options.path, 'utf8')).toBe(original)
+  })
+
   it('requires an audited uncapped grant and preserves prior failures, caps and reservations across reloads', async () => {
     const f = await fixture({ authorizedUsd: 0.12, maxModelCalls: 1, maxSearchCalls: 1 })
     await f.budget.admit('search', 'old-search', 'deepseek-official')

@@ -13,6 +13,7 @@ function uniqueById<T extends { id: string }>(values: readonly T[]): T[] {
 
 export function addArtifactRef(workingSet: GoalWorkingSet, ref: GoalArtifactRef): GoalWorkingSet {
   const next = goalWorkingSetSchema.parse({
+    ...workingSet,
     artifactRefs: uniqueById([...workingSet.artifactRefs, goalArtifactRefSchema.parse(ref)]),
     locationHandles: workingSet.locationHandles
   })
@@ -21,6 +22,7 @@ export function addArtifactRef(workingSet: GoalWorkingSet, ref: GoalArtifactRef)
 
 export function addLocationHandle(workingSet: GoalWorkingSet, handle: GoalLocationHandle): GoalWorkingSet {
   const next = goalWorkingSetSchema.parse({
+    ...workingSet,
     artifactRefs: workingSet.artifactRefs,
     locationHandles: uniqueById([...workingSet.locationHandles, goalLocationHandleSchema.parse(handle)])
   })
@@ -29,6 +31,7 @@ export function addLocationHandle(workingSet: GoalWorkingSet, handle: GoalLocati
 
 export function mergeWorkingSet(base: GoalWorkingSet, additions: Partial<GoalWorkingSet>): GoalWorkingSet {
   return goalWorkingSetSchema.parse({
+    ...base,
     artifactRefs: uniqueById([...(base.artifactRefs ?? []), ...(additions.artifactRefs ?? [])]),
     locationHandles: uniqueById([...(base.locationHandles ?? []), ...(additions.locationHandles ?? [])])
   })

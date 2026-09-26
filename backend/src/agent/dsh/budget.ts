@@ -55,6 +55,24 @@ function usdMicros(value: number): number {
   return Math.ceil(Number((value * 1_000_000).toPrecision(15)))
 }
 function isMissing(value: unknown): boolean { return (value as NodeJS.ErrnoException)?.code === 'ENOENT' }
+/** Retry only the atomic replacement, never a transaction or an admission.
+ * Windows readers may transiently deny rename; the same temp file and lock remain held. */
+async function budgetFileOperation<T>(operation: string, action: () => Promise<T>, retryRename = false): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try { return await action() } catch (failure) {
+      const systemCode = (failure as NodeJS.ErrnoException)?.code
+      // These are existing create/read control-flow cases, not recoverable lock failures.
+      if (systemCode === 'ENOENT' || systemCode === 'EEXIST') throw failure
+      if (retryRename && (systemCode === 'EPERM' || systemCode === 'EBUSY') && attempt < 3) {
+        await new Promise(resolve => setTimeout(resolve, attempt === 1 ? 25 : 75))
+        continue
+      }
+      const code = typeof systemCode === 'string' && /^[A-Z0-9_]{1,16}$/.test(systemCode) ? systemCode : 'UNKNOWN'
+      throw new AppError(`DSH_BUDGET_FS_${operation}_${code}`, `Budget file operation ${operation} failed after ${attempt} attempt(s)`, 503,
+        { operation, systemCode: code, attempts: attempt })
+    }
+  }
+}
 function callCounts(kind: DshBudgetEntry['kind'], provider: string) {
   return { model: Number(kind === 'model' || provider === DSH_OFFICIAL_SEARCH_PROVIDER), search: Number(kind === 'search') }
 }
@@ -181,21 +199,25 @@ export class FileDshBudget {
 
   private transaction<T>(operation: (ledger: Ledger) => Promise<{ value: T; changed: boolean }>): Promise<T> {
     const task = this.queue.then(async () => {
-      await mkdir(dirname(this.path), { recursive: true })
+      await budgetFileOperation('DIRECTORY_CREATE', () => mkdir(dirname(this.path), { recursive: true }))
       const lockPath = `${this.path}.lock`
       const lock = { version: 1 as const, token: randomUUID(), pid: process.pid, host: hostname(), createdAt: new Date().toISOString() }
       let handle
-      try { handle = await open(lockPath, 'wx', 0o600) } catch (failure) {
+      try { handle = await budgetFileOperation('LOCK_OPEN', () => open(lockPath, 'wx', 0o600)) } catch (failure) {
         if ((failure as NodeJS.ErrnoException).code !== 'EEXIST') throw failure
         let valid = false
-        try { valid = lockSchema.safeParse(JSON.parse(await readFile(lockPath, 'utf8'))).success } catch { /* No stale-lock deletion or recovery guess. */ }
+        try { valid = lockSchema.safeParse(JSON.parse(await budgetFileOperation('LOCK_READ', () => readFile(lockPath, 'utf8')))).success } catch (failure) {
+          if (failure instanceof AppError) throw failure
+          /* No stale-lock deletion or recovery guess. */
+        }
         error(valid ? 'DSH_BUDGET_LOCKED' : 'DSH_BUDGET_LOCK_CORRUPT', 'The budget lock must be inspected before another process can write')
       }
       try {
-        await handle.writeFile(JSON.stringify(lock)); await handle.sync()
+        await budgetFileOperation('LOCK_WRITE', () => handle.writeFile(JSON.stringify(lock)))
+        await budgetFileOperation('LOCK_SYNC', () => handle.sync())
         let ledger: Ledger, fresh = false
         try {
-          const parsed = ledgerSchema.safeParse(JSON.parse(await readFile(this.path, 'utf8')))
+          const parsed = ledgerSchema.safeParse(JSON.parse(await budgetFileOperation('LEDGER_READ', () => readFile(this.path, 'utf8'))))
           if (!parsed.success) error('DSH_BUDGET_CORRUPT', 'The existing budget ledger is invalid; it will not be reset')
           ledger = parsed.data
         } catch (failure) {
@@ -221,12 +243,15 @@ export class FileDshBudget {
         }
         return result.value
       } finally {
-        await handle.close()
+        await budgetFileOperation('LOCK_CLOSE', () => handle.close())
         // Never unlink a replacement/corrupted lock owned by someone else.
         let held
-        try { held = lockSchema.safeParse(JSON.parse(await readFile(lockPath, 'utf8'))) } catch { error('DSH_BUDGET_LOCK_CORRUPT', 'Budget lock changed while held') }
+        try { held = lockSchema.safeParse(JSON.parse(await budgetFileOperation('LOCK_READ', () => readFile(lockPath, 'utf8')))) } catch (failure) {
+          if (failure instanceof AppError) throw failure
+          error('DSH_BUDGET_LOCK_CORRUPT', 'Budget lock changed while held')
+        }
         if (!held.success || held.data.token !== lock.token) error('DSH_BUDGET_LOCK_CORRUPT', 'Budget lock ownership changed while held')
-        await unlink(lockPath)
+        await budgetFileOperation('LOCK_RELEASE', () => unlink(lockPath))
       }
     })
     this.queue = task.catch(() => {})
@@ -235,11 +260,13 @@ export class FileDshBudget {
 
   private async persist(ledger: Ledger): Promise<void> {
     const temporary = `${this.path}.${randomUUID()}.tmp`
-    const handle = await open(temporary, 'wx', 0o600)
+    const handle = await budgetFileOperation('TEMP_OPEN', () => open(temporary, 'wx', 0o600))
     let moved = false
     try {
-      await handle.writeFile(`${JSON.stringify(ledger, null, 2)}\n`); await handle.sync(); await handle.close()
-      await rename(temporary, this.path); moved = true
+      await budgetFileOperation('TEMP_WRITE', () => handle.writeFile(`${JSON.stringify(ledger, null, 2)}\n`))
+      await budgetFileOperation('TEMP_SYNC', () => handle.sync())
+      await budgetFileOperation('TEMP_CLOSE', () => handle.close())
+      await budgetFileOperation('LEDGER_RENAME', () => rename(temporary, this.path), true); moved = true
     } finally {
       await handle.close().catch(() => {})
       if (!moved) await unlink(temporary).catch(() => {})

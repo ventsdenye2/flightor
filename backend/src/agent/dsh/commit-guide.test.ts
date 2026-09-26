@@ -49,9 +49,49 @@ async function fixture() {
 }
 
 describe('DSH combined guide commit', () => {
+  it.each(['intent', 'goalRef', 'bound-runtime'] as const)('keeps one accepted Goal during a %s repair', async mode => {
+    const f = await fixture(), accept = vi.spyOn(f.runs, 'accept')
+    const invalid = structuredClone(f.input)
+    invalid.text.reply = 'Your budget target is 4000元.'
+    await expect(f.execute(invalid)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION' })
+    const goalId = f.context.activeGoalId
+    const repair = f.tool.inputSchema.parse({ ...f.input,
+      ...(mode === 'intent' ? { intent } : mode === 'goalRef' ? { goalRef: goalId } : {}) })
+    await expect(f.tool.execute(repair, f.context, new AbortController().signal))
+      .resolves.toMatchObject({ status: 'accepted', acceptedGoal: { goalId }, completion: { status: 'satisfied' } })
+    expect(accept).toHaveBeenCalledTimes(1)
+    expect(await f.goals.listForTrip(f.trip.id)).toHaveLength(1)
+    expect(f.tool.description).toContain('EVERY complete submission')
+    expect(f.tool.description).not.toContain('later operations use the same accepted goal without repeating it')
+  })
+
+  it('omits legacy draft tokens and accepts a full same-turn repair of duplicated findings', async () => {
+    const f = await fixture()
+    const duplicate = structuredClone(f.input)
+    duplicate.days[1]!.items.forEach(item => { item.candidateKey = 'temple' })
+    let feedback: any
+    try { await f.execute(duplicate) } catch (error) { feedback = (error as { details: unknown }).details }
+    expect(feedback).toMatchObject({ issues: expect.arrayContaining(['guide_duplicate_evidence']),
+      repairHint: expect.stringContaining('Resubmit COMPLETE corrected days and text'),
+      repair: { availableCandidates: expect.arrayContaining([expect.objectContaining({ findingId: 'temple' })]) } })
+    expect(feedback.repair).not.toHaveProperty('draftRef')
+    expect(feedback.repair).not.toHaveProperty('revision')
+    expect(feedback.repairHint).toContain('genuinely distinct places or experiences')
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'travel_guide')).toHaveLength(0)
+    expect(f.input).not.toHaveProperty('baseGuideId')
+    expect(f.input).not.toHaveProperty('expectedContentHash')
+    const result = await f.execute()
+    expect(result).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    const guide = travelGuideArtifactPayloadSchema.parse((await f.artifacts.get(result.artifact.id))!.payload)
+    expect(guide.days.flatMap(day => day.items.map(item => item.sourceFindingId))).toEqual(['temple', 'museum', 'garden'])
+    expect(new Set(f.input.candidates!.flatMap(candidate => candidate.evidenceRefs)).size).toBe(1)
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'research')).toHaveLength(1)
+  })
+
   it('explains that budget targets are excluded from publication prose and accepts a text-only repair', async () => {
     const f = await fixture()
     f.input.text.overview = 'Your two-day budget target is 1500元 in total, with a relaxed cultural itinerary.'
+    f.input.text.reply = 'Your 4000元 itinerary starts at 12:30.'
     await expect(f.execute()).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
       issues: expect.arrayContaining([expect.objectContaining({ code: 'format', detail: 'excluded_precise_claim' })]),
       repairHint: expect.stringContaining('including the user budget target')
@@ -59,12 +99,76 @@ describe('DSH combined guide commit', () => {
     const blocked = (await f.artifacts.listForTrip(f.trip.id)).find(record => record.type === 'travel_guide')!
     expect(publicationFor(blocked)!.finalization!.variants.en).toMatchObject({ status: 'blocked', text: null })
     expect((await f.goals.get(f.context.activeGoalId!))!.status).toBe('pending')
+    const acceptedGoal = f.context.activeGoalId
+    const researchBefore = (await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'research')
     f.input.text.overview = 'Explore traditional culture with a relaxed two-day itinerary.'
+    f.input.text.reply = 'Your Tokyo cultural itinerary is ready to explore.'
+    delete f.input.candidates
     const result = await f.execute()
-    expect(result).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    expect(result).toMatchObject({ status: 'accepted', acceptedGoal: { goalId: acceptedGoal }, completion: { status: 'satisfied' } })
     const accepted = (await f.artifacts.get(result.artifact.id))!
     expect(travelGuideArtifactPayloadSchema.parse(accepted.payload).days).toEqual(travelGuideArtifactPayloadSchema.parse(blocked.payload).days)
     expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'research')).toHaveLength(1)
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'research')).toEqual(researchBefore)
+  })
+
+  it('reports domain and prose failures together so one same-goal repair can address both', async () => {
+    const f = await fixture(), bad = structuredClone(f.input)
+    bad.days[1]!.items[0]!.candidateKey = 'temple'
+    bad.text.reply = 'Your 4000元 itinerary starts at 12:30.'
+    await expect(f.execute(bad)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      issues: expect.arrayContaining(['guide_duplicate_evidence']),
+      presentationIssues: expect.arrayContaining(['excluded_precise_claim']),
+      repairHint: expect.stringContaining('ALSO remove ALL monetary amounts')
+    } })
+    const acceptedGoal = f.context.activeGoalId
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'travel_guide')).toHaveLength(0)
+    await expect(f.execute()).resolves.toMatchObject({ status: 'accepted', acceptedGoal: { goalId: acceptedGoal }, completion: { status: 'satisfied' } })
+  })
+
+  it.each(['owner', 'trip', 'conversation', 'generation', 'version', 'goal', 'run', 'flight'] as const)('does not reuse registered candidate keys after %s scope changes', async change => {
+    const f = await fixture()
+    const invalid = structuredClone(f.input)
+    invalid.text.reply = 'The budget target is 4000元.'
+    await expect(f.execute(invalid)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION' })
+    const before = await f.artifacts.listForTrip(f.trip.id)
+    const repair = structuredClone(f.input)
+    delete repair.candidates
+    const context = { ...f.context }
+    if (change === 'owner') context.ownerId = 'another-owner'
+    if (change === 'trip') context.tripId = randomUUID()
+    if (change === 'conversation') context.conversationId = randomUUID()
+    if (change === 'generation') context.generationId = randomUUID()
+    if (change === 'run') { context.activeGoalRunId = randomUUID(); context.acceptedGoalIntent = { ...context.acceptedGoalIntent!, runId: context.activeGoalRunId } }
+    if (change === 'flight') context.selectedFlight = { selection: { kind: 'offer', artifactId: randomUUID(), offerId: 'other', revision: 1 }, segments: [], layoverWindows: [] } as any
+    if (change === 'version') await f.trips.update(f.trip.id, { notes: ['Changed context'] }, 1)
+    if (change === 'goal' || change === 'version') {
+      context.requestId = randomUUID()
+      delete context.activeGoalId; delete context.activeGoalRunId; delete context.activeGoalKind
+      delete context.activeGoalContextVersion; delete context.acceptedGoalIntent
+    }
+    await expect(f.execute(repair, context)).rejects.toBeDefined()
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual(before)
+  })
+
+  it('requires a supplied replacement candidate list to resolve every key without merging older registrations', async () => {
+    const f = await fixture()
+    const invalid = structuredClone(f.input)
+    invalid.text.reply = 'The budget target is 4000元.'
+    await expect(f.execute(invalid)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION' })
+    const replacement = structuredClone(f.input)
+    replacement.candidates = replacement.candidates!.slice(0, 1)
+    await expect(f.execute(replacement)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', message: 'Candidate key is unavailable: museum' })
+  })
+
+  it('does not register keys when research persistence failed', async () => {
+    const f = await fixture()
+    vi.spyOn(f.artifacts, 'create').mockRejectedValueOnce(new Error('research save unavailable'))
+    await expect(f.execute()).rejects.toThrow('research save unavailable')
+    const repair = structuredClone(f.input)
+    delete repair.candidates
+    await expect(f.execute(repair)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', message: 'Candidate key is unavailable: temple' })
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
   })
 
   it('rejects partial raw evidence under a verified-only Goal and forbids weakening that accepted Goal', async () => {

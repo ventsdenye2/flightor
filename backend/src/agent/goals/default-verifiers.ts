@@ -5,6 +5,7 @@ import { FlightSearchGoalVerifier } from './flight-search-verifier.js'
 import { TravelGuideGoalVerifier } from './travel-guide-verifier.js'
 import { RouteGenerationGoalVerifier } from './route-generation-verifier.js'
 import { verificationResult } from './artifact-verification.js'
+import { canonicalFingerprint } from './repository.js'
 
 class TripContextUpdateGoalVerifier implements GoalVerifier {
   readonly kind = 'trip_context_update' as const
@@ -21,7 +22,16 @@ class TripContextUpdateGoalVerifier implements GoalVerifier {
     // Removing an optional field is a real update; absent in both snapshots is not.
     // Repository null patches become absent properties in the canonical Trip schema.
     const changed = fields.filter(field => JSON.stringify(current[field]) !== JSON.stringify(context.run.contextSnapshot[field]))
-    const missing = fields.filter(field => !changed.includes(field))
+    const receipt = context.run.workingSet.tripUpdateReceipt
+    const confirmedSetter = receipt !== undefined
+      && receipt.ownerId === context.ownerId && receipt.tripId === current.id
+      && receipt.runId === context.run.id && receipt.generationId === context.run.generationId
+      && receipt.contextVersion === current.version
+      && fields.every(field => receipt.fieldHashes[field] === canonicalFingerprint({ value: current[field] }))
+    // Once a setter is attested, later unrelated writes cannot satisfy that
+    // setter by falling back to a difference from the original Run snapshot.
+    if (receipt && !confirmedSetter) return verificationResult('pending', ['trip_update_receipt_stale'])
+    const missing = confirmedSetter ? [] : fields.filter(field => !changed.includes(field))
     return missing.length === 0
       ? { status: 'satisfied', artifactIds: [], missing: [], warnings: [] }
       : changed.length > 0

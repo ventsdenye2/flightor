@@ -11,6 +11,11 @@ describe('DSH lightweight public explanation boundary', () => {
     ['zh', '可以参观 Tokyo National Museum，了解当地文化。'],
     ['en', 'Your current budget is CNY 1200 in total for two days.'],
     ['zh', '两天的总预算是1200元，具体费用还需要核实。'],
+    ['zh', '已确认：预算目标是两天合计1200元人民币，整个行程统一口径，不是每天1200元；原行程不变。'],
+    ['en', 'Your total budget is CNY 1200, not CNY 1200 per day.'],
+    ['zh', '预算只是目标，实际费用仍待核实，不承诺未知费用一定够。'],
+    ['zh', '已保留总预算目标，费用是否足够仍需核实。'],
+    ['en', 'The budget remains a target; actual costs still need checking.'],
   ] as const)('preserves relevant %s explanation: %s', (locale, text) => {
     expect(publicProseProblems([text], locale, { shortReply: true, budget })).toEqual([])
   })
@@ -34,8 +39,20 @@ describe('DSH lightweight public explanation boundary', () => {
     ['en', 'The train takes 2 hours.', 'excluded_precise_claim'],
     ['zh', '全程保证在预算内。', 'budget_guarantee'],
     ['en', 'This itinerary is within your budget.', 'budget_guarantee'],
+    ['zh', '整体预算仍在既定总额内。', 'budget_guarantee'],
+    ['zh', '总费用已控制在预算范围内。', 'budget_guarantee'],
+    ['zh', '两天开销不会超出预算上限。', 'budget_guarantee'],
+    ['zh', '花费完全符合预算目标。', 'budget_guarantee'],
+    ['zh', '这样的安排满足你的预算要求。', 'budget_guarantee'],
+    ['zh', '这笔预算肯定足够。', 'budget_guarantee'],
+    ['en', 'The cost stays within the allocated total.', 'budget_guarantee'],
+    ['en', 'All expenses are below your total budget.', 'budget_guarantee'],
     ['en', 'Your total budget is CNY 1500.', 'excluded_precise_claim'],
     ['en', 'Your total budget is CNY 1200 per day.', 'excluded_precise_claim'],
+    ['zh', '总预算是1200元，不是每天1500元。', 'excluded_precise_claim'],
+    ['zh', '总预算是1200元，门票不是每天1200元。', 'excluded_precise_claim'],
+    ['zh', '总预算是1200元，每天1200元。', 'excluded_precise_claim'],
+    ['zh', '不是每天1200元。', 'excluded_precise_claim'],
     ['en', 'Tickets cost CNY 1200, matching your total budget.', 'excluded_precise_claim'],
     ['en', '', 'empty_reply'],
   ] as const)('withholds %s unsafe expression: %s', (locale, text, reason) => {

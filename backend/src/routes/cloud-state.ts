@@ -119,8 +119,9 @@ export async function registerCloudStateRoutes(
     if (!conversation) return reply.code(404).send({ error: { code: 'RESOURCE_NOT_FOUND', message: 'Conversation was not found' } })
     const messages = (await repos.conversations.listMessages(conversationId))
       .filter(message => message.role === 'user' || message.role === 'assistant')
+    const currentTrip = await repos.trips.get(conversation.tripId)
     const projected = await projectHistoricalGuideMessages(messages, {
-      tripId: conversation.tripId, conversationId, locale, artifacts: repos.artifacts
+      tripId: conversation.tripId, conversationId, locale, artifacts: repos.artifacts, budget: currentTrip?.budget ?? null
     })
     return reply.send({ messages: projected })
   })

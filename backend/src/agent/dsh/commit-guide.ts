@@ -8,7 +8,7 @@ import { authoredGuideInputSchema } from '../../travel-guides/authored.js'
 import { guideCandidateRef } from '../../travel-guides/candidates.js'
 import { finalTextSchema, type FinalText, type PublicationLocale } from '../../travel-guides/finalization-schema.js'
 import { publishIntegratedGuide } from '../../travel-guides/finalization-service.js'
-import { sourceRef } from '../../travel-guides/finalization.js'
+import { publicProseProblems, sourceRef } from '../../travel-guides/finalization.js'
 import { publicationFor } from '../../travel-guides/publication.js'
 import { tripTravelWindow } from '../../trips/dates.js'
 import { tripRoutePlanPayloadSchema } from '../../trip-planning/types.js'
@@ -24,7 +24,9 @@ import { convertCandidatesToResearch, type DshEvidenceStore } from './evidence.j
 const key = z.string().trim().min(1).max(120)
 const slot = z.enum(['morning', 'afternoon', 'evening', 'flexible'])
 const choice = authoredGuideInputSchema.shape.days.element.shape.items.element.omit({ researchIndex: true, findingId: true })
-  .extend({ activityKey: key, candidateKey: key.optional(), candidateRef: z.string().min(1).max(160).optional() }).strict()
+  .extend({ activityKey: key,
+    candidateKey: key.optional().describe('Select a distinct candidate/finding for each scheduled visit. Do not reuse one candidateKey across multiple slots or days. Different actual places or experiences may use the same raw evidenceRefs when that source supports each distinct candidate; do not merely rename duplicate visits.'),
+    candidateRef: z.string().min(1).max(160).optional().describe('Select an existing persisted finding once per guide; do not reuse the same candidateRef across multiple scheduled slots or as supporting evidence.') }).strict()
 const daySchema = authoredGuideInputSchema.shape.days.element.extend({ items: z.array(choice).max(6)
   .describe('A visit day needs sourced activities. An intentionally empty rest or travel day requires kind rest/travel, meaningful notes describing that day, and allowRestDays=true in the accepted travel_guide intent; use this only when compatible with the user request.') }).strict()
 const activityTextSchema = finalTextSchema.shape.activities.element.omit({ activityId: true, sourceRefs: true }).extend({ activityKey: key }).strict()
@@ -107,17 +109,27 @@ export async function mergeProtectedGuide(input: CommitGuideInput, scope: Artifa
 
 export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore; locale: PublicationLocale; memoryEnabled?: boolean }): AgentTool {
   const researchCache = new Map<string, ResearchArtifact>()
+  let candidateScope: string | undefined
+  let registeredCandidates = new Map<string, string>()
   const outputSchema = z.object({ status: z.literal('accepted'), artifact: z.object({ id: z.string().uuid(), type: z.literal('travel_guide'), schemaVersion: z.literal(1) }).strict(),
     reply: z.string(), warnings: z.array(z.string()), guideContentHash: z.string(),
     activityBindings: z.array(z.object({ activityKey: z.string(), activityId: z.string(), sourceRefs: z.array(z.string()) }).strict()) }).strict()
   const tool: AgentTool<CommitGuideInput, z.infer<typeof outputSchema>> = {
     name: 'commit_travel_guide',
-    description: 'Commit an evidence-backed itinerary and its final text together. New candidates select opaque evidenceRefs from web_search/web_fetch and trusted locationId; existing candidateRef may be reused without new research. Raw web evidence is converted to partially_verified, reference-only material, never independent fact verification. For an ordinary research-backed itinerary, set intent.parameters.allowPartial=true before accepting the first durable Goal; this keeps the source uncertainty visible and does not relax daily/category/publication checks. If the user explicitly requires independently verified facts, this raw-evidence path cannot satisfy that requirement: explain the limitation and clarify instead of committing or changing the accepted constraints. Never weaken an already accepted Goal after a rejection. Each day item and text activity share a unique activityKey; do not invent source IDs. Text must be in the current locale, with concrete place/action and preference-based reasons. Omit ALL monetary amounts from reply, overview, day themes and activity text, including the user budget target, because the UI displays budget separately. No prices, clock times, exact minutes/durations, opening hours, budget guarantees or verified-fact claims. To modify only a slot, pass current baseGuideId/expectedContentHash/replaceSlots and only replacement items; the server preserves every other slot and its text. Required Goal intent is accepted before writes; completion happens only after publication accepts.',
+    description: 'Commit an evidence-backed itinerary and its final text together. New candidates select opaque evidenceRefs from web_search/web_fetch and trusted locationId; existing candidateRef may be reused without new research. Raw web evidence is converted to partially_verified, reference-only material, never independent fact verification. For an ordinary research-backed itinerary, set intent.parameters.allowPartial=true before accepting the first durable Goal; this keeps the source uncertainty visible and does not relax daily/category/publication checks. If the user explicitly requires independently verified facts, this raw-evidence path cannot satisfy that requirement: explain the limitation and clarify instead of committing or changing the accepted constraints. Never weaken an already accepted Goal after a rejection. Each day item and text activity share a unique activityKey; each scheduled visit selects a distinct candidate/finding. Do not invent source IDs. Text must be in the current locale, with concrete place/action and preference-based reasons. Omit ALL monetary amounts from reply, overview, day themes and activity text, including the user budget target, because the UI displays budget separately. No prices, clock times, exact minutes/durations, opening hours, budget guarantees or verified-fact claims. After a first-guide needs_revision, resubmit the COMPLETE corrected days and text with the same accepted Goal; if the candidates were already registered by that attempt, omit candidates to reuse the same candidateKeys within this turn and unchanged scope. Supplying candidates replaces the list and revalidates every evidenceRef; this is not an accepted-guide local edit and needs no baseGuideId, expectedContentHash or replaceSlots. To modify only a slot of an already accepted guide, use its real persisted baseGuideId/expectedContentHash/replaceSlots and only replacement items; never invent a hash or treat a failed draft as that accepted base. The server preserves every other slot and its text. Required Goal intent is accepted before writes; completion happens only after publication accepts.',
     inputSchema: commitGuideInputSchema, outputSchema, costClass: 'cheap', costUnits: 1, sideEffect: 'state', parallelSafe: false, timeoutMs: 30_000, provider: 'travel_guide',
     async execute(input, context, signal) {
       if (!context.ownerId) throw new AppError('UNAUTHORIZED', 'An authenticated owner is required', 401)
       const scopedContext: ToolExecutionContext = { ...context, requireGuideFinalization: true }
       const scope = await workspaceScope(scopedContext, signal)
+      const currentCandidateScope = canonicalFingerprint({ ownerId: context.ownerId, tripId: scope.tripId,
+        conversationId: context.conversationId, generationId: context.generationId, contextVersion: scope.tripContextVersion,
+        goalId: scope.goalId, runId: scope.runId, selectedFlight: scope.selectedFlight ?? null })
+      if (candidateScope !== currentCandidateScope) {
+        candidateScope = currentCandidateScope
+        registeredCandidates = new Map()
+        researchCache.clear()
+      }
       recordTripLocations(scopedContext, scope.tripContext)
       if (input.days.some(day => day.items.some(item => Number(Boolean(item.candidateKey)) + Number(Boolean(item.candidateRef)) !== 1))) fail('Each item requires exactly one candidateKey or candidateRef')
       const isPatch = input.baseGuideId !== undefined || input.expectedContentHash !== undefined || input.replaceSlots !== undefined
@@ -140,8 +152,10 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         })
       }
       if (input.candidates && new Set(input.candidates.map(item => item.key)).size !== input.candidates.length) fail('Candidate keys must be unique')
-      const candidateRefs = new Map<string, string>()
+      const candidateRefs = input.candidates ? new Map<string, string>() : new Map(registeredCandidates)
       if (input.candidates) {
+        // A replacement candidate list must stand on its own validated evidence.
+        registeredCandidates = new Map()
         const goal = context.activeGoalId ? await context.goalRepository?.get(context.activeGoalId) : undefined
         if (!goal || goal.kind !== 'travel_guide') fail('A current travel guide Goal is required')
         const parameters = travelGuideGoalParametersSchema.parse(goal.parameters)
@@ -149,7 +163,10 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         const unavailableCandidates = (await Promise.all(candidates.map(async candidate => {
           const records = await Promise.all(candidate.evidenceRefs.map(ref => options.evidenceStore.get(ref)))
           return { candidateKey: candidate.key, unavailableEvidenceRefs: candidate.evidenceRefs.filter((_ref, index) =>
-            !records[index] || records[index]!.status !== 'available') }
+            !records[index] || records[index]!.status !== 'available'
+            || records[index]!.ownerId !== context.ownerId || records[index]!.tripId !== scope.tripId
+            || records[index]!.conversationId !== context.conversationId || records[index]!.generationId !== context.generationId
+            || records[index]!.tripContextVersion !== scope.tripContextVersion) }
         }))).filter(candidate => candidate.unavailableEvidenceRefs.length > 0)
         if (unavailableCandidates.length > 0) fail('Candidate evidence must be available in the current turn and Trip context', {
           code: 'candidate_evidence_unavailable', candidates: unavailableCandidates,
@@ -158,21 +175,44 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         const brief = { destinations: [...new Map(candidates.map(item => [item.location.id, item.location])).values()],
           interests: scope.tripContext.interests, questions: parameters.questions, researchTypes: parameters.researchTypes,
           ...(tripTravelWindow(scope.tripContext) ? { travelWindow: tripTravelWindow(scope.tripContext)! } : {}), maxResults: 50 }
-        const fingerprint = canonicalFingerprint({ generation: context.generationId, trip: scope.tripId, version: scope.tripContextVersion, candidates, brief })
+        const fingerprint = canonicalFingerprint({ scope: currentCandidateScope, candidates, brief })
         let source = researchCache.get(fingerprint)
         if (!source) {
           source = await convertCandidatesToResearch({ candidates, brief, artifactId: randomUUID() }, options.evidenceStore)
           await saveWorkspaceArtifact(scope, { id: source.id, type: 'research', schemaVersion: 2, payload: source, sourceArtifactIds: [] })
+          await checkpoint(scope)
           researchCache.set(fingerprint, source)
         }
         for (const candidate of candidates) candidateRefs.set(candidate.key, guideCandidateRef(scope, source, candidate.key))
+        await checkpoint(scope)
+        registeredCandidates = new Map(candidateRefs)
       }
       const resolveKey = (value: string) => candidateRefs.get(value) ?? fail(`Candidate key is unavailable: ${value}`)
       const saveInput = { days: days.map(day => ({ ...day, items: day.items.map(({ activityKey: _key, candidateKey, ...item }) =>
         ({ ...item, ...(candidateKey ? { candidateRef: resolveKey(candidateKey) } : {}) })) })),
         supportingRefs: protectedGuide?.supportingRefs ?? [...(input.supportingRefs ?? []), ...(input.supportingCandidateKeys ?? []).map(resolveKey)] }
       const saved = await saveTravelGuideTool.execute(saveInput, scopedContext, signal)
-      if (saved.status !== 'saved' || !saved.artifact) fail('The itinerary requires revision', saved)
+      if (saved.status !== 'saved' || !saved.artifact) {
+        // Report expression problems alongside domain rejection so the single
+        // allowed repair can fix both. Publication still validates after save.
+        const proposedActivities = [...authoredTexts.values(), ...(protectedGuide?.protectedText.values() ?? [])]
+        const bodies = [input.text.reply, input.text.overview, ...(protectedGuide?.themes ?? input.text.days).map(day => day.theme),
+          ...proposedActivities.flatMap(activity => [activity.introduction, activity.recommendationReason])]
+        const presentationIssues = publicProseProblems([...bodies, ...proposedActivities.map(activity => activity.name)], options.locale, { languageBodies: bodies })
+        const repairHint = (saved.issues.includes('guide_duplicate_evidence')
+          ? 'Select a distinct candidate/finding for each scheduled visit and supporting entry; the same finding cannot occupy multiple slots. A single raw source may support multiple genuinely distinct places or experiences, with separate candidate keys and accurately supported descriptions; do not merely rename duplicate visits. '
+          : '') + (isPatch
+          ? 'Resubmit the complete corrected replacement days and text for the original selected slots, using the same real accepted baseGuideId and expectedContentHash. '
+          : 'Resubmit COMPLETE corrected days and text with the same accepted Goal. This first-guide repair needs no baseGuideId, expectedContentHash or replaceSlots; do not invent these values. ')
+          + 'Reuse availableCandidates or current evidence for supported corrections; research only genuinely missing material. Keep accepted constraints unchanged.'
+          + (presentationIssues.includes('excluded_precise_claim')
+            ? ' ALSO remove ALL monetary amounts, including the user budget target, clock times and exact minutes/durations from every text field; the UI displays the authoritative budget separately.' : '')
+        fail('The itinerary requires revision', { ...saved,
+          ...(presentationIssues.length ? { presentationIssues } : {}),
+          ...(saved.repair ? { repair: { issues: saved.repair.issues, availableCandidates: saved.repair.availableCandidates,
+            candidateSearchComplete: saved.repair.candidateSearchComplete } } : {}),
+          revisionGuidance: repairHint, repairHint })
+      }
       const record = await context.artifacts.get(saved.artifact.id)
       if (!record) throw new AppError('RESOURCE_NOT_FOUND', 'Saved guide was not found', 404)
       const guide = travelGuideArtifactPayloadSchema.parse(record.payload)
@@ -195,7 +235,7 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       const variant = publication?.finalization?.variants[options.locale]
       if (variant?.status !== 'accepted') fail('The final text requires revision', { artifactId: published.id, issues: variant?.issues ?? [],
         ...(variant?.issues.some(issue => issue.detail.split(', ').includes('excluded_precise_claim')) ? {
-          repairHint: 'Remove ALL monetary amounts, including the user budget target (for example 1500元), from text.reply, text.overview, text.days[].theme and every text.activities field. The UI displays the authoritative budget separately. Also remove clock times and exact minutes/durations. Keep the itinerary, evidence bindings and accepted Goal unchanged; repair only the rejected presentation text.'
+          repairHint: 'Remove ALL monetary amounts, including the user budget target (for example 1500元), from text.reply, text.overview, text.days[].theme and every text.activities field. The UI displays the authoritative budget separately. Also remove clock times and exact minutes/durations. Keep the itinerary, evidence bindings and accepted Goal unchanged; repair only the rejected presentation text. Resubmit complete days and text; you may omit candidates to reuse the candidateKeys already registered in this same turn, Goal and unchanged Trip/flight context.'
         } : {}) })
       await checkpoint(scope)
       context.onArtifactCommitted?.(published)
@@ -204,5 +244,6 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         activityBindings: activities.map((item, index) => ({ activityKey: decisions[index]!.activityKey, activityId: item.activityId, sourceRefs: item.sourceRefs })) }
     }
   }
-  return withGoalIntent(tool, ['travel_guide'], { required: true, completeAfter: true })
+  const wrapped = withGoalIntent(tool, ['travel_guide'], { required: true, completeAfter: true })
+  return { ...wrapped, description: `${tool.description} DSH Goal protocol: EVERY complete submission, including a repair, carries intent or goalRef, never both. A new user turn starts with no accepted Goal: provide a NEW travel_guide intent matching the current request, or a valid resumable goalRef with matching parameters. A repair repeats exactly the same accepted intent or references that accepted Goal; never weaken its constraints. Completion feedback is server-owned; no declare/resume/finish call is needed.` }
 }

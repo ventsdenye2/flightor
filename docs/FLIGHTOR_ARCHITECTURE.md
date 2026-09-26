@@ -956,6 +956,8 @@ Read current trip state.
 
 ### `update_trip_context`
 
+2026-09-26增量：Run working set 可选持久 Trip setter 回执区分“本轮真实重复设置”与“字段本来就存在”。只有 core 工具提交后独立读回匹配 canonical patch 才记录 owner/Trip/run/generation/版本与字段 SHA-256；同值完成要求全体 Goal 字段被本次实际提交并匹配当前版本。旧无回执记录继续按快照差异验证；已有回执失配明确pending / trip_update_receipt_stale，不能用后续其他写入的字段差异冒认原setter完成；completion 的取消、版本与 revision 竞争保护不变，无新表或公开 API 入参。详见[工具合同](TOOLS.md#update_trip_context)。
+
 Apply explicit user constraints/preferences to current trip.
 
 Cost: free

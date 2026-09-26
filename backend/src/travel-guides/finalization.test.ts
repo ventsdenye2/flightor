@@ -70,6 +70,19 @@ describe('integrated main Agent publication', () => {
       if (failure === 'placeholder') expect(variant.issues[0]!.activityId).toBe(f.text.activities[0]!.activityId)
       expect((projectGuideRecord(saved, 'zh').payload as any).days).toEqual([])
     })
+  it.each(['reply', 'overview', 'day_theme', 'name', 'introduction', 'recommendationReason'] as const)(
+    'blocks an implicit total-budget guarantee in %s before publishing', async field => {
+      const f = await application()
+      const claim = '整体预算仍在既定总额内。'
+      if (field === 'reply' || field === 'overview') f.text[field] = claim
+      else if (field === 'day_theme') f.text.days[0]!.theme = claim
+      else f.text.activities[0]![field] = claim
+      const saved = await publishIntegratedGuide({ ...f.input, text: f.text })
+      const variant = publicationFor(saved)!.finalization!.variants.zh!
+      expect(variant).toMatchObject({ status: 'blocked', text: null, observation: { calls: 0 } })
+      expect(variant.issues).toContainEqual(expect.objectContaining({ code: 'format', detail: expect.stringContaining('budget_guarantee') }))
+      expect((projectGuideRecord(saved, 'zh').payload as any).days).toEqual([])
+    })
   it('uses the same material and context gates as legacy, even if accepted text is supplied', async () => {
     const f = fixture()
     const missing = validateIntegratedFinalText({ ...f.input, research: [], accepted: f.text }, f.text)

@@ -68,6 +68,13 @@ export class PostgresTripContextRepository implements TripContextRepository {
     return row ? contextFromRow(row.context_json) : undefined
   }
 
+  async getAtVersion(tripId: string, version: number): Promise<TripContext | undefined> {
+    const row = await this.db.selectFrom('trips').innerJoin('trip_context_versions', join => join
+      .onRef('trip_context_versions.trip_id', '=', 'trips.id').on('trip_context_versions.version', '=', version))
+      .select('trip_context_versions.context_json').where('trips.public_id', '=', tripId).where('trips.user_id', '=', this.userId).executeTakeFirst()
+    return row ? contextFromRow(row.context_json) : undefined
+  }
+
   async update(
     tripId: string,
     patch: TripContextPatch,

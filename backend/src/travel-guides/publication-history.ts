@@ -3,6 +3,8 @@ import { goalDeliverySchema } from '../agent/goals/completion.js'
 import type { ConversationMessage } from '../conversations/repository.js'
 import { GUIDE_LEGACY_REPLY, guidePublicationReply } from './publication.js'
 import { finalPendingReply } from './finalization-schema.js'
+import { publicProseProblems } from './finalization.js'
+import type { TripContext } from '../trips/types.js'
 
 /** Stable copy shown when an old guide message has no usable saved guide. */
 export const LEGACY_GUIDE_HISTORY_NOTICE = GUIDE_LEGACY_REPLY
@@ -22,6 +24,8 @@ export interface HistoryPublicationScope {
   tripId: string
   conversationId: string
   artifacts: Pick<ArtifactRepository, 'get'>
+  /** Current owner-scoped Trip facts, never message/model-supplied amounts. */
+  budget?: TripContext['budget'] | null
 }
 
 function strings(value: unknown): string[] {
@@ -52,6 +56,17 @@ export async function projectHistoricalGuideMessage(
   const refs = strings(message.metadata.artifact_refs)
   const delivery = guideDelivery(message.metadata)
   const isGuideMessage = delivery !== undefined
+  const storedDelivery = goalDeliverySchema.safeParse(message.metadata.delivery)
+  // A budget update can attach a revalidated guide without being a guide-writing
+  // reply. Recheck its persisted DSH answer at this read boundary before keeping it.
+  if (!isGuideMessage && message.metadata.engine === 'dsh' && message.metadata.stop_reason === 'completed'
+    && message.conversationId === scope.conversationId && storedDelivery.success
+    && storedDelivery.data.kind === 'trip_context_update' && storedDelivery.data.status === 'satisfied') {
+    return publicProseProblems([message.content], scope.locale ?? 'zh', { shortReply: true, budget: scope.budget ?? null }).length === 0
+      ? message : { ...message, content: scope.locale === 'en'
+        ? 'I could not provide a suitable explanation this time. Please rephrase your question.'
+        : '这次未能给出合适的说明，请换一种方式描述你想了解的问题。' }
+  }
   // In-flight and unsuccessful guide turns may contain arbitrary old model
   // prose. Replace it with a deterministic status notice; only satisfied
   // turns may publish a saved guide reply.

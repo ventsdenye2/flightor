@@ -11,7 +11,7 @@ import type { TravelGuideArtifactPayload } from '../../travel-guides/artifact.js
 import type { TripRoutePlanPayload } from '../../trip-planning/types.js'
 import { emptyTripContext, type TripContext } from '../../trips/types.js'
 import { createDefaultGoalVerifierRegistry } from './default-verifiers.js'
-import { InMemoryGoalRepository, InMemoryGoalRunRepository } from './repository.js'
+import { canonicalFingerprint, InMemoryGoalRepository, InMemoryGoalRunRepository } from './repository.js'
 import type { GoalIntent } from './types.js'
 import { selectedFlightContext } from '../../workspaces/flight-selection.js'
 
@@ -462,6 +462,36 @@ describe('default route-generation goal verifier', () => {
 })
 
 describe('default Trip Context update goal verifier', () => {
+  it('accepts a same-value setter only with an exact run-scoped persisted receipt for every requested field', async () => {
+    const test = await fixture({ kind: 'trip_context_update', parameters: { fields: ['budget', 'notes'] } },
+      { budget: { amount: 1200, currency: 'CNY', scope: 'trip' } })
+    test.context.currentTrip = { ...test.trip, version: 4 }
+    expect(await test.verify()).toMatchObject({ status: 'pending' })
+    const receipt = { ownerId: test.context.ownerId, tripId: test.trip.id, runId: test.context.run.id,
+      generationId: test.context.run.generationId, contextVersion: 4,
+      fieldHashes: { budget: canonicalFingerprint({ value: test.trip.budget }), notes: canonicalFingerprint({ value: test.trip.notes }) } }
+    test.context.run.workingSet.tripUpdateReceipt = receipt
+    expect(await test.verify()).toMatchObject({ status: 'satisfied' })
+    for (const invalid of [
+      { ...receipt, contextVersion: 3 }, { ...receipt, ownerId: 'other-owner' },
+      { ...receipt, runId: uuidv7() }, { ...receipt, generationId: 'other-generation' },
+      { ...receipt, tripId: 'other-trip' },
+      { ...receipt, fieldHashes: { budget: receipt.fieldHashes.budget } },
+      { ...receipt, fieldHashes: { ...receipt.fieldHashes, budget: canonicalFingerprint({ value: { amount: 1500, currency: 'CNY', scope: 'trip' } }) } }
+    ]) {
+      test.context.run.workingSet.tripUpdateReceipt = invalid
+      expect(await test.verify()).toMatchObject({ status: 'pending' })
+    }
+    test.context.run.workingSet.tripUpdateReceipt = receipt
+    test.context.currentTrip.version = 5
+    expect(await test.verify()).toMatchObject({ status: 'pending', missing: ['trip_update_receipt_stale'] })
+    test.context.currentTrip.budget = { amount: 1300, currency: 'CNY', scope: 'trip' }
+    expect(await test.verify()).toMatchObject({ status: 'pending', missing: ['trip_update_receipt_stale'] })
+    // Legacy records without an attested setter retain their original rule.
+    delete test.context.run.workingSet.tripUpdateReceipt
+    expect(await test.verify()).toMatchObject({ status: 'partial', missing: ['trip_field:notes'] })
+  })
+
   it('does not turn absent requested fields into an empty satisfied set', async () => {
     const test = await fixture({ kind: 'trip_context_update', parameters: { fields: ['budget'] } })
     test.context.currentTrip = { ...test.trip, version: 4, notes: ['unrelated change'] }

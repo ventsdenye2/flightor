@@ -68,6 +68,46 @@ async function runSave(test: Awaited<ReturnType<typeof fixture>>, extra: Record<
 }
 
 describe('Lean Goal intent protocol', () => {
+  it('confirms a real same-value Trip setter without changing frozen Goal parameters', async () => {
+    const test = await fixture()
+    const budget = { amount: 1200, currency: 'CNY', scope: 'trip' as const }
+    await test.trips.update(tripId, { budget }, 1)
+    const registry = createPlannerToolRegistry({ leanGoalsEnabled: true })
+    const requested = { kind: 'trip_context_update', parameters: { fields: ['budget'] } }
+    const result = await registry.execute(call('set', 'update_trip_context', { patch: { budget }, intent: requested }), test.context, new AbortController().signal)
+    expect(result.ok).toBe(true)
+    expect(JSON.parse(result.content).data).toMatchObject({ tripContext: { budget, version: 3 }, completion: { status: 'satisfied' } })
+    const goal = (await test.goals.listForTrip(tripId))[0]!
+    expect(goal.parameters).toEqual(requested.parameters)
+    const run = (await test.runs.listForGoal(goal.id))[0]!
+    expect(run).toMatchObject({ status: 'satisfied', contextVersion: 2,
+      workingSet: { tripUpdateReceipt: { ownerId, tripId, runId: run.id, generationId: test.context.generationId, contextVersion: 3 } } })
+    expect(Object.keys(run.workingSet.tripUpdateReceipt!.fieldHashes)).toEqual(['budget'])
+  })
+
+  it.each(['cancel', 'version', 'value', 'owner'] as const)('does not issue a setter receipt after a %s race', async race => {
+    const test = await fixture()
+    const budget = { amount: 1200, currency: 'CNY', scope: 'trip' as const }
+    const abort = new AbortController()
+    const original = test.trips.update.bind(test.trips)
+    vi.spyOn(test.trips, 'update').mockImplementation(async (...args) => {
+      const saved = await original(...args)
+      if (race === 'cancel') abort.abort(new Error('cancelled'))
+      if (race === 'version') await original(tripId, { notes: ['concurrent'] }, saved.version)
+      if (race === 'value') return { ...saved, budget: { ...budget, amount: 999 } }
+      if (race === 'owner') test.context.ownerId = 'other-owner'
+      return saved
+    })
+    const result = await createPlannerToolRegistry({ leanGoalsEnabled: true }).execute(call('set', 'update_trip_context', {
+      patch: { budget }, intent: { kind: 'trip_context_update', parameters: { fields: ['budget'] } }
+    }), test.context, abort.signal)
+    expect(result.ok).toBe(false)
+    const goal = (await test.goals.listForTrip(tripId))[0]!
+    const run = (await test.runs.listForGoal(goal.id))[0]!
+    expect(run.workingSet.tripUpdateReceipt).toBeUndefined()
+    expect(run.status).not.toBe('satisfied')
+  })
+
   it('accepts intent once, saves a real guide, and uses shared completion without finish_goal', async () => {
     const test = await fixture()
     const { result } = await runSave(test, { intent: intent() })

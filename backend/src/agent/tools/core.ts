@@ -22,6 +22,8 @@ import { workspaceScope } from './workspace-scope.js'
 import { locationSelectorSchema, type LocationSelector } from '../../locations/selector.js'
 import { withGoalIntent } from './goal-intent.js'
 import { AppError } from '../../lib/errors.js'
+import { applyTripContextPatch } from '../../trips/repository.js'
+import { canonicalFingerprint } from '../goals/repository.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
@@ -193,6 +195,32 @@ const updateTripContextTool: AgentTool<
       signal,
       ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
     })
+    // A same-value setter is still a durable user instruction. Do not infer it
+    // from a populated field: bind proof to this run, write version and readback.
+    if (context.activeGoalKind === 'trip_context_update' && context.activeGoalRunId && context.goalRunRepository && context.ownerId) {
+      signal.throwIfAborted()
+      if (context.isGenerationCurrent?.() === false) throw new Error('Trip context update was cancelled')
+      const run = await context.goalRunRepository.get(context.activeGoalRunId)
+      const readback = await context.trips.get(context.tripId)
+      signal.throwIfAborted()
+      if (context.isGenerationCurrent?.() === false) throw new Error('Trip context update was cancelled')
+      const expected = tripContextSchema.parse(applyTripContextPatch(current, patch))
+      if (!run || run.status !== 'running' || run.ownerId !== context.ownerId || run.tripId !== context.tripId
+        || run.goalId !== context.activeGoalId || run.generationId !== context.generationId
+        || !readback || canonicalFingerprint(readback) !== canonicalFingerprint(expected)
+        || canonicalFingerprint(tripContext) !== canonicalFingerprint(readback)) {
+        throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Trip changed before update confirmation', 409)
+      }
+      const fieldHashes = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)
+        .map(([field]) => [field, canonicalFingerprint({ value: readback[field as keyof typeof readback] })]))
+      await context.goalRunRepository.update(run.id, run.revision, { status: 'running', workingSet: {
+        ...run.workingSet,
+        tripUpdateReceipt: { ownerId: context.ownerId, tripId: context.tripId, runId: run.id,
+          generationId: context.generationId, contextVersion: readback.version, fieldHashes }
+      } })
+      signal.throwIfAborted()
+      if (context.isGenerationCurrent?.() === false) throw new Error('Trip context update was cancelled')
+    }
     return { tripContext, changed: true }
   }
 }

@@ -15,6 +15,7 @@ export class TripContextVersionConflict extends AppError {
 
 export interface TripContextRepository {
   get(tripId: string): Promise<TripContext | undefined>
+  getAtVersion?(tripId: string, version: number): Promise<TripContext | undefined>
   update(
     tripId: string,
     patch: TripContextPatch,
@@ -59,10 +60,13 @@ export interface TripRepository extends TripContextRepository {
 
 export class InMemoryTripContextRepository implements TripContextRepository {
   private readonly trips = new Map<string, TripContext>()
+  private readonly history = new Map<string, TripContext>()
 
   constructor(initial: readonly TripContext[] = []) {
-    for (const trip of initial) this.trips.set(trip.id, structuredClone(trip))
+    for (const trip of initial) { this.trips.set(trip.id, structuredClone(trip)); this.history.set(`${trip.id}/${trip.version}`, structuredClone(trip)) }
   }
+
+  async getAtVersion(tripId: string, version: number) { const value = this.history.get(`${tripId}/${version}`); return value ? structuredClone(value) : undefined }
 
   async get(tripId: string): Promise<TripContext | undefined> {
     const value = this.trips.get(tripId)
@@ -84,16 +88,20 @@ export class InMemoryTripContextRepository implements TripContextRepository {
     const next = applyTripContextPatch(current, patch)
     if (guard?.signal?.aborted || guard?.isCurrent?.() === false) throw new Error('TRIP_CONTEXT_UPDATE_CANCELLED')
     this.trips.set(tripId, next)
+    this.history.set(`${tripId}/${next.version}`, structuredClone(next))
     return structuredClone(next)
   }
 }
 
 export class InMemoryTripRepository implements TripRepository {
   private readonly trips = new Map<string, Trip>()
+  private readonly history = new Map<string, TripContext>()
 
   constructor(initial: readonly Trip[] = []) {
-    for (const trip of initial) this.trips.set(trip.id, structuredClone(trip))
+    for (const trip of initial) { this.trips.set(trip.id, structuredClone(trip)); this.history.set(`${trip.id}/${trip.context.version}`, structuredClone(trip.context)) }
   }
+
+  async getAtVersion(tripId: string, version: number) { const value = this.history.get(`${tripId}/${version}`); return value ? structuredClone(value) : undefined }
 
   async create(input: CreateTripInput = {}): Promise<Trip> {
     const id = uuidv7()
@@ -112,6 +120,7 @@ export class InMemoryTripRepository implements TripRepository {
       updatedAt: now
     }
     this.trips.set(id, trip)
+    this.history.set(`${id}/${context.version}`, structuredClone(context))
     return structuredClone(trip)
   }
 
@@ -139,6 +148,7 @@ export class InMemoryTripRepository implements TripRepository {
     const context = tripContextSchema.parse(applyTripContextPatch(trip.context, patch))
     if (guard?.signal?.aborted || guard?.isCurrent?.() === false) throw new Error('TRIP_CONTEXT_UPDATE_CANCELLED')
     trip.context = context
+    this.history.set(`${tripId}/${context.version}`, structuredClone(context))
     trip.currentContextVersion = context.version
     trip.updatedAt = new Date().toISOString()
     return structuredClone(context)

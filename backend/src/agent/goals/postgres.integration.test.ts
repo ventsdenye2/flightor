@@ -9,6 +9,12 @@ import { PostgresUserIdentityRepository } from '../../identity/postgres.js'
 import { PostgresTripRepository } from '../../trips/postgres.js'
 import { emptyTripContext } from '../../trips/types.js'
 import { PostgresGoalRepository, PostgresGoalRunRepository } from './postgres.js'
+import { PostgresArtifactRepository } from '../../artifacts/postgres.js'
+import { createCoreToolRegistry } from '../tools/core.js'
+import type { ToolExecutionContext } from '../runtime/registry.js'
+import { completeGoal } from './completion.js'
+import { createDefaultGoalVerifierRegistry } from './default-verifiers.js'
+import { canonicalFingerprint } from './repository.js'
 
 const databaseUrl = process.env.TEST_DATABASE_URL
 const suite = databaseUrl ? describe : describe.skip
@@ -52,6 +58,41 @@ suite('PostgreSQL durable planning goals', () => {
       idempotencyKey: key
     }
   }
+
+  it('persists a real same-value Trip setter receipt and verifies it through fresh repositories without reusing stale proof', async () => {
+    const trips = new PostgresTripRepository(db, userId)
+    const budget = { amount: 1200, currency: 'CNY', scope: 'trip' as const }
+    const trip = await trips.create({ initialContext: { budget } })
+    const runs = new PostgresGoalRunRepository(db, userId)
+    const accepted = await runs.accept({ tripId: trip.id, requestId: 'same-value-setter', generationId: 'setter-generation',
+      contextSnapshot: trip.context, intent: { kind: 'trip_context_update', parameters: { fields: ['budget'] } } })
+    const context = { ownerId: userId, tripId: trip.id, requestId: 'same-value-setter', conversationId: '',
+      generationId: 'setter-generation', trips, goalRunRepository: runs,
+      activeGoalId: accepted.goal.id, activeGoalRunId: accepted.run.id, activeGoalKind: 'trip_context_update',
+      isGenerationCurrent: () => true } as ToolExecutionContext
+    const outcome = await createCoreToolRegistry().execute({ id: 'set-budget', type: 'function', function: {
+      name: 'update_trip_context', arguments: JSON.stringify({ patch: { budget }, expectedVersion: trip.context.version })
+    } }, context, new AbortController().signal)
+    expect(outcome.ok).toBe(true)
+    const version = trip.context.version + 1
+    const freshRuns = new PostgresGoalRunRepository(db, userId)
+    const persisted = await freshRuns.get(accepted.run.id)
+    expect(persisted).toMatchObject({ status: 'running', workingSet: { tripUpdateReceipt: {
+      ownerId: userId, tripId: trip.id, runId: accepted.run.id, generationId: 'setter-generation',
+      contextVersion: version, fieldHashes: { budget: canonicalFingerprint({ value: budget }) }
+    } } })
+    const scope = { ownerId: userId, tripId: trip.id, trips: new PostgresTripRepository(db, userId),
+      goals: new PostgresGoalRepository(db, userId), runs: freshRuns,
+      artifacts: new PostgresArtifactRepository(db, userId), verifiers: createDefaultGoalVerifierRegistry() }
+    const completed = await completeGoal(scope, { goalId: accepted.goal.id, runId: accepted.run.id })
+    expect(completed).toMatchObject({ goal: { status: 'satisfied' }, run: { status: 'satisfied' }, verification: { status: 'satisfied' } })
+    expect(await new PostgresGoalRunRepository(db, userId).get(accepted.run.id)).toMatchObject({ status: 'satisfied' })
+    await scope.trips.update(trip.id, { notes: ['Later unrelated update'] }, version)
+    expect((await completeGoal(scope, { goalId: accepted.goal.id, runId: accepted.run.id, persist: false })).verification.status).toBe('pending')
+    await scope.trips.update(trip.id, { budget: { ...budget, amount: 1300 } }, version + 1)
+    expect((await completeGoal(scope, { goalId: accepted.goal.id, runId: accepted.run.id, persist: false })).verification.status).toBe('pending')
+    expect((await freshRuns.get(accepted.run.id))?.workingSet.tripUpdateReceipt).toEqual(persisted?.workingSet.tripUpdateReceipt)
+  })
 
   it('accepts Goal and Run atomically under concurrent retries and rejects competing generations', async () => {
     const trip = await createTrip()

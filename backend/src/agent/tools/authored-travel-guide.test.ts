@@ -234,12 +234,40 @@ describe('stable guide decisions and local repair', () => {
     const preloaded = JSON.parse(prepared.content).research[0].findings
     const read = await readArtifactTool.execute({ artifactId: test.source.id }, test.context, new AbortController().signal)
     expect(readArtifactTool.outputSchema.safeParse(read).success).toBe(true)
+    expect(read.researchReuse).toMatchObject({ status: 'current_candidates', sourceTripContextVersion: 1, currentTripContextVersion: 1 })
     const full = compact(test)
     for (const day of full.days!) for (const item of day.items) {
       expect(preloaded.some((finding: { candidateRef: string }) => finding.candidateRef === item.candidateRef)).toBe(true)
       expect(read.candidates?.some(finding => finding.candidateRef === item.candidateRef)).toBe(true)
     }
     expect(await saveTravelGuideTool.execute(full, { ...test.context }, new AbortController().signal)).toMatchObject({ status: 'saved' })
+  })
+
+  it('keeps historical research readable but explicitly disallows its old candidate refs after a Trip version change', async () => {
+    const test = await fixture()
+    const signal = new AbortController().signal
+    const before = await readArtifactTool.execute({ artifactId: test.source.id }, test.context, signal)
+    await test.trips.update(test.trip.id, { notes: ['A changed travel requirement'] }, 1)
+    const after = await readArtifactTool.execute({ artifactId: test.source.id }, test.context, signal)
+    expect(readArtifactTool.outputSchema.safeParse(after).success).toBe(true)
+    expect(after.content).toBe(before.content)
+    expect(after.candidates).toBeUndefined()
+    expect(after.researchReuse).toMatchObject({ status: 'historical_only', sourceTripContextVersion: 1, currentTripContextVersion: 2 })
+    expect(after.researchReuse?.notice).toContain('no candidateRefs usable for a new guide')
+    expect(after.researchReuse?.notice).toContain('Do not reuse candidateRefs from earlier messages')
+    expect((await test.artifacts.get(test.source.id))?.tripContextVersion).toBe(1)
+  })
+
+  it('does not reveal historical content or reuse metadata across owner or Trip boundaries', async () => {
+    const test = await fixture()
+    const records = new Map()
+    const owned = new InMemoryArtifactRepository(test.context.ownerId!, new Set([test.trip.id]), records)
+    await owned.create({ id: test.source.id, tripId: test.trip.id, type: 'research', schemaVersion: 2, tripContextVersion: 1, payload: test.source })
+    const otherOwner = new InMemoryArtifactRepository('other-owner', new Set([test.trip.id]), records)
+    await expect(readArtifactTool.execute({ artifactId: test.source.id }, { ...test.context, ownerId: 'other-owner', artifacts: otherOwner }, new AbortController().signal))
+      .rejects.toThrow('Artifact was not found in the current trip')
+    await expect(readArtifactTool.execute({ artifactId: test.source.id }, { ...test.context, tripId: 'other-trip', artifacts: owned }, new AbortController().signal))
+      .rejects.toThrow('Artifact was not found in the current trip')
   })
 
   it('saves a full compact draft without positional research indices and preserves authoritative days', async () => {

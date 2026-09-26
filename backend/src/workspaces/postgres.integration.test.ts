@@ -27,6 +27,8 @@ import { PostgresWorkspaceRepository } from './postgres.js'
 import { travelGuideArtifactPayloadSchema } from '../travel-guides/artifact.js'
 import { publicationFor } from '../travel-guides/publication.js'
 import { sourceRef } from '../travel-guides/finalization.js'
+import { carryForwardBudgetGuide } from '../agent/dsh/budget-guide.js'
+import type { ToolExecutionContext } from '../agent/runtime/registry.js'
 
 const databaseUrl = process.env.TEST_DATABASE_URL
 const suite = databaseUrl ? describe : describe.skip
@@ -81,7 +83,8 @@ suite('PostgreSQL workspace guide persistence and refresh', () => {
     const trips = new PostgresTripRepository(db, ownerId)
     const trip = await trips.create({ initialContext: {
       origin, destinationIntent: { mode: 'explicit', required: [city], preferred: [], excluded: [] },
-      departureWindow: { from: '2026-10-10', to: '2026-10-10', precision: 'exact' }, travelDays: 1
+      departureWindow: { from: '2026-10-10', to: '2026-10-10', precision: 'exact' }, travelDays: 1,
+      budget: { amount: 1500, currency: 'CNY', scope: 'trip' }, notes: ['Flights are arranged. Total budget target 1500 CNY.']
     } })
     const artifacts = new PostgresArtifactRepository(db, ownerId)
     const researchId = uuidv7()
@@ -178,5 +181,79 @@ suite('PostgreSQL workspace guide persistence and refresh', () => {
     }
     expect(await new PostgresArtifactRepository(db, otherOwnerId).get(test.guideId)).toBeUndefined()
     await expect(new PostgresWorkspaceRepository(db, otherOwnerId).get(test.trip.id)).rejects.toMatchObject({ code: 'RESOURCE_NOT_FOUND' })
+  })
+
+  it('restores guides chronologically without promoting unannounced initial drafts and preserves localization/legacy retry access', async () => {
+    const test = await fixture(false)
+    const source = travelGuideArtifactPayloadSchema.parse(test.guide!.payload)
+    const accepted = publicationFor(test.guide!)!.finalization!.variants.zh!
+    const blocked = { ...accepted, status: 'blocked' as const, text: null,
+      issues: [{ code: 'format' as const, activityId: null, detail: 'excluded_precise_claim' }] }
+    const copyGuide = async (variants: { zh?: typeof accepted; en?: typeof accepted } | undefined) => {
+      const id = uuidv7()
+      const publication = { ...source.publication!, artifactId: id,
+        ...(variants ? { finalization: { version: 1, variants } } : {}) }
+      if (!variants) delete publication.finalization
+      return test.artifacts.create({ id, tripId: test.trip.id, conversationId: test.conversation.id,
+        tripContextVersion: test.trip.context.version, type: 'travel_guide', schemaVersion: 1,
+        payload: { ...source, publication } })
+    }
+    const unannouncedDraft = await copyGuide({ zh: blocked })
+    const legacy = await copyGuide(undefined)
+    const announcedFailure = await copyGuide({ zh: blocked })
+    await new PostgresConversationRepository(db, ownerId).appendMessage({ conversationId: test.conversation.id, role: 'assistant',
+      content: 'The final text is pending.', metadata: { artifact_refs: [announcedFailure.id] } })
+    const latestAccepted = await copyGuide({ zh: accepted, en: blocked })
+    const laterUnannouncedDraft = await copyGuide({})
+    for (const locale of ['zh', 'en'] as const) {
+      const view = await test.workspace.get(test.trip.id, test.conversation.id, locale)
+      const guides = view.artifactRefs.filter(ref => ref.type === 'travel_guide').map(ref => ref.id)
+      expect(guides).toEqual([test.guideId, legacy.id, announcedFailure.id, latestAccepted.id])
+      expect([...view.artifactRefs].reverse().find(ref => ref.type === 'travel_guide')!.id).toBe(latestAccepted.id)
+      expect(view.messages.at(-1)!.artifactRefs.map(ref => ref.id)).toEqual([announcedFailure.id])
+    }
+    // Hidden here means no result promotion, not deletion or bypassing owner reads.
+    expect(await test.artifacts.get(unannouncedDraft.id)).toBeDefined()
+    expect(await test.artifacts.get(laterUnannouncedDraft.id)).toBeDefined()
+    expect(publicationFor((await test.artifacts.get(latestAccepted.id))!)!.finalization!.variants.en!.status).toBe('blocked')
+  })
+
+  it('carries an accepted guide through a budget-only version with real provenance, completion and scoped history', async () => {
+    const test = await fixture(false), trips = new PostgresTripRepository(db, ownerId)
+    const original = await trips.get(test.trip.id)
+    const updated = await trips.update(test.trip.id, { budget: { amount: 1200, currency: 'CNY', scope: 'trip' },
+      notes: ['Flights are arranged.', 'Total budget target 1200 CNY.', 'Do not guarantee costs within budget.'] }, original!.version)
+    expect(await trips.getAtVersion(test.trip.id, original!.version)).toEqual(original)
+    expect(await new PostgresTripRepository(db, otherOwnerId).getAtVersion(test.trip.id, original!.version)).toBeUndefined()
+    const goals = new PostgresGoalRepository(db, ownerId), runs = new PostgresGoalRunRepository(db, ownerId)
+    const context = { ownerId, tripId: test.trip.id, conversationId: test.conversation.id, generationId: uuidv7(), requestId: uuidv7(),
+      trips, artifacts: test.artifacts, goalRepository: goals, goalRunRepository: runs,
+      goalVerifiers: createDefaultGoalVerifierRegistry(), isGenerationCurrent: () => true, resolvedLocations: new Map() } as unknown as ToolExecutionContext
+    const result = await carryForwardBudgetGuide({ context, baseGuideId: test.guideId, locale: 'zh', signal: new AbortController().signal }) as any
+    expect(result).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    const current = (await test.artifacts.get(result.artifact.id))!
+    expect(current.tripContextVersion).toBe(updated.version)
+    expect(publicationFor(current)!.finalization!.variants.zh).toMatchObject({ status: 'accepted', observation: { calls: 0 } })
+    expect((await test.workspace.get(test.trip.id, test.conversation.id)).artifactRefs.at(-1)!.id).toBe(current.id)
+    expect(await test.artifacts.get(test.guideId)).toEqual(test.guide)
+    const cloned = travelGuideArtifactPayloadSchema.parse(current.payload)
+    const source = (await test.artifacts.get(cloned.days[0]!.items[0]!.sourceArtifactId))!
+    expect(source.tripContextVersion).toBe(updated.version)
+    expect(source.sourceArtifactIds).toHaveLength(1)
+    expect((await test.artifacts.get(source.sourceArtifactIds![0]!))!.tripContextVersion).toBe(original!.version)
+    const conversations = new PostgresConversationRepository(db, ownerId)
+    const content = '预算目标已改为两天合计1200元，不是每天1200元。'
+    const metadata = { engine: 'dsh', stop_reason: 'completed', artifact_refs: [current.id],
+      delivery: { kind: 'trip_context_update', status: 'satisfied', artifactIds: [current.id], missing: [], warnings: [], goals: [] } }
+    const budgetMessage = await conversations.appendMessage({ conversationId: test.conversation.id, role: 'assistant', content, metadata })
+    const unsafeMessage = await conversations.appendMessage({ conversationId: test.conversation.id, role: 'assistant',
+      content: '预算目标两天合计1200元，一定够用。', metadata })
+    const restored = await new PostgresWorkspaceRepository(db, ownerId).get(test.trip.id, test.conversation.id, 'zh')
+    expect(restored.messages.find(message => message.id === budgetMessage.id)).toMatchObject({ content,
+      artifactRefs: [expect.objectContaining({ id: current.id })], delivery: { kind: 'trip_context_update', status: 'satisfied' } })
+    expect(restored.messages.find(message => message.id === unsafeMessage.id)!.content).not.toContain('一定够用')
+    const english = await new PostgresWorkspaceRepository(db, ownerId).get(test.trip.id, test.conversation.id, 'en')
+    expect(english.messages.find(message => message.id === budgetMessage.id)!.content).not.toBe(content)
+    expect((await conversations.listMessages(test.conversation.id)).find(message => message.id === budgetMessage.id)!.content).toBe(content)
   })
 })
