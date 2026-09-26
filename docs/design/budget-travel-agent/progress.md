@@ -1,5 +1,7 @@
 # 当前进度与验证
 
+2026-09-26 Planner 连续对话 UI 定向回归：新增 `test:planner-chat`，直接执行生产 `PlannerPage` 并断言有序历史 user/assistant 消息、无 assistant 的最新 user 轮、latest reply 对应、草稿发送/清空、busy 时只显示停止入口、新旅行 idle/busy 行为、中英标签及失败后的完整历史和具体错误保留；5项通过。同步调整旧 publication harness，以当前行程卡、busy stop、停止待确认错误语义复核；conversation-progress及publication/flight/telemetry相关链合计68项通过。命令为 `npm run test:planner-chat` 与 `npm run test:conversation-progress`。均为离线 JSX/hooks/component-tree 测试，无浏览器、微信、Provider 或真实持久化结论。
+
 2026-09-26 18:04最终功能验收：**DSH正式H5 E2E PASS（限定本次后端替换，G1仍未放行）**。A自备机票的解释/局部修改/全程1200预算/刷新/显式官方英文与恢复已验；B先通过正式API采用synthetic fixture航班，再真实H5规划、解释、slot修改和刷新通过。B最新修改5主模型/1官方搜索/2fetch/2commit，一次修复后accepted+satisfied并可读，点击→UI26.115s，第一天/其他slot/航班revision不变；刷新零调用。B初版预算保证错误与全部失败不追认，最新公开文字无该保证；人流推论/事实时效仍有内容质量限制。实际官方DeepSeek模型及搜索，不是mock攻略；原账本258模型准入/68搜索、US$15.76未知预留、pending0/unlimited，不是实际支出。27份运行日志违规旧Planner/Runtime/Research/非本地化Finalizer调用0（23份有guard，其余无HTTP）。后端代码commit bf42bf80283ba39f062c37db79d9d0a92bd20f32；前端授权最小修复8233a84/8626876；runner/harness代码commit be8b8937a1e787ca79012bf8c92495f5ac3f4d6b；报告与证据由包含本记录的后续docs提交交付，最终交付SHA见任务最终回复/远端分支HEAD。原工作区main=8a83b03及未提交内容保留。证据见[实施报告](DSH_IMPLEMENTATION_REPORT_2026-09-24.md)和[D4报告](DSH_LIVE_2026-09-24.md)。
 
 2026-09-26同值Trip setter回执：既有Run working set新增服务器写入的可选版本/字段hash回执，修复显式重复设置被字段差异误判未交付；保留旧无回执校验和取消/owner/version/CAS保护。4文件72项离线回归通过（9.52秒），backend类型检查通过；无新Provider/H5调用。设计与负例见[DSH发布说明](DSH_PUBLICATION_2026-09-24.md)。
@@ -346,3 +348,5 @@ H5 收尾补充：计时包装直接调用 Taro 的一次构建在 loader 阶段
 2026-09-25续作：fetch确认远端/HEAD仍765f3acf，主工作区改动保留。真实model/search probe通过；三次commit失败分别为活动文字exact-cover、Provider连接中断、旧generation原始来源混入当前候选。针对性修复保持validator、来源隔离和一次修复上限，未伪造accepted；修复后的最后一次真实重试尚待新增预算授权。累计72模型/23搜索、US$4.72未知预留，剩余US$0.28/1搜索；此前所有失败原样保留。来源修复25项通过，worker计数/关闭16项通过（一次Windows关闭文件句柄EBUSY修复后复验），独立PostgreSQL多轮综合1项通过8.13秒，backend构建通过。真实前端发送、accepted显示、后续多轮与中英恢复尚未通过，不用这些离线/数据库结果代替H5验收。
 
 2026-09-26Trip setter回执PG补验：真实同值写入、持久回执和新repository共享completion完成通过；新增竞争预算修改负例先失败后定位修复，已有回执失配不再回落legacy差异。Goal PostgreSQL 12/12（7.14秒）、定向离线72/72（6.46秒）通过，原E2E schema及Provider不受影响。详见[DSH发布说明](DSH_PUBLICATION_2026-09-24.md)。
+
+2026-09-26 持久对话真实H5补验：在8f528b6基线上完成聊天界面、常驻发送/停止、新旅行隔离及同会话冷恢复assistant上下文。正式DSH+官方DeepSeek两轮推荐与指代追问、刷新恢复、重开原用户对话通过，2模型/0搜索/0Artifact，Trip版本0不变；桌面与390px窄屏截图、回执及本批定向测试见[UI合同及验收](PUBLICATION_UI_2026-09-22.md)。实际费用未知，原账本追加US$0.08预留，未清旧记录。最终H5构建31.020秒，未跑微信真机或本批完整攻略流程，G1仍未放行。

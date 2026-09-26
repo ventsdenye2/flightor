@@ -145,12 +145,12 @@ function PlanPage() {
   const planSelectedFlight = () => void submit(selectedFlight?.layoverPreference === 'consider_city'
     ? '请根据我刚刚采用的全部航段和时间安排游玩。长中转只有在入境、行李、地面交通和安全余量都合适时才考虑进城；先安排真实抵达后的目的地行程。'
     : '请根据我刚刚采用的全部航段和时间安排游玩。中转期间留在机场，先安排真实抵达后的目的地行程。', plannerTelemetry.now())
-  const flightDecision = <>
+  const flightDecision = currentFlightArtifact || alternativeFlightArtifact ? <>
     {currentFlightArtifact && <FlightDecisionPanel key={currentFlightArtifact.id} artifact={currentFlightArtifact} selection={selectedFlight} busy={busy}
       onOpenCandidates={openFlightCandidates} onChange={openFlightCandidates} onPlan={planSelectedFlight} />}
     {alternativeFlightArtifact && <FlightDecisionPanel key={alternativeFlightArtifact.id} artifact={alternativeFlightArtifact} busy={busy}
       onOpenCandidates={openFlightCandidates} onChange={openFlightCandidates} onPlan={planSelectedFlight} />}
-  </>
+  </> : undefined
 
   return <View className='trip-plan ux-app production-main-page'>
     <PlannerPage
@@ -159,12 +159,20 @@ function PlanPage() {
       onOpenTrip={() => productionRef && void Taro.navigateTo({ url: `/pages/route/index?artifactId=${encodeURIComponent(productionRef.id)}` })}
       onSearchFlights={() => void Taro.navigateTo({ url: '/pages/index/index' })}
       onSubmitPrompt={message => void submit(message, plannerTelemetry.now())}
+      productionTimeline={chatStore.timeline}
+      onNewConversation={() => {
+        if (busy || chatStore.isThinking) return
+        activeSubmit.current = undefined
+        pendingPrompt.current = ''
+        setProductionError('')
+        chatStore.reset()
+      }}
       productionBusy={busy}
       productionProgress={chatStore.turnProgress}
       productionCancelling={chatStore.turnCancelling}
       locale={locale}
       productionError={productionError || chatStore.multiError}
-      productionReply={(lastTurn?.delivery?.status === 'not_requested' && lastTurn?.stopReason === 'responded')
+      productionReply={!lastTurn?.assistant ? undefined : (lastTurn?.delivery?.status === 'not_requested' && lastTurn?.stopReason === 'responded')
         || (lastTurn?.delivery?.kind === 'trip_context_update' && lastTurn.delivery.status === 'satisfied' && lastTurn.stopReason === 'completed')
         ? (lastTurn.assistant?.locale && lastTurn.assistant.locale !== locale ? undefined : lastTurn.assistant?.content)
         : productionRef?.type === 'travel_guide' ? (productionResult?.key === resultKey ? productionResult.reply : undefined)

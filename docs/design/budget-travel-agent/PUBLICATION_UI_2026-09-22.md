@@ -80,3 +80,19 @@ enrichment 是后续素材服务的独立响应扩展位置，本轮没有 Provi
 2026-09-26用户进一步明确批准同一字段选择扩展：`trip_context_update/satisfied`且`stopReason=completed`的预算保存回合也展示当前同locale会话回复，避免旧局部修改的publication.reply覆盖预算确认。仅扩展该条件；解释规则、攻略提交取接纳publication.reply、异语言保护均保持。新增实际Plan组件用例覆盖成功预算确认、locale不匹配、partial/blocked/model_failure及travel_guide提交；运行结果与真实H5恢复证据另记DSH报告，不将代码修改认定为页面通过。
 
 本次条件扩展实际Plan组件14/14通过，正式H5构建31.335秒（既有体积警告）。A真实只读恢复报告A-restore-2026-09-26T09-28-43-814Z在后端历史投影配套修复后显示本轮“两天合计1200元”预算正文，刷新恢复攻略一致，0POST且原账本SHA不变；已人工查看restored-planner-reply截图。仅该字段行为通过，不代替B全流程或G1内容验收。
+
+## 2026-09-26 持久 Planner 对话呈现
+
+Plan正式模式现在以 `productionTimeline` 的有序服务端快照渲染会话：逐轮显示原用户文字与已保存的公开assistant文字，只读取消息 `content`，不展示stopReason、delivery、warnings或其它内部字段；取消/失败仍展示适配器给出的用户可读productionError，避免丢失停止未确认等信息。历史消息保留各自保存时的语言；适配器提供的 `productionReply` 只作为最新一轮assistant正文的当前公开投影/兼容回退，不替换较早回复。空timeline仍兼容只提供当前 `productionPrompt` 的旧调用形态。
+
+当前攻略/航班呈现在对话下方唯一的当前状态区，不重复附着到每一轮历史消息；没有旧消息时仍显示welcome。Composer持续可见，发送按钮在执行中切为停止动作，取消禁用时显示停止中；“新旅行”页头动作委托给 `onNewConversation`，执行期间禁用；正式适配器调用chatStore.reset保留旧会话并隔离新Trip。保留演示模式的固定参考行为及正式publication、flight与telemetry接点。切换locale只按页面当前语言选择最新回复，不翻译已保存历史消息。
+
+生产模式的空会话欢迎语和输入占位文案邀请用户自由提问、讨论偏好或索取目的地建议，不要求先给齐出发地、日期和预算；英语与中文均提供对应文案。演示模式继续保留固定参考体验原有的行程字段提示，航班搜索入口仍明确可用。
+
+对话显示受聊天存储快照的现有限额约束（最多12个timeline turn、24条message，具体截断及持久化规则由chat history store负责），因此这里描述为持久化的有界历史，不承诺无限保留。滚动容器保持挂载，收到新轮次/回复后滚至底部，避免每次提交都重建滚动视口。
+
+本轮验证：conversation-progress链68项（含新增chat组件5项、正式Plan集成16项）通过；session-recovery20项、chat-history20项、PlannerReply6项通过。前端TypeScript、后端check/build与DSH service6项通过；最终H5构建31.020秒，保留原有2项体积警告。最初旧出版测试依赖已移除的忙碌标签而失败，改为验证当前状态卡后通过；取消未确认具体错误丢失是实际回归，恢复productionError显示后通过，没有用泛化断言掩盖问题。
+
+正式H5（10087）经真实3025 API、DSH worker与官方DeepSeek `deepseek-v4-flash`完成两轮问答：先推荐意大利/西班牙，刷新后追问“第二个国家”正确解释西班牙。两次刷新保留文字和常驻发送入口；“我的行程”中两条独立Trip均保留，并已重新打开用户原来的欧洲旅行对话。桌面内容列限宽820px；390×844窄屏检查输入区、消息换行和底部导航，并恢复原窗口尺寸。截图：[桌面](dsh-e2e-evidence/chat-ui-20260926/two-turns.png)、[窄屏](dsh-e2e-evidence/chat-ui-20260926/mobile.png)。
+
+[脱敏持久结果及模型回执](dsh-e2e-evidence/chat-ui-20260926/conversation.json)：隔离Trip版本保持0、4条真实消息、2条assistant均engine=dsh、0 Artifact；2模型调用/0搜索，输入37461 token、输出257 token，均finishReason=stop、thinking=disabled、maxTokens=4096。原账本260→262条，新增未知费用预留US$0.08，实际费用未知；刷新、返回列表及重开原对话后仍262条，无新调用。此测试是推荐讨论，不生成攻略、不确认推荐目的地；未重跑完整机票→攻略或微信平台验收，不扩大此前DSH验收范围或宣布G1通过。

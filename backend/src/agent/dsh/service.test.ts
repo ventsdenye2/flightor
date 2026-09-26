@@ -45,6 +45,44 @@ describe('DSH durable Goal request identity', () => {
 })
 
 describe('DSH service with the official worker and loop', () => {
+  it('includes same-conversation assistant context in a cold snapshot with long-term memory disabled', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-cold-history-'))
+    const sessions = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' },
+      fixture: [{ text: 'South Korea is the second country you asked about.' }] })
+    const sessionRun = vi.spyOn(sessions, 'run')
+    try {
+      const trips = new InMemoryTripRepository(), trip = await trips.create(), unrelatedTrip = await trips.create()
+      const ownerId = 'cold-history-owner', owned = new Set([trip.id, unrelatedTrip.id])
+      const conversations = new InMemoryConversationRepository(ownerId, owned)
+      const conversation = await conversations.create({ tripId: trip.id })
+      const unrelatedConversation = await conversations.create({ tripId: unrelatedTrip.id })
+      await conversations.appendMessage({ conversationId: conversation.id, role: 'user', content: 'Suggest another country after Japan.' })
+      await conversations.appendMessage({ conversationId: conversation.id, role: 'assistant', content: 'South Korea could be a good second country.' })
+      await conversations.appendMessage({ conversationId: unrelatedConversation.id, role: 'assistant', content: 'Unrelated destination: Arkania.' })
+      const memory = new InMemoryUserMemoryRepository({ enabled: false, markdown: 'Long-term memory sentinel: Arkania.' })
+      const service = new DshPlannerService({ ownerId, trips, conversations, sessions,
+        artifacts: new InMemoryArtifactRepository(ownerId, owned), memory,
+        aviation: new MockAviationProvider(), fares: new MockFareProvider(), research: new UnavailableResearchAgent(),
+        connectionSearch: new UnavailableConnectionSearchService(), flightRoutePlanner: new UnavailableFlightRoutePlanner(),
+        routeOptimizer: new UnavailableRouteOptimizer(), createFinalizer: vi.fn(() => { throw new Error('Unexpected finalizer') }) })
+
+      const result = await service.runTurn({ requestId: 'cold-1', generationId: 'cold-generation', tripId: trip.id,
+        conversationId: conversation.id, message: 'Tell me more about the second country.', locale: 'en' })
+      const snapshot = JSON.parse(sessionRun.mock.calls[0]![0].snapshot)
+      expect(result.reply).toContain('South Korea')
+      expect(snapshot.memory).toBeNull()
+      expect(snapshot.publicHistory).toEqual([
+        { role: 'user', content: 'Suggest another country after Japan.' },
+        { role: 'assistant', content: 'South Korea could be a good second country.' },
+      ])
+      expect(JSON.stringify(snapshot)).not.toContain('Arkania')
+      expect(sessionRun.mock.calls[0]![0].persona).toContain('Exploratory country or place recommendations and clarifying questions are dialogue only')
+      expect(sessionRun.mock.calls[0]![0].persona).toContain('a recommendation in conversation is not a Trip update or destination confirmation')
+      expect(sessionRun.mock.calls[0]![0].persona).toContain('When the user explicitly asks to create or edit a guide')
+      expect(sessionRun.mock.calls[0]![0].persona).toContain('Requested country/place recommendation research may use web_search/web_fetch but remains dialogue')
+    } finally { await sessions.close(); await rm(root, { recursive: true, force: true }) }
+  }, 20_000)
+
   it('persists two independent objectives when Fastify request IDs repeat across generations', async () => {
     const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-request-id-'))
     const budget = (amount: number) => ({ tool: 'update_trip_context', args: { patch: { budget: { amount, currency: 'CNY', scope: 'trip' } },

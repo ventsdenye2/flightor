@@ -99,6 +99,32 @@ async function selectedHarness() {
 }
 
 async function main() {
+  await test('planner receives the complete retained transcript and new trip starts a separate session', async () => {
+    const h = harness()
+    const turns = [
+      { id: 'one', user: { content: '推荐两个国家' }, assistant: { content: '葡萄牙、意大利' } },
+      { id: 'two', user: { content: '第二个呢？' }, assistant: { content: '意大利适合文化旅行。' } }
+    ]
+    h.chatStore.timeline = turns
+    let resets = 0
+    h.chatStore.reset = () => { resets++; h.chatStore.currentSessionId = 'new-session'; h.chatStore.tripId = ''; h.chatStore.timeline = [] }
+    assert.equal(h.planner(h.render()).props.productionTimeline, turns)
+    h.planner(h.render()).props.onNewConversation()
+    assert.equal(resets, 1)
+    assert.equal(h.chatStore.tripId, '')
+    assert.equal(h.planner(h.render()).props.productionTimeline.length, 0)
+    assert.equal(turns.length, 2, 'starting a new trip must not mutate the previous transcript')
+  })
+  await test('new trip is guarded while a turn is running, including a stale click callback', async () => {
+    const h = harness()
+    let resets = 0
+    h.chatStore.reset = () => { resets++ }
+    const callback = h.planner(h.render()).props.onNewConversation
+    h.chatStore.isThinking = true
+    callback()
+    h.planner(h.render()).props.onNewConversation()
+    assert.equal(resets, 0)
+  })
   await test('current explanation overrides old publication reply without changing the guide; commits retain accepted reply', async () => {
     const h = harness()
     h.chatStore.artifactRefs = [{ id: 'guide', type: 'travel_guide', schemaVersion: 1 }]
@@ -114,6 +140,9 @@ async function main() {
     h.chatStore.timeline[0].stopReason = 'completed'
     h.chatStore.timeline[0].delivery = { status: 'satisfied' }
     assert.equal(h.planner(h.render()).props.productionReply, '攻略已保存。')
+    h.chatStore.timeline.push({ user: { content: '下一轮追问' }, assistant: null, artifactRefs: [] })
+    h.chatStore.isThinking = true
+    assert.equal(h.planner(h.render()).props.productionReply, undefined, 'pending turn cannot borrow the previous guide confirmation')
   })
 
   await test('completed budget update uses current confirmation with locale and guide-commit guards', async () => {

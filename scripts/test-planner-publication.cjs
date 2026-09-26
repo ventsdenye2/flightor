@@ -80,7 +80,8 @@ function planner(overrides = {}) {
 check('busy renders committed guide and flight before final prose', () => {
   let opened = 0
   const h = planner({ onOpenTrip() { opened++ } })
-  assert.match(h.content(), /已保存，仍在整理\/核验/)
+  assert.ok(h.find('pl-current-state__trip'))
+  assert.ok(h.find('pl-current-state'))
   assert.match(h.content(), /已提交航班卡片/)
   h.find('pl-result').props.onClick(); assert.equal(opened, 1)
 })
@@ -88,11 +89,12 @@ check('unsaved guide never appears as a saved card', () => {
   const h = planner({ productionResultAvailable: false })
   assert.equal(h.find('pl-result'), undefined); assert.match(h.content(), /已提交航班卡片/)
 })
-check('empty busy draft remains editable while submit is disabled', () => {
+check('empty busy draft remains editable while send is replaced by stop', () => {
   const h = planner()
   assert.equal(h.find('pl-textarea').props.value, '')
   assert.notEqual(h.find('pl-textarea').props.disabled, true)
-  assert.equal(h.find('pl-submit').props.disabled, true)
+  assert.ok(h.find('pl-stop'))
+  assert.equal(h.nodes().filter(n => n.type === 'Button' && n.props?.className?.split(' ').includes('pl-submit') && !n.props.className.split(' ').includes('pl-stop')).length, 0)
 })
 check('draft survives completion and can then submit once', () => {
   const messages = [], h = planner({ onSubmitPrompt(message) { messages.push(message) } })
@@ -106,13 +108,15 @@ check('draft survives completion and can then submit once', () => {
 check('cancel awaits acknowledgement; failure stays visible while busy', () => {
   let cancellations = 0
   const h = planner({ onCancelProduction() { cancellations++ } })
-  const cancel = () => h.nodes().find(n => n.type === 'Button' && /取消规划|正在取消/.test(h.content(n)))
-  cancel().props.onClick(); h.render()
-  assert.equal(cancellations, 1); assert.equal(h.find('pl-submit').props.disabled, true)
+  const stop = () => h.find('pl-stop')
+  stop().props.onClick(); h.render()
+  assert.equal(cancellations, 1); assert.equal(stop().props.disabled, false)
   assert.doesNotMatch(h.content(), /已取消规划/)
-  h.props.productionCancelling = true; h.render(); assert.equal(cancel().props.disabled, true)
+  h.props.productionCancelling = true; h.render(); assert.equal(stop().props.disabled, true)
   h.props.productionCancelling = false; h.props.productionError = '未能确认停止，仍在等待服务端结果'; h.render()
-  assert.match(h.content(), /未能确认停止/); assert.equal(h.find('pl-submit').props.disabled, true)
+  assert.match(h.content(), /未能确认停止/)
+  assert.ok(h.find('pl-interrupted'))
+  assert.equal(stop().props.disabled, false)
 })
 const offer = { id: 'offer-1', segments: [{ departure: '2026-10-01T10:00', arrival: '2026-10-01T14:00', flightNumber: 'CA123' }], airlines: [], layovers: [] }
 function flight(selection) {

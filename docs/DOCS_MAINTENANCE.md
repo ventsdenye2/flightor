@@ -170,4 +170,6 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 2026-09-26真实多轮故障后，显式retry-terminal扩展到第2/3轮：只允许已结束失败验收且原正式API未satisfied，原前后accepted攻略及Trip逐项不变，fresh恢复时再次检查同一base。第3轮持久消息必须完全不变；解释重测允许后续追加消息但旧前缀不可变。重启404还须原PID退出/hash绑定证明，增加已知not_requested/responded终态支持。保留旧attempt并独占新前驱SHA文件，不自动重发。该恢复脚本不放宽领域validator或付费单轮次数。
 多轮显式重测可在原历史后追加完整只解释对话；每一对均须user/assistant、responded/not_requested且artifactRefs空，原历史前缀、完整Trip、accepted base及所有引用必须不变。未完成或有写入的插入回合拒绝。
 
+2026-09-26 Planner 连续对话 UI 回归：`scripts/test-planner-chat.cjs` 执行生产 `PlannerPage` 的 JSX/交互树，离线检查有序历史消息、进行中/失败轮、草稿发送与清空、busy/停止入口、新旅行回调及中英文按钮文本；由 `npm run test:planner-chat` 单独运行，并纳入 `npm run test:conversation-progress`。它不运行 H5、微信或 Provider；实现与验证结论维护在当前 [progress](design/budget-travel-agent/progress.md)，产品交互设计仍归 [UI Experience](design/ui-experience-v1.md)。
+
 2026-09-26 B航班入口准备：verify-dsh-e2e --prepare-b检查同A的首轮真实satisfied/accepted及解释、局改、预算、恢复、英文各已有成功H5证据才创建B。只在原schema和账本，隔离身份/Trip，航班明确synthetic，去掉bookingURL，通过正式PATCH采用及独立GET核对revision。setup门禁仅临时允许该Trip PATCH；启动保留B后只读恢复既有选择，不能改选。夹具创建意图先写本地状态，重启按固定artifactID恢复，不再次搜索票价；网页规划仍须正式输入框。未实际运行前不能宣称B已验收。

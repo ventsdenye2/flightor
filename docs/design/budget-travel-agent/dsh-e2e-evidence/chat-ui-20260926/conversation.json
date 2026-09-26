@@ -1,0 +1,95 @@
+{
+  "tripId": "01a0dd77-2b61-721d-b55f-3cbfd1b7614f",
+  "conversationId": "10",
+  "tripContextVersion": 0,
+  "context": {
+    "id": "01a0dd77-2b61-721d-b55f-3cbfd1b7614f",
+    "notes": [],
+    "version": 0,
+    "interests": [],
+    "priorities": {},
+    "destinationIntent": {
+      "mode": "open",
+      "excluded": [],
+      "required": [],
+      "preferred": []
+    },
+    "mustIncludeEvents": [],
+    "requiredGroundLegs": [],
+    "transferPreferences": {},
+    "locationRoleOverrides": []
+  },
+  "artifactCount": 0,
+  "messages": [
+    {
+      "role": "user",
+      "content": "我想去欧洲玩一周，喜欢文化和街头小吃，先给我推荐两个国家，各用一句话说明理由。现在只讨论，不确定目的地，不查航班也不保存攻略。",
+      "createdAt": "2026-09-26T11:26:11.888Z",
+      "engine": "dsh"
+    },
+    {
+      "role": "assistant",
+      "content": "欧洲一周、文化和街头小吃——两个方向供你挑：\n\n**意大利**：罗马、佛罗伦萨、那不勒斯把古罗马遗迹、文艺复兴真迹和日常市集小吃挤在很短的车程里，一周专注一两个城市就能兼顾看展和逛吃。\n\n**西班牙**：马德里、塞维利亚、巴塞罗那各有鲜明的历史街区与艺术馆，同时塔帕斯文化和街头摊点让\"边走边吃\"本身就是行程的一部分。\n\n如果你更想按\"从某地直飞、城市间移动尽量少\"来定，可以告诉我出发城市和大致出行时间，我们再缩小范围。",
+      "createdAt": "2026-09-26T11:26:14.008Z",
+      "engine": "dsh"
+    },
+    {
+      "role": "user",
+      "content": "第二个国家呢？为什么它更适合我？请接着刚才的推荐用两句话回答，仍然只讨论。",
+      "createdAt": "2026-09-26T11:27:17.448Z",
+      "engine": "dsh"
+    },
+    {
+      "role": "assistant",
+      "content": "**西班牙**：它把文化看点和街头吃喝绑在同一片街区里——马德里的艺术馆与老城塔帕斯吧、塞维利亚的摩尔式宫殿与市井小馆、巴塞罗那的高迪建筑与市场摊档，走几步就能从\"看\"切换到\"吃\"，一周专注一到两个城市也不会觉得赶。\n\n更适合你，是因为塔帕斯和市集小吃在西班牙是日常饮食方式而非\"打卡项目\"，你可以在看展、逛老城的间隙自然解决三餐，文化和小吃两条线索始终并行，不用专门为吃安排行程。",
+      "createdAt": "2026-09-26T11:27:19.073Z",
+      "engine": "dsh"
+    }
+  ],
+  "budget": {
+    "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+    "totalEntries": 262,
+    "newEntries": [
+      {
+        "id": "01a0dd77-2c30-7679-8dd7-6fb57876c95d:model:1",
+        "kind": "model",
+        "provider": "deepseek",
+        "admittedAt": "2026-09-26T11:26:11.941Z",
+        "reservedUsdMicros": 40000,
+        "receipt": {
+          "durationMs": 2042.6243,
+          "usage": {
+            "promptTokens": 18313,
+            "completionTokens": 132,
+            "totalTokens": 18445
+          },
+          "finishReason": "stop",
+          "model": "deepseek-v4-flash",
+          "maxTokens": 4096,
+          "thinking": "disabled"
+        },
+        "settledAt": "2026-09-26T11:26:13.982Z"
+      },
+      {
+        "id": "01a0dd78-339f-75e8-8d29-f27253b32a9f:model:1",
+        "kind": "model",
+        "provider": "deepseek",
+        "admittedAt": "2026-09-26T11:27:17.485Z",
+        "reservedUsdMicros": 40000,
+        "receipt": {
+          "durationMs": 1566.8119999999908,
+          "usage": {
+            "promptTokens": 19148,
+            "completionTokens": 125,
+            "totalTokens": 19273
+          },
+          "finishReason": "stop",
+          "model": "deepseek-v4-flash",
+          "maxTokens": 4096,
+          "thinking": "disabled"
+        },
+        "settledAt": "2026-09-26T11:27:19.049Z"
+      }
+    ]
+  }
+}

@@ -5,6 +5,7 @@ import { Icon, Photo } from './VisualMedia'
 import { formatPrice, tripDurationLabel, travelerLabel } from './presentation'
 import type { TripPresentation } from './presentation'
 import type { ConversationDelivery, ConversationTurnProgress } from '../../services/conversationService'
+import type { ConversationTurnSnapshot } from '../../stores/chatHistory'
 import type { PlannerRenderMeasurement, PlannerUiCommit } from '../../services/plannerTelemetry'
 import PlannerProgress from '../../components/plan/PlannerProgress'
 import PlannerReply from '../../components/plan/PlannerReply'
@@ -33,6 +34,8 @@ interface PlannerPageProps {
   flightDecision?: ReactNode
   productionTelemetry?: PlannerRenderMeasurement
   onProductionCommit?: (id: string, event: PlannerUiCommit) => void
+  productionTimeline?: ConversationTurnSnapshot[]
+  onNewConversation?: () => void
 }
 
 const suggestions = [
@@ -41,7 +44,7 @@ const suggestions = [
   { title: '只有一个长周末', prompt: '下一个长周末想出去走走，从上海出发，两个人，想要轻松、不赶路的安排。', icon: 'calendar' }
 ]
 
-export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, productionCancelling = false, flightDecision, productionTelemetry, onProductionCommit }: PlannerPageProps) {
+export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, productionCancelling = false, flightDecision, productionTelemetry, onProductionCommit, productionTimeline = [], onNewConversation }: PlannerPageProps) {
   const tt = (key: string, params?: Record<string, string | number>) => tripText(locale, key, params)
   const production = Boolean(onSubmitPrompt)
   const hasResult = !production || productionResultAvailable
@@ -61,8 +64,18 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
   const [draft, setDraft] = useState(initialPrompt)
   const [submitted, setSubmitted] = useState('')
   const [phase, setPhase] = useState<'idle' | 'loading' | 'ready' | 'cancelled'>('idle')
+  const productionCancelled = productionDelivery?.status === 'cancelled' || productionStopReason === 'cancelled' || phase === 'cancelled'
+  const showProductionInterruption = Boolean(productionError || interrupted || productionCancelled)
+  const interruptionTitle = productionCancelled
+    ? locale === 'en' ? 'Planning stopped' : '规划已停止'
+    : rateLimited ? locale === 'en' ? 'Research is temporarily limited' : '联网研究暂时受限'
+    : locale === 'en' ? 'This turn did not finish' : '本次规划未完成'
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null)
   const receivedPrompt = useRef('')
+  const scrollContainer = useRef<HTMLDivElement | null>(null)
+  const hasProductionConversation = productionTimeline.some(turn => Boolean(turn.user.content || turn.assistant?.content)) || Boolean(submitted || productionPrompt)
+  const hasConversation = production ? hasProductionConversation : Boolean(submitted)
+  const timelineScrollKey = productionTimeline.map(turn => `${turn.id}:${turn.user.content}:${turn.assistant?.content ?? ''}`).join('|')
 
   useEffect(() => {
     if (pending.current) clearTimeout(pending.current)
@@ -80,6 +93,15 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
   }, [production, productionBusy, productionError, submitted, productionPrompt])
 
   useEffect(() => () => { if (pending.current) clearTimeout(pending.current) }, [])
+
+  useEffect(() => {
+    if (!production || !hasConversation) return
+    const frame = setTimeout(() => {
+      const node = scrollContainer.current
+      node?.scrollTo({ top: node.scrollHeight, behavior: 'smooth' })
+    }, 0)
+    return () => clearTimeout(frame)
+  }, [production, hasConversation, timelineScrollKey, submitted, productionPrompt, productionReply, productionBusy])
 
   // A passive effect confirms this tree committed. It does not prove native paint,
   // and only the active turn's server-published IDs are eligible in the sink.
@@ -127,11 +149,15 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
   }
 
   return <>
-    <PageHeader action={submitted || draft ? <Button className='ux-text-button' disabled={productionBusy} onClick={() => reset()}>重新输入</Button> : null} />
-    <View className='ux-scroll pl-scroll' key={submitted ? 'conversation' : 'welcome'}>
-      {!submitted ? <View className='pl-welcome'>
+    <PageHeader action={production && onNewConversation
+      ? <Button className='ux-text-button' disabled={productionBusy} onClick={onNewConversation}>{locale === 'en' ? 'New trip' : '新旅行'}</Button>
+      : submitted || draft ? <Button className='ux-text-button' disabled={productionBusy} onClick={() => reset()}>{locale === 'en' ? 'Start over' : '重新输入'}</Button> : null} />
+    <View className='ux-scroll pl-scroll' ref={scrollContainer}>
+      {!hasConversation ? <View className='pl-welcome'>
         <Text className='pl-title'>这次，<Text className='pl-title-line'>想去哪？</Text></Text>
-        <Text className='pl-intro'>告诉我们出发地、日期和预算。<Text className='pl-intro-line'>先比较航班，再安排怎么玩。</Text></Text>
+        <Text className='pl-intro'>{production
+          ? locale === 'en' ? <>Ask about destination ideas or tell us what you enjoy.<Text className='pl-intro-line'>We can explore a trip that fits you.</Text></> : <>还没决定也没关系，先聊聊你的旅行想法。<Text className='pl-intro-line'>我们一起找到适合你的地方。</Text></>
+          : <>告诉我们出发地、日期和预算。<Text className='pl-intro-line'>先比较航班，再安排怎么玩。</Text></>}</Text>
 
         {hasReferenceTrip && <Button className='pl-inspiration' onClick={() => setDraft(samplePrompt)}>
           <View className='pl-inspiration-copy'><Text className='pl-card-kicker'>从这里找到灵感</Text><Text className='pl-inspiration-title'>{trip.title}</Text><View className='pl-inspiration-link'><Text>试试这个想法</Text><Icon name='arrow-right' /></View></View>
@@ -142,6 +168,49 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
         <View className='pl-suggestions'>{visibleSuggestions.map(item => <Button key={item.title} className={`pl-suggestion ${draft === (item.prompt || samplePrompt) ? 'is-selected' : ''}`} onClick={() => setDraft(item.prompt || samplePrompt)}><Icon name={item.icon} /><Text>{item.title}</Text><Icon name='arrow-right' /></Button>)}</View>
         <Button className='pl-flight-link' onClick={onSearchFlights}><Icon name='plane' /><View><Text className='pl-flight-title'>目的地定了，先看看机票</Text><Text className='ux-muted'>搜索航班，比较时间与中转安排</Text></View><Icon name='chevron-right' /></Button>
         {flightDecision}
+      </View> : production ? <View className='pl-conversation pl-conversation--persistent'>
+        {productionTimeline.map((turn, index) => {
+          const isLatest = index === productionTimeline.length - 1
+          const userContent = turn.user.content
+          const isCurrentTurn = turn.user.content === productionPrompt || turn.user.content === submitted
+          const isPromptRepresented = isCurrentTurn && Boolean(productionPrompt || submitted)
+          const guideReplyPendingPublication = isLatest && (turn.delivery?.kind ?? productionDelivery?.kind) === 'travel_guide' && !productionReply
+          const replyApplies = turn.user.content === productionPrompt || (!productionPrompt && turn.user.content === submitted)
+          const assistantContent = isLatest && isCurrentTurn && replyApplies && productionReply
+            ? productionReply
+            : guideReplyPendingPublication ? '' : turn.assistant?.content
+          return <View className='pl-turn' key={turn.id}>
+            {userContent ? <View className='pl-user-message'><Text>{userContent}</Text></View> : null}
+            {assistantContent ? <View className='pl-assistant-turn'>
+              <View className='pl-reply-brand'><View className='pl-reply-mark'><Icon name='plane' /></View><Text>FlightOR</Text></View>
+              <PlannerReply className='pl-reply-copy' content={assistantContent} />
+            </View> : null}
+            {isLatest && isPromptRepresented && productionBusy ? <View className='pl-generating'>
+              <PlannerProgress progress={productionProgress} locale={locale} compact active />
+              <View className='pl-loading-skeleton'><View /><View /><View /></View>
+            </View> : null}
+          </View>
+        })}
+        {(submitted || productionPrompt) && !productionTimeline.some(turn => turn.user.content === (submitted || productionPrompt)) && <View className='pl-turn' key='current-prompt'>
+          <View className='pl-user-message'><Text>{submitted || productionPrompt}</Text></View>
+          {!productionBusy && productionReply && productionPrompt === (submitted || productionPrompt)
+            ? <View className='pl-assistant-turn'><View className='pl-reply-brand'><View className='pl-reply-mark'><Icon name='plane' /></View><Text>FlightOR</Text></View><PlannerReply className='pl-reply-copy' content={productionReply} /></View>
+            : null}
+          {productionBusy ? <View className='pl-generating'><PlannerProgress progress={productionProgress} locale={locale} compact active /><View className='pl-loading-skeleton'><View /><View /><View /></View></View> : null}
+        </View>}
+        {showProductionInterruption ? <View className='pl-cancelled pl-interrupted' role='alert'><Text className='ux-section-title'>{interruptionTitle}</Text><Text className='ux-muted'>{productionError || (locale === 'en' ? 'You can send another message or try again.' : '可以继续发送消息，或稍后重试。')}</Text></View> : null}
+        {hasResult || flightDecision ? <View className='pl-current-state'>
+          {hasResult && <View className='pl-current-state__trip'>
+            <Text className='pl-current-state__label'>{locale === 'en' ? 'Current trip' : '当前行程'}</Text>
+            <Button className='pl-result' onClick={onOpenTrip}>
+              {trip.cover && <Photo src={trip.cover.src} description={trip.cover.description} className='pl-result-photo' retry={false} />}
+              <View className='pl-result-body'><View className='pl-result-meta'><Text>{trip.country || trip.destination} · {production ? trip.durationDays ? tt('trip.duration', { n: trip.durationDays }) : tt('trip.dateUnknown') : tripDurationLabel(trip)}</Text><Text>{tt('trip.saved')}</Text></View><Text className='pl-result-title'>{trip.title}</Text><Text className='pl-result-route'>{trip.route.join(' → ') || tt('trip.routePending')}</Text><View className='pl-result-bottom'><View><Text className='pl-result-price'>{trip.flights[0]?.price?.amount != null ? formatPrice(trip.flights[0].price) : tt('trip.priceUnknown')}{trip.flights[0]?.price && trip.flights[0].price.status !== 'unknown' && trip.flights[0].price.amount !== null ? <Text>{` / ${tt(trip.flights[0].price.unit === 'person' ? 'trip.person' : 'trip.total')}`}</Text> : null}</Text><Text className='ux-caption'>{trip.flights[0]?.price && trip.flights[0].price.status !== 'unknown' ? tt(`trip.price.${trip.flights[0].price.status}`) : tt('trip.priceUnknown')}</Text></View><View className='pl-open-result'><Text>{tt('trip.open')}</Text><Icon name='arrow-right' /></View></View></View>
+            </Button>
+            <View className='pl-result-status'><Icon name='info' /><Text>{trip.publication ? tt(`trip.${trip.publication.status}`) : trip.days.length ? (locale === 'en' ? 'Reference days are available to review and adjust' : `已有 ${trip.days.filter(day => day.status === 'ready').length} 天参考安排，可查看和调整`) : (locale === 'en' ? 'Daily plans are not available yet' : '每日安排尚未补充，可先查看旅行信息')}</Text></View>
+            <Text className='pl-result-description'>{trip.description}</Text>
+          </View>}
+          {flightDecision}
+        </View> : null}
       </View> : <View className='pl-conversation'>
         <Text className='pl-conversation-label'>我的旅行需求</Text>
         <View className='pl-user-message'><Text>{submitted}</Text></View>
@@ -179,10 +248,12 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
         </>}
       </View>}
     </View>
-    {(!submitted || productionBusy || Boolean(draft)) ? <View className='pl-composer'>
-      <View className='pl-input-wrap'><Textarea className='pl-textarea' value={draft} maxlength={600} ariaLabel='旅行想法' placeholder='例如：北京出发，东京五天，两个人，安排轻松一点。' onInput={event => setDraft(event.detail.value)} /><View className='pl-composer-actions'><Text className='pl-composer-hint'>{draft ? `${draft.length}/600` : '出发地、日期、人数和预算'}</Text>{draft ? <Button className='ux-icon-button pl-clear' ariaLabel='清空旅行想法' onClick={() => setDraft('')}><Icon name='close' /></Button> : null}</View></View>
-      <Button className='ux-primary pl-submit' disabled={!draft.trim() || productionBusy} onClick={() => start(draft)}><Text>{production ? '开始规划' : '查看行程示例'}</Text><Icon name='arrow-right' /></Button>
-      <Text className='pl-composer-note'>{productionBusy ? '规划进行中：草稿会保留，当前提交入口将在本轮结束后恢复' : production ? '确认航班后再生成游玩安排，结果会自动保存' : `演示模式 · 将展示${sampleLabel}固定参考`}</Text>
+    {(production || !submitted || productionBusy || Boolean(draft)) ? <View className='pl-composer'>
+      <View className='pl-input-wrap'><Textarea className='pl-textarea' value={draft} maxlength={600} ariaLabel={locale === 'en' ? 'Travel request' : '旅行想法'} placeholder={production ? locale === 'en' ? 'Ask for destination ideas or tell us what kind of trip you enjoy.' : '可以问目的地建议，也可以聊聊你喜欢怎样旅行。' : locale === 'en' ? 'For example: five days in Tokyo for two, departing from Beijing.' : '例如：北京出发，东京五天，两个人，安排轻松一点。'} onInput={event => setDraft(event.detail.value)} /><View className='pl-composer-actions'><Text className='pl-composer-hint'>{draft ? `${draft.length}/600` : production ? locale === 'en' ? 'Ideas, questions or recommendations' : '想法、问题或推荐需求' : locale === 'en' ? 'Origin, dates, travelers and budget' : '出发地、日期、人数和预算'}</Text>{draft ? <Button className='ux-icon-button pl-clear' ariaLabel={locale === 'en' ? 'Clear travel request' : '清空旅行想法'} onClick={() => setDraft('')}><Icon name='close' /></Button> : null}</View></View>
+      {production && productionBusy
+        ? <Button className='ux-primary pl-submit pl-stop' disabled={productionCancelling || !onCancelProduction} onClick={cancel}><Text>{productionCancelling ? (locale === 'en' ? 'Stopping…' : '正在停止…') : locale === 'en' ? 'Stop' : '停止'}</Text><Icon name='close' /></Button>
+        : <Button className='ux-primary pl-submit' disabled={!draft.trim() || productionBusy} onClick={() => start(draft)}><Text>{production ? locale === 'en' ? 'Send' : '发送' : '查看行程示例'}</Text><Icon name='arrow-right' /></Button>}
+      <Text className='pl-composer-note'>{productionBusy ? (locale === 'en' ? 'Planning is in progress' : '规划进行中') : production ? (locale === 'en' ? 'Saved to this conversation' : '发送后会保留在当前对话') : `演示模式 · 将展示${sampleLabel}固定参考`}</Text>
     </View> : null}
   </>
 }

@@ -75,6 +75,12 @@ H5 使用真实OSM瓦片；微信原生Map不打包服务端Key、不申请实�
 生产后端须配置微信request HTTPS域名，照片源须在目标网络可达并满足平台证书要求；若改为downloadFile需另配下载域名。既有开发urlCheck=false未修改，不能据开发模拟器推断生产通过。微信照片页面、真机和正式public库当前未验收；地图暂停排查、仍未解决。详见[验证与费用](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)。
 # DSH 实验引擎（2026-09-24，未部署）
 
+2026-09-26 用户手动测试：独立 `codex/dsh-backend` 工作树的本机API使用正式 `dist/server.js` 入口，监听 `127.0.0.1:3025`；手动H5监听 `127.0.0.1:10087`，使用 `dist-h5-manual` 本地构建和既有“本地测试登录”入口。此前验收runner的写路由门禁只用于自动验收，不能直接作为用户新建行程/登录服务。本次已替换该runner进程，不修改产品UI/API。
+
+启动配置和日志留在忽略的 `backend/.demo/dsh-manual*`，从原后端env与DSH overlay读取官方模型/搜索配置；仅对启动进程启用loopback本地测试登录。数据库仍是原 `dsh_e2e_20260924` 隔离schema，保留原 `.dsh-data/budget.json` 及不限累计测试额度授权，不重置账本。`node backend/.demo/dsh-manual-server.mjs` 启动API；H5以 `FLIGHTOR_H5_ROOT=dist-h5-manual`、`H5_PORT=10087` 运行 `node scripts/serve-h5.cjs`。这些本机私有配置不是生产部署文件，不提交登录密钥或构建产物。
+
+实际检查：H5构建成功（31.947秒），后端 `/health/ready` 返回200/PostgreSQL ok；通过真实H5按钮完成本地测试登录，页面显示“本地测试账户”。本次启动与登录没有代用户发送旅行规划消息，不作为新的Provider验收或费用样本。
+
 默认 `FLIGHTOR_AGENT_ENGINE=legacy`。设 `dsh` 后启动时选用独立 DSH worker；配置失败直接报错，不回落旧 Planner。先在 `backend/dsh-runtime` 执行 `npm ci --ignore-scripts`，Node 固定验证版 22.21.0；根前端无需变更。
 
 `DSH_MODEL_PROVIDER=openrouter|deepseek`，主模型由 `DSH_MODEL` 指定；OpenRouter 默认沿用 `PLANNER_MODEL`，官方默认 deepseek-v4-flash。对应凭证分别 `OPENROUTER_API_KEY` / `DEEPSEEK_API_KEY`。官方主模型不要求 OpenRouter Key。官方主Agent通过 `llm-pi-ai` 的 reasoning=off 与 DeepSeek thinkingFormat 明确发送 `thinking: disabled`，由 `DSH_MODEL_MAX_TOKENS` 显式限制输出（默认4096，允许256–16384；只有诊断真实输出触顶后才手动调整并记录）；不能仅把模型声明为不支持推理，因为远端默认仍可能启用。该改动会退休旧profile历史。显式本地化仍通过同一路由的有界编辑客户端，读取与轮询不启动 Agent。

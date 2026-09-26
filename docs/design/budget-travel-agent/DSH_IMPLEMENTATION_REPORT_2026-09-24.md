@@ -156,3 +156,7 @@ DSH 显式本地化采用独立 `createDshLocalizationClient`：官方 DeepSeek 
 2026-09-26预算文件有界健壮性：B续验在第4次模型调用准入前出现EPERM，旧observer缺少具体操作，不能追认成rename故障。仅为原子账本rename的EPERM/EBUSY加入最多3次同文件/同锁短重试（25/75ms），全部预算文件操作补不含路径的操作级错误code；其他操作不重试，不清账本或绕锁。`budget.test.ts` 27/27通过（2.77秒），证明瞬态故障只准入一次、持续失败旧账本不变/Provider不调用、EIO立即失败，旧锁/损坏/授权围栏仍通过。配置/运行边界见[部署说明](../../deploy.md)。未以离线通过声称真实B已恢复。
 
 2026-09-26 B09:19续验越过请求身份冲突后，首提交复用warm历史旧版本candidateRef遭ARTIFACT_CONTEXT_VERSION_MISMATCH，第二次把同一候选排在多个时段遭guide_duplicate_evidence，第三次被DSH_REPAIR_LIMIT拦截。提示现明确仅复用本轮read_artifact.candidates或当前snapshot的候选；无当前候选先补当前证据；一个候选仅一次访问，不为填满时段重复安排。不改版本validator、单轮12步或最多两次commit。历史失败保留，修复后的真实结果另记D4。
+
+## 2026-09-26 冷恢复对话上下文与探索边界
+
+冷启动新 worker 时，快照保留当前 owner/Trip/conversation 已持久化的 user 与 assistant 公开消息，即使长期 Memory 关闭；不注入其他会话消息或关闭状态下的长期 Memory 内容。这样用户可以追问“第二个国家”并由同一对话中的先前推荐消解指代。国家/地点建议和澄清仍是对话，不会被当成已确认 Trip 目的地；生成/保存攻略或搜索航班须有用户明确请求。Trip 中已确认目的地、实际航班选择与已接纳攻略继续以可信结构化快照为准。
