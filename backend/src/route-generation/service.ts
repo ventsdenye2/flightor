@@ -40,6 +40,7 @@ export interface RouteGenerationDependencies {
 }
 
 export interface StartRouteGenerationInput extends RouteGenerationRequest {
+  dispatch?: 'queued' | 'inline'
   ownerId: string
   tripId: string
   idempotencyKey: string
@@ -241,6 +242,7 @@ export async function startRouteGenerationRun(
     throw error
   }
   const createInput: CreateRouteGenerationRunInput = {
+    ...(input.dispatch ? { dispatch: input.dispatch } : {}),
     ownerId: input.ownerId, tripId: input.tripId,
     ...(input.conversationId === undefined ? {} : { conversationId: input.conversationId }),
     goalId: goal.goal.id,
@@ -431,9 +433,12 @@ async function assertRunActive(dependencies: RouteGenerationDependencies, runId:
 /** Worker-callable pipeline. Job payloads should contain only this public run id. */
 export async function executeRouteGenerationRun(
   dependencies: RouteGenerationDependencies,
-  runId: string
+  runId: string,
+  execution: { signal?: AbortSignal; assertActive?: () => Promise<void> } = {}
 ): Promise<RouteGenerationRunRecord | undefined> {
   ensureRunId(runId)
+  execution.signal?.throwIfAborted()
+  await execution.assertActive?.()
   const claimed = await dependencies.runs.claim(runId)
   if (claimed === undefined) {
     const current = await dependencies.runs.get(runId)
@@ -457,7 +462,12 @@ export async function executeRouteGenerationRun(
       ...(claimed.goalId ? { goalId: claimed.goalId } : {}),
       ...(claimed.goalRunId ? { runId: claimed.goalRunId } : {}),
       tripContextVersion: claimed.contextVersion,
-      assertActive: () => assertRunActive(dependencies, runId)
+      ...(execution.signal ? { signal: execution.signal } : {}),
+      assertActive: async () => {
+        execution.signal?.throwIfAborted()
+        await execution.assertActive?.()
+        await assertRunActive(dependencies, runId)
+      }
     }, context)
     const selection = routeSelection(context)
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
@@ -469,7 +479,7 @@ export async function executeRouteGenerationRun(
       acceptsSelfTransfer: selection.acceptsSelfTransfer,
       acceptsLongStopover: selection.acceptsLongStopover,
       maxCandidates: 100
-    }, { tripId: claimed.tripId, ...(claimed.conversationId ? { conversationId: claimed.conversationId } : {}), artifactWorkspace: workspace, checkpoint: () => checkpoint(workspace) })
+    }, { ...(execution.signal ? { signal: execution.signal } : {}), tripId: claimed.tripId, ...(claimed.conversationId ? { conversationId: claimed.conversationId } : {}), artifactWorkspace: workspace, checkpoint: () => checkpoint(workspace) })
     await checkpoint(workspace)
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
     if (connectionResult.edges.length === 0) {
@@ -491,7 +501,7 @@ export async function executeRouteGenerationRun(
         minTransferMinutes: 45,
         ...(context.travelDays === undefined ? {} : { maxTravelDays: context.travelDays })
       }, maxPaths: 50
-    })
+    }, { ...(execution.signal ? { signal: execution.signal } : {}), checkpoint: () => checkpoint(workspace) })
     await checkpoint(workspace)
     if (await cancelledBetweenStages(dependencies, runId)) return dependencies.runs.get(runId)
     if (pathPlan.paths.length === 0) {
@@ -559,6 +569,10 @@ export async function executeRouteGenerationRun(
     }
     return completed
   } catch (error) {
+    if (execution.signal?.aborted) {
+      await cancelRouteGenerationRun(dependencies, runId)
+      execution.signal.throwIfAborted()
+    }
     if (error instanceof Error && error.message === 'ROUTE_GENERATION_CANCELLED') return dependencies.runs.get(runId)
     dependencies.onFailure?.(error, runId)
     const current = await dependencies.runs.get(runId)

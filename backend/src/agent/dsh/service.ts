@@ -17,6 +17,7 @@ import { createCommitGuideTool } from './commit-guide.js'
 import { CommitRecovery, safeCommitFeedback } from './commit-recovery.js'
 import { compactPublicHistory } from './working-context.js'
 import { carryForwardBudgetGuide } from './budget-guide.js'
+import { budgetRouteReply } from './budget-route-reply.js'
 import { DSH_WEB_TOOLS, executeDshWeb, type DshWebDependencies } from './web.js'
 import { publicationFor } from '../../travel-guides/publication.js'
 import type { ArtifactRecord } from '../../artifacts/repository.js'
@@ -85,6 +86,7 @@ export class DshPlannerService implements PlannerServicePort {
     let commit = createCommitGuideTool({ evidenceStore: evidence, locale: input.locale ?? 'zh', memoryEnabled: memory.enabled })
     const commitRecovery = new CommitRecovery()
     let committedReply: string | undefined
+    let committedRouteReply: string | undefined
     let delivery: GoalDelivery = noGoalDelivery()
     const referenced = new Set<string>()
     const publish = (record: ArtifactRecord) => {
@@ -194,6 +196,7 @@ export class DshPlannerService implements PlannerServicePort {
               const variant = publicationFor(record)?.finalization?.variants[input.locale ?? 'zh']
               if (variant?.status === 'accepted' && variant.text) committedReply = variant.text.reply
             }
+            if (record && name === 'search_budget_routes') committedRouteReply = budgetRouteReply(record, input.locale ?? 'zh')
             if (record) publish(record)
           }
           if (output.completion && context.activeGoalId && context.activeGoalKind) delivery = summarizeGoalDelivery([
@@ -267,7 +270,9 @@ export class DshPlannerService implements PlannerServicePort {
     const current = await deps.trips.get(input.tripId)
     if (!current) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
     const warnings = result.reason === 'completed' ? [] : ['dsh_model_incomplete']
-    if (!commitRecovery.calls && result.reason !== 'completed') {
+    if (!commitRecovery.calls && committedRouteReply && delivery.status === 'satisfied') {
+      reply = committedRouteReply
+    } else if (!commitRecovery.calls && result.reason !== 'completed') {
       reply = result.errorCode === 'MODEL_OUTPUT_LIMIT'
         ? input.locale === 'en' ? 'The response was too long to finish. Please retry the planning request.' : '本轮回复过长，未能完成规划，请重试。'
         : result.errorCode === 'AUTH' || result.errorCode === 'INVALID_REQUEST' || result.errorCode === 'BUDGET'

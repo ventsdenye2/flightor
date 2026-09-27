@@ -11,6 +11,7 @@ import {
 import { PostgresTopologyRepository } from '../topology/postgres.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
 import { LiveFareConnectionSearch } from '../flight-routing/live-connections.js'
+import { BoundedBudgetConnectionSearch } from '../flight-routing/budget-connections.js'
 import { PostgresRouteGenerationRunRepository } from './repository.js'
 import type { RouteGenerationDependencies } from './service.js'
 
@@ -29,9 +30,16 @@ export function routeGenerationDependenciesFactory(context: AppContext): RouteGe
       trips,
       conversations: new PostgresConversationRepository(context.db, trustedUserId),
       artifacts,
-      connectionSearch: new LiveFareConnectionSearch({
-        artifacts, trips, fares: context.providers.fares,
+      connectionSearch: new BoundedBudgetConnectionSearch({
         aviation: context.providers.aviation,
+        knownHubIata: ['ICN', 'HKG', 'SIN'],
+        live: new LiveFareConnectionSearch({ artifacts, trips, fares: context.providers.fares,
+          aviation: context.providers.aviation,
+          // Leaf queries persist fares; only the coordinator explores topology.
+          topology: { search: async () => ({ edges: [], serviceVersion: 'no-leaf-topology-v1',
+            verification: { status: 'unverified', checkedAt: new Date().toISOString(), confidence: 0, sources: [] },
+            warnings: [], truncated: false, exhausted: true }) }
+        }),
         topology: new ProductionConnectionSearchService(new PostgresTopologyRepository(context.db))
       }),
       flightRoutePlanner: new DeterministicFlightRoutePlanner(),

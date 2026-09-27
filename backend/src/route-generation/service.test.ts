@@ -376,3 +376,36 @@ describe('route generation service', () => {
     })).rejects.toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSE' })
   })
 })
+
+
+describe('inline budget route execution', () => {
+  it('uses the existing durable lineage without queuing a second background execution', async () => {
+    const value = await fixture()
+    const started = await startRouteGenerationRun(value.dependencies, {
+      ownerId: 'user-1', authorizationSource: 'explicit_user_message', tripId: value.trip.id,
+      idempotencyKey: 'budget-inline', dispatch: 'inline'
+    })
+    expect(value.runs.enqueuedJobRunIds).toEqual([])
+    const finished = await executeRouteGenerationRun(value.dependencies, started.run.id, { signal: new AbortController().signal })
+    expect(finished?.status).toBe('succeeded')
+    const replay = await executeRouteGenerationRun(value.dependencies, started.run.id)
+    expect(replay?.resultArtifactId).toBe(finished?.resultArtifactId)
+    expect(value.connectionSearch.search).toHaveBeenCalledTimes(1)
+  })
+
+  it('propagates abort to fare boundaries and cancels the run without saving route results', async () => {
+    const controller = new AbortController()
+    const value = await fixture({ onSearch: async context => {
+      expect(context?.signal).toBe(controller.signal)
+      controller.abort()
+      await context?.checkpoint?.()
+    } })
+    const started = await startRouteGenerationRun(value.dependencies, {
+      ownerId: 'user-1', authorizationSource: 'explicit_user_message', tripId: value.trip.id,
+      idempotencyKey: 'budget-cancel', dispatch: 'inline'
+    })
+    await expect(executeRouteGenerationRun(value.dependencies, started.run.id, { signal: controller.signal })).rejects.toThrow()
+    expect((await value.runs.get(started.run.id))?.status).toBe('cancelled')
+    expect(await value.artifacts.listForTrip(value.trip.id)).toEqual([])
+  })
+})

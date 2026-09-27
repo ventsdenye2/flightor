@@ -224,7 +224,7 @@ export class PostgresRouteGenerationRunRepository implements RouteGenerationRunR
         return { run: current, created: false }
       }
 
-      await trx.insertInto('jobs').values({
+      if (input.dispatch !== 'inline') await trx.insertInto('jobs').values({
         type: 'route_generation',
         payload: { runId: publicId } as unknown as JsonValue,
         run_at: new Date(),
@@ -374,7 +374,7 @@ export class InMemoryRouteGenerationRunRepository implements RouteGenerationRunR
       warnings: [], createdAt: now, updatedAt: now
     }
     this.records.set(run.id, run)
-    this.jobs.push(run.id)
+    if (input.dispatch !== 'inline') this.jobs.push(run.id)
     return { run: structuredClone(run), created: true }
   }
 

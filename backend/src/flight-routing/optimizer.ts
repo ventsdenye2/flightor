@@ -94,6 +94,23 @@ function fareValues(paths: readonly CompleteFlightPath[]): { min: number; max: n
   return { min: Math.min(...amounts), max: Math.max(...amounts), currency: currencies[0]!, comparable: true }
 }
 
+function hasComparableImmutableFare(path: CompleteFlightPath): boolean {
+  if (path.totalFare === undefined || path.edges.length === 0) return false
+  if (path.edges.some(edge => edge.fare === undefined || edge.fareArtifactId === undefined || edge.fareOfferId === undefined)) return false
+  const currencies = new Set(path.edges.map(edge => edge.fare!.currency))
+  if (currencies.size !== 1 || !currencies.has(path.totalFare.currency)) return false
+  const sum = path.edges.reduce((total, edge) => total + edge.fare!.amount, 0)
+  return Math.abs(sum - path.totalFare.amount) <= 0.01
+}
+
+function hasPlayableStopover(path: CompleteFlightPath): boolean {
+  const durations = [
+    ...path.edges.filter(edge => edge.transferMinutes !== undefined).map(edge => edge.transferMinutes!),
+    ...path.edges.flatMap(internalTransfers).flatMap(transfer => transfer.durationMinutes === undefined ? [] : [transfer.durationMinutes])
+  ]
+  return durations.some(minutes => minutes >= PLAYABLE_STOPOVER_MINUTES && minutes <= 24 * 60)
+}
+
 function durationValues(paths: readonly CompleteFlightPath[]): number {
   return Math.max(0, ...paths.map(path => path.totalDurationMinutes ?? 0))
 }
@@ -230,17 +247,22 @@ export class ParetoRouteOptimizer {
     rejectedCandidateCount += scored.length - frontier.length
     const frontierSorted = [...frontier].sort((left, right) => lexicalPathId(left).localeCompare(lexicalPathId(right)))
     const choose = (compare: (left: ScoredPath, right: ScoredPath) => number): ScoredPath | undefined => frontierSorted.reduce<ScoredPath | undefined>((best, candidate) => best === undefined || compare(candidate, best) < 0 ? candidate : best, undefined)
-    const cheapest = choose((left, right) => {
-      const leftFare = left.path.totalFare?.amount ?? Number.POSITIVE_INFINITY
-      const rightFare = right.path.totalFare?.amount ?? Number.POSITIVE_INFINITY
-      return leftFare - rightFare || lexicalPathId(left).localeCompare(lexicalPathId(right))
-    })
+    const pricedFrontier = scored.filter(candidate => hasComparableImmutableFare(candidate.path))
+    const cheapest = pricedFrontier.reduce<ScoredPath | undefined>((best, candidate) => {
+      if (best === undefined) return candidate
+      const leftFare = best.path.totalFare!.amount
+      const rightFare = candidate.path.totalFare!.amount
+      return rightFare < leftFare || (rightFare === leftFare && lexicalPathId(candidate).localeCompare(lexicalPathId(best)) < 0) ? candidate : best
+    }, undefined)
     const balanced = choose((left, right) => right.score.total - left.score.total || lexicalPathId(left).localeCompare(lexicalPathId(right)))
-    const mostFun = choose((left, right) => {
+    const mostFun = frontierSorted.filter(candidate => hasPlayableStopover(candidate.path)).reduce<ScoredPath | undefined>((best, candidate) => {
+      if (best === undefined) return candidate
+      const left = best
+      const right = candidate
       const leftValue = left.score.preferredCityMatch + left.score.interestMatch + left.score.eventMatch + left.score.seasonMatch + left.score.stopoverPlayability + left.score.additionalCityValue + left.score.routeNovelty - left.score.excessiveComplexity
       const rightValue = right.score.preferredCityMatch + right.score.interestMatch + right.score.eventMatch + right.score.seasonMatch + right.score.stopoverPlayability + right.score.additionalCityValue + right.score.routeNovelty - right.score.excessiveComplexity
-      return rightValue - leftValue || lexicalPathId(left).localeCompare(lexicalPathId(right))
-    })
+      return rightValue > leftValue || (rightValue === leftValue && lexicalPathId(right).localeCompare(lexicalPathId(left)) < 0) ? right : left
+    }, undefined)
     const bestMatch = choose((left, right) => {
       const leftValue = left.score.preferredCityMatch + left.score.interestMatch + left.score.eventMatch + left.score.seasonMatch
       const rightValue = right.score.preferredCityMatch + right.score.interestMatch + right.score.eventMatch + right.score.seasonMatch

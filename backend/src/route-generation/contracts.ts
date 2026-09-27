@@ -103,6 +103,8 @@ export type RouteGenerationRunMutation = {
 }
 
 export interface CreateRouteGenerationRunInput {
+  /** Server-owned dispatch; inline work belongs to the current cancellable Agent turn. */
+  dispatch?: 'queued' | 'inline'
   ownerId: string
   tripId: string
   conversationId?: string

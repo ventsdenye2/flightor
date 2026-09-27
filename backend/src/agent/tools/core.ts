@@ -17,7 +17,7 @@ import { saveTravelGuideTool } from './authored-travel-guide.js'
 import { getTripArtifactsTool, readArtifactTool } from './artifact-reading.js'
 import { canonicalResolvedLocation, recordResolvedLocations } from './resolved-locations.js'
 import { cancelGoalTool, declareGoalTool, finishGoalTool, getGoalTool, resumeGoalTool } from './goals.js'
-import { startRouteGenerationTool } from './route-generation.js'
+import { searchBudgetRoutesTool, startRouteGenerationTool } from './route-generation.js'
 import { workspaceScope } from './workspace-scope.js'
 import { locationSelectorSchema, type LocationSelector } from '../../locations/selector.js'
 import { withGoalIntent } from './goal-intent.js'
@@ -340,6 +340,7 @@ export function createCoreToolRegistry(): ToolRegistry {
     .register(finishGoalTool)
     .register(cancelGoalTool)
     .register(startRouteGenerationTool)
+    .register(searchBudgetRoutesTool)
     .register(getTripArtifactsTool)
     .register(readArtifactTool)
     .register(getTripContextTool)
@@ -377,6 +378,7 @@ export function createPlannerToolRegistry(options: { leanGoalsEnabled?: boolean 
         if (context.acceptedGoalIntent) throw new AppError('GOAL_INTENT_CONFLICT', 'Final route generation requires a separate objective', 409)
         return startRouteGenerationTool.execute(input, context, signal)
       } })
+      .register(searchBudgetRoutesTool)
       .register(getTripArtifactsTool)
       .register(readArtifactTool)
       .register(getTripContextTool)
@@ -401,6 +403,7 @@ export function createPlannerToolRegistry(options: { leanGoalsEnabled?: boolean 
     .register(finishGoalTool)
     .register(cancelGoalTool)
     .register(startRouteGenerationTool)
+    .register(searchBudgetRoutesTool)
     .register(getTripArtifactsTool)
     .register(readArtifactTool)
     .register(getTripContextTool)

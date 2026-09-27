@@ -73,6 +73,21 @@ suite('Phase 5 PostgreSQL route-generation concurrency', () => {
     })
   }
 
+  it('persists inline budget runs without a background job and preserves idempotency', async () => {
+    const trip = await createTrip()
+    const repository = new PostgresRouteGenerationRunRepository(db, userId)
+    const input = { ownerId: userId, tripId: trip.id, idempotencyKey: 'inline-budget',
+      requestHash: 'b'.repeat(64), contextVersion: trip.currentContextVersion,
+      contextSnapshot: trip.context, dispatch: 'inline' as const }
+    const first = await repository.createOrGet(input)
+    const replay = await repository.createOrGet(input)
+    expect(replay).toMatchObject({ created: false, run: { id: first.run.id } })
+    const jobs = await db.selectFrom('jobs').select('payload').execute()
+    expect(jobs.some(job => (job.payload as { runId?: string }).runId === first.run.id)).toBe(false)
+    expect((await repository.claim(first.run.id))?.status).toBe('running')
+    expect(await repository.claim(first.run.id)).toBeUndefined()
+  })
+
   it('persists nonempty JSON warnings without PostgreSQL array coercion', async () => {
     const trip = await createTrip()
     const repository = new PostgresRouteGenerationRunRepository(db, userId)
