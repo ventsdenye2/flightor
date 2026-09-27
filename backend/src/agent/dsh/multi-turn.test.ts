@@ -32,7 +32,7 @@ afterEach(async () => {
 })
 
 describe('DSH multi-turn publication flow with the official worker', () => {
-  it.each(['exact_cover', 'stale_evidence'] as const)('repairs %s, publishes once, explains without another write, and resumes persisted history after manager recreation', async failure => {
+  it.each(['exact_cover', 'stale_evidence', 'missing_then_duplicate'] as const)('repairs %s, publishes once, explains without another write, and resumes persisted history after manager recreation', async failure => {
     const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-multiturn-'))
     roots.push(root)
     const ownerId = 'dsh-multiturn-owner'
@@ -87,13 +87,18 @@ describe('DSH multi-turn publication flow with the official worker', () => {
           introduction: 'Explore the temple grounds and appreciate traditional architecture.',
           recommendationReason: 'This visit matches your interest in traditional culture.' }] },
     }
-    const invalidCommit = failure === 'exact_cover' ? { ...commitArgs, text: { ...commitArgs.text,
+    const invalidCommit = failure === 'missing_then_duplicate' ? { ...commitArgs,
+      days: [{ ...commitArgs.days[0]!, items: [...commitArgs.days[0]!.items,
+        { ...commitArgs.days[0]!.items[0]!, activityKey: 'duplicate', timeOfDay: 'afternoon' }] }],
+      text: { ...commitArgs.text, activities: [...commitArgs.text.activities,
+        { ...commitArgs.text.activities[0]!, activityKey: 'duplicate' }] } } : failure === 'exact_cover' ? { ...commitArgs, text: { ...commitArgs.text,
       activities: [...commitArgs.text.activities, { ...commitArgs.text.activities[0], activityKey: 'rail-guidance' }] } } : {
       ...commitArgs, candidates: [{ key: 'temple', evidenceRefs: stale.evidenceRefs, title: 'Senso-ji Temple',
         summary: 'Explore the temple grounds and traditional architecture.', category: 'activity', locationId: 'city:TYO' }],
       days: commitArgs.days.map(day => ({ ...day, items: day.items.map(({ candidateRef: _ref, ...item }) => ({ ...item, candidateKey: 'temple' })) }))
     }
     const firstManager = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [
+      ...(failure === 'missing_then_duplicate' ? [call('commit_travel_guide', { ...commitArgs, text: { ...commitArgs.text, activities: undefined } })] : []),
       call('commit_travel_guide', invalidCommit),
       call('commit_travel_guide', commitArgs), { text: 'DEBUG: commit_travel_guide accepted. Admission costs USD 500 and everything is within your budget.' },
       { text: 'Senso-ji is a historic temple and fits your interest in traditional culture.' },
@@ -120,15 +125,18 @@ describe('DSH multi-turn publication flow with the official worker', () => {
     const base = { tripId, conversationId: conversation.id, locale: 'en' as const }
     const first = await service.runTurn({ ...base, requestId: randomUUID(), generationId: randomUUID(), message: 'Create a Tokyo cultural guide.' })
     expect(first.reply).toBe('Your Tokyo cultural guide is ready.')
-    expect(commitFeedback[0]).toMatchObject({ ok: false, error: { code: 'DSH_GUIDE_NEEDS_REVISION', details: failure === 'exact_cover' ? {
-      hint: 'Text must cover exactly the submitted activities; protected activities cannot be rewritten',
-      requiredActivityKeys: ['temple'], unexpectedActivityKeys: ['rail-guidance'], missingActivityKeys: [],
-      repairHint: expect.stringContaining('supportingCandidateKeys')
-    } : {
-      code: 'candidate_evidence_unavailable', candidates: [{ candidateKey: 'temple', unavailableEvidenceRefs: stale.evidenceRefs }],
-      hint: 'Candidate evidence must be available in the current turn and Trip context', repairHint: expect.stringContaining('candidateRef')
-    } } })
-    expect(commitFeedback[1]).toMatchObject({ status: 'accepted' })
+    const rejectedIndex = failure === 'missing_then_duplicate' ? 1 : 0
+    if (failure === 'missing_then_duplicate') expect(commitFeedback[0]).toMatchObject({ ok: false,
+      error: { code: 'INVALID_ARGUMENTS', kind: 'arguments', recovery: { contentAttempts: 0, argumentCorrections: 1 } } })
+    expect(commitFeedback[rejectedIndex]).toMatchObject({ ok: false, error: failure === 'exact_cover'
+      ? { code: 'DSH_GUIDE_NEEDS_REVISION', kind: 'prerequisite', requiredActivityKeys: ['temple'], unexpectedActivityKeys: ['rail-guidance'] }
+      : failure === 'stale_evidence'
+        ? { code: 'DSH_GUIDE_NEEDS_REVISION', kind: 'prerequisite', revisionCode: 'candidate_evidence_unavailable',
+          candidates: [{ candidateKey: 'temple', unavailableEvidenceRefs: stale.evidenceRefs }] }
+        : { code: 'DSH_GUIDE_NEEDS_REVISION', kind: 'content', issues: expect.arrayContaining(['guide_duplicate_evidence']) } })
+    expect(commitFeedback[rejectedIndex + 1]).toMatchObject({ status: 'accepted' })
+    expect((await conversations.listMessages(conversation.id)).find(message => message.role === 'assistant')?.metadata.commit_recovery)
+      .toMatchObject({ calls: rejectedIndex + 2, contentAttempts: failure === 'missing_then_duplicate' ? 2 : 1 })
     expect(first.delivery.status).toBe('satisfied')
     expect(await goals.get(first.delivery.goalId!)).toMatchObject({ status: 'satisfied' })
     expect(first.artifactRefs).toHaveLength(1)

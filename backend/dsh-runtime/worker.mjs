@@ -70,7 +70,7 @@ async function open(data) {
       const billingId = `${active.generation}:model:${active.calls + 1}`
       if (config.metered) {
         const receipt = await bridge('__model_admit', { id: billingId }, { signal: options.signal })
-        if (!receipt?.ok) throw new Error('DSH_BUDGET_NOT_ADMITTED')
+        if (!receipt?.ok) { active.errorCode = 'BUDGET'; throw new Error('DSH_BUDGET_NOT_ADMITTED') }
       }
       active.calls += 1
       if (retries) active.providerRetries += 1

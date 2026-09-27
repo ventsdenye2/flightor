@@ -51,7 +51,7 @@ function fail(message: string, details?: unknown): never { throw new AppError('D
 
 /** Merge only explicitly selected slots. Untouched day metadata and accepted prose are server-owned. */
 export async function mergeProtectedGuide(input: CommitGuideInput, scope: ArtifactWorkspace, locale: PublicationLocale) {
-  if (!input.baseGuideId || !input.expectedContentHash || !input.replaceSlots) fail('A local edit requires baseGuideId, expectedContentHash and replaceSlots')
+  if (!input.baseGuideId || !input.expectedContentHash || !input.replaceSlots) fail('A local edit requires baseGuideId, expectedContentHash and replaceSlots', { code: 'guide_edit_prerequisite' })
   const record = await loadWorkspaceArtifact(scope, input.baseGuideId, 'travel_guide', [1])
   const guide = travelGuideArtifactPayloadSchema.parse(record.payload)
   const selection = scope.selectedFlight?.selection
@@ -63,12 +63,12 @@ export async function mergeProtectedGuide(input: CommitGuideInput, scope: Artifa
   }
   const publication = publicationFor(record)
   const accepted = publication?.finalization?.variants[locale]?.text
-  if (publication?.guideContentHash !== input.expectedContentHash || !accepted) fail('The base guide content or accepted language changed')
+  if (publication?.guideContentHash !== input.expectedContentHash || !accepted) fail('The base guide content or accepted language changed', { code: 'guide_edit_prerequisite' })
   const selected = new Set(input.replaceSlots.map(item => `${item.day}/${item.slot}`))
   if (selected.size !== input.replaceSlots.length || input.replaceSlots.some(item =>
-    !guide.days.some(day => day.day === item.day && day.items.some(activity => activity.timeOfDay === item.slot)))) fail('Replacement slots must identify existing distinct slots')
+    !guide.days.some(day => day.day === item.day && day.items.some(activity => activity.timeOfDay === item.slot)))) fail('Replacement slots must identify existing distinct slots', { code: 'guide_edit_prerequisite', replaceSlots: input.replaceSlots })
   if (new Set(input.days.map(day => day.day)).size !== input.days.length || input.days.some(day => !guide.days.some(old => old.day === day.day)
-    || day.items.some(item => !selected.has(`${day.day}/${item.timeOfDay}`)))) fail('Replacement input contains a protected day or slot')
+    || day.items.some(item => !selected.has(`${day.day}/${item.timeOfDay}`)))) fail('Replacement input contains a protected day or slot', { code: 'protected_slot_conflict', replaceSlots: input.replaceSlots })
   const route = tripRoutePlanPayloadSchema.parse((await loadWorkspaceArtifact(scope, guide.routeArtifactId, 'route', [1])).payload)
   const research = new Map<string, ResearchArtifact>()
   const ref = async (sourceId: string, findingId: string) => {
@@ -103,7 +103,7 @@ export async function mergeProtectedGuide(input: CommitGuideInput, scope: Artifa
       ...(old.notes ? { notes: old.notes } : {}), items })
   }
   const supportingRefs = await Promise.all((guide.supportingEvidence ?? []).map(item => ref(item.sourceArtifactId, item.sourceFindingId)))
-  if (input.supportingRefs || input.supportingCandidateKeys) fail('A slot edit cannot replace protected supporting evidence')
+  if (input.supportingRefs || input.supportingCandidateKeys) fail('A slot edit cannot replace protected supporting evidence', { code: 'protected_supporting_evidence' })
   return { days, supportingRefs, protectedText, protectedItems, themes: accepted.days }
 }
 
@@ -131,12 +131,12 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         researchCache.clear()
       }
       recordTripLocations(scopedContext, scope.tripContext)
-      if (input.days.some(day => day.items.some(item => Number(Boolean(item.candidateKey)) + Number(Boolean(item.candidateRef)) !== 1))) fail('Each item requires exactly one candidateKey or candidateRef')
+      if (input.days.some(day => day.items.some(item => Number(Boolean(item.candidateKey)) + Number(Boolean(item.candidateRef)) !== 1))) fail('Each item requires exactly one candidateKey or candidateRef', { code: 'candidate_binding_invalid' })
       const isPatch = input.baseGuideId !== undefined || input.expectedContentHash !== undefined || input.replaceSlots !== undefined
       const protectedGuide = isPatch ? await mergeProtectedGuide(input, scope, options.locale) : undefined
       const days = protectedGuide?.days ?? input.days
       const decisions = days.flatMap(day => day.items)
-      if (new Set(days.map(day => day.day)).size !== days.length || new Set(decisions.map(item => item.activityKey)).size !== decisions.length) fail('Days and activity keys must be unique')
+      if (new Set(days.map(day => day.day)).size !== days.length || new Set(decisions.map(item => item.activityKey)).size !== decisions.length) fail('Days and activity keys must be unique', { code: 'duplicate_day_or_activity_key', days: days.map(day => day.day), activityKeys: decisions.map(item => item.activityKey) })
       const authoredTexts = new Map(input.text.activities.map(item => [item.activityKey, item]))
       const needsText = decisions.filter(item => !protectedGuide?.protectedText.has(item.activityKey))
       if (authoredTexts.size !== input.text.activities.length || authoredTexts.size !== needsText.length || needsText.some(item => !authoredTexts.has(item.activityKey))) {
@@ -151,15 +151,18 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
           repairHint: 'Write text.activities only for the required scheduled activityKeys, exactly once each. Remove unexpected entries. Put supplemental/practical candidates in supportingCandidateKeys (or supportingRefs); they need no text.activities entry. Keep protected activities unchanged.'
         })
       }
-      if (input.candidates && new Set(input.candidates.map(item => item.key)).size !== input.candidates.length) fail('Candidate keys must be unique')
+      if (input.candidates && new Set(input.candidates.map(item => item.key)).size !== input.candidates.length) fail('Candidate keys must be unique', { code: 'duplicate_candidate_key', candidateKeys: input.candidates.map(item => item.key) })
       const candidateRefs = input.candidates ? new Map<string, string>() : new Map(registeredCandidates)
       if (input.candidates) {
         // A replacement candidate list must stand on its own validated evidence.
         registeredCandidates = new Map()
         const goal = context.activeGoalId ? await context.goalRepository?.get(context.activeGoalId) : undefined
-        if (!goal || goal.kind !== 'travel_guide') fail('A current travel guide Goal is required')
+        if (!goal || goal.kind !== 'travel_guide') fail('A current travel guide Goal is required', { code: 'candidate_goal_missing' })
         const parameters = travelGuideGoalParametersSchema.parse(goal.parameters)
-        const candidates = input.candidates.map(({ locationId, ...candidate }) => ({ ...candidate, location: canonicalResolvedLocation(scopedContext, locationId) }))
+        const candidates = input.candidates.map(({ locationId, ...candidate }) => {
+          try { return { ...candidate, location: canonicalResolvedLocation(scopedContext, locationId) } }
+          catch { fail('Candidate location must resolve in the current Trip', { code: 'candidate_location_unresolved', candidateKey: candidate.key }) }
+        })
         const unavailableCandidates = (await Promise.all(candidates.map(async candidate => {
           const records = await Promise.all(candidate.evidenceRefs.map(ref => options.evidenceStore.get(ref)))
           return { candidateKey: candidate.key, unavailableEvidenceRefs: candidate.evidenceRefs.filter((_ref, index) =>
@@ -187,7 +190,7 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         await checkpoint(scope)
         registeredCandidates = new Map(candidateRefs)
       }
-      const resolveKey = (value: string) => candidateRefs.get(value) ?? fail(`Candidate key is unavailable: ${value}`)
+      const resolveKey = (value: string) => candidateRefs.get(value) ?? fail(`Candidate key is unavailable: ${value}`, { code: 'candidate_key_unavailable', candidateKey: value })
       const saveInput = { days: days.map(day => ({ ...day, items: day.items.map(({ activityKey: _key, candidateKey, ...item }) =>
         ({ ...item, ...(candidateKey ? { candidateRef: resolveKey(candidateKey) } : {}) })) })),
         supportingRefs: protectedGuide?.supportingRefs ?? [...(input.supportingRefs ?? []), ...(input.supportingCandidateKeys ?? []).map(resolveKey)] }
