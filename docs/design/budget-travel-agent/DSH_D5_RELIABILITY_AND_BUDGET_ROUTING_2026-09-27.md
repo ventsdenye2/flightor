@@ -57,3 +57,5 @@ D5-B 接线编辑中间态曾出现 6 个 tool 测试失败（缺失测试 impor
 真实调用前dry-run核对原账本：batch d1a2aef6-d04d-4c44-9d22-6b1892226f95，354模型准入（含官方搜索计量）、92搜索，unknown/reserved US$21.52，pending0，unlimited授权延续用户本会话明确指示。保留原失败、未新建或清空真实账本；不是实付金额。D5 local simulation另外隔离账本不与真实费用混算。
 
 D5-C 场景实现已完成并进入冻结验证：1普通发布、2首次503、3schema错误、4重复候选内容修订、5 503+内容修订、6cold resume、7 1500对900独立票、8禁止self-transfer、9缺不可变绑定、10查票/显式校验采用/攻略/单slot修改/只读恢复。case10保留非目标slot，刷新比较账本和Artifact计数不变。所有模型协议测试使用本地HTTP；synthetic token量是协议fixture估算，不是官方计费。
+
+全量离线第一轮 126 文件1132项中1131通过、1失败：旧Core vocabulary断言尚未包含新增search_budget_routes。已补齐预期名单，未删测试/降validator；该修订后新建冻结batch，不混用原30次结果。

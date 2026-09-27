@@ -217,7 +217,7 @@ describe('AgentRuntime and ToolRegistry', () => {
   })
   it('publishes the complete Phase 4B Core Tool vocabulary', () => {
     expect(createCoreToolRegistry().definitions().map(definition => definition.function.name)).toEqual([
-      'declare_goal', 'get_active_goal', 'resume_goal', 'finish_goal', 'cancel_goal', 'start_route_generation',
+      'declare_goal', 'get_active_goal', 'resume_goal', 'finish_goal', 'cancel_goal', 'start_route_generation', 'search_budget_routes',
       'get_trip_artifacts', 'read_artifact',
       'get_trip_context', 'update_trip_context', 'resolve_location', 'search_flights',
       'search_flexible_flights', 'confirm_flight_price', 'search_connection_flights',
