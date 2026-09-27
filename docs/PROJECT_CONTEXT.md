@@ -1,5 +1,9 @@
 # FlightOR 当前项目上下文
 
+2026-09-27 D5 最终：A/B已实现，冻结10类×3次30/30（本地HTTP/fixture）、backend1132项、runtime9项、数据库7项通过；另一次官方DeepSeek模型+搜索正式API攻略accepted+satisfied，24.653s。没有本轮实价路线或新版H5通过声明，G1仍未放行。代码HEAD9cae53b，详情见 [D5报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。
+
+2026-09-27 D5：模型真实请求逐次计量，不再固定 12 次；Provider 有界恢复、commit 参数/内容修订分开、官方 Session 工作上下文压缩已实现。新增 search_budget_routes 复用 route-generation、真实 fare Artifact 和确定性 planner/optimizer；明确省钱意图可触发，无需内部“最终路线”术语，搜索不等于采用。状态与新验证见 [D5 报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)，以下旧日期为历史快照。
+
 2026-09-26 18:04最终功能验收：**DSH正式H5 E2E PASS（限定本次后端替换，G1仍未放行）**。A自备机票的解释/局部修改/全程1200预算/刷新/显式官方英文与恢复已验；B先通过正式API采用synthetic fixture航班，再真实H5规划、解释、slot修改和刷新通过。B最新修改5主模型/1官方搜索/2fetch/2commit，一次修复后accepted+satisfied并可读，点击→UI26.115s，第一天/其他slot/航班revision不变；刷新零调用。B初版预算保证错误与全部失败不追认，最新公开文字无该保证；人流推论/事实时效仍有内容质量限制。实际官方DeepSeek模型及搜索，不是mock攻略；原账本258模型准入/68搜索、US$15.76未知预留、pending0/unlimited，不是实际支出。27份运行日志违规旧Planner/Runtime/Research/非本地化Finalizer调用0（23份有guard，其余无HTTP）。后端代码commit bf42bf80283ba39f062c37db79d9d0a92bd20f32；前端授权最小修复8233a84/8626876；runner/harness代码commit be8b8937a1e787ca79012bf8c92495f5ac3f4d6b；报告与证据由包含本记录的后续docs提交交付，最终交付SHA见任务最终回复/远端分支HEAD。原工作区main=8a83b03及未提交内容保留。证据见[现有D4报告](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。以下带日期段落保留为历史快照。
 
 2026-09-26 17:51 DSH验收快照：A自备机票完整能力经真实失败/修复/恢复已验收。B先正式采用synthetic fixture机票，再真实H5官方链路，第七次发送首次accepted/satisfied并显示两天5项活动，点击→可读27.713s；4主模型0搜索0fetch，复用09:31同B会话真实官方搜索/正文研究，不冒称成功轮新搜索。当前accepted reply仍有“整体预算仍在既定总额内”的无依据预算保证（budgetAssessment undetermined），已发现并继续修复；B后续解释/slot修改/恢复尚待完成，因此整体E2E仍FAIL。Artifact/source/evidence谱系与前六次失败保留。独立codex/dsh-backend、前端最小扩展commit8626876，其余后端修复未提交；main/用户原工作区保留。原账本251模型准入/67搜索、US$15.40未知预留、pending0/unlimited，不是实付账单。地图不阻塞、G1未放行。证据见[现有D4报告](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。

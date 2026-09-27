@@ -1,5 +1,13 @@
 # 当前进度与验证
 
+2026-09-27 D5 最终：A/B已实现，冻结10类×3次30/30（本地HTTP/fixture）、backend1132项、runtime9项、数据库7项通过；另一次官方DeepSeek模型+搜索正式API攻略accepted+satisfied，24.653s。没有本轮实价路线或新版H5通过声明，G1仍未放行。代码HEAD9cae53b，详情见 [D5报告](DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。
+
+2026-09-27 D5 实施中途记录（历史）：已提交 Provider 恢复 `786efa4`、独立修复额度/上下文 `9f381fa`；定向 129 项通过。低价航线与冻结 10×3 验收进行中，详见 [D5 报告](DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。
+
+2026-09-26 20:23–20:27葡萄牙两次重试已定位，未实施修复：实际回执均为8192/thinking disabled；首轮研究耗尽12次模型限制，次轮三次commit依次地点未解析、旧turn证据不可用、修复额度耗尽。第二轮提交输出约4300 token已完整返回，故不能继续归因输出截断。两轮均无accepted交付，消息入库间隔63.037/76.741秒，不是前端耗时。仅增量更新现有报告，无代码/配置变更或新付费调用；后续修复建议与原始证据索引见[D4报告](DSH_LIVE_2026-09-24.md)。历史限定A/B PASS不覆盖本案例，G1仍未放行。
+
+2026-09-26 用户手动葡萄牙案例新增失败（仅诊断、未修代码）：已采用真实SerpApi/Google Flights航班后两次规划均无攻略。第一次澄清复述航班中转时长被excluded_precise_claim拦截；第二次9主模型/6搜索/9fetch，提交生成触及4096输出上限，commit未执行，错误又被语言检查覆盖成泛化提示。两轮耗时4.019/60.649秒仅为消息入库时间差；0攻略/0accepted，未知费用预留US$0.88，实际扣费未知。票价为PEK-LIS往返查询但页面只突出去程，确定性中转优化未调用；统一双路往返比较需补建模与展示/采用合同，尚未实施。用户要求先记报告不改代码；详见[D4手动测试诊断](DSH_LIVE_2026-09-24.md)。下述18:04的PASS仅对应此前限定A/B验收，不覆盖本次失败。
+
 2026-09-26 Planner 连续对话 UI 定向回归：新增 `test:planner-chat`，直接执行生产 `PlannerPage` 并断言有序历史 user/assistant 消息、无 assistant 的最新 user 轮、latest reply 对应、草稿发送/清空、busy 时只显示停止入口、新旅行 idle/busy 行为、中英标签及失败后的完整历史和具体错误保留；5项通过。同步调整旧 publication harness，以当前行程卡、busy stop、停止待确认错误语义复核；conversation-progress及publication/flight/telemetry相关链合计68项通过。命令为 `npm run test:planner-chat` 与 `npm run test:conversation-progress`。均为离线 JSX/hooks/component-tree 测试，无浏览器、微信、Provider 或真实持久化结论。
 
 2026-09-26 18:04最终功能验收：**DSH正式H5 E2E PASS（限定本次后端替换，G1仍未放行）**。A自备机票的解释/局部修改/全程1200预算/刷新/显式官方英文与恢复已验；B先通过正式API采用synthetic fixture航班，再真实H5规划、解释、slot修改和刷新通过。B最新修改5主模型/1官方搜索/2fetch/2commit，一次修复后accepted+satisfied并可读，点击→UI26.115s，第一天/其他slot/航班revision不变；刷新零调用。B初版预算保证错误与全部失败不追认，最新公开文字无该保证；人流推论/事实时效仍有内容质量限制。实际官方DeepSeek模型及搜索，不是mock攻略；原账本258模型准入/68搜索、US$15.76未知预留、pending0/unlimited，不是实际支出。27份运行日志违规旧Planner/Runtime/Research/非本地化Finalizer调用0（23份有guard，其余无HTTP）。后端代码commit bf42bf80283ba39f062c37db79d9d0a92bd20f32；前端授权最小修复8233a84/8626876；runner/harness代码commit be8b8937a1e787ca79012bf8c92495f5ac3f4d6b；报告与证据由包含本记录的后续docs提交交付，最终交付SHA见任务最终回复/远端分支HEAD。原工作区main=8a83b03及未提交内容保留。证据见[实施报告](DSH_IMPLEMENTATION_REPORT_2026-09-24.md)和[D4报告](DSH_LIVE_2026-09-24.md)。

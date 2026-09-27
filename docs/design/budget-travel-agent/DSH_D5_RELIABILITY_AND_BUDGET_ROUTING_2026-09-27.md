@@ -1,6 +1,6 @@
 # D5 — Reliable Planning & Budget Flight Routing
 
-状态：实施中，未验收。工作分支 `codex/dsh-backend`；2026-09-27 fetch 后本地与远端基线均为 `a01d6e4cbc520aa181aadc4417ee03921f49765c`。保留既存未提交D4诊断与其他worktree，不修改main。D4限定A/B通过不等于一般规划可靠性通过；既有失败见[D4报告](DSH_LIVE_2026-09-24.md)。
+状态：D5-A/B 已实现；D5-C 最终冻结 30/30、本轮官方发布冒烟 1/1 通过，证据层级如下。工作分支 `codex/dsh-backend`；2026-09-27 fetch 后本地与远端基线均为 `a01d6e4cbc520aa181aadc4417ee03921f49765c`。保留既存未提交D4诊断与其他worktree，不修改main。D4限定A/B通过不等于一般规划可靠性通过；既有失败见[D4报告](DSH_LIVE_2026-09-24.md)。
 
 ## D5-A 根因与修改边界
 
@@ -13,9 +13,9 @@
 ## 验证记录
 
 - 官方DSH runtime的working-context定向测试1/1通过：旧工具证据从下一轮模型输入移除、当前轮工具结果保留、审计前缀不变、冷resume后无旧副作用重放。直接执行 `node test/working-context.test.mjs`；0.225秒。首次 `node --test` 被沙箱spawn EPERM阻断，未执行用例，不算功能失败或通过。
-- 其他D5-A定向、D5-B与代码冻结后的D5-C 10类×3次结果待实施后填写；不引用D4旧测试数充当本轮通过。
+- 后续定向、全量及最终冻结结果见下方最终验收，不引用 D4 旧测试数充当本轮通过。
 
-## D5-B 已核实的问题（待实施）
+## D5-B 实施前根因
 
 `route-generation/composition.ts`向LiveFareConnectionSearch传入不带fare service的拓扑服务；LiveFareConnectionSearch当前只为查询OD的整程报价保存immutable FlightSearchArtifact，附加拓扑边本身不会自动获得真实分段绑定。给拓扑服务简单传fare service也不够：它的报价富化不持久化Artifact，不能据此计算可验证总价。D5将复用持久fare搜索及既有planner/optimizer做有界baseline与单hub比较，保留每票段artifact/offer绑定。
 
@@ -23,7 +23,7 @@ optimizer当前在全部totalFare缺失时仍可能选出cheapest，须排除不
 
 ## 验收、费用与回滚
 
-尚无D5冻结batch成功率或真实Provider成功声明。将分列离线fixture、本地HTTP模拟、生产式持久测试与真实Provider，失败保留且代码变更后新建batch，不能混算。
+证据分列离线 fixture、本地 HTTP 模拟、数据库集成与真实 Provider，失败保留且代码变更后新建 batch，不能混算。
 
 D5回滚应逐项revert本轮提交并保留现有DSH引擎、预算、会话、数据和所有失败记录；本轮不通过切legacy回避问题。当前未提交实现不得以reset/clean覆盖用户内容。已知限制及下一阶段以最终验证更新，本页当前不构成验收放行。
 
@@ -59,3 +59,50 @@ D5-B 接线编辑中间态曾出现 6 个 tool 测试失败（缺失测试 impor
 D5-C 场景实现已完成并进入冻结验证：1普通发布、2首次503、3schema错误、4重复候选内容修订、5 503+内容修订、6cold resume、7 1500对900独立票、8禁止self-transfer、9缺不可变绑定、10查票/显式校验采用/攻略/单slot修改/只读恢复。case10保留非目标slot，刷新比较账本和Artifact计数不变。所有模型协议测试使用本地HTTP；synthetic token量是协议fixture估算，不是官方计费。
 
 全量离线第一轮 126 文件1132项中1131通过、1失败：旧Core vocabulary断言尚未包含新增search_budget_routes。已补齐预期名单，未删测试/降validator；该修订后新建冻结batch，不混用原30次结果。
+
+
+## 最终验收（2026-09-27）
+
+基线 `a01d6e4cbc520aa181aadc4417ee03921f49765c`；最终代码/测试 HEAD `9cae53b`，其后只有报告和脱敏证据提交，最终文档提交 SHA 以 Git HEAD 为准。
+
+| 层次 | 结果 | 说明 |
+| --- | --- | --- |
+| backend 全量离线 | 126 文件 / 1132 项通过，133.11s | 包含 legacy 回归，DSH 不调用 legacy |
+| TypeScript | build/check 通过 | 前端未改，无额外前端构建成功声明 |
+| 独立 DSH runtime | 9/9，7.213s | HTTP 503/429/401、取消退避、逐次账本、核心Loop/工作上下文 |
+| PostgreSQL | 7/7，3.28s | 隔离 schema，inline无job、并发claim/取消/Trip版本 |
+| 最终冻结 D5-C | 30/30，代码指纹前后一致 | 本地 HTTP 模拟 + 真实领域服务 + 合成资料/票价 |
+| 官方 Provider 冒烟 | 1/1 accepted+satisfied，24.653s | 正式鉴权 POST/GET，独立测试Trip；不是新H5点击验收 |
+
+最终 batch：[d5-2026-09-27T03-34-28-891Z.json](evidence/d5-2026-09-27T03-34-28-891Z.json)。前一批 [03:31 batch](evidence/d5-2026-09-27T03-31-10-875Z.json) 保留，未混入最终成功率。源码和编译产物指纹见各 JSON。
+
+### D5-C 指标与口径
+
+21 个规划场景（case1–6/10，每类3次）：首次无恢复完成率 42.86%，自动恢复后完成率 100%，未恢复失败率 0%。首次率包含故意注入故障的case，因此不是线上用户自然请求成功率。模型平均3.43次，p50=3、p95=6；search平均0次（使用预存合成研究，不能据此声称真实研究不需搜索）；模拟场景wall p50=1357ms、p95=2321ms。case6/10含多个turn，该wall口径是整个scenario，不能与实际用户单turn或点击延迟混比。Provider重试6次、schema修复3次、semantic修复6次；所有真实本地HTTP请求均有对应准入/回执，无pending。
+
+9个航线场景：12条路径候选、21次fare lookup、9条可定价路径；6/9有cheapest，剩余3个正是故意缺绑定的case9；3次缺绑定拒绝。case7每次发现900对1500，case8每次禁止拆票后只保留1500，case9每次无可比较totalFare且无cheapest。模型usage为模拟SSE量估计，仅验证收据协议。模拟成本0；不影响真实原账本。
+
+### 官方链路单次冒烟
+
+[脱敏官方证据](evidence/d5-official-smoke-2026-09-27.json)：DeepSeek官方 `deepseek-v4-flash`、maxTokens8192、thinking disabled；4次主模型、1次官方搜索（原账本共5次模型准入），1次commit，无Provider重试、无参数/内容修复，最终finish reason stop。输入tokens合计89984、输出1901；正式API请求开始至轮询accepted/satisfied 24.653s。独立GET读取相同攻略且账本不变。旧Planner/Runtime/Research synthesis/非本地化Finalizer guard命中0。
+
+turn `01a0e0eb-255d-763e-84ee-9cbe10bd3af8`，generation `01a0e0eb-255d-763e-84ee-9a5403e06299`，artifact `01a0e0eb-7cdf-7558-8c70-6c8288e5c198`，hash `ccf94e7969caf6c454d1595d6c939cf260fbbf46a890bfa5f2a0913d255f4b33`。publication.zh=accepted、delivery=satisfied、budgetAssessment=undetermined、evidenceCoverage=partial、contentContract=limited；不是事实全面核实或预算保证。
+
+新增 unknown/reserved US$0.28，实际账单未知；原账本累计359模型准入/93搜索、US$21.80未知预留、pending0/unlimited。所有旧失败及预留保留。真实冒烟没有注入Provider故障，不用1次成功外推线上恢复率；本轮没有真实 fare provider 的低价对比或新版 H5 浏览器验收。
+
+## 修改文件与提交
+
+- `786efa4`：worker/provider-recovery、session-manager、working-context runtime及HTTP/取消测试。
+- `9f381fa`：service、commit-guide/commit-recovery、当前轮research复用、public history及修复测试。
+- `567022b`：budget-connections、live fare组合接线、optimizer、route-generation inline合同/仓库/取消、tools/core、受控budget回复及单元/集成/DB测试。
+- `2f197c1`：D5 30次runner和真实worker+本地HTTP planning scenarios。
+- `9cae53b`：更新旧Core tool vocabulary回归断言以包含新工具。
+- 随后的docs提交同步本报告、TOOLS/架构/PROJECT_CONTEXT/DPS/progress/README及旧D4待提交诊断；不提交env、private日志、Key或用户对话。
+
+## 已知限制、回滚与下一阶段
+
+一版仅单程、单OD、一个主动hub、最多两票；往返要求另行明确去程范围，不能与单程900错误比较。搜索窗口只采样两日，候选hub与fare调用有界，因此仅“本次范围内最低”。真实fare provider覆盖/限流/票价波动尚未通过本轮实价对比；fixture金额不是真实机票。签证、入境、行李和保护未知时仍需确认，长中转badge不保证可进城。
+
+工作上下文只在turn边界压缩，单turn大量研究仍可增长；审计记录仍完整。不可恢复auth/invalid/version/flight冲突仍停止，参数或内容持续错误超过各自有界额度仍失败；取消后仅允许已准入调用费用结算。inline运行若进程崩溃，不会另起后台续写，已running失联run返回冲突而不重复副作用，后续可单独完善可观测回收。
+
+回滚使用本分支逐项逆序revert上述D5提交及对应docs提交，不reset/clean数据、不改main、不清空预算或会话、不切回legacy引擎；旧D4失败与局限仍存在。建议进入下一阶段的有限真实低价航线/H5回归与自然请求稳定性采样；本轮D5工程恢复合同通过，不等于整个G1或线上成功率达标。

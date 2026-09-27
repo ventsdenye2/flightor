@@ -1,0 +1,221 @@
+{
+  "mode": "real-official-provider-smoke",
+  "codeHead": "2f197c1",
+  "fixture": "no model or research fixture; isolated Trip",
+  "probe": {
+    "kind": "commit",
+    "turnStatus": "completed",
+    "delivery": "satisfied",
+    "artifactRefs": [
+      {
+        "id": "01a0e0eb-7cdf-7558-8c70-6c8288e5c198",
+        "type": "travel_guide",
+        "schemaVersion": 1,
+        "presentationHint": "travel_guide"
+      }
+    ],
+    "stopReason": "completed",
+    "probeCaseId": "COMMIT-8",
+    "durationMs": 24653.2253,
+    "beforeBudget": {
+      "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+      "authorization": {
+        "authorizedUsdMicros": 7000000,
+        "maxModelCalls": 128,
+        "maxSearchCalls": 32,
+        "modelReserveUsdMicros": 40000,
+        "searchReserveUsdMicros": 80000,
+        "unlimited": true
+      },
+      "model": 354,
+      "search": 92,
+      "usdMicros": 21520000,
+      "pending": 0,
+      "remainingUsdMicros": null
+    },
+    "afterBudget": {
+      "batchId": "d1a2aef6-d04d-4c44-9d22-6b1892226f95",
+      "authorization": {
+        "authorizedUsdMicros": 7000000,
+        "maxModelCalls": 128,
+        "maxSearchCalls": 32,
+        "modelReserveUsdMicros": 40000,
+        "searchReserveUsdMicros": 80000,
+        "unlimited": true
+      },
+      "model": 359,
+      "search": 93,
+      "usdMicros": 21800000,
+      "pending": 0,
+      "remainingUsdMicros": null
+    },
+    "turnId": "01a0e0eb-255d-763e-84ee-9cbe10bd3af8",
+    "artifactId": "01a0e0eb-7cdf-7558-8c70-6c8288e5c198",
+    "contentHash": "ccf94e7969caf6c454d1595d6c939cf260fbbf46a890bfa5f2a0913d255f4b33",
+    "publicReply": "已按你的要求保存一份最小中文攻略：只研究浅草寺一个文化景点，第一天参观，第二天留作自由休息，未新增其他景点；未研究交通票券、小吃、价格或预算可行性，也不承诺费用是否够用。",
+    "getBudgetUnchanged": true,
+    "engine": "dsh",
+    "transport": "authenticated loopback POST + GET polling",
+    "status": "passed",
+    "recordedAt": "2026-09-27T03:32:06.692Z"
+  },
+  "transport": "formal authenticated POST and GET polling; not browser UI",
+  "generationId": "01a0e0eb-255d-763e-84ee-9a5403e06299",
+  "providerReceipts": [
+    {
+      "id": "01a0e0eb-255d-763e-84ee-9a5403e06299:model:1",
+      "kind": "model",
+      "provider": "deepseek",
+      "reservedUsdMicros": 40000,
+      "receipt": {
+        "durationMs": 1519.7385,
+        "usage": {
+          "promptTokens": 18843,
+          "completionTokens": 84,
+          "totalTokens": 18927
+        },
+        "finishReason": "tool-calls",
+        "model": "deepseek-v4-flash",
+        "maxTokens": 8192,
+        "thinking": "disabled"
+      }
+    },
+    {
+      "id": "01a0e0eb-255d-763e-84ee-9a5403e06299:3",
+      "kind": "search",
+      "provider": "deepseek-official",
+      "reservedUsdMicros": 120000,
+      "receipt": {
+        "durationMs": 8985.2259
+      }
+    },
+    {
+      "id": "01a0e0eb-255d-763e-84ee-9a5403e06299:model:2",
+      "kind": "model",
+      "provider": "deepseek",
+      "reservedUsdMicros": 40000,
+      "receipt": {
+        "durationMs": 1319.8752000000004,
+        "usage": {
+          "promptTokens": 19648,
+          "completionTokens": 109,
+          "totalTokens": 19757
+        },
+        "finishReason": "tool-calls",
+        "model": "deepseek-v4-flash",
+        "maxTokens": 8192,
+        "thinking": "disabled"
+      }
+    },
+    {
+      "id": "01a0e0eb-255d-763e-84ee-9a5403e06299:model:3",
+      "kind": "model",
+      "provider": "deepseek",
+      "reservedUsdMicros": 40000,
+      "receipt": {
+        "durationMs": 7199.415800000001,
+        "usage": {
+          "promptTokens": 24713,
+          "completionTokens": 1528,
+          "totalTokens": 26241
+        },
+        "finishReason": "tool-calls",
+        "model": "deepseek-v4-flash",
+        "maxTokens": 8192,
+        "thinking": "disabled"
+      }
+    },
+    {
+      "id": "01a0e0eb-255d-763e-84ee-9a5403e06299:model:4",
+      "kind": "model",
+      "provider": "deepseek",
+      "reservedUsdMicros": 40000,
+      "receipt": {
+        "durationMs": 1796.8291000000027,
+        "usage": {
+          "promptTokens": 26780,
+          "completionTokens": 180,
+          "totalTokens": 26960
+        },
+        "finishReason": "stop",
+        "model": "deepseek-v4-flash",
+        "maxTokens": 8192,
+        "thinking": "disabled"
+      }
+    }
+  ],
+  "turn": {
+    "status": "completed",
+    "stopReason": "completed",
+    "delivery": {
+      "status": "satisfied",
+      "goalId": "01a0e0eb-7c89-7287-978e-3998a0d8b081",
+      "kind": "travel_guide",
+      "artifactIds": [
+        "01a0e0eb-7cdf-7558-8c70-6c8288e5c198"
+      ],
+      "missing": [],
+      "warnings": [
+        "evidence_partially_verified"
+      ],
+      "goals": [
+        {
+          "status": "satisfied",
+          "artifactIds": [
+            "01a0e0eb-7cdf-7558-8c70-6c8288e5c198"
+          ],
+          "missing": [],
+          "warnings": [
+            "evidence_partially_verified"
+          ],
+          "goalId": "01a0e0eb-7c89-7287-978e-3998a0d8b081",
+          "kind": "travel_guide"
+        }
+      ]
+    },
+    "reply": "已按你的要求保存一份最小中文攻略：只研究浅草寺一个文化景点，第一天参观，第二天留作自由休息，未新增其他景点；未研究交通票券、小吃、价格或预算可行性，也不承诺费用是否够用。"
+  },
+  "publication": {
+    "status": "accepted",
+    "guideContentHash": "ccf94e7969caf6c454d1595d6c939cf260fbbf46a890bfa5f2a0913d255f4b33",
+    "budgetAssessment": "undetermined",
+    "evidenceCoverage": "partial",
+    "contentContract": "limited"
+  },
+  "guards": [
+    {
+      "type": "guards_installed",
+      "engine": "dsh",
+      "at": "2026-09-27T03:31:41.079Z",
+      "guarded": [
+        "CloudPlannerService.runTurn",
+        "AgentRuntime.run",
+        "ProductionResearchAgent.research",
+        "NativeResearchAgent.research",
+        "OpenRouterResearchSynthesisModel.synthesize",
+        "GuideFinalizer.generate outside explicit localization",
+        "fare requests"
+      ]
+    }
+  ],
+  "forbiddenCalls": 0,
+  "incrementalCost": {
+    "knownUsd": null,
+    "unknownReservedUsd": 0.28,
+    "ledgerModelAdmissions": 5,
+    "mainModelCalls": 4,
+    "officialSearchCalls": 1
+  },
+  "execution": {
+    "engine": "dsh",
+    "modelCalls": 4,
+    "providerRetries": 0,
+    "commitRecovery": {
+      "calls": 1,
+      "contentAttempts": 1,
+      "argumentCorrections": 0
+    },
+    "resumed": false,
+    "warnings": []
+  }
+}

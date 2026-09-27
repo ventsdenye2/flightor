@@ -1,5 +1,9 @@
 # FlightOR 文档入口
 
+2026-09-27 D5 最终：A/B已实现，冻结10类×3次30/30（本地HTTP/fixture）、backend1132项、runtime9项、数据库7项通过；另一次官方DeepSeek模型+搜索正式API攻略accepted+satisfied，24.653s。没有本轮实价路线或新版H5通过声明，G1仍未放行。代码HEAD9cae53b，详情见 [D5报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。
+
+2026-09-27：D5 可靠规划与低价航线的实现及独立验收批次见 [D5 报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。D4 为历史限定案例通过，G1 仍未放行。
+
 2026-09-22：[第四阶段真实图片](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)、[媒体ADR0027](adr/0027-place-media.md)：Wikimedia媒体持久链路及双景点H5实景通过；微信构建完成但照片页面未验收。地图暂停排查、仍未解决，未合并main、未放行G1。以下第三阶段“未开展图片任务”为当时记录。
 
 2026-09-22：[地点身份与地图 ADR 0026](adr/0026-place-identity-and-maps.md) 与[第三阶段验证](design/budget-travel-agent/PLACES_MAP_2026-09-22.md)：真实 Nominatim、持久缓存和 H5 地图已接入；微信底图验证单独记录，未开展图片任务或全量 G1。

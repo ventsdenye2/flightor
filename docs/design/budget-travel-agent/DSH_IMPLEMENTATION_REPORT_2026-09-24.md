@@ -1,5 +1,13 @@
 # DSH 后端实施记录
 
+2026-09-27：后续 D5 可靠性与低价路线工作见 [D5 报告](DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。固定12次上限已依用户要求移除；逐次计量与各类有界修复保留。本页D4证据与旧失败不覆盖为D5成功率。
+
+2026-09-26 20:23–20:27真实重试补记（仅诊断、未修代码）：24次实际模型回执确认maxTokens=8192、thinking disabled。第一轮12模型/9搜索/6fetch/0commit，研究耗尽每回合模型次数，worker报DSH_MODEL_LIMIT；第二轮12模型/2搜索/5fetch/3commit，依次因LOCATION_NOT_RESOLVED、上一回合candidate_evidence_unavailable、DSH_REPAIR_LIMIT失败，delivery partial且缺accepted_publication。三次提交输出4347/4324/4336 token均完整返回，已非4096截断。两轮服务端消息时间差63.037/76.741秒，非click→UI指标；无accepted交付，实际费用未知。提交前准备、跨回合证据、研究收敛及公开错误映射仍待修复，没有自动重试或进一步提高限制。详情与generation/session证据见[D4重试诊断](DSH_LIVE_2026-09-24.md)。下段20:21是当时尚无真实8192调用的历史快照，后续调用证据以上述补记为准。
+
+2026-09-26 20:21 用户显式授权本地DSH主模型上限8192，已更新忽略的本地配置、重启并确认启动指纹maxTokens=8192和health200；没有自动重跑Provider，原账本287条不变。产品默认值仍4096，其他代码问题未修复，真实8192攻略验收待下一次显式请求。详情见[D4配置变更记录](DSH_LIVE_2026-09-24.md)。
+
+2026-09-26 用户手动葡萄牙案例新增失败（仅诊断、未修代码）：已采用真实SerpApi/Google Flights航班后两次规划均无攻略。第一次澄清复述航班中转时长被excluded_precise_claim拦截；第二次9主模型/6搜索/9fetch，提交生成触及4096输出上限，commit未执行，错误又被语言检查覆盖成泛化提示。两轮耗时4.019/60.649秒仅为消息入库时间差；0攻略/0accepted，未知费用预留US$0.88，实际扣费未知。票价为PEK-LIS往返查询但页面只突出去程，确定性中转优化未调用；统一双路往返比较需补建模与展示/采用合同，尚未实施。用户要求先记报告不改代码；详见[D4手动测试诊断](DSH_LIVE_2026-09-24.md)。下述18:04的PASS仅对应此前限定A/B验收，不覆盖本次失败。
+
 2026-09-26 18:04最终功能验收：**DSH正式H5 E2E PASS（限定本次后端替换，G1仍未放行）**。A自备机票的解释/局部修改/全程1200预算/刷新/显式官方英文与恢复已验；B先通过正式API采用synthetic fixture航班，再真实H5规划、解释、slot修改和刷新通过。B最新修改5主模型/1官方搜索/2fetch/2commit，一次修复后accepted+satisfied并可读，点击→UI26.115s，第一天/其他slot/航班revision不变；刷新零调用。B初版预算保证错误与全部失败不追认，最新公开文字无该保证；人流推论/事实时效仍有内容质量限制。实际官方DeepSeek模型及搜索，不是mock攻略；原账本258模型准入/68搜索、US$15.76未知预留、pending0/unlimited，不是实际支出。27份运行日志违规旧Planner/Runtime/Research/非本地化Finalizer调用0（23份有guard，其余无HTTP）。后端代码commit bf42bf80283ba39f062c37db79d9d0a92bd20f32；前端授权最小修复8233a84/8626876；runner/harness代码commit be8b8937a1e787ca79012bf8c92495f5ac3f4d6b；报告与证据由包含本记录的后续docs提交交付，最终交付SHA见任务最终回复/远端分支HEAD。原工作区main=8a83b03及未提交内容保留。完整17项映射、两例公开文字、逐阶段时间、配置指纹及已知限制见[现有D4报告](DSH_LIVE_2026-09-24.md)。
 
 2026-09-26 18:13图片附加诊断：隔离runner media路由403已修，真实POST200后4活动仍empty；3个source_identity_required、浅草寺与雷门为ambiguous_or_unsupported，均在Wikimedia出站前返回。照片尚未显示，不称下载失败/图片PASS；0Agent/模型/搜索及账本不变。详情与截图见[D4报告](DSH_LIVE_2026-09-24.md)。

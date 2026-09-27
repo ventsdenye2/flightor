@@ -105,3 +105,5 @@ DSH 还要求正数 `DSH_AUTHORIZED_USD` 与 `DSH_AUTHORIZED_MODEL_CALLS`，以�
 文件操作的失败现在以`DSH_BUDGET_FS_<操作>_<errno>`定位，例如`DSH_BUDGET_FS_LEDGER_RENAME_EPERM`或`DSH_BUDGET_FS_LOCK_OPEN_EPERM`；错误消息/details只有操作名、系统错误码和尝试次数，不含路径、Key、请求或账本正文。EEXIST/ENOENT仍用于原有创建/读取分支。现存锁拒绝、损坏账本拒绝、释放前token所有权验证均不变；不会自动删除其他进程锁或把EPERM当作账本不存在。临时文件清理仍仅限本次随机临时文件。
 
 该处理来自一次真实B准入EPERM，但旧日志只有错误码，不能据此确定当时是rename或其他syscall。27/27离线预算测试通过（2.77秒），包含rename瞬态恢复只准入一次、持续失败原账本逐字节不变且Provider未调用、EIO不重试及已有锁/损坏/授权回归；不代表重跑真实B已成功。
+
+2026-09-26 用户明确要求将当前本地DSH主模型上限升至8192：在独立dsh-backend工作树的忽略配置 `backend/.env.dsh.local` 设置 `DSH_MODEL_MAX_TOKENS=8192`，手动服务启动日志显示有效maxTokens。仓库默认4096、模型/搜索路由、thinking disabled、原预算账本和数据库保持原值；本次未修改产品代码、自动重跑规划或提高自动重试次数。重启及核对结果见[D4报告](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。
