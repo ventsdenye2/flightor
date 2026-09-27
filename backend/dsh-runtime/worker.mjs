@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { createUserMessage, expandAssistantStream } from '@deepseek-ai/dsh-llm'
 import { createRuntime, PROFILE, CORE_PLUGINS } from './runtime.mjs'
+import { replaceWorkingContext } from './working-context.mjs'
+import { mayRetryProvider, providerFailureCode, retryPause } from './provider-recovery.mjs'
 
 const id = z.string().min(1).max(160)
 const envelope = z.object({ id, op: z.enum(['open', 'turn', 'cancel', 'close', 'tool_result']), data: z.unknown() }).strict()
@@ -13,7 +15,7 @@ const send = message => {
   if (process.connected) process.send(message)
 }
 async function bridge(name, args, exec) {
-  if (!active || active.cancelled) throw new Error('DSH_GENERATION_RETIRED')
+  if (!active || (active.cancelled && name !== '__model_receipt')) throw new Error('DSH_GENERATION_RETIRED')
   const callId = `${active.generation}:${++serial}`
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => { pending.delete(callId); reject(new Error('DSH_TOOL_TIMEOUT')) }, 120_000)
@@ -57,28 +59,55 @@ async function open(data) {
       retryPolicy: { mode: 'normal', maxRetries: 0 }, defaultMaxTokens: config.route.maxTokens, timeoutMs: 60000,
     } } })
   }
+  let retryDispatch = false
   ctx.on('llm/stream', async function* (options, next) {
-    if (!active || active.cancelled || active.calls >= 12) throw new Error('DSH_MODEL_LIMIT')
-    const started = performance.now()
-    const billingId = `${active.generation}:model:${active.calls + 1}`
-    if (config.metered) {
-      const receipt = await bridge('__model_admit', { id: billingId }, { signal: options.signal })
-      if (!receipt?.ok) throw new Error('DSH_BUDGET_NOT_ADMITTED')
-    }
-    active.calls += 1
-    send({ kind: 'activity', generation: active.generation, type: 'model_start' })
-    let usage, finishReason, failed = false
-    try { for await (const chunk of next()) {
-      if (chunk.type === 'usage') usage = chunk.usage
-      if (chunk.type === 'finish') { finishReason = chunk.reason.kind; failed = ['error', 'aborted'].includes(finishReason) }
-      yield chunk
-    } }
-    catch (error) { failed = true; throw error } finally {
-      if (config.metered && active && !active.cancelled) await bridge('__model_receipt', { id: billingId,
-        durationMs: performance.now() - started, usage: usage ?? null, failed,
-        ...(finishReason ? { finishReason } : {}), model: config.route.model, maxTokens: config.route.maxTokens,
-        ...(config.route.provider === 'deepseek' ? { thinking: 'disabled' } : {}) }, {})
-      send({ kind: 'activity', generation: active?.generation, type: 'model_end', durationMs: performance.now() - started })
+    if (retryDispatch) { yield* next(); return }
+    if (!active || active.cancelled) throw new Error('DSH_GENERATION_RETIRED')
+    let retries = 0
+    while (true) {
+      if (options.signal?.aborted || active.cancelled) return
+      const started = performance.now()
+      const billingId = `${active.generation}:model:${active.calls + 1}`
+      if (config.metered) {
+        const receipt = await bridge('__model_admit', { id: billingId }, { signal: options.signal })
+        if (!receipt?.ok) throw new Error('DSH_BUDGET_NOT_ADMITTED')
+      }
+      active.calls += 1
+      if (retries) active.providerRetries += 1
+      send({ kind: 'activity', generation: active.generation, type: 'model_start' })
+      let usage, finishReason, failed = false, terminal, emitted = false
+      const prelude = []
+      try {
+        const stream = retries === 0 ? next() : ctx.llm.stream(options)
+        if (retries) retryDispatch = true
+        try {
+          for await (const chunk of stream) {
+            if (chunk.type === 'usage') usage = chunk.usage
+            if (chunk.type === 'finish') {
+              finishReason = chunk.reason.kind
+              failed = ['error', 'aborted'].includes(finishReason)
+              terminal = chunk
+              if (failed) active.errorCode = providerFailureCode(chunk) ?? (finishReason === 'aborted' ? 'ABORTED' : 'PROVIDER_FAILURE')
+              else active.errorCode = finishReason === 'max-tokens' ? 'MODEL_OUTPUT_LIMIT' : undefined
+              if (mayRetryProvider({ chunk, emitted, signal: options.signal, retries }) && !active.cancelled) break
+            }
+            if (!emitted && chunk.type === 'usage') { prelude.push(chunk); continue }
+            for (const prior of prelude.splice(0)) yield prior
+            if (chunk.type !== 'finish') emitted = true
+            yield chunk
+          }
+        } finally { retryDispatch = false }
+      } catch (error) { failed = true; throw error } finally {
+        if (config.metered && active) await bridge('__model_receipt', { id: billingId,
+          durationMs: performance.now() - started, usage: usage ?? null, failed,
+          ...(finishReason ? { finishReason } : {}), model: config.route.model, maxTokens: config.route.maxTokens,
+          ...(failed && active.errorCode ? { failureCode: active.errorCode } : {}),
+          ...(config.route.provider === 'deepseek' ? { thinking: 'disabled' } : {}) }, {})
+        send({ kind: 'activity', generation: active?.generation, type: 'model_end', durationMs: performance.now() - started })
+      }
+      if (!terminal || !mayRetryProvider({ chunk: terminal, emitted, signal: options.signal, retries }) || active.cancelled) return
+      if (!await retryPause(retries, options.signal)) return
+      retries += 1
     }
   })
   const agentOptions = { provider: config.route.provider, model: config.route.model, maxTokens: config.route.maxTokens }
@@ -92,17 +121,18 @@ async function turn(data) {
   if (!handle) throw new Error('DSH_NOT_OPEN')
   if (active) throw new Error('DSH_TURN_BUSY')
   const input = turnSchema.parse(data)
-  active = { generation: input.generation, cancelled: false, calls: 0 }
+  active = { generation: input.generation, cancelled: false, calls: 0, providerRetries: 0 }
   const start = handle.agent.session.snapshotEvents().length
   try {
-    handle.agent.inject(createUserMessage({ content: [{ type: 'text', text: input.snapshot }], source: { kind: 'flightor-context' } }))
+    replaceWorkingContext(handle.agent, input.snapshot)
     handle.agent.followup(createUserMessage({ content: [{ type: 'text', text: input.message }], source: { kind: 'user' } }))
     await handle.agent.whenIdle()
     const events = handle.agent.session.snapshotEvents().slice(start)
     const end = events.findLast(event => event.type === 'turn/end')
     const message = events.findLast(event => event.type === 'assistant/message')
     const text = message ? expandAssistantStream(message.data.stream).flatMap(({ chunk }) => chunk.type === 'block-end' && chunk.block.type === 'text' ? [chunk.block.text] : []).join('\n') : ''
-    return { reply: text, reason: end?.data.reason.kind ?? 'failed', calls: active.calls, cancelled: active.cancelled }
+    return { reply: text, reason: end?.data.reason.kind ?? 'failed', calls: active.calls, providerRetries: active.providerRetries,
+      ...(active.errorCode ? { errorCode: active.errorCode } : {}), cancelled: active.cancelled }
   } finally { active = undefined }
 }
 process.on('message', async raw => {

@@ -22,18 +22,33 @@ afterEach(async () => {
 })
 
 describe('DSH session manager with actual official worker', () => {
-  it('counts only admitted model dispatches when a turn or budget limit stops the real loop', async () => {
-    const { manager } = await setup(Array.from({ length: 13 }, () => ({ tool: 'read_trip' })), { metered: true })
+  it('counts all admitted dispatches beyond twelve and still honors budget rejection', async () => {
+    const { manager } = await setup([...Array.from({ length: 13 }, () => ({ tool: 'read_trip' })), { text: 'Done' }], { metered: true })
     const execute = vi.fn(async (name: string) => name === '__model_admit' || name === '__model_receipt' ? { ok: true } : { city: 'Tokyo' })
     const tools = [{ name: 'read_trip', description: 'Read trip', rawSchema: { type: 'object', properties: {}, additionalProperties: false } }]
-    expect(await manager.run(input({ execute, tools }))).toMatchObject({ calls: 12, reason: 'error' })
-    expect(execute.mock.calls.filter(([name]) => name === '__model_admit')).toHaveLength(12)
-    expect(execute.mock.calls.filter(([name]) => name === '__model_receipt')).toHaveLength(12)
-    expect(execute.mock.calls.filter(([name]) => name === 'read_trip')).toHaveLength(12)
+    expect(await manager.run(input({ execute, tools }))).toMatchObject({ calls: 14, reason: 'completed' })
+    expect(execute.mock.calls.filter(([name]) => name === '__model_admit')).toHaveLength(14)
+    expect(execute.mock.calls.filter(([name]) => name === '__model_receipt')).toHaveLength(14)
+    expect(execute.mock.calls.filter(([name]) => name === 'read_trip')).toHaveLength(13)
     const denied = await setup([{ text: 'Must never dispatch' }], { metered: true })
     const rejectAdmission = vi.fn(async () => ({ ok: false }))
     expect(await denied.manager.run(input({ execute: rejectAdmission }))).toMatchObject({ calls: 0, reason: 'error', reply: '' })
     expect(rejectAdmission).toHaveBeenCalledTimes(1)
+  }, 30_000)
+
+  it('settles an admitted interrupted model after cancellation without admitting more work', async () => {
+    const { manager } = await setup([{ hang: true }], { metered: true })
+    const controller = new AbortController()
+    let started!: () => void
+    const modelStarted = new Promise<void>(resolve => { started = resolve })
+    const execute = vi.fn(async (name: string, args: unknown) => ({ ok: true, id: (args as { id: string }).id }))
+    const run = manager.run(input({ execute, signal: controller.signal,
+      onActivity: activity => { if (activity.type === 'model_start') started() } }))
+    await modelStarted
+    controller.abort()
+    expect(await run).toMatchObject({ cancelled: true })
+    expect(execute.mock.calls.map(([name]) => name)).toEqual(['__model_admit', '__model_receipt'])
+    expect(execute.mock.calls[1]![1]).toMatchObject({ id: 'generation-1:model:1', failed: true })
   }, 30_000)
 
   it('passes metered model/search admission and receipts through the actual worker without exposing internal tools', async () => {

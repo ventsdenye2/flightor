@@ -19,9 +19,11 @@ const usageSchema = z.object({ inputTokens: tokenCount, outputTokens: tokenCount
   cacheReadTokens: tokenCount.optional(), cacheWriteTokens: tokenCount.optional(), reasoningTokens: tokenCount.optional() }).strict()
 const receiptBase = { id: billingId, durationMs: z.number().finite().nonnegative().max(3600000), failed: z.boolean() }
 const modelReceipt = { finishReason: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/).optional(),
+  failureCode: z.string().regex(/^[A-Z][A-Z0-9_]{0,79}$/).optional(),
   model: z.string().min(1).max(200).optional(), maxTokens: z.number().int().min(256).max(16384).optional(),
   thinking: z.literal('disabled').optional() }
-const resultSchema = z.object({ reply: z.string().max(500000), reason: z.string().max(100), calls: z.number().int().min(0).max(13), cancelled: z.boolean() }).strict()
+const resultSchema = z.object({ reply: z.string().max(500000), reason: z.string().max(100), calls: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  providerRetries: z.number().int().nonnegative().optional(), errorCode: z.string().regex(/^[A-Z][A-Z0-9_]{0,79}$/).optional(), cancelled: z.boolean() }).strict()
 const activitySchema = z.union([
   z.object({ kind: z.literal('activity'), generation: id.optional(), type: z.enum(['model_start', 'model_end']), durationMs: z.number().nonnegative().optional() }).strict(),
   z.object({ kind: z.literal('activity'), generation: id.optional(), type: z.enum(['tool_start', 'tool_end']), toolName: toolSchema.shape.name, toolCallId: id }).strict()
@@ -71,6 +73,7 @@ interface Active {
   input: DshSessionRun
   controller: AbortController
   tools: Map<string, { execution: Promise<unknown>; fingerprint: string }>
+  admittedBillingIds: Set<string>
   retired: boolean
   cancel?: Promise<void>
 }
@@ -205,7 +208,7 @@ export class DshSessionManager {
     if (this.closed) { await this.dispose(worker); throw failure('DSH_MANAGER_CLOSED', 'DSH is shutting down') }
     if (worker.idleTimer) clearTimeout(worker.idleTimer)
     input.signal?.throwIfAborted()
-    const active: Active = { input, controller: new AbortController(), tools: new Map(), retired: false }
+    const active: Active = { input, controller: new AbortController(), tools: new Map(), admittedBillingIds: new Set(), retired: false }
     worker.active = active
     const current = worker
     const abort = () => { void this.cancel(current, active) }
@@ -294,13 +297,19 @@ export class DshSessionManager {
       return
     }
     const active = worker.active
-    if (!active || active.retired || message.generation !== active.input.generationId) return
+    if (!active || message.generation !== active.input.generationId) return
+    // Receipts may drain after cancellation, but never admit work or mutate domain
+    // state. They can settle only an already admitted ID from this generation.
+    const settlement = message.kind === 'tool' && this.config.metered === true
+      && ['__model_receipt', '__search_receipt'].includes(message.name)
+      && active.admittedBillingIds.has((message.args as { id?: string }).id ?? '')
+    if (active.retired && !settlement) return
     if (message.kind === 'activity') { try { active.input.onActivity?.(message) } catch { /* observation is best effort */ }; return }
     const tool = message
     const fingerprint = hash([tool.name, tool.args])
     const cached = active.tools.get(tool.id)
     const reply = (data: unknown) => {
-      if (!active.retired && worker.active === active && !worker.dead) this.send(worker, { id: tool.id, op: 'tool_result', data })
+      if ((!active.retired || settlement) && worker.active === active && !worker.dead) this.send(worker, { id: tool.id, op: 'tool_result', data })
     }
     if (cached) {
       if (cached.fingerprint !== fingerprint) { this.retire(worker, failure('DSH_IPC_ID_CONFLICT', 'DSH tool ID was reused with different arguments')); return }
@@ -308,11 +317,16 @@ export class DshSessionManager {
       return
     }
     const execution = Promise.resolve().then(async () => {
-      if (active.retired || worker.dead) return { error: 'DSH_GENERATION_RETIRED' }
+      if ((active.retired && !settlement) || worker.dead) return { error: 'DSH_GENERATION_RETIRED' }
       const internalWeb = this.config.web && (internalWebTools as readonly string[]).includes(tool.name)
       const internalMeter = this.config.metered && (internalMeterTools as readonly string[]).includes(tool.name)
       if (!internalWeb && !internalMeter && !active.input.tools.some(candidate => candidate.name === tool.name)) return { error: 'DSH_TOOL_NOT_ALLOWED' }
-      return structuredClone(await active.input.execute(tool.name, tool.args, tool.id, active.controller.signal))
+      const result = structuredClone(await active.input.execute(tool.name, tool.args, tool.id, active.controller.signal))
+      if (['__model_admit', '__search_admit'].includes(tool.name) && (result as { ok?: boolean })?.ok === true) {
+        const admittedId = (result as { id?: string }).id ?? (tool.args as { id?: string }).id
+        if (admittedId) active.admittedBillingIds.add(admittedId)
+      }
+      return result
     }).catch(() => ({ error: 'DSH_TOOL_EXECUTION_FAILED' }))
     active.tools.set(message.id, { execution, fingerprint })
     void execution.then(reply)
