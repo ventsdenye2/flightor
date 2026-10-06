@@ -59,10 +59,12 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind) {
     ? error.details as Record<string, unknown> : {}
   const strings = (value: unknown) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string').slice(0, 30) : []
   const code = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
-  const feedback: Record<string, unknown> = { code, kind, instruction: code === 'GOAL_INTENT_CONFLICT' || code === 'GOAL_IDEMPOTENCY_CONFLICT'
-    ? 'The Goal is already accepted with fixed constraints. Repeat exactly that intent or use its valid goalRef; do not weaken or replace its parameters.'
+  const feedback: Record<string, unknown> = { code, kind, instruction: code === 'GOAL_INTENT_REQUIRED'
+    ? 'The first durable operation of this prepared attempt requires a new semantic intent matching the explicit user objective.'
+    : code === 'GOAL_INTENT_CONFLICT' || code === 'GOAL_IDEMPOTENCY_CONFLICT'
+    ? 'The accepted Goal constraints are immutable. For its repair, omit intent/goalRef and preserve those constraints; do not weaken or replace the objective.'
     : kind === 'arguments'
-    ? 'Correct the stated commit fields and repeat the same accepted intent. Current-turn candidates and evidence remain available.'
+    ? 'Correct only the stated commit fields. If a Goal is already accepted, omit intent/goalRef and preserve its immutable constraints. Current-turn candidates and evidence remain available.'
     : kind === 'prerequisite' ? 'Correct the missing or stale prerequisite before resubmitting. Reuse current-turn candidates and evidence when their scope is unchanged.'
       : kind === 'content' ? 'Revise the rejected itinerary or public text once, preserving the accepted Goal and protected slots.'
         : 'The guide submission could not be processed. Do not infer acceptance.' }
@@ -85,7 +87,7 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind) {
       if (details.issues.some(value => value && typeof value === 'object' &&
         typeof (value as Record<string, unknown>).detail === 'string' &&
         (value as Record<string, unknown>).detail!.toString().split(', ').includes('excluded_precise_claim'))) {
-        feedback.correction = 'Remove monetary amounts, clock times and precise durations from public text; the UI shows the authoritative budget.'
+        feedback.correction = 'Remove unsupported prices, clock times and precise durations from public text. You may retain the exact current trip budget amount only as a total-trip target; do not claim that costs fit it.'
       }
     }
     if (typeof details.candidateKey === 'string') feedback.candidateKey = details.candidateKey.slice(0, 120)
@@ -129,7 +131,7 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind) {
     if (strings(details.issues).includes('guide_duplicate_evidence')) feedback.correction =
       'Use a distinct candidate/finding for each scheduled visit and supporting item. One current source may support several truly distinct places; do not rename the same visit. Keep accepted Goal constraints and protected slots unchanged.'
     else if (strings(details.presentationIssues).includes('excluded_precise_claim')) feedback.correction =
-      'Remove monetary amounts, clock times and precise durations from public text; the UI shows the authoritative budget.'
+      'Remove unsupported prices, clock times and precise durations from public text. You may retain the exact current trip budget amount only as a total-trip target; do not claim that costs fit it.'
     else if (details.code === 'activity_text_exact_cover') feedback.correction =
       'Provide exactly one text activity per requiredActivityKey. Put practical material in supportingCandidateKeys, not text.activities.'
   }

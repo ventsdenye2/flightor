@@ -6,6 +6,7 @@ export const postgresTestFiles = [
   'src/**/postgres.integration.test.ts',
   'src/**/*-postgres.integration.test.ts',
   'src/db/cloud-state.integration.test.ts',
+  'src/agent/dsh/d6-preparation.integration.test.ts',
 ]
 
 export default defineConfig({

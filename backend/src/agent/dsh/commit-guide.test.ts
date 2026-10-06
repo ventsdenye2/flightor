@@ -61,8 +61,8 @@ describe('DSH combined guide commit', () => {
       .resolves.toMatchObject({ status: 'accepted', acceptedGoal: { goalId }, completion: { status: 'satisfied' } })
     expect(accept).toHaveBeenCalledTimes(1)
     expect(await f.goals.listForTrip(f.trip.id)).toHaveLength(1)
-    expect(f.tool.description).toContain('EVERY complete submission')
-    expect(f.tool.description).not.toContain('later operations use the same accepted goal without repeating it')
+    expect(f.tool.description).toContain('repairs reuse the accepted immutable Goal automatically')
+    expect(f.tool.description).not.toContain('EVERY complete submission')
   })
 
   it('omits legacy draft tokens and accepts a full same-turn repair of duplicated findings', async () => {
@@ -94,7 +94,7 @@ describe('DSH combined guide commit', () => {
     f.input.text.reply = 'Your 4000元 itinerary starts at 12:30.'
     await expect(f.execute()).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
       issues: expect.arrayContaining([expect.objectContaining({ code: 'format', detail: 'excluded_precise_claim' })]),
-      repairHint: expect.stringContaining('including the user budget target')
+      repairHint: expect.stringContaining('exact authoritative whole-trip budget target')
     } })
     const blocked = (await f.artifacts.listForTrip(f.trip.id)).find(record => record.type === 'travel_guide')!
     expect(publicationFor(blocked)!.finalization!.variants.en).toMatchObject({ status: 'blocked', text: null })

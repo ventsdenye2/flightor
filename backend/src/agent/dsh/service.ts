@@ -21,8 +21,11 @@ import { budgetRouteReply } from './budget-route-reply.js'
 import { DSH_WEB_TOOLS, executeDshWeb, type DshWebDependencies } from './web.js'
 import { publicationFor } from '../../travel-guides/publication.js'
 import type { ArtifactRecord } from '../../artifacts/repository.js'
-import { finalPendingReply } from '../../travel-guides/finalization-schema.js'
 import { publicProseProblems } from '../../travel-guides/finalization.js'
+import { adaptDshCommit, dshCommitInputSchema, prepareDshSnapshot, preparedGuideSummary } from './preparation.js'
+import { recordTripLocations } from '../tools/resolved-locations.js'
+import { classifyDshFailure, publicFailureReply } from './public-errors.js'
+import { DshReferences } from './references.js'
 import type { FileDshBudget } from './budget.js'
 
 export const DSH_READ_TOOLS = ['get_trip_context', 'get_trip_artifacts', 'read_artifact', 'resolve_location', 'get_user_memory', 'get_active_goal'] as const
@@ -66,10 +69,36 @@ export class DshPlannerService implements PlannerServicePort {
       ownerId: deps.ownerId, ...(deps.goalRepository ? { goals: deps.goalRepository } : {}),
       ...(deps.goalRunRepository ? { runs: deps.goalRunRepository } : {}), signal })
     const prior = await deps.conversations.listMessages(input.conversationId, 30)
+    let preparation = prepareDshSnapshot({ trip: trip.context, records: planning.records,
+      conversationId: input.conversationId, selectedFlight, locale: input.locale ?? 'zh' })
+    const referenceScope = () => ({ ownerId: deps.ownerId, tripId: input.tripId, conversationId: input.conversationId,
+      generationId: input.generationId, tripContextVersion: preparation.trip.version })
+    let references = new DshReferences(referenceScope())
+    const modelReferences = (value: unknown): unknown => {
+      if (Array.isArray(value)) return value.map(modelReferences)
+      if (!value || typeof value !== 'object') return value
+      return Object.fromEntries(Object.entries(value).map(([key, item]) => [key,
+        key === 'candidateRef' && typeof item === 'string' ? references.registerCandidate(item) ?? item : modelReferences(item)]))
+    }
+    const domainReferences = (raw: unknown): unknown => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw
+      const input = structuredClone(raw) as Record<string, any>
+      const resolve = (ref: string) => {
+        const full = references.resolveCandidate(ref)
+        if (!full) throw new AppError('DSH_CANDIDATE_REFERENCE_UNAVAILABLE', 'Candidate reference is not available in this preparation', 409)
+        return full
+      }
+      for (const day of Array.isArray(input.days) ? input.days : []) for (const item of Array.isArray(day.items) ? day.items : []) {
+        if (typeof item.candidateRef === 'string') item.candidateRef = resolve(item.candidateRef)
+      }
+      if (Array.isArray(input.supportingRefs)) input.supportingRefs = input.supportingRefs.map((ref: unknown) => typeof ref === 'string' ? resolve(ref) : ref)
+      return input
+    }
     signal.throwIfAborted()
     const context: ToolExecutionContext = {
       ...deps, requestId: dshGoalRequestId({ ...input, ownerId: deps.ownerId }), tripId: input.tripId, conversationId: input.conversationId,
       generationId: input.generationId, requireGuideFinalization: true,
+      tripContextSnapshot: preparation.trip,
       resolvedLocations: new Map(), resolvedLocationKeys: new Set(), isGenerationCurrent: () => !signal.aborted,
       ...(selectedFlight ? { selectedFlight } : {}),
       assertFlightSelectionCurrent: async () => {
@@ -78,6 +107,7 @@ export class DshPlannerService implements PlannerServicePort {
           throw new AppError('FLIGHT_SELECTION_CHANGED', 'Selected flight changed', 409)
       },
     }
+    recordTripLocations(context, preparation.trip)
     const registry = createPlannerToolRegistry({ leanGoalsEnabled: true })
     // Evidence scope is refreshed after an explicit Trip update, before first web receipt.
     let evidenceVersion = trip.context.version
@@ -85,6 +115,8 @@ export class DshPlannerService implements PlannerServicePort {
       generationId: input.generationId, tripContextVersion: evidenceVersion }, deps.evidenceRepository ? { repository: deps.evidenceRepository } : {})
     let commit = createCommitGuideTool({ evidenceStore: evidence, locale: input.locale ?? 'zh', memoryEnabled: memory.enabled })
     const commitRecovery = new CommitRecovery()
+    let lastCommitStage: import('./public-errors.js').PublicFailureStage | undefined
+    let lastCommitCode: string | undefined
     let committedReply: string | undefined
     let committedRouteReply: string | undefined
     let delivery: GoalDelivery = noGoalDelivery()
@@ -105,24 +137,31 @@ export class DshPlannerService implements PlannerServicePort {
     }
     const tools: Array<{ name: string; description: string; rawSchema: Record<string, unknown> }> = DSH_DOMAIN_TOOLS.flatMap(name => {
       const tool = registry.get(name)
-      return tool ? [{ name, description: tool.description, rawSchema: z.toJSONSchema(tool.inputSchema) as Record<string, unknown> }] : []
+      if (!tool) return []
+      const schema = z.toJSONSchema(tool.inputSchema) as Record<string, unknown>
+      if (name === 'update_trip_context' && schema.properties) delete (schema.properties as Record<string, unknown>).expectedVersion
+      const intentSchema = (schema.properties as Record<string, Record<string, unknown>> | undefined)?.intent
+      if (intentSchema) intentSchema.description = 'Accept the explicit user objective on the first durable operation of this prepared attempt. Repairs preserve its immutable constraints. An explicit satisfied Trip setter with an advanced version ends that binding; the next durable objective needs a new semantic intent.'
+      const description = `${tool.description} DSH prepared-attempt boundary: after an explicit trip_context_update Goal is satisfied and the returned Trip version advances, its binding ends. The next durable objective requires a new semantic intent. Failed or pending setters and guide repairs retain their accepted immutable Goal.`
+      return [{ name, description, rawSchema: schema }]
     })
-    tools.push({ name: commit.name, description: commit.description, rawSchema: {
-      ...z.toJSONSchema(commit.inputSchema), anyOf: [{ required: ['intent'] }, { required: ['goalRef'] }]
-    } })
+    const compactSchema = z.toJSONSchema(dshCommitInputSchema) as Record<string, unknown>
+    const domainSchema = z.toJSONSchema(commit.inputSchema) as { properties: Record<string, unknown> }
+    Object.assign(compactSchema.properties as Record<string, unknown>, { intent: domainSchema.properties.intent })
+    tools.push({ name: commit.name, description: 'Commit a sourced itinerary and current-locale text together. The first submission requires semantic intent; same-turn repairs omit it and preserve the accepted Goal. Choose a distinct candidate for each visit; place its name/introduction/recommendationReason inside that item.text. For a local edit provide replaceSlots and only replacement items; the server binds the prepared accepted guide and content hash. Current evidence and compatible persisted candidates retain their original scope. No budget guarantees, invented sources, precise prices, hours or transport durations. Publication and completion remain server validated.', rawSchema: compactSchema })
     if (deps.web) tools.push(...DSH_WEB_TOOLS)
     let userSaved = false
     let result
     try { result = await deps.sessions.run({
       ownerId: deps.ownerId, tripId: input.tripId, conversationId: input.conversationId,
       memoryEpoch: createHash('sha256').update(JSON.stringify([memory.enabled, memory.version])).digest('hex'),
-      generationId: input.generationId, message: input.message, persona: `${PERSONA}\nWhen the user explicitly asks to create or edit a guide, use update_trip_context for changed conditions BEFORE accepting the fixed travel_guide intent. For a guide request, use web_search/web_fetch for original source material, then commit_travel_guide once with source evidenceRefs, itinerary and current-locale presentation text together. Requested country/place recommendation research may use web_search/web_fetch but remains dialogue; do not commit a guide unless the user explicitly asks for one. Prefer targeted searches for official destination tourism or attraction pages and fetch promising sources early. A blocked website is not a reason to keep adding destinations or repeat broad itinerary searches; use another retrieved source. One readable source may support several candidates when its actual text describes them. Once readable material covers each requested day and interest, submit a compact itinerary and retain room for correction. No research synthesis or finalizer will write text for you. Tools return errors as {ok:false,error}; correct only the indicated fields. Argument and prerequisite corrections have separate bounded allowances; at most one semantic content repair follows an evaluable submission. Reuse candidateRefs only from the CURRENT snapshot or candidates explicitly returned by read_artifact in THIS turn. Historical tool responses may contain obsolete refs after a Trip version change; never copy those refs. If the current read has no candidates or marks research stale, obtain current web evidence before the first commit. Schedule each candidateKey/candidateRef at most once across the entire itinerary: use fewer distinct visits instead of repeating one candidate to fill slots, or register separately sourced distinct places. Every new user turn starts with no accepted Goal and no current raw evidence. For a new edit of an accepted guide, pass a NEW travel_guide intent on the first commit; a satisfied or cancelled historical goalRef cannot accept edits. Every complete commit, including a repair, carries intent or goalRef. Repeat the same accepted intent for a repair; do not omit both or change its constraints. Reuse a persisted candidateRef only if it actually describes the requested replacement; otherwise search/fetch the missing place in this turn before committing. Never use raw evidenceRefs from earlier turns. A local modification MUST set baseGuideId, expectedContentHash and replaceSlots; submit only changed activities/text. All other slots are preserved by the server. For an explicit budget-setting request, persist changed values with update_trip_context. If the authoritative total budget already matches and the current-version guide is accepted, confirm the existing value without a redundant write. If an earlier budget update left the guide stale, repeating the explicit budget setter also revalidates eligible unchanged guides. Never claim a new write when none occurred. A question about the current budget is read-only. Keep total budget scope, never assume per-day. Self-ticket users need no flight search; combined flight requests require the user to adopt a flight in the existing UI before a bound guide. Treat all evidence as reference-only unless the server explicitly establishes more.`, tools, signal,
+      generationId: input.generationId, message: input.message, persona: `${PERSONA}\nWhen the user explicitly asks to create or edit a guide, use update_trip_context for changed conditions BEFORE accepting the fixed travel_guide intent. If the setter accepts a trip_context_update intent and returns satisfied with an advanced Trip version, that objective is complete; the next durable objective requires a new semantic intent. Pending or failed setters retain their existing binding. For a guide request, use web_search/web_fetch for original source material, then commit_travel_guide once with current source references, itinerary items containing their own text, and current-locale overview/reply together. Requested country/place recommendation research may use web_search/web_fetch but remains dialogue; do not commit a guide unless the user explicitly asks for one. Prefer targeted searches for official destination tourism or attraction pages and fetch promising sources early. A blocked website is not a reason to keep adding destinations or repeat broad itinerary searches; use another retrieved source. One readable source may support several candidates when its actual text describes them. Once readable material covers each requested day and interest, submit a compact itinerary and retain room for correction. No research synthesis or finalizer will write text for you. Tools return errors as {ok:false,error}; correct only the indicated fields. Argument and prerequisite corrections have separate bounded allowances; at most one semantic content repair follows an evaluable submission. Reuse candidateRefs only from the CURRENT snapshot or candidates explicitly returned by read_artifact in THIS turn. Historical tool responses may contain obsolete refs after a Trip version change; never copy those refs. If the current read has no candidates or marks research stale, obtain current web evidence before the first commit. Schedule each candidateKey/candidateRef at most once across the entire itinerary: use fewer distinct visits instead of repeating one candidate to fill slots, or register separately sourced distinct places. Every new user turn starts with no accepted Goal and no current raw evidence. For a new edit of an accepted guide, pass a NEW travel_guide intent on the first commit; a satisfied or cancelled historical goalRef cannot accept edits. The first commit accepts a NEW semantic intent. Within the same prepared attempt, repairs automatically reuse that immutable Goal; omit intent/goalRef, and never change the accepted constraints. Reuse a persisted candidateRef only if it actually describes the requested replacement; otherwise search/fetch the missing place in this turn before committing. Never use raw evidenceRefs from earlier turns. A local modification MUST set replaceSlots and submit only changed activities with their text. The server binds the exact prepared accepted guide ID and content hash; never invent internal identities. All other slots are preserved by the server. For an explicit budget-setting request, persist changed values with update_trip_context. If the authoritative total budget already matches and the current-version guide is accepted, confirm the existing value without a redundant write. If an earlier budget update left the guide stale, repeating the explicit budget setter also revalidates eligible unchanged guides. Never claim a new write when none occurred. A question about the current budget is read-only. Keep total budget scope, never assume per-day. Self-ticket users need no flight search; combined flight requests require the user to adopt a flight in the existing UI before a bound guide. Treat all evidence as reference-only unless the server explicitly establishes more.`, tools, signal,
       snapshot: JSON.stringify({ locale: input.locale ?? 'zh', date: new Date().toISOString().slice(0, 10),
-        trip: trip.context, selectedFlight, planning: planning.content,
+        trip: preparation.trip, selectedFlight, planning: JSON.stringify(modelReferences(JSON.parse(planning.content))), preparedGuide: preparedGuideSummary(preparation, planning.records),
         memory: memory.enabled ? memory.markdown : null,
         publicHistory: compactPublicHistory(prior),
         turnState: { generationId: input.generationId, acceptedGoal: null, currentEvidenceRefs: [],
-          instruction: 'This turn starts with acceptedGoal=null. Old raw evidenceRefs are invalid. Use only candidates from the current snapshot/read_artifact, or evidenceRefs from web_search/web_fetch in this turn. Every commit includes a NEW intent or a valid goalRef; a repair repeats the same accepted constraints.' } }),
+          instruction: 'This turn starts with acceptedGoal=null. Old raw evidenceRefs are invalid. Use only candidates from the current snapshot/read_artifact, or evidenceRefs from web_search/web_fetch in this turn. The first commit includes a NEW semantic intent; repairs omit intent and reuse the same accepted immutable constraints. An explicit satisfied Trip setter that advances the version ends its binding; the next durable objective requires a new semantic intent and freshly prepared evidence.' } }),
       onActivity: activity => {
         if (activity.type === 'tool_start' || activity.type === 'tool_end')
           emitActivity(input.onActivity, { type: activity.type, toolName: activity.toolName, toolCallId: activity.toolCallId })
@@ -166,15 +205,34 @@ export class DshPlannerService implements PlannerServicePort {
         emitActivity(input.onActivity, { type: 'tool_start', toolName: name, toolCallId: callId })
         try {
           if (name === 'commit_travel_guide') commitRecovery.admit()
-          const value = await tool.execute(tool.inputSchema.parse(args), context, executionSignal)
+          const adapted = name === 'commit_travel_guide' ? adaptDshCommit(domainReferences(args), preparation) : args
+          if (name === 'commit_travel_guide') {
+            if (preparation.baseGuide) context.guideBaseCondition = preparation.baseGuide
+            else delete context.guideBaseCondition
+          }
+          const value = await tool.execute(tool.inputSchema.parse(adapted), context, executionSignal)
           executionSignal.throwIfAborted()
           const output = tool.outputSchema.parse(value) as Record<string, unknown>
+          const completedGoal = output.completion && context.activeGoalId && context.activeGoalKind
+            ? { goalId: context.activeGoalId, kind: context.activeGoalKind, completion: output.completion }
+            : undefined
           if (name === 'commit_travel_guide' && output.status === 'accepted') commitRecovery.accepted()
           if (name === 'update_trip_context') {
-            evidenceVersion = z.object({ version: z.number() }).parse(output.tripContext).version
-            evidence = new DshEvidenceStore({ ownerId: deps.ownerId, tripId: input.tripId, conversationId: input.conversationId,
-              generationId: input.generationId, tripContextVersion: evidenceVersion }, deps.evidenceRepository ? { repository: deps.evidenceRepository } : {})
-            commit = createCommitGuideTool({ evidenceStore: evidence, locale: input.locale ?? 'zh', memoryEnabled: memory.enabled })
+            const updatedTrip = z.object({ tripContext: z.any() }).parse(output).tripContext
+            const updatedVersion = z.object({ version: z.number() }).parse(updatedTrip).version
+            if (updatedVersion < preparation.trip.version) throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Trip update returned an older context', 409)
+            if (updatedVersion > preparation.trip.version) {
+              preparation = prepareDshSnapshot({ trip: updatedTrip, records: [], conversationId: input.conversationId,
+                selectedFlight, locale: input.locale ?? 'zh' })
+              context.tripContextSnapshot = preparation.trip
+              references = new DshReferences(referenceScope())
+              delete context.guideBaseCondition
+              recordTripLocations(context, preparation.trip)
+              evidenceVersion = updatedVersion
+              evidence = new DshEvidenceStore({ ownerId: deps.ownerId, tripId: input.tripId, conversationId: input.conversationId,
+                generationId: input.generationId, tripContextVersion: evidenceVersion }, deps.evidenceRepository ? { repository: deps.evidenceRepository } : {})
+              commit = createCommitGuideTool({ evidenceStore: evidence, locale: input.locale ?? 'zh', memoryEnabled: memory.enabled })
+            }
             const patch = z.object({ patch: z.record(z.string(), z.unknown()) }).parse(args).patch
             if (patch.budget && deps.artifacts.listForTrip) {
               const candidates = await deps.artifacts.listForTrip(input.tripId, 100)
@@ -185,6 +243,19 @@ export class DshPlannerService implements PlannerServicePort {
                   memoryEnabled: memory.enabled, signal: executionSignal })
                 if (carried) output.budgetGuide = carried
               }
+            }
+            if (output.changed === true && (output.completion as { status?: string } | undefined)?.status === 'satisfied'
+              && context.acceptedGoalIntent?.kind === 'trip_context_update'
+              && preparation.trip.version > context.acceptedGoalIntent.contextVersion) {
+              // The explicit setter has durably completed. Start a separate
+              // prepared attempt; guide repairs never use this transition.
+              context.requestId = `${dshGoalRequestId({ ...input, ownerId: deps.ownerId })}:prepared-v${preparation.trip.version}`
+              delete context.activeGoalId
+              delete context.activeGoalRunId
+              delete context.activeGoalKind
+              delete context.activeGoalContextVersion
+              delete context.acceptedGoalIntent
+              delete context.guideDraft
             }
           }
           const artifactId = (output.artifact as { id?: string } | undefined)?.id
@@ -199,9 +270,9 @@ export class DshPlannerService implements PlannerServicePort {
             if (record && name === 'search_budget_routes') committedRouteReply = budgetRouteReply(record, input.locale ?? 'zh')
             if (record) publish(record)
           }
-          if (output.completion && context.activeGoalId && context.activeGoalKind) delivery = summarizeGoalDelivery([
-            { ...(output.completion as GoalDelivery['goals'][number]), goalId: context.activeGoalId, kind: context.activeGoalKind }])
-          return output
+          if (completedGoal) delivery = summarizeGoalDelivery([
+            { ...(completedGoal.completion as GoalDelivery['goals'][number]), goalId: completedGoal.goalId, kind: completedGoal.kind }])
+          return modelReferences(output)
         } catch (error) {
           executionSignal.throwIfAborted()
           if (isAppError(error) && ['TRIP_CONTEXT_VERSION_CONFLICT', 'FLIGHT_SELECTION_CHANGED'].includes(error.code)) throw error
@@ -209,7 +280,10 @@ export class DshPlannerService implements PlannerServicePort {
           // Arbitrary provider/runtime messages remain withheld, and no tool error is public prose.
           if (name === 'commit_travel_guide') {
             const kind = commitRecovery.failed(error)
-            return { ok: false, error: { ...safeCommitFeedback(error, kind), recovery: commitRecovery.snapshot() } }
+            lastCommitCode = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
+            lastCommitStage = classifyDshFailure(lastCommitCode, isAppError(error) ? error.details : null)
+              ?? (kind === 'prerequisite' ? 'evidence' : kind === 'content' ? 'publication' : 'commit')
+            return { ok: false, error: modelReferences({ ...safeCommitFeedback(error, kind), recovery: commitRecovery.snapshot() }) }
           }
           return { ok: false, error: { code: isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE' } }
         } finally { emitActivity(input.onActivity, { type: 'tool_end', toolName: name, toolCallId: callId }) }
@@ -242,15 +316,10 @@ export class DshPlannerService implements PlannerServicePort {
       delivery = summarizeGoalDelivery([{ goalId: context.activeGoalId, kind: completed.goal.kind, ...completed.verification }])
     }
     if (commitRecovery.calls) {
-      const hasDraft = (await Promise.all([...referenced].map(id => deps.artifacts.get(id)))).some(record => record?.type === 'travel_guide')
-      reply = committedReply && delivery.status === 'satisfied' ? committedReply : hasDraft ? finalPendingReply(input.locale ?? 'zh')
-        : commitRecovery.lastFailure === 'arguments'
-          ? input.locale === 'en' ? 'The guide submission had missing or invalid fields. The guide was not saved; please retry.' : '攻略提交缺少字段或参数无效，尚未保存，请重试。'
-          : commitRecovery.lastFailure === 'prerequisite'
-            ? input.locale === 'en' ? 'The guide could not use a required current location or source. The guide was not saved; please retry with current details.' : '攻略缺少当前可用的地点或来源，尚未保存，请补充当前信息后重试。'
-            : commitRecovery.lastFailure === 'content'
-              ? input.locale === 'en' ? 'The guide did not pass itinerary or publication checks. It was not saved; please revise the guide.' : '攻略未通过行程或发布校验，尚未保存，请调整行程内容。'
-              : input.locale === 'en' ? 'The guide could not be published in this turn. Please retry.' : '本轮未能发布攻略，请重试。'
+      const terminalCode = result.reason !== 'completed' ? result.errorCode : lastCommitCode
+      reply = committedReply && delivery.status === 'satisfied' ? committedReply : publicFailureReply(
+        (result.reason !== 'completed' ? classifyDshFailure(result.errorCode ?? 'model_failure') : undefined) ?? lastCommitStage ?? 'publication',
+        input.locale ?? 'zh', terminalCode)
       if (!committedReply && context.activeGoalId) {
         delivery = summarizeGoalDelivery([{ goalId: context.activeGoalId, kind: 'travel_guide', status: 'partial', artifactIds: [],
           missing: ['accepted_publication'], warnings: [] }])
@@ -273,11 +342,7 @@ export class DshPlannerService implements PlannerServicePort {
     if (!commitRecovery.calls && committedRouteReply && delivery.status === 'satisfied') {
       reply = committedRouteReply
     } else if (!commitRecovery.calls && result.reason !== 'completed') {
-      reply = result.errorCode === 'MODEL_OUTPUT_LIMIT'
-        ? input.locale === 'en' ? 'The response was too long to finish. Please retry the planning request.' : '本轮回复过长，未能完成规划，请重试。'
-        : result.errorCode === 'AUTH' || result.errorCode === 'INVALID_REQUEST' || result.errorCode === 'BUDGET'
-          ? input.locale === 'en' ? 'The planning service is unavailable. Please try again later.' : '规划服务暂时不可用，请稍后再试。'
-          : input.locale === 'en' ? 'The planning request could not finish this time. Please retry.' : '本轮规划未能完成，请重试。'
+      reply = publicFailureReply(classifyDshFailure(result.errorCode ?? 'model_failure') ?? 'provider', input.locale ?? 'zh')
     } else if (!commitRecovery.calls) {
       const problems = publicProseProblems([result.reply], input.locale ?? 'zh', { shortReply: true, budget: current.budget ?? null })
       if (problems.length) {

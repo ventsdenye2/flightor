@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { GuideFinalizer, sourceRef, validateIntegratedFinalText } from './finalization.js'
+import { GuideFinalizer, publicProseProblems, sourceRef, validateIntegratedFinalText } from './finalization.js'
 import { finalTextSchema, type FinalText } from './finalization-schema.js'
 import { travelGuideArtifactPayloadSchema } from './artifact.js'
 import { admittedResearch, buildGuidePublication, publicationFor, projectGuideRecord } from './publication.js'
@@ -34,7 +34,7 @@ describe('integrated main Agent publication', () => {
     for (const record of sample.researchArtifacts as ArtifactRecord[]) await artifacts.create({ ...record })
     const record = await artifacts.create({ ...f.record, goalId: undefined, runId: undefined, sourceArtifactIds: [] })
     const input = { ownerId: 'owner', record, artifacts, locale, text: f.text, memoryEnabled: true, assertCurrent: vi.fn(async () => {}) }
-    return { ...f, artifacts, record, input }
+    return { ...f, finalizationInput: f.input, artifacts, record, input }
   }
   it.each(['zh', 'en'] as const)('publishes %s with zero additional model calls and preserves the domain payload', async locale => {
     const f = await application(locale)
@@ -93,6 +93,63 @@ describe('integrated main Agent publication', () => {
     const other = fixture()
     expect(validateIntegratedFinalText({ ...other.input, requirements: 'x'.repeat(180001) }, other.text).issues[0]!.code).toBe('context_budget')
     expect(validateIntegratedFinalText({ ...other.input, omitted: ['material missing'] }, other.text).status).toBe('blocked')
+  })
+  it.each([
+    ['zh', 'reply', '全程预算目标是1500元，实际费用仍待核实。'],
+    ['en', 'reply', 'The whole-trip budget target is CNY 1500; actual costs remain unknown.'],
+    ['zh', 'overview', '这份行程按全程1500元预算目标安排，实际花费仍待核实。'],
+    ['en', 'overview', 'This itinerary uses the current whole-trip budget of CNY 1500 as a target; affordability remains unverified.'],
+    ['en', 'reply', 'The whole-trip budget target is JPY 1500; actual costs remain unknown.']
+  ] as const)('allows an exact authoritative trip budget target in %s %s', async (locale, field, content) => {
+    const f = await application(locale)
+    if (content.includes('JPY')) f.guide.budget = { ...f.guide.budget!, currency: 'JPY' }
+    f.text[field] = content
+    const checked = validateIntegratedFinalText({ ...f.finalizationInput, guide: f.guide }, f.text)
+    expect(checked.status).toBe('accepted')
+    expect(checked.issues).toEqual([])
+  })
+  it.each([
+    ['mismatched_amount', { amount: 1300, currency: 'CNY', scope: 'trip' }, '全程预算目标是1500元，实际费用仍待核实。'],
+    ['wrong_scope', { amount: 1500, currency: 'CNY', scope: 'airfare' }, '全程预算目标是1500元，实际费用仍待核实。'],
+    ['wrong_currency', { amount: 1500, currency: 'JPY', scope: 'trip' }, '全程预算目标是1500元，实际费用仍待核实。'],
+    ['cost_claim', { amount: 1500, currency: 'CNY', scope: 'trip' }, '全程预算目标是1500元，门票费用也计入其中。']
+  ] as const)('does not allow %s as a budget target exception', async (_case, budget, content) => {
+    const f = await application()
+    f.guide.budget = { ...f.guide.budget!, ...budget }
+    f.text.reply = content
+    const checked = validateIntegratedFinalText({ ...f.finalizationInput, guide: f.guide }, f.text)
+    expect(checked.status).toBe('blocked')
+    expect(checked.issues).toContainEqual(expect.objectContaining({ code: 'format', detail: expect.stringContaining('excluded_precise_claim') }))
+  })
+  it.each([
+    ['zh', '目前无法确认费用是否在预算内。'],
+    ['zh', '这项安排的费用是否符合预算，仍待核实。'],
+    ['en', 'I cannot confirm whether the trip will stay within your budget.'],
+    ['en', 'Whether the plan fits your budget remains unknown.']
+  ] as const)('allows cautious budget uncertainty in %s prose', (locale, content) => {
+    expect(publicProseProblems([content], locale, { languageBodies: [content] })).not.toContain('budget_guarantee')
+  })
+  it('allows a cautious short reply that says budget fit cannot be confirmed', () => {
+    const content = 'I cannot confirm it is within the budget.'
+    expect(publicProseProblems([content], 'en', { languageBodies: [content], shortReply: true })).not.toContain('budget_guarantee')
+  })
+  it.each(['USD', 'GBP'])('rejects a %s amount in final prose when the authoritative budget is CNY', currency => {
+    const content = `全程预算目标为1200 ${currency}`
+    expect(publicProseProblems([content], 'zh', {
+      languageBodies: [content],
+      budget: { amount: 1200, currency: 'CNY', scope: 'trip' },
+      budgetTarget: true
+    })).toContain('excluded_precise_claim')
+  })
+  it.each([
+    ['zh', '费用会在预算内。'],
+    ['zh', '这项安排符合你的预算目标。'],
+    ['en', 'The trip will stay within your budget.'],
+    ['en', 'This itinerary fits your budget target.'],
+    ['en', 'I cannot confirm the budget is enough; actual costs are within your budget.'],
+    ['zh', '不能确认预算足够；实际费用在预算内。']
+  ] as const)('still blocks affirmative budget guarantees in %s prose', (locale, content) => {
+    expect(publicProseProblems([content], locale, { languageBodies: [content] })).toContain('budget_guarantee')
   })
   it.each(['already_cancelled', 'cancel_before_save', 'trip_changed', 'flight_changed'] as const)('does not save after %s', async failure => {
     const f = await application(), controller = new AbortController()

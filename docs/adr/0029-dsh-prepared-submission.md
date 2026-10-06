@@ -1,0 +1,33 @@
+# ADR 0029：DSH 准备快照与紧凑提交
+
+2026-10-06；Accepted for D6 implementation，验证见 [冻结验收](../design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)，尚非全量真实验收通过。
+
+## 决策
+
+保留官方单主 AgentLoop、公开 API、原 Goal/Run、Artifact、candidate/evidence 和 publication。DSH 首次模型调用前绑定已鉴权 Trip 快照、selected flight revision、同会话当前版本 accepted guide 的确切 id/content hash。复用 planning-context 已读取的 records，不为绑定额外读取最新数据库值。
+
+模型可见 commit 输入中每个 days.items 包含自己的 text，无需复制 activityKey 两次；服务端统一生成关联键，重复候选仍按原规则拒绝。模型仅给 replaceSlots 与替换内容，服务端从准备快照补齐 baseGuideId/hash。首个业务提交仍需真实语义 intent；同轮修复省略 intent/goalRef，服务端复用不可变 accepted Goal，显式变更仍拒绝。模型纠错反馈同样区分首次缺intent与已接受Goal的修复：首次要求真实新意图，后续省略重复intent/goalRef并保留不可变约束；不再要求重复内部协议。legacy 工具合同和公开前端 API 不变。
+
+所有领域工作区和首次 Goal 接受使用该准备 Trip 版本；外部变化明确 context conflict，不在 commit 时填最新值。显式 update_trip_context 以准备版本执行现有 CAS，只有确认版本推进后才受控更新快照，丢弃旧 raw evidence/candidate aliases/编辑基底；空patch等无版本变化的更新保留原准备、引用映射及基底，不能重置相同scope的序号使旧alias改指另一记录；模型得到新版本条件，须重新准备，不能把旧证据重贴版本。
+
+同轮显式 setter 携带语义 `trip_context_update` intent、确实推进版本且已有持久 `satisfied` 完成回执时，保存该 setter 的交付结果，再结束其活动绑定并开始独立的准备后尝试。新尝试的请求身份由原可信 owner/Trip/conversation/generation identity 加当前已确认准备版本派生；generation、会话、谱系和费用计量连续保留，原Goal不可复活或修改。后续攻略仍需新的真实 `travel_guide` intent；DSH工具说明、persona与snapshot同时说明这一准备尝试边界，legacy的同一Goal协议保持不变。同轮攻略内容修复继续复用原不可变Goal，不执行这一setter边界；失败、pending或外部版本变化不获自动推进。
+
+短 source 引用映射本轮原始 UUID 与内容 hash，不改变持久证据格式或 scope 检查。短 C 引用映射已校验持久候选，恢复完整 locator 后仍经过原 owner/Trip/version/过期验证。唯一已选择的 Trip city 可补省略 cityId/locationId，机场或多城市不猜；它不执行 POI、Provider 或目的地变更。
+
+局部编辑的 publication-only 最终合并使用现有短事务，Trip 行独占锁串行化 Trip、航班选择及并发发布；同 owner/Trip/conversation/version 的最新 accepted 基底必须仍为准备 id/hash/locale，否则拒绝发布。新隐藏草稿可留审计，不能覆盖/显示成正式成果；accepted 语言仍不可覆写。网络与模型在事务外，无新增表或迁移。
+
+事务中的原始行以内部 conversation_id 定位；比较领域基底前必须在同一 owner-scoped 锁查询取得公开 conversationId，与普通 repository 投影保持一致。不能混用两类ID产生伪冲突，也不能为规避冲突删除会话范围校验。
+
+## 兼容与回滚
+
+一个 DSH-only 输入适配边界兼容内部 fixture/domain 的原 days+text.activities 输入；模型只看到紧凑合同。共享 context 可选字段、saveFinalVariant 可选基底条件由 DSH 显式提供，legacy 未提供时保持既有行为。回滚本地 D6 提交或关闭 DSH opt-in；已有 UUID证据、publication v1、Goal 与来源记录不需数据改写。
+
+## 表达与错误
+
+精确且匹配结构化 Trip 的全程预算目标可确认，不能据此承诺费用足够。结构化航班字段仍在对应 UI 展示，自由散文不获万能精确事实豁免。固定安全错误按 provider/output_limit/location/evidence/context_conflict/commit/publication/UI_restore 区分；不增加公开 response 字段、不泄露原错误正文。细则见 [公开合同](../design/budget-travel-agent/DSH_D6_PUBLIC_ERRORS.md) 和 [引用/地点](../design/budget-travel-agent/DSH_D6_EVIDENCE_AND_LOCATIONS.md)。
+
+## 验证要求
+
+版本冲突、Goal省略/首次意图、跨代短引用、重复候选、slot保护、真实PostgreSQL原子条件与重启、D5恢复/计量、真实UI均按冻结v1执行。离线通过不认证真实页面、Provider或微信；完整分母和失败保留于验收报告。
+
+D6 最新基底选择先按 createdAt/public ID 选择同 Trip/conversation/context version 的最新任一语言 accepted 攻略，再检查当前语言的 accepted text 和已选航班 revision。最新攻略缺当前语言或航班不符时不退回旧攻略；局部编辑准备为空，需先完成当前基底的合法语言/上下文准备。发布 CAS 仍检查最新任一语言 accepted 基底，防止跨语言并发的新攻略被旧编辑覆盖。此调整不放宽发布校验。

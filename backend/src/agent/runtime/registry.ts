@@ -25,6 +25,9 @@ export type ToolCostClass = 'free' | 'cheap' | 'paid' | 'expensive'
 export type ToolSideEffect = 'none' | 'state'
 
 export interface ToolExecutionContext {
+  /** DSH model's immutable preparation snapshot; legacy callers leave this unset. */
+  tripContextSnapshot?: import('../../trips/types.js').TripContext
+  guideBaseCondition?: import('../../artifacts/repository.js').GuideBaseCondition
   requireGuideFinalization?: boolean
   /** Authenticated owner for durable Goal records. */
   ownerId?: string

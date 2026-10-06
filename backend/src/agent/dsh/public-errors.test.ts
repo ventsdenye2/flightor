@@ -1,0 +1,42 @@
+import { describe, expect, it } from 'vitest'
+import { classifyDshFailure, publicFailureReply } from './public-errors.js'
+
+describe('public DSH failure classification', () => {
+  it.each([
+    ['PROVIDER_TIMEOUT', null, 'provider'],
+    ['MODEL_OUTPUT_LIMIT', null, 'output_limit'],
+    ['DSH_GUIDE_NEEDS_REVISION', { code: 'candidate_location_unresolved' }, 'location'],
+    ['DSH_GUIDE_NEEDS_REVISION', { issues: [{ code: 'missing_material' }] }, 'evidence'],
+    ['DSH_GUIDE_NEEDS_REVISION', { issues: [{ code: 'conflict' }] }, 'publication'],
+    ['TRIP_CONTEXT_VERSION_CONFLICT', null, 'context_conflict'],
+    ['PUBLICATION_CONTENT_CHANGED', null, 'context_conflict'],
+    ['DSH_GUIDE_BASE_UNAVAILABLE', null, 'context_conflict'],
+    ['DSH_CANDIDATE_REFERENCE_UNAVAILABLE', null, 'evidence'],
+    ['RATE_LIMIT', null, 'provider'],
+    ['DSH_COMMIT_CALL_LIMIT', null, 'commit'],
+    ['CONVERSATION_TURN_NOT_FOUND', null, 'ui_restore']
+  ] as const)('classifies %s with details %j', (code, details, expected) => {
+    expect(classifyDshFailure(code, details)).toBe(expected)
+  })
+
+  it('returns bounded localized public copy without accepting a provider body', () => {
+    expect(publicFailureReply('provider', 'en')).toContain('Check the saved results')
+    expect(publicFailureReply('publication', 'zh')).toContain('草稿没有作为正式结果显示')
+    expect(publicFailureReply('context_conflict', 'en')).toContain('did not replace the current content')
+    expect(publicFailureReply('provider', 'en')).not.toMatch(/stack|api.?key|provider body/i)
+  })
+
+  it('explains an unavailable local-edit base without claiming the trip changed', () => {
+    const zh = publicFailureReply('context_conflict', 'zh', 'DSH_GUIDE_BASE_UNAVAILABLE')
+    const en = publicFailureReply('context_conflict', 'en', 'DSH_GUIDE_BASE_UNAVAILABLE')
+    expect(zh).toContain('当前没有可用于局部修改的已发布攻略')
+    expect(zh).toContain('完成当前显示语言的准备')
+    expect(en).toContain('There is no published guide available for a local edit')
+    expect(en).toContain('in the displayed language')
+    expect(`${zh} ${en}`).not.toMatch(/DSH_GUIDE_BASE_UNAVAILABLE|stack|token=|provider body/i)
+  })
+
+  it('leaves unknown failures unclassified instead of exposing their text', () => {
+    expect(classifyDshFailure('SECRET_PROVIDER_BODY: token=abc')).toBeUndefined()
+  })
+})

@@ -1,5 +1,9 @@
 # FlightOR Agent Architecture v1
 
+## 2026-10-06 DSH准备与条件发布
+
+DSH-only薄输入适配固定模型依据的Trip、flight与accepted base/hash，活动与文字一次提交。共享领域仍进行owner、version、来源、重复与发布校验；明确Trip更新才受控刷新准备上下文并失效旧raw证据。局部编辑最终publication短事务锁Trip并核对最新accepted基底，不读取最新hash伪装旧决定。没有新表/状态机/LLM；兼容、回滚及验证边界见[ADR0029](adr/0029-dsh-prepared-submission.md)与[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
+
 2026-09-27 D5 更新：以下关于会话只能以 start_route_generation 显式生成最终路线的描述是旧边界。当前 DSH 新增 search_budget_routes，可按明确省钱意图启动既有确定性航线流程；inline dispatch 随当前 turn 取消，原 queued 入口不变。最多一个主动 hub、两张独立票，报价持久化绑定后才比较总价；不自动采用。实现与验证以 [D5 报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md) 为准。
 
 2026-09-21: [ADR 0024](adr/0024-guide-publication-contract.md) adds a server-owned guide publication boundary, shared by cards, final confirmation and restored history. Raw research and authored prose stay in audit storage and domain validation, not public guide prose. Publication is committed with the artifact and bound to its context, flight revision and content hash. Cost coverage remains incomplete/undetermined; `delivery.satisfied` retains its domain meaning. Guide-only successful batches may omit final model narration only after authoritative completion and current-generation checks. Planner remains autonomous; no new runtime agent or harness. Offline evidence and outstanding live/platform checks are in [progress](design/budget-travel-agent/progress.md).

@@ -71,6 +71,9 @@ export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, ki
         const trip = await context.trips.get(context.tripId)
         checkpoint(context, signal)
         if (!trip) throw new AppError('RESOURCE_NOT_FOUND', 'Trip was not found', 404)
+        if (context.tripContextSnapshot && (context.tripContextSnapshot.id !== trip.id || context.tripContextSnapshot.version !== trip.version)) {
+          throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Trip changed after this execution was prepared', 409)
+        }
         if (bound) {
           if (trip.version !== bound.contextVersion) throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Accepted Goal context changed; start a new turn', 409)
           const goal = await context.goalRepository.get(bound.goalId)
@@ -92,7 +95,7 @@ export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, ki
           checkpoint(context, signal)
           const { goal, run } = await context.goalRunRepository.accept({
             tripId: context.tripId, conversationId: context.conversationId, requestId: context.requestId,
-            generationId: context.generationId, contextSnapshot: trip,
+            generationId: context.generationId, contextSnapshot: context.tripContextSnapshot ?? trip,
             ...(requested ? { intent: requested } : { goalRef: goalRef as string })
           })
           // Track before checking cancellation. A late acceptance must close its own attempt.

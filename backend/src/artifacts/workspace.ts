@@ -9,6 +9,7 @@ import { isCompatibleSelectedFlightSource, type SelectedFlightContext } from '..
 
 /** Authenticated scope shared by artifact-producing domain services. */
 export interface ArtifactWorkspace {
+  guideBaseCondition?: import('./repository.js').GuideBaseCondition
   requireGuideFinalization?: boolean
   artifacts: ArtifactRepository
   /** Authenticated owner, carried only to domain-owned infrastructure such as research audit linking. */

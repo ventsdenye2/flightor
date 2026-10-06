@@ -1,5 +1,15 @@
 # 当前进度与验证
 
+## 2026-10-06 D6当前实施
+
+D6 H5 runner 修正（验证待补）：每轮在点击前记录事件游标和提交时刻，受理/终态只匹配该游标后的本轮turnId；恢复与攻略详情等待可见内容，支持 action `precondition`/`assert`（文字与 selector），前置失败会把后续动作明确标为 `blocked`。保留 baseline-b01c 原始失败及负耗时证据，负耗时不作为有效性能数据；B01–B12需用新runner重跑且人工按冻结rubric判定，`observed`不等于PASS。详见[D6 harness](DSH_D6_HARNESS.md)。
+
+独立分支codex/dsh-reliability-d6基于最新origin/codex/dsh-backend=f2ec6c1，原dsh-backend与main两份微信配置改动保留。本轮先冻结[计划](DSH_D6_ENGINEERING_PLAN.md)/[12+4验收](DSH_D6_ACCEPTANCE.md)，实现准备快照、紧凑输入、Goal修复省略、基底条件发布、短引用/唯一已选城市及分类错误。迭代失败与环境缺口保留于验收，不等于最终PASS；真实隔离PG/全量/D5/真实UI仍在推进。对应[ADR0029](../../adr/0029-dsh-prepared-submission.md)、[证据地点](DSH_D6_EVIDENCE_AND_LOCATIONS.md)、[公开错误](DSH_D6_PUBLIC_ERRORS.md)。产品仍单主LLM；当前用户另授权DeepSeek API不限金额，旧账本不变。
+
+同日 aviation 地名补齐：严格 city-only 本地无命中→显式配置的 Nominatim OSM city/town 查询已接入共享 aviation composition（DSH 与 legacy）。复用 existing transport/proxy、`place_query_cache`、全局 `place_provider_calls` 租约和 signal；OSM place city/town 与市级 administrative city/town-address 实体均须名称精确匹配，逗号限定必须匹配真实 address；多个未限定同名城市原样保留为歧义。OSM 身份/国家不推断，不修改 Trip canonical ID，也不触及机场/POI路径。`npm --prefix backend run check` 通过；定向 `composite.test.ts`、`nominatim-city-resolver.test.ts`、`places.test.ts` 共27项通过，含缓存读取/等待竞态与取消时不返回迟到身份。最初 Vitest 因 sandbox `spawn EPERM` 未启动，授权重跑成功。当前冷缓存未命中会额外读一次地点查询缓存，并使用一笔共享租约事务及结束状态更新；缓存命中不请求 Nominatim，等租约时发现已填充缓存不会再申请网络。随后新增 D6-09：真实隔离 PostgreSQL 5/5 通过，覆盖有效缓存身份合并、空未验证缓存接纳后到 verified 身份、原 TTL 精确保留、过期替换和双连接单HTTP/单租约/缓存命中不新增租约。Vitest 首次被 sandbox `spawn EPERM` 阻止，获准启动测试子进程后红测复现、修复后绿测通过。HTTP 为受控本地 fixture；未做真实 Nominatim 或最终 DSH/H5 验收，真实响应尚未验证。细则见[D6地点合同](DSH_D6_EVIDENCE_AND_LOCATIONS.md)、[问题台账](DSH_D6_ACCEPTANCE.md)及[ADR0026](../../adr/0026-place-identity-and-maps.md)。
+
+2026-10-06 免费 Nominatim smoke 使用当前 backend build、真实 `PostgresPlaceRepository` 与全新随机 schema，UA `FlightOR-D6/1.0`，保留8秒超时。首个 Kyoto HTTP 请求超时；真实 PostgreSQL lease 状态为 `timeout`，测试 schema 已删除。按边界停止，Tallinn 与缓存复查未执行，也没有重试；未取得 identity/source 响应。脚本与完整失败记录保存在忽略目录 `backend/.demo/d6/`，具体报告见 [地点与证据记录](DSH_D6_EVIDENCE_AND_LOCATIONS.md)。此结果不构成 provider 通过或最终 H5 验收。
+
 2026-09-27 D5 最终：A/B已实现，冻结10类×3次30/30（本地HTTP/fixture）、backend1132项、runtime9项、数据库7项通过；另一次官方DeepSeek模型+搜索正式API攻略accepted+satisfied，24.653s。没有本轮实价路线或新版H5通过声明，G1仍未放行。代码HEAD9cae53b，详情见 [D5报告](DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。
 
 2026-09-27 D5 实施中途记录（历史）：已提交 Provider 恢复 `786efa4`、独立修复额度/上下文 `9f381fa`；定向 129 项通过。低价航线与冻结 10×3 验收进行中，详见 [D5 报告](DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。

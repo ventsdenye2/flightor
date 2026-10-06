@@ -8,6 +8,7 @@ import { canRetryFinalVariant, type FinalVariant, type PublicationLocale } from 
 // Shared across request-scoped service instances; owner is part of the key.
 const pending = new Map<string, Promise<ArtifactRecord>>()
 interface PublicationApplicationInput {
+  guideBaseCondition?: import('../artifacts/repository.js').GuideBaseCondition
   ownerId: string; record: ArtifactRecord; artifacts: ArtifactRepository
   locale: PublicationLocale; requirements?: unknown; memoryEnabled?: boolean; localization?: boolean
   retryRevision?: number
@@ -79,7 +80,7 @@ async function applyFinalVariant(input: PublicationApplicationInput,
       ...(input.signal ? { signal: input.signal } : {}), ...(input.timeoutMs === undefined ? {} : { timeoutMs: input.timeoutMs }) })
     await assertCurrent()
     return input.artifacts.saveFinalVariant!(current.id, publication.guideContentHash, input.locale,
-      { ...variant, revision: previous ? (previous.revision ?? 1) + 1 : 1 }, input.signal)
+      { ...variant, revision: previous ? (previous.revision ?? 1) + 1 : 1 }, input.signal, input.guideBaseCondition)
   })()
   pending.set(key, task)
   try { return await task } finally { if (pending.get(key) === task) pending.delete(key) }

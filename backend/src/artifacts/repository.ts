@@ -47,6 +47,25 @@ export interface CreateArtifactInput {
   isSourceContextCompatible?: (record: ArtifactRecord) => boolean
 }
 
+/** Server-owned accepted base captured before generation, never model supplied. */
+export interface GuideBaseCondition { id: string; contentHash: string; locale: PublicationLocale }
+
+export function assertGuideBaseCurrent(records: readonly ArtifactRecord[], current: ArtifactRecord, condition: GuideBaseCondition): void {
+  const publication = (record: ArtifactRecord) => record.payload && typeof record.payload === 'object'
+    ? (record.payload as { publication?: { guideContentHash?: string; finalization?: { variants: Partial<Record<PublicationLocale, FinalVariant>> } } }).publication : undefined
+  const candidates = records.filter(record => record.id !== current.id && record.type === 'travel_guide'
+    && record.tripId === current.tripId && record.conversationId === current.conversationId
+    && record.tripContextVersion === current.tripContextVersion
+    && Object.values(publication(record)?.finalization?.variants ?? {}).some(variant => variant?.status === 'accepted'))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))
+  const base = candidates[0]
+  const bound = base && publication(base)
+  if (!base || base.id !== condition.id || bound?.guideContentHash !== condition.contentHash
+    || bound.finalization?.variants[condition.locale]?.status !== 'accepted') {
+    throw new AppError('PUBLICATION_CONTENT_CHANGED', 'The accepted guide changed after preparation', 409)
+  }
+}
+
 export interface ArtifactScope {
   tripId?: string
   goalId?: string
@@ -102,7 +121,7 @@ export interface ArtifactRelationshipResolver {
 }
 
 export interface ArtifactRepository {
-  saveFinalVariant?(id: string, contentHash: string, locale: PublicationLocale, variant: FinalVariant, signal?: AbortSignal): Promise<ArtifactRecord>
+  saveFinalVariant?(id: string, contentHash: string, locale: PublicationLocale, variant: FinalVariant, signal?: AbortSignal, base?: GuideBaseCondition): Promise<ArtifactRecord>
   create(input: CreateArtifactInput): Promise<ArtifactRecord>
   /** Atomically records the final artifact on a pre-existing native research audit. */
   createWithResearchAudit?(input: CreateArtifactInput, auditId: string): Promise<ArtifactRecord>
@@ -116,11 +135,12 @@ export interface ArtifactRepository {
 interface OwnedArtifact extends ArtifactRecord { ownerId: string }
 
 export class InMemoryArtifactRepository implements ArtifactRepository {
-  async saveFinalVariant(id: string, hash: string, locale: PublicationLocale, variant: FinalVariant, signal?: AbortSignal): Promise<ArtifactRecord> {
+  async saveFinalVariant(id: string, hash: string, locale: PublicationLocale, variant: FinalVariant, signal?: AbortSignal, base?: GuideBaseCondition): Promise<ArtifactRecord> {
     const record = await this.get(id)
     if (!record) throw new AppError('RESOURCE_NOT_FOUND', 'Artifact not found', 404)
     const current = this.records.get(id)!
     signal?.throwIfAborted()
+    if (base) assertGuideBaseCurrent([...this.records.values()].filter(value => value.ownerId === this.ownerId), current, base)
     const payload = mergeFinalVariant(current, hash, locale, variant)
     this.records.set(id, { ...current, payload, updatedAt: new Date().toISOString() })
     return (await this.get(id))!

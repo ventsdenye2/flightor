@@ -1,4 +1,6 @@
-# DPS：当前授权工作为 DSH D5
+# DPS：当前授权工作为 DSH D6
+
+2026-10-06：按[D6计划](DSH_D6_ENGINEERING_PLAN.md)推进：冻结验收→最小修复与输入适配→全量及隔离PG/D5→冻结12固定+4探索真实UI→报告。当前实施中；实际失败/阻塞/结果见[D6验收](DSH_D6_ACCEPTANCE.md)，不以D5旧样本替代。
 
 2026-09-27：继续现有 DSH 单主执行层，按 D5-A 稳定性 → D5-B 低价路线 → D5-C 冻结验收推进，实际状态见 [D5 报告](DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。以下 D0–D4 为已发生的历史计划与证据；G1 不因此放行。
 

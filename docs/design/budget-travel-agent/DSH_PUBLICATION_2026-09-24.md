@@ -1,5 +1,9 @@
 # DSH 主 Agent 集成发布（2026-09-24）
 
+## 2026-10-06 D6协议替代（当前）
+
+上文9月26日EVERY/anyOf、模型baseGuideId/hash搬运和排除所有预算目标金额均为当时历史协议。D6模型首个commit携带真实语义intent，修复省略并固定Goal；每活动内text统一关联；局部编辑仅replaceSlots，服务端绑定准备基底/hash与Trip，最终事务拒绝基底变化。短source/C引用保留原验证；匹配结构化Trip的全程预算目标可确认，费用保证仍拒绝。当前实现/验收见[ADR0029](../../adr/0029-dsh-prepared-submission.md)与[D6报告](DSH_D6_ACCEPTANCE.md)，不追认旧失败或新平台通过。
+
 ## 2026-09-26 同值 Trip setter 的持久确认
 
 真实预算续验暴露：重复明确设置已经为1200的预算，Trip版本实际写入后，旧 `trip_context_update` verifier 因数值未变化仍判未交付。现在 core setter 只在独立读回与 canonical patch 结果一致后，为当前 owner/Trip/run/generation/写入版本持久保存实际提交字段的 SHA-256 回执；既有 Run JSON working set 承载，不新增表、Goal参数或模型输入。全部请求字段均在回执中且匹配当前版本/值才确认同值保存；完全无回执的历史记录继续使用原差异验证；已有回执缺请求字段或scope/值/版本失配则pending / trip_update_receipt_stale，不允许回落差异规则。不是以现有字段存在或模型宣称完成取代 verifier。

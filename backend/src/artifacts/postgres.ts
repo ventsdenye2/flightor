@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
-import type { Kysely } from 'kysely'
+import { sql, type Kysely } from 'kysely'
 import { assertArtifactSourceContext, assertArtifactGoalWritable, assertArtifactRunWritable, normalizeSourceArtifactIds, type ArtifactRecord, type ArtifactRepository, type ArtifactScope, type CreateArtifactInput } from './repository.js'
 import { AppError } from '../lib/errors.js'
 import type { Database, JsonValue } from '../db/types.js'
@@ -7,6 +7,7 @@ import { TripContextVersionConflict } from '../trips/repository.js'
 import { mergeFinalVariant } from '../travel-guides/finalization-storage.js'
 import type { FinalVariant, PublicationLocale } from '../travel-guides/finalization-schema.js'
 import { readSavedFlightSelection } from '../workspaces/flight-selection.js'
+import { assertGuideBaseCurrent, type GuideBaseCondition } from './repository.js'
 
 type ArtifactRow = {
   internal_id?: string
@@ -102,16 +103,32 @@ function resourceNotFound(message: string): AppError {
 
 /** PostgreSQL implementation scoped to one trusted internal user id. */
 export class PostgresArtifactRepository implements ArtifactRepository {
-  async saveFinalVariant(id: string, hash: string, locale: PublicationLocale, variant: FinalVariant, signal?: AbortSignal): Promise<ArtifactRecord> {
+  async saveFinalVariant(id: string, hash: string, locale: PublicationLocale, variant: FinalVariant, signal?: AbortSignal, base?: GuideBaseCondition): Promise<ArtifactRecord> {
     // The model call has already finished. Only the short merge is transactional.
     await this.db.transaction().execute(async trx => {
       const row = await trx.selectFrom('artifacts').selectAll().where('public_id', '=', id)
         .where('user_id', '=', this.userId).forUpdate().executeTakeFirst()
       if (!row) throw resourceNotFound('Artifact was not found')
       const trip = await trx.selectFrom('trips').select(['public_id', 'current_context_version', 'saved_route_json'])
-        .where('id', '=', row.trip_id).where('user_id', '=', this.userId).forShare().executeTakeFirstOrThrow()
+        .select(eb => eb.selectFrom('conversations').select('public_id')
+          .where('id', '=', row.conversation_id!).where('user_id', '=', this.userId).as('conversation_public_id'))
+        .where('id', '=', row.trip_id).where('user_id', '=', this.userId).forUpdate().executeTakeFirstOrThrow()
       if (trip.current_context_version !== row.trip_context_version) throw new AppError('PUBLICATION_CONTENT_CHANGED', 'Trip changed', 409)
-      const record = toArtifact({ ...row, id: row.public_id, trip_public_id: trip.public_id })
+      const record = toArtifact({ ...row, id: row.public_id, trip_public_id: trip.public_id,
+        conversation_public_id: trip.conversation_public_id })
+      if (base) {
+        // Trip row serializes concurrent publication with Trip and selection writes.
+        let query = selectArtifacts(untyped(trx)).where('artifacts.user_id', '=', this.userId)
+          .where('artifacts.trip_id', '=', row.trip_id).where('artifacts.type', '=', 'travel_guide')
+          .where('artifacts.trip_context_version', '=', row.trip_context_version!)
+          .where('artifacts.public_id', '!=', id)
+          .where(sql<boolean>`(artifacts.payload_json #>> '{publication,finalization,variants,zh,status}' = 'accepted' OR artifacts.payload_json #>> '{publication,finalization,variants,en,status}' = 'accepted')`)
+          .orderBy('artifacts.created_at', 'desc').orderBy('artifacts.public_id', 'desc')
+        query = row.conversation_id === null ? query.where('artifacts.conversation_id', 'is', null)
+          : query.where('artifacts.conversation_id', '=', row.conversation_id)
+        const rows = await query.limit(1).execute()
+        assertGuideBaseCurrent(rows.map(toArtifact), record, base)
+      }
       const payload = mergeFinalVariant(record, hash, locale, variant)
       const saved = typeof trip.saved_route_json === 'string' ? JSON.parse(trip.saved_route_json) : trip.saved_route_json
       const selection = readSavedFlightSelection(saved)

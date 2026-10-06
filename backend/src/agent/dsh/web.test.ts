@@ -25,7 +25,7 @@ describe('DSH web tools through the official worker and evidence repository', ()
     expect(value).toEqual({ error: { code: 'SOURCE_CHALLENGE_REJECTED', hint: expect.stringContaining('supplies no evidence') } })
     expect(JSON.stringify(value)).not.toContain('12345-67890')
     expect(await executeDshWeb('__record_web', { tool: 'web_fetch', args, value }, 'record', new AbortController().signal, deps, evidence))
-      .toEqual({ evidenceRefs: [], urls: [] })
+      .toEqual({ evidenceRefs: [], sourceRefs: [], urls: [] })
   })
 
   it('keeps ordinary content mentioning CAPTCHA and leaves legacy reader behavior unchanged', async () => {
@@ -81,7 +81,7 @@ describe('DSH web tools through the official worker and evidence repository', ()
     const value = await executeDshWeb('__web_fetch', { url: 'https://example.com/denied' }, 'fetch', new AbortController().signal, deps, evidence)
     expect(value).toMatchObject({ statusCode: 403, body: { kind: 'text', content: '' } })
     expect(await executeDshWeb('__record_web', { tool: 'web_fetch', args: { url: 'https://example.com/denied' }, value }, 'receipt', new AbortController().signal, deps, evidence))
-      .toEqual({ evidenceRefs: [], urls: [] })
+      .toEqual({ evidenceRefs: [], sourceRefs: [], urls: [] })
     const cancelled = new AbortController(); cancelled.abort(new Error('Caller cancelled'))
     await expect(executeDshWeb('__web_fetch', { url: 'https://example.com/denied' }, 'cancel', cancelled.signal, deps, evidence)).rejects.toThrow('Caller cancelled')
   })
@@ -122,10 +122,11 @@ describe('DSH web tools through the official worker and evidence repository', ()
       // Public ToolExecutionContext.arguments must survive post-execute and IPC unchanged.
       expect(receipts[0]!.args).toMatchObject({ tool: 'web_search', args: searchArgs,
         value: { sources: [{ url: sourceUrl, title: 'Museum' }] } })
-      expect(receipts[0]!.result).toEqual({ evidenceRefs: [], urls: [] })
+      expect(receipts[0]!.result).toEqual({ evidenceRefs: [], sourceRefs: [], urls: [] })
       expect(receipts[1]!.args).toMatchObject({ tool: 'web_fetch', args: fetchArgs,
         value: { url: sourceUrl, statusCode: 200, body: { kind: 'text', content: sourceBody } } })
       expect(receipts[1]!.result.evidenceRefs).toHaveLength(1)
+      expect(receipts[1]!.result.sourceRefs).toHaveLength(1)
       expect(receipts[1]!.result.urls).toEqual([sourceUrl])
       expect(new Set(receipts.map(receipt => receipt.callId)).size).toBe(2)
 

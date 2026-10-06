@@ -45,6 +45,41 @@ describe('DSH durable Goal request identity', () => {
 })
 
 describe('DSH service with the official worker and loop', () => {
+  it('uses precise safe copy when the latest guide has no prepared current-language edit base', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-no-edit-base-'))
+    const sessions = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [
+      { tool: 'commit_travel_guide', args: { replaceSlots: [{ day: 1, slot: 'afternoon' }],
+        days: [{ day: 1, cityId: 'city:TYO', kind: 'visit', theme: 'A revised afternoon', items: [{ candidateKey: 'garden', timeOfDay: 'afternoon',
+          planningNote: 'Take a relaxed walk.', text: { name: 'A garden walk', introduction: 'Walk along quiet garden paths.',
+            recommendationReason: 'A quieter activity fits the request.' } }] }],
+        text: { reply: 'Updated itinerary.', overview: 'An updated afternoon.', days: [{ day: 1, theme: 'A revised afternoon' }] } } },
+      { text: 'I could not prepare that edit.' }
+    ] })
+    const toolResults: Array<{ name: string; result: unknown }> = []
+    const actualRun = sessions.run.bind(sessions)
+    vi.spyOn(sessions, 'run').mockImplementation(input => actualRun({ ...input, execute: async (...args) => {
+      const result = await input.execute(...args)
+      if (args[0] === 'commit_travel_guide') toolResults.push({ name: args[0], result })
+      return result
+    } }))
+    try {
+      const trips = new InMemoryTripRepository(), trip = await trips.create()
+      const ownerId = 'no-edit-base-owner', owned = new Set([trip.id])
+      const conversations = new InMemoryConversationRepository(ownerId, owned), conversation = await conversations.create({ tripId: trip.id })
+      const service = new DshPlannerService({ ownerId, trips, conversations, sessions,
+        artifacts: new InMemoryArtifactRepository(ownerId, owned), memory: new InMemoryUserMemoryRepository(),
+        aviation: new MockAviationProvider(), fares: new MockFareProvider(), research: new UnavailableResearchAgent(),
+        connectionSearch: new UnavailableConnectionSearchService(), flightRoutePlanner: new UnavailableFlightRoutePlanner(),
+        routeOptimizer: new UnavailableRouteOptimizer(), createFinalizer: vi.fn(() => { throw new Error('Unexpected finalizer') }) })
+      const result = await service.runTurn({ requestId: 'no-edit-base', generationId: 'no-edit-base-generation', tripId: trip.id,
+        conversationId: conversation.id, message: 'Change the second afternoon of my guide.', locale: 'en' })
+      expect(toolResults[0]?.result).toMatchObject({ error: { code: 'DSH_GUIDE_BASE_UNAVAILABLE' } })
+      expect(result.reply).toBe('There is no published guide available for a local edit. Reopen the current guide and complete preparation in the displayed language before requesting a local edit.')
+      expect(result.reply).not.toMatch(/changed while|DSH_GUIDE_BASE_UNAVAILABLE|stack|token=/i)
+      expect(result.delivery.status).toBe('not_requested')
+    } finally { await sessions.close(); await rm(root, { recursive: true, force: true }) }
+  }, 20_000)
+
   it('includes same-conversation assistant context in a cold snapshot with long-term memory disabled', async () => {
     const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-cold-history-'))
     const sessions = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' },
@@ -176,8 +211,11 @@ describe('DSH service with the official worker and loop', () => {
       expect(first.reply).toBe('Tokyo is your destination.')
       const request = sessionRun.mock.calls[0]![0]
       const commit = request.tools.find(tool => tool.name === 'commit_travel_guide')!
-      expect(commit.rawSchema.anyOf).toEqual([{ required: ['intent'] }, { required: ['goalRef'] }])
-      expect(commit.description).toContain('EVERY complete submission')
+      expect(commit.rawSchema).not.toHaveProperty('anyOf')
+      expect(commit.description).toContain('same-turn repairs omit it')
+      expect(commit.rawSchema.properties).not.toHaveProperty('baseGuideId')
+      expect(commit.rawSchema.properties).not.toHaveProperty('expectedContentHash')
+      expect(commit.rawSchema.properties).not.toHaveProperty('goalRef')
       expect(request.tools.find(tool => tool.name === 'get_trip_context')!.rawSchema).not.toHaveProperty('anyOf')
       const snapshot = JSON.parse(request.snapshot)
       expect(Object.keys(snapshot).at(-1)).toBe('turnState')

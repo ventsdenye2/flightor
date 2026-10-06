@@ -4,6 +4,17 @@ import { AppError } from '../../lib/errors.js'
 import { CommitRecovery, safeCommitFeedback } from './commit-recovery.js'
 
 describe('DSH commit recovery policy', () => {
+  it('asks for the first objective once and keeps later corrections on the immutable accepted Goal', () => {
+    const missing = safeCommitFeedback(new AppError('GOAL_INTENT_REQUIRED', 'untrusted', 409), 'arguments')
+    expect(missing.instruction).toContain('new semantic intent')
+    const conflict = safeCommitFeedback(new AppError('GOAL_INTENT_CONFLICT', 'untrusted', 409), 'arguments')
+    expect(conflict.instruction).toContain('omit intent/goalRef')
+    expect(conflict.instruction).toContain('immutable')
+    expect(conflict.instruction).not.toContain('Repeat exactly')
+    const correction = safeCommitFeedback(new z.ZodError([]), 'arguments')
+    expect(correction.instruction).toContain('omit intent/goalRef')
+  })
+
   it('keeps argument and prerequisites outside the one content repair quota', () => {
     const recovery = new CommitRecovery()
     recovery.admit(); recovery.failed(new z.ZodError([{ code: 'invalid_type', expected: 'string', path: ['intent'] }]))
@@ -54,5 +65,13 @@ describe('DSH commit recovery policy', () => {
       locations: [{ day: 2, fieldPath: 'days[1].items[0]', location: 'city:TYO' }],
       repair: { availableCandidates: [{ candidateRef: 'gc1.example', title: 'Museum', cityIds: ['city:TYO'] }] } })
     expect(JSON.stringify(feedback)).not.toContain('PRIVATE_PROVIDER_BODY')
+  })
+
+  it('keeps the one repair instruction consistent with the narrow budget target allowance', () => {
+    const feedback = safeCommitFeedback(new AppError('DSH_GUIDE_NEEDS_REVISION', 'untrusted', 422,
+      { presentationIssues: ['excluded_precise_claim'] }), 'content')
+    expect(feedback.correction).toContain('exact current trip budget amount only as a total-trip target')
+    expect(feedback.correction).toContain('do not claim that costs fit it')
+    expect(feedback.correction).not.toContain('Remove monetary amounts')
   })
 })

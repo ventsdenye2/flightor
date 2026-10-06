@@ -70,8 +70,13 @@ export interface DshFetchResult {
 
 export interface DshEvidenceReferenceList {
   evidenceRefs: string[]
+  sourceRefs: string[]
   urls: string[]
 }
+
+const sourceScopeDigest = (scope: DshEvidenceScope) => createHash('sha256')
+  .update(JSON.stringify([scope.ownerId, scope.tripId, scope.conversationId, scope.generationId, scope.tripContextVersion]))
+  .digest('hex').slice(0, 10)
 
 function safeHttpUrl(value: unknown): string | undefined {
   if (typeof value !== 'string') return
@@ -96,10 +101,14 @@ function sameLocation(left: LocationRef, right: LocationRef): boolean {
 export class DshEvidenceStore {
   private readonly repository: DshEvidenceRepository
   private readonly now: () => Date
+  private readonly sourceScope: string
+  private readonly sourceRecords = new Map<string, string>()
+  private sourceSequence = 0
 
   constructor(private readonly scope: DshEvidenceScope, options: { repository?: DshEvidenceRepository; now?: () => Date } = {}) {
     this.repository = options.repository ?? new InMemoryDshEvidenceRepository()
     this.now = options.now ?? (() => new Date())
+    this.sourceScope = sourceScopeDigest(scope)
   }
 
   async recordSearch(result: DshSearchResult, provider: string, toolCallId: string): Promise<DshEvidenceReferenceList> {
@@ -139,7 +148,8 @@ export class DshEvidenceStore {
   }
 
   async get(evidenceRef: string): Promise<DshEvidenceRecord | null> {
-    const record = await this.repository.get(evidenceRef)
+    const resolvedRef = this.sourceRecords.get(evidenceRef) ?? evidenceRef
+    const record = await this.repository.get(resolvedRef)
     return record && scopeMatches(record, this.scope) ? record : null
   }
 
@@ -161,7 +171,13 @@ export class DshEvidenceStore {
 
   private references(records: readonly DshEvidenceRecord[]): DshEvidenceReferenceList {
     const usable = records.filter(record => record.status === 'available')
-    return { evidenceRefs: usable.map(record => record.evidenceRef), urls: usable.map(record => record.finalUrl ?? record.url) }
+    const sourceRefs = usable.map(record => {
+      const content = record.contentHash?.slice(0, 10) ?? 'nohash0000'
+      const ref = `s1.${this.sourceScope}.${content}.${++this.sourceSequence}`
+      this.sourceRecords.set(ref, record.evidenceRef)
+      return ref
+    })
+    return { evidenceRefs: usable.map(record => record.evidenceRef), sourceRefs, urls: usable.map(record => record.finalUrl ?? record.url) }
   }
 }
 

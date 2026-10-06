@@ -191,7 +191,7 @@ const updateTripContextTool: AgentTool<
     if (Object.keys(input.patch).length === 0) {
       return { tripContext: current, changed: false }
     }
-    const tripContext = await context.trips.update(context.tripId, patch, input.expectedVersion ?? current.version, {
+    const tripContext = await context.trips.update(context.tripId, patch, input.expectedVersion ?? context.tripContextSnapshot?.version ?? current.version, {
       signal,
       ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
     })

@@ -202,7 +202,7 @@ export async function preparePlanningContext(input: PlanningContextInput) {
   }
   signal?.throwIfAborted()
   const content = JSON.stringify(context)
-  return { content, metrics: { durationMs: Math.max(0, performance.now() - started), characters: content.length,
+  return { content, records: current, metrics: { durationMs: Math.max(0, performance.now() - started), characters: content.length,
     goals: goalSummaries.length, researchArtifacts: research.length,
     findings: research.reduce((total, source) => total + source.findings.length, 0), guides: guides.length,
     omitted: context.omitted } }

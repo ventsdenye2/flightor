@@ -170,7 +170,16 @@ suite('DSH official worker with PostgreSQL domain persistence', () => {
       const budget = await turn('CNY 1200 is the total for both days, not per day. Do not promise unknown prices.')
       expect(budget.tripContext.budget).toEqual({ amount: 1200, currency: 'CNY', scope: 'trip' })
       expect(budget.tripVersion).toBe(trip.context.version + 1)
-      expect((await artifacts.listForTrip(trip.id)).filter(record => record.type === 'travel_guide')).toHaveLength(2)
+      const budgetGuides = (await artifacts.listForTrip(trip.id)).filter(record => record.type === 'travel_guide')
+      expect(budgetGuides).toHaveLength(3)
+      const carried = budgetGuides.find(record => record.tripContextVersion === budget.tripVersion)!
+      const carriedGuide = travelGuideArtifactPayloadSchema.parse(carried.payload)
+      expect(carriedGuide.budget).toMatchObject({ amount: 1200, currency: 'CNY', scope: 'trip', period: 'trip_total' })
+      expect(carriedGuide.days.map(day => day.items.map(item => ({ ...item, sourceArtifactId: undefined }))))
+        .toEqual(after.days.map(day => day.items.map(item => ({ ...item, sourceArtifactId: undefined }))))
+      expect(publicationFor(carried)!.finalization!.variants.en!.status).toBe('accepted')
+      expect(await artifacts.get(base.id)).toEqual(base)
+      expect(await artifacts.get(revised.id)).toEqual(revised)
 
       await sessions.close()
       sessions = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [

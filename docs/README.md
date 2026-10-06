@@ -1,5 +1,7 @@
 # FlightOR 文档入口
 
+2026-10-06 当前授权工作为 [D6工程化减负](design/budget-travel-agent/DSH_D6_ENGINEERING_PLAN.md)，[验收v1](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)已在修改前冻结。当前实施与迭代验证中，D5/D4仍仅是历史范围证据，不宣称新真实UI已通过。
+
 2026-09-27 D5 最终：A/B已实现，冻结10类×3次30/30（本地HTTP/fixture）、backend1132项、runtime9项、数据库7项通过；另一次官方DeepSeek模型+搜索正式API攻略accepted+satisfied，24.653s。没有本轮实价路线或新版H5通过声明，G1仍未放行。代码HEAD9cae53b，详情见 [D5报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。
 
 2026-09-27：D5 可靠规划与低价航线的实现及独立验收批次见 [D5 报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。D4 为历史限定案例通过，G1 仍未放行。

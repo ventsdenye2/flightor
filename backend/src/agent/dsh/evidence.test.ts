@@ -21,10 +21,34 @@ describe('DSH evidence capture', () => {
 
     expect(captured.urls).toEqual(['https://example.com/place'])
     expect(captured.evidenceRefs).toHaveLength(1)
+    expect(captured.sourceRefs).toHaveLength(1)
+    expect(captured.sourceRefs[0]).toMatch(/^s1\.[a-f0-9]{10}\.[a-f0-9]{10}\.1$/)
     const record = await evidence.get(captured.evidenceRefs[0]!)
+    expect(await evidence.get(captured.sourceRefs[0]!)).toEqual(record)
     expect(record).toMatchObject({ ...scope, provider: 'deepseek-web-search', toolCallId: 'tool-1', depth: 'search_snippet',
       status: 'available', truncated: true, untrusted: true, snippet: 'Visitor information.' })
     expect(record?.contentHash).toMatch(/^[a-f0-9]{64}$/)
+  })
+
+  it('keeps source aliases bound to their generation, Trip version, and evidence hash', async () => {
+    const repository = new InMemoryDshEvidenceRepository()
+    const evidence = store(repository)
+    const captured = await evidence.recordSearch({ sources: [{ url: 'https://example.com/place', snippet: 'Current source.' }] }, 'web-search', 'tool-current')
+    const changed = await evidence.recordSearch({ sources: [{ url: 'https://example.com/place', snippet: 'Changed source.' }] }, 'web-search', 'tool-changed')
+    const foreign = new DshEvidenceStore({ ...scope, generationId: 'generation-2' }, { repository, now: clock })
+    expect(await foreign.get(captured.sourceRefs[0]!)).toBeNull()
+    expect(await foreign.get(captured.evidenceRefs[0]!)).toBeNull()
+    expect(changed.sourceRefs[0]).not.toBe(captured.sourceRefs[0])
+    expect((await evidence.get(captured.sourceRefs[0]!))?.contentHash).not.toBe((await evidence.get(changed.sourceRefs[0]!))?.contentHash)
+  })
+
+  it('accepts short source aliases when mapping candidates and keeps legacy UUID refs', async () => {
+    const evidence = store()
+    const captured = await evidence.recordSearch({ sources: [{ url: 'https://example.com/place', snippet: 'Original provider snippet.' }] }, 'web-search', 'tool-short-ref')
+    expect(captured.evidenceRefs[0]).toMatch(/^[0-9a-f-]{36}$/)
+    const artifact = await convertCandidatesToResearch({ artifactId: 'research-short-ref', brief, candidates: [{ key: 'finding-short-ref', evidenceRefs: captured.sourceRefs,
+      title: 'Curated title', summary: 'Model-authored summary.', category: 'activity', location: tokyo }] }, evidence)
+    expect(artifact.findings[0]?.sources[0]?.snippet).toBe('Original provider snippet.')
   })
 
   it('captures fetch text and records final URL, status, hash, and truncation state', async () => {
