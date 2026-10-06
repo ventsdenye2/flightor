@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-07按用户“第一个场景测试后暂时停下”暂停：r24真实B01首稿46.590秒satisfied并读完9活动详情；解释4.081秒被withheld，后5动作blocked，完整59.613秒FAIL，非180秒超时，未完成局改/刷新。冻结dist实际原因仅excluded_precise_claim；Astra max复现裸“整趟”预算范围及“并非已经核实的费用结论”否定误判，同时确认无金额“单价低”漏检，不能仅修误拦就放行原解释。代码尚未修复，来源/全文独立审阅与方向研判因暂停未完成。服务PID128072退出/无监听，但日志管道中断未写guards_closed；同PID残留锁原样保留，数据/会话/账本/归档与六项指纹保持。本批10model/4search/14settled/pending0/fare0、USD0.88未知预留，累计USD38.24未知预留（非实付）。B02–B12/E01–E04未运行，D6未PASS、无确认硬阻塞；[失败与暂停续作](design/budget-travel-agent/evidence/d6-r24-b01-failure.json)。恢复须先重新核对退出/锁及完成诊断，代码修后新r25完整冻结重验。
+
 2026-10-07 r24完整工程通过：[同版冻结证据](design/budget-travel-agent/evidence/d6-r24-freeze.json)记录backend1609/1609、真实专用PG52/52、D5本地fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端四族/根TS/helper21/21及两端构建完整日志。两批固定10对全部accepted/语义一致/零外呼，保留P50组装增加2.7–3.9ms及约0.042ms/次回指检查定位，无新增仓库往返、不宣称生产提速。工程后source/backend/H5/worker/归档及历史ledger实际六项SHA一致；单主模型/原参数/授权/日期与390×844配置不变，新批仍零真实调用。现在从B01执行原12+4真实H5，D6未PASS、无确认硬阻塞；下述过程状态为历史快照。
 
 2026-10-07 r24已冻结并执行完整工程：源码fee07e5，新隔离run c7c8b0b0-feac-434e-80bc-eb26e818cbf5、schema dsh_d6_c7c8b0b0feac434e80bceb26e818cbf5、PID128072/TTY89212、API63207/H551018；实际source/backend/H5/worker指纹与783文件归档一致，[冻结证据](design/budget-travel-agent/evidence/d6-r24-freeze.json)保留。H5编译30.383秒/2警告、完整日志已保存，当前零新真实调用。完整backend进行中，随后真实专用PG/D5/runtime/observer/固定回放和原12+4手机390×844 H5；仅同run --resume冷重启，旧schema/会话/费用保留。D6未PASS，无确认硬阻塞；下述提交前及r23为历史快照。

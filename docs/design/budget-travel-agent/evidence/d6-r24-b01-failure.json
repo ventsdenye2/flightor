@@ -1,0 +1,198 @@
+{
+  "version": 1,
+  "at": "2026-10-06T23:46:51.427Z",
+  "status": "FAIL",
+  "taskState": "PAUSED_BY_USER",
+  "acceptanceVersion": "D6-v1",
+  "codeHead": "fee07e5dd4cff9afb402b91be721eb8cf2a5da44",
+  "runId": "c7c8b0b0-feac-434e-80bc-eb26e818cbf5",
+  "journey": "B01",
+  "originalReport": "backend/.demo/dsh-d6-runtime/d6-final-r24/evidence/B01-2026-10-06T23-33-36-765Z.json",
+  "originalReportSha256": "4774c12106d3da9920e2ba1f9f3fd9fc08c38f2ad53b1e96fbd3c34eff4b76b7",
+  "ui": {
+    "result": "failed",
+    "durationMs": 59613,
+    "browserEnvironment": {
+      "name": "Chrome",
+      "version": "154.0.8037.98",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "screen": {
+        "width": 390,
+        "height": 844
+      },
+      "deviceScaleFactor": 1.0000000298023224,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "mobile": false,
+      "touch": false,
+      "emulation": "phone-sized viewport; default Chrome user agent; mobile and touch emulation disabled"
+    },
+    "screenshotViewed": true,
+    "firstSend": {
+      "acceptedMs": 101,
+      "terminalMs": 46590,
+      "delivery": "satisfied",
+      "activityDetailsRead": 9
+    },
+    "explanation": {
+      "acceptedMs": 35,
+      "terminalMs": 4081,
+      "delivery": "not_requested",
+      "artifactRevision": 0,
+      "warning": "dsh_reply_withheld"
+    },
+    "blockedActions": [
+      {
+        "index": 4,
+        "type": "send"
+      },
+      {
+        "index": 5,
+        "type": "reload"
+      },
+      {
+        "index": 6,
+        "type": "open-latest-result"
+      },
+      {
+        "index": 7,
+        "type": "read-page"
+      },
+      {
+        "index": 8,
+        "type": "read-each-detail"
+      }
+    ],
+    "browserErrors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "resourceErrors": []
+  },
+  "diagnosis": {
+    "actualFrozenProseCodes": [
+      "excluded_precise_claim"
+    ],
+    "firstFinding": "Whole-trip budget phrasing using bare 整趟 is not recognised by the existing target clause.",
+    "secondFinding": "并非已经核实的费用结论 is misread as affirmative cost due to missing 的 in local-negation boundary.",
+    "separateLeak": "Amount-free 小吃通常单价低 is not rejected by the current affordability/price judgment check. The original explanation must not be accepted merely by fixing the target false rejections.",
+    "grounding": "Explanation made no read_artifact call and added facts beyond the saved summary; content/source review remains incomplete.",
+    "publicError": "The content rejection asks the user to rephrase a valid question instead of accurately stating the rejected explanation stage.",
+    "astra": "GPT-6 Astra max independently reproduced the frozen pure-function findings; direction review interrupted by user pause; no implementation change"
+  },
+  "persistence": {
+    "snapshot": "backend/.demo/dsh-d6-runtime/d6-final-r24/private/readbacks/B01-2026-10-06T23-33-36-765Z.postgres.private.json",
+    "tripCount": 1,
+    "counts": [
+      {
+        "artifacts": 3,
+        "goals": 2,
+        "goalRuns": 2,
+        "contextVersions": 2,
+        "messages": 4
+      }
+    ],
+    "sourceAndFullContentReview": "not completed; no content PASS claim"
+  },
+  "closure": {
+    "serverPid": 128072,
+    "serverSession": 89212,
+    "processExitedConfirmed": true,
+    "listenersConfirmed": 0,
+    "exitKind": "Interrupted while stdout was piped through Tee-Object; no graceful guards_closed event",
+    "guardInstalledCount": 1,
+    "guardClosedCount": 0,
+    "forbiddenEvents": 0,
+    "serverLockRetained": true,
+    "managerLockRetained": true,
+    "managerLockOwnerPid": 128072,
+    "managerLockOwnerExitedConfirmed": true,
+    "note": "Stale lock records deliberately preserved. Recheck ownership and archive safely if later resuming; do not fabricate a closure event.",
+    "shutdownForbiddenCallCount": null,
+    "forbiddenEventNote": "No observed forbidden event; final in-memory count was not persisted because graceful guards_closed is absent."
+  },
+  "accounting": {
+    "directory": "d6-final-r24",
+    "batchId": "af1a3b55-bf14-4c94-b6c4-0e9d8364213a",
+    "hasManifest": true,
+    "ledgerSha256": "c4ff6d5d33698c1ea5bd7493469cf0a11e47b6f36e1b186a54f66bb291db6f3a",
+    "modelAdmissions": 10,
+    "searchAdmissions": 4,
+    "settled": 14,
+    "pending": 0,
+    "promptTokens": 222783,
+    "completionTokens": 5194,
+    "modelTokens": 227977,
+    "modelCallsWithoutUsage": 0,
+    "knownCostCalls": 0,
+    "knownCostUsdMicros": 0,
+    "unknownCostCalls": 14,
+    "unknownReservedUsdMicros": 880000,
+    "fareMethodCalls": 0,
+    "reports": [
+      {
+        "name": "B01-2026-10-06T23-33-36-765Z.json",
+        "sha256": "4774c12106d3da9920e2ba1f9f3fd9fc08c38f2ad53b1e96fbd3c34eff4b76b7",
+        "journeyId": "B01",
+        "result": "failed",
+        "durationMs": 59613,
+        "sends": [
+          {
+            "index": 0,
+            "status": "observed",
+            "submitToAcceptedMs": 101,
+            "submitToTerminalMs": 46590,
+            "acceptedArtifactCount": 2,
+            "apiStatus": "completed",
+            "deliveryStatus": "satisfied"
+          },
+          {
+            "index": 3,
+            "status": "failed",
+            "submitToAcceptedMs": 35,
+            "submitToTerminalMs": 4081,
+            "acceptedArtifactCount": 0,
+            "apiStatus": "completed",
+            "deliveryStatus": "not_requested"
+          },
+          {
+            "index": 4,
+            "status": "blocked",
+            "acceptedArtifactCount": 0
+          }
+        ]
+      }
+    ]
+  },
+  "cumulativeAccounting": {
+    "modelAdmissions": 404,
+    "searchAdmissions": 184,
+    "settled": 588,
+    "pending": 0,
+    "promptTokens": 13449908,
+    "completionTokens": 193581,
+    "modelTokens": 13643489,
+    "modelCallsWithoutUsage": 0,
+    "knownCostCalls": 0,
+    "knownCostUsdMicros": 0,
+    "unknownCostCalls": 588,
+    "unknownReservedUsdMicros": 38240000,
+    "fareMethodCalls": 0
+  },
+  "costNote": "USD 0.88 current / USD 38.24 cumulative are unknown-cost reservations, not actual paid costs.",
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "postPauseFingerprintAudit": "backend/.demo/dsh-d6-runtime/d6-final-r24/private/post-pause-fingerprint-audit.private.json",
+  "continuation": {
+    "pausedByUser": true,
+    "hardBlockConfirmed": false,
+    "unrun": [
+      "B02-B12",
+      "E01-E04"
+    ],
+    "B01LocalEditAndRestoreNotRun": true,
+    "noRetryAfterFailure": true,
+    "newFrozenRunRequiredAfterCodeFix": true,
+    "next": "After explicit resume, finish read-only Astra direction and source review, add failure regressions, make the minimum repair, then create r25 and repeat complete frozen engineering and original 12+4 H5."
+  }
+}

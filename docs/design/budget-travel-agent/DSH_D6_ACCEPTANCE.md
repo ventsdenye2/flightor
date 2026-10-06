@@ -1,5 +1,7 @@
 # DSH D6 冻结验收与结果
 
+2026-10-07用户要求首场景测试后暂停，已暂停：r24原B01 **FAIL**，首稿101ms受理/46.590秒终态satisfied、9活动详情读完，解释35ms受理/4.081秒终态completed/not_requested但withheld，后5动作blocked，完整59.613秒，非180秒超时。局改/刷新未运行，首稿来源/全文独立评阅未完成，不能据accepted称内容通过。[失败/关闭/费用及准确续作](evidence/d6-r24-b01-failure.json)记录实际手机环境、原报告SHA、PG/会话、Astra max复现的预算范围与否定误判以及独立单价低漏检；没有本轮后续源码修复。PID退出/无监听但日志管道停止无正常关闭事件，残留锁与异常如实保留，六项指纹/历史账本不变。本批10model/4search/USD0.88未知预留，累计USD38.24未知预留（均非实付）、pending0/fare0；原B02–B12/E01–E04未运行。恢复后先收尾诊断/来源审阅，补回归/修复，再新冻结完整工程与原12+4；D6未PASS，无确认硬阻塞。
+
 2026-10-07 r24同冻结版本完整工程通过，结果/完整日志及两次固定回放原样归[工程证据](evidence/d6-r24-freeze.json)：backend139文件1609/1609（201.43秒）、真实专用PG52/52（52.12秒）、D5 fixture30/30且codeUnchanged、完整runtime14/14、observer1/1、前端116/20/37/52、根TS/helper21/21、check/build和H5/weapp构建。固定10对两批均accepted/语义一致/0模型/外呼，P50总耗时11.385→15.254ms、10.338→13.077ms；Trip.get20→19，其余仓库调用未增加。实际同文本纯检查20批×200调用定位r23/r24约0.361/0.403ms每次，新增回指约0.042ms；组装开销全部保留，不称提速，不取消保护。工程后source/backend/H5/worker/archive/历史ledger实际六项指纹一致，独立配置/账本审阅一致，当前新批零真实调用。原B01–B12/E01–E04即开始真实手机390×844 H5，页面实际screen/UA需由runner观测验证；当前未PASS，无确认硬阻塞。
 
 2026-10-07 r24已冻结：[实际指纹](evidence/d6-r24-freeze.json)对应源码fee07e5、run c7c8b0b0-feac-434e-80bc-eb26e818cbf5、schema dsh_d6_c7c8b0b0feac434e80bceb26e818cbf5、PID128072/TTY89212、API63207/H551018。source/backend/H5/worker及783文件构建归档核对一致；H5编译30.383秒/2既有警告，完整启动/构建日志为backend/output/d6/r24-isolated-server.log。当前新批零真实调用；完整backend开始，随后真实专用PG、D5、完整runtime、observer、固定回放与原B01–B12/E01–E04真实390×844 H5。v1、原journey hash、日期、单主模型/路由/max_tokens/thinking及额度授权边界不变，当前未PASS。
@@ -236,6 +238,10 @@ The D6 H5 runner uses the prior H5 harness's 390x844 viewport and records browse
 | D6-48 | read_artifact读旧记录也触发artifact_committed进度 | 移除工具输出引用重复publish，只由workspace真正提交回调通知；最终引用语义保留 | service-progress红1/1→绿1/1（5.23秒），零外呼；读取零Trip/Goal/Artifact写，后续真实fixture写仅一条通知；新完整冻结待验 |
 | D6-49 | r23修订reply在准确全程1200目标后以同额“只是整体目标”复述，却仍被精确费用拦截 | 保留公开字段边界，同字段先行权威预算锚点允许同额同币目标回指；闭合谓词防止餐饮/住宿用途借目标前缀豁免；跨字段实际费用指代仍拒绝 | Astra max完成；正例先红12项，谓词/短答再红9项；最终4文件406/406、14文件600/600、check通过，零外呼；r23原B01 FAIL不追认，新冻结待验 |
 | D6-50 | r23额外text.days2参数反馈只列text，缺少当前模型可填写字段 | 基于现有schema的受控compact文本路径返回允许字段，未知属性名/值不回显，保留参数纠正与内容修订额度 | 实际compact schema回归红→最终正式配置38/38，check/build通过；不要求模型维护server展开的activities/identity/source数组，零外呼，新冻结待验 |
+| D6-51 | r24解释用合法“整趟1200元预算目标”及“并非已经核实的费用结论”，实际excluded_precise_claim拦截 | 冻结函数确认裸整趟范围未识别；局部否定漏掉“的”，费用前缀却识别为肯定，关闭全字段预算豁免 | Astra max只读复现，未修源码；用户暂停，不盲目重发 |
+| D6-52 | r24解释新称“小吃通常单价低”，删金额后cost检查却无问题 | 无依据单位价格评价的独立漏检；否定/未知及偏好解释边界须继续区分 | 原文及无金额冻结回放确认；未修源码，不能仅修D6-51放行整段 |
+| D6-53 | 只解释现有行程却自行补新事实；内容拦截后公开提示要求用户换问法 | 复用当前accepted理由与来源的方向待研判，保留单主LLM及校验；公开错误应准确指明说明未通过校验 | 未完成方向/来源独立评阅；源码未改，暂停后续作 |
+| D6-54 | 本地验收服务通过Tee-Object管道停止后PID退出但无guards_closed、残留锁 | 已确认PID/端口退出及锁归同已退出PID，原样保留异常；后续独立服务采用可正常接收关闭信号的启动方式并保存完整日志 | 业务数据/会话/账本保留，pending0；不伪造正常关闭审计、不盲删锁，当前暂停 |
 
 2026-10-07 对r20未发布原稿的只读内容审查：两稿安排相同7项，均非accepted成果。已保存JNTO滨离宫正文描述茶屋/水上巴士，但没有开闭园或茶屋营业时刻，因此其evening建议未获得现有资料的时段核实；离线证据不足以证明与某个真实闭园时刻冲突，不编造时刻、不追认旧稿。Hoppy来源支持日落后体验，Yanaka已保存店铺时刻与afternoon不直接冲突；其余粗时段仍不是逐时钟排程/交通可行性证明。后续真实正文验收须独立审阅这些边界，不能以预算校验通过替代内容验收。未修改数据库、会话、来源、原报告或账本，未作外呼。
 | D6-15 | Taro 初始 main tab 页面尚未完成首次 ready 时，H5 原生 tabbar 可先发起另一标签的切换；native 与 custom 导航未共享页面就绪条件 | 任一 main tab 的 `useReady` 前禁用原生 H5/custom tab 点击，首次 main tab ready 后恢复原 `switchTab`；初始直达任一 main tab 可解锁，详情返回不重置门 | 已实施；session-recovery fixture 20/20、H5 build通过；真实H5复验待新run，late-hide因果仍未证实 |
