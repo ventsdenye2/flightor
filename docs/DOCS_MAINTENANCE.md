@@ -56,7 +56,7 @@ H5 首轮在会话 bootstrap 之前失败时，`--hydrate-existing --execute --c
 
 `scripts/qa-dsh-e2e-h5.cjs`使用已安装Chrome和正式H5；`--prepare --case A`只读检查，`--execute --case A --round 1`起通过真实输入框发送，`--restore`检查恢复，`--execute --localize`执行现有显式语言生成。只装载隔离用户的真实token和会话存储，不拦截API、不mock模型；每次发送保留独占attempt文件，失败后先核查已有turn，不能删除文件来盲目重发。私有transport/browser storage含token，禁止提交。脱敏报告和截图留在`output/playwright/dsh-e2e-20260924`，可分享证据选择性归入现有DSH报告目录。
 
-`backend/scripts/dsh-e2e-observation.mjs`仅观察实际DSH运行，逐执行保留JSONL时间、工具名、调用回执和session/profile；不记录Key、模型推理或网页正文，不改变执行结果。真实结果、失败原因、调用总量和平台验收结论增量维护在[既有DSH D4报告](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。只读页面、probe和正式H5多轮验收分开认定。
+`backend/scripts/dsh-e2e-observation.mjs`仅观察实际DSH运行，逐执行保留JSONL时间、工具名、调用回执和session/profile；commit仅记录提交形状计数（文本对象数、缺省地点身份数、候选/来源别名数、slot及base/hash是否省略），不记录攻略文字或原始候选/来源/evidence引用。仅accepted结果记录活动绑定及服务端补全计数；rejected只记录安全原因码。恢复记录仅保留有限计数与枚举类别，Web记录evidence引用数量、去查询参数与片段的URL；不记录Key、模型推理或网页正文，也不改变执行结果。`node --test backend/scripts/dsh-e2e-observation.test.mjs`以fixture覆盖rejected→accepted、接受态字段、恢复计数脱敏及无原始文本/Key/evidence引用。已安装旧版本observer的运行进程仍使用旧行为，其记录不得作为本合同的count-only最终证据。真实结果、失败原因、调用总量和平台验收结论增量维护在[既有DSH D4报告](design/budget-travel-agent/DSH_LIVE_2026-09-24.md)。只读页面、probe和正式H5多轮验收分开认定。
 
 ## 2026-09-24 DSH 真实双对话 runner
 
@@ -173,3 +173,15 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 2026-09-26 Planner 连续对话 UI 回归：`scripts/test-planner-chat.cjs` 执行生产 `PlannerPage` 的 JSX/交互树，离线检查有序历史消息、进行中/失败轮、草稿发送与清空、busy/停止入口、新旅行回调及中英文按钮文本；由 `npm run test:planner-chat` 单独运行，并纳入 `npm run test:conversation-progress`。它不运行 H5、微信或 Provider；实现与验证结论维护在当前 [progress](design/budget-travel-agent/progress.md)，产品交互设计仍归 [UI Experience](design/ui-experience-v1.md)。
 
 2026-09-26 B航班入口准备：verify-dsh-e2e --prepare-b检查同A的首轮真实satisfied/accepted及解释、局改、预算、恢复、英文各已有成功H5证据才创建B。只在原schema和账本，隔离身份/Trip，航班明确synthetic，去掉bookingURL，通过正式PATCH采用及独立GET核对revision。setup门禁仅临时允许该Trip PATCH；启动保留B后只读恢复既有选择，不能改选。夹具创建意图先写本地状态，重启按固定artifactID恢复，不再次搜索票价；网页规划仍须正式输入框。未实际运行前不能宣称B已验收。
+
+## 2026-10-06 D6 隔离验收与固定回放
+
+`backend/scripts/serve-dsh-d6.mjs` 只在显式指定的专用loopback数据库建立本轮独立schema、账本、身份密钥和H5输出。`--execute` 才开放业务写入；`--allow-fares --fare-env` 只使用当前明确授权的SerpAPI现有剩余额度。原DSH账本只读hash关联，不继承旧权限。`--resume --run-dir` 保留同schema、身份、账本与构建，配置/来源/构建不一致拒绝；只释放本进程成功取得的锁，不盲删残锁。
+
+`scripts/qa-dsh-d6-h5.cjs --transport <private.json> --journeys docs/design/budget-travel-agent/d6-journeys.json --journey <id> --output-dir <dir>` 从可见本地测试登录和真实输入框执行自然用户动作，逐次保存失败、页面文字、截图、network/console；不mock、不注入攻略、不自动重发。`observed` 只是动作完成，必须按照冻结标准复核正文、详情、持久化、发布与费用才能判PASS。private目录及浏览器原始材料不得提交。用途/命令与冷重启边界见[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)，12+4分母和问题台账见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
+
+`backend/scripts/d6-fixed-replay.mjs` 对归档基线及D6构建使用相同固定材料和内存仓库，不出站、不产生模型调用；比较组装耗时/仓库调用，不冒称真实用户性能。其数据与全部失败见[引用/地点行为](design/budget-travel-agent/DSH_D6_EVIDENCE_AND_LOCATIONS.md)。真实PG仍需独立test:db，不能以回放代替。
+
+D6隔离服务还使用 `backend/scripts/d6-runtime-guards.mjs` 对实际选中构建安装原D4禁止旧Planner/Runtime/Research/首次Finalizer的运行守卫；只有显式认证localization路由可调用本地化Finalizer。路径、状态和违规计数进入私有逐服务器JSONL，无header/query/key/正文。守卫目标缺失时拒绝启动；关闭恢复方法与审计。此为验收观察围栏，不增加产品LLM或修改发布权限。
+
+D6每次H5构建输出 `dist-h5-d6-<run-id>/`，含只用于隔离本地测试登录的编译常量；此目录统一gitignore，仅私有保留构建hash与审阅截图，禁止误加入代码提交。旧输出与失败仍保留，不清理用户数据。

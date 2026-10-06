@@ -1,0 +1,302 @@
+{
+  "version": 1,
+  "journeys": [
+    {
+      "id": "B01",
+      "actions": [
+        { "type": "send", "label": "Start self-ticket Tokyo plan", "message": "我和朋友11月3日至4日去东京，机票已经自己买好，不需要帮我订票。请安排两天，喜欢传统文化和当地小吃，步调轻松；全程预算总共1200元，不是每天1200元。", "assert": { "artifactTypes": ["travel_guide"] } },
+        { "type": "inspect-latest-result", "label": "Inspect the first accepted guide and every activity detail", "precondition": { "selectorsVisible": [".pl-result:visible"] } },
+        { "type": "read-page", "label": "Observe first result" },
+        { "type": "send", "label": "Explain without replanning", "message": "请解释一下第二天下午这项安排为什么适合我们。只解释现有行程，不要重新生成或修改。" },
+        { "type": "send", "label": "Edit only day two afternoon", "message": "请只调整第二天下午，让活动更安静、更有文化体验；其他日期和活动都保持原样。" },
+        { "type": "reload", "label": "Reload accepted trip" },
+        { "type": "open-latest-result", "label": "Open the latest visible itinerary after reload" },
+        { "type": "read-page", "label": "Observe restored trip" },
+        { "type": "read-each-detail", "label": "Read every accepted activity detail after edit", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "B02",
+      "actions": [
+        { "type": "send", "label": "Start self-ticket Tokyo plan", "message": "I will be in Tokyo from November 5 to 6. My flights are already booked, so please do not search for or book flights. Plan two relaxed days around quiet cultural experiences. My budget is 1,800 yuan for the entire trip, not per day.", "assert": { "artifactTypes": ["travel_guide"] } },
+        { "type": "inspect-latest-result", "label": "Inspect the first accepted guide and every activity detail", "precondition": { "selectorsVisible": [".pl-result:visible"] } },
+        { "type": "read-page", "label": "Observe first result" },
+        { "type": "send", "label": "Explain without replanning", "message": "Please explain why the second-afternoon activity fits my preferences. Explain the existing plan only; do not generate or change the itinerary." },
+        { "type": "send", "label": "Edit only day two afternoon", "message": "Please adjust only the second afternoon toward a quieter cultural experience. Keep every other day and activity unchanged." },
+        { "type": "reload", "label": "Reload accepted trip" },
+        { "type": "open-latest-result", "label": "Open the latest visible itinerary after reload" },
+        { "type": "read-page", "label": "Observe restored trip" },
+        { "type": "read-each-detail", "label": "Read every accepted activity detail after edit", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "B03",
+      "actions": [
+        { "type": "send", "label": "Request low-cost Lisbon route; separate tickets allowed", "message": "我11月3日至5日从北京去葡萄牙，想找价格尽量低的单程路线。我明确允许分开出票和自行转机，可以比较真实可查的方案；请先只查路线，不要替我选择，也不要先做游玩行程。", "assert": { "artifactTypesBySource": { "final-response": ["route_set"] } } },
+        { "type": "read-page", "label": "Observe actual route candidates" },
+        { "type": "click", "label": "Open route result", "selector": ".artifact-card--route .artifact-card__action", "ariaLabel": "Review route result" },
+        { "type": "click", "label": "Adopt an actually displayed route", "selector": ".route-workspace__action[aria-label=\"采用此航线并继续规划\"]", "operatorChoice": true },
+        { "type": "read-page", "label": "Observe adopted route in planner" },
+        { "type": "send", "label": "Plan after route adoption", "message": "请按我刚才在页面上采用的全部航段，安排11月5日至8日在葡萄牙的行程。只依据实际采用的航班时间安排行程，不要假设全球最低价。", "assert": { "artifactTypes": ["travel_guide"] } },
+        { "type": "open-latest-result", "label": "Open the latest visible itinerary" },
+        { "type": "read-page", "label": "Observe itinerary details" },
+        { "type": "read-each-detail", "label": "Read every accepted activity detail", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "B04",
+      "actions": [
+        { "type": "send", "label": "Request low-cost Lisbon route; separate tickets not allowed", "message": "I plan to travel from Beijing to Portugal between November 3 and 5 and want an inexpensive one-way route. I do not allow separate tickets or self-transfer; keep any connection on a protected through-ticket. Please search real available options first, but do not select one or make a sightseeing plan yet.", "assert": { "artifactTypesBySource": { "final-response": ["route_set"] } } },
+        { "type": "read-page", "label": "Observe actual route candidates" },
+        { "type": "click", "label": "Open route result", "selector": ".artifact-card--route .artifact-card__action", "ariaLabel": "Review route result" },
+        { "type": "click", "label": "Adopt an actually displayed route", "selector": ".route-workspace__action[aria-label=\"采用此航线并继续规划\"]", "operatorChoice": true },
+        { "type": "read-page", "label": "Observe adopted route in planner" },
+        { "type": "send", "label": "Plan after route adoption", "message": "Please plan my Portugal trip from November 5 through 9 using every segment of the route I just adopted in the UI. Keep the connection policy unchanged and do not claim the route is the global cheapest.", "assert": { "artifactTypes": ["travel_guide"] } },
+        { "type": "open-latest-result", "label": "Open the latest visible itinerary" },
+        { "type": "read-page", "label": "Observe itinerary details" },
+        { "type": "read-each-detail", "label": "Read every accepted activity detail", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "B05",
+      "actions": [
+        { "type": "send", "label": "Plan five self-ticket days in Kyoto", "message": "我11月3日至7日在京都，机票和到达安排都已经确定，不需要查票。请为我安排连续五天的文化与饮食体验，日程不必排得太满。", "assert": { "artifactTypes": ["travel_guide"] } },
+        { "type": "inspect-latest-result", "label": "Inspect the first accepted guide and every activity detail", "precondition": { "selectorsVisible": [".pl-result:visible"] } },
+        { "type": "read-page", "label": "Observe complete itinerary" },
+        { "type": "send", "label": "Change one time slot only", "message": "请只把第三天下午改成更轻松的文化活动；其他日期、活动、顺序和已经确认的出行信息都不要改。" },
+        { "type": "reload", "label": "Reload edited itinerary" },
+        { "type": "open-latest-result", "label": "Open the latest visible itinerary after reload" },
+        { "type": "read-page", "label": "Observe restored itinerary" },
+        { "type": "read-each-detail", "label": "Read every accepted activity detail after edit", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "B06",
+      "actions": [
+        { "type": "send", "label": "Plan ordered Portugal cities", "message": "我11月3日至9日在葡萄牙，已经自己安排好国际交通，不用查航班。请按里斯本在前、波尔图在后的顺序安排多日行程，文化、美食为主，购物少一些；不要颠倒城市顺序。" },
+        { "type": "read-page", "label": "Observe ordered-city response" },
+        { "type": "send", "label": "Reduce shopping preference", "message": "请减少购物相关安排，其他已经确认的城市顺序和出行条件保持不变。若这段多城市行程超出支持范围，请先直接说明，不要在高成本操作后才告知。" },
+        { "type": "read-page", "label": "Observe adjusted response" },
+        { "type": "open-latest-result", "label": "Open itinerary details if multi-city planning produced an accepted guide", "optional": true },
+        { "type": "read-each-detail", "label": "Read every accepted activity detail when supported", "optional": true }
+      ]
+    },
+    {
+      "id": "B07",
+      "actions": [
+        { "type": "send", "label": "Read current budget", "message": "请先告诉我当前这趟旅行记录的预算是多少；这里只是查询，不要替我修改预算。" },
+        { "type": "read-page", "label": "Observe budget answer" },
+        { "type": "send", "label": "Set whole-trip budget", "message": "请把整趟旅行的总预算设为2000元，按全程总额理解，不是每天2000元。" },
+        { "type": "send", "label": "Confirm the same budget", "message": "再确认一次，这趟旅行总预算就是2000元。" },
+        { "type": "send", "label": "Ask about ambiguous San Jose", "message": "请帮我安排去圣何塞的旅行。我还没有说明是哪一个圣何塞，也没有指定国家或地区。" },
+        { "type": "read-page", "label": "Observe whether location clarification is requested" },
+        { "type": "send", "label": "Clarify location only", "message": "我指的是美国加利福尼亚州的圣何塞。请先确认这个地点是否明确，再告诉我还需要哪些行程信息。" },
+        { "type": "read-page", "label": "Observe clarified-location response" }
+      ]
+    },
+    {
+      "id": "B08",
+      "actions": [
+        { "type": "send", "label": "Ask per-day budget without changing it", "message": "我想知道当前预算的口径是整趟总额还是每天金额。先回答这个问题，不要修改任何预算。" },
+        { "type": "send", "label": "Clarify per-day amount and ask total", "message": "我说的是每天500元，不是全程500元。请说明目前能否确定全程总额；如果缺少天数或其他信息，请先问我，不要承诺预算一定够用。" },
+        { "type": "send", "label": "Ask about ambiguous San Diego", "message": "另外我想安排一次去圣地亚哥的旅行，但还没有说是哪个国家或地区的圣地亚哥。" },
+        { "type": "read-page", "label": "Observe whether location clarification is requested" },
+        { "type": "send", "label": "Clarify location", "message": "我指的是美国加利福尼亚州的圣迭戈。请先确认地点，不要假设每天预算就是全程预算。" },
+        { "type": "read-page", "label": "Observe clarified-location response" }
+      ]
+    },
+    {
+      "id": "B09",
+      "actions": [
+        { "type": "send", "label": "Start a two-day Tokyo plan and leave time to cancel", "awaitTerminal": false, "message": "请为我安排11月3日至4日的东京两日文化行程。机票已自备，不用查票；我喜欢安静的地方和传统文化，节奏放慢一些。" },
+        { "type": "stop", "label": "Stop the active planning turn" },
+        { "type": "read-page", "label": "Observe stop confirmation" },
+        { "type": "send", "label": "Change preference and continue", "message": "刚才我改变了偏好：请减少热门拥挤景点，多安排安静的传统文化体验，再继续完成11月3日至4日的东京两日行程。机票仍由我自备。", "assert": { "artifactTypes": ["travel_guide"] } },
+        { "type": "read-page", "label": "Observe resumed itinerary" },
+        { "type": "open-latest-result", "label": "Open the final accepted itinerary", "precondition": { "selectorsVisible": [".pl-result:visible"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "read-each-detail", "label": "Read every accepted activity detail", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "B10",
+      "actions": [
+        { "type": "send", "label": "Start a multi-day Kyoto plan and leave time to cancel", "awaitTerminal": false, "message": "请先开始规划我11月3日至7日的京都文化与饮食行程。交通已自行安排，不查航班。我目前设想全程总预算9000元，购物尽量少。" },
+        { "type": "stop", "label": "Stop the active planning turn" },
+        { "type": "read-page", "label": "Observe stop confirmation" },
+        { "type": "send", "label": "Change total budget after stopping", "message": "请把刚才的预算从9000元改为7500元，仍然是整趟旅行总额，不是每天金额。购物保持少量。" },
+        { "type": "send", "label": "Continue under updated conditions", "message": "请按刚更新的全程7500元预算和少购物偏好，继续完成11月3日至7日京都行程。不要沿用停止前的旧预算或旧研究结果。", "assert": { "artifactTypes": ["travel_guide"] } },
+        { "type": "read-page", "label": "Observe resumed itinerary" },
+        { "type": "open-latest-result", "label": "Open the final accepted itinerary", "precondition": { "selectorsVisible": [".pl-result:visible"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "read-each-detail", "label": "Read every accepted activity detail", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "B11",
+      "actions": [
+        { "type": "send", "label": "Create an accepted self-ticket Tokyo trip", "message": "我11月3日至4日在东京，机票已自备，不用查航班。请安排一份两天、轻松的文化行程；预算按整趟旅行1500元理解，不是每天。", "assert": { "selectorsVisible": [".pl-result:visible"], "artifactTypes": ["travel_guide"] } },
+        { "type": "open-latest-result", "label": "Open the visible Planner result", "precondition": { "selectorsVisible": [".pl-result:visible"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] }, "assert": { "selectorsVisible": [".ux-published .ux-trip-overview"] } },
+        { "type": "read-page", "label": "Observe accepted trip from Planner", "assert": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "read-each-detail", "label": "Read every activity detail from Planner entry", "precondition": { "selectorsVisible": [".ux-published"] } },
+        { "type": "click", "label": "Return from activity details to trip overview", "selector": ".ux-published .ux-header .ux-icon-button", "ariaLabel": "返回行程概览", "precondition": { "selectorsVisible": [".ux-published .ux-activity"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-overview"] } },
+        { "type": "click", "label": "Exit trip overview to Planner", "selector": ".ux-published .ux-header .ux-icon-button", "ariaLabel": "返回上一页", "precondition": { "selectorsVisible": [".ux-published .ux-overview"] }, "waitFor": { "selectorsVisible": [".pl-result:visible"] } },
+        { "type": "open-latest-result", "label": "Re-enter from the visible Planner result", "precondition": { "selectorsVisible": [".pl-result:visible"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "reload", "label": "Reload visible accepted trip", "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "click", "label": "Request first English localization", "selector": ".ux-published .ux-locale-toggle", "waitFor": { "selectorsVisible": [".ux-published .ux-prepare-locale"] }, "assert": { "selectorsVisible": [".ux-published .ux-prepare-locale"] } },
+        { "type": "click", "label": "Generate the English publication through the visible control", "selector": ".ux-published .ux-prepare-locale", "awaitHttp": { "method": "POST", "pathSuffix": "/localization", "status": 200, "firstOnly": true }, "timeoutMs": 240000, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] }, "assert": { "selectorsHidden": [".ux-published .ux-prepare-locale"] } },
+        { "type": "read-each-detail", "label": "Read every English activity detail", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "click", "label": "Switch the localized trip back to Chinese", "selector": ".ux-published .ux-locale-toggle", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-trip-overview"] } },
+        { "type": "read-page", "label": "Verify Chinese publication is restored", "assert": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "cold-restart", "label": "Cold restart and authenticated recovery of this same trip", "timeoutMs": 180000, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "read-each-detail", "label": "Read every Chinese activity detail after restart", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "click", "label": "Return from activity details to trip overview after restart", "selector": ".ux-published .ux-header .ux-icon-button", "ariaLabel": "返回行程概览", "precondition": { "selectorsVisible": [".ux-published .ux-activity"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-overview"] } },
+        { "type": "click", "label": "Exit trip overview to Planner after restart", "selector": ".ux-published .ux-header .ux-icon-button", "ariaLabel": "返回上一页", "precondition": { "selectorsVisible": [".ux-published .ux-overview"] }, "waitFor": { "selectorsVisible": [".pl-result:visible"] } },
+        { "type": "click", "label": "Open My Trips from the visible native tab", "selector": "taro-tabbar *", "textExact": "行程", "waitFor": { "selectorsVisible": [".trips-production .lb-cloud-trip"] } },
+        { "type": "open-trip-workspace-artifact", "label": "Open this run's accepted guide from its My Trips workspace", "artifactType": "travel_guide", "precondition": { "selectorsVisible": [".trips-production .lb-cloud-trip"] } },
+        { "type": "read-each-detail", "label": "Read every activity detail from My Trips entry", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "reload", "label": "Reload the My Trips guide entry", "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "read-page", "label": "Verify My Trips guide survives reload", "assert": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "B12",
+      "actions": [
+        { "type": "send", "label": "Search actual one-way flight options", "message": "Please search currently available one-way flights from Beijing to Lisbon departing November 3. I want to compare the real results before choosing; do not create a sightseeing plan or select a flight for me.", "assert": { "selectorsVisible": [".artifact-card__action"], "artifactTypesBySource": { "turn-progress": ["flight_search"] } } },
+        { "type": "read-page", "label": "Observe actual flight search results", "assert": { "selectorsVisible": [".artifact-card__action"] } },
+        { "type": "click", "label": "Open flight search results", "selector": ".artifact-card__action", "precondition": { "selectorsVisible": [".artifact-card__action"] }, "waitFor": { "selectorsVisible": [".pf-results-list"] } },
+        { "type": "click", "label": "Open the operator-selected displayed offer", "selector": ".pf-detail-button", "operatorChoice": true, "precondition": { "selectorsVisible": [".pf-detail-button"] }, "waitFor": { "selectorsVisible": [".flight-detail"] } },
+        { "type": "read-page", "label": "Observe offer details before adoption", "assert": { "selectorsVisible": [".flight-detail"] } },
+        { "type": "click", "label": "Adopt the displayed offer in the UI", "selector": ".flight-detail__adopt .ux-primary", "precondition": { "selectorsVisible": [".flight-detail__adopt .ux-primary"] }, "waitFor": { "selectorsVisible": [".flight-decision__actions .ux-primary"] } },
+        { "type": "read-page", "label": "Observe adopted flight in planner", "assert": { "selectorsVisible": [".flight-decision__actions .ux-primary"] } },
+        { "type": "click", "label": "Plan using the adopted flight", "selector": ".flight-decision__actions .ux-primary", "precondition": { "selectorsVisible": [".flight-decision__actions .ux-primary"] }, "awaitTerminal": true, "assert": { "selectorsVisible": [".pl-result:visible"], "artifactTypes": ["travel_guide"] } },
+        { "type": "read-page", "label": "Observe first itinerary result", "assert": { "selectorsVisible": [".pl-result:visible"] } },
+        { "type": "open-latest-result", "label": "Open itinerary details", "precondition": { "selectorsVisible": [".pl-result:visible"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] }, "assert": { "selectorsVisible": [".ux-published .ux-trip-overview"] } },
+        { "type": "read-page", "label": "Observe accepted trip details", "assert": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "read-each-detail", "label": "Read every activity detail before localization", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "click", "label": "Switch to English and inspect localization readiness", "selector": ".ux-published .ux-locale-toggle", "waitFor": { "selectorsVisible": [".ux-published .ux-prepare-locale"] }, "assert": { "selectorsVisible": [".ux-published .ux-prepare-locale"] } },
+        { "type": "click", "label": "Create the first English localization", "selector": ".ux-published .ux-prepare-locale", "awaitHttp": { "method": "POST", "pathSuffix": "/localization", "status": 200, "firstOnly": true }, "timeoutMs": 240000, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] }, "assert": { "selectorsHidden": [".ux-published .ux-prepare-locale"] } },
+        { "type": "read-each-detail", "label": "Read every localized activity detail", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "click", "label": "Switch the localized trip back to Chinese", "selector": ".ux-published .ux-locale-toggle", "waitFor": { "selectorsVisible": [".ux-published .ux-trip-overview"] } },
+        { "type": "read-page", "label": "Observe Chinese trip details after localization", "assert": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "reload", "label": "Reload Chinese trip details", "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "read-page", "label": "Observe localized recovery", "assert": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "cold-restart", "label": "Cold restart and authenticated recovery of adopted-flight trip", "timeoutMs": 180000, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "E01",
+      "actions": [
+        { "type": "send", "label": "Explore a broad city preference", "message": "我最近想找一个安静一点、有文化氛围的城市旅行，但还没有决定国家、日期或具体城市。你能先给我一些适合继续了解的方向吗？" },
+        { "type": "read-page", "label": "Observe exploratory recommendations" },
+        { "type": "send", "label": "Ask a continuous follow-up", "message": "你提到的方向里，哪一个更适合慢慢逛博物馆和历史街区？我还没有决定出发，也没有要你保存行程。" },
+        { "type": "read-page", "label": "Observe follow-up response" }
+      ]
+    },
+    {
+      "id": "E02",
+      "actions": [
+        { "type": "send", "label": "State an initial travel idea", "message": "I was thinking about a relaxed culture-focused visit to Kyoto sometime next spring. I have not settled the exact dates, and I am only exploring ideas for now." },
+        { "type": "read-page", "label": "Observe initial response" },
+        { "type": "send", "label": "Change destination and preference", "message": "I have changed my mind about the destination. Please compare Kanazawa instead, with traditional neighborhoods and local food as priorities. This is still exploratory; do not save a Kyoto or Kanazawa itinerary yet." },
+        { "type": "read-page", "label": "Observe changed-intent response" }
+      ]
+    },
+    {
+      "id": "E03",
+      "actions": [
+        { "type": "send", "label": "Plan a reasonable unfamiliar destination", "message": "请为我安排2026年11月3日至6日塔林四日行程，想了解老城历史、当地饮食和安静的文化空间。机票我会自己处理；如果有关键安排需要我决定，请先问清楚。", "assert": { "artifactTypes": ["travel_guide"] } },
+        { "type": "read-page", "label": "Observe Tallinn response" },
+        { "type": "open-latest-result", "label": "Open accepted Tallinn itinerary", "precondition": { "selectorsVisible": [".pl-result:visible"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "read-each-detail", "label": "Read every accepted Tallinn activity detail", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    },
+    {
+      "id": "E04",
+      "actions": [
+        { "type": "send", "label": "Ask for a Tallinn recommendation only", "message": "请评价塔林是否适合慢节奏文化旅行，并给我一个建议。我还没有选择目的地，也没有让你开始规划或保存攻略。" },
+        { "type": "read-page", "label": "Observe recommendation" },
+        { "type": "send", "label": "Ask a read-only explanation", "message": "请解释一下你首推的城市为什么适合慢节奏文化旅行。先只解释，不要开始规划。" },
+        { "type": "read-page", "label": "Observe read-only explanation" },
+        { "type": "send", "label": "Explicitly choose the discussed destination", "message": "我明确选择刚才讨论的塔林作为目的地。请先记下这个选择，但先不要保存或生成攻略。" },
+        { "type": "read-page", "label": "Observe explicit selection" },
+        { "type": "send", "label": "Now request a dated itinerary", "message": "现在请为我安排2026年11月3日至6日塔林四日文化行程，机票自理，重点放在历史与当地饮食。", "assert": { "artifactTypes": ["travel_guide"] } },
+        { "type": "read-page", "label": "Observe planning result" },
+        { "type": "open-latest-result", "label": "Open accepted Tallinn itinerary", "precondition": { "selectorsVisible": [".pl-result:visible"] }, "waitFor": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } },
+        { "type": "read-each-detail", "label": "Read every accepted Tallinn activity detail", "precondition": { "selectorsVisible": [".ux-published .ux-publication-state--accepted"] } }
+      ]
+    }
+  ],
+  "inputs": {
+    "description": "Non-executable bilingual reference. Each messages array corresponds in order to that journey's send actions; the runner executes only journeys.actions. User text stays natural and contains no tool names, protocol fields, references, or internal intent vocabulary.",
+    "B01": { "messages": [
+      { "zh": "我和朋友11月3日至4日去东京，机票已经自己买好，不需要帮我订票。请安排两天，喜欢传统文化和当地小吃，步调轻松；全程预算总共1200元，不是每天1200元。", "en": "My friend and I will be in Tokyo from November 3 to 4. Our flights are already booked, so please do not book flights. Plan two relaxed days around traditional culture and local food. Our budget is 1,200 yuan for the whole trip, not per day." },
+      { "zh": "请解释一下第二天下午这项安排为什么适合我们。只解释现有行程，不要重新生成或修改。", "en": "Please explain why the second-afternoon activity suits us. Explain the existing itinerary only; do not generate or change it." },
+      { "zh": "请只调整第二天下午，让活动更安静、更有文化体验；其他日期和活动都保持原样。", "en": "Please adjust only the second afternoon toward a quieter cultural experience. Keep all other dates and activities unchanged." }
+    ] },
+    "B02": { "messages": [
+      { "zh": "我11月5日至6日在东京。机票已经买好，不需要查票。请安排两天轻松、安静的文化体验；全程预算总额1800元，不是每天1800元。", "en": "I will be in Tokyo from November 5 to 6. My flights are already booked, so please do not search for flights. Plan two relaxed days around quiet cultural experiences. My budget is 1,800 yuan for the entire trip, not per day." },
+      { "zh": "请解释一下第二天下午的活动为什么符合我的偏好，只解释，不要重新规划。", "en": "Please explain why the second-afternoon activity fits my preferences. Explain only; do not replan." },
+      { "zh": "请只把第二天下午调整为更安静的文化体验，其余日程保持不变。", "en": "Please adjust only the second afternoon to a quieter cultural experience; keep the rest of the itinerary unchanged." }
+    ] },
+    "B03": { "messages": [
+      { "zh": "我11月3日至5日从北京去葡萄牙，想找价格尽量低的单程路线。我明确允许分开出票和自行转机，可以比较真实可查的方案；请先只查路线，不要替我选择，也不要先做游玩行程。", "en": "I will travel from Beijing to Portugal between November 3 and 5 and want an inexpensive one-way route. I explicitly allow separate tickets and self-transfer. Please compare real available options only; do not choose one or plan sightseeing yet." },
+      { "zh": "请按我刚才在页面上采用的全部航段，安排11月5日至8日在葡萄牙的行程。不要假设全球最低价。", "en": "Please plan Portugal from November 5 through 8 using every segment of the route I adopted in the UI. Do not assume it is the global lowest fare." }
+    ] },
+    "B04": { "messages": [
+      { "zh": "我11月3日至5日从北京去葡萄牙，想找便宜的单程路线。我不允许分开出票或自行转机，只接受有联程保障的转机；请先查真实方案，不要替我选择或安排游玩。", "en": "I plan to travel from Beijing to Portugal between November 3 and 5 and want an inexpensive one-way route. I do not allow separate tickets or self-transfer; only consider a protected through-ticket. Please search real options first, but do not select one or plan sightseeing yet." },
+      { "zh": "请按我刚才采用的全部航段，安排11月5日至9日在葡萄牙的行程。保持中转权限不变，也不要声称是全球最低价。", "en": "Please plan Portugal from November 5 through 9 using every segment of the route I adopted. Keep the connection policy unchanged and do not claim a global lowest fare." }
+    ] },
+    "B05": { "messages": [
+      { "zh": "我11月3日至7日在京都，交通已安排好，不用查票。请安排五天文化与饮食体验，日程轻松。", "en": "I will be in Kyoto from November 3 through 7. My transport is arranged, so do not search for flights. Plan five relaxed days focused on culture and food." },
+      { "zh": "请只把第三天下午改成更轻松的文化活动，其他日期、活动、顺序和出行信息不变。", "en": "Please change only the third afternoon to a more relaxed cultural activity. Keep all other dates, activities, order, and travel details unchanged." }
+    ] },
+    "B06": { "messages": [
+      { "zh": "我11月3日至9日在葡萄牙，国际交通已安排好，不查航班。请按里斯本在前、波尔图在后的顺序安排多日行程，以文化和美食为主，少安排购物。", "en": "I will be in Portugal from November 3 through 9. International transport is arranged, so do not search for flights. Plan multiple days in this order: Lisbon first, then Porto, focused on culture and food with little shopping." },
+      { "zh": "请减少购物相关安排，保持城市顺序和已确认的出行条件不变。如果行程超出支持范围，请在高成本操作前说明。", "en": "Please reduce shopping-related activities while preserving the city order and confirmed travel conditions. If this itinerary is outside the supported scope, tell me before any costly work." }
+    ] },
+    "B07": { "messages": [
+      { "zh": "请告诉我当前旅行记录的预算是多少。只查询，不要修改。", "en": "Please tell me the budget currently recorded for this trip. This is read-only; do not change it." },
+      { "zh": "请把整趟旅行的总预算设为2000元，是全程总额，不是每天2000元。", "en": "Please set the budget to 2,000 yuan for the entire trip, not 2,000 yuan per day." },
+      { "zh": "再确认一次，这趟旅行总预算就是2000元。", "en": "Please confirm once more that the total budget for this trip is 2,000 yuan." },
+      { "zh": "请帮我安排去圣何塞的旅行。我还没说明是哪一个圣何塞，也没说国家或地区。", "en": "Please help me plan a trip to San Jose. I have not specified which San Jose, country, or region." },
+      { "zh": "我指的是美国加利福尼亚州的圣何塞。请确认地点是否明确，并告诉我还需要哪些行程信息。", "en": "I mean San Jose, California, in the United States. Please confirm the location and tell me what travel details you still need." }
+    ] },
+    "B08": { "messages": [
+      { "zh": "请先说明当前预算是整趟总额还是每天金额，不要修改预算。", "en": "Please tell me whether the current budget is a whole-trip total or a per-day amount. Do not change it." },
+      { "zh": "我指的是每天500元，不是全程500元。请说明全程总额能否确定；缺少天数时先问我，不要承诺够用。", "en": "I mean 500 yuan per day, not 500 yuan for the whole trip. Tell me whether the total can be determined; ask for the trip length if needed and do not promise it will be enough." },
+      { "zh": "我还想安排一次去圣地亚哥的旅行，但没说是哪个国家或地区的圣地亚哥。", "en": "I also want to plan a trip to San Diego, but I have not specified which country or region." },
+      { "zh": "我指的是美国加利福尼亚州的圣迭戈。请先确认地点，不要把每天预算当作全程预算。", "en": "I mean San Diego, California, in the United States. Please confirm the location and do not treat my per-day budget as a whole-trip total." }
+    ] },
+    "B09": { "messages": [
+      { "zh": "请开始规划11月3日至4日东京两日文化行程。机票自备，不用查票；我喜欢安静和传统文化，节奏慢一些。", "en": "Please start a two-day Tokyo culture itinerary for November 3 to 4. I have my own flights, so do not search. I prefer quiet traditional culture at a slower pace." },
+      { "zh": "我改变了偏好：少安排热门拥挤景点，多安排安静的传统文化体验，再继续完成两日行程；机票仍自备。", "en": "My preference has changed: include fewer crowded highlights and more quiet traditional culture, then continue the two-day itinerary. I still have my own flights." }
+    ] },
+    "B10": { "messages": [
+      { "zh": "请开始规划11月3日至7日京都文化与饮食行程。交通已自行安排，不查航班；购物少一些，全程预算先按9000元。", "en": "Please start a Kyoto culture and food itinerary for November 3 through 7. My transport is arranged, so do not search flights. Keep shopping limited; my initial whole-trip budget is 9,000 yuan." },
+      { "zh": "停止后请把预算从9000元改为7500元，仍是整趟旅行总额而非每天金额。", "en": "After stopping, change the budget from 9,000 to 7,500 yuan for the whole trip, not per day." },
+      { "zh": "请按更新后的全程7500元预算和少购物偏好继续完成行程，不要沿用旧预算或旧研究。", "en": "Please continue under the updated 7,500-yuan whole-trip budget and limited-shopping preference. Do not reuse the old budget or research." }
+    ] },
+    "B11": { "messages": [
+      { "zh": "我11月3日至4日在东京，机票自备，不用查航班。请安排两天轻松的文化行程；预算是整趟1500元，不是每天。", "en": "I will be in Tokyo from November 3 to 4. My flights are arranged, so do not search. Plan two relaxed cultural days; my budget is 1,500 yuan for the entire trip, not per day." }
+    ], "manualSteps": ["REQUIRED FOR PASS: cold-restart only the isolated D6 backend after the accepted trip is saved. Keep the same isolated database schema, D6 usage ledger, local-test identity key, built H5, and run directory; resume that run directory, then use the visible UI to reopen the saved trip, switch to English and back to Chinese, and capture both details views. Preserve restart logs and the existing attempt history; do not replay the user turn. Any failure or unavailable control remains a recorded failure, not a skipped PASS step."] },
+    "B12": { "messages": [
+      { "zh": "请查询11月3日北京飞里斯本的当前单程航班报价。我想先看真实结果再自己选择；暂时不要安排游玩，也不要替我采用航班。", "en": "Please search currently available one-way flights from Beijing to Lisbon departing November 3. I want to review the real results before choosing. Do not plan sightseeing or select a flight for me yet." }
+    ], "manualSteps": ["REQUIRED FOR PASS: if and only if a real displayed offer is available, adopt it through the visible flight detail control, continue planning from the adopted workspace, and preserve the observed flight identity/revision. Open the accepted trip from both the planner result and the visible My Trips entry, switch locale in trip details, and inspect recovery. Then cold-restart only the isolated D6 backend using the same isolated database schema, D6 usage ledger, local-test identity key, built H5, and run directory; resume that directory and repeat the visible My Trips/detail recovery check. Preserve restart logs and attempts. If search/adoption/accepted delivery is unavailable, record the failure; never substitute a synthetic itinerary or flight, and do not report PASS with these steps incomplete."] },
+    "E01": { "messages": [
+      { "zh": "我想找一座安静、有文化氛围的城市，但还没决定国家、日期或城市。先给我一些值得了解的方向。", "en": "I am looking for a quiet city with a strong cultural atmosphere, but I have not chosen a country, date, or city. Please suggest a few directions to explore." },
+      { "zh": "你提到的方向里，哪一个更适合慢慢逛博物馆和历史街区？我还没决定出发，也不要保存行程。", "en": "Which of those places is better for a slow visit to museums and historic neighborhoods? I have not decided to travel, so do not save an itinerary." }
+    ] },
+    "E02": { "messages": [
+      { "zh": "我在考虑明年春天去京都做一次轻松的文化旅行，日期还没定，目前只是了解想法。", "en": "I am considering a relaxed culture-focused visit to Kyoto next spring. I have not chosen exact dates and am only exploring ideas." },
+      { "zh": "我改主意了，想先了解金泽而不是京都，重点看传统街区和当地饮食。这仍是探索，不要保存任何行程。", "en": "I have changed my mind and want to explore Kanazawa instead of Kyoto, focusing on traditional neighborhoods and local food. This is still exploratory; do not save an itinerary." }
+    ] },
+    "E03": { "messages": [
+      { "zh": "请安排2026年11月3日至6日塔林四日行程，了解老城历史、当地饮食和安静的文化空间。机票我自理；需要我决定的重要事项请先问清楚。", "en": "Please plan four days in Tallinn from November 3 to 6, 2026, focused on old-town history, local food, and quiet cultural spaces. I will arrange flights myself; ask me about any important undecided details." }
+    ] },
+    "E04": { "messages": [
+      { "zh": "请评价塔林是否适合慢节奏文化旅行，并给我一个建议。我还没选择目的地，也没让你开始规划或保存攻略。", "en": "Please assess whether Tallinn suits a slow-paced cultural trip and give me a recommendation. I have not chosen a destination and am not asking you to plan or save an itinerary yet." },
+      { "zh": "请解释你首推的城市为什么适合慢节奏文化旅行。只解释，不要开始规划。", "en": "Please explain why your top recommendation suits a slow-paced cultural trip. Just explain; do not start planning." },
+      { "zh": "我明确选择刚才讨论的塔林。请先记下这个选择，但暂时不要保存或生成攻略。", "en": "I explicitly choose Tallinn, the destination we just discussed. Please note my choice, but do not save or generate an itinerary yet." },
+      { "zh": "现在请安排2026年11月3日至6日塔林四日文化行程，机票自理，重点放在历史与当地饮食。", "en": "Now please plan four cultural days in Tallinn from November 3 to 6, 2026. I will arrange flights myself; focus on history and local food." }
+    ] }
+  }
+}

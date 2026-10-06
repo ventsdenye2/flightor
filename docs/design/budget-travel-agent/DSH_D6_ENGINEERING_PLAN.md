@@ -44,7 +44,7 @@
 
 ## 续作记录
 
-起点：f2ec6c1；新工作树干净。待完成：定向修复、依赖/隔离数据库、页面基线及全部本版验收。后续每个里程碑在验收报告中追加命令、失败、进程与下一步，禁止以续作记录代替通过。
+初始检查点（历史）：f2ec6c1；当时新工作树干净。当时待完成：定向修复、依赖/隔离数据库、页面基线及全部本版验收。后续每个里程碑在验收报告中追加命令、失败、进程与下一步，禁止以续作记录代替通过。
 
 2026-10-06平台范围：用户在CLI实际确认服务端口关闭后明确要求先验证H5，暂不验收微信内部内容。不开启IDE安全设置；H5的12+4与所有领域/持久化/D5门槛不变，微信与真机不作本轮通过声明。
 
@@ -52,4 +52,14 @@
 
 专用 PostgreSQL 仍在 `127.0.0.1:58896/flightor_d6_validation`，用户名 `d6_test`；不重启旧服务。真实页面基线 `backend/.demo/dsh-d6-runtime/baseline-b01c` 使用归档 DSH backend、当前必要 UI 修复。B01 首次请求已到达真实模型，却因参数校验未保存攻略；后续解释、编辑均无 accepted 基底。报告/截图和全部历史初始化失败保留。其后续 turn 的旧 runner 终态耗时出现负值，相关指标无效，需用按本次提交关联的 runner 修后新批测量，不能重写原报告或宣称改前成功。
 
-待完成：D6-09 城市缓存真实 PG 红绿回归、D6-10 跨语言基底准备与公开说明、冷重启身份读取和 runner 关联修复；收敛后运行 `npm --prefix backend run check` / build / test / test:db、runtime 和完整 D5 30。再按小批本地提交冻结源码、构建和配置，完整 H5 12+4；真实 B11/B12 冷重启、双入口和首次本地化仍不得跳过。私有 manifest/账本/登录密钥不提交。
+较早检查点的待办（历史，完成结果见后续记录）：D6-09 城市缓存真实 PG 红绿回归、D6-10 跨语言基底准备与公开说明、冷重启身份读取和 runner 关联修复；收敛后运行 `npm --prefix backend run check` / build / test / test:db、runtime 和完整 D5 30。再按小批本地提交冻结源码、构建和配置，完整 H5 12+4；真实 B11/B12 冷重启、双入口和首次本地化仍不得跳过。私有 manifest/账本/登录密钥不提交。
+
+2026-10-06 13:40 Asia/Shanghai 追加检查点（上段为较早待办）：本地已有52c669e、dd3c8af两提交。r6后端1206项、真实PG51项、runtime14项及D5完整30/30且源码不变已通过。D6-09/10实现与相应工程回归完成；JSONv2城市字段兼容红绿测和真实Kyoto身份/缓存复验完成。原B01真实页面复跑发现URL误填candidate/source字段、反馈不足，D6-12已补红绿回归，5文件28项通过。首轮无accepted，保留0成果、15model/5search/6fetch的失败；首成果未出现，不把终态耗时算完成性能。接下来构建新迭代服务、原B01复跑并继续修复，之后再冻结最终源码/构建/config执行全部H5及最终工程检查。微信范围按用户指令暂缓，不降低H5分母。上一iteration非TTY停止没有finally，保留原锁而不盲删；最终恢复必须确认正常关闭和同身份/账本。
+
+同日后续检查点：本地HEAD `c0e125c`，增加 `88a86e2`（引用/JSONv2）与 `c0e125c`（安全错误/失败重试）两个提交，未push。r7后端1211、真实PG51、runtime14、D5完整30/30且源码不变，以及前端conversation/presentation通过。r7真实B01在发送前导航空白，零model/search/fare；初始页面ready条件两组10次均正常，未gate的1/10持续空白原件保留。TTY服务30185已正常finally关闭，原PID57288退出、锁释放、guard关闭记录1条、API58005/H556293关闭；不盲删旧非TTY残锁，不把此当same-run恢复通过。
+
+续作仍在本任务目录、专用PG58896：收敛 D6-14 Goal字段写前围栏，保持合法legacy declare/resume setter兼容与DSH零新增绑定读取；当前定向14项通过，但最初TypeScript check-r8因Set字段类型不匹配失败，修后再check。客户端首main tab生命周期就绪前的导航保护与可选同浏览器自然澄清/实际UI选择控制正在实现。各owner源码/docs同步后统一build，建立新 `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r8`、原B01复跑，随后收敛再冻结全工程/12+4。私有只读审阅器为 `backend/.demo/d6/review-dsh-run.mjs`，通过本命令进程的 `D6_REVIEW_DATABASE_URL` 指定专用库，可审查同run browser JSON；它不自动semantic PASS。没有硬阻塞或最终H5通过声明。
+
+2026-10-06 本次续作只读核对：远端 `git ls-remote origin refs/heads/codex/dsh-backend` 仍为 `f2ec6c1`；本任务HEAD仍为`c0e125c`，main仅用户两份配置修改。专用PG当前数据库名为`flightor_d6_validation`。D6-14类型修正和legacy可信绑定定向5文件55/55及check已通过，去重内部绑定与清理结束scope后的复验正在完成。H5导航门覆盖实际native/custom，session20/20与构建通过，真实ungated十次检查待r8。runner正在完善同页自然澄清、当前Trip/accepted攻略双入口和全部活动详情；预算路线需以正式response的`route_set`引用验收，不能把仅支持flight/guide的进度引用误作全部成果。observer受控fixture1/1通过、零真实Provider调用。以上仍是迭代证据，完整冻结H5批次尚未通过。
+
+2026-10-06 15:04 Asia/Shanghai 真实迭代检查点：D6-14字段范围本地提交`1c44bbe`包含pending/partial finish仍保留可信scope的回归，5文件56/56和check通过；r8进程的已加载构建在这项微修之前，不能用作最终冻结版。r8独立API64033/H564423，TTY exec52044（尚在运行），schema/密钥/账本均私有保存。实际ungated十次导航9可见/1超时，首Plan缺tabbar_page分类，保护不足、继续诊断；导航自身零业务写/Provider调用，不拿之后B01共享账本计数充作导航费用。原B01报告`B01-2026-10-06T07-00-51-947Z`首提交受理91ms/终态127086ms、无首可读成果，后续动作阻塞。21model/13search/18fetch、0fare，34已结算/0pending，691018输入及9659输出token；实际费用均未知、预留USD2.40。92条证据为76 no_body/7 http_error/7 available/2 invalid_url。首次与两次修复均候选event超出已接受activity/seasonal/practical范围，plain Error被隐藏为DSH_TOOL_FAILURE，正在做受控前置字段反馈与分账回归，不自动修改分类、删候选或扩大Goal。失败和所有模型/搜索回执保留，不能宣布PASS；修复后新迭代再收敛冻结全套。

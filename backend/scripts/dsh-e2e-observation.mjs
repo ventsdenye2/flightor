@@ -12,6 +12,8 @@ const code = value => typeof value === 'string' ? value.match(/^[A-Za-z][A-Za-z0
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value) ? value : {}
 const array = value => Array.isArray(value) ? value : []
 const reference = value => uuid(value) ?? hash(value)
+const candidateAlias = value => typeof value === 'string' && /^C-[a-f0-9]{10}-\d+$/u.test(value)
+const sourceAlias = value => typeof value === 'string' && /^s1\.[a-f0-9]{10}\.[a-f0-9]{10}\.\d+$/u.test(value)
 function safeUrl(value) {
   try {
     const url = new URL(value)
@@ -28,12 +30,29 @@ function revisionReasons(value) {
 }
 function commitInput(value) {
   const args = object(value)
+  const days = array(args.days), items = days.flatMap(day => array(object(day).items).map(object))
+  const candidates = array(args.candidates).map(object)
+  const supportingRefs = array(args.supportingRefs)
   return { baseGuideId: uuid(args.baseGuideId), expectedContentHash: hash(args.expectedContentHash),
+    submissionShape: 'submitted_model_input',
+    itemTextCount: items.filter(item => item.text && typeof item.text === 'object' && !Array.isArray(item.text)).length,
+    omittedCityIdCount: days.filter(day => !identifier(object(day).cityId)).length,
+    candidateLocationIdMissingCount: candidates.filter(candidate => !identifier(candidate.locationId)).length,
+    candidateAliasSelectionCount: items.filter(item => candidateAlias(item.candidateRef)).length
+      + supportingRefs.filter(candidateAlias).length,
+    sourceAliasSelectionCount: candidates.flatMap(candidate => array(candidate.sourceRefs)).filter(sourceAlias).length
+      + supportingRefs.filter(sourceAlias).length,
     replaceSlots: array(args.replaceSlots).slice(0, 100).flatMap(value => {
       const slot = object(value)
       return Number.isInteger(slot.day) && slot.day > 0 && slot.day <= 365 && ['morning', 'afternoon', 'evening', 'flexible'].includes(slot.slot)
         ? [{ day: slot.day, slot: slot.slot }] : []
-    }) }
+    }), serverBaseIdOmitted: !uuid(args.baseGuideId), serverContentHashOmitted: !hash(args.expectedContentHash) }
+}
+function recoverySnapshot(value) {
+  const recovery = object(value)
+  const failure = ['arguments', 'prerequisite', 'content', 'system'].includes(recovery.lastFailure) ? recovery.lastFailure : undefined
+  return { calls: number(recovery.calls), argumentCorrections: number(recovery.argumentCorrections),
+    contentAttempts: number(recovery.contentAttempts), ...(failure ? { lastFailure: failure } : {}) }
 }
 function meterInput(value) {
   const args = object(value), usage = object(args.usage)
@@ -46,10 +65,20 @@ function meterInput(value) {
 function toolOutput(name, args, value) {
   const result = object(value), error = object(result.error)
   const base = { ok: typeof result.ok === 'boolean' ? result.ok : undefined, errorCode: code(error.code) }
-  if (name === 'commit_travel_guide') return { ...base, status: code(result.status), artifactId: uuid(object(result.artifact).id),
-    guideContentHash: hash(result.guideContentHash), deliveryStatus: code(object(result.completion).status), revisionReasons: revisionReasons(result) }
+  if (name === 'commit_travel_guide') {
+    const submitted = commitInput(args)
+    const accepted = result.status === 'accepted' && Boolean(uuid(object(result.artifact).id))
+    return { ...base, status: code(result.status), artifactId: uuid(object(result.artifact).id),
+      guideContentHash: hash(result.guideContentHash), deliveryStatus: code(object(result.completion).status), revisionReasons: revisionReasons(result),
+      submissionShape: submitted,
+      publicationOutcome: accepted ? { accepted: true, activityBindingCount: array(result.activityBindings).length,
+        serverFilledCityIdCount: submitted.omittedCityIdCount, serverFilledCandidateLocationIdCount: submitted.candidateLocationIdMissingCount,
+        serverSuppliedBaseAndHash: submitted.replaceSlots.length > 0 && submitted.serverBaseIdOmitted && submitted.serverContentHashOmitted }
+        : { accepted: false },
+      recovery: recoverySnapshot(error.recovery ?? result.recovery) }
+  }
   if (name === '__record_web') return { ...base, webTool: ['web_search', 'web_fetch'].includes(object(args).tool) ? args.tool : undefined,
-    evidenceRefs: array(result.evidenceRefs).map(reference).filter(Boolean).slice(0, 100),
+    evidenceRefCount: array(result.evidenceRefs).length,
     urls: array(result.urls).map(safeUrl).filter(Boolean).slice(0, 100) }
   if (name === '__web_search') return { ...base, urls: array(result.sources).map(source => safeUrl(object(source).url)).filter(Boolean).slice(0, 100) }
   if (name === '__web_fetch') return { ...base, url: safeUrl(result.url), statusCode: number(result.statusCode) }

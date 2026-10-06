@@ -56,6 +56,8 @@ E01 模糊但合理的“想找安静的文化城市”推荐与连续追问；E
 
 2026-10-06 平台范围调整：用户明确“暂时不用验收微信小程序内的内容，先验证H5”。本轮真实交互验收只覆盖H5，不开启微信开发者工具CLI安全服务端口；保留weapp构建工程检查，但微信与真机均标记未验收。A族、H5的12固定+4探索分母、同版冻结及内容/持久化/费用标准保持不变。
 
+2026-10-06 H5 action contract clarification: the natural-language inputs and 12+4 denominator remain unchanged. Generation actions now assert the Artifact type already specified by each frozen outcome; B03/B04 route discovery expects `flight_search`, followed by `travel_guide` after UI adoption. Accepted guide journeys open the final visible result and inspect every activity detail sheet; B06 inspection is conditional because an accurate early unsupported-scope response is also within its rubric. `--interactive` is separate diagnostic evidence: only completed `responded` turns with no delivery attempt may pause for an operator's real UI choice/reply, and the resulting report is `interactive-assisted`, never an unassisted PASS. Same-page route-aware reload/restart logic and scoped authenticated readback are runner changes still pending final H5 verification; they do not relax recovery expectations.
+
 ## 批次及问题台账（追加）
 
 当前基线 f2ec6c1；本轮已执行下述迭代测试，真实页面与最终冻结批次待运行。付费授权已明确：D6 DeepSeek API 金额不限，逐次计量；其他供应商不继承历史不限。无已完成PASS声明。
@@ -65,6 +67,7 @@ E01 模糊但合理的“想找安静的文化城市”推荐与连续追问；E
 | D6-01 | withGoalIntent允许省略，commit schema/persona/说明却强制重复内部Goal字段 | 同步输入面与固定Goal测试 | 已实施，最终验收待运行 |
 | D6-02 | 局部编辑要求模型传baseGuideId/hash；准备快照未集中冻结 | 服务端绑定初始base及Trip，冲突拒绝/CAS回归 | 已实施；PG发现的会话内部/公开ID映射已修复，完整真实PG51项通过；最终UI待验证 |
 | D6-03 | 公开规则/修复提示禁预算目标金额 | 精确目标确认允许，预算保证继续拒绝 | 已实施，定向通过并继续检查边界 |
+| D6-15 | Taro 初始 main tab 页面尚未完成首次 ready 时，H5 原生 tabbar 可先发起另一标签的切换；native 与 custom 导航未共享页面就绪条件 | 任一 main tab 的 `useReady` 前禁用原生 H5/custom tab 点击，首次 main tab ready 后恢复原 `switchTab`；初始直达任一 main tab 可解锁，详情返回不重置门 | 已实施；session-recovery fixture 20/20、H5 build通过；真实H5复验待新run，late-hide因果仍未证实 |
 | D6-07 | `update_trip_context` 的空 patch 返回 `changed: false`，但仍重建同 scope 的 evidence store 并复位 source alias sequence；旧模型引用可能映射到后续不同证据 | 同 generation 在 setter 前后记录相同内容、不同 URL，要求 source alias 不重复，并断言 Trip version 与 accepted base 不变 | 修复及定向绿测通过；最终冻结验收待运行 |
 | D6-10 | 准备阶段按当前语言选取任一旧 accepted guide，而发布 CAS 将同 conversation/version 最新任一语言 accepted guide 视为当前基底，可能错误允许回退到旧版或在提交时无故冲突 | 同作用域新英/旧中组合不得把旧中文 guide 当编辑基底；新guide补齐中文 accepted后必须绑定新guide | 准备规则已实施，定向7/7通过；最终冻结验收待运行 |
 | D6-08 | 隔离运行守卫以独占新建模式打开固定审计路径，冷重启沿用同目录时会触发 EEXIST，无法恢复服务 | 同一文件追加带 guard-session UUID/PID 的审计；安装、关闭、再次安装保留原字节及各次计数 | 已修复，受控 probe 9 项通过（零网络/模型）；真实 B11/B12 仍待完整验收 |
@@ -85,6 +88,8 @@ D6-12 追加完整定向5文件/28项通过（`output/d6/source-reference-green.
 
 2026-10-06 r7 工程回归：引用字段反馈与JSONv2修复后的后端全量133文件/1211项通过（185.28秒，`output/d6/backend-unit-r7.log`），真实专用PostgreSQL 11文件/51项通过（52.70秒，`output/d6/postgres-r7.log`），官方runtime14/14通过（9.42秒，`output/d6/runtime-r7.log`）。均为工程验证，不能替代最终H5批次。B01 r7报告 `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r7/evidence/B01-2026-10-06T05-49-13-863Z.json` 在登录后进入规划页时输入框隐藏，全部旅程动作阻塞，model/search/fare零调用；单次零turn复现可正常进入，间歇导航问题仍在定位，不宣称根因或修复完成。原工作区仅保留用户两份配置修改，历史账本SHA256仍为 `3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126`。
 
+r7追加：D5完整30/30且 `codeUnchanged=true`（[完整报告](evidence/d5-2026-10-06T06-06-07-970Z.json)），规划自动恢复后21/21，fixture P50 1584ms/P95 2583ms；不作真实页面性能结论。导航无初始ready门槛时10次有1次持续空白，两个带初始Plan/composer/nonshade条件的独立10次批次均可见、业务写零次；runner加入相同条件，仍不宣称快速启动导航的产品竞态已修。TTY服务r7在PID57288收到Ctrl+C后实测 `server.lock` 不存在、guard审计新增一条 `guards_closed`、原API/H5端口均关闭且PID退出；与之前非TTY失败不同，finally正常完成。由于后续源码变化，本run不作同版冷恢复证据，B11/B12仍须新冻结run沿用身份/账本/构建完整重启。
+
 已实现准备快照、模型单项文字输入、绑定base/hash、同轮Goal省略、scoped C/source引用、单一已选城市补齐，以及发布短事务的基底条件。实际状态由本轮测试决定；协议见 [ADR0029](../../adr/0029-dsh-prepared-submission.md)。
 
 service 级回归 `backend/src/agent/dsh/d6-controlled-update.test.ts` 使用官方 fixture worker，在同一用户请求中先以真实 `trip_context_update` intent 更新全程预算并得到 `satisfied`，再用真实 `travel_guide` intent 提交 compact 攻略。初始故障是在首个攻略提交的 alias/evidence 检查之前返回 `GOAL_INTENT_CONFLICT`：Trip update adapter 更新快照与 evidence scope 后仍保留已满足的 Goal binding。修复后，已确认 setter 保存其 delivery 并结束活动绑定，再按同一可信 scope/generation 和已确认准备版本派生独立尝试身份；后续攻略仍须提供真实 intent。回归 3/3 通过：独立 Goal/request identity 与 context version、旧 source alias 拒绝而新 alias 接受、缺 intent 拒绝、pending setter 不推进、日期冲突导致的失败 setter 不推进均有断言；不重贴 base id/hash/slot-edit字段，不调用付费 Provider。验证命令 `backend npm test -- src/agent/dsh/d6-controlled-update.test.ts`。
@@ -96,6 +101,10 @@ service 级回归 `backend/src/agent/dsh/d6-controlled-update.test.ts` 使用官
 | 第二批90 | 81通过/9失败：runtime依赖缺失4、准备测试fixture3、错误分类2 | D6目录按原lockfile离线安装runtime；修fixture及分类；保留原失败 |
 | 第三批57 | 55通过/2失败：准备fixture缺checkedAt、旧service anyOf断言 | 补合法fixture；验证新schema无需内部base/hash/goalRef |
 | TypeScript初批 | 可选字段exactOptionalPropertyTypes错误 | 修可选条件赋值/预算null；继续复验 |
+
+2026-10-06 D6-14 Trip update Goal 字段围栏：可写字段由 repository 校验后的 Goal 参数绑定到当前 Goal/run/context version；lean wrapper 复用已验证 Goal，不增加 setter 侧 Goal 查询。legacy `declare_goal`/`resume_goal` 的实际 owner/Trip/current-generation run 激活路径也建立同一 scope，保持其合法 setter 兼容；仅 active Goal 字段伪造、无绑定或身份不匹配仍失败关闭，Trip 激活后换版本也拒绝旧 scope。超范围 patch 在 Trip 写入/回执前以受控 `GOAL_FIELD_SCOPE_MISMATCH` 拒绝；空 patch 不写，显式 null/空数组仍可作为清除操作。DSH setter推进到新准备版本、cancel/route-generation 替换 active Goal 或 run 真正结束时清理 scope；`finish_goal` 对仍 running 的 pending/partial run 保留scope，让当前目标可继续修复。唯一的内部 scope 不进入公开 completion。
+
+修前红测为本轮新增的 legacy declare/resume 正例：`npm test -- src/agent/tools/core.test.ts` 2 failed/14 passed（拒绝发生在现有字段围栏，日志 `output/d6/d6-14-legacy-red.log`）。上一轮原始超范围patch缺陷的红测据交接记录曾运行，但本工作树没有其原始输出日志，不能由本轮兼容性红测代替。初次字段围栏批次与最终55项记录见前述日志。新增 pending retry 回归：legacy Goal fields=`budget,notes`，尚无写入时 `finish_goal` 返回 verification pending 且 Run 仍 running，随后 budget setter 成功；`backend npm test -- src/agent/tools/core.test.ts` 17/17，日志 `output/d6/d6-14-finish-scope-green.log`；后续 `backend npm run check` 通过，日志 `output/d6/d6-14-finish-scope-check.log`。未运行 build、全量、真实 PostgreSQL 或最终 H5，因此不代表冻结验收通过。
 
 上述为迭代检查，不是冻结最终全量。初始页面基线尚不可运行：已有独立PG端口58789不监听；Docker只读查询无返回；正在准备隔离替代数据库，不以普通环境问题停工。旧账本984条、1 pending保持不变；新D6授权账本独立并记录历史指纹，不清空/沿用旧权限。
 
