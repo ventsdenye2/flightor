@@ -46,7 +46,8 @@ describe('DSH durable Goal request identity', () => {
 })
 
 describe('DSH service with the official worker and loop', () => {
-  it.each(['completed', 'output_limit'] as const)('keeps the publication cause at repair exhaustion, with %s worker result', async workerResult => {
+  it.each([['completed', 'publication'], ['output_limit', 'publication'], ['completed', 'event'], ['output_limit', 'event']] as const)(
+    'keeps the last %s result and %s cause at repair exhaustion', async (workerResult, failure) => {
     const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-publication-limit-'))
     const sessions = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [{ text: 'Unused fixture' }] })
     const receipts: any[] = []
@@ -57,10 +58,12 @@ describe('DSH service with the official worker and loop', () => {
         sources: [{ url: 'https://www.gotokyo.org/en/spot/15/index.html', title: 'Temple culture',
           snippet: 'Explore the temple grounds, traditional architecture and the historic neighborhood culture.' }]
       } }, 'source', signal) as { evidenceRefs: string[] }
-      const input = { intent: { kind: 'travel_guide', parameters: { questions: ['Culture'], researchTypes: ['activity'],
-        requiredEvidenceTypes: ['activity'], maxResults: 1, maxCities: 1, allowPartial: true } },
+      const input = { intent: { kind: 'travel_guide', parameters: { questions: ['Culture'], researchTypes: [failure === 'event' ? 'event' : 'activity'],
+        requiredEvidenceTypes: [failure === 'event' ? 'event' : 'activity'], maxResults: 1, maxCities: 1, allowPartial: true } },
         candidates: [{ key: 'temple', sourceRefs: source.evidenceRefs, title: 'Tokyo temple',
-          summary: 'Explore the temple grounds and traditional architecture.', category: 'activity' }],
+          summary: 'Explore the temple grounds and traditional architecture.', category: failure === 'event' ? 'event' : 'activity',
+          ...(failure === 'event' ? { temporalEvidence: { from: '2026-11-03', to: '2026-11-03',
+            sourceRef: source.evidenceRefs[0], quote: 'PRIVATE_UNSUPPORTED_OCCURRENCE_QUOTE' } } : {}) }],
         days: [{ day: 1, kind: 'visit', theme: 'Temple culture', items: [{ candidateKey: 'temple', timeOfDay: 'afternoon',
           planningNote: 'Explore temple culture.', text: { name: 'Temple visit',
             introduction: 'Explore the temple grounds and traditional architecture.',
@@ -69,8 +72,9 @@ describe('DSH service with the official worker and loop', () => {
           overview: 'The walk takes 15 minutes through the historic neighborhood.', days: [{ day: 1, theme: 'Temple culture' }] } }
       receipts.push(await request.execute('commit_travel_guide', input, 'commit-1', signal))
       const { intent: _intent, candidates: _candidates, ...repair } = input
-      receipts.push(await request.execute('commit_travel_guide', repair, 'commit-2', signal))
-      receipts.push(await request.execute('commit_travel_guide', repair, 'commit-3', signal))
+      const corrected = failure === 'event' ? { ...repair, candidates: input.candidates } : repair
+      receipts.push(await request.execute('commit_travel_guide', corrected, 'commit-2', signal))
+      receipts.push(await request.execute('commit_travel_guide', corrected, 'commit-3', signal))
       return { reply: 'PRIVATE_RAW_REPLY', reason: workerResult === 'completed' ? 'completed' : 'error',
         ...(workerResult === 'output_limit' ? { errorCode: 'MODEL_OUTPUT_LIMIT' } : {}), calls: 4, resumed: false, cancelled: false }
     })
@@ -92,12 +96,16 @@ describe('DSH service with the official worker and loop', () => {
         createFinalizer: vi.fn(() => { throw Error('Unexpected finalizer') }) })
       const result = await service.runTurn({ requestId: 'publication-limit', generationId: 'publication-limit-generation',
         tripId: trip.id, conversationId: conversation.id, message: 'Plan a cultural day in Tokyo.', locale: 'en' })
-      expect(receipts.slice(0, 2).map(receipt => receipt.error.publicationIssues)).toEqual([
+      if (failure === 'publication') expect(receipts.slice(0, 2).map(receipt => receipt.error.publicationIssues)).toEqual([
         [{ code: 'format' }], [{ code: 'format' }]
+      ])
+      else expect(receipts.slice(0, 2).map(receipt => receipt.error.revisionCode)).toEqual([
+        'candidate_temporal_evidence_invalid', 'candidate_temporal_evidence_invalid'
       ])
       expect(receipts[2]).toMatchObject({ ok: false, error: { code: 'DSH_REPAIR_LIMIT', recovery: {
         calls: 2, contentAttempts: 2, lastFailure: 'content' } } })
-      expect(result.reply).toBe(publicFailureReply(workerResult === 'completed' ? 'publication' : 'output_limit', 'en'))
+      expect(result.reply).toBe(publicFailureReply(workerResult === 'completed' ? failure === 'event' ? 'evidence' : 'publication' : 'output_limit',
+        'en', workerResult === 'completed' && failure === 'event' ? 'candidate_temporal_evidence_invalid' : undefined))
       expect(result.delivery).toMatchObject({ status: 'partial', artifactIds: [], missing: ['accepted_publication'] })
       const assistant = (await conversations.listMessages(conversation.id)).at(-1)!
       expect(assistant.metadata.commit_recovery).toMatchObject({ calls: 2, contentAttempts: 2, lastFailure: 'content' })

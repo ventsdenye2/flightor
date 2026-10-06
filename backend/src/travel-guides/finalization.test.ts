@@ -142,6 +142,20 @@ describe('integrated main Agent publication', () => {
     ['English whole-trip budget without target label', 'The whole-trip budget is CNY 1200.', false],
     ['Chinese whole-trip budget without target label', '全程预算1200元人民币。', false],
     ['explicit whole-trip total without a target label', '全程预算为1200元人民币。', false],
+    ['short reply target with local-spending caveat', '1200元是整趟行程的总预算目标，实际花费以当地为准。', false],
+    ['short overview target with local-spending caveat', '1200元为整趟行程的总预算目标，实际支出以当地为准。', false],
+    ['full r18 seq114 reply field', '两天的东京轻松版安排已经准备好了（11月3日至4日，传统文化＋当地小吃，节奏放缓）。\n\n第一天集中在浅草下町：上午从雷门进仲见世通，参拜浅草寺、边走边尝现烤仙贝与人形烧；下午安排一场和菓子制作＋抹茶体验，坐着动手、暖身又应季。\n\n第二天以上野—谷中的老街小吃为主：上午逛阿美横丁，现切水果串、干货和街头小吃都适合边走边吃；下午转到谷中银座，从日暮里侧的“夕やけだんだん”台阶下行，老街的惣菜店与和菓子店很适合慢慢试吃。\n\n另外给了一个备选：11月1日至15日新宿御苑正在办菊花坛展，是很有传统味的秋季花展，如果第二天想换个口味，可以用它替换谷中银座的下午，不要两处都排满。\n\n两点提醒：日本不少老铺商店街的店铺有固定休息日，出发前请再确认一次当天营业情况；行程里未包含往返机票（你们已自行购买），1200元是整趟行程的总预算目标，实际花费以当地为准。\n\n要不要我按这个思路再压缩成更省钱的版本，或者换成第一天谷中、第二天浅草？', false],
+    ['full r18 seq114 overview field', '这份两天东京行程围绕“传统文化＋当地小吃”，步调刻意放松：第一天走浅草下町，以浅草寺与仲见世通为主线，搭配一场和菓子与抹茶的动手体验；第二天聚焦上野阿美横丁与谷中银座两处老街商店街，以边走边吃的方式感受下町风情，并保留一个新宿御苑菊花坛展作为可选替换。两天节奏都不赶，适合和朋友一起慢慢逛。行程中的活动均为参考性安排，门票、营业时间与预约情况请以官方最新信息为准；1200元为整趟行程的总预算目标，实际支出以当地为准。', false],
+    ['local qualifier before a confirmed expense', '1200元是整趟行程的总预算目标，实际花费以当地为准，但住宿费用已确认1200元。', true],
+    ['official qualifier before a confirmed ticket price', '门票、营业时间与预约情况请以官方最新信息为准；1200元为整趟行程的总预算目标，但门票票价已确认1200元。', true],
+    ['official reference after an affirmed admission amount', '全程预算目标是1200元，门票费用就是这个金额但营业时间请以官方最新信息为准。', true],
+    ['official qualifier after an affirmed ticket amount', '全程预算目标1200元，门票费用就是这个金额请以官方最新信息为准。', true],
+    ['official qualifier after an affirmed general expense', '全程预算目标1200元，费用作为本次花费以官方最新信息为准。', true],
+    ['official reference after an affirmed ticket price', '全程预算目标是1200元，票价就是这个金额不过营业时间请以官方最新信息为准。', true],
+    ['official reference before a later affirmed cost', '门票信息请以官方最新信息为准但费用就是这个金额，全程预算目标1200元。', true],
+    ['local reference does not negate a preceding affirmed expense', '全程预算目标1200元，实际费用就是这个金额（实际花费以当地为准）。', true],
+    ['local reference does not negate an affirmed suffix', '全程预算目标1200元，实际花费以当地为准并已确定为此金额。', true],
+    ['local qualifier does not excuse an affirmative daily budget', '1200元是整趟行程的总预算目标，实际花费以当地为准，但这也作为每日预算。', true],
     ['local daily and cost negations', '全程预算目标为1200元（非每日预算、亦非已确认花费）。', false],
     ['negated cost claim in parentheses', 'The whole-trip budget target is CNY 1200 (not confirmed costs).', false],
     ['negated plural cost after predicate', 'The whole-trip budget target is CNY 1200 (actual costs are not confirmed).', false],
@@ -164,6 +178,12 @@ describe('integrated main Agent publication', () => {
     })
     if (shouldReject) expect(result).toContain('excluded_precise_claim')
     else expect(result).not.toContain('excluded_precise_claim')
+  })
+  it('keeps budget guarantees rejected after a local-spending caveat', () => {
+    const content = '1200元是整趟行程的总预算目标，实际花费以当地为准，但保证不会超支。'
+    expect(publicProseProblems([content], 'zh', {
+      languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).toContain('budget_guarantee')
   })
   it.each([
     ['mismatched_amount', { amount: 1300, currency: 'CNY', scope: 'trip' }, '全程预算目标是1500元，实际费用仍待核实。'],
@@ -237,6 +257,38 @@ describe('integrated main Agent publication', () => {
     expect(publicProseProblems([content], 'zh', {
       languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
     })).toContain('budget_guarantee')
+  })
+  it.each([
+    ['zh', '全程预算目标1200元肯定足够，实际花费以当地为准。'],
+    ['zh', '全程预算目标为1200元足够，实际花费以当地为准。'],
+    ['en', 'The whole-trip budget target of CNY 1200 is enough, actual costs remain unknown.']
+  ] as const)('rejects a %s sufficiency guarantee across the stated target amount', (locale, content) => {
+    expect(publicProseProblems([content], locale, {
+      languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).toContain('budget_guarantee')
+  })
+  it.each([
+    '全程预算目标1200元，已确认花费以当地为准。',
+    '全程预算目标1200元，已核实费用以当地为准。',
+    '全程预算目标1200元，已确认票价以官方最新信息为准。',
+    '全程预算目标1200元亦是已支付费用以当地为准。',
+    '全程预算目标1200元亦是费用以当地为准。'
+  ])('does not mask a confirmed or paid cost before a deferral suffix: %s', content => {
+    expect(publicProseProblems([content], 'zh', {
+      languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).toContain('excluded_precise_claim')
+  })
+  it.each([
+    '已确认全程预算目标1200元，实际花费以当地为准。',
+    '已确认全程预算目标1200元（实际花费以当地为准）。',
+    '全程预算目标1200元，未确认花费以当地为准。',
+    '全程预算目标1200元是否足够尚未确认，实际花费以当地为准。',
+    '全程预算目标1200元，门票价格与预约情况请以官方最新信息为准。',
+    '全程预算目标1200元，门票、交通费和实际花费以当地为准。'
+  ])('preserves target confirmation and cautious cost uncertainty: %s', content => {
+    expect(publicProseProblems([content], 'zh', {
+      languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).toEqual([])
   })
   it.each(['already_cancelled', 'cancel_before_save', 'trip_changed', 'flight_changed'] as const)('does not save after %s', async failure => {
     const f = await application(), controller = new AbortController()

@@ -1,0 +1,293 @@
+{
+  "version": 1,
+  "capturedAt": "2026-10-06T17:37:09.983Z",
+  "runId": "eadf455a-5523-4a79-8e4c-834061446ceb",
+  "schema": "dsh_d6_eadf455a55234a798e4c834061446ceb",
+  "journey": "B01",
+  "result": "failed",
+  "startedAt": "2026-10-06T17:12:28.769Z",
+  "finishedAt": "2026-10-06T17:14:31.057Z",
+  "durations": {
+    "flowMs": 122289,
+    "submitToAcceptedMs": 108,
+    "submitToTerminalMs": 117213
+  },
+  "trip": {
+    "id": "01a11233-e57a-764f-9e47-fe3faf1a0ff8",
+    "version": 1,
+    "versionCount": 2,
+    "budget": {
+      "scope": "trip",
+      "amount": 1200,
+      "currency": "CNY"
+    },
+    "travelDays": 2,
+    "destination": "Tokyo",
+    "cityCode": "TYO",
+    "dates": [
+      "2026-11-03",
+      "2026-11-04"
+    ]
+  },
+  "conversationId": "01a11233-e59a-73a2-b837-788539253017",
+  "generationId": "01a11233-e5ba-7165-a8e4-3c2f2233cedb",
+  "goals": [
+    {
+      "id": "01a11233-f3f1-7084-8073-5d862b60bf8d",
+      "kind": "trip_context_update",
+      "status": "satisfied",
+      "revision": 1
+    },
+    {
+      "id": "01a11235-328f-7658-a254-bf40dec3ad43",
+      "kind": "travel_guide",
+      "status": "pending",
+      "revision": 0
+    }
+  ],
+  "runs": [
+    {
+      "id": "01a11233-f40a-7174-80f2-02800669b661",
+      "goalId": "01a11233-f3f1-7084-8073-5d862b60bf8d",
+      "status": "satisfied",
+      "contextVersion": 0,
+      "revision": 3
+    },
+    {
+      "id": "01a11235-329c-744f-8449-b0bf2c3ad83e",
+      "goalId": "01a11235-328f-7658-a254-bf40dec3ad43",
+      "status": "failed",
+      "contextVersion": 1,
+      "revision": 1
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "73dcd77f-99c1-45cb-a3bd-b0697bc1afb5",
+      "type": "research",
+      "contextVersion": 1,
+      "findingCount": 5,
+      "sourceCount": 5,
+      "payloadKeys": [
+        "id",
+        "type",
+        "brief",
+        "findings",
+        "warnings",
+        "createdAt",
+        "queryCount",
+        "schemaVersion"
+      ]
+    },
+    {
+      "id": "b859fcde-ace8-4be5-9022-16d2d313e1f2",
+      "type": "research",
+      "contextVersion": 1,
+      "findingCount": 5,
+      "sourceCount": 5,
+      "payloadKeys": [
+        "id",
+        "type",
+        "brief",
+        "findings",
+        "warnings",
+        "createdAt",
+        "queryCount",
+        "schemaVersion"
+      ]
+    }
+  ],
+  "publication": {
+    "acceptedGuides": 0,
+    "travelGuideArtifacts": 0,
+    "delivery": "partial",
+    "missing": [
+      "accepted_publication"
+    ],
+    "downstreamActionsBlocked": 8
+  },
+  "commits": [
+    {
+      "sequence": 251,
+      "code": "INVALID_ARGUMENTS",
+      "revisionReasons": [],
+      "presentationProblems": [],
+      "itemTextCount": 0,
+      "omittedCityIdCount": 3
+    },
+    {
+      "sequence": 259,
+      "code": "DSH_GUIDE_NEEDS_REVISION",
+      "revisionReasons": [
+        "duplicate_day_or_activity_key"
+      ],
+      "presentationProblems": [],
+      "itemTextCount": 5,
+      "omittedCityIdCount": 3
+    },
+    {
+      "sequence": 267,
+      "code": "DSH_GUIDE_NEEDS_REVISION",
+      "revisionReasons": [
+        "duplicate_day_or_activity_key"
+      ],
+      "presentationProblems": [],
+      "itemTextCount": 5,
+      "omittedCityIdCount": 3
+    },
+    {
+      "sequence": 275,
+      "code": "DSH_GUIDE_NEEDS_REVISION",
+      "revisionReasons": [
+        "guide_event_date_evidence_missing",
+        "excluded_precise_claim"
+      ],
+      "presentationProblems": [
+        {
+          "code": "excluded_precise_claim",
+          "fieldPath": "text.reply"
+        },
+        {
+          "code": "excluded_precise_claim",
+          "fieldPath": "text.overview"
+        },
+        {
+          "code": "excluded_precise_claim",
+          "fieldPath": "days.1.items.1.text.introduction"
+        }
+      ],
+      "itemTextCount": 5,
+      "omittedCityIdCount": 2
+    },
+    {
+      "sequence": 283,
+      "code": "DSH_GUIDE_NEEDS_REVISION",
+      "revisionReasons": [
+        "guide_event_date_evidence_missing",
+        "excluded_precise_claim"
+      ],
+      "presentationProblems": [
+        {
+          "code": "excluded_precise_claim",
+          "fieldPath": "text.reply"
+        },
+        {
+          "code": "excluded_precise_claim",
+          "fieldPath": "text.overview"
+        }
+      ],
+      "itemTextCount": 5,
+      "omittedCityIdCount": 2
+    },
+    {
+      "sequence": 291,
+      "code": "DSH_REPAIR_LIMIT",
+      "revisionReasons": [],
+      "presentationProblems": [],
+      "itemTextCount": 5,
+      "omittedCityIdCount": 2
+    }
+  ],
+  "budget": {
+    "entries": 32,
+    "byKind": {
+      "model": {
+        "entries": 21,
+        "receipts": 21,
+        "pending": 0,
+        "reservedUsdMicros": 840000,
+        "usage": {
+          "promptTokens": 747641,
+          "completionTokens": 14952,
+          "totalTokens": 762593
+        },
+        "usageMissing": 0
+      },
+      "search": {
+        "entries": 11,
+        "receipts": 11,
+        "pending": 0,
+        "reservedUsdMicros": 1320000,
+        "usage": null,
+        "usageMissing": 11
+      }
+    },
+    "pending": 0,
+    "actualUsd": "unknown"
+  },
+  "legacyLedger": {
+    "sha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+    "entries": 984,
+    "pendingAtFreeze": 1,
+    "hashesAgree": true,
+    "directOriginalPathAvailable": true,
+    "verification": "root independently rehashed original dsh-backend ledger after closure; bytes unchanged"
+  },
+  "runtimeCopy": {
+    "dist": {
+      "files": 783,
+      "sha256": "45eee817d9c381356195a99c9771c91410a58baff14772c09250aefc6052b6d0"
+    },
+    "frozen": {
+      "files": 783,
+      "sha256": "45eee817d9c381356195a99c9771c91410a58baff14772c09250aefc6052b6d0"
+    },
+    "identical": true,
+    "launcherAlgorithm": "sorted recursive file walk; hash normalized relative path then bytes"
+  },
+  "closure": {
+    "pidExists": false,
+    "ports": [
+      {
+        "port": 55171,
+        "connected": false
+      },
+      {
+        "port": 51443,
+        "connected": false
+      }
+    ],
+    "locksAbsent": true,
+    "closedAt": "2026-10-06T17:18:38.56Z",
+    "forbiddenCalls": 0
+  },
+  "sources": {
+    "pgSnapshot": "private/b01-scoped-readback.private.json",
+    "originalCommits": "private/b01-original-commits.private.json",
+    "session": "private/dsh-data/sessions/_no-cwd/d77da0e2-a9a0-4bad-8159-bf0e1a600124/session.v4.jsonl",
+    "observer": "private/observation/executions/0a399d4d-4fe2-4c54-9a44-181f5f00c4a5.jsonl",
+    "sha256": {
+      "report": "e7d75a1cd877147d46eac6812f5bd4795dc7959893a1396270e09e848ea515de",
+      "pgSnapshot": "46575d8c6652b04f375fa148a1e629003445d7657071e2304c3bd248dfa6f3bf",
+      "originalCommits": "b17897534cbb29e8b1fc4ddbd1694fd857944565f9d3e36824e4b64fa003e2a5",
+      "session": "9d390253a171d5e16d26bf0ff3c13ed188f018be1e74fd502fcc847147f9d06f",
+      "observer": "b3b94113b5f4f21e05827a3faacf8b6daca0fb073b80d1e03c4ff43919f63247"
+    }
+  },
+  "sourceShape": {
+    "tripRows": 2,
+    "conversationMessages": 2,
+    "researchArtifacts": 2,
+    "pgResearchAuditRows": 0,
+    "observedCommits": 6,
+    "sessionCommitCalls": 6
+  },
+  "calls": {
+    "reservedUsd": 2.16,
+    "search": 11,
+    "actualUsd": "unknown",
+    "model": 21,
+    "fare": 0,
+    "webFetchToolAttempts": 11,
+    "pending": 0
+  },
+  "scope": "failed real H5 B01; no accepted guide or downstream edit/restore validation; original files preserved",
+  "contentReview": {
+    "screenshotOpened": true,
+    "notAcceptedRetrospectively": true,
+    "eventEveningSlotUnsupported": true,
+    "dshTemporalEvidenceNotExpressible": true,
+    "eventDateSourceAvailable": true,
+    "budgetCautionFalsePositive": true
+  }
+}

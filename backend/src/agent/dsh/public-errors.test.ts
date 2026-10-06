@@ -45,6 +45,19 @@ describe('public DSH failure classification', () => {
     expect(en).toContain('Check the saved results in your trip')
     expect(`${zh} ${en}`).not.toMatch(/candidate_key_unavailable|private-candidate|DSH_GUIDE_NEEDS_REVISION/i)
   })
+  it.each(['candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid', 'guide_event_date_evidence_missing'])(
+    'explains the occurrence-date evidence gap for %s without asking for unrelated preferences', cause => {
+      const stage = classifyDshFailure('DSH_GUIDE_NEEDS_REVISION', { code: cause })!
+      expect(stage).toBe('evidence')
+      const zh = publicFailureReply(stage, 'zh', cause)
+      const en = publicFailureReply(stage, 'en', cause)
+      expect(zh).toContain('活动日期')
+      expect(zh).toContain('本轮未发布新的攻略')
+      expect(en).toContain('event dates')
+      expect(en).toContain('No new guide was published')
+      expect(`${zh} ${en}`).not.toMatch(/temporalEvidence|sourceRef|candidate_|guide_event_|地点或偏好|place or preference/)
+      expect(publicFailureReply('provider', 'en', cause)).toBe(publicFailureReply('provider', 'en'))
+    })
   it('uses fixed public copy when a guide has no confirmed Trip destination', () => {
     const details = { code: 'candidate_location_unresolved', fieldPaths: ['candidates.0.locationId'], selectedCityCount: 0 }
     const stage = classifyDshFailure('DSH_GUIDE_NEEDS_REVISION', details)!

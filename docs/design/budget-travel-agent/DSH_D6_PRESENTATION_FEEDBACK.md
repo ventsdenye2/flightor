@@ -1,5 +1,9 @@
 # D6 发布字段反馈
 
+2026-10-07 活动日期适配反馈已实现：仅缺字段/未选来源/不可用来源属于前置；引文或日期抄录错误保持content并照原2次内容额度计数，未知reason失败关闭。仅回传有效`candidates.<0–49>.temporalEvidence`路径与受控缺口原因，主模型选择来源日期，不回显正文或URL、不允许重标event回避校验。红6失败→绿28/28；与service/public-errors联合63/63，耗尽回执及公开原因、output_limit优先均已定向验证。日期完整工具链/真实PG及新冻结UI另记，不等于D6通过。
+
+2026-10-07 r18真实B01再次失败：首轮108ms受理、117.213秒终态、0accepted，后续8动作blocked，原报告和手机截图保留。重复日拒绝正确，但模型反馈丢弃服务端`days=[1,2,2]`，只返回活动内部key；下一稿仅将重复日改为rest，仍失败。已返回最多60个提交日号、有界重复日号和具体`days.<index>.day`，只接纳1–60整数，过滤恶意/越界值而保留原数组索引。主模型选择哪项备选实际进入同日items，禁止代码合并或删掉语义活动；明确不得增加rest日、延长天数或丢弃用户必需活动。原形状及恶意/越界回归红测2失败→绿21/21（`output/d6/r19-duplicate-day-red.log`/`r19-duplicate-day-green.log`），前置分类和既有修订额度保持。event日期证据可表示性与预算原文正由Astra max零出站审查；定向通过不是D6通过。
+
 2026-10-06，内部协议实现与定向验证；不是完整 D6 PASS。冻结分母仍为[验收 v1](DSH_D6_ACCEPTANCE.md)的工程、真实隔离 PostgreSQL、D5、12 固定及 4 探索 H5 旅程。
 
 `commit_travel_guide`在发布拒绝或领域保存拒绝附带表达问题时，返回内部`presentationProblems: [{code, fieldPath}]`。它复用`publicProseProblems`，只诊断原聚合校验已拒绝的规则，不形成第二套发布判据或事实审核。路径为`text.reply/overview`、`text.days.<0–59>.theme`、`days.<0–59>.items.<0–5>.text.name/introduction/recommendationReason`。活动按本次提交的activityKey映射；继承活动及局部编辑中忽略的主题不伪装成本次输入。语言阈值对完整正文判断，定位整个`text`，不将短主题或专名误判为错误语言。

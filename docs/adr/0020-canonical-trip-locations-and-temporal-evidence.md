@@ -9,7 +9,7 @@ Planner 每轮会创建新的地点 authority ledger。若当前 Trip 已持久�
 ## 决策
 
 1. `research_destination` 与共享研究执行边界在 canonicalize 前，从当前 owner-scoped Trip snapshot 将已保存的 `LocationRef` 回填本轮 ledger。该 snapshot 仍受 owner、Trip、context version 和 workspace 检查；复用只认可服务端保存的 canonical identity，不接受模型复制的名称、坐标、机场代码或任意 ID。
-2. Research v2 finding 可携带可选 `temporalEvidence`，字段仅为 `from`、`to`、`sourceUrl`、`quote`。`from`/`to` 表示事件 occurrence 日期；`sourceUrl` 标识来源；`quote` 必须来自检索 snippet，并包含 1–2 个完整 ISO 日期。`queryWindow`、`expiry` 或只有模糊月份的文字不能替代 occurrence evidence。
+2. Research v2 finding 可携带可选 `temporalEvidence`，字段仅为 `from`、`to`、`sourceUrl`、`quote`。`from`/`to` 表示事件 occurrence 日期；`sourceUrl` 标识来源；`quote` 必须逐字来自检索 snippet，或来自 SHA-256 与抓取记录一致的正文，并包含 1–2 个完整 ISO 日期或一段无歧义的完整 CJK 日期范围。紧邻引文日期的发布、更新、检索、过期和 query-window 标签不能作为 occurrence evidence。
 3. 保存路径与 durable Goal verifier 共用 temporalEvidence 校验。日期绑定的 event 缺少证据、日期与 quote 不匹配或 quote 不满足格式时拒绝；`allowPartial` 不豁免此硬约束。Goal 的 `researchTypes` 必需语义保持不变。
 4. 旧 Artifact 仍按兼容 reader 可读，但读取得到的旧 payload 不等于本次复验通过。当前 native research adapter 不产 temporalEvidence，因此 native finding 不能单独支持按 Trip 日期排程的 event；必须获得符合合同的来源证据或明确不能排程。
 
@@ -28,3 +28,9 @@ temporalEvidence 格式或日期硬门槛。可选 event 只有在被实际选�
 地点复用及 temporalEvidence schema、源文校验、保存/持久完成有离线回归覆盖；完整后端 95 文件 / 745 项、PostgreSQL 7 文件 / 37 项通过。原真实 SQL 快照复验拦住错误电影节攻略，正常航班攻略仍通过，详见 [修复报告](../design/budget-travel-agent/G1_REPAIR_2026-09-20.md)。本批未重跑真实 Provider；native 适配器不产该字段的源码边界已审查，未把通用 event 缺证据回归称为 native 端到端验收。
 
 日期证据仅验证源文绑定与日期抄录，不能证明该句谈论的日期一定属于该活动。精确日期行程按每日偏移匹配；浮动出发窗口要求活动覆盖该日所有可能日期。supportingEvidence 中的 event 也须有日期证据且与行程窗口相交。缺失/伪造证据为 guide_event_date_evidence_missing，缺排程日期为 guide_event_schedule_date_missing，日期不兼容为 guide_event_date_mismatch；不做自动付费研究修复。
+
+## 2026-10-07 D6 输入适配补充
+
+本节澄清 D6 compact guide 输入的适配，不改写上方 2026-09-20 决策或当时验证结果。D6 候选可带 `{from, to, sourceRef, quote}`；`sourceRef` 必须是该候选本次当前 `sourceRefs` 之一，由服务端解析为真实来源 URL，持久 Research v2 仍只保存 `{from, to, sourceUrl, quote}`。只有被选入攻略的 event 必须提供日期证据；任何已提供的证据都必须校验。未选中的 event 可保留为 finding，但不因此取得排程资格。
+
+共享解析器继续支持 ISO 日期，并新增一段无歧义的 CJK 完整日期范围。引文必须逐字来自检索 snippet，或来自 SHA-256 与抓取记录一致的正文；抓取正文存在但 hash 不符时，即使 snippet 同时匹配也失败关闭。可识别的发布、更新、检索、过期和 query-window 日期标签不作为 occurrence evidence。以上仅验证来源绑定与日期抄录；不判断引文语义是否描述该活动，Trip 日期范围校验仍由领域层负责。此 clarification 不追认 r18 内容通过，也不替代冻结 D6 验收。

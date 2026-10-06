@@ -97,6 +97,106 @@ describe('DSH combined guide commit', () => {
     expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
   })
 
+  it('requires temporal evidence only for a selected event candidate', async () => {
+    const f = await fixture()
+    const eventSource = await f.store.recordSearch({ sources: [{ url: 'https://example.com/festival',
+      snippet: 'The festival runs 2026-10-10 through 2026-10-11.' }] }, 'fixture-event-search', 'event-search')
+    const eventIntent = { ...intent, parameters: { ...intent.parameters, researchTypes: ['activity', 'event'] } }
+    const input = structuredClone(f.input)
+    input.candidates!.push({ key: 'festival', evidenceRefs: eventSource.evidenceRefs, title: 'Tokyo festival',
+      summary: 'A cultural event during the trip.', category: 'event', locationId: city.id })
+    const runAccept = vi.spyOn(f.runs, 'accept')
+    const unselected = await f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: eventIntent }), f.context, new AbortController().signal) as any
+    expect(unselected).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+
+    const selectedFixture = await fixture()
+    const selectedSource = await selectedFixture.store.recordSearch({ sources: [{ url: 'https://example.com/festival',
+      snippet: 'The festival runs 2026-10-10 through 2026-10-11.' }] }, 'fixture-event-search', 'selected-event-search')
+    const selectedInput = structuredClone(selectedFixture.input)
+    selectedInput.candidates!.push({ key: 'festival', evidenceRefs: selectedSource.evidenceRefs, title: 'Tokyo festival',
+      summary: 'A cultural event during the trip.', category: 'event', locationId: city.id })
+    selectedInput.days[0]!.items[0]!.candidateKey = 'festival'
+    await expect(selectedFixture.tool.execute(selectedFixture.tool.inputSchema.parse({ ...selectedInput, intent: eventIntent }),
+      selectedFixture.context, new AbortController().signal)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+        code: 'candidate_temporal_evidence_missing', candidateIndex: 3, fieldPath: 'candidates.3.temporalEvidence', reason: 'missing'
+      } })
+    expect(runAccept).toHaveBeenCalledTimes(1)
+    expect(await selectedFixture.artifacts.listForTrip(selectedFixture.trip.id)).toEqual([])
+  })
+
+  it('retains a registered event date when a same-turn repair omits the candidate list', async () => {
+    const f = await fixture()
+    const quote = 'The festival runs 2026-10-10 through 2026-10-11.'
+    const source = await f.store.recordSearch({ sources: [{ url: 'https://example.com/festival', snippet: quote }] }, 'fixture-event-search', 'event-search')
+    const input = structuredClone(f.input)
+    input.candidates!.push({ key: 'festival', evidenceRefs: source.evidenceRefs, title: 'Tokyo festival',
+      summary: 'A cultural event during the trip.', category: 'event', locationId: city.id,
+      temporalEvidence: { from: '2026-10-10', to: '2026-10-11', sourceRef: source.evidenceRefs[0]!, quote } })
+    const eventIntent = { ...intent, parameters: { ...intent.parameters, researchTypes: ['activity', 'event'] } }
+    input.text.reply = 'Admission is 20 dollars.'
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: eventIntent }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION' })
+    const repair = structuredClone(f.input)
+    delete repair.candidates
+    repair.days[0]!.items[0]!.candidateKey = 'festival'
+
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...repair, intent: eventIntent }), f.context, new AbortController().signal))
+      .resolves.toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+  })
+
+  it('accepts a source-bound in-trip event and preserves its Research v2 occurrence dates', async () => {
+    const f = await fixture()
+    const quote = 'The festival runs 2026-10-10 through 2026-10-11.'
+    const source = await f.store.recordSearch({ sources: [{ url: 'https://example.com/festival', snippet: quote }] }, 'fixture-event-search', 'event-search')
+    const input = structuredClone(f.input)
+    input.candidates!.push({ key: 'festival', evidenceRefs: source.evidenceRefs, title: 'Tokyo festival',
+      summary: 'A cultural event during the trip.', category: 'event', locationId: city.id,
+      temporalEvidence: { from: '2026-10-10', to: '2026-10-11', sourceRef: source.evidenceRefs[0]!, quote } })
+    input.days[0]!.items[0]!.candidateKey = 'festival'
+    const eventIntent = { ...intent, parameters: { ...intent.parameters, researchTypes: ['activity', 'event'] } }
+
+    const result = await f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: eventIntent }), f.context, new AbortController().signal) as any
+
+    expect(result).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    const research = (await f.artifacts.listForTrip(f.trip.id)).find(record => record.type === 'research')!
+    expect((research.payload as any).findings.find((finding: any) => finding.id === 'festival').temporalEvidence)
+      .toEqual({ from: '2026-10-10', to: '2026-10-11', sourceUrl: 'https://example.com/festival', quote })
+  })
+
+  it('rejects a fabricated event quote before persisting research or guide artifacts', async () => {
+    const f = await fixture()
+    const source = await f.store.recordSearch({ sources: [{ url: 'https://example.com/festival',
+      snippet: 'The festival runs 2026-10-10 through 2026-10-11.' }] }, 'fixture-event-search', 'event-search')
+    const input = structuredClone(f.input)
+    input.candidates!.push({ key: 'festival', evidenceRefs: source.evidenceRefs, title: 'Tokyo festival',
+      summary: 'A cultural event.', category: 'event', locationId: city.id,
+      temporalEvidence: { from: '2026-10-10', to: '2026-10-11', sourceRef: source.evidenceRefs[0]!,
+        quote: 'The festival runs 2026-10-10 through 2026-10-12.' } })
+    input.days[0]!.items[0]!.candidateKey = 'festival'
+    const eventIntent = { ...intent, parameters: { ...intent.parameters, researchTypes: ['activity', 'event'] } }
+
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: eventIntent }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+        code: 'candidate_temporal_evidence_invalid', candidateIndex: 3, fieldPath: 'candidates.3.temporalEvidence', reason: 'quote_not_found'
+      } })
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+  })
+
+  it('keeps domain rejection when a validly sourced event is outside the Trip dates', async () => {
+    const f = await fixture()
+    const quote = 'The festival runs 2026-11-01 through 2026-11-15.'
+    const source = await f.store.recordSearch({ sources: [{ url: 'https://example.com/festival', snippet: quote }] }, 'fixture-event-search', 'event-search')
+    const input = structuredClone(f.input)
+    input.candidates!.push({ key: 'festival', evidenceRefs: source.evidenceRefs, title: 'Tokyo festival',
+      summary: 'A cultural event.', category: 'event', locationId: city.id,
+      temporalEvidence: { from: '2026-11-01', to: '2026-11-15', sourceRef: source.evidenceRefs[0]!, quote } })
+    input.days[0]!.items[0]!.candidateKey = 'festival'
+    const eventIntent = { ...intent, parameters: { ...intent.parameters, researchTypes: ['activity', 'event'] } }
+
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: eventIntent }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: { issues: expect.arrayContaining(['guide_event_date_mismatch']) } })
+  })
+
   it('keeps current registered keys and reports a missing renamed key without another research write', async () => {
     const f = await fixture()
     const invalid = structuredClone(f.input)

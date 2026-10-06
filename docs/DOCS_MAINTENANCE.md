@@ -1,5 +1,7 @@
 # 文档维护规则与本轮清理记录
 
+2026-10-07 D6日期证据适配观察：observer白名单新增`candidate_temporal_evidence_missing/invalid`受控原因码，沿用原字段计数/脱敏，不记录quote、sourceRef、URL或日期证据正文；官方fixture同时保留未知码、私密正文及来源过滤。实际新构建fixture验证与真实UI结果归[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)，修改本身不代表通过，也不改变发布/日期权限。
+
 2026-10-06 D6停止验收：`qa-dsh-d6-h5.cjs`的stop通过共享`dsh-h5-assertions.cjs`验证唯一成功cancel POST、实际`failed/AGENT_TURN_CANCELLED`取消终态及UI停止/非busy。cancelAndWait响应已等待执行退出，UI随后停止poll，不要求新GET；已观察到的确认后GET有冲突则失败。断言前保留取消响应、原终态、来源和可见文字，失败截图/原报告不改。`node scripts/test-dsh-h5-assertions.cjs`红测15/16→最终16/16，根复验同16/16；runner语法/diff通过。仅harness离线验证，真实取消/持久迟到写仍待B09/B10，详见[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)。
 
 2026-10-06 D6 observer修订：既有`backend/scripts/dsh-e2e-observation.mjs`采集内部publicationIssues，以及共享白名单过滤的presentationProblems码/compact路径；不采原文、Provider正文或任意details。构建后用`node --test backend/scripts/dsh-e2e-observation.test.mjs`验证官方fixture worker、增量记录与脱敏，红测0/1保留，绿测结果由当前D6报告维护；观测不授权发布、不改变业务执行。详见[字段反馈合同](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。

@@ -4,6 +4,65 @@ import { AppError } from '../../lib/errors.js'
 import { CommitRecovery, classifyCommitFailure, safeCommitFeedback } from './commit-recovery.js'
 
 describe('DSH commit recovery policy', () => {
+  it.each([
+    ['candidate_temporal_evidence_missing', 'missing', 'prerequisite'],
+    ['candidate_temporal_evidence_invalid', 'source_not_selected', 'prerequisite'],
+    ['candidate_temporal_evidence_invalid', 'unavailable', 'prerequisite'],
+    ['candidate_temporal_evidence_invalid', 'quote_not_found', 'content'],
+    ['candidate_temporal_evidence_invalid', 'date_mismatch', 'content'],
+    ['candidate_temporal_evidence_invalid', 'PRIVATE_REASON', 'content']
+  ] as const)('keeps event proof %s/%s in its existing bounded %s allowance', (code, reason, kind) => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_BODY', 422, {
+      code, reason, candidateIndex: 4, fieldPath: 'candidates.4.temporalEvidence', quote: 'PRIVATE_QUOTE', url: 'https://private.example'
+    })
+    expect(classifyCommitFailure(error)).toBe(kind)
+    const feedback = safeCommitFeedback(error, kind, { acceptedGoal: true })
+    expect(feedback).toMatchObject({ fields: ['candidates.4.temporalEvidence'], candidateIndex: 4 })
+    expect(feedback.correction).toContain('exact occurrence-date quote')
+    expect(feedback.correction).toContain('Do not relabel an event')
+    expect(JSON.stringify(feedback)).not.toMatch(/PRIVATE_|private\.example/)
+    const recovery = new CommitRecovery()
+    recovery.admit(); recovery.failed(error)
+    expect(recovery.contentAttempts).toBe(kind === 'content' ? 1 : 0)
+  })
+  it('does not echo a forged event-proof field or out-of-range candidate index', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_BODY', 422, {
+      code: 'candidate_temporal_evidence_invalid', reason: 'date_mismatch', candidateIndex: 50,
+      fieldPath: 'PRIVATE_PATH', quote: 'PRIVATE_QUOTE'
+    })
+    const feedback = safeCommitFeedback(error, 'content')
+    expect(feedback).not.toHaveProperty('fields')
+    expect(feedback).not.toHaveProperty('candidateIndex')
+    expect(JSON.stringify(feedback)).not.toMatch(/PRIVATE_/)
+  })
+  it('identifies the repeated day from the r18 optional-event submission without choosing or dropping an activity', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_BODY', 422, {
+      code: 'duplicate_day_or_activity_key', days: [1, 2, 2], activityKeys: ['a', 'b', 'c'],
+      providerBody: 'PRIVATE_BODY'
+    })
+    const kind = classifyCommitFailure(error)
+    const recovery = new CommitRecovery()
+    recovery.admit(); recovery.failed(error)
+    const feedback = safeCommitFeedback(error, kind, { acceptedGoal: true })
+    expect(kind).toBe('prerequisite')
+    expect(feedback).toMatchObject({ submittedDayNumbers: [1, 2, 2], duplicateDayNumbers: [2], fields: ['days.2.day'] })
+    expect(feedback.correction).toContain('one entry per day number')
+    expect(feedback.correction).toContain('do not invent a rest day')
+    expect(feedback.correction).toContain('Do not silently drop user-required activities')
+    expect(recovery.snapshot()).toMatchObject({ calls: 1, argumentCorrections: 0, contentAttempts: 0 })
+    expect(JSON.stringify(feedback)).not.toContain('PRIVATE_BODY')
+  })
+  it('bounds duplicate-day diagnostics and ignores malformed or private day values', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_BODY', 422, {
+      code: 'duplicate_day_or_activity_key', days: [1, 'PRIVATE_DAY', 2, 2, 0, 61, 1.5, ...Array(80).fill(3)]
+    })
+    const feedback = safeCommitFeedback(error, 'prerequisite')
+    expect(feedback.submittedDayNumbers).toEqual([1, 2, 2, ...Array(53).fill(3)])
+    expect(feedback.duplicateDayNumbers).toEqual([2, 3])
+    expect((feedback.fields as string[])[0]).toBe('days.3.day')
+    expect((feedback.fields as string[]).every(field => /^days\.(?:[0-9]|[1-5][0-9])\.day$/.test(field))).toBe(true)
+    expect(JSON.stringify(feedback)).not.toMatch(/PRIVATE_BODY|PRIVATE_DAY/)
+  })
   it('exposes only controlled publication reasons and compact input paths', () => {
     const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_PROVIDER_BODY', 422, {
       issues: [{ code: 'format', detail: 'PRIVATE_TEXT', activityId: null }],

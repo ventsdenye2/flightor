@@ -1,7 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { locationRefKey, type LocationRef } from '../../aviation/types.js'
 import { researchArtifactSchema, researchBriefSchema, type ResearchArtifact, type ResearchBrief } from '../../research-agent/types.js'
+import { checkTemporalEvidence, temporalEvidenceSchema } from '../../research-agent/temporal-evidence.js'
 import { classifyResearchSourceAuthority } from '../../research-agent/verification.js'
+import { z } from 'zod'
 
 export interface DshEvidenceScope {
   ownerId: string
@@ -260,8 +262,37 @@ export interface DshResearchCandidate {
   title: string
   summary: string
   category: ResearchBrief['researchTypes'][number]
+  temporalEvidence?: DshCandidateTemporalEvidence | undefined
   /** Supplied by the trusted caller after resolving against the current Trip. */
   location: LocationRef
+}
+
+export const dshCandidateTemporalEvidenceSchema = z.object({
+  from: z.iso.date(), to: z.iso.date(), sourceRef: z.string().min(1).max(160), quote: z.string().trim().min(1).max(800)
+}).strict().refine(value => value.from <= value.to, 'Date range must be ordered')
+export type DshCandidateTemporalEvidence = z.infer<typeof dshCandidateTemporalEvidenceSchema>
+
+export type CandidateTemporalEvidenceIssue = 'source_not_selected' | 'unavailable' | 'quote_not_found' | 'date_mismatch'
+
+export class CandidateTemporalEvidenceError extends Error {
+  constructor(public readonly candidateIndex: number, public readonly reason: CandidateTemporalEvidenceIssue) {
+    super('Candidate temporal evidence validation failed')
+  }
+}
+
+export async function inspectCandidateTemporalEvidence(candidate: DshResearchCandidate, store: DshEvidenceStore): Promise<CandidateTemporalEvidenceIssue | undefined> {
+  if (!candidate.temporalEvidence) return
+  const index = candidate.evidenceRefs.indexOf(candidate.temporalEvidence.sourceRef)
+  if (index < 0) return 'source_not_selected'
+  const record = await store.get(candidate.temporalEvidence.sourceRef)
+  if (!record || record.status !== 'available') return 'unavailable'
+  const url = record.finalUrl ?? record.url
+  const { sourceRef: _sourceRef, ...claim } = candidate.temporalEvidence
+  const checked = checkTemporalEvidence({ ...claim, sourceUrl: url }, [{
+    url, snippet: record.snippet ?? record.body?.slice(0, 800) ?? '',
+    ...(record.body && record.contentHash ? { page: { text: record.body, contentHash: record.contentHash } } : {})
+  }])
+  return checked.ok ? undefined : checked.reason
 }
 
 export interface DshResearchConversionInput {
@@ -272,7 +303,7 @@ export interface DshResearchConversionInput {
 
 export async function convertCandidatesToResearch(input: DshResearchConversionInput, store: DshEvidenceStore): Promise<ResearchArtifact> {
   const brief = researchBriefSchema.parse(input.brief)
-  const findings = await Promise.all(input.candidates.map(async candidate => {
+  const findings = await Promise.all(input.candidates.map(async (candidate, candidateIndex) => {
     if (!brief.researchTypes.includes(candidate.category)) throw new Error(`Candidate category is outside brief: ${candidate.key}`)
     const location = candidate.location
     if (!brief.destinations.some(destination => sameLocation(destination, location))) throw new Error(`Candidate location is outside brief: ${candidate.key}`)
@@ -295,7 +326,7 @@ export async function convertCandidatesToResearch(input: DshResearchConversionIn
         ...(text && evidence.contentHash ? { page: { text, retrievedAt: evidence.retrievedAt, contentHash: evidence.contentHash } } : {})
       }
     })
-    return {
+    const finding = {
       id: candidate.key,
       category: candidate.category,
       destinations: [location],
@@ -307,6 +338,17 @@ export async function convertCandidatesToResearch(input: DshResearchConversionIn
       warnings: ['dsh_source_not_independently_verified', 'web_content_untrusted',
         ...(records.some(record => record!.truncated) ? ['source_content_truncated'] : [])]
     }
+    if (candidate.temporalEvidence) {
+      const temporalEvidenceIssue = await inspectCandidateTemporalEvidence(candidate, store)
+      if (temporalEvidenceIssue) throw new CandidateTemporalEvidenceError(candidateIndex, temporalEvidenceIssue)
+      const temporalIndex = candidate.evidenceRefs.indexOf(candidate.temporalEvidence.sourceRef)
+      const record = records[temporalIndex]!
+      const { sourceRef: _sourceRef, ...claim } = candidate.temporalEvidence
+      const checked = checkTemporalEvidence({ ...claim, sourceUrl: record!.finalUrl ?? record!.url }, [sources[temporalIndex]!])
+      if (!checked.ok) throw new CandidateTemporalEvidenceError(candidateIndex, checked.reason)
+      return { ...finding, temporalEvidence: temporalEvidenceSchema.parse(checked.evidence) }
+    }
+    return finding
   }))
   return researchArtifactSchema.parse({ id: input.artifactId, type: 'research', schemaVersion: 2, brief, findings,
     queryCount: 0, warnings: ['dsh_evidence_only', 'content_requires_domain_validation'], createdAt: store.timestamp() })

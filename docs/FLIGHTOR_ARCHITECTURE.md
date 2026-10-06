@@ -1184,13 +1184,28 @@ Structured destination research.
 
 Research findings may carry optional v2 `temporalEvidence` with `from`, `to`,
 `sourceUrl` and `quote`. The date fields are occurrence dates only when the
-quote comes from a retrieved snippet and contains one or two complete ISO dates;
-query windows and source expiry are not occurrence evidence. Save and durable
-Goal verification use the same validator: missing or mismatched evidence
+quote exactly matches a retrieved snippet or text from a fetched page with a
+matching SHA-256 hash, and contains one or two complete ISO dates or one
+unambiguous complete CJK date range. Recognized publication, update, retrieval,
+expiry and query-window labels adjacent to the quoted date are not occurrence
+evidence. Save and durable Goal verification use the same validator: missing or mismatched evidence
 rejects an event scheduled against Trip dates, and `allowPartial` does not waive
 that requirement. Existing artifacts remain readable, but readability is not a
 fresh verification pass. The current native research path does not produce this
 evidence, so it cannot by itself support date-bound event scheduling.
+
+The D6 compact guide submission binds event temporal evidence to one of the
+candidate's current-turn source references. The server resolves that locator
+and persists only the Research v2 `{from, to, sourceUrl, quote}` contract. A
+selected event requires evidence; an unselected event may remain an unverified
+finding, and any evidence supplied for it is still validated. The validator
+accepts an exact retrieved snippet quote or text from a fetched page with a
+matching SHA-256 content hash. A present but mismatched page hash fails closed,
+including when the snippet matches. It supports one unambiguous CJK occurrence
+range in addition to ISO dates and rejects recognized publication/retrieval or
+query-window labels. These format and provenance checks do not establish that
+the quoted sentence describes that event; Trip-date compatibility remains a
+separate domain check.
 
 ### `save_travel_guide`
 
@@ -1662,11 +1677,22 @@ Important event dates should normally have:
 For structured research, the durable date contract is narrower than a source's
 query window or expiry metadata. Optional v2 `temporalEvidence` consists of
 `from`/`to` occurrence dates, `sourceUrl`, and a `quote` copied from a retrieved
-snippet. `quote` must contain one or two complete ISO dates; source metadata
-alone cannot satisfy the contract. The save path and durable verifier share the
-same check, and `allowPartial` does not exempt a date-bound event. Native
-research currently has no such evidence output, so a native finding cannot be
-used as proof for event scheduling on Trip dates.
+  snippet or a hash-verified fetched body. The quote must contain one or two
+  complete ISO dates or one unambiguous complete CJK date range. Recognized
+  publication, update, retrieval, expiry and query-window labels adjacent to
+  the quoted date cannot satisfy the contract. The save path and durable
+  verifier share the same check, and `allowPartial` does not exempt a date-bound
+  event. Native research currently has no such evidence output, so a native
+  finding cannot be used as proof for event scheduling on Trip dates.
+
+For D6's compact guide path, the model supplies a selected current-turn
+`sourceRef`; the server resolves it to `sourceUrl` and stores only the ordinary
+Research v2 evidence shape. In addition to ISO dates, the shared validator
+accepts one unambiguous CJK occurrence range, requires exact snippet text or a
+hash-verified fetched-body quote, and rejects a fetched record with a bad page
+hash even if its snippet matches. Recognized publication, update, retrieval,
+expiry, and query-window labels are rejected as occurrence evidence. This is a
+bounded transcription/provenance guard, not semantic event verification.
 
 ---
 

@@ -76,8 +76,18 @@ const maskAuthoritativeTripBudgetAmounts = (prose: string, budget: { amount: num
     const isUnsupportedCostAssertion = (assertion: string, adjacent: string) => {
       const costPattern = /(?:tickets?|admissions?|fares?|costs?|prices?)(?:\s+(?:costs?|prices?))?|门票|票价|费用|花费|消费/gi
       const costMentions = [...assertion.matchAll(costPattern)]
-      if (!costMentions.some(match => !isLocallyNegated(assertion, match.index ?? 0, (match.index ?? 0) + match[0].length))
-        || cautiousBudgetLanguage.test(assertion) && !/(?:confirmed|verified|已确认|已核实)/i.test(assertion)
+      const hasAffirmativeCostMention = costMentions.some(match => {
+        const start = match.index ?? 0
+        const end = start + match[0].length
+        const after = assertion.slice(end)
+        const assertedCostPrefix = /(?:已(?:经)?(?:确认|核实|支付)|已付|亦是|也是|就是|等于|作为|用于|为|是|\b(?:confirmed|verified|paid)\b)(?:(?:的|实际|当前|住宿|餐饮|交通|购物|门票|总|全部|所有|部分)|\s|\b(?:actual|total|current|accommodation|dining|transport|ticket)\b)*$/i.test(assertion.slice(0, start))
+        const localReference = !assertedCostPrefix && /^(?:(?:价格|费用|信息)?(?:(?:、|与|和|及|，|,)\s*(?:实际|当地)?(?:门票(?:价格|费用|信息)?|票价|交通费|住宿费|餐饮费|费用|花费|消费|支出|开销|价格))*)?\s*(?:仍|尚)?以当地为准[\s。！？，,；;）)]*$/i.test(after)
+        const officialReference = !assertedCostPrefix && /^(?:(?:价格|费用|信息)?(?:[、，,]\s*(?:营业时间|预约情况|预约信息|营业信息|活动信息|信息))*(?:(?:与|和|及)(?:营业时间|预约情况|预约信息|营业信息|活动信息|信息))*)?\s*(?:请|应|需|需要)?以官方最新信息为准[\s。！？，,；;）)]*$/i.test(after)
+        const cautiousCostRelation = cautiousBudgetLanguage.test(assertion)
+          && !/(?:confirmed|verified|已确认|已核实)/i.test(assertion)
+        return !isLocallyNegated(assertion, start, end) && !localReference && !officialReference && !cautiousCostRelation
+      })
+      if (!hasAffirmativeCostMention
         || /不构成.{0,20}(?:费用|花费|开销|支出|可负担性).{0,12}(?:保证|承诺)/.test(assertion)
         || /(?:需|需要|应|请).{0,16}(?:核对|查询|确认|检查|核实)/.test(assertion)
         || /\b(?:need to be checked|needs checking|need checking)\b/i.test(assertion)) return false
@@ -153,6 +163,8 @@ export function publicProseProblems(fields: string[], locale: PublicationLocale,
     /(?:guarantee.{0,30}budget|within (?:your|the) budget|保证.{0,20}预算|不会超支)/i,
     /(?:预算|费用|花费|支出|开销)(?:仍然|仍|依然|还|已经|已|全部|都|均|将|预计|完全|能够|能|可以|可|会)*(?:保持|控制)?(?:在|低于|不超过|未超出|不会超出|不会超过)(?:你的|您的|既定|设定|原定|约定|给定|目标)*(?:预算(?:范围|总额|上限)?|总额|限额|上限)(?:之)?内?/,
     /(?:符合|满足)(?:你的|您的|既定|设定|原定|目标|总)*预算(?:目标|要求)?|预算(?:肯定|一定|绝对|完全|已经|已|是|很)*(?:足够|够用|充足)/,
+    /预算(?:目标|总额|上限)?(?:为|是)?\s*(?:(?:CNY|RMB|USD|EUR|JPY)\s*)?\d+(?:\.\d+)?\s*(?:元人民币|人民币|元|美元|欧元|日元|CNY|RMB|USD|EUR|JPY)?\s*(?:肯定|一定|绝对|完全|已经|已|是|很)*(?:足够|够用|充足)/i,
+    /\bbudget(?:\s+(?:target|goal|total))?(?:\s+(?:is|of))?\s*(?:(?:CNY|RMB|USD|EUR|JPY)\s*\d+(?:\.\d+)?|\d+(?:\.\d+)?\s*(?:yuan|dollars?|euros?|yen|CNY|RMB|USD|EUR|JPY))\s*(?:(?:is|will be)\s+)?(?:(?:certainly|definitely)\s+)?(?:enough|sufficient)\b/i,
     /\b(?:under|below|within) (?:your |the |our )?(?:(?:allocated|agreed|planned|set|total) )*(?:budget|total|amount|limit)\b|\bbudget (?:is |will be )?(?:certainly |definitely )?(?:enough|sufficient)\b|\b(?:fit|fits|stay within|remain within) .{0,40}\b(?:your |the )?(?:total )?budget\b/i
   ]
   const cautiousBudgetLanguage = /(?:无法确认|无法判断|不能确认|不能判断|不确定|尚未确认|尚未核实|仍待核实|尚待核实|有待核实|是否|不保证|不能保证|不承诺|uncertain|unknown|not sure|cannot confirm|can't confirm|cannot determine|can't determine|not yet (?:known|verified)|whether|may be|might be)/i

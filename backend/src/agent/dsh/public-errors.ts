@@ -97,7 +97,14 @@ const unresolvedTripLocationCopy: Record<PublicationLocale, string> = {
   en: 'The place is not yet confirmed against the current trip, so no new guide was confirmed. Check and confirm the trip destination before continuing.'
 }
 
+const eventDateEvidenceCopy: Record<PublicationLocale, string> = {
+  zh: '活动日期的来源支持尚未确认，本轮未发布新的攻略。请先查看已保存的结果，确认活动日期或选择其他体验后再继续。',
+  en: 'Source support for the event dates could not be confirmed. No new guide was published. Check saved results, then confirm the event dates or choose another experience before continuing.'
+}
+
 export function publicFailureReply(stage: PublicFailureStage, locale: PublicationLocale, causeCode?: string): string {
+  if (stage === 'evidence' && ['candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid', 'guide_event_date_evidence_missing'].includes(causeCode ?? ''))
+    return eventDateEvidenceCopy[locale]
   if (causeCode === 'DSH_GUIDE_BASE_UNAVAILABLE') return unavailableGuideBaseCopy[locale]
   if (causeCode === 'candidate_key_unavailable') return unavailableCandidateKeyCopy[locale]
   if (causeCode === 'candidate_location_unresolved') return unresolvedTripLocationCopy[locale]

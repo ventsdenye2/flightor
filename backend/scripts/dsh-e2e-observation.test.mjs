@@ -47,6 +47,7 @@ test('observes an official fixture worker incrementally without raw model/tool s
         if (name === 'commit_travel_guide' && calls.filter(call => call.name === name).length === 1) return { ok: false,
           error: { code: 'DSH_GUIDE_NEEDS_REVISION', kind: 'content', revisionCode: 'raw_evidence_requires_partial',
             issues: ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type:PRIVATE_CATEGORY',
+              'candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid',
               'PRIVATE_REVISION_REASON', 'https://private.example/path?token=SECRET'],
             presentationIssues: ['excluded_precise_claim', randomUUID(), 'SENSITIVE_API_KEY'],
             publicationIssues: [{ code: 'language', detail: 'SENSITIVE_DETAIL' }, { code: 'PRIVATE_CODE' }],
@@ -86,6 +87,7 @@ test('observes an official fixture worker incrementally without raw model/tool s
     assert.deepEqual(commits[1].submissionShape, submitted)
     assert.deepEqual(commits[0].revisionReasons,
       ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type',
+        'candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid',
         'excluded_precise_claim', 'language', 'budget_guarantee', 'guide_day_count', 'format', 'source_missing', 'raw_evidence_requires_partial',
         'candidate_category_outside_goal'])
     assert.deepEqual(commits[0].publicationOutcome, { accepted: false })

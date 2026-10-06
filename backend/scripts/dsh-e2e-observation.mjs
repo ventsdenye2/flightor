@@ -32,6 +32,7 @@ const revisionReasonCodes = new Set([
   'duplicate_day_or_activity_key', 'activity_text_exact_cover', 'duplicate_candidate_key', 'candidate_goal_missing',
   'candidate_category_outside_goal', 'candidate_location_unresolved', 'candidate_evidence_unavailable',
   'candidate_key_unavailable', 'raw_evidence_requires_partial',
+  'candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid',
 ])
 function safeUrl(value) {
   try {

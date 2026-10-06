@@ -13,9 +13,15 @@ import { createArtifactWorkspace, saveWorkspaceArtifact } from '../../artifacts/
 import { PostgresConversationRepository } from '../../conversations/postgres.js'
 import { PostgresUserIdentityRepository } from '../../identity/postgres.js'
 import { PostgresTripRepository } from '../../trips/postgres.js'
+import { PostgresGoalRepository, PostgresGoalRunRepository } from '../goals/postgres.js'
+import { createDefaultGoalVerifierRegistry } from '../goals/default-verifiers.js'
+import type { ToolExecutionContext } from '../runtime/registry.js'
 import { publicationFor } from '../../travel-guides/publication.js'
 import { GuideFinalizer, sourceRef } from '../../travel-guides/finalization.js'
 import { travelGuideArtifactPayloadSchema } from '../../travel-guides/artifact.js'
+import { guideCandidateRef } from '../../travel-guides/candidates.js'
+import { DshEvidenceStore } from './evidence.js'
+import { createCommitGuideTool } from './commit-guide.js'
 import { prepareDshSnapshot } from './preparation.js'
 
 const databaseUrl = process.env.TEST_DATABASE_URL
@@ -120,6 +126,87 @@ suite('D6 DSH preparation and PostgreSQL publication CAS', () => {
       'en', guide.variant)
     return { ...guide, record: saved, base: { id: saved.id, contentHash: guide.publication.guideContentHash, locale: 'en' as const } }
   }
+
+  it('persists and recovers source-bound event dates and rejects a fake date quote before Artifact writes', async () => {
+    const trips = new PostgresTripRepository(db, ownerId)
+    const artifacts = new PostgresArtifactRepository(db, ownerId)
+    const goals = new PostgresGoalRepository(db, ownerId)
+    const goalRuns = new PostgresGoalRunRepository(db, ownerId)
+    const trip = await trips.create({ initialContext: { travelDays: 2, interests: ['culture'],
+      departureWindow: { from: '2026-10-10', to: '2026-10-10', precision: 'exact' },
+      destinationIntent: { mode: 'explicit', required: [city], preferred: [], excluded: [] } } })
+    const conversation = await new PostgresConversationRepository(db, ownerId).create({ tripId: trip.id, title: 'Temporal evidence DSH test' })
+    const generationId = randomUUID()
+    const evidence = new DshEvidenceStore({ ownerId, tripId: trip.id, conversationId: conversation.id,
+      generationId, tripContextVersion: trip.context.version })
+    const activitySources = await evidence.recordSearch({ sources: [{ url: 'https://example.com/tokyo-culture',
+      snippet: 'Explore traditional architecture, museum exhibits, and quiet garden paths.' }] }, 'fixture-search', 'activity-search')
+    const eventQuote = '開催期間は2026年10月10日(土)～10月11日(日)です。'
+    const eventSources = await evidence.recordFetch('https://example.com/festival', { statusCode: 200,
+      snippet: 'Official festival information.', body: { kind: 'text', content: eventQuote } }, 'fixture-fetch', 'event-fetch')
+    const eventIntent = { kind: 'travel_guide' as const, parameters: { questions: ['Cultural visits and events'],
+      researchTypes: ['activity', 'event'] as const, requiredEvidenceTypes: ['activity'] as const,
+      maxResults: 10, maxCities: 1, allowPartial: true } }
+    const context = { ownerId, tripId: trip.id, conversationId: conversation.id, generationId, requestId: randomUUID(),
+      trips, artifacts, tripContextSnapshot: structuredClone(trip.context), resolvedLocations: new Map(),
+      goalRepository: goals, goalRunRepository: goalRuns, goalVerifiers: createDefaultGoalVerifierRegistry(),
+      isGenerationCurrent: () => true, research: { research: () => { throw new Error('Independent ResearchAgent forbidden') } }
+    } as unknown as ToolExecutionContext
+    const tool = createCommitGuideTool({ evidenceStore: evidence, locale: 'en', memoryEnabled: true })
+    const candidates = ['temple', 'museum', 'garden'].map(key => ({ key, sourceRefs: activitySources.sourceRefs,
+      title: `Tokyo ${key}`, summary: `Explore the ${key} and local culture.`, category: 'activity' as const, locationId: city.id }))
+    candidates.push({ key: 'festival', sourceRefs: eventSources.sourceRefs,
+      title: 'Tokyo festival', summary: 'A cultural event during the selected dates.', category: 'event' as const,
+      locationId: city.id, temporalEvidence: { from: '2026-10-10', to: '2026-10-11',
+        sourceRef: eventSources.sourceRefs[0]!, quote: '2026年10月10日(土)～10月11日(日)' } } as any)
+    const args = {
+      intent: eventIntent, candidates,
+      days: [
+        { day: 1, cityId: city.id, kind: 'visit' as const, theme: 'Culture and festival', items: [
+          { activityKey: 'festival', candidateKey: 'festival', timeOfDay: 'morning' as const, planningNote: 'Explore the festival at a relaxed pace.' },
+          { activityKey: 'temple', candidateKey: 'temple', timeOfDay: 'afternoon' as const, planningNote: 'Explore traditional architecture.' }
+        ] },
+        { day: 2, cityId: city.id, kind: 'visit' as const, theme: 'Museums and gardens', items: [
+          { activityKey: 'museum', candidateKey: 'museum', timeOfDay: 'morning' as const, planningNote: 'Explore cultural exhibits.' },
+          { activityKey: 'garden', candidateKey: 'garden', timeOfDay: 'afternoon' as const, planningNote: 'Enjoy a quiet garden walk.' }
+        ] }
+      ],
+      text: { reply: 'Your Tokyo cultural itinerary is ready to explore.', overview: 'Explore Tokyo culture and enjoy a relaxed pace across two days.',
+        days: [{ day: 1, theme: 'Culture and festival' }, { day: 2, theme: 'Museums and gardens' }],
+        activities: [
+          { activityKey: 'festival', name: 'Tokyo festival visit', introduction: 'Explore a cultural festival in Tokyo.', recommendationReason: 'This event matches your interest in local culture.' },
+          { activityKey: 'temple', name: 'Temple visit', introduction: 'Explore traditional architecture in Tokyo.', recommendationReason: 'This visit matches your interest in local culture.' },
+          { activityKey: 'museum', name: 'Museum visit', introduction: 'Explore cultural exhibits in Tokyo.', recommendationReason: 'This visit matches your interest in local culture.' },
+          { activityKey: 'garden', name: 'Garden walk', introduction: 'Walk through quiet garden paths in Tokyo.', recommendationReason: 'This visit adds a quieter cultural experience.' }
+        ] }
+    }
+    const execute = (value: typeof args) => tool.execute(tool.inputSchema.parse(value), context, new AbortController().signal) as Promise<any>
+
+    const fake = structuredClone(args) as any
+    fake.candidates[3]!.temporalEvidence.quote = '2026年10月10日(土)～10月12日(月)'
+    await expect(execute(fake)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'candidate_temporal_evidence_invalid', reason: 'quote_not_found'
+    } })
+    expect(await artifacts.listForTrip(trip.id)).toEqual([])
+
+    await expect(execute(args)).resolves.toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    const freshArtifacts = new PostgresArtifactRepository(recoveryDb, ownerId)
+    const records = await freshArtifacts.listForTrip(trip.id)
+    const researchRecord = records.find(record => record.type === 'research')!
+    const research = researchRecord.payload as any
+    const eventFinding = research.findings.find((finding: any) => finding.id === 'festival')
+    expect(eventFinding.temporalEvidence).toEqual({ from: '2026-10-10', to: '2026-10-11',
+      sourceUrl: 'https://example.com/festival', quote: '2026年10月10日(土)～10月11日(日)' })
+    expect(eventFinding.temporalEvidence).not.toHaveProperty('sourceRef')
+    expect(eventFinding.verification.status).toBe('partially_verified')
+    expect(eventFinding.sources[0].page).toMatchObject({ text: eventQuote })
+    const guide = records.find(record => record.type === 'travel_guide')!
+    const freshTrip = (await trips.get(trip.id))!
+    expect(prepareDshSnapshot({ trip: freshTrip, records, conversationId: conversation.id,
+      selectedFlight: null, locale: 'en' }).baseGuide?.id).toBe(guide.id)
+    expect(guideCandidateRef({ ownerId, tripId: trip.id, tripContextVersion: freshTrip.version }, research, 'festival'))
+      .toMatch(/^gc1\./)
+  }, 30_000)
 
   it('captures the exact accepted guide from preparation and rejects a waiting edit after a concurrent winner publishes', async () => {
     const { trip, conversation } = await createTrip()

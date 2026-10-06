@@ -19,7 +19,7 @@ import { saveTravelGuideTool } from '../tools/authored-travel-guide.js'
 import { withGoalIntent } from '../tools/goal-intent.js'
 import { canonicalResolvedLocation, recordTripLocations } from '../tools/resolved-locations.js'
 import { workspaceScope } from '../tools/workspace-scope.js'
-import { convertCandidatesToResearch, type DshEvidenceStore } from './evidence.js'
+import { CandidateTemporalEvidenceError, convertCandidatesToResearch, dshCandidateTemporalEvidenceSchema, inspectCandidateTemporalEvidence, type DshEvidenceStore } from './evidence.js'
 import { submittedPresentationProblems } from './presentation-problems.js'
 
 const key = z.string().trim().min(1).max(120)
@@ -36,7 +36,10 @@ export const commitGuideInputSchema = z.object({
     .describe('Only evidenceRefs returned in this current turn after the latest Trip update. Raw refs from earlier turns are unavailable; reuse persisted research through candidateRef instead.').optional(),
     sourceRefs: z.array(z.string().min(1).max(160)).min(1).max(20).optional(),
     title: z.string().trim().min(1).max(240), summary: z.string().trim().min(1).max(1500),
-    category: researchTypeSchema, locationId: z.string().min(1).max(160) }).strict()
+    category: researchTypeSchema,
+    temporalEvidence: dshCandidateTemporalEvidenceSchema.optional()
+      .describe('For a selected event, bind one of this candidate\'s current sourceRefs and copy the exact occurrence date range from its retrieved snippet or hash-verified fetched body. Metadata dates and source URLs are not occurrence evidence.'),
+    locationId: z.string().min(1).max(160) }).strict()
     .refine(value => Boolean(value.evidenceRefs) !== Boolean(value.sourceRefs), 'Select sourceRefs or legacy evidenceRefs, never both.')).min(1).max(50).optional(),
   days: z.array(daySchema).min(1).max(60),
   supportingRefs: z.array(z.string().min(1).max(160)).max(50).optional(),
@@ -64,6 +67,13 @@ function requireRegisteredCandidateKeys(selectedKeys: readonly string[], availab
   if (missingCandidateKeys.length) fail('Every candidateKey must be explicitly registered from current-turn sourceRefs before it can be selected', {
     code: 'candidate_key_unavailable', fieldPath: 'candidates', registrationStatus,
     missingCandidateKeys, availableCandidateKeys: [...new Set(availableKeys)].slice(0, 50)
+  })
+}
+
+function failCandidateTemporalEvidence(candidateIndex: number, reason: 'missing' | 'source_not_selected' | 'unavailable' | 'quote_not_found' | 'date_mismatch'): never {
+  const code = reason === 'missing' ? 'candidate_temporal_evidence_missing' : 'candidate_temporal_evidence_invalid'
+  fail('A selected event needs a current source-backed occurrence date', {
+    code, candidateIndex, fieldPath: `candidates.${candidateIndex}.temporalEvidence`, reason
   })
 }
 
@@ -129,6 +139,7 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
   const researchCache = new Map<string, ResearchArtifact>()
   let candidateScope: string | undefined
   let registeredCandidates = new Map<string, string>()
+  let registeredCandidateMetadata = new Map<string, { category: string; temporalEvidence?: unknown; index: number }>()
   const outputSchema = z.object({ status: z.literal('accepted'), artifact: z.object({ id: z.string().uuid(), type: z.literal('travel_guide'), schemaVersion: z.literal(1) }).strict(),
     reply: z.string(), warnings: z.array(z.string()), guideContentHash: z.string(),
     activityBindings: z.array(z.object({ activityKey: z.string(), activityId: z.string(), sourceRefs: z.array(z.string()) }).strict()) }).strict()
@@ -144,6 +155,7 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       if (candidateScope !== currentCandidateScope) {
         candidateScope = currentCandidateScope
         registeredCandidates = new Map()
+        registeredCandidateMetadata = new Map()
         researchCache.clear()
       }
       const selectedKeys = [
@@ -153,6 +165,13 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       const availableKeys = input.candidates?.map(candidate => candidate.key) ?? [...registeredCandidates.keys()]
       requireRegisteredCandidateKeys(selectedKeys, availableKeys,
         input.candidates ? 'submitted_incomplete' : 'not_submitted')
+      const selectedCandidateKeys = new Set(selectedKeys)
+      if (!input.candidates) {
+        for (const candidateKey of selectedCandidateKeys) {
+          const metadata = registeredCandidateMetadata.get(candidateKey)
+          if (metadata?.category === 'event' && !metadata.temporalEvidence) failCandidateTemporalEvidence(metadata.index, 'missing')
+        }
+      }
       recordTripLocations(scopedContext, scope.tripContext)
       if (input.days.some(day => day.items.some(item => Number(Boolean(item.candidateKey)) + Number(Boolean(item.candidateRef)) !== 1))) fail('Each item requires exactly one candidateKey or candidateRef', { code: 'candidate_binding_invalid' })
       const isPatch = input.baseGuideId !== undefined || input.expectedContentHash !== undefined || input.replaceSlots !== undefined
@@ -180,6 +199,7 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       if (input.candidates) {
         // A replacement candidate list must stand on its own validated evidence.
         registeredCandidates = new Map()
+        registeredCandidateMetadata = new Map()
         const goal = context.activeGoalId ? await context.goalRepository?.get(context.activeGoalId) : undefined
         if (!goal || goal.kind !== 'travel_guide') fail('A current travel guide Goal is required', { code: 'candidate_goal_missing' })
         const parameters = travelGuideGoalParametersSchema.parse(goal.parameters)
@@ -192,6 +212,15 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
           try { return { ...candidate, evidenceRefs: sourceRefs ?? evidenceRefs!, location: canonicalResolvedLocation(scopedContext, locationId) } }
           catch { fail('Candidate location must resolve in the current Trip', { code: 'candidate_location_unresolved', candidateKey: candidate.key }) }
         })
+        for (let index = 0; index < candidates.length; index++) {
+          const candidate = candidates[index]!
+          if (candidate.temporalEvidence) {
+            const issue = await inspectCandidateTemporalEvidence(candidate, options.evidenceStore)
+            if (issue) failCandidateTemporalEvidence(index, issue)
+          } else if (candidate.category === 'event' && selectedCandidateKeys.has(candidate.key)) {
+            failCandidateTemporalEvidence(index, 'missing')
+          }
+        }
         const unavailableCandidates = (await Promise.all(candidates.map(async candidate => {
           const records = await Promise.all(candidate.evidenceRefs.map(ref => options.evidenceStore.get(ref)))
           return { candidateKey: candidate.key, unavailableEvidenceRefs: candidate.evidenceRefs.filter((_ref, index) =>
@@ -210,7 +239,12 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         const fingerprint = canonicalFingerprint({ scope: currentCandidateScope, candidates, brief })
         let source = researchCache.get(fingerprint)
         if (!source) {
-          source = await convertCandidatesToResearch({ candidates, brief, artifactId: randomUUID() }, options.evidenceStore)
+          try {
+            source = await convertCandidatesToResearch({ candidates, brief, artifactId: randomUUID() }, options.evidenceStore)
+          } catch (error) {
+            if (error instanceof CandidateTemporalEvidenceError) failCandidateTemporalEvidence(error.candidateIndex, error.reason)
+            throw error
+          }
           await saveWorkspaceArtifact(scope, { id: source.id, type: 'research', schemaVersion: 2, payload: source, sourceArtifactIds: [] })
           await checkpoint(scope)
           researchCache.set(fingerprint, source)
@@ -218,6 +252,9 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         for (const candidate of candidates) candidateRefs.set(candidate.key, guideCandidateRef(scope, source, candidate.key))
         await checkpoint(scope)
         registeredCandidates = new Map(candidateRefs)
+        candidates.forEach((candidate, index) => registeredCandidateMetadata.set(candidate.key, {
+          category: candidate.category, ...(candidate.temporalEvidence ? { temporalEvidence: candidate.temporalEvidence } : {}), index
+        }))
       }
       const resolveKey = (value: string) => candidateRefs.get(value) ?? fail(`Candidate key is unavailable: ${value}`, { code: 'candidate_key_unavailable', candidateKey: value })
       const saveInput = { days: days.map(day => ({ ...day, items: day.items.map(({ activityKey: _key, candidateKey, ...item }) =>

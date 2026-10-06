@@ -8,6 +8,7 @@ import type { TripContext } from '../../trips/types.js'
 import type { SelectedFlightContext } from '../../workspaces/flight-selection.js'
 import type { PublicationLocale } from '../../travel-guides/finalization-schema.js'
 import { commitGuideInputSchema, type CommitGuideInput } from './commit-guide.js'
+import { dshCandidateTemporalEvidenceSchema } from './evidence.js'
 import { uniqueSelectedTripCity } from './city-preparation.js'
 
 /** Captured before the model runs; never refreshed from a newer draft at commit. */
@@ -53,7 +54,10 @@ export const dshCommitInputSchema = commitGuideInputSchema.omit({ baseGuideId: t
   .extend({ candidates: z.array(z.object({ key: z.string().trim().min(1).max(120), sourceRefs: z.array(sourceReference).min(1).max(20)
       .describe('Select only sourceRefs returned by web_search/web_fetch in this turn after the latest Trip update; never source URLs or invented IDs.'),
       title: z.string().trim().min(1).max(240), summary: z.string().trim().min(1).max(1500),
-      category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']), locationId: z.string().min(1).max(160).optional()
+      category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']),
+      temporalEvidence: dshCandidateTemporalEvidenceSchema.optional()
+        .describe('For a selected event, bind one current sourceRef and copy the exact occurrence date range from its retrieved snippet or hash-verified fetched body. Metadata dates and source URLs are not occurrence evidence.'),
+      locationId: z.string().min(1).max(160).optional()
         .describe('Use an explicit canonical locationId when the current Trip has multiple selected cities; only one unique selected Trip city may fill an omitted value automatically.') }).strict()).min(1).max(50).optional()
       .describe('Define every new key selected by days[].items[].candidateKey or supportingCandidateKeys. Each entry binds its exact key to supported current-turn sourceRefs; web source receipts alone are not registered candidates. Omitting this list is allowed only when reusing candidates already registered in this same prepared attempt and scope, or when using persisted candidateRef values.'),
     days: z.array(commitGuideInputSchema.shape.days.element.extend({ cityId: z.string().min(1).max(160).optional()

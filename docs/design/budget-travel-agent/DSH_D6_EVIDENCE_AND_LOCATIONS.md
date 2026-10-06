@@ -32,6 +32,24 @@ The PostgreSQL city-query cache locks the query key before updating it. When an 
 
 Existing implementation references: [resolved locations](../../../backend/src/agent/tools/resolved-locations.ts), [aviation location resolver](../../../backend/src/aviation/location-resolver.ts), [aviation composition](../../../backend/src/aviation/composition.ts), [OSM city adapter](../../../backend/src/aviation/nominatim-city-resolver.ts), [research candidates](../../../backend/src/travel-guides/candidates.ts), and [DSH evidence storage](../../../backend/src/agent/dsh/evidence.ts).
 
+## Candidate temporal evidence
+
+The compact D6 candidate may submit `{from, to, sourceRef, quote}`. `sourceRef`
+must be one of that candidate's current `sourceRefs`; the service resolves the
+scoped receipt and stores Research v2 `sourceUrl` rather than the compact alias.
+Only a selected event candidate requires temporal evidence. Unselected events
+may remain as findings without it, but supplied evidence is always validated.
+
+Quotes accept complete ISO dates or one unambiguous CJK occurrence range. The
+quote must exactly match retrieved snippet text or fetched body text whose
+SHA-256 matches the captured hash. A fetched record with a bad body hash is
+rejected even when its snippet matches. Recognized publication, update,
+retrieval, expiry, and query-window labels are not occurrence evidence. These
+checks bind and transcribe source dates; they do not establish that a sentence
+describes the named event. The existing domain validator independently rejects
+an otherwise supported event outside the Trip dates. No automatic slot or
+schedule edit is performed.
+
 ## Compact Goal and Reference Contract
 
 The model-facing D6 schema keeps source locators separate from candidate locators. New candidates require current-turn `sourceRefs` (short `s1.*` receipts or compatible evidence UUIDs from this same turn) and are registered by key; a scheduled activity selects exactly one distinct `candidateKey` or a persisted `candidateRef` returned by the current snapshot or this turn's `read_artifact`. Supplemental new candidates use `supportingCandidateKeys` and do not need activity text; supplemental persisted candidates use `supportingRefs` only. Persisted candidates are normally presented through current-preparation `C-*` aliases; compatible full `gc1` candidate references still pass through the scoped adapter and domain validation. URLs are not accepted as source or candidate references; evidence UUID and `gc1` compatibility does not make earlier-turn or unscoped data valid. Evidence `s1.*` aliases exist only in the active `DshEvidenceStore` index. After an accepted Trip version change the store is replaced, so aliases from the previous version resolve as unavailable (`null`) and never reach the file repository as paths; canonical UUID/SHA references remain supported and still undergo scope checks.

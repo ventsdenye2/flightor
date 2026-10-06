@@ -122,7 +122,8 @@ export class DshPlannerService implements PlannerServicePort {
     const commitRecovery = new CommitRecovery()
     let lastCommitStage: import('./public-errors.js').PublicFailureStage | undefined
     let lastCommitCode: string | undefined
-    let lastCommitCause: 'candidate_key_unavailable' | 'candidate_location_unresolved' | undefined
+    let lastCommitCause: 'candidate_key_unavailable' | 'candidate_location_unresolved'
+      | 'candidate_temporal_evidence_missing' | 'candidate_temporal_evidence_invalid' | 'guide_event_date_evidence_missing' | undefined
     let committedReply: string | undefined
     let committedRouteReply: string | undefined
     let delivery: GoalDelivery = noGoalDelivery()
@@ -304,7 +305,10 @@ export class DshPlannerService implements PlannerServicePort {
             if (!exhausted) {
               lastCommitCode = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
               lastCommitCause = details?.code === 'candidate_key_unavailable' || details?.code === 'candidate_location_unresolved'
-                ? details.code : undefined
+                || details?.code === 'candidate_temporal_evidence_missing' || details?.code === 'candidate_temporal_evidence_invalid'
+                || details?.code === 'guide_event_date_evidence_missing' ? details.code
+                : Array.isArray(details?.issues) && details.issues.includes('guide_event_date_evidence_missing')
+                  ? 'guide_event_date_evidence_missing' : undefined
               lastCommitStage = classifyDshFailure(lastCommitCode, details ?? null)
                 ?? (kind === 'prerequisite' ? 'evidence' : kind === 'content' ? 'publication' : 'commit')
             }

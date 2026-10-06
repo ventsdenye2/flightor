@@ -42,6 +42,16 @@ describe('DSH model preparation and deterministic input adaptation', () => {
     expect(dshCommitInputSchema.shape.candidates.description).toContain('same prepared attempt and scope')
   })
 
+  it('accepts sourceRef-bound temporal evidence and rejects candidate-supplied URLs', () => {
+    const candidate = { key: 'event', sourceRefs: ['s1.0123456789.abcdef0123.1'], title: 'Event', summary: 'A seasonal display.',
+      category: 'event' as const, temporalEvidence: { from: '2026-11-01', to: '2026-11-15',
+        sourceRef: 's1.0123456789.abcdef0123.1', quote: '2026年11月1日(日)～11月15日(日)' } }
+    expect(dshCommitInputSchema.safeParse({ ...compact, candidates: [candidate] }).success).toBe(true)
+    expect(dshCommitInputSchema.safeParse({ ...compact, candidates: [{ ...candidate,
+      temporalEvidence: { ...candidate.temporalEvidence, sourceUrl: 'https://example.com/event' } }] }).success).toBe(false)
+    expect(dshCommitInputSchema.shape.candidates.unwrap().element.shape.temporalEvidence.description).toContain('one current sourceRef')
+  })
+
   it('accepts a compact first submission and a prepared local edit through the commit tool', async () => {
     const ownerId = 'prepared-commit-owner', tripId = randomUUID(), conversationId = randomUUID()
     const preparedTrip = { ...emptyTripContext(tripId), version: 1, travelDays: 2,

@@ -1,5 +1,13 @@
 # 当前进度与验证
 
+2026-10-07 r19冻结前最终检查：10文件联合367/367（17.42秒）、backend check/build退出0、新build observer1/1（1.646秒）；专用PG preparation套件3/3通过，新增真实源绑定事件保存/fresh仓库读取/prepare及candidate引用恢复/伪造日期零Artifact写（子任务过程输出未单独落盘，最终完整PG另留日志）。最终日期helper SHA1db130f27a的focused90/90、Astra35/35和预算focused211/211、Astra39/39通过；修前三问题均修复，原366/366不是最终证据。TOOLS当前合同已收敛ISO或唯一完整CJK、snippet或hash正确body，原领域/权限/版本/发布与单主模型配置不变。远端f2ec6c1f与历史账本SHA3fdfdb12未变。接下来本地提交、r19新run/schema/账本与构建冻结，再完整工程及原12固定+4探索390×844真实H5；r18仍FAIL，D6未PASS、无确认硬阻塞。
+
+2026-10-07 r19修前中间检查点：十文件联合366/366（19.41秒）、类型错误修正后check/build、observer1/1通过；Astra日期独立14项另发现同URL摘要/正文次序、metadata标签裁剪和CJK括号任意内容三问题，故暂停冻结/真实调用，先补红回归修复，再做真实PG与联合/新冻结。预算最终211/211及独立39/39结论保留；D6未PASS，无硬阻塞，不复用修前结果凑新版本通过。
+
+2026-10-07 r19预算/错误反馈收尾：focused预算211/211及Astra最终源码固定39/39（零出站），service/commit-recovery/public-errors63/63；修复合法费用核验提示，同时保留同额肯定费用、前置确认/支付、每日/金额币种与保证拒绝，预算确认不跨括号污染费用。日期适配focused及真实PG仍收尾，未新冻结、未启动付费H5，不冒称完整工程或真实用户通过。D6未PASS，无确认硬阻塞；远端仍f2ec6c1f、原历史账本hash未变，下一步完成日期链路与联合后冻结r19完整重跑原12+4。
+
+2026-10-07 r18真实B01 FAIL：108ms受理、117.213秒终态、122.289秒流程，0accepted及后8动作blocked；不是180秒超时。只读PG仅research，Trip v1/东京两天/全程CNY1200正确，原预算/活动日期证据可表示性缺口由Astra max零出站复现。重复日真实拒绝的具体日号反馈已补红测2失败→绿21/21，保持前置分类及修订额度。服务正常关闭，原schema/session/ledger/报告与runtime副本保留。继续最小修复并新冻结完整工程及原12+4真实手机H5，不追认r18或任何历史成功；D6未PASS、无确认硬阻塞。下段工程结果不等于用户验收通过。
+
 2026-10-07 r18同冻结版本完整工程完成：backend1331/1331、真实专用PG51/51、D5本地HTTP/票价fixture30/30/codeUnchanged、runtime14/14、observer1/1、前端四族/根TS、H5及weapp构建通过（weapp17.28秒，既有CSS顺序/体积警告保留）。[固定回放](evidence/d6-r18-fixed-replay.json)两版各10/10语义一致、0调用；p50总耗时10.630→11.861ms、适配0.474ms，Trip读取20→18，其余仓库调用一致，不宣称真实性能改善。API55171/H551443及PID93668仍运行，远端f2ec6c1f未变；下一步同版原B01至B12/E01至E04真实390×844页面全文/详情/持久化联合验收，D6未PASS，无确认硬阻塞。下面的“正在执行”均为此前时间点记录。
 
 2026-10-07 r18真实专用PG完整11文件51/51通过（50.53秒，退出码0）；同版backend1331/1331已通过。D5完整30例、runtime完整package与前端四族/根TS正在执行，weapp构建及真实H5原12+4随后运行；未PASS。
@@ -424,3 +432,4 @@ H5 收尾补充：计时包装直接调用 Taro 的一次构建在 loader 阶段
 2026-09-26Trip setter回执PG补验：真实同值写入、持久回执和新repository共享completion完成通过；新增竞争预算修改负例先失败后定位修复，已有回执失配不再回落legacy差异。Goal PostgreSQL 12/12（7.14秒）、定向离线72/72（6.46秒）通过，原E2E schema及Provider不受影响。详见[DSH发布说明](DSH_PUBLICATION_2026-09-24.md)。
 
 2026-09-26 持久对话真实H5补验：在8f528b6基线上完成聊天界面、常驻发送/停止、新旅行隔离及同会话冷恢复assistant上下文。正式DSH+官方DeepSeek两轮推荐与指代追问、刷新恢复、重开原用户对话通过，2模型/0搜索/0Artifact，Trip版本0不变；桌面与390px窄屏截图、回执及本批定向测试见[UI合同及验收](PUBLICATION_UI_2026-09-22.md)。实际费用未知，原账本追加US$0.08预留，未清旧记录。最终H5构建31.020秒，未跑微信真机或本批完整攻略流程，G1仍未放行。
+2026-10-07 D6 r18 B01 temporal evidence implementation: compact candidate evidence is sourceRef-bound and resolves to the existing Research v2 shape; selected events require it, unselected events may omit it, and supplied evidence is always checked. Shared validation supports one unambiguous CJK date range alongside ISO, exact snippets or hash-verified fetched text, rejects adjacent English/CJK/Japanese metadata/query-date labels, and fails closed on an invalid present page hash even if the snippet matches. Candidate conversion validates the explicitly selected receipt, independent of duplicate URL ordering; draft sourceIndex likewise stays bound to its selected source. Commit-tool regressions cover persistence, selected/unselected candidates, same-turn registered-date fallback, fabricated quotes and preserving the existing Trip-date rejection. Focused tests passed 4 files / 89 cases before the final helper edge regressions; fresh PostgreSQL persistence/recovery coverage remains in progress. This does not change the failed r18 B01 result or claim D6 acceptance.

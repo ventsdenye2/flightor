@@ -47,6 +47,9 @@ export function classifyCommitFailure(error: unknown): CommitFailureKind {
       ? error.details as Record<string, unknown> : {}
     const code = typeof details.code === 'string' ? details.code : ''
     if (code === 'candidate_category_outside_goal') return 'arguments'
+    if (code === 'candidate_temporal_evidence_missing') return 'prerequisite'
+    if (code === 'candidate_temporal_evidence_invalid') return ['source_not_selected', 'unavailable'].includes(String(details.reason))
+      ? 'prerequisite' : 'content'
     if (['candidate_evidence_unavailable', 'candidate_key_unavailable', 'candidate_location_unresolved',
       'candidate_goal_missing', 'guide_edit_prerequisite', 'activity_text_exact_cover', 'candidate_binding_invalid',
       'duplicate_day_or_activity_key', 'duplicate_candidate_key', 'raw_evidence_requires_partial'].includes(code)) return 'prerequisite'
@@ -82,6 +85,33 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
     : kind === 'prerequisite' ? 'Correct the missing or stale prerequisite before resubmitting. Reuse current-turn candidates and evidence when their scope is unchanged.'
       : kind === 'content' ? 'Revise the rejected itinerary or public text once, preserving the accepted Goal and protected slots.'
         : 'The guide submission could not be processed. Do not infer acceptance.' }
+  if (code === 'DSH_GUIDE_NEEDS_REVISION' && details.code === 'duplicate_day_or_activity_key') {
+    const submitted = Array.isArray(details.days) ? details.days.slice(0, 60) : []
+    const seen = new Set<number>()
+    const duplicateDayNumbers = new Set<number>()
+    const fields: string[] = []
+    const submittedDayNumbers: number[] = []
+    submitted.forEach((day, index) => {
+      if (typeof day !== 'number' || !Number.isInteger(day) || day < 1 || day > 60) return
+      submittedDayNumbers.push(day)
+      if (seen.has(day)) { duplicateDayNumbers.add(day); fields.push(`days.${index}.day`) }
+      seen.add(day)
+    })
+    if (submittedDayNumbers.length) feedback.submittedDayNumbers = submittedDayNumbers
+    if (duplicateDayNumbers.size) { feedback.duplicateDayNumbers = [...duplicateDayNumbers]; feedback.fields = fields }
+    feedback.correction = 'Keep one entry per day number, with its selected visits in that entry\'s items. Choose which optional alternative is actually scheduled; do not invent a rest day or renumber an extra day to bypass the duplicate. Do not silently drop user-required activities. Each scheduled visit must also use a distinct activity/candidate binding. Keep the accepted trip duration, Goal, evidence and protected slots unchanged.'
+  }
+  if (code === 'DSH_GUIDE_NEEDS_REVISION' && ['candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid'].includes(String(details.code))) {
+    const index = details.candidateIndex
+    if (typeof index === 'number' && Number.isInteger(index) && index >= 0 && index < 50
+      && details.fieldPath === `candidates.${index}.temporalEvidence`) {
+      feedback.candidateIndex = index
+      feedback.fields = [details.fieldPath]
+    }
+    if (['missing', 'source_not_selected', 'unavailable', 'quote_not_found', 'date_mismatch'].includes(String(details.reason)))
+      feedback.reason = details.reason
+    feedback.correction = 'Supply an exact occurrence-date quote from an available source selected by this candidate, plus its matching from/to dates and current sourceRef. Never use a page publication date, query window or expiry date as the event date. Do not relabel an event or invent a quote to bypass validation. Select a supported visit that meets the unchanged user request, or explain a genuine source gap. Keep the accepted Goal, trip dates and protected slots unchanged.'
+  }
   if (kind === 'arguments' && error instanceof z.ZodError) {
     feedback.fields = error.issues.slice(0, 20).map(issue => issue.path.join('.'))
     if (error.issues.some(issue => issue.path.includes('sourceRefs'))) feedback.correction =
