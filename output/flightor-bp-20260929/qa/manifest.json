@@ -1,0 +1,141 @@
+{
+  "source": "C:\\Users\\VENTSDENYE5\\Downloads\\FlightOR 商业计划书（正式排版版）.docx",
+  "source_sha256": "f477a1bc8c631dd9ba565d6aeac40f503220e7ddcfba217254fe4bafb5ee9319",
+  "output": "D:\\FunnyProject\\flightor-repo\\output\\flightor-bp-20260929\\FlightOR_商业计划书_终稿.docx",
+  "sections": [
+    {
+      "sequence": 1,
+      "title": "封面"
+    },
+    {
+      "sequence": 2,
+      "title": "一  项目概述"
+    },
+    {
+      "sequence": 3,
+      "title": "二  用户痛点与需求背景"
+    },
+    {
+      "sequence": 4,
+      "title": "三  产品定位与解决方案"
+    },
+    {
+      "sequence": 5,
+      "title": "四  核心产品能力与产品架构"
+    },
+    {
+      "sequence": 6,
+      "title": "五  目标用户与首批用户画像"
+    },
+    {
+      "sequence": 7,
+      "title": "六  市场分析"
+    },
+    {
+      "sequence": 8,
+      "title": "七  竞争格局"
+    },
+    {
+      "sequence": 9,
+      "title": "八  商业模式"
+    },
+    {
+      "sequence": 10,
+      "title": "九  用户增长与运营策略"
+    },
+    {
+      "sequence": 11,
+      "title": "十  技术与数据能力"
+    },
+    {
+      "sequence": 12,
+      "title": "十一  产品进展与验证情况"
+    },
+    {
+      "sequence": 13,
+      "title": "十二  发展规划"
+    },
+    {
+      "sequence": 14,
+      "title": "十三  核心团队背景"
+    },
+    {
+      "sequence": 15,
+      "title": "十四  风险与应对"
+    },
+    {
+      "sequence": 16,
+      "title": "十五  阶段目标与结语"
+    },
+    {
+      "sequence": 17,
+      "title": "主要公开资料来源"
+    }
+  ],
+  "layout": "continuous_report",
+  "tables": 16,
+  "figures": 9,
+  "team_section": "user_supplied_brief_bios",
+  "sources": [
+    [
+      "文化和旅游部",
+      "2025 年国内居民出游数据情况",
+      "2026-01-26",
+      "https://zwgk.mct.gov.cn/zfxxgkml/tjxx/202601/t20260126_964367.html"
+    ],
+    [
+      "文化和旅游部",
+      "2025 年文化和旅游发展统计公报",
+      "2026-06-02",
+      "https://zwgk.mct.gov.cn/zfxxgkml/tjxx/202606/t20260602_966073.html"
+    ],
+    [
+      "文化和旅游部",
+      "2026 年春节假期国内出游 5.96 亿人次",
+      "2026-02-24",
+      "https://www.mct.gov.cn/whzx/whyw/202602/t20260224_964790.htm"
+    ],
+    [
+      "文化和旅游部",
+      "2026 年五一假期国内出游 3.25 亿人次",
+      "2026-05-07",
+      "https://www.mct.gov.cn/wlbphone/wlbydd/xxfb/jiaodianxinwen/202605/t20260506_965708.html"
+    ],
+    [
+      "Trip.com",
+      "Trip.com Launches Trip.Planner: Smart Itineraries Tailored to Your Travel Style with Real-Time Recommendations",
+      "2025-08-26",
+      "https://www.trip.com/newsroom/trip-com-launches-trip-planner-smart-itineraries-tailored-to-your-travel-style-with-real-time-recommendations/"
+    ],
+    [
+      "Trip.com Group",
+      "Plan Less, Travel More: TripGenie Unveils New Features for Effortless Travel Planning",
+      "2024-06-06",
+      "https://www.trip.com/newsroom/tripgenie-new-features-2/"
+    ],
+    [
+      "Skyscanner",
+      "How do I find the best prices?",
+      "更新于 2026-03-26",
+      "https://help.skyscanner.net/hc/en-us/articles/201150942-How-do-I-find-the-best-prices"
+    ],
+    [
+      "Google Travel Help",
+      "How to find the best fares with Google Flights",
+      "页面未标注发布日期",
+      "https://support.google.com/travel/answer/7664728?hl=en"
+    ],
+    [
+      "Google Travel Help",
+      "Find flight deals with AI in Google Flights",
+      "页面未标注发布日期",
+      "https://support.google.com/travel/answer/16497283?hl=en"
+    ],
+    [
+      "Alibaba Group",
+      "Fliggy",
+      "页面未标注发布日期",
+      "https://www.alibabagroup.com/en-US/about-alibaba-businesses-1752789467896217600"
+    ]
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "date": "2026-09-29",
+  "method": "Microsoft Word export and bundled Poppler rendering; pages 1-10 are pixel-identical to the previously visually inspected edition, and pages 11-13 were visually inspected after the team expansion. Structural and text comparison against the prior edition passed.",
+  "render_directory": "qa/team-background-v2",
+  "pages_reviewed": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+  "page_count": 13,
+  "findings_unresolved": [],
+  "checks": ["competition consolidated into one chapter", "expanded user-supplied team biographies", "Nanjing University explicitly named", "listed experience explicitly described as internships", "member paragraphs kept together", "table pagination", "diagram visibility", "screenshot captions", "margins and footers", "text-only cover", "reference formatting", "absence of clipped text and blank pages"],
+  "docx_sha256": "3eabd38575249dc79d2c6ba2c12668633851ace6db73bc08b7dce7b24bdcacee",
+  "pdf_sha256": "bbbf74e08bf5ffe8784680daadbc210d4fcfe48b90a869523ed58a3dfd132cd2",
+  "product_runtime_retested": false
+}

@@ -29,6 +29,12 @@ dist-h5-replay/
 dist-weapp-demo/
 output/playwright/
 output/weapp/
+output/dsh-upstream/
+output/map-closeout/
+
+# Business-plan local history and reproducible render caches
+output/flightor-bp-20260929/history/
+output/flightor-bp-20260929/qa/*/
 tools/demo-video/public/*.wav
 tools/demo-video/public/shots/
 tools/demo-video/public/mix.wav

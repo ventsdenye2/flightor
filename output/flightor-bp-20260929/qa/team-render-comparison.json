@@ -1,0 +1,46 @@
+{
+  "baseline": "qa/competition-team-v1",
+  "current": "qa/team-background-v2",
+  "comparisons": [
+    {
+      "page": 1,
+      "full_page_pixels_unchanged": true
+    },
+    {
+      "page": 2,
+      "full_page_pixels_unchanged": true
+    },
+    {
+      "page": 3,
+      "full_page_pixels_unchanged": true
+    },
+    {
+      "page": 4,
+      "full_page_pixels_unchanged": true
+    },
+    {
+      "page": 5,
+      "full_page_pixels_unchanged": true
+    },
+    {
+      "page": 6,
+      "full_page_pixels_unchanged": true
+    },
+    {
+      "page": 7,
+      "full_page_pixels_unchanged": true
+    },
+    {
+      "page": 8,
+      "full_page_pixels_unchanged": true
+    },
+    {
+      "page": 9,
+      "full_page_pixels_unchanged": true
+    },
+    {
+      "page": 10,
+      "full_page_pixels_unchanged": true
+    }
+  ]
+}
