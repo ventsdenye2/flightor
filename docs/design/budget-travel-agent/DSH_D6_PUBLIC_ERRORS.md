@@ -4,7 +4,7 @@
 
 ## 预算与精确字段
 
-只允许精确复述当前 Trip 结构化预算中的全程总额目标：金额、币种及 trip scope 必须与权威字段一致，并须明确写成全程预算目标。简短确认和攻略公开文字均不得借此推断预算可行或表示费用已经核实；其他金额、币种、每日预算解释、票价、门票价格、营业时刻和具体交通耗时仍被拦截。预算保证仍被拒绝；同一句中明确表示无法确认预算是否够用的谨慎表述可通过，但不能掩盖同句或后续分句中的肯定保证。纯文本货币代码（CNY、RMB、USD、EUR、GBP、JPY）也按金额检查。发布 validator 不因精确目标例外而放宽其他公开字段。
+只允许精确复述当前 Trip 结构化预算中的全程总额目标：金额、币种及 trip scope 必须与权威字段一致，并须明确写成全程预算目标。攻略可以在同一句目标说明中补充实际支出会随住宿、餐饮、购物等选择而变化、未知部分仍未知；这只是条件性不确定说明，不表示估算或费用已核实。该说明只帮助识别同句中的精确预算目标，不放行其他金额。其他金额或币种、每日金额、票价、门票价格、已核实支出、营业时刻和具体交通耗时仍被拦截。预算保证仍被拒绝；同一句中明确表示无法确认预算是否够用的谨慎表述可通过，但不能掩盖同句或后续分句中的肯定保证。纯文本货币代码（CNY、RMB、USD、EUR、GBP、JPY）也按金额检查。发布 validator 不因精确目标例外而放宽其他公开字段。
 
 已采用航班的班次、日期、机场和起降时刻属于绑定航班 Artifact 的结构化展示字段，按航班卡展示。这个结构化展示不授权模型将其改写为自由文本中的精确交通耗时、费用或其它未经支持的事实；也不增加公共散文 validator 的普遍数字豁免。回归覆盖模型散文中的航班起飞时刻，仍应按精确时刻拦截。
 
@@ -24,4 +24,8 @@ DSH `commit_travel_guide` 的模型可见纠错回执只从 schema 路径与受�
 
 ## 验证
 
+2026-10-06 r12原会话确认：两次完整提交都因`verified_evidence`拒绝，并附`excluded_precise_claim`；首次intent的`allowPartial=false`已被接受，而此轮新网页候选按现有合同均为部分核实材料。第三次触及原内容修订上限。DSH提交现在在首次Goal接受之前检查：新提交raw候选若被日程或补充材料选中，不能同时要求完全核实；返回受控`raw_evidence_requires_partial`及`intent.parameters.allowPartial`字段，不写Goal或研究，也不消耗内容修订次数。主模型只能在符合用户请求时显式纠正首次语义intent；用户要求独立核实时应说明资料能力限制。已接受/恢复的严格Goal仍交原领域验证，不能改为宽松Goal。参数、前置与内容额度上限不变。前置门红测2失败/49通过→51/51，官方worker修后接线1/1（未取得该新fixture修前红测），联合预算/Goal/Trip更新/准备/回复/公开错误8文件207/207，backend check/build与docs113份736链接均通过。真实完整验收仍待新冻结批次，不能据离线通过宣称已完成。
+
 当前定向验证：`backend npm run check` 通过；D6 public-error、service wiring、preparation 3文件/29项通过，覆盖缺当前语言基底的双语公开回复以及不泄露内部码；`node scripts/test-public-planner-errors.cjs` 的 40 项分类、固定双语文案及 failed-turn 接线断言通过。既有 `npm test -- src/agent/dsh/public-errors.test.ts` 14/14 与 `npm test -- src/travel-guides/finalization.test.ts src/agent/dsh/reply.test.ts src/agent/dsh/public-errors.test.ts src/agent/dsh/commit-recovery.test.ts` 4文件/138项，以及 `npm run test:production-presentation` 的呈现36项、格式化回复6项、生产库7项、媒体客户端1项和媒体迟到结果1项为先前检查，不替代当前完整回归。当前批次 `node scripts/check-docs.cjs` 检查113份Markdown和709个相对链接及同批文档更新通过；`git diff --check` 通过。真实 Provider、H5、微信和完整 D6 验收均未由这些定向检查证明。
+
+2026-10-06 r12预算目标误拦复验：原第二次提交overview把`1200元人民币`明确写为全程总预算目标，并注明实际花费会随住宿、餐饮、购物选择而变化、未知部分仍未知；逗号切分让条件说明与其变化结论分开，令目标金额未获精确字段豁免。仅增加同句、相邻分句的条件性支出变化识别；原预算金额、币种、trip scope 和全程目标条件不变。红测过程保留如下：首版为3失败/73通过，1项是原overview误拦，另2项是对无金额、独立句价格/核实表述提出了过严的`excluded_precise_claim`预期，随后改成同句同额门票价与已核实支出反例；修正中文反例后为1失败/76通过，英文例当时用`actual spending`未走精确cost分支，改为`actual costs`后最终红测为2失败/75通过，恰为中英文条件性说明被旧逻辑误拦。绿测`backend/src/travel-guides/finalization.test.ts` 78/78通过。负例覆盖金额、币种或scope不匹配、每日金额、同额门票价、已核实支出及预算保证；`cautiousBudgetLanguage`未放宽。真实 Provider、H5和完整 D6 验收不由本定向结果证明。

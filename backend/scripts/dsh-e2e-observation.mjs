@@ -14,6 +14,24 @@ const array = value => Array.isArray(value) ? value : []
 const reference = value => uuid(value) ?? hash(value)
 const candidateAlias = value => typeof value === 'string' && /^C-[a-f0-9]{10}-\d+$/u.test(value)
 const sourceAlias = value => typeof value === 'string' && /^s1\.[a-f0-9]{10}\.[a-f0-9]{10}\.\d+$/u.test(value)
+const revisionReasonCodes = new Set([
+  'verified_evidence', 'eligible_research_evidence', 'research_travel_window', 'guide_research_type',
+  'trip_dates_inconsistent', 'guide_budget_mismatch', 'guide_day_coverage', 'guide_day_count', 'guide_route_day_mismatch',
+  'guide_flight_selection_lineage', 'guide_before_flight_arrival', 'guide_arrival_day_time_conflict', 'guide_departure_day_time_conflict',
+  'guide_required_city_coverage', 'guide_excluded_city', 'guide_city_limit', 'guide_required_activity_coverage',
+  'guide_item_lineage', 'guide_research_payload', 'guide_ambiguous_finding', 'guide_item_evidence_mismatch',
+  'guide_source_applicability_missing', 'guide_claim_evidence_mismatch', 'guide_claim_evidence_conflict', 'guide_duplicate_evidence',
+  'guide_evidence_source_mismatch', 'guide_event_date_evidence_missing', 'guide_event_schedule_date_missing',
+  'guide_event_date_mismatch', 'guide_daily_activity_coverage', 'guide_result_limit', 'source_missing',
+  'wrong_locale', 'day_identity', 'activity_identity_or_order', 'source_binding', 'placeholder_content', 'internal_narration',
+  'budget_guarantee', 'excluded_precise_claim', 'excluded_admission_or_hours', 'unsupported_asset_or_url', 'internal_metadata',
+  'internal_identity', 'language', 'duplicated_or_foreign_prose', 'empty_reply', 'format', 'missing_material', 'conflict',
+  'invalid_plan', 'timeout', 'cancelled', 'stale', 'provider_failure', 'context_budget',
+  'guide_edit_prerequisite', 'protected_slot_conflict', 'protected_supporting_evidence', 'candidate_binding_invalid',
+  'duplicate_day_or_activity_key', 'activity_text_exact_cover', 'duplicate_candidate_key', 'candidate_goal_missing',
+  'candidate_category_outside_goal', 'candidate_location_unresolved', 'candidate_evidence_unavailable',
+  'candidate_key_unavailable', 'raw_evidence_requires_partial',
+])
 function safeUrl(value) {
   try {
     const url = new URL(value)
@@ -25,8 +43,17 @@ function safeUrl(value) {
 }
 function revisionReasons(value) {
   const data = object(value), error = object(data.error), details = object(error.details)
-  const candidates = [...array(data.issues), ...array(details.issues), ...array(object(details.repair).issues)]
-  return [...new Set(candidates.map(issue => code(typeof issue === 'string' ? issue : object(issue).code)).filter(Boolean))].slice(0, 100)
+  const candidates = [
+    ...array(data.issues), ...array(data.presentationIssues), ...array(object(data.repair).issues),
+    ...array(error.issues), ...array(error.presentationIssues), ...array(object(error.repair).issues),
+    ...array(details.issues), ...array(details.presentationIssues), ...array(object(details.repair).issues),
+    error.revisionCode, details.code,
+  ]
+  return [...new Set(candidates.map(issue => {
+    const candidate = typeof issue === 'string' ? issue.split(':', 1)[0] : object(issue).code
+    const value = typeof candidate === 'string' ? candidate.split(':', 1)[0] : undefined
+    return value && revisionReasonCodes.has(value) ? value : undefined
+  }).filter(Boolean))].slice(0, 100)
 }
 function commitInput(value) {
   const args = object(value)

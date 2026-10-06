@@ -45,9 +45,15 @@ test('observes an official fixture worker incrementally without raw model/tool s
           body: { kind: 'text', content: 'SENSITIVE_SOURCE_BODY' }, truncated: false,
           ...(calls.filter(call => call.name === name).length === 1 ? { cacheHit: true } : { sharedFetch: true }) }
         if (name === 'commit_travel_guide' && calls.filter(call => call.name === name).length === 1) return { ok: false,
-          error: { code: 'DSH_GUIDE_NEEDS_REVISION', recovery: { calls: 2, argumentCorrections: 1, contentAttempts: 1,
+          error: { code: 'DSH_GUIDE_NEEDS_REVISION', kind: 'content', revisionCode: 'raw_evidence_requires_partial',
+            issues: ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type:PRIVATE_CATEGORY',
+              'PRIVATE_REVISION_REASON', 'https://private.example/path?token=SECRET'],
+            presentationIssues: ['excluded_precise_claim', randomUUID(), 'SENSITIVE_API_KEY'],
+            repair: { issues: [{ code: 'verified_evidence', classification: 'evidence_missing', fieldPath: 'SENSITIVE_FIELD' }] },
+            recovery: { calls: 2, argumentCorrections: 1, contentAttempts: 1,
             lastFailure: 'content', privateKey: 'SENSITIVE_RECOVERY' },
-            details: { issues: ['guide_day_count:SENSITIVE_DETAIL', { code: 'format', detail: 'SENSITIVE_DETAIL' }],
+            details: { code: 'candidate_category_outside_goal', issues: ['guide_day_count:SENSITIVE_DETAIL',
+              'guide_research_type:PRIVATE_SUFFIX', 'PRIVATE_LEGACY_REASON', { code: 'format', detail: 'SENSITIVE_DETAIL' }],
               repair: { issues: [{ code: 'source_missing', detail: 'SENSITIVE_DETAIL' }] } } } }
         if (name === 'commit_travel_guide') return { ok: true, status: 'accepted', artifact: { id: artifactId },
           guideContentHash: 'b'.repeat(64), completion: { status: 'satisfied' }, activityBindings: [{ activityId: randomUUID() }],
@@ -63,6 +69,10 @@ test('observes an official fixture worker incrementally without raw model/tool s
     assert.deepEqual(calls.find(call => call.name === 'commit_travel_guide').value, args)
     const records = read(), raw = JSON.stringify(records)
     assert.equal(raw.includes('SENSITIVE_'), false)
+    assert.equal(raw.includes('PRIVATE_'), false)
+    assert.equal(raw.includes('PRIVATE_CATEGORY'), false)
+    assert.equal(raw.includes('PRIVATE_SUFFIX'), false)
+    assert.equal(raw.includes('SECRET'), false)
     assert.equal(raw.includes(evidenceRef), false)
     assert.equal(raw.includes('privateKey'), false)
     const commits = records.filter(row => row.type === 'tool_end' && row.toolName === 'commit_travel_guide')
@@ -72,7 +82,9 @@ test('observes an official fixture worker incrementally without raw model/tool s
     assert.deepEqual(commits[0].submissionShape, submitted)
     assert.deepEqual(commits[1].submissionShape, submitted)
     assert.deepEqual(commits[0].revisionReasons,
-      ['guide_day_count', 'format', 'source_missing'])
+      ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type',
+        'excluded_precise_claim', 'guide_day_count', 'format', 'source_missing', 'raw_evidence_requires_partial',
+        'candidate_category_outside_goal'])
     assert.deepEqual(commits[0].publicationOutcome, { accepted: false })
     assert.deepEqual(commits[0].recovery, { calls: 2, argumentCorrections: 1, contentAttempts: 1, lastFailure: 'content' })
     assert.deepEqual(commits[1].publicationOutcome, { accepted: true, activityBindingCount: 1,

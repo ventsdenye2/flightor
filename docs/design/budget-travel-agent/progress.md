@@ -1,6 +1,10 @@
 # 当前进度与验证
 
+2026-10-06 r12已在真实交互前冻结源码d9954f4及源码/backend/H5/旅程指纹，完整记录见[D6验收](DSH_D6_ACCEPTANCE.md)。本版完整工程回归已通过：backend1229/1229、独立PG51/51、runtime14/14、observer1/1、D5完整30/30；固定材料baseline/D6各10/10语义一致。最新390×844真实H5 B01首发送99ms受理、66.680秒终态失败、0 accepted攻略，解释/局改/恢复等后续8动作blocked，完整批次不通过。两次内容提交被拒，第三次触及原内容修订上限；正从原会话确认具体拒绝原因，不提高额度或盲重发。12model/4search/5fetch/0fare、pending0、393653 tokens、USD0.96预留非实付，原报告/会话/数据库/账本保留。完整12固定+4探索及内容/持久化联合评阅尚未完成，不宣布PASS。weapp44.84秒构建通过只计工程，微信页面按用户指令暂缓。
+
 当前前端 Artifact 恢复对被替代请求不显示规划失败：Plan 忽略旧回调，active Route 显示固定 `ui_restore` 指引和刷新入口；PlanPage/RoutePage hook、ArtifactService与文案回归通过，完整记录见[D6-20](DSH_D6_ACCEPTANCE.md)。
+
+r12精确根因已确认并完成最小修复：首次allowPartial=false Goal与本轮reference-only网页候选不兼容，原两次提交均缺verified_evidence；overview的合法1200元全程目标附花费条件说明又被精确文字规则误拦。DSH首次接受前门红测2失败→51/51，预算finalization78/78、官方worker接线1/1、联合8文件207/207、observer受控完整原因采集1/1、backend check/build及docs113份736链接通过，不自动改变intent/已接受Goal或增加修复额度。r12经TTY正常关闭、两个端口/锁释放、guards_closed恰1/forbidden0，全部原状态保留。正准备新冻结r13完整工程/D5/12+4，不沿用r12工程通过为新版本验收。
 
 2026-10-06 r11：手机390×844首轮114ms受理、64.982秒终态、69.488秒逐详情可读；随后返回控件role定位失败，B01解释/局改/恢复未执行，候选冻结整批不通过。真实DOM确认`taro-button-core aria-label=返回`无button role；正在用原攻略零Provider导航修复复验。内容按实际alias→原始正文审阅，浅草寺绑定通用目录页是来源覆盖缺口，不能以accepted/satisfied宣称内容合格。真实PG原50/51修fixture为真实resume_goal激活后，完整11文件51/51（95.35秒）；backend原1223/1224超时保留，单独3/3不冒称全量通过，D5新30/30证据保留。D6-18成功fetch仅同prepared store精确canonical请求URL复用原record/hash/time，修前1失败、修后证据4文件23/23及service/web/reuse19/19、check/build、observer安全审计1/1；D6-19明确主模型按正文逐候选选源，不新增模型/协议字段，真实内容尚待复验。源码及冻结指纹变化后必须完整新批12+4，详见[D6验收](DSH_D6_ACCEPTANCE.md)及[证据合同](DSH_D6_EVIDENCE_AND_LOCATIONS.md)。
 

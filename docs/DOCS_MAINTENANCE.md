@@ -176,6 +176,8 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 
 ## 2026-10-06 D6 隔离验收与固定回放
 
+r12模型回执已清洗为`error.issues/presentationIssues/repair.issues/revisionCode`，observer原先只读`error.details`而漏采拒绝原因。现在同时支持清洗格式与历史details格式，仅采validator/finalizer/DSH修复代码白名单，参数化原因去掉冒号后类别/值；未知字符串、正文、字段值、URL/query、UUID和密钥均不采。`node backend/scripts/dsh-e2e-observation.test.mjs`的官方fixture单套1/1通过，保留r10日覆盖/重复与r12证据/预算及新前置原因，未调用Provider或数据库业务写。详细行为与限制见[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)。
+
 `backend/scripts/serve-dsh-d6.mjs` 只在显式指定的专用loopback数据库建立本轮独立schema、账本、身份密钥和H5输出。`--execute` 才开放业务写入；`--allow-fares --fare-env` 只使用当前明确授权的SerpAPI现有剩余额度。原DSH账本只读hash关联，不继承旧权限。`--resume --run-dir` 保留同schema、身份、账本与构建，配置/来源/构建不一致拒绝；只释放本进程成功取得的锁，不盲删残锁。
 
 `scripts/qa-dsh-d6-h5.cjs --transport <private.json> --journeys docs/design/budget-travel-agent/d6-journeys.json --journey <id> --output-dir <dir>` 从可见本地测试登录和真实输入框执行自然用户动作，逐次保存失败、页面文字、截图、network/console；不mock、不注入攻略、不自动重发。`observed` 只是动作完成，必须按照冻结标准复核正文、详情、持久化、发布与费用才能判PASS。private目录及浏览器原始材料不得提交。用途/命令与冷重启边界见[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)，12+4分母和问题台账见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。

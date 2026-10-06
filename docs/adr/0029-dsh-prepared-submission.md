@@ -12,6 +12,8 @@
 
 所有领域工作区和首次 Goal 接受使用该准备 Trip 版本；外部变化明确 context conflict，不在 commit 时填最新值。显式 update_trip_context 以准备版本执行现有 CAS，只有确认版本推进后才受控更新快照，丢弃旧 raw evidence/candidate aliases/编辑基底；空patch等无版本变化的更新保留原准备、引用映射及基底，不能重置相同scope的序号使旧alias改指另一记录；模型得到新版本条件，须重新准备，不能把旧证据重贴版本。
 
+首次提交前先检查可确定的资料能力兼容性：当日程或补充材料选择本次新增raw-web候选时，这些候选必为reference-only/partially_verified，故`allowPartial=false`的新intent不能进入Goal接受及研究保存。DSH返回受控前置错误和字段说明，不替模型改写intent；主模型只能在仍符合用户请求时显式纠正首次intent。用户要求独立核实时应说明不能满足，已接受/恢复的严格Goal仍由原领域校验执行且不可弱化。此检查仅使用已解析提交，不读取数据库、不请求网页或模型、不更改原修订额度。
+
 同轮显式 setter 携带语义 `trip_context_update` intent、确实推进版本且已有持久 `satisfied` 完成回执时，保存该 setter 的交付结果，再结束其活动绑定并开始独立的准备后尝试。新尝试的请求身份由原可信 owner/Trip/conversation/generation identity 加当前已确认准备版本派生；generation、会话、谱系和费用计量连续保留，原Goal不可复活或修改。后续攻略仍需新的真实 `travel_guide` intent；DSH工具说明、persona与snapshot同时说明这一准备尝试边界，legacy的同一Goal协议保持不变。同轮攻略内容修复继续复用原不可变Goal，不执行这一setter边界；失败、pending或外部版本变化不获自动推进。
 
 短 source 引用映射本轮原始 UUID 与内容 hash，不改变持久证据格式或 scope 检查。短 C 引用映射已校验持久候选，恢复完整 locator 后仍经过原 owner/Trip/version/过期验证。唯一已选择的 Trip city 可补省略 cityId/locationId，机场或多城市不猜；它不执行 POI、Provider 或目的地变更。

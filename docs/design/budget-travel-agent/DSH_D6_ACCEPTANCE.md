@@ -1,8 +1,12 @@
 # DSH D6 冻结验收与结果
 
-标准 v1：2026-10-06（Asia/Shanghai），业务代码修改前冻结。状态：实施与迭代验证中，候选冻结批次r11已在B01失败，最终合格 UI 批次尚未完成；不能引用 D5/D4 的旧通过数替代。计划与当前授权见 [工程计划](DSH_D6_ENGINEERING_PLAN.md)。标准修订保留原版、理由和分母影响。
+标准 v1：2026-10-06（Asia/Shanghai），业务代码修改前冻结。状态：r12同冻结源码工程回归已通过，但真实H5 B01首轮提交失败，0 accepted攻略，候选完整批次不通过。原会话确认首次Goal要求完全核实却使用部分核实raw-web材料，并发现合法预算目标附条件花费说明的文案误拦；最小修复与回归进行中。r11及更早失败保留，最终合格批次尚未完成；不能引用 D5/D4 的旧通过数替代。计划与当前授权见 [工程计划](DSH_D6_ENGINEERING_PLAN.md)。标准修订保留原版、理由和分母影响。
+
+2026-10-06 r12交互前冻结：源码提交 `d9954f478657e846189d591507782c7e0bacdd92`，核心源码指纹 `85f6483fa561945f43e44a26b68115646cbc8ea702ff44e77de5ce04b2c11c98`，backend构建 `3e198755e2b3cda8c78f4847ca02f0083a4f3655d6e42a45e19a34e07bccdb89`，H5构建 `0df804649fc99da2140e3ba5446a5b241307d986bc2815075eb3b1f0e0bfcd1b`，旅程文件SHA256 `91240ac6c741a990ad4a233451cc5982702b9d3856eb85597fa88206be943780`。run `fe58e286-3665-447f-b955-f106ffbe6ac4` 位于私有 `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r12`，API63839/H561468、TTY77507、PID85304。实际配置 deepseek-v4-flash / deepseek-official / thinking disabled / max_tokens8192，模型及搜索路由不变；SerpAPI仅使用用户授权的现有余额。日期和12固定+4探索自然输入不变；Chrome手机布局390×844/DPR1、非mobile/touch仿真。本版包含D6-18/19/20与返回选择器修复，必须完整重跑工程、独立PG、D5及12+4，任一源码/核心配置修订均使批次失效。backend check/build、四前端族、根TypeScript已在相同源码通过；weapp本版构建44.84秒通过，仅为工程验证。以下r11及更早记录为保留历史，不计入r12通过分母。
 
 ## A：确定性与真实持久化
+
+2026-10-06 r12同冻结源码工程回归：backend134文件1229/1229（171.10秒），真实专用PG11文件51/51（45.47秒），runtime14/14，observer脱敏1/1均通过。backend首次受限进程在Vitest配置加载阶段遇到spawn EPERM、尚未收集任何测试；授权本地子进程后原命令完整通过，未改测试时限或源码。前端四族/根TypeScript、backend check/build及H5/weapp构建亦在本版通过。D5 [本版完整证据](evidence/d5-2026-10-06T10-05-41-018Z.json)30/30、codeUnchanged=true、HEAD=d9954f4，首轮9/21、自动恢复21/21，均是本地HTTP/持久票价fixture；不称真实Provider性能。固定材料回放 `backend/.demo/d6-fixed-replay/fixed-replay-2026-10-06T10-07-40.042Z.json` baseline/D6各10/10 accepted、逐样本语义一致、0模型/外部调用、无失败。阶段日志均为忽略目录 `output/d6/*r12-final.log`。真实H5及正文/持久化联合评阅仍待完成，工程通过不是D6 PASS。
 
 2026-10-06 r11 完整工程保留失败：backend1223/1224，cloud-state授权单例触及5秒测试时限，原文件单独复验3/3；真实专用PG50/51，Goal持久化文件单独仍11/12。PG的同值setter fixture只手工设置active Goal IDs，缺少D6-14要求的真实服务器激活范围，写前正确以GOAL_FIELD_SCOPE_MISMATCH拒绝。原测试改为先检查未激活零写，再通过真实`resume_goal`工具绑定已接受同generation run，然后保留原持久回执、fresh repository与stale proof断言；不手填scope，不修改产品保护。修改后 `npm run test:db -- src/agent/goals/postgres.integration.test.ts` 在真实专用PG定向12/12通过（10.38秒）；完整PG复验已11文件51/51通过（95.35秒），最终冻结完整套仍待完成。D5本版30/30、runtime14/14、前端4族/根TypeScript及weapp构建通过，不能掩盖两个原完整suite失败，也不能替代H5旅程。
 
@@ -26,6 +30,12 @@
 执行：实际 package.json 的 backend check/build/test/test:db；DSH runtime 独立测试及 D5 runner；前端 conversation-progress、session-recovery、artifacts、production-presentation；H5/weapp build；docs 检查和 diff --check。先审查出站边界，PostgreSQL 使用独立 loopback 数据库/schema，不访问 public 业务数据。每次命令/分母/结果及未运行边界追加到本报告。
 
 ## B：最终真实 UI 固定旅程
+
+2026-10-06 r12精确定位及D6-21：原worker两次完整提交均回`issues=[verified_evidence]`、`repair.issues`分类evidence_missing，并附`presentationIssues=[excluded_precise_claim]`。首次intent为allowPartial=false；用户只要求两天文化/小吃与全程1200元，未要求独立核实。当前raw来源新候选均为partially_verified，固定Goal因此不可能由修稿满足。第二稿唯一精确文字拒绝为overview中的1200元全程目标，同句附“实际花费会因住宿、餐饮与购物选择而不同”，未产生具体价格或预算可行保证，但现有豁免把“实际花费”判为正面成本声明。DSH已新增首次raw候选/strict intent兼容性门，在Goal及研究写入之前返回受控前置字段，不自动改intent、放宽已接受Goal或增加任何额度。定向红测2失败/49通过→修后51/51，backend check通过；合法目标误拦与observer反馈漏采正在独立修复，新的官方worker接线回归待完成。原严格Goal回归改为先创建真实持久strict Goal再激活，继续验证raw证据拒绝、allowPartial不可改变、0攻略；这是前置门变化后的明确初始状态修正，不删除原严格证据约束。日志在忽略目录`output/d6/d6-21-prerequisite-{red,green}.log`。
+
+r12已通过TTY Ctrl+C正常关闭：PID85304退出，API63839/H561468无监听，server/manager锁均不存在，原audit恰一条guards_closed、forbiddenCalls=0；会话、schema、失败报告和D6账本保留。原历史账本SHA256仍为`3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126`。首次Vitest配置加载EPERM的原同名日志被成功重跑覆盖；已从首次工具输出恢复到忽略的`output/d6/backend-unit-r12-launch-eperm.log`，首行注明recovered-from-tool-output，不能称原始落盘文件。
+
+2026-10-06 r12 B01原失败保留于私有 `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r12/evidence/B01-2026-10-06T10-10-09-761Z.json`。实测Chrome154默认UA、viewport/screen390×844、DPR1、mobile/touch=false。首发送99ms受理、66680ms终态，accepted攻略0，可读计时null；delivery为partial/travel_guide、missing accepted_publication。后续解释、局改、刷新等8动作均blocked，没有重发失败需求。只读联合审阅 `backend/.demo/d6/B01-2026-10-06T10-12-43-463Z.private.json` 确认Trip v1/Tokyo JP/TYO/11月3–4日/2天/全程CNY1200，trip_context_update satisfied、travel_guide partial、无Guide。12model/4search/5fetch/0fare、16条账本全部settled、pending0、393653 total tokens，仅预留USD0.96，实际费用未知；连同此前D6迭代累计122model/50search/0fare、预留USD10.88。三次commit依次为DSH_GUIDE_NEEDS_REVISION、DSH_GUIDE_NEEDS_REVISION、DSH_REPAIR_LIMIT，contentAttempts达到2、argumentCorrections0；observer未给出具体revisionReasons，尚未据此推测根因。没有观察到output_limit或180秒超时；66.680秒为失败耗时，不是完成攻略耗时。需定位、补回归、修复后新冻结完整重跑，不能增加修订额度或凭工程通过宣布PASS。
 
 2026-10-06 真实交互前冻结候选完整批次 r11：源码提交 `57d2c1b`，工作树核心源码指纹 `b3225344c05ce07b81121494f8e2e036cd395a2678a0793fefb35ba3dc3d6151`，backend构建 `58ae2a14c2c79036ff9fc68706512ccf7ef29de13a99a52da3afaebb8a65bf1d`，H5构建 `f5c0f88764e57565c462cc596ab98c49d6a23865d3416e2f7d0bf06e1e499181`。run `13d1f214-6ee4-4a55-a190-7070b7cb1542` 保存于私有 `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r11`；API56227/H559502，TTY14746。配置仍为deepseek-v4-flash / deepseek-official / thinking disabled / max_tokens8192，SerpAPI只用本轮授权既有余额，逐次计量；手机viewport390×844。本批从原B01开始，全部12固定+4探索及完整工程回归须在相同版本完成；任何源码/核心配置修改立即使整批失效，不保留成功例凑分母。当前尚无旅程通过声明。
 
@@ -97,6 +107,8 @@ The D6 H5 runner uses the prior H5 harness's 390x844 viewport and records browse
 | D6-01 | withGoalIntent允许省略，commit schema/persona/说明却强制重复内部Goal字段 | 同步输入面与固定Goal测试 | 已实施，最终验收待运行 |
 | D6-02 | 局部编辑要求模型传baseGuideId/hash；准备快照未集中冻结 | 服务端绑定初始base及Trip，冲突拒绝/CAS回归 | 已实施；PG发现的会话内部/公开ID映射已修复，完整真实PG51项通过；最终UI待验证 |
 | D6-03 | 公开规则/修复提示禁预算目标金额 | 精确目标确认允许，预算保证继续拒绝 | 已实施，定向通过并继续检查边界 |
+| D6-21 | r12首次allowPartial=false Goal已接受，但选中的raw-web候选均为partially_verified，修稿无法满足verified_evidence | 首次接受前按已解析选择检查兼容性；主模型忠于用户要求显式纠正首次intent或说明不能独立核实，不自动降低Goal | 红测2失败→51/51、worker接线1/1；联合8文件207/207及check/build通过；完整新冻结批次待执行 |
+| D6-22 | r12 overview合法全程1200元目标附“实际花费会因住宿、餐饮与购物选择而不同”，被目标豁免当正面价格声明 | 仅为精确匹配全程目标识别有界条件花费说明；其他金额、币种/scope、票价、每日金额及保证继续拒绝 | finalization78/78及联合207/207通过；红测/测试期望更正历史在公开错误说明中保留；真实新批待执行 |
 | D6-15 | Taro 初始 main tab 页面尚未完成首次 ready 时，H5 原生 tabbar 可先发起另一标签的切换；native 与 custom 导航未共享页面就绪条件 | 任一 main tab 的 `useReady` 前禁用原生 H5/custom tab 点击，首次 main tab ready 后恢复原 `switchTab`；初始直达任一 main tab 可解锁，详情返回不重置门 | 已实施；session-recovery fixture 20/20、H5 build通过；真实H5复验待新run，late-hide因果仍未证实 |
 | D6-07 | `update_trip_context` 的空 patch 返回 `changed: false`，但仍重建同 scope 的 evidence store 并复位 source alias sequence；旧模型引用可能映射到后续不同证据 | 同 generation 在 setter 前后记录相同内容、不同 URL，要求 source alias 不重复，并断言 Trip version 与 accepted base 不变 | 修复及定向绿测通过；最终冻结验收待运行 |
 | D6-10 | 准备阶段按当前语言选取任一旧 accepted guide，而发布 CAS 将同 conversation/version 最新任一语言 accepted guide 视为当前基底，可能错误允许回退到旧版或在提交时无故冲突 | 同作用域新英/旧中组合不得把旧中文 guide 当编辑基底；新guide补齐中文 accepted后必须绑定新guide | 准备规则已实施，定向7/7通过；最终冻结验收待运行 |

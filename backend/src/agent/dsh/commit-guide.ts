@@ -13,6 +13,7 @@ import { publicationFor } from '../../travel-guides/publication.js'
 import { tripDatesConsistent, tripDurationDays, tripTravelWindow } from '../../trips/dates.js'
 import { tripRoutePlanPayloadSchema } from '../../trip-planning/types.js'
 import { canonicalFingerprint } from '../goals/repository.js'
+import { plannerGoalIntentSchema } from '../goals/acceptance-types.js'
 import { travelGuideGoalParametersSchema } from '../goals/types.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
 import { saveTravelGuideTool } from '../tools/authored-travel-guide.js'
@@ -263,5 +264,26 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
     }
   }
   const wrapped = withGoalIntent(tool, ['travel_guide'], { required: true, completeAfter: true })
-  return { ...wrapped, description: `${tool.description} DSH Goal protocol: the first submission requires a NEW semantic travel_guide intent matching this user request, or an explicitly resumable goalRef. Later same-turn repairs reuse the accepted immutable Goal automatically; omit intent/goalRef. An explicitly changed intent remains a conflict. Completion feedback is server-owned.` }
+  return { ...wrapped,
+    description: `${tool.description} DSH Goal protocol: the first submission requires a NEW semantic travel_guide intent matching this user request, or an explicitly resumable goalRef. Later same-turn repairs reuse the accepted immutable Goal automatically; omit intent/goalRef. An explicitly changed intent remains a conflict. Completion feedback is server-owned.`,
+    async execute(raw, context, signal) {
+      signal.throwIfAborted()
+      // New raw candidates are always reference-only. Reject an impossible
+      // first intent before its immutable Goal or research can be persisted.
+      // Existing/resumed Goals retain their original domain validation.
+      const input = raw as CommitGuideInput & { intent?: unknown }
+      if (!context.acceptedGoalIntent && !context.activeGoalId && input.intent !== undefined) {
+        const requested = plannerGoalIntentSchema.parse(input.intent)
+        const rawKeys = new Set(input.candidates?.map(candidate => candidate.key) ?? [])
+        const usesRawCandidate = input.days.some(day => day.items.some(item => item.candidateKey && rawKeys.has(item.candidateKey)))
+          || input.supportingCandidateKeys?.some(key => rawKeys.has(key))
+        if (requested.kind === 'travel_guide' && !requested.parameters.allowPartial && usesRawCandidate) {
+          fail('Raw web candidates cannot satisfy independently verified evidence', {
+            code: 'raw_evidence_requires_partial', fieldPath: 'intent.parameters.allowPartial'
+          })
+        }
+      }
+      return wrapped.execute(raw, context, signal)
+    }
+  }
 }

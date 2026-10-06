@@ -4,6 +4,22 @@ import { AppError } from '../../lib/errors.js'
 import { CommitRecovery, classifyCommitFailure, safeCommitFeedback } from './commit-recovery.js'
 
 describe('DSH commit recovery policy', () => {
+  it('reports the r12 raw-source verification mismatch as a prerequisite without consuming a content attempt', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_RAW_SOURCE', 422,
+      { code: 'raw_evidence_requires_partial', fieldPath: 'intent.parameters.allowPartial', providerBody: 'PRIVATE_RAW_SOURCE' })
+    const kind = classifyCommitFailure(error)
+    expect(kind).toBe('prerequisite')
+    const feedback = safeCommitFeedback(error, kind, { acceptedGoal: false })
+    expect(feedback).toMatchObject({ revisionCode: 'raw_evidence_requires_partial', fields: ['intent.parameters.allowPartial'] })
+    expect(feedback.correction).toContain('No Goal has been accepted')
+    expect(feedback.correction).toContain('only if this matches the user request')
+    expect(feedback.correction).toContain('independently verified')
+    expect(JSON.stringify(feedback)).not.toContain('PRIVATE_RAW_SOURCE')
+    const recovery = new CommitRecovery()
+    recovery.admit(); recovery.failed(error)
+    expect(recovery.snapshot()).toMatchObject({ calls: 1, contentAttempts: 0, argumentCorrections: 0 })
+  })
+
   it('gives a field-specific correction for a source URL used as a persisted candidate reference', () => {
     const error = new AppError('DSH_CANDIDATE_REFERENCE_UNAVAILABLE', 'PRIVATE_PROVIDER_BODY', 409,
       { fieldPath: 'supportingRefs.0', reference: 'https://private.test/?token=secret' })

@@ -48,7 +48,7 @@ export function classifyCommitFailure(error: unknown): CommitFailureKind {
     if (code === 'candidate_category_outside_goal') return 'arguments'
     if (['candidate_evidence_unavailable', 'candidate_key_unavailable', 'candidate_location_unresolved',
       'candidate_goal_missing', 'guide_edit_prerequisite', 'activity_text_exact_cover', 'candidate_binding_invalid',
-      'duplicate_day_or_activity_key', 'duplicate_candidate_key'].includes(code)) return 'prerequisite'
+      'duplicate_day_or_activity_key', 'duplicate_candidate_key', 'raw_evidence_requires_partial'].includes(code)) return 'prerequisite'
     return 'content'
   }
   if (['ARTIFACT_CONTEXT_VERSION_MISMATCH', 'TRIP_CONTEXT_VERSION_CONFLICT', 'FLIGHT_SELECTION_CHANGED',
@@ -112,6 +112,10 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
     feedback.fields = [details.fieldPath]
   }
   if (kind === 'content' || kind === 'prerequisite') {
+    if (details.code === 'raw_evidence_requires_partial') {
+      feedback.fields = ['intent.parameters.allowPartial']
+      feedback.correction = 'No Goal has been accepted for this submission. New raw-web candidates are partially verified, reference-only material. Correct the first intent to allowPartial=true only if this matches the user request. If the user requires independently verified facts, explain that these sources cannot satisfy that requirement and clarify; do not silently weaken the requested objective or an accepted Goal. Reuse current evidence and repair public text without repeating valid research.'
+    }
     for (const field of ['code', 'requiredActivityKeys', 'submittedActivityKeys', 'unexpectedActivityKeys',
       'missingActivityKeys', 'duplicateActivityKeys', 'issues', 'presentationIssues'] as const) {
       if (field === 'code') { if (typeof details.code === 'string') feedback.revisionCode = details.code }

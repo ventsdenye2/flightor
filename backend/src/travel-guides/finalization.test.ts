@@ -108,6 +108,18 @@ describe('integrated main Agent publication', () => {
     expect(checked.status).toBe('accepted')
     expect(checked.issues).toEqual([])
   })
+  it('allows the exact trip target with the r12 conditional-spending explanation', () => {
+    const overview = '两日行程均为东京市区内的传统文化与当地小吃路线，节奏轻松。第一天以浅草为核心：浅草寺与雷门、仲见世通参拜路线，午后小吃巡礼与可选的传统艺能体验，傍晚在Hoppy Street感受下町串烧氛围。第二天上午在明治神宫的人工森林参道慢走，午后到谷中银座商店街逛老铺小吃，最后到上野阿美横町以多样市场小吃收尾。两天均建议使用Suica／PASMO等交通IC卡或合适的一日券，方便在浅草、原宿、日暮里与上野之间移动。你们设定的全程总预算为1200元人民币（覆盖整趟行程、非每日），此处仅作为规划目标引用，实际花费会因住宿、餐饮与购物选择而不同，未知部分仍属未知。行程中的店铺营业时间与价格会随时间变动，出行前请再行确认。'
+    expect(publicProseProblems([overview], 'zh', {
+      languageBodies: [overview], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).not.toContain('excluded_precise_claim')
+  })
+  it('allows the exact trip target with a scoped English variable-spending explanation', () => {
+    const content = 'The whole-trip budget target is CNY 1200, and actual costs vary depending on lodging, dining, and shopping choices; unknown portions remain unknown.'
+    expect(publicProseProblems([content], 'en', {
+      languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).not.toContain('excluded_precise_claim')
+  })
   it.each([
     ['mismatched_amount', { amount: 1300, currency: 'CNY', scope: 'trip' }, '全程预算目标是1500元，实际费用仍待核实。'],
     ['wrong_scope', { amount: 1500, currency: 'CNY', scope: 'airfare' }, '全程预算目标是1500元，实际费用仍待核实。'],
@@ -120,6 +132,16 @@ describe('integrated main Agent publication', () => {
     const checked = validateIntegratedFinalText({ ...f.finalizationInput, guide: f.guide }, f.text)
     expect(checked.status).toBe('blocked')
     expect(checked.issues).toContainEqual(expect.objectContaining({ code: 'format', detail: expect.stringContaining('excluded_precise_claim') }))
+  })
+  it.each([
+    ['same-amount admission price', '全程预算目标为1200元人民币（非每日），门票价格为1200元人民币。'],
+    ['verified actual spending', '全程预算目标为1200元人民币（非每日），实际花费已核实为1200元人民币。'],
+    ['another amount', '全程预算目标为1200元人民币（非每日），另有住宿花费为300元人民币。'],
+    ['daily amount', '全程预算目标为1200元人民币（非每日），另把1200元人民币列为每日金额。'],
+  ] as const)('keeps %s outside the exact-target allowance', (_case, content) => {
+    expect(publicProseProblems([content], 'zh', {
+      languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).toContain('excluded_precise_claim')
   })
   it.each([
     ['zh', '目前无法确认费用是否在预算内。'],
@@ -150,6 +172,12 @@ describe('integrated main Agent publication', () => {
     ['zh', '不能确认预算足够；实际费用在预算内。']
   ] as const)('still blocks affirmative budget guarantees in %s prose', (locale, content) => {
     expect(publicProseProblems([content], locale, { languageBodies: [content] })).toContain('budget_guarantee')
+  })
+  it('does not let a variable-cost explanation mask a separate budget guarantee', () => {
+    const content = '全程预算目标为1200元人民币（非每日），实际花费会因住宿、餐饮与购物选择而不同，不过实际费用仍会在预算内。'
+    expect(publicProseProblems([content], 'zh', {
+      languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).toContain('budget_guarantee')
   })
   it.each(['already_cancelled', 'cancel_before_save', 'trip_changed', 'flight_changed'] as const)('does not save after %s', async failure => {
     const f = await application(), controller = new AbortController()

@@ -2,6 +2,8 @@
 
 ## 2026-10-06 DSH准备与条件发布
 
+DSH组合提交在首次Goal接受前用已解析的选择检查raw材料与证据要求是否兼容；不可由本次raw候选满足的独立核实要求返回前置错误，不保存不可满足的新Goal、不调用额外模型或网络。由主模型按用户目标纠正首次语义intent或说明能力限制，既有严格Goal不可降低。该检查仍使用原withGoalIntent接受及领域发布路径，详见[ADR0029](adr/0029-dsh-prepared-submission.md)。
+
 DSH-only薄输入适配固定模型依据的Trip、flight与accepted base/hash，活动与文字一次提交。模型合同将本轮来源 `sourceRefs`、新候选 `candidateKey`、已持久候选 `candidateRef`、补充新候选 `supportingCandidateKeys` 与补充持久候选 `supportingRefs` 分开；来源URL不是候选或证据引用。首个持久操作需要匹配当前明确目标的新语义 intent；普通 raw-web reference-only 攻略的首个 `travel_guide` Goal 还需 `allowPartial=true`，同轮修正复用不可变Goal，满足条件的显式Trip版本推进之后则须为新目标重新立Goal。共享领域仍进行owner、version、来源、重复与发布校验；明确Trip更新才受控刷新准备上下文并失效旧raw证据。局部编辑最终publication短事务锁Trip并核对最新accepted基底，不读取最新hash伪装旧决定。没有新表/状态机/LLM；兼容、回滚及验证边界见[ADR0029](adr/0029-dsh-prepared-submission.md)、[引用与地点合同](design/budget-travel-agent/DSH_D6_EVIDENCE_AND_LOCATIONS.md)与[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
 
 2026-09-27 D5 更新：以下关于会话只能以 start_route_generation 显式生成最终路线的描述是旧边界。当前 DSH 新增 search_budget_routes，可按明确省钱意图启动既有确定性航线流程；inline dispatch 随当前 turn 取消，原 queued 入口不变。最多一个主动 hub、两张独立票，报价持久化绑定后才比较总价；不自动采用。实现与验证以 [D5 报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md) 为准。

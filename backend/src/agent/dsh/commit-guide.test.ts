@@ -49,6 +49,41 @@ async function fixture() {
 }
 
 describe('DSH combined guide commit', () => {
+  it('rejects a first raw-source submission that requires fully verified evidence before accepting or writing a Goal', async () => {
+    const f = await fixture()
+    const strictIntent = { ...intent, parameters: { ...intent.parameters, allowPartial: false } }
+    const before = structuredClone(strictIntent)
+    const accept = vi.spyOn(f.runs, 'accept')
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...f.input, intent: strictIntent }),
+      f.context, new AbortController().signal)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION',
+      details: { code: 'raw_evidence_requires_partial', fieldPath: 'intent.parameters.allowPartial' } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.goals.listForTrip(f.trip.id)).toEqual([])
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+    expect(f.context.acceptedGoalIntent).toBeUndefined()
+    expect(strictIntent).toEqual(before)
+    const corrected = await f.execute()
+    expect(corrected).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    expect(accept).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves an already accepted strict Goal immutable when its raw-source submission is rejected', async () => {
+    const f = await fixture()
+    const strictIntent = { ...intent, parameters: { ...intent.parameters, allowPartial: false } }
+    const { goal, run } = await f.runs.accept({ tripId: f.trip.id, conversationId: f.context.conversationId,
+      requestId: f.context.requestId, generationId: f.context.generationId, contextSnapshot: f.trip, intent: strictIntent })
+    const { canonicalFingerprint } = await import('../goals/repository.js')
+    Object.assign(f.context, { activeGoalId: goal.id, activeGoalRunId: run.id,
+      acceptedGoalIntent: { goalId: goal.id, runId: run.id, kind: goal.kind, contextVersion: run.contextVersion,
+        fingerprint: canonicalFingerprint(strictIntent) } })
+    await expect(f.tool.execute(f.tool.inputSchema.parse(f.input), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: { issues: ['verified_evidence'] } })
+    await expect(f.execute()).rejects.toMatchObject({ code: 'GOAL_INTENT_CONFLICT' })
+    expect((await f.goals.get(goal.id))?.parameters).toEqual(strictIntent.parameters)
+    expect(await f.goals.listForTrip(f.trip.id)).toHaveLength(1)
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'travel_guide')).toEqual([])
+  })
+
   it('reports the r10 extra-day rejection alongside presentation issues and reuses the same material for a complete repair', async () => {
     const f = await fixture()
     const invalid = structuredClone(f.input)
@@ -224,7 +259,13 @@ describe('DSH combined guide commit', () => {
   it('rejects partial raw evidence under a verified-only Goal and forbids weakening that accepted Goal', async () => {
     const f = await fixture()
     const strictIntent = { ...intent, parameters: { ...intent.parameters, allowPartial: false } }
-    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...f.input, intent: strictIntent }), f.context, new AbortController().signal))
+    const { goal, run } = await f.runs.accept({ tripId: f.trip.id, conversationId: f.context.conversationId,
+      requestId: f.context.requestId, generationId: f.context.generationId, contextSnapshot: f.trip, intent: strictIntent })
+    const { canonicalFingerprint } = await import('../goals/repository.js')
+    Object.assign(f.context, { activeGoalId: goal.id, activeGoalRunId: run.id,
+      acceptedGoalIntent: { goalId: goal.id, runId: run.id, kind: goal.kind, contextVersion: run.contextVersion,
+        fingerprint: canonicalFingerprint(strictIntent) } })
+    await expect(f.tool.execute(f.tool.inputSchema.parse(f.input), f.context, new AbortController().signal))
       .rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: { issues: expect.arrayContaining(['verified_evidence']) } })
     expect((await f.goals.get(f.context.activeGoalId!))!).toMatchObject({ status: 'pending', parameters: { allowPartial: false } })
     await expect(f.execute()).rejects.toMatchObject({ code: 'GOAL_INTENT_CONFLICT' })

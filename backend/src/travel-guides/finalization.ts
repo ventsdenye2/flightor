@@ -115,9 +115,16 @@ export function publicProseProblems(fields: string[], locale: PublicationLocale,
             && /(?:全程|整个行程|两天|三天|[一二三四五六七八九十\d]+天合计|总额|合计)/.test(clause)
         return hasTarget && money.test(clause)
       })
-      const unsupportedCostClaim = clauses.some(clause =>
-        /(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
-        && !cautiousBudgetLanguage.test(clause))
+      const unsupportedCostClaim = clauses.some((clause, index) => {
+        if (!/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
+          || cautiousBudgetLanguage.test(clause)) return false
+        const adjacent = clauses.slice(index, index + 2).join('')
+        const supportedVariableCostExplanation = !/(?:ticket|admission|fare|price|门票|票价)/i.test(adjacent)
+          && !/(?:已核实|已确认|已经核实|已经确认|verified|confirmed)/i.test(adjacent)
+          && (/(?:实际)?(?:花费|费用|开销|支出)(?:会|将|可能)?(?:因|随|取决于).{0,60}(?:住宿|餐饮|购物|选择|消费习惯|安排).{0,20}(?:而(?:不同|变化|变动|异)|(?:不同|变化|变动|有差异))/.test(adjacent)
+            || /\b(?:actual\s+)?(?:costs?|expenses?|spending)\b.{0,40}\b(?:vary|varies|change|changes|depend|depends)\b.{0,60}\b(?:choice|choices|selection|accommodation|lodging|dining|shopping)\b/i.test(adjacent))
+        return !supportedVariableCostExplanation
+      })
       return hasTargetAmount && !unsupportedCostClaim
     }
     claimProse = claimProse.split(/(?<=[.!?;。！？；\n])/).map(sentence =>
