@@ -107,6 +107,29 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
     if (allowedCategories.length) feedback.allowedCategories = allowedCategories
     feedback.correction = 'Keep the accepted Goal unchanged. Submit only candidates whose actual category is in allowedCategories; do not relabel unsupported material. Correct or replace the indicated candidate explicitly, using current-turn evidence where needed.'
   }
+  if (code === 'DSH_GUIDE_NEEDS_REVISION' && details.code === 'candidate_location_unresolved') {
+    const fieldPattern = /^(?:candidates\.(\d+)\.locationId|days\.(\d+)\.cityId)$/
+    const fields: string[] = []
+    const seenFields = new Set<string>()
+    if (Array.isArray(details.fieldPaths)) for (const value of details.fieldPaths) {
+      if (typeof value !== 'string' || seenFields.has(value)) continue
+      const match = fieldPattern.exec(value)
+      if (!match || match[0] !== value) continue
+      const candidateIndex = match[1] === undefined ? undefined : Number(match[1])
+      const dayIndex = match[2] === undefined ? undefined : Number(match[2])
+      if (candidateIndex !== undefined && (candidateIndex >= 50 || String(candidateIndex) !== match[1])
+        || dayIndex !== undefined && (dayIndex >= 60 || String(dayIndex) !== match[2])) continue
+      seenFields.add(value)
+      fields.push(value)
+      if (fields.length === 110) break
+    }
+    if (fields.length) feedback.fields = [...new Set(fields)]
+    if (['open', 'explicit', 'mixed'].includes(String(details.destinationMode))) feedback.destinationMode = details.destinationMode
+    if (Number.isInteger(details.selectedCityCount) && Number(details.selectedCityCount) >= 0 && Number(details.selectedCityCount) <= 99)
+      feedback.selectedCityCount = Number(details.selectedCityCount)
+    feedback.revisionCode = 'candidate_location_unresolved'
+    feedback.correction = 'For each omitted field, explicitly select a matching canonical city already confirmed in the current Trip when one is available; never infer a candidate location from another day cityId or text. If no current Trip city identifies the requested place, ask the user to confirm it. Use the trusted location resolver and update_trip_context only when a new destination is supported by the user request; do not collapse an existing multi-city Trip to one city. After the Trip version advances to a new version, prepare again and repeat research; old sourceRefs and candidate bindings belong to the previous Trip version and must not be reused.'
+  }
   if (details.code === 'candidate_key_unavailable') {
     const fieldPath = details.fieldPath === 'candidates' ? 'candidates' : undefined
     const registrationStatus = ['not_submitted', 'submitted_incomplete'].includes(String(details.registrationStatus))

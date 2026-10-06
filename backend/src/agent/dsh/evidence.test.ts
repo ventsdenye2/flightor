@@ -42,6 +42,22 @@ describe('DSH evidence capture', () => {
     expect((await evidence.get(captured.sourceRefs[0]!))?.contentHash).not.toBe((await evidence.get(changed.sourceRefs[0]!))?.contentHash)
   })
 
+  it('keeps canonical SHA-256 evidence references on the repository lookup path', async () => {
+    const ref = 'a'.repeat(64)
+    const repository = new InMemoryDshEvidenceRepository()
+    const originalStore = store(repository)
+    const captured = await originalStore.recordSearch({ sources: [{ url: 'https://example.com/place', snippet: 'SHA-backed current-scope evidence.' }] },
+      'web-search', 'tool-sha-ref')
+    const original = await repository.get(captured.evidenceRefs[0]!)
+    const record = { ...original!, evidenceRef: ref }
+    await repository.put(record)
+    const current = new DshEvidenceStore(scope, { repository, now: clock })
+
+    await expect(current.get(ref)).resolves.toEqual(record)
+    await expect(new DshEvidenceStore({ ...scope, ownerId: 'other-owner' }, { repository }).get(ref)).resolves.toBeNull()
+    await expect(new DshEvidenceStore({ ...scope, tripContextVersion: scope.tripContextVersion + 1 }, { repository }).get(ref)).resolves.toBeNull()
+  })
+
   it('accepts short source aliases when mapping candidates and keeps legacy UUID refs', async () => {
     const evidence = store()
     const captured = await evidence.recordSearch({ sources: [{ url: 'https://example.com/place', snippet: 'Original provider snippet.' }] }, 'web-search', 'tool-short-ref')

@@ -181,6 +181,46 @@ describe('DSH model preparation and deterministic input adaptation', () => {
     expect(schema.shape).not.toHaveProperty('baseGuideId')
     expect(schema.shape).not.toHaveProperty('expectedContentHash')
   })
+  it('requires a confirmed Trip city when compact candidates omit canonical locations', () => {
+    const openTrip = structuredClone(trip)
+    const input = { ...compact, candidates: Array.from({ length: 6 }, (_, index) => ({ key: `place-${index}`,
+      sourceRefs: ['s1.fixture'], title: `Place ${index}`, summary: 'A source-backed place.', category: 'activity' as const })),
+      days: compact.days }
+    try {
+      adaptDshCommit(input, { trip: openTrip })
+      throw new Error('expected a controlled location prerequisite')
+    } catch (error) {
+      expect(error).toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+        code: 'candidate_location_unresolved', destinationMode: 'open', selectedCityCount: 0,
+        fieldPaths: ['candidates.0.locationId', 'candidates.1.locationId', 'candidates.2.locationId',
+          'candidates.3.locationId', 'candidates.4.locationId', 'candidates.5.locationId']
+      } })
+      expect(JSON.stringify((error as any).details)).not.toContain('Place 0')
+    }
+  })
+  it('reports every omitted location field allowed by the compact schema', () => {
+    const openTrip = structuredClone(trip)
+    const input = { ...compact,
+      candidates: Array.from({ length: 50 }, (_, index) => ({ key: `place-${index}`,
+        sourceRefs: ['s1.fixture'], title: `Place ${index}`, summary: 'A source-backed place.', category: 'activity' as const })),
+      days: Array.from({ length: 60 }, (_, index) => ({ day: index + 1, kind: 'visit' as const,
+        theme: `Day ${index + 1}`, items: [] })),
+      text: { ...compact.text, days: Array.from({ length: 60 }, (_, index) => ({ day: index + 1, theme: `Day ${index + 1}` })) } }
+    let failure: any
+    try { adaptDshCommit(input, { trip: openTrip }) } catch (error) { failure = error }
+    expect(failure?.details?.fieldPaths).toEqual([
+      ...Array.from({ length: 50 }, (_, index) => `candidates.${index}.locationId`),
+      ...Array.from({ length: 60 }, (_, index) => `days.${index}.cityId`)
+    ])
+  })
+  it('does not infer a candidate location from a day cityId', () => {
+    const input = { ...compact, candidates: [{ key: 'place', sourceRefs: ['s1.fixture'], title: 'Place',
+      summary: 'A source-backed place.', category: 'activity' as const }], days: [{ ...compact.days[0]!, cityId: 'city:TYO',
+        items: [{ candidateKey: 'place', timeOfDay: 'afternoon' as const, planningNote: 'Visit the place.',
+          text: { name: 'Visit', introduction: 'Visit the place.', recommendationReason: 'It matches the trip.' } }] }] }
+    expect(() => adaptDshCommit(input, { trip })).toThrowError(expect.objectContaining({ code: 'DSH_GUIDE_NEEDS_REVISION',
+      details: expect.objectContaining({ code: 'candidate_location_unresolved', fieldPaths: ['candidates.0.locationId'] }) }))
+  })
   it('rejects source URLs in supporting candidate references without silently dropping them', () => {
     const malformed = { ...compact, supportingRefs: ['https://example.test/tokyo-transit'], supportingCandidateKeys: ['transit'] }
     const parsed = dshCommitInputSchema.safeParse(malformed)

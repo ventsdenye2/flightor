@@ -45,6 +45,46 @@ describe('DSH durable Goal request identity', () => {
 })
 
 describe('DSH service with the official worker and loop', () => {
+  it('shows the Trip location preparation failure without inventing a Goal or adopting the model day city', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-location-preparation-'))
+    const sessions = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [
+      { tool: 'commit_travel_guide', args: {
+        intent: { kind: 'travel_guide', parameters: { questions: ['Visit a cultural venue'], researchTypes: ['activity'],
+          requiredEvidenceTypes: ['activity'], maxResults: 1, maxCities: 1, allowPartial: true } },
+        candidates: [{ key: 'venue', sourceRefs: ['s1.0123456789.abcdef0123.1'], title: 'A cultural venue',
+          summary: 'Explore local culture.', category: 'activity' }],
+        days: [{ day: 1, cityId: 'city:TYO', kind: 'visit', theme: 'Culture', items: [{ candidateKey: 'venue',
+          timeOfDay: 'afternoon', planningNote: 'Explore local culture.', text: { name: 'Cultural visit',
+            introduction: 'Explore local culture.', recommendationReason: 'Matches your cultural interest.' } }] }],
+        text: { reply: 'Your guide is ready.', overview: 'Explore local culture.', days: [{ day: 1, theme: 'Culture' }] }
+      } },
+      { text: 'Could not prepare the guide.' }
+    ] })
+    try {
+      const trips = new InMemoryTripRepository(), trip = await trips.create()
+      const ownerId = 'location-preparation-owner', owned = new Set([trip.id])
+      const conversations = new InMemoryConversationRepository(ownerId, owned), conversation = await conversations.create({ tripId: trip.id })
+      const artifacts = new InMemoryArtifactRepository(ownerId, owned)
+      const goals = new InMemoryGoalRepository(ownerId), runs = new InMemoryGoalRunRepository(ownerId, goals)
+      const accept = vi.spyOn(runs, 'accept')
+      const service = new DshPlannerService({ ownerId, trips, conversations, sessions, artifacts,
+        goalRepository: goals, goalRunRepository: runs, goalVerifiers: createDefaultGoalVerifierRegistry(),
+        memory: new InMemoryUserMemoryRepository(), aviation: new MockAviationProvider(), fares: new MockFareProvider(),
+        research: new UnavailableResearchAgent(), connectionSearch: new UnavailableConnectionSearchService(),
+        flightRoutePlanner: new UnavailableFlightRoutePlanner(), routeOptimizer: new UnavailableRouteOptimizer(),
+        createFinalizer: vi.fn(() => { throw new Error('Unexpected finalizer') }) })
+      const result = await service.runTurn({ requestId: 'location-preparation', generationId: 'location-preparation-generation',
+        tripId: trip.id, conversationId: conversation.id, message: 'Plan a cultural day in Tokyo.', locale: 'en' })
+      expect(result.reply).toMatch(/current trip|trip destination/i)
+      expect(result.reply).not.toMatch(/more specific place name|candidate_location_unresolved|city:TYO|s1\.|stack|token=/i)
+      expect(result.delivery).toEqual({ status: 'partial', kind: 'travel_guide', artifactIds: [],
+        missing: ['accepted_publication'], warnings: [], goals: [] })
+      expect(accept).not.toHaveBeenCalled()
+      expect(await trips.get(trip.id)).toEqual(trip.context)
+      expect(await artifacts.listForTrip(trip.id)).toEqual([])
+    } finally { await sessions.close(); await rm(root, { recursive: true, force: true }) }
+  }, 20_000)
+
   it('uses precise safe copy when the latest guide has no prepared current-language edit base', async () => {
     const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-no-edit-base-'))
     const sessions = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [

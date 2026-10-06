@@ -53,9 +53,11 @@ export const dshCommitInputSchema = commitGuideInputSchema.omit({ baseGuideId: t
   .extend({ candidates: z.array(z.object({ key: z.string().trim().min(1).max(120), sourceRefs: z.array(sourceReference).min(1).max(20)
       .describe('Select only sourceRefs returned by web_search/web_fetch in this turn after the latest Trip update; never source URLs or invented IDs.'),
       title: z.string().trim().min(1).max(240), summary: z.string().trim().min(1).max(1500),
-      category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']), locationId: z.string().min(1).max(160).optional() }).strict()).min(1).max(50).optional()
+      category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']), locationId: z.string().min(1).max(160).optional()
+        .describe('Use an explicit canonical locationId when the current Trip has multiple selected cities; only one unique selected Trip city may fill an omitted value automatically.') }).strict()).min(1).max(50).optional()
       .describe('Define every new key selected by days[].items[].candidateKey or supportingCandidateKeys. Each entry binds its exact key to supported current-turn sourceRefs; web source receipts alone are not registered candidates. Omitting this list is allowed only when reusing candidates already registered in this same prepared attempt and scope, or when using persisted candidateRef values.'),
-    days: z.array(commitGuideInputSchema.shape.days.element.extend({ cityId: z.string().min(1).max(160).optional(), items: z.array(item).max(6) })).min(1).max(60)
+    days: z.array(commitGuideInputSchema.shape.days.element.extend({ cityId: z.string().min(1).max(160).optional()
+      .describe('Use an explicit canonical cityId when the current Trip has multiple selected cities; only one unique selected Trip city may fill an omitted value automatically.'), items: z.array(item).max(6) })).min(1).max(60)
       .describe('For a first guide or failed first-guide repair, submit the COMPLETE itinerary covering exactly the authoritative Trip duration with consecutive day numbers starting at 1, including rest/travel days within that span. Do not append an optional extra day. For a local edit of an accepted guide, submit only the selected replacement slots; the server preserves other days. Always include both days and text in a corrected submission.'),
     supportingRefs: z.array(candidateReference).max(50).optional()
       .describe('Optional supplemental persisted candidate references, not source URLs. For candidates submitted here, use supportingCandidateKeys instead.'),
@@ -70,6 +72,23 @@ export function adaptDshCommit(raw: unknown, preparation: DshPreparation): Commi
   const legacy = body.text && typeof body.text === 'object' && 'activities' in body.text
   const compact = legacy ? undefined : dshCommitInputSchema.parse(body)
   const uniqueCity = uniqueSelectedTripCity(preparation.trip)
+  if (compact && !uniqueCity) {
+    const fieldPaths = [
+      ...(compact.candidates ?? []).flatMap((candidate, index) => candidate.locationId === undefined
+        ? [`candidates.${index}.locationId`] : []),
+      ...compact.days.flatMap((day, index) => day.cityId === undefined ? [`days.${index}.cityId`] : [])
+    ].slice(0, 110)
+    if (fieldPaths.length) {
+      const selected = [...preparation.trip.destinationIntent.required, ...preparation.trip.destinationIntent.preferred]
+      const selectedCities = new Set(selected.filter(location => location.type === 'city').map(location => location.id))
+      throw new AppError('DSH_GUIDE_NEEDS_REVISION', 'The current Trip has no unique selected city for omitted locations', 422, {
+        code: 'candidate_location_unresolved', fieldPaths,
+        destinationMode: ['open', 'explicit', 'mixed'].includes(preparation.trip.destinationIntent.mode)
+          ? preparation.trip.destinationIntent.mode : 'open',
+        selectedCityCount: Math.min(selectedCities.size, 99)
+      })
+    }
+  }
   const expanded = compact ? {
     ...compact,
     ...(compact.candidates ? { candidates: compact.candidates.map(candidate => ({ ...candidate, locationId: candidate.locationId ?? uniqueCity?.id })) } : {}),

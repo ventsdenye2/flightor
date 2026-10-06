@@ -14,6 +14,7 @@ import { InMemoryTripRepository } from '../../trips/repository.js'
 import { createDefaultGoalVerifierRegistry } from '../goals/default-verifiers.js'
 import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repository.js'
 import { DshEvidenceStore } from './evidence.js'
+import { FileDshEvidenceRepository } from './evidence-file.js'
 import { DshSessionManager } from './session-manager.js'
 import { DshPlannerService } from './service.js'
 
@@ -25,9 +26,11 @@ const guideIntent = { kind: 'travel_guide', parameters: { questions: ['Visit a c
 const updateIntent = { kind: 'trip_context_update', parameters: { fields: ['budget'] } }
 const budget = { amount: 1200, currency: 'CNY', scope: 'trip' }
 
-async function sourceAlias(input: { ownerId: string; tripId: string; conversationId: string; generationId: string; version: number }) {
+async function sourceAlias(input: { ownerId: string; tripId: string; conversationId: string; generationId: string; version: number },
+  repository?: FileDshEvidenceRepository) {
   const store = new DshEvidenceStore({ ownerId: input.ownerId, tripId: input.tripId, conversationId: input.conversationId,
-    generationId: input.generationId, tripContextVersion: input.version }, { now: () => new Date('2026-10-06T00:00:00.000Z') })
+    generationId: input.generationId, tripContextVersion: input.version }, { now: () => new Date('2026-10-06T00:00:00.000Z'),
+    ...(repository ? { repository } : {}) })
   const result = await store.recordSearch({ sources: [source] }, 'serpapi-raw', 'fixture-search')
   return result.sourceRefs[0]!
 }
@@ -35,6 +38,7 @@ async function sourceAlias(input: { ownerId: string; tripId: string; conversatio
 describe('D6 same-turn controlled Trip update then guide publication', () => {
   it('accepts a compact sourced guide after the budget update Goal is satisfied and refuses pre-update evidence', async () => {
     const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-controlled-update-'))
+    const evidenceRepository = new FileDshEvidenceRepository(join(root, 'evidence'))
     const ownerId = 'd6-controlled-update-owner', generationId = randomUUID()
     const trips = new InMemoryTripRepository()
     const trip = await trips.create({ initialContext: { travelDays: 1,
@@ -43,7 +47,7 @@ describe('D6 same-turn controlled Trip update then guide publication', () => {
     const owned = new Set([trip.id])
     const conversations = new InMemoryConversationRepository(ownerId, owned)
     const conversation = await conversations.create({ tripId: trip.id })
-    const oldAlias = await sourceAlias({ ownerId, tripId: trip.id, conversationId: conversation.id, generationId, version: trip.context.version })
+    const oldAlias = await sourceAlias({ ownerId, tripId: trip.id, conversationId: conversation.id, generationId, version: trip.context.version }, evidenceRepository)
     const currentAlias = await sourceAlias({ ownerId, tripId: trip.id, conversationId: conversation.id, generationId, version: trip.context.version + 1 })
     expect(oldAlias).not.toBe(currentAlias)
 
@@ -89,6 +93,7 @@ describe('D6 same-turn controlled Trip update then guide publication', () => {
         memory: new InMemoryUserMemoryRepository(), aviation: new MockAviationProvider(), fares: new MockFareProvider(),
         research, connectionSearch: new UnavailableConnectionSearchService(), flightRoutePlanner: new UnavailableFlightRoutePlanner(),
         routeOptimizer: new UnavailableRouteOptimizer(), createFinalizer: vi.fn(() => { throw new Error('Unexpected legacy finalizer') }),
+        evidenceRepository,
         web: { provider: 'serpapi-raw', serpapi: { searchOrganic } } })
 
       const result = await service.runTurn({ requestId: 'controlled-update-request', generationId, tripId: trip.id,
@@ -97,8 +102,10 @@ describe('D6 same-turn controlled Trip update then guide publication', () => {
       const commits = toolResults.filter(value => value.name === 'commit_travel_guide')
       expect(updates).toHaveLength(2)
       expect(updates[0]!.result).toMatchObject({ completion: { status: 'satisfied' }, acceptedGoal: { kind: 'trip_context_update' } })
+      expect(updates[0]!.result).toMatchObject({ preparationUpdate: { rawEvidence: 'invalidated' } })
       expect(updates[1]!.result).toMatchObject({ changed: false })
       expect(updates[1]!.result).not.toHaveProperty('acceptedGoal')
+      expect(updates[1]!.result).not.toHaveProperty('preparationUpdate')
       expect(updates[1]!.result).not.toHaveProperty('error')
       expect(commits).toHaveLength(3)
       expect(commits[0]!.args.intent).toBeUndefined()

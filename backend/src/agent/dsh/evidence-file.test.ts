@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DshEvidenceStore, type DshEvidenceScope, type DshEvidenceRecord } from './evidence.js'
 import { FileDshEvidenceRepository } from './evidence-file.js'
 
@@ -48,15 +48,37 @@ describe('FileDshEvidenceRepository', () => {
     expect(await repository.get(record.evidenceRef)).toEqual(record)
   })
 
+  it('does not pass an alias from another version or generation to the file repository', async () => {
+    const directory = await root()
+    const repository = new FileDshEvidenceRepository(directory)
+    const repositoryGet = vi.spyOn(repository, 'get')
+    const current = new DshEvidenceStore(scope, { repository })
+    const captured = await current.recordSearch({ sources: [{ url: 'https://example.com/place', snippet: 'Version three.' }] }, 'web-search', 'tool-version-3')
+    const nextVersion = new DshEvidenceStore({ ...scope, tripContextVersion: scope.tripContextVersion + 1 }, { repository })
+    const nextGeneration = new DshEvidenceStore({ ...scope, generationId: 'generation-2' }, { repository })
+
+    await expect(nextVersion.get(captured.sourceRefs[0]!)).resolves.toBeNull()
+    await expect(nextGeneration.get(captured.sourceRefs[0]!)).resolves.toBeNull()
+    await expect(nextVersion.get('s1.malformed')).resolves.toBeNull()
+    expect(repositoryGet).not.toHaveBeenCalled()
+    await expect(nextVersion.get(captured.evidenceRefs[0]!)).resolves.toBeNull()
+    expect(repositoryGet).toHaveBeenCalledWith(captured.evidenceRefs[0])
+    await expect(current.get(captured.evidenceRefs[0]!)).resolves.toMatchObject({ snippet: 'Version three.' })
+  })
+
   it('rejects path traversal and surfaces corrupt persisted records', async () => {
     const directory = await root()
-    const record = await fixture(directory)
     const repository = new FileDshEvidenceRepository(directory)
     await expect(repository.get('../outside')).rejects.toThrow(/canonical UUID or lowercase SHA-256/)
 
-    const file = join(directory, `${record.evidenceRef}.json`)
+    const evidence = new DshEvidenceStore(scope, { repository })
+    const captured = await evidence.recordSearch({ sources: [{ url: 'https://example.com/place', snippet: 'Corrupt me.' }] }, 'web-search', 'tool-corrupt')
+    const evidenceRef = captured.evidenceRefs[0]!
+
+    const file = join(directory, `${evidenceRef}.json`)
     await writeFile(file, '{broken', { mode: 0o600 })
-    await expect(repository.get(record.evidenceRef)).rejects.toThrow(/corrupt JSON/)
+    await expect(repository.get(evidenceRef)).rejects.toThrow(/corrupt JSON/)
+    await expect(evidence.get(captured.sourceRefs[0]!)).rejects.toThrow(/corrupt JSON/)
     await expect(readFile(file, 'utf8')).resolves.toBe('{broken')
   })
 })

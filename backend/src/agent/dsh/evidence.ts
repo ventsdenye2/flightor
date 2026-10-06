@@ -95,6 +95,8 @@ function scopeMatches(record: DshEvidenceRecord, scope: DshEvidenceScope): boole
     && record.tripContextVersion === scope.tripContextVersion
 }
 
+const canonicalEvidenceRef = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|[a-f0-9]{64})$/
+
 function sameLocation(left: LocationRef, right: LocationRef): boolean {
   return locationRefKey(left) === locationRefKey(right)
 }
@@ -217,7 +219,9 @@ export class DshEvidenceStore {
   }
 
   async get(evidenceRef: string): Promise<DshEvidenceRecord | null> {
-    const resolvedRef = this.sourceRecords.get(evidenceRef) ?? evidenceRef
+    const alias = this.sourceRecords.get(evidenceRef)
+    if (!alias && !canonicalEvidenceRef.test(evidenceRef)) return null
+    const resolvedRef = alias ?? evidenceRef
     const record = await this.repository.get(resolvedRef)
     return record && scopeMatches(record, this.scope) ? record : null
   }

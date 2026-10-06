@@ -1,5 +1,7 @@
 # FlightOR Agent Tool Registry
 
+2026-10-06 r14准备与来源顺序修复：主模型须先在权威Trip保存用户明确的地点、日期/天数、预算及偏好，再取当前版本证据；代码不从day.cityId或正文猜候选地点。实际setter版本推进的内部回执声明旧raw sourceRefs/evidenceRefs失效，同值/空patch不声明失效，公开API不新增字段。未知非canonical alias在文件repository前返回不可用；canonical引用仍查原作用域，损坏文件继续失败关闭。无唯一已选城市时，compact提交省略地点字段返回受控前置反馈，一次最多110个白名单字段，保留多城市选择与原修复限额。新7文件联合74/74、backend check/build通过；新冻结真实H5和全量工程仍待执行，见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
+
 2026-10-06 D6首次提交前置检查：`commit_travel_guide`在接受新Goal前拒绝“选中本次raw-web候选且allowPartial=false”的不兼容intent，返回受控`raw_evidence_requires_partial`与`intent.parameters.allowPartial`纠正字段；不写Goal/研究、不消耗内容修订次数。主模型须按用户真实要求显式纠正首次intent或说明独立核实无法满足，服务端不自动弱化目标。已接受/恢复Goal的严格证据与不可变参数检查保持，legacy工具合同不变；详见[ADR0029](adr/0029-dsh-prepared-submission.md)及[公共反馈](design/budget-travel-agent/DSH_D6_PUBLIC_ERRORS.md)。
 
 2026-10-06 D6候选注册前置：每个`candidateKey`必须精确匹配本次`candidates[].key`，或同一准备尝试与scope内已登记的key；仅调用`web_search`/`web_fetch`不会登记候选。新Goal在原有intent/runtime/kind/Trip快照/航班检查后、接受前检查key覆盖，已接受Goal在scope确认后、候选研究持久化前检查。受控拒绝返回registration状态、缺失key、当前可用key及`candidates`字段路径；不会按地点或网页正文猜配来源、自动造候选或通过重命名绕过。注册列表省略仅可复用同scope现存候选或持久`candidateRef`，显式列表仍整体替换并重验。无Goal的失败终态返回`partial/travel_guide`与`accepted_publication`缺口，不伪造Goal ID；详见D6工程计划的r13续作记录及定向测试。

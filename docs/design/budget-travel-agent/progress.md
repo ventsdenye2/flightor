@@ -1,5 +1,7 @@
 # 当前进度与验证
 
+2026-10-06 最新状态：r14完整工程backend1256/1256、专用真实PG51/51、D5 30/30通过，但390×844真实H5 B01仍0 accepted攻略、157.339秒终态失败、后续8动作blocked；没有180秒timeout证据。旧证据alias跨Trip版本误入严格文件repository的TypeError路径已修为受控拒绝，保留canonical作用域和真实文件损坏保护；setter实际版本推进才向模型声明raw证据失效。通用准备顺序、地点前置反馈已实现；20路径截断已改为最多110条完整白名单。新7文件74/74（17.96秒）、backend check/build通过，110边界有效红测2失败/29通过→31/31绿测。下一步本地提交、新冻结完整工程和390×844真实H5 12固定+4探索；目前不能声明此前用户流程失败已解决或D6 PASS，无已确认硬阻塞。原工作区/数据库/会话/账本保留，不push、合并或部署。
+
 2026-10-06 r13失败后的候选注册/公开关联提示/无Goal失败状态修复已完成定向验证：联合8文件112/112、check/build通过。首次候选与raw-evidence检查已移到原runtime/kind/Trip snapshot/flight guards后、Goal接受前，原Goal及scope复用规则保留，没有新增DB读取或产品模型。官方worker2/2验证漏定义零写→同NEW intent与同来源注册并发布，以及成功setter后两次漏定义仍partial/goal_partial且不伪造Goal。中间夹具错误不作产品红测；联合首次111/112的旧局改not_requested断言已更正为完整partial结构，原日志保留。源码尚待本地提交及新冻结完整backend/PG/D5/H5 12+4，r13真实B01失败不改写为通过。
 
 2026-10-06 r13已冻结本地代码743fddd及源码/backend/H5/worker/旅程指纹，私有run/schema和端口见[D6验收](DSH_D6_ACCEPTANCE.md)。模型、输出配置、标准v1和12+4输入不变；完整backend1240/1240、专用PG51/51、D5本版30/30、runtime14/14、observer1/1、四前端族113/20/37/52及根TypeScript均通过，H5/weapp构建完成。weapp首次spawnSync git EPERM及授权重跑日志分别保留，仅工程、不计微信页面。固定材料baseline/D6各10/10、逐例语义一致、0模型/外部调用。最新390×844真实H5 B01仍失败：107ms受理、111.202秒终态、整段115.748秒、0 accepted攻略、后续8动作blocked；没有180秒超时证据。两次commit均candidate_key_unavailable前置拒绝，contentAttempts0；正对照原会话和候选注册定位，不盲重发。只读PG联合审阅确认Trip和全程预算正确、无Guide；21model/11search/14fetch/0fare、pending0、727783 tokens、USD2.16预留非实付。完整12+4及最终内容/持久化验收未完成，不宣布PASS。用户其他工作树及未提交内容保留，未推送/合并/部署。

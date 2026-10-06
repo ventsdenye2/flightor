@@ -20,7 +20,7 @@
 
 只要本轮尝试提交攻略但没有成功确认其 publication，最终攻略交付为 `partial/travel_guide`、缺 `accepted_publication`。若前置拒绝尚未接受攻略 Goal，`goals` 为空，不伪造 Goal 身份，也不继承前一 setter 的 `satisfied` 或当成普通澄清。前一 setter 的独立持久完成记录保留。候选关联前置失败采用固定双语公开提示；内部键、错误码和原始异常正文不进入用户回复。
 
-短 source 引用映射本轮原始 UUID 与内容 hash，不改变持久证据格式或 scope 检查。短 C 引用映射已校验持久候选，恢复完整 locator 后仍经过原 owner/Trip/version/过期验证。唯一已选择的 Trip city 可补省略 cityId/locationId，机场或多城市不猜；它不执行 POI、Provider 或目的地变更。
+短 source 引用映射本轮原始 UUID 与内容 hash，不改变持久证据格式或 scope 检查。短 C 引用映射已校验持久候选，恢复完整 locator 后仍经过原 owner/Trip/version/过期验证。唯一已选择的 Trip city 是省略 `cityId`/`locationId` 的唯一自动补全来源；日程 cityId、文本、source 或模型地点名均不能补候选 canonical location。若没有唯一已选 city 且提交有省略地点字段，准备适配在领域 parse/Goal 接受前停止并给受控 `candidate_location_unresolved` prerequisite，最多返回110个安全字段路径（50个候选及60天日程）；反馈过滤非规范、越界和重复索引后再限量。模型可显式为各字段选择当前 Trip 中匹配的已确认 canonical city，保留多城范围；否则只能请求用户确认，或在用户请求支持且 trusted resolver 确认身份后执行既有 Trip 更新。Trip version 推进后必须重新准备并重新研究，旧 sourceRefs/candidate bindings 不复用。该错误不改变 Goal、参数/内容额度或 API 字段，也不自行变更目的地。
 
 同准备尝试精确请求URL的成功正文可通过内存索引复用原始source receipt/hash/retrievedAt；索引只读取当前scope记录并复核正文hash，不跨generation/version、不缓存失败、不将redirect等同于另一请求URL。取消检查保持生效。模型逐候选核对实际正文支持是语义责任，通用目录页、域名权威及引用存在都不是具体地点的事实证明；不加入另一LLM或地名字符串猜测。observer记录脱敏cacheHit以区分工具请求和真正HTTP，细则见[D6证据合同](../design/budget-travel-agent/DSH_D6_EVIDENCE_AND_LOCATIONS.md)。
 

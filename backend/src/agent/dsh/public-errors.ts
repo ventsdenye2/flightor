@@ -83,9 +83,15 @@ const unavailableCandidateKeyCopy: Record<PublicationLocale, string> = {
   en: 'A trip activity could not be correctly linked to its reference material, so no new guide was confirmed. Check the saved results in your trip before retrying this request.'
 }
 
+const unresolvedTripLocationCopy: Record<PublicationLocale, string> = {
+  zh: '地点尚未与当前行程确认关联，本轮没有确认新的攻略结果。请核对并确认行程目的地信息后再继续。',
+  en: 'The place is not yet confirmed against the current trip, so no new guide was confirmed. Check and confirm the trip destination before continuing.'
+}
+
 export function publicFailureReply(stage: PublicFailureStage, locale: PublicationLocale, causeCode?: string): string {
   if (causeCode === 'DSH_GUIDE_BASE_UNAVAILABLE') return unavailableGuideBaseCopy[locale]
   if (causeCode === 'candidate_key_unavailable') return unavailableCandidateKeyCopy[locale]
+  if (causeCode === 'candidate_location_unresolved') return unresolvedTripLocationCopy[locale]
   const value = copy[stage][locale]
   return `${value.message} ${value.action}`
 }

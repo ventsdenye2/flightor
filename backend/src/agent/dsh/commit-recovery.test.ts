@@ -35,6 +35,37 @@ describe('DSH commit recovery policy', () => {
     recovery.admit(); recovery.failed(error)
     expect(recovery.snapshot()).toMatchObject({ calls: 1, contentAttempts: 0, lastFailure: 'prerequisite' })
   })
+  it('keeps missing Trip city feedback bounded and outside content/argument quotas', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_PROVIDER_BODY', 422, {
+      code: 'candidate_location_unresolved', destinationMode: 'open', selectedCityCount: 0,
+      fieldPaths: ['candidates.0.locationId', 'days.1.cityId', 'private.injected.path'], providerBody: 'PRIVATE_PROVIDER_BODY' })
+    const kind = classifyCommitFailure(error)
+    const feedback = safeCommitFeedback(error, kind)
+    expect(kind).toBe('prerequisite')
+    expect(feedback).toMatchObject({ revisionCode: 'candidate_location_unresolved', destinationMode: 'open',
+      selectedCityCount: 0, fields: ['candidates.0.locationId', 'days.1.cityId'] })
+    expect(feedback.correction).toContain('select a matching canonical city already confirmed in the current Trip')
+    expect(feedback.correction).toContain('do not collapse an existing multi-city Trip to one city')
+    expect(feedback.correction).toContain('new version')
+    expect(JSON.stringify(feedback)).not.toMatch(/PRIVATE_PROVIDER_BODY|private\.injected|locationId.*raw/)
+    const recovery = new CommitRecovery()
+    recovery.admit(); recovery.failed(error)
+    expect(recovery.snapshot()).toMatchObject({ calls: 1, argumentCorrections: 0, contentAttempts: 0, lastFailure: 'prerequisite' })
+  })
+  it('retains all 110 schema-bounded location paths after filtering invalid entries', () => {
+    const validPaths = [
+      ...Array.from({ length: 50 }, (_, index) => `candidates.${index}.locationId`),
+      ...Array.from({ length: 60 }, (_, index) => `days.${index}.cityId`)
+    ]
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_PROVIDER_BODY', 422, {
+      code: 'candidate_location_unresolved',
+      fieldPaths: ['private.injected.path', 'candidates.00.locationId', 'candidates.50.locationId',
+        'days.60.cityId', 'days.0.cityId\n', validPaths[0], ...validPaths]
+    })
+    const feedback = safeCommitFeedback(error, classifyCommitFailure(error))
+    expect(feedback.fields).toEqual(validPaths)
+    expect(JSON.stringify(feedback)).not.toContain('private.injected.path')
+  })
   it.each([
     [{ registrationStatus: 'not_submitted', missingCandidateKeys: ['nakamise'], availableCandidateKeys: [] }, 'No candidates are registered'],
     [{ registrationStatus: 'not_submitted', missingCandidateKeys: ['new-key'], availableCandidateKeys: ['temple'] }, 'Only availableCandidateKeys are registered'],

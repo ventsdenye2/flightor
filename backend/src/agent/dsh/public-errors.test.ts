@@ -38,6 +38,18 @@ describe('public DSH failure classification', () => {
     expect(en).toContain('Check the saved results in your trip')
     expect(`${zh} ${en}`).not.toMatch(/candidate_key_unavailable|private-candidate|DSH_GUIDE_NEEDS_REVISION/i)
   })
+  it('uses fixed public copy when a guide has no confirmed Trip destination', () => {
+    const details = { code: 'candidate_location_unresolved', fieldPaths: ['candidates.0.locationId'], selectedCityCount: 0 }
+    const stage = classifyDshFailure('DSH_GUIDE_NEEDS_REVISION', details)!
+    const zh = publicFailureReply(stage, 'zh', details.code)
+    const en = publicFailureReply(stage, 'en', details.code)
+    expect(stage).toBe('location')
+    expect(zh).toContain('地点尚未与当前行程确认关联')
+    expect(zh).toContain('核对并确认行程目的地')
+    expect(en).toContain('not yet confirmed against the current trip')
+    expect(en).toContain('Check and confirm the trip destination')
+    expect(`${zh} ${en}`).not.toMatch(/candidate_location_unresolved|candidates\.0|locationId|selectedCityCount/i)
+  })
 
   it('ignores unknown cause codes and keeps the stage fallback copy', () => {
     expect(publicFailureReply('evidence', 'zh', 'private_unknown_cause'))
