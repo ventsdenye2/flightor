@@ -11,7 +11,7 @@ const stageForCode = (code: string): PublicFailureStage | undefined => {
   if (/(?:EVIDENCE|SOURCE|missing_material|candidate_evidence_unavailable|candidate_key_unavailable|DSH_CANDIDATE_REFERENCE_UNAVAILABLE)/i.test(code)) return 'evidence'
   if (/^(?:DSH_COMMIT_[A-Z0-9_]+|DSH_ARGUMENT_CORRECTION_LIMIT|DSH_REPAIR_LIMIT|commit)$/.test(code)) return 'commit'
   if (/(?:PUBLICATION|GUIDE_NEEDS_REVISION|publication)/i.test(code)) return 'publication'
-  if (['conflict', 'context_budget', 'invalid_plan', 'language', 'format', 'budget_guarantee',
+  if (['conflict', 'context_budget', 'invalid_plan', 'language', 'format', 'budget_guarantee', 'budget_scope_changed',
     'excluded_precise_claim', 'excluded_admission_or_hours', 'internal_narration', 'unsupported_asset_or_url',
     'duplicated_or_foreign_prose', 'empty_reply'].includes(code)) return 'publication'
   return undefined

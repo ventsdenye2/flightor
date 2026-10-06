@@ -52,7 +52,9 @@ export function classifyCommitFailure(error: unknown): CommitFailureKind {
       ? 'prerequisite' : 'content'
     if (['candidate_evidence_unavailable', 'candidate_key_unavailable', 'candidate_location_unresolved',
       'candidate_goal_missing', 'guide_edit_prerequisite', 'activity_text_exact_cover', 'candidate_binding_invalid',
-      'duplicate_day_or_activity_key', 'duplicate_candidate_key', 'raw_evidence_requires_partial'].includes(code)) return 'prerequisite'
+      'duplicate_day_or_activity_key', 'duplicate_candidate_key', 'raw_evidence_requires_partial',
+      'guide_edit_result_limit', 'protected_slot_conflict', 'protected_supporting_evidence'].includes(code)) return 'prerequisite'
+    if (['guide_edit_limit_conflict', 'guide_edit_limits_unavailable'].includes(code)) return 'prerequisite'
     return 'content'
   }
   if (['ARTIFACT_CONTEXT_VERSION_MISMATCH', 'TRIP_CONTEXT_VERSION_CONFLICT', 'FLIGHT_SELECTION_CHANGED',
@@ -85,6 +87,13 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
     : kind === 'prerequisite' ? 'Correct the missing or stale prerequisite before resubmitting. Reuse current-turn candidates and evidence when their scope is unchanged.'
       : kind === 'content' ? 'Revise the rejected itinerary or public text once, preserving the accepted Goal and protected slots.'
         : 'The guide submission could not be processed. Do not infer acceptance.' }
+  if (code === 'DSH_GUIDE_NEEDS_REVISION' && ['guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable'].includes(String(details.code))) {
+    feedback.revisionCode = details.code
+    if (Number.isInteger(details.selectedFindingCount) && Number(details.selectedFindingCount) >= 0 && Number(details.selectedFindingCount) <= 410)
+      feedback.selectedFindingCount = details.selectedFindingCount
+    if (Number.isInteger(details.maxResults) && Number(details.maxResults) >= 1 && Number(details.maxResults) <= 20) feedback.maxResults = details.maxResults
+    feedback.correction = 'For a compact slot edit, omit maxResults/maxCities and keep the explicit semantic intent. The server must carry the exact prepared base Goal limits. Never remove protected findings or change an accepted Goal to fit a replacement. If the base contract is unavailable or cannot cover the complete edited guide, stop this edit without claiming publication.'
+  }
   if (code === 'DSH_GUIDE_NEEDS_REVISION' && details.code === 'duplicate_day_or_activity_key') {
     const submitted = Array.isArray(details.days) ? details.days.slice(0, 60) : []
     const seen = new Set<number>()
@@ -269,6 +278,9 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
       'Use a distinct candidate/finding for each scheduled visit and supporting item. One current source may support several truly distinct places; do not rename the same visit. Keep accepted Goal constraints and protected slots unchanged.')
     if (strings(details.presentationIssues).includes('excluded_precise_claim')) contentCorrections.push(
       'Remove unsupported prices, clock times and precise durations from public text. You may retain the exact current trip budget amount only as a total-trip target; do not claim that costs fit it.')
+    if (strings(details.presentationIssues).includes('budget_scope_changed')
+      || sanitizePresentationProblems(details.presentationProblems).some(problem => problem.code === 'budget_scope_changed')) contentCorrections.push(
+      'Keep the authoritative whole-trip budget scope. Remove invented expense exclusions or separate-counting claims; self-purchased flights do not authorize narrowing it. Unknown costs remain unknown.')
     if (details.code === 'activity_text_exact_cover') contentCorrections.push(
       'Provide exactly one text activity per requiredActivityKey. Put practical material in supportingCandidateKeys, not text.activities.')
     if (contentCorrections.length) feedback.correction = [typeof feedback.correction === 'string' ? feedback.correction : undefined,

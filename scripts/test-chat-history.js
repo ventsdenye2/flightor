@@ -135,6 +135,7 @@ const guideSession = session('guide')
 const guide = travelGuide()
 guideSession.timeline[0].assistant = { role: 'assistant', content: '旧缓存攻略保证预算 900 元。' }
 guideSession.timeline[0].travelGuide = guide
+guideSession.timeline[0].delivery = { kind: 'travel_guide', status: 'satisfied', artifactIds: ['guide-artifact-1'], missing: [], warnings: [] }
 const guideRestored = sanitizeHistoryPayload({ version: 1, currentSessionId: 'guide', sessions: [guideSession] }).sessions[0]
 check('带发布绑定的攻略可随 v1 会话持久化恢复', guideRestored?.timeline[0]?.travelGuide?.summary.en === guide.summary.en
   && guideRestored?.timeline[0]?.travelGuide?.days[0]?.items[0]?.sources[0]?.domain === 'example.com'
@@ -156,8 +157,47 @@ const nestedGuideReplySession = session('nested-guide-reply')
 nestedGuideReplySession.timeline[0].assistant = { role: 'assistant', content: '预算承诺 100 元。' }
 nestedGuideReplySession.timeline[0].delivery = { status: 'partial', artifactIds: [], missing: [], warnings: [], goals: [{ status: 'partial', kind: 'travel_guide', artifactIds: [], missing: [], warnings: [] }] }
 const nestedGuideReplyRestored = sanitizeHistoryPayload({ version: 1, currentSessionId: 'nested-guide-reply', sessions: [nestedGuideReplySession] }).sessions[0]
-check('聚合 delivery goals 中的旧攻略助手回复也被隐藏', nestedGuideReplyRestored?.timeline[0]?.assistant?.content.includes('预算与攻略正文已隐藏')
+check('聚合 delivery goals 中的失败攻略恢复为安全状态提示', nestedGuideReplyRestored?.timeline[0]?.assistant?.content.includes('尚未完成')
   && !nestedGuideReplyRestored?.timeline[0]?.assistant?.content.includes('100'))
+
+for (const status of ['partial', 'failed', 'cancelled', 'pending']) {
+  const failedGuideSession = session(`guide-${status}`)
+  failedGuideSession.timeline[0].assistant = { role: 'assistant', content: '旧缓存保证预算 900 元。', locale: 'zh' }
+  failedGuideSession.timeline[0].travelGuide = guide
+  failedGuideSession.timeline[0].delivery = { kind: 'travel_guide', status, artifactIds: [], missing: [], warnings: [] }
+  const restored = sanitizeHistoryPayload({ version: 1, sessions: [failedGuideSession] }).sessions[0]?.timeline[0]
+  check(`${status}攻略恢复不借旧攻略成功答复或原始预算承诺`, restored?.travelGuide?.publication?.reply === '已发布攻略。'
+    && restored?.assistant?.content !== '已发布攻略。' && !restored?.assistant?.content.includes('900')
+    && restored?.assistant?.locale === 'zh')
+}
+const unrelatedGuideSession = session('guide-unrelated')
+unrelatedGuideSession.timeline[0].assistant = { role: 'assistant', content: '未验证的成功尾句' }
+unrelatedGuideSession.timeline[0].travelGuide = guide
+unrelatedGuideSession.timeline[0].delivery = { kind: 'travel_guide', status: 'satisfied', artifactIds: ['other-guide'], missing: [], warnings: [] }
+const unrelatedGuideRestored = sanitizeHistoryPayload({ version: 1, sessions: [unrelatedGuideSession] }).sessions[0]
+check('成功delivery只可恢复本轮同artifactId的publication答复', unrelatedGuideRestored?.timeline[0]?.assistant?.content.includes('预算与攻略正文已隐藏'))
+
+const englishFailureSession = session('guide-failed-en')
+englishFailureSession.timeline[0].assistant = { role: 'assistant', content: 'The old guide is complete with a guaranteed budget of 900.', locale: 'en' }
+englishFailureSession.timeline[0].travelGuide = guide
+englishFailureSession.timeline[0].delivery = { kind: 'travel_guide', status: 'failed', artifactIds: [], missing: [], warnings: [] }
+const englishFailureRestored = sanitizeHistoryPayload({ version: 1, sessions: [englishFailureSession] }).sessions[0]?.timeline[0]
+check('英文失败缓存恢复英文状态且保留locale', englishFailureRestored?.assistant?.locale === 'en'
+  && englishFailureRestored?.assistant?.content === 'This guide could not be completed. Reopen the trip to check saved results.')
+englishFailureSession.timeline[0].delivery.status = 'satisfied'
+const englishUnboundRestored = sanitizeHistoryPayload({ version: 1, sessions: [englishFailureSession] }).sessions[0]?.timeline[0]
+check('英文缺少归属的缓存恢复英文隐藏提示', englishUnboundRestored?.assistant?.locale === 'en'
+  && englishUnboundRestored?.assistant?.content.startsWith('This cache contains an older guide.'))
+
+const aggregateGuideSession = session('guide-aggregate')
+aggregateGuideSession.timeline[0].assistant = { role: 'assistant', content: '未验证的成功尾句' }
+aggregateGuideSession.timeline[0].travelGuide = guide
+aggregateGuideSession.timeline[0].delivery = { status: 'satisfied', artifactIds: ['guide-artifact-1'], missing: [], warnings: [], goals: [guideSession.timeline[0].delivery] }
+const aggregateGuideRestored = sanitizeHistoryPayload({ version: 1, sessions: [aggregateGuideSession] }).sessions[0]?.timeline[0]
+check('成功聚合delivery与攻略goal共同绑定publication', aggregateGuideRestored?.assistant?.content === '已发布攻略。')
+aggregateGuideSession.timeline[0].delivery.artifactIds = []
+const unboundAggregateRestored = sanitizeHistoryPayload({ version: 1, sessions: [aggregateGuideSession] }).sessions[0]?.timeline[0]
+check('聚合delivery缺少本轮artifact绑定不借嵌套成功答复', unboundAggregateRestored?.assistant?.content.includes('预算与攻略正文已隐藏'))
 
 const spoofedDomainSession = session('spoofed-domain')
 const spoofedDomainSource = {

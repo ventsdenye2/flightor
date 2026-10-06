@@ -49,6 +49,43 @@ async function fixture() {
 }
 
 describe('DSH combined guide commit', () => {
+  it('rejects ambiguous candidate bindings before accepting an immutable Goal', async () => {
+    const f = await fixture(), accept = vi.spyOn(f.runs, 'accept')
+    f.input.days[0]!.items[0]!.candidateRef = 'invalid-both-bindings'
+    await expect(f.execute()).rejects.toMatchObject({ details: { code: 'candidate_binding_invalid' } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+  })
+  it('counts protected supporting findings before accepting a slot-edit Goal', async () => {
+    const f = await fixture()
+    const supportKeys = ['subway-pass', 'market', 'food-street', 'history-exhibit']
+    f.input.candidates!.push(...supportKeys.map(key => ({ ...f.input.candidates![0]!, key, title: key })))
+    f.input.supportingCandidateKeys = supportKeys
+    const first = await f.execute(), base = (await f.artifacts.get(first.artifact.id))!
+    const source = (await f.artifacts.listForTrip(f.trip.id)).find(record => record.type === 'research')!
+    const { guideCandidateRef } = await import('../../travel-guides/candidates.js')
+    const ctx = { ...f.context, requestId: randomUUID(), generationId: randomUUID() }
+    delete ctx.activeGoalId; delete ctx.activeGoalRunId; delete ctx.activeGoalKind; delete ctx.activeGoalContextVersion; delete ctx.acceptedGoalIntent
+    const patch = structuredClone(f.input)
+    delete patch.candidates; delete patch.supportingCandidateKeys
+    patch.baseGuideId = base.id; patch.expectedContentHash = first.guideContentHash
+    patch.replaceSlots = [{ day: 2, slot: 'afternoon' }]
+    patch.days = [patch.days[1]!]; patch.days[0]!.items = [patch.days[0]!.items[1]!]
+    delete patch.days[0]!.items[0]!.candidateKey
+    patch.days[0]!.items[0]!.candidateRef = guideCandidateRef({ ownerId: ctx.ownerId, tripId: ctx.tripId, tripContextVersion: 1 }, source.payload as any, 'garden')
+    patch.text.activities = [patch.text.activities[2]!]
+    const accept = vi.spyOn(f.runs, 'accept'), before = await f.artifacts.listForTrip(f.trip.id)
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...patch, intent: { ...intent,
+      parameters: { ...intent.parameters, maxResults: 3 } } }), ctx, new AbortController().signal))
+      .rejects.toMatchObject({ details: { code: 'guide_edit_result_limit', selectedFindingCount: 7, maxResults: 3 } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(ctx.acceptedGoalIntent).toBeUndefined()
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual(before)
+    const edited = await f.execute(patch, ctx)
+    expect(edited).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    const payload = travelGuideArtifactPayloadSchema.parse((await f.artifacts.get(edited.artifact.id))!.payload)
+    expect(payload.supportingEvidence).toEqual(travelGuideArtifactPayloadSchema.parse(base.payload).supportingEvidence)
+  })
   it('locates rejected prose in submitted compact paths without exposing content or source bodies', async () => {
     const f = await fixture()
     const input = structuredClone(f.input)
@@ -637,7 +674,8 @@ describe('DSH combined guide commit', () => {
     await expect(f.execute(input, ctx)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION' })
     expect(await f.artifacts.get(base.id)).toEqual(base)
     expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'travel_guide')).toHaveLength(1)
-    expect((await f.goals.get(ctx.activeGoalId!))!.status).toBe('pending')
+    if (failure === 'protected_text') expect((await f.goals.get(ctx.activeGoalId!))!.status).toBe('pending')
+    else expect(ctx.activeGoalId).toBeUndefined()
   })
   it('rejects an actual Trip version change after Goal acceptance', async () => {
     const f = await fixture(), invalid = structuredClone(f.input)

@@ -115,6 +115,29 @@ check('an assistant-less newest user turn and prior replies remain visible while
   assert.equal(byClass(turns[2], 'pl-assistant-turn').length, 0)
 })
 
+check('a failed guide turn shows its safe reply even while a prior accepted result remains available', () => {
+  const h = harness(), rows = timeline()
+  const failure = '本次修改未能发布，已保存的攻略仍可查看。'
+  rows[1].assistant = { content: failure, locale: 'zh' }
+  rows[1].delivery = { kind: 'travel_guide', status: 'partial', artifactIds: [], warnings: [] }
+  h.setProps({ productionTimeline: rows, productionPrompt: rows[1].user.content, productionReply: '旧攻略已经完成。',
+    productionDelivery: rows[1].delivery, productionStopReason: 'goal_partial', productionResultAvailable: true })
+  const tree = h.render(), turns = byClass(tree, 'pl-turn')
+  assert.equal(text(byClass(turns[1], 'pl-reply-copy')[0]), failure)
+  assert.ok(text(byClass(tree, 'pl-interrupted')[0]).includes(failure))
+  assert.equal(byClass(tree, 'pl-result').length, 1)
+  assert.ok(!text(tree).includes('旧攻略已经完成。'))
+  h.setProps({ productionReply: undefined })
+  assert.equal(text(byClass(byClass(h.render(), 'pl-turn')[1], 'pl-reply-copy')[0]), failure, 'an incomplete guide must not wait for publication')
+  rows[1].assistant.locale = 'en'
+  assert.equal(byClass(byClass(h.render(), 'pl-turn')[1], 'pl-reply-copy').length, 0, 'current replies keep the locale boundary')
+  rows[1].assistant.locale = 'zh'
+  rows[1].delivery = { status: 'satisfied', artifactIds: ['new-guide'], warnings: [], goals: [{ kind: 'travel_guide', status: 'satisfied', artifactIds: ['new-guide'] }] }
+  h.setProps({ productionDelivery: rows[1].delivery, productionStopReason: 'completed' })
+  assert.equal(byClass(byClass(h.render(), 'pl-turn')[1], 'pl-reply-copy').length, 0, 'a satisfied aggregate awaits its own publication')
+  assert.equal(byClass(h.render(), 'pl-result').length, 1)
+})
+
 check('composer sends the draft once, clears it, and busy state exposes only stop', () => {
   const h = harness(), sent = []
   h.setProps({ onSubmitPrompt: message => sent.push(message), onCancelProduction() {} })

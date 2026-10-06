@@ -3,8 +3,9 @@ const fs = require('node:fs')
 const path = require('node:path')
 const assert = require('node:assert/strict')
 const readline = require('node:readline/promises')
+const { pathToFileURL } = require('node:url')
 const { chromium } = require('playwright')
-const { assertStopCancellation } = require('./dsh-h5-assertions.cjs')
+const { assertStopCancellation, assertGuideTurnTransition, guideTurnTransitionRequirement, assertPublicBudgetProse } = require('./dsh-h5-assertions.cjs')
 
 const args = process.argv.slice(2)
 const value = name => args.includes(name) ? args[args.indexOf(name) + 1] : args.find(arg => arg.startsWith(`${name}=`))?.slice(name.length + 1)
@@ -39,7 +40,7 @@ const sanitize = input => privateValues.reduce((text, secret) => text.split(secr
 const safeJson = value => sanitize(JSON.stringify(value, (key, item) => /^(?:access_?token|refresh_?token|authorization|token|api_?key|secret|password)$/i.test(key) ? '[REDACTED]' : item, 2)) + '\n'
 const write = () => fs.writeFileSync(reportPath, safeJson(report))
 const started = performance.now(), elapsed = () => Math.round(performance.now() - started)
-let browser, activeTurnId, acceptedArtifactRefs = []
+let browser, activeTurnId, acceptedArtifactRefs = [], acceptedGuideRef = null
 const terminalStates = ['completed', 'failed', 'cancelled']
 const input = interactive ? readline.createInterface({ input: process.stdin, output: process.stdout }) : undefined
 
@@ -75,7 +76,14 @@ const recordTurnArtifacts = (record, action) => {
     ...valid(progressRefs).map(ref => ({ ...ref, source: 'turn-progress' })),
     ...valid(responseRefs).map(ref => ({ ...ref, source: 'final-response' })),
   ]
-  acceptedArtifactRefs = observed
+  const newGuideRef = observed.find(ref => ref.type === 'travel_guide')
+  if (newGuideRef || record.terminal?.response?.delivery?.kind === 'travel_guide') {
+    const transition = assertGuideTurnTransition(record.terminal, acceptedGuideRef?.id || null)
+    record.guideTurnTransition = transition
+    assert.ok(newGuideRef && transition.outcome === 'guide-published', 'Guide delivery did not publish a new Artifact')
+    acceptedGuideRef = newGuideRef
+  }
+  acceptedArtifactRefs = observed.length ? observed : acceptedGuideRef ? [acceptedGuideRef] : []
   record.acceptedArtifactRefs = observed.map(ref => ({ id: ref.id, type: ref.type, source: ref.source, revision: ref.revision ?? null }))
   record.artifactRefsBySource = {
     turnProgress: valid(progressRefs).map(ref => ({ id: ref.id, type: ref.type })),
@@ -315,17 +323,44 @@ const recordAcceptedGuideReadability = async (page, record) => {
   record.acceptedGuideReadableAtMs = elapsed()
   record.acceptedGuideReadableObservation = 'accepted publication visible, current route matched the opened Artifact, and every activity detail sheet was read'
   record.acceptedGuideTripId = source?.tripId || null
+  record.acceptedGuideConversationId = source?.conversationId || null
+  record.acceptedGuideConversationId = source?.conversationId || null
   record.acceptedGuideTurnId = source?.turnId || null
   record.acceptedGuideReferenceObserved = Boolean(source)
   record.submitToAcceptedGuideReadableMs = source && Number.isFinite(source.submitAtMs)
     ? record.acceptedGuideReadableAtMs - source.submitAtMs : null
   record.acceptedGuideReadableTiming = source && Number.isFinite(source.submitAtMs) ? 'measured-from-matching-accepted-guide-turn' : 'unknown-source-turn'
 }
+const inspectPersistedGuideBudgetProse = async (page, artifactId, tripId, conversationId) => {
+  assert.ok(tripId && conversationId, 'Public-prose inspection requires the accepted guide turn scope')
+  const token = await page.evaluate(() => JSON.parse(localStorage.getItem('access_token') || '{}').data || '')
+  assert.ok(token, 'Authenticated public-prose inspection requires the current browser session')
+  const headers = { authorization: `Bearer ${token}` }
+  const [artifactResponse, tripResponse] = await Promise.all([
+    page.request.get(`${apiUrl}/v1/artifacts/${encodeURIComponent(artifactId)}`, { headers }),
+    page.request.get(`${apiUrl}/v1/trips/${encodeURIComponent(tripId)}/workspace?conversationId=${encodeURIComponent(conversationId)}`, { headers }),
+  ])
+  assert.equal(artifactResponse.status(), 200, 'Persisted accepted guide GET failed')
+  assert.equal(tripResponse.status(), 200, 'Authoritative Trip GET failed')
+  const artifactBody = await artifactResponse.json(), tripBody = await tripResponse.json()
+  const guide = artifactBody?.artifact
+  assert.equal(guide?.id, artifactId, 'Persisted guide GET returned another Artifact')
+  assert.equal(guide?.tripId, tripId, 'Persisted guide GET returned another Trip')
+  assert.equal(guide?.payload?.publication?.status, 'accepted', 'Persisted guide is not accepted')
+  assert.equal(tripBody?.trip?.id, tripId, 'Authoritative workspace GET returned another Trip')
+  assert.equal(tripBody?.conversationId, conversationId, 'Authoritative workspace GET returned another conversation')
+  assert.ok(tripBody?.tripContextSummary && typeof tripBody.tripContextSummary === 'object', 'Authoritative Trip summary is missing from workspace GET')
+  const tripBudget = tripBody.tripContextSummary.budget ?? null
+  if (['B01', 'B02'].includes(journeyId)) assert.ok(tripBudget && typeof tripBudget === 'object', 'Frozen budget journey has no authoritative Trip budget')
+  const { publicProseProblems } = await import(pathToFileURL(path.resolve(__dirname, '../backend/dist/travel-guides/finalization.js')).href)
+  return assertPublicBudgetProse(guide, publicProseProblems, [], tripBudget)
+}
 const inspectLatestAcceptedResult = async (page, action, record) => {
   await openVisibleLatestResult(page, action, record)
   await page.locator('.ux-published .ux-publication-state--accepted').waitFor({ state: 'visible', timeout: action.timeoutMs || 30000 })
   await readEveryActivityDetail(page, record, action.timeoutMs || 15000)
   await recordAcceptedGuideReadability(page, record)
+  record.publicBudgetProse = await inspectPersistedGuideBudgetProse(page, record.openedArtifactId, record.acceptedGuideTripId, record.acceptedGuideConversationId)
   await clickPublishedHeaderBack(page, '.ux-published .ux-overview', action.timeoutMs || 15000)
   record.overviewText = (await page.locator('.ux-published .ux-overview').innerText()).trim()
   await clickPublishedHeaderBack(page, '.pl-result:visible', action.timeoutMs || 15000)
@@ -603,8 +638,20 @@ async function run() {
         assert.ok(postSeen, 'Planner turn POST was not observed; do not resubmit')
         if (action.awaitTerminal !== false) assert.ok(terminal, 'Planner turn did not reach an observed terminal response; do not resubmit')
         if (terminal) record.terminal = report.events.filter(event => event.kind === 'response' && event.path.endsWith(`/v1/agent/turns/${activeTurnId}`) && event.body?.status).at(-1)?.body
-      const missingArtifactTypes = recordTurnArtifacts(record, action)
-      if (missingArtifactTypes.length) await pauseForInteractiveClarification(page, record, missingArtifactTypes)
+        const previousGuideId = acceptedGuideRef?.id || null
+        const missingArtifactTypes = recordTurnArtifacts(record, action)
+        const requirement = guideTurnTransitionRequirement(journeyId, index, previousGuideId)
+        const delivery = record.terminal?.response?.delivery || {}
+        const hasGuideRef = [...(record.artifactRefsBySource?.turnProgress || []), ...(record.artifactRefsBySource?.finalResponse || [])]
+          .some(ref => ref.type === 'travel_guide')
+        if (requirement || delivery.kind === 'travel_guide' || hasGuideRef) {
+          assert.ok(record.terminal, 'Guide-turn contract requires an observed terminal response')
+          record.guideTurnTransition = assertGuideTurnTransition(record.terminal, previousGuideId,
+            { requireGuide: requirement === 'guide', requireNoGuide: requirement === 'no-guide' })
+          if (record.guideTurnTransition.outcome === 'guide-published') acceptedGuideRef = { id: record.guideTurnTransition.guideId, type: 'travel_guide' }
+          acceptedArtifactRefs = acceptedGuideRef ? [acceptedGuideRef] : []
+        }
+        if (missingArtifactTypes.length) await pauseForInteractiveClarification(page, record, missingArtifactTypes)
       } else if (action.type === 'stop') {
         assert.ok(activeTurnId, 'stop requires a prior send with awaitTerminal:false')
         const cancelPath = `/v1/agent/turns/${activeTurnId}/cancel`

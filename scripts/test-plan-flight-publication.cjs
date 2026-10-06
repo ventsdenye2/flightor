@@ -174,7 +174,7 @@ async function main() {
     assert.equal(h.planner(h.render()).props.productionReply, undefined)
     h.chatStore.timeline[0].assistant = { content: '未经接纳的模型尾句', locale: 'zh' }
     h.chatStore.timeline[0].stopReason = 'completed'
-    h.chatStore.timeline[0].delivery = { status: 'satisfied' }
+    h.chatStore.timeline[0].delivery = { kind: 'travel_guide', status: 'satisfied', artifactIds: ['guide'] }
     assert.equal(h.planner(h.render()).props.productionReply, '攻略已保存。')
     h.chatStore.timeline.push({ user: { content: '下一轮追问' }, assistant: null, artifactRefs: [] })
     h.chatStore.isThinking = true
@@ -194,16 +194,64 @@ async function main() {
     h.chatStore.timeline[0].assistant.locale = 'en'
     assert.equal(h.planner(h.render()).props.productionReply, undefined)
     h.chatStore.timeline[0].assistant.locale = 'zh'
-    for (const status of ['partial', 'blocked']) {
+    for (const status of ['partial', 'failed']) {
       h.chatStore.timeline[0].delivery.status = status
-      assert.equal(h.planner(h.render()).props.productionReply, '第二天下午已修改。')
+      h.chatStore.timeline[0].assistant.content = '本次预算修改未完成，请查看已保存结果。'
+      assert.equal(h.planner(h.render()).props.productionReply, h.chatStore.timeline[0].assistant.content)
     }
     h.chatStore.timeline[0].delivery = { kind: 'trip_context_update', status: 'satisfied' }
     h.chatStore.timeline[0].stopReason = 'model_failure'
-    assert.equal(h.planner(h.render()).props.productionReply, '第二天下午已修改。')
+    assert.equal(h.planner(h.render()).props.productionReply, h.chatStore.timeline[0].assistant.content)
     h.chatStore.timeline[0].stopReason = 'completed'
     h.chatStore.timeline[0].delivery.kind = 'travel_guide'
+    h.chatStore.timeline[0].delivery.artifactIds = ['guide']
     assert.equal(h.planner(h.render()).props.productionReply, '第二天下午已修改。')
+  })
+
+  await test('unsuccessful guide edits keep their current safe reply and the old readable guide', async () => {
+    const h = harness()
+    const oldRef = { id: 'old-guide', type: 'travel_guide', schemaVersion: 1 }
+    h.chatStore.artifactRefs = [oldRef]
+    h.setGuide(async () => ({ guide: { id: oldRef.id, payload: { publication: { reply: '旧攻略已经完成。' } } },
+      presentation: { destination: 'Tokyo', route: [], days: [], publication: { status: 'accepted', artifactId: oldRef.id } } }))
+    h.chatStore.timeline = [{ id: 'edit-turn', user: { content: '只改第二天下午。' },
+      assistant: { content: '攻略未通过内容或发布检查，草稿没有作为正式结果显示。', locale: 'zh' },
+      stopReason: 'goal_partial', delivery: { kind: 'travel_guide', status: 'partial', artifactIds: [] }, artifactRefs: [oldRef] }]
+    h.render(); await flush()
+    for (const status of ['partial', 'failed', 'cancelled', 'pending']) {
+      h.chatStore.timeline[0].delivery.status = status
+      const page = h.planner(h.render()).props
+      assert.equal(page.productionReply, h.chatStore.timeline[0].assistant.content, status)
+      assert.equal(page.productionResultAvailable, true, 'the prior accepted guide stays readable')
+      assert.equal(page.trip.publication.artifactId, oldRef.id)
+    }
+    h.chatStore.timeline[0].assistant.locale = 'en'
+    assert.equal(h.planner(h.render()).props.productionReply, undefined, 'an older guide cannot replace a reply in another locale')
+  })
+
+  await test('publication reply requires this satisfied guide delivery to own its artifact', async () => {
+    const h = harness()
+    h.chatStore.artifactRefs = [{ id: 'old-guide', type: 'travel_guide', schemaVersion: 1 }]
+    h.setGuide(async () => ({ guide: { id: 'old-guide', payload: { publication: { reply: '旧攻略已经完成。' } } },
+      presentation: { destination: 'Tokyo', route: [], days: [], publication: { status: 'accepted' } } }))
+    h.chatStore.timeline = [{ user: { content: '修改行程。' }, assistant: { content: '未经接纳的模型尾句', locale: 'zh' },
+      stopReason: 'completed', delivery: { kind: 'travel_guide', status: 'satisfied', artifactIds: ['new-guide'] }, artifactRefs: [] }]
+    h.render(); await flush()
+    assert.equal(h.planner(h.render()).props.productionReply, undefined)
+    h.chatStore.timeline[0].delivery.artifactIds = ['old-guide']
+    assert.equal(h.planner(h.render()).props.productionReply, '旧攻略已经完成。')
+    const guideGoal = { ...h.chatStore.timeline[0].delivery }
+    h.chatStore.timeline[0].delivery = { status: 'satisfied', artifactIds: ['old-guide'], goals: [guideGoal] }
+    assert.equal(h.planner(h.render()).props.productionReply, '旧攻略已经完成。', 'an aggregate must bind the same satisfied guide goal')
+    h.chatStore.timeline[0].delivery.artifactIds = []
+    assert.equal(h.planner(h.render()).props.productionReply, undefined, 'nested ownership cannot bypass the current turn artifact set')
+    h.chatStore.timeline[0].delivery.artifactIds = ['old-guide']
+    guideGoal.artifactIds = ['new-guide']
+    assert.equal(h.planner(h.render()).props.productionReply, undefined, 'aggregate ownership cannot borrow another guide goal')
+    guideGoal.artifactIds = ['old-guide']
+    h.chatStore.timeline[0].delivery.status = 'partial'
+    h.chatStore.timeline[0].assistant.content = '本次修改尚未完成。'
+    assert.equal(h.planner(h.render()).props.productionReply, '本次修改尚未完成。', 'an incomplete aggregate keeps this turn status')
   })
 
   await test('adopted A and newly published B both load and render before final reply', async () => {

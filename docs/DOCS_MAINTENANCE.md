@@ -1,5 +1,9 @@
 # 文档维护规则与本轮清理记录
 
+2026-10-07 r20 H5验收修正：qa-dsh-d6-h5沿用原自然输入与分母，guide交付检查satisfied/本轮Artifact ID，mandatory局改不能以not_requested或旧稿读取替代，解释不能生成新稿；按真实workspace GET合同取得预算，检查采用backend公开文案规则。helper19/19与runner语法通过，真实H5尚待新冻结；用途与范围归[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)，原r19 observed结果另判FAIL，不改原报告。
+
+2026-10-07 r20观察白名单：已有observer新增guide_edit_result_limit/guide_edit_limit_conflict/guide_edit_limits_unavailable和budget_scope_changed受控原因；presentationProblems仍只含白名单码和规范compact路径，不记录拒绝scope文字或任意details。扩展官方fixture worker1/1通过（1.285秒），正文/秘密/来源过滤负例仍验证；无Provider/业务DB写，实际H5需新冻结复验。
+
 2026-10-07 D6日期证据适配观察：observer白名单新增`candidate_temporal_evidence_missing/invalid`受控原因码，沿用原字段计数/脱敏，不记录quote、sourceRef、URL或日期证据正文；官方fixture同时保留未知码、私密正文及来源过滤。实际新构建fixture验证与真实UI结果归[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)，修改本身不代表通过，也不改变发布/日期权限。
 
 2026-10-06 D6停止验收：`qa-dsh-d6-h5.cjs`的stop通过共享`dsh-h5-assertions.cjs`验证唯一成功cancel POST、实际`failed/AGENT_TURN_CANCELLED`取消终态及UI停止/非busy。cancelAndWait响应已等待执行退出，UI随后停止poll，不要求新GET；已观察到的确认后GET有冲突则失败。断言前保留取消响应、原终态、来源和可见文字，失败截图/原报告不改。`node scripts/test-dsh-h5-assertions.cjs`红测15/16→最终16/16，根复验同16/16；runner语法/diff通过。仅harness离线验证，真实取消/持久迟到写仍待B09/B10，详见[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)。

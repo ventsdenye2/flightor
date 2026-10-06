@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "status": "engineering_passed_real_h5_pending",
+  "createdAt": "2026-10-06T18:47:21.890Z",
+  "codeHead": "5ff50628df66b473f03c17e454897931c6beab1b",
+  "runId": "6344c29a-32ba-45ca-a1fd-ed3c488f7bd6",
+  "schema": "dsh_d6_6344c29a32ba45caa1fded3c488f7bd6",
+  "pid": 109176,
+  "serverSession": 1542,
+  "apiPort": 57722,
+  "h5Port": 59937,
+  "sourceFingerprint": "5b6539096788827164f08b8f672d1bba62ef561d28188fc374808a0b970b6a0a",
+  "backendFingerprint": "b8f47042c59f489434fde81b0f7ca28d49d82a4755918edae25f3eff4b01de5f",
+  "h5Fingerprint": "2b95788c5f0b9ec132e61cf63809a0671ba6bee68819472b2bdf927a1886541d",
+  "workerFingerprint": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+  "configuration": {
+    "modelProvider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "searchProvider": "deepseek-official",
+    "maxTokens": 8192,
+    "thinking": "disabled",
+    "nativeResearchProvider": "serpapi",
+    "places": {
+      "url": "https://nominatim.openstreetmap.org/",
+      "userAgent": "FlightOR-D6/1.0 (+https://github.com/ventsdenye2/flightor)",
+      "proxy": "http://127.0.0.1:7890"
+    }
+  },
+  "journeysSha256": "91240ac6c741a990ad4a233451cc5982702b9d3856eb85597fa88206be943780",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false
+  },
+  "authorization": {
+    "deepseek": "current user authorization; unlimited amount, per-call metering retained",
+    "serpapi": "existing authorized account allowance only; no purchase"
+  },
+  "platform": "H5; WeChat page acceptance deferred by user; WeChat build still required",
+  "h5Build": {
+    "durationMs": 30711,
+    "warnings": 2,
+    "result": "compiled",
+    "evidence": "launcher terminal output; no complete standalone H5 build log"
+  },
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "initialRealCalls": {
+    "model": 0,
+    "search": 0,
+    "fare": 0,
+    "pending": 0
+  },
+  "runtimeArchive": "backend/.demo/dsh-d6-runtime/d6-final-r19/private/runtime-frozen",
+  "startupBeforeFreeze": {
+    "result": "failed before any schema/ledger/network call",
+    "stage": "environment_parse",
+    "error": "ENOENT",
+    "reason": "fare env path was relative to D6 worktree rather than original workspace",
+    "correctedFareEnv": "../../backend/.env",
+    "sourceChanges": false
+  },
+  "serverStartedAt": "2026-10-06T18:46:36.383Z",
+  "runtimeArchiveAudit": {
+    "sha256": "b8f47042c59f489434fde81b0f7ca28d49d82a4755918edae25f3eff4b01de5f",
+    "files": 783,
+    "matchesRunningBackend": true
+  },
+  "backendUnit": {
+    "files": 137,
+    "passed": 1390,
+    "failed": 0,
+    "total": 1390,
+    "durationSeconds": 184.09,
+    "log": "output/d6/backend-unit-r19-final.log"
+  },
+  "weappBuild": {
+    "result": "compiled",
+    "durationSeconds": 18.0,
+    "exitCode": 0,
+    "warnings": "existing CSS order and bundle-size warnings",
+    "log": "output/d6/weapp-build-r19-final.log"
+  },
+  "observer": {
+    "passed": 1,
+    "total": 1,
+    "durationSeconds": 1.646,
+    "log": "output/d6/observer-r19-final.log",
+    "sameBackendBuild": true
+  },
+  "postgres": {
+    "files": 11,
+    "passed": 52,
+    "failed": 0,
+    "total": 52,
+    "durationSeconds": 48.96,
+    "log": "output/d6/postgres-r19-final.log",
+    "database": "dedicated loopback flightor_d6_validation"
+  },
+  "d5": {
+    "passed": 30,
+    "total": 30,
+    "codeUnchanged": true,
+    "realProvider": false,
+    "evidence": "d5-2026-10-06T18-54-27-251Z.json"
+  },
+  "runtime": {
+    "passed": 14,
+    "total": 14,
+    "log": "output/d6/dsh-runtime-r19-final.log",
+    "firstLaunch": "sandbox spawn EPERM before assertions; original log retained"
+  },
+  "frontend": {
+    "conversationProgress": {
+      "passed": 113,
+      "total": 113
+    },
+    "sessionRecovery": {
+      "passed": 20,
+      "total": 20
+    },
+    "artifacts": {
+      "passed": 37,
+      "total": 37
+    },
+    "productionPresentation": {
+      "passed": 52,
+      "total": 52
+    },
+    "typescript": "passed",
+    "logs": "output/d6/*-r19-final.log"
+  },
+  "fixedReplay": [
+    {
+      "evidence": "d6-r19-fixed-replay.json",
+      "acceptedSamples": {
+        "baseline": 10,
+        "d6": 10
+      },
+      "semanticMatches": true,
+      "modelCalls": 0,
+      "externalCalls": 0,
+      "p50": {
+        "baselineExecuteMs": 8.70999999999998,
+        "d6AdapterMs": 0.35184999999995625,
+        "d6ExecuteMs": 10.090800000000058,
+        "baselineTotalMs": 9.915549999999996,
+        "d6TotalMs": 12.485400000000027
+      }
+    },
+    {
+      "evidence": "d6-r19-fixed-replay-quiet-check.json",
+      "acceptedSamples": {
+        "baseline": 10,
+        "d6": 10
+      },
+      "semanticMatches": true,
+      "modelCalls": 0,
+      "externalCalls": 0,
+      "p50": {
+        "baselineExecuteMs": 8.504399999999976,
+        "d6AdapterMs": 0.3480999999999881,
+        "d6ExecuteMs": 10.992249999999956,
+        "baselineTotalMs": 10.143849999999986,
+        "d6TotalMs": 12.80495000000002
+      }
+    }
+  ]
+}

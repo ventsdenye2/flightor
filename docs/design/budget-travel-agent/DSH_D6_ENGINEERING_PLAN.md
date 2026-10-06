@@ -1,5 +1,11 @@
 # DSH D6 工程计划
 
+2026-10-07 当前r20收尾：r19完整工程虽通过，真实B01因预算范围、局改完整finding上限及旧回复/runner假阳性FAIL，已关闭隔离服务并保留全部材料。D6-38–41修复及定向验证已完成；下一步本地提交、r20实际源码/构建/配置冻结，再同版完整backend/真实PG/D5/runtime/前端/TS/双构建与原12+4真实手机尺寸H5。标准v1、原旅程输入与分母、日期及产品参数不变。尚未PASS、无确认硬阻塞；详见[D6验收](DSH_D6_ACCEPTANCE.md)，以下为历史计划快照。
+
+2026-10-07 r19同冻结版完整工程通过：backend1390/1390、真实专用PG52/52（48.96秒，原随机schema套件）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端113/20/37/52及根TypeScript、H5/weapp构建。runtime首次sandbox spawn EPERM未收集业务断言，原日志保留，允许本地子进程后原配置14/14通过。固定回放两批各10对均accepted/语义一致/0模型与外部调用；首批总P50 9.916→12.485ms，quiet复核10.144→12.805ms，adapter0.348ms，约2.6ms增加两批均保留，正在有界只读定位、不宣称提速。冻结source及参数不变，原12+4真实390×844 H5从B01启动；D6未PASS、无确认硬阻塞。只读PG诊断用一次性忽略脚本`backend/.demo/d6/read-current-trip.mjs`，验证run/schema一致后BEGIN READ ONLY，原报告/数据库/账本不改写。
+
+2026-10-07 r19已冻结并开始完整工程：源码提交`5ff50628df66b473f03c17e454897931c6beab1b`，标准v1及原旅程SHA、日期/参数/390×844布局保持。新run`6344c29a-32ba-45ca-a1fd-ed3c488f7bd6`、schema`dsh_d6_6344c29a32ba45caa1fded3c488f7bd6`、API57722/H559937、PID109176/TTY1542，目录`backend/.demo/dsh-d6-runtime/d6-final-r19`；source/backend/H5/worker实际指纹见[冻结指纹](evidence/d6-r19-freeze.json)。H5编译30.711秒、2条既有体积警告；启动已安装保护与observer，0模型/搜索/fare，旧账本SHA不变。首次启动在环境读取前置因fare-env相对路径错误ENOENT退出、无schema/账本/调用，实际文件在原工作区`../../backend/.env`；仅修正命令的只读路径，未修改凭据、源码或产品路由。完整backend/专用PG/D5/runtime/前端四族/根TS及weapp构建进行中，随后同版原12固定+4探索真实H5。当前未PASS、无确认硬阻塞；旧r18失败不追认。
+
 当前状态（2026-10-07 r19最终定向与联合复核）：r18真实手机H5 B01仍FAIL（117.213秒终态、0accepted），不归因180秒超时。预算focused211/211、Astra固定39/39；日期证据适配最终helper SHA`1db130f27a8869fafb05896e94423a84dd90b4f769af28f539251a3d7844bd95`下focused90/90、Astra独立35/35，D6-35/36/37最终独立复核通过，均零外呼。根10文件联合367/367（17.42秒）、build退出0、新build observer1/1（1.646秒）通过；backend typecheck退出0；真实专用PG新用例所在套件3/3通过（子任务过程输出未单独落盘，最终完整PG另留日志）。通过剩余复核后建立新冻结批次并完整运行原12固定+4探索真实390×844 H5。旧失败及原标准v1/旅程SHA保留，Trip日期、证据、权限和发布门槛不变；当前D6未PASS、无确认硬阻塞，未push/合并/部署。
 
 当前状态（2026-10-07 r18准备完成）：D6-34预算名词关系及局部否定修复已实现，focused182/182、joint297/297、check/build、observer1/1与Astra25/25窄复核通过；原文完整第二稿零调用重放消除误拦。保留所有费用/每日/金额币种/保证和领域门槛。下一步本地提交、新隔离run/schema及实际构建冻结，完整同版工程与原12+4真实390×844 H5；当前未PASS，不追认r17失败。下段保留修复前状态。

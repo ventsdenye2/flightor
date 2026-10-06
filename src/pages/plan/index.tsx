@@ -16,12 +16,22 @@ import { FlightDecisionPanel } from '../../features/ui-experience/FlightDecision
 import { displayOffers, displayOfferById, record } from '../../components/artifacts/payload'
 import { plannerTelemetry } from '../../services/plannerTelemetry'
 import { publicPlannerRestoreError } from '../../utils/publicPlannerError'
+import type { ConversationDelivery } from '../../services/conversationService'
 import './index.scss'
 
 type SubmitScope = { ownerId: string | undefined; authRevision: number; sessionId: string; tripId: string }
 const currentSubmitScope = (scope: SubmitScope) => scope.ownerId === userStore.profile?.uid
   && scope.authRevision === userStore.sessionRevision && scope.sessionId === chatStore.currentSessionId
   && (!scope.tripId || scope.tripId === chatStore.tripId)
+
+function hasGuideDelivery(delivery: ConversationDelivery | undefined): boolean {
+  return delivery?.kind === 'travel_guide' || Boolean(delivery?.goals?.some(hasGuideDelivery))
+}
+
+function ownsPublishedGuide(delivery: ConversationDelivery | undefined, guideId: string): boolean {
+  if (delivery?.status !== 'satisfied' || !delivery.artifactIds?.includes(guideId)) return false
+  return delivery.kind === 'travel_guide' || Boolean(delivery.goals?.some(goal => ownsPublishedGuide(goal, guideId)))
+}
 
 /** A saved selection and newly published alternatives have independent read scopes. */
 function useScopedFlightArtifact(id: string | undefined, ownerId: string | undefined, sessionId: string, tripId: string, authRevision: number) {
@@ -145,6 +155,14 @@ function PlanPage() {
     sources: []
   }
   const result = productionResult?.key === resultKey ? productionResult.trip : undefined
+  const currentAssistantReply = lastTurn?.assistant?.locale && lastTurn.assistant.locale !== locale ? undefined : lastTurn?.assistant?.content
+  // A saved guide remains available independently of the current turn's outcome.
+  // Only its own satisfied delivery can replace this turn's assistant reply.
+  const productionReply = !lastTurn?.assistant ? undefined
+    : hasGuideDelivery(lastTurn.delivery) && lastTurn.delivery?.status === 'satisfied'
+      ? productionResult?.key === resultKey && productionResult.guideId && ownsPublishedGuide(lastTurn.delivery, productionResult.guideId)
+        ? productionResult.reply : undefined
+      : currentAssistantReply
   const openFlightCandidates = (artifactId: string) => void Taro.navigateTo({ url: `/pages/search/index?artifactId=${encodeURIComponent(artifactId)}` })
   const planSelectedFlight = () => void submit(selectedFlight?.layoverPreference === 'consider_city'
     ? '请根据我刚刚采用的全部航段和时间安排游玩。长中转只有在入境、行李、地面交通和安全余量都合适时才考虑进城；先安排真实抵达后的目的地行程。'
@@ -176,11 +194,7 @@ function PlanPage() {
       productionCancelling={chatStore.turnCancelling}
       locale={locale}
       productionError={productionError || chatStore.multiError}
-      productionReply={!lastTurn?.assistant ? undefined : (lastTurn?.delivery?.status === 'not_requested' && lastTurn?.stopReason === 'responded')
-        || (lastTurn?.delivery?.kind === 'trip_context_update' && lastTurn.delivery.status === 'satisfied' && lastTurn.stopReason === 'completed')
-        ? (lastTurn.assistant?.locale && lastTurn.assistant.locale !== locale ? undefined : lastTurn.assistant?.content)
-        : productionRef?.type === 'travel_guide' ? (productionResult?.key === resultKey ? productionResult.reply : undefined)
-        : lastTurn?.assistant?.locale && lastTurn.assistant.locale !== locale ? undefined : lastTurn?.assistant?.content}
+      productionReply={productionReply}
       productionPrompt={lastTurn?.user.content}
       productionResultAvailable={Boolean(result)}
       productionStopReason={lastTurn?.stopReason}

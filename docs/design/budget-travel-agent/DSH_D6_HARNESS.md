@@ -1,5 +1,7 @@
 # DSH D6 Isolated Verification Harness
 
+2026-10-07 r20验收修正：全部travel_guide交付必须completed/satisfied、引用唯一新guide ID且delivery.artifactIds同ID绑定；partial/failed/cancelled不得沿旧refs继续。原固定B01/B02 index4与B05 index3明确必须局改交付，B01/B02 index3解释只允许responded/not_requested、零新产物，B06 index2在已有accepted攻略时要求新编辑。合法解释保留已接受攻略可读，不把其复用当新发布。inspect-latest-result在实际全部详情读取后，通过当前浏览器身份仅GET确切Artifact与同Trip/conversation的workspace，用tripContextSummary.budget和已构建publicProseProblems检查预算保证/范围；无预算旅程保留未设置状态，不猜费用。辅助回归19/19、runner语法通过，原journeys/hash与r19 observed报告不改写。真实最终批次仍须全文/详情/PG/费用审阅，observed不代表PASS。
+
 Status: implementation in progress, 2026-10-06. This harness is evidence collection only; it does not change the frozen journey denominator or convert observed API completion into accepted product behavior.
 
 2026-10-06 r11 shutdown before rebuilding: Ctrl+C on TTY session 14746 stopped PID 75052; both loopback ports 56227/59502 stopped listening, `private/server.lock` and `private/dsh-data/manager.lock` were released, and the append-only audit ended with exactly one `guards_closed`, forbiddenCalls=0. The historical ledger SHA256 remained `3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126`. The r11 schema, session, ledger, failed B01 report and bounded read-only recovery evidence remain intact. Current product/runner changes require a new run; r11 is not the final frozen acceptance batch.

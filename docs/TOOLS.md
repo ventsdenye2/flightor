@@ -1,5 +1,7 @@
 # FlightOR Agent Tool Registry
 
+2026-10-07 r20局改合同（实现待验）：DSH compact的travel_guide intent仍显式描述新用户编辑目标；maxResults/maxCities对新完整攻略仍必需，对局部编辑可省略并携带准备基底原Goal的确切限额。显式冲突或基底合同不可取返回受控前置错误，不静默改Goal。首次接受前完整计数包括受保护活动、support和replacement，绑定错误先拒绝，不耗内容修订。公开文字新增budget_scope_changed：权威scope=trip时，不允许通过“不含机票住宿/另计/只包括”等文案收窄全程范围；已买票不是排除授权，实际费用未知仍允许。无新产品LLM/API/表，详细行为归ADR0029与字段反馈合同。
+
 2026-10-06 DSH模型Goal schema仅暴露该工具withGoalIntent已允许的kind，原领域/legacy inputSchema、显式错误kind拒绝及immutable Goal校验保持。实际commit/setter/search_flights/search_flexible_flights/confirm_flight_price共减13590字符（仅intent序列化，不是耗时或质量结论），见[schema测量](design/budget-travel-agent/evidence/d6-r16-intent-schema.json)。
 
 2026-10-06 r16内部发布反馈：`commit_travel_guide`复用原规则返回受控问题码与compact输入字段路径，不透原文，不映射受保护旧slot为本次输入。准入限额耗尽保留最后实质失败阶段；公开分类不把repairHint中的source/location文字当错误码。observer采同一受控原因。公开API、持久schema与修订额度不变，详见[字段反馈合同](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。定向验证不代表真实H5或D6通过。

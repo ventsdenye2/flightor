@@ -10,12 +10,41 @@ import type { PublicationLocale } from '../../travel-guides/finalization-schema.
 import { commitGuideInputSchema, type CommitGuideInput } from './commit-guide.js'
 import { dshCandidateTemporalEvidenceSchema } from './evidence.js'
 import { uniqueSelectedTripCity } from './city-preparation.js'
+import { travelGuideGoalParametersSchema } from '../goals/types.js'
+import type { GoalRepository } from '../goals/repository.js'
 
 /** Captured before the model runs; never refreshed from a newer draft at commit. */
 export interface DshPreparation {
   trip: TripContext
   baseGuide?: GuideBaseCondition
+  editLimits?: { maxResults: number; maxCities: number }
 }
+
+/** One owner-scoped read of the exact base lineage; never a default or a newer Goal. */
+export async function bindPreparedEditLimits(preparation: DshPreparation, records: readonly ArtifactRecord[],
+  goals: GoalRepository | undefined, ownerId: string, signal: AbortSignal): Promise<DshPreparation> {
+  const base = records.find(record => record.id === preparation.baseGuide?.id)
+  if (!goals || !base?.goalId || base.tripId !== preparation.trip.id || base.tripContextVersion !== preparation.trip.version) return preparation
+  const publication = publicationFor(base)
+  if (publication?.guideContentHash !== preparation.baseGuide?.contentHash
+    || publication?.finalization?.variants[preparation.baseGuide!.locale]?.status !== 'accepted') return preparation
+  const goal = await goals.get(base.goalId)
+  signal.throwIfAborted()
+  if (!goal || goal.ownerId !== ownerId || goal.tripId !== base.tripId || goal.conversationId !== base.conversationId
+    || goal.kind !== 'travel_guide' || goal.createdContextVersion !== base.tripContextVersion) return preparation
+  const parameters = travelGuideGoalParametersSchema.safeParse(goal.parameters)
+  return parameters.success ? { ...preparation, editLimits: {
+    maxResults: parameters.data.maxResults, maxCities: parameters.data.maxCities
+  } } : preparation
+}
+
+export const dshCommitIntentSchema = z.object({ kind: z.literal('travel_guide'), parameters: z.object({
+  ...travelGuideGoalParametersSchema.shape,
+  maxResults: travelGuideGoalParametersSchema.shape.maxResults.optional()
+    .describe('Required for a new full guide. For an accepted-guide slot edit, omit: the server carries the exact prepared base Goal limit, including protected supporting findings.'),
+  maxCities: travelGuideGoalParametersSchema.shape.maxCities.optional()
+    .describe('Required for a new full guide. For an accepted-guide slot edit, omit: the server carries the exact prepared base Goal limit.')
+}).strict() }).strict()
 
 export function prepareDshSnapshot(input: { trip: TripContext; records: readonly ArtifactRecord[];
   conversationId: string; selectedFlight: SelectedFlightContext | null; locale: PublicationLocale }): DshPreparation {
@@ -104,6 +133,7 @@ export function adaptDshCommit(raw: unknown, preparation: DshPreparation): Commi
     }))) }
   } : body
   const parsed = commitGuideInputSchema.parse(expanded)
+  let resolvedIntent = intent
   if (parsed.replaceSlots || parsed.baseGuideId || parsed.expectedContentHash) {
     const base = preparation.baseGuide
     if (!base) throw new AppError('DSH_GUIDE_BASE_UNAVAILABLE', 'No accepted guide was bound for this edit', 409)
@@ -112,8 +142,25 @@ export function adaptDshCommit(raw: unknown, preparation: DshPreparation): Commi
     }
     parsed.baseGuideId = base.id
     parsed.expectedContentHash = base.contentHash
+    if (compact && intent !== undefined) {
+      const semanticIntent = dshCommitIntentSchema.parse(intent)
+      const limits = preparation.editLimits
+      if (!limits) throw new AppError('DSH_GUIDE_NEEDS_REVISION', 'The prepared base Goal limits are unavailable', 422, { code: 'guide_edit_limits_unavailable' })
+      const { maxResults, maxCities } = semanticIntent.parameters
+      if (maxResults !== undefined && maxResults !== limits.maxResults || maxCities !== undefined && maxCities !== limits.maxCities) {
+        throw new AppError('DSH_GUIDE_NEEDS_REVISION', 'Explicit edit limits conflict with the prepared base Goal', 422, {
+          code: 'guide_edit_limit_conflict', fieldPaths: ['intent.parameters.maxResults', 'intent.parameters.maxCities'],
+          repairHint: 'Omit mechanical maxResults/maxCities for this slot edit. The server carries the exact prepared base Goal limits; preserve the explicit semantic intent and all protected findings.'
+        })
+      }
+      resolvedIntent = { kind: 'travel_guide', parameters: travelGuideGoalParametersSchema.parse({ ...semanticIntent.parameters, ...limits }) }
+    }
   }
-  return { ...parsed, ...(intent === undefined ? {} : { intent }), ...(goalRef === undefined ? {} : { goalRef }) }
+  if (compact && resolvedIntent !== undefined) {
+    const semanticIntent = dshCommitIntentSchema.parse(resolvedIntent)
+    resolvedIntent = { kind: 'travel_guide', parameters: travelGuideGoalParametersSchema.parse(semanticIntent.parameters) }
+  }
+  return { ...parsed, ...(resolvedIntent === undefined ? {} : { intent: resolvedIntent }), ...(goalRef === undefined ? {} : { goalRef }) }
 }
 
 export function preparedGuideSummary(preparation: DshPreparation, records: readonly ArtifactRecord[]) {

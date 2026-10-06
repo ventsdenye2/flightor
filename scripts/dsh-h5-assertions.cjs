@@ -1,11 +1,49 @@
 const assert = require('node:assert/strict')
-function assertPublicBudgetProse(guide, publicProseProblems, extraFields = []) {
+function assertPublicBudgetProse(guide, publicProseProblems, extraFields = [], tripBudget = guide?.payload?.budget ?? null) {
   assert.equal(typeof publicProseProblems, 'function', 'Use the built backend public-prose policy')
   const publication = guide?.payload?.publication
   assert.equal(publication?.status, 'accepted', 'Budget prose check requires a current accepted publication')
   const fields = [publication.reply, publication.overview, ...extraFields].filter(value => typeof value === 'string')
-  assert.ok(!publicProseProblems(fields, publication.locale || 'zh').includes('budget_guarantee'), 'Public reply/overview contains an unsupported budget guarantee')
-  return { policy: 'backend publicProseProblems', fields: fields.length, unsupportedBudgetGuarantee: false, affordability: 'not_verified' }
+  const problems = publicProseProblems(fields, publication.locale || 'zh', { budget: tripBudget, budgetTarget: true })
+  assert.ok(!problems.includes('budget_guarantee'), 'Public reply/overview contains an unsupported budget guarantee')
+  assert.ok(!problems.includes('budget_scope_changed'), 'Public reply/overview narrows the authoritative Trip budget scope')
+  return { policy: 'backend publicProseProblems', fields: fields.length, unsupportedBudgetGuarantee: false, budgetScopePreserved: true, affordability: 'not_verified' }
+}
+function assertGuideTurnTransition(terminal, previousGuideId, { requireGuide = false, requireNoGuide = false } = {}) {
+  assert.equal(terminal?.status, 'completed', 'Planner send did not complete')
+  const response = terminal.response ?? {}
+  const delivery = response.delivery ?? {}
+  const refs = [...(terminal.artifactRefs || []), ...(response.artifactRefs || [])]
+    .filter(ref => typeof ref?.id === 'string' && typeof ref?.type === 'string')
+  const guideIds = [...new Set(refs.filter(ref => ref.type === 'travel_guide').map(ref => ref.id))]
+  if (requireGuide) assert.equal(delivery.status, 'satisfied', 'Travel guide delivery is not satisfied')
+  if (requireNoGuide) assert.ok(previousGuideId, 'Explanation requires a previously accepted guide')
+  if (delivery.status === 'not_requested' && previousGuideId) {
+    assert.equal(response.stopReason, 'responded', 'No-op explanation did not finish as a response')
+    assert.equal(delivery.kind, undefined, 'No-op explanation unexpectedly declared a delivery kind')
+    assert.deepEqual(delivery.artifactIds || [], [], 'not_requested turn listed new Artifact IDs')
+    assert.deepEqual(refs, [], 'not_requested turn created artifacts')
+    assert.equal(terminal.artifactRevision, 0, 'not_requested turn changed Artifact revision')
+    return { outcome: 'no-guide-publication', currentGuideId: previousGuideId }
+  }
+  if (requireNoGuide) assert.equal(delivery.status, 'not_requested', 'Explanation turn must not request or publish a guide')
+  if (requireGuide || delivery.kind === 'travel_guide' || guideIds.length) {
+    assert.equal(delivery.status, 'satisfied', 'Travel guide delivery is not satisfied')
+    assert.equal(delivery.kind, 'travel_guide', 'Guide Artifact is not backed by travel_guide delivery')
+    assert.equal(guideIds.length, 1, 'Satisfied guide delivery must reference exactly one new travel_guide Artifact')
+    const guideId = guideIds[0]
+    assert.notEqual(guideId, previousGuideId, 'Guide update did not publish a new travel_guide Artifact')
+    assert.deepEqual(delivery.artifactIds, [guideId], 'Satisfied guide delivery must bind its new Artifact ID')
+    return { outcome: 'guide-published', previousGuideId: previousGuideId ?? null, guideId }
+  }
+  return { outcome: 'not-a-guide-turn', currentGuideId: previousGuideId ?? null }
+}
+function guideTurnTransitionRequirement(journeyId, actionIndex, previousGuideId) {
+  if (['B01', 'B02'].includes(journeyId) && actionIndex === 3) return 'no-guide'
+  if (['B01', 'B02'].includes(journeyId) && actionIndex === 4) return 'guide'
+  if (journeyId === 'B05' && actionIndex === 3) return 'guide'
+  if (journeyId === 'B06' && actionIndex === 2 && previousGuideId) return 'guide'
+  return null
 }
 const normalizePlannerReply = value => String(value || '').replace(/\*\*/g, '').replace(/\s+/g, '').trim()
 function assertStopCancellation(input) {
@@ -349,4 +387,4 @@ function assertLocalization(before, after, english, budgetBefore, budgetAfter, e
   assert.equal(mutations[0].path, `/v1/artifacts/${original.id}/localization`, 'Localization started a planner or another write')
   return { sameGuide: true, samePlanAndSources: true, searchCalls: 0, mainAgentCalls: 0, localizationCalls: calls.length }
 }
-module.exports = { acceptedGuide, assertPatch, assertTotalBudget, assertLocalization, assertEmptySeedRecovery, assertAdoptedFlight, assertBudgetRetryCandidate, assertBudgetConfirmCandidate, assertStableBudgetConfirmationBase, assertBudgetConfirmationResult, isBUnpublishedModelFailure, isBContextOnlyModelFailure, isBCommitIdempotencyFailure, assertBCommitIdempotencyObserver, normalizePlannerReply, assertRestoredPlannerReply, assertNewVersionLocalization, assertAcceptedEnglish, assertPublicBudgetProse, assertStopCancellation }
+module.exports = { acceptedGuide, assertPatch, assertTotalBudget, assertLocalization, assertEmptySeedRecovery, assertAdoptedFlight, assertBudgetRetryCandidate, assertBudgetConfirmCandidate, assertStableBudgetConfirmationBase, assertBudgetConfirmationResult, isBUnpublishedModelFailure, isBContextOnlyModelFailure, isBCommitIdempotencyFailure, assertBCommitIdempotencyObserver, normalizePlannerReply, assertRestoredPlannerReply, assertNewVersionLocalization, assertAcceptedEnglish, assertPublicBudgetProse, assertGuideTurnTransition, guideTurnTransitionRequirement, assertStopCancellation }

@@ -1,5 +1,13 @@
 # 当前进度与验证
 
+2026-10-07 r20准备：r19真实B01初稿189.534秒accepted、局改54.451秒partial且旧UI/runner读取旧稿，完整旅程FAIL；服务正常关闭、费用/会话保留，不追认observed。局改原Goal机械限额与accept前完整计数、预算范围、旧reply覆盖及验收假阳性已修；backend联合313/313、最终预算241/241、真实专用PG3/3、check/build/observer1/1、前端定向303项/根TS、H5 helper19/19通过。下一步提交、建立r20新run/schema/账本与实际构建冻结、同版完整工程及原12固定+4探索390×844真实H5。D6未PASS、无确认硬阻塞；问题/计量/原材料见[D6验收](DSH_D6_ACCEPTANCE.md)。以下记录保留当时状态。
+
+2026-10-07 r19同冻结版完整工程通过：backend1390/1390、真实专用PG52/52（48.96秒，原随机schema套件）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端113/20/37/52及根TypeScript、H5/weapp构建。runtime首次sandbox spawn EPERM未收集业务断言，原日志保留，允许本地子进程后原配置14/14通过。固定回放两批各10对均accepted/语义一致/0模型与外部调用；首批总P50 9.916→12.485ms，quiet复核10.144→12.805ms，adapter0.348ms，约2.6ms增加两批均保留，正在有界只读定位、不宣称提速。冻结source及参数不变，原12+4真实390×844 H5从B01启动；D6未PASS、无确认硬阻塞。只读PG诊断用一次性忽略脚本`backend/.demo/d6/read-current-trip.mjs`，验证run/schema一致后BEGIN READ ONLY，原报告/数据库/账本不改写。
+
+2026-10-07 r19同冻结版本完整后端137文件1390/1390通过（184.09秒，退出0，`output/d6/backend-unit-r19-final.log`），weapp正式构建18.00秒退出0（仅工程，保留既有CSS/体积警告）。真实专用PG完整套件正在执行，随后D5及固定回放；前端四族/根TS/runtime由子任务串行验证。实际构建及配置冻结不变，原12+4真实H5尚待同版执行；D6未PASS。
+
+2026-10-07 r19已冻结并开始完整工程：源码提交`5ff50628df66b473f03c17e454897931c6beab1b`，标准v1及原旅程SHA、日期/参数/390×844布局保持。新run`6344c29a-32ba-45ca-a1fd-ed3c488f7bd6`、schema`dsh_d6_6344c29a32ba45caa1fded3c488f7bd6`、API57722/H559937、PID109176/TTY1542，目录`backend/.demo/dsh-d6-runtime/d6-final-r19`；source/backend/H5/worker实际指纹见[冻结指纹](evidence/d6-r19-freeze.json)。H5编译30.711秒、2条既有体积警告；启动已安装保护与observer，0模型/搜索/fare，旧账本SHA不变。首次启动在环境读取前置因fare-env相对路径错误ENOENT退出、无schema/账本/调用，实际文件在原工作区`../../backend/.env`；仅修正命令的只读路径，未修改凭据、源码或产品路由。完整backend/专用PG/D5/runtime/前端四族/根TS及weapp构建进行中，随后同版原12固定+4探索真实H5。当前未PASS、无确认硬阻塞；旧r18失败不追认。
+
 2026-10-07 r19冻结前最终检查：10文件联合367/367（17.42秒）、backend check/build退出0、新build observer1/1（1.646秒）；专用PG preparation套件3/3通过，新增真实源绑定事件保存/fresh仓库读取/prepare及candidate引用恢复/伪造日期零Artifact写（子任务过程输出未单独落盘，最终完整PG另留日志）。最终日期helper SHA1db130f27a的focused90/90、Astra35/35和预算focused211/211、Astra39/39通过；修前三问题均修复，原366/366不是最终证据。TOOLS当前合同已收敛ISO或唯一完整CJK、snippet或hash正确body，原领域/权限/版本/发布与单主模型配置不变。远端f2ec6c1f与历史账本SHA3fdfdb12未变。接下来本地提交、r19新run/schema/账本与构建冻结，再完整工程及原12固定+4探索390×844真实H5；r18仍FAIL，D6未PASS、无确认硬阻塞。
 
 2026-10-07 r19修前中间检查点：十文件联合366/366（19.41秒）、类型错误修正后check/build、observer1/1通过；Astra日期独立14项另发现同URL摘要/正文次序、metadata标签裁剪和CJK括号任意内容三问题，故暂停冻结/真实调用，先补红回归修复，再做真实PG与联合/新冻结。预算最终211/211及独立39/39结论保留；D6未PASS，无硬阻塞，不复用修前结果凑新版本通过。

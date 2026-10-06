@@ -44,10 +44,20 @@ const suggestions = [
   { title: '只有一个长周末', prompt: '下一个长周末想出去走走，从上海出发，两个人，想要轻松、不赶路的安排。', icon: 'calendar' }
 ]
 
-export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, productionCancelling = false, flightDecision, productionTelemetry, onProductionCommit, productionTimeline = [], onNewConversation }: PlannerPageProps) {
+function hasGuideDelivery(delivery: ConversationDelivery | undefined): boolean {
+  return delivery?.kind === 'travel_guide' || Boolean(delivery?.goals?.some(hasGuideDelivery))
+}
+
+export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt = '', onSubmitPrompt, productionBusy = false, productionProgress, locale = 'zh', productionError = '', productionReply: suppliedProductionReply = '', productionPrompt = '', productionResultAvailable = false, productionStopReason = '', productionDelivery, productionWarnings = [], onCancelProduction, productionCancelling = false, flightDecision, productionTelemetry, onProductionCommit, productionTimeline = [], onNewConversation }: PlannerPageProps) {
   const tt = (key: string, params?: Record<string, string | number>) => tripText(locale, key, params)
   const production = Boolean(onSubmitPrompt)
   const hasResult = !production || productionResultAvailable
+  const latestTurn = productionTimeline[productionTimeline.length - 1]
+  const latestDelivery = latestTurn?.delivery ?? productionDelivery
+  const incompleteGuide = hasGuideDelivery(latestDelivery) && latestDelivery?.status !== 'satisfied'
+  const productionReply = incompleteGuide && latestTurn && (!productionPrompt || latestTurn.user.content === productionPrompt)
+    ? latestTurn.assistant?.locale && latestTurn.assistant.locale !== locale ? '' : latestTurn.assistant?.content ?? ''
+    : suppliedProductionReply
   const rateLimited = productionWarnings.includes('research_provider_rate_limited')
     || productionDelivery?.warnings.includes('research_provider_rate_limited')
   const interrupted = production && (Boolean(productionError) || (productionStopReason !== 'completed' && productionDelivery?.status !== 'satisfied' && (
@@ -174,11 +184,12 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
           const userContent = turn.user.content
           const isCurrentTurn = turn.user.content === productionPrompt || turn.user.content === submitted
           const isPromptRepresented = isCurrentTurn && Boolean(productionPrompt || submitted)
-          const guideReplyPendingPublication = isLatest && (turn.delivery?.kind ?? productionDelivery?.kind) === 'travel_guide' && !productionReply
+          const turnDelivery = turn.delivery ?? productionDelivery
+          const guideReplyPendingPublication = isLatest && turnDelivery?.status === 'satisfied' && hasGuideDelivery(turnDelivery) && !productionReply
           const replyApplies = turn.user.content === productionPrompt || (!productionPrompt && turn.user.content === submitted)
           const assistantContent = isLatest && isCurrentTurn && replyApplies && productionReply
             ? productionReply
-            : guideReplyPendingPublication ? '' : turn.assistant?.content
+            : guideReplyPendingPublication || (isLatest && isCurrentTurn && replyApplies && turn.assistant?.locale && turn.assistant.locale !== locale) ? '' : turn.assistant?.content
           return <View className='pl-turn' key={turn.id}>
             {userContent ? <View className='pl-user-message'><Text>{userContent}</Text></View> : null}
             {assistantContent ? <View className='pl-assistant-turn'>

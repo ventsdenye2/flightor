@@ -1,5 +1,7 @@
 # FlightOR Agent Architecture v1
 
+2026-10-07 r20局部编辑已实现：准备层在原accepted base谱系上读取一次合法Goal机械限额；compact新编辑intent可省maxResults/maxCities，按原值绑定，不提升已接受上限。首次接受前对完整编辑结果（含protected supporting evidence）执行选择/版本/基底/slot及finding计数前置检查，后续领域与最终publication CAS保留。预算scope=trip的公开文案禁止擅自排除或另计已含支出；仅未知费用不是违规。联合313/313、最后预算交叉复核241/241、真实专用PG定向3/3、check/build及observer1/1通过；新冻结全量与真实H5尚待完成，不宣称D6通过。
+
 ## 2026-10-06 DSH准备与条件发布
 
 DSH组合提交在首次Goal接受前用已解析的选择检查raw材料与证据要求是否兼容；不可由本次raw候选满足的独立核实要求返回前置错误，不保存不可满足的新Goal、不调用额外模型或网络。由主模型按用户目标纠正首次语义intent或说明能力限制，既有严格Goal不可降低。该检查仍使用原withGoalIntent接受及领域发布路径，详见[ADR0029](adr/0029-dsh-prepared-submission.md)。

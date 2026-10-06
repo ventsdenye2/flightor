@@ -121,7 +121,8 @@ export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, ki
         } else {
           await context.assertFlightSelectionCurrent?.()
           checkpoint(context, signal)
-          if (requested && options.beforeAccept) await options.beforeAccept(args, requested, context, signal)
+          const acceptanceIntent = requested ?? (referenced && plannerGoalIntentSchema.parse({ kind: referenced.kind, parameters: referenced.parameters }))
+          if (acceptanceIntent && options.beforeAccept) await options.beforeAccept(args, acceptanceIntent, context, signal)
           checkpoint(context, signal)
           const { goal, run } = await context.goalRunRepository.accept({
             tripId: context.tripId, conversationId: context.conversationId, requestId: context.requestId,

@@ -48,10 +48,12 @@ test('observes an official fixture worker incrementally without raw model/tool s
           error: { code: 'DSH_GUIDE_NEEDS_REVISION', kind: 'content', revisionCode: 'raw_evidence_requires_partial',
             issues: ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type:PRIVATE_CATEGORY',
               'candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid',
+              'guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable',
               'PRIVATE_REVISION_REASON', 'https://private.example/path?token=SECRET'],
             presentationIssues: ['excluded_precise_claim', randomUUID(), 'SENSITIVE_API_KEY'],
             publicationIssues: [{ code: 'language', detail: 'SENSITIVE_DETAIL' }, { code: 'PRIVATE_CODE' }],
             presentationProblems: [{ code: 'budget_guarantee', fieldPath: 'text.overview', value: 'SENSITIVE_PROSE' },
+              { code: 'budget_scope_changed', fieldPath: 'text.reply', value: 'SENSITIVE_SCOPE' },
               { code: 'PRIVATE_CODE', fieldPath: 'text.reply' }, { code: 'budget_guarantee', fieldPath: 'SENSITIVE_FIELD' }],
             repair: { issues: [{ code: 'verified_evidence', classification: 'evidence_missing', fieldPath: 'SENSITIVE_FIELD' }] },
             recovery: { calls: 2, argumentCorrections: 1, contentAttempts: 1,
@@ -88,10 +90,12 @@ test('observes an official fixture worker incrementally without raw model/tool s
     assert.deepEqual(commits[0].revisionReasons,
       ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type',
         'candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid',
-        'excluded_precise_claim', 'language', 'budget_guarantee', 'guide_day_count', 'format', 'source_missing', 'raw_evidence_requires_partial',
+        'guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable',
+        'excluded_precise_claim', 'language', 'budget_guarantee', 'budget_scope_changed', 'guide_day_count', 'format', 'source_missing', 'raw_evidence_requires_partial',
         'candidate_category_outside_goal'])
     assert.deepEqual(commits[0].publicationOutcome, { accepted: false })
-    assert.deepEqual(commits[0].presentationProblems, [{ code: 'budget_guarantee', fieldPath: 'text.overview' }])
+    assert.deepEqual(commits[0].presentationProblems, [{ code: 'budget_guarantee', fieldPath: 'text.overview' },
+      { code: 'budget_scope_changed', fieldPath: 'text.reply' }])
     assert.deepEqual(commits[0].recovery, { calls: 2, argumentCorrections: 1, contentAttempts: 1, lastFailure: 'content' })
     assert.deepEqual(commits[1].publicationOutcome, { accepted: true, activityBindingCount: 1,
       serverFilledCityIdCount: 1, serverFilledCandidateLocationIdCount: 1, serverSuppliedBaseAndHash: true })

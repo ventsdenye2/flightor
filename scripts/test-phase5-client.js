@@ -101,6 +101,17 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/services/plannerTelem
   compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
 }).outputText, { module: telemetryModule, exports: telemetryModule.exports, performance: { now: () => telemetryNow } })
 const telemetry = telemetryModule.exports
+const publicPlannerErrorModule = { exports: {} }
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/utils/publicPlannerError.ts', 'utf8'), {
+  compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
+}).outputText, {
+  module: publicPlannerErrorModule,
+  exports: publicPlannerErrorModule.exports,
+  require: specifier => {
+    if (specifier === '../services/artifactService') return { ArtifactRequestSupersededError: class extends Error {} }
+    throw new Error(`unexpected public planner error dependency: ${specifier}`)
+  }
+})
 
 let passed = 0
 let failed = 0
@@ -262,6 +273,7 @@ const chatStoreSandbox = {
     if (specifier === 'mobx') return { makeAutoObservable: () => {}, runInAction: callback => callback() }
     if (specifier === '../services/routeService') return { confirmPicks: async () => [] }
     if (specifier === '../services/plannerTelemetry') return telemetry
+    if (specifier === '../utils/publicPlannerError') return publicPlannerErrorModule.exports
     if (specifier === '../services/conversationService') return {
       emptyTripState: service.emptyTripState,
       converse: (...args) => converseStub(...args),

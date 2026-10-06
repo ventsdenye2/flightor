@@ -2,7 +2,7 @@ const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
-const { assertPatch, assertTotalBudget, assertLocalization, assertEmptySeedRecovery, assertAdoptedFlight, assertBudgetRetryCandidate, assertBudgetConfirmCandidate, assertStableBudgetConfirmationBase, assertBudgetConfirmationResult, isBUnpublishedModelFailure, isBContextOnlyModelFailure, isBCommitIdempotencyFailure, assertBCommitIdempotencyObserver, assertRestoredPlannerReply, assertNewVersionLocalization, assertAcceptedEnglish, assertPublicBudgetProse, assertStopCancellation } = require('./dsh-h5-assertions.cjs')
+const { assertPatch, assertTotalBudget, assertLocalization, assertEmptySeedRecovery, assertAdoptedFlight, assertBudgetRetryCandidate, assertBudgetConfirmCandidate, assertStableBudgetConfirmationBase, assertBudgetConfirmationResult, isBUnpublishedModelFailure, isBContextOnlyModelFailure, isBCommitIdempotencyFailure, assertBCommitIdempotencyObserver, assertRestoredPlannerReply, assertNewVersionLocalization, assertAcceptedEnglish, assertPublicBudgetProse, assertGuideTurnTransition, guideTurnTransitionRequirement, assertStopCancellation } = require('./dsh-h5-assertions.cjs')
 test('stop requires accepted cancel request, cancellation terminal, and visible stopped UI', () => {
   const input = { cancelRequestCount: 1, cancelResponse: { status: 200, body: { status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' } } },
     terminalReadbacks: [], stoppedUiVisible: true, busyUiVisible: false }
@@ -143,10 +143,74 @@ test('public reply and overview reject real unsupported budget guarantees using 
     const safe = structuredClone(guide); safe.payload.publication.reply = text; safe.payload.publication.overview = text
     assert.equal(assertPublicBudgetProse(safe, publicProseProblems).affordability, 'not_verified')
   }
+  const narrowed = structuredClone(guide)
+  narrowed.payload.budget = { amount: 1200, currency: 'CNY', scope: 'trip' }
+  narrowed.payload.publication.reply = '全程预算1200元，但不含机票、住宿等未提供开销。'
+  assert.throws(() => assertPublicBudgetProse(narrowed, publicProseProblems), /narrows the authoritative Trip budget scope/)
   const old = snapshot(), replacement = patch(old)
   old.guide.payload.publication.reply = '整体预算仍在既定总额内。'
   assert.doesNotThrow(() => assertPatch(old, replacement), 'An unsafe old reply must not prevent a clean new slot replacement')
   assert.doesNotThrow(() => assertPublicBudgetProse(replacement.guide, publicProseProblems))
+})
+test('guide send requires a satisfied new publication, while explanation keeps the accepted guide without artifacts', () => {
+  const guide = id => ({ id, type: 'travel_guide' })
+  const accepted = { status: 'completed', artifactRevision: 1, artifactRefs: [guide('guide-2')], response: {
+    stopReason: 'completed', artifactRefs: [guide('guide-2')], delivery: { status: 'satisfied', kind: 'travel_guide', artifactIds: ['guide-2'] } } }
+  assert.deepEqual(assertGuideTurnTransition(accepted, 'guide-1'), { outcome: 'guide-published', previousGuideId: 'guide-1', guideId: 'guide-2' })
+
+  const explanation = { status: 'completed', artifactRevision: 0, artifactRefs: [], response: {
+    stopReason: 'responded', artifactRefs: [], delivery: { status: 'not_requested' } } }
+  assert.deepEqual(assertGuideTurnTransition(explanation, 'guide-1'), { outcome: 'no-guide-publication', currentGuideId: 'guide-1' })
+  assert.throws(() => assertGuideTurnTransition(explanation, 'guide-1', { requireGuide: true }), /not satisfied/)
+  assert.throws(() => assertGuideTurnTransition(accepted, 'guide-1', { requireNoGuide: true }), /must not request or publish/)
+  assert.throws(() => assertGuideTurnTransition(explanation, null, { requireNoGuide: true }), /previously accepted guide/)
+  assert.throws(() => assertGuideTurnTransition({ ...accepted, response: { ...accepted.response,
+    delivery: { status: 'satisfied', kind: 'travel_guide', artifactIds: ['other'] } } }, 'guide-1'), /must bind its new Artifact ID/)
+  assert.throws(() => assertGuideTurnTransition({ ...accepted, response: { ...accepted.response,
+    delivery: { status: 'satisfied', kind: 'travel_guide' } } }, 'guide-1'), /must bind its new Artifact ID/)
+
+  const partialEdit = { status: 'completed', artifactRevision: 0, artifactRefs: [], response: {
+    stopReason: 'goal_partial', artifactRefs: [], delivery: { status: 'partial', kind: 'travel_guide', missing: ['accepted_publication'] } } }
+  assert.throws(() => assertGuideTurnTransition(partialEdit, 'guide-1'), /not satisfied/)
+  assert.throws(() => assertGuideTurnTransition({ ...accepted, artifactRefs: [guide('guide-1')], response: { ...accepted.response, artifactRefs: [guide('guide-1')] } }, 'guide-1'), /new travel_guide Artifact/)
+  assert.throws(() => assertGuideTurnTransition({ ...explanation, artifactRevision: 1 }, 'guide-1'), /changed Artifact revision/)
+  assert.throws(() => assertGuideTurnTransition({ ...explanation, response: { ...explanation.response, artifactRefs: [guide('guide-2')] } }, 'guide-1'), /not_requested turn created artifacts/)
+})
+test('frozen journey/action mapping drives guide-turn requirements independently of delivery kind', () => {
+  assert.equal(guideTurnTransitionRequirement('B01', 3, 'guide'), 'no-guide')
+  assert.equal(guideTurnTransitionRequirement('B02', 3, 'guide'), 'no-guide')
+  assert.equal(guideTurnTransitionRequirement('B01', 4, null), 'guide')
+  assert.equal(guideTurnTransitionRequirement('B02', 4, null), 'guide')
+  assert.equal(guideTurnTransitionRequirement('B05', 3, null), 'guide')
+  assert.equal(guideTurnTransitionRequirement('B06', 2, 'guide'), 'guide')
+  assert.equal(guideTurnTransitionRequirement('B06', 2, null), null)
+  assert.equal(guideTurnTransitionRequirement('B01', 0, null), null)
+})
+test('actual runner budget inspection reads the scoped workspace contract and handles absent budgets', async () => {
+  const fs = require('node:fs')
+  const runner = fs.readFileSync(path.join(__dirname, 'qa-dsh-d6-h5.cjs'), 'utf8')
+  const start = runner.indexOf('const inspectPersistedGuideBudgetProse =')
+  const end = runner.indexOf('const inspectLatestAcceptedResult =', start)
+  assert.ok(start > 0 && end > start)
+  const load = journeyId => new Function('apiUrl', 'assert', 'path', 'pathToFileURL', '__dirname',
+    'assertPublicBudgetProse', 'journeyId', runner.slice(start, end) + '\nreturn inspectPersistedGuideBudgetProse;')(
+      'http://127.0.0.1:1', assert, path, pathToFileURL, __dirname, assertPublicBudgetProse, journeyId)
+  const guide = { ...snapshot().guide, tripId: 'trip' }
+  const workspace = { trip: { id: 'trip' }, conversationId: 'conversation', tripContextSummary: {} }
+  const urls = []
+  const page = { evaluate: async () => 'fixture-test-token', request: { get: async (url, options) => {
+    assert.equal(options.headers.authorization, 'Bearer fixture-test-token')
+    urls.push(url)
+    return { status: () => 200, json: async () => url.includes('/workspace?') ? workspace : { artifact: guide } }
+  } } }
+  assert.equal((await load('B05')(page, 'guide', 'trip', 'conversation')).affordability, 'not_verified')
+  assert.deepEqual(urls, ['http://127.0.0.1:1/v1/artifacts/guide', 'http://127.0.0.1:1/v1/trips/trip/workspace?conversationId=conversation'])
+  await assert.rejects(load('B01')(page, 'guide', 'trip', 'conversation'), /no authoritative Trip budget/)
+  workspace.tripContextSummary.budget = { amount: 1200, currency: 'CNY', scope: 'trip' }
+  guide.payload.publication.reply = '全程预算目标1200元，不含机票和住宿。'
+  await assert.rejects(load('B01')(page, 'guide', 'trip', 'conversation'), /narrows the authoritative Trip budget scope/)
+  workspace.conversationId = 'other'
+  await assert.rejects(load('B01')(page, 'guide', 'trip', 'conversation'), /another conversation/)
 })
 test('explicit new-version localization binds original success and rejects same or already-English guide', () => {
   const previous = snapshot(), current = snapshot()

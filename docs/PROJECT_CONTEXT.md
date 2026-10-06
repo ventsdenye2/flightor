@@ -1,5 +1,13 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 当前r20修复已通过定向：后端313/313、最终预算241/241、真实专用PG3/3、check/build/observer1/1；前端303项及根TS；H5 helper19/19。r19真实B01仍FAIL：189.534秒初稿accepted但预算范围收窄，54.451秒局改partial，旧页面及runner读取旧稿造成误判。服务已关闭、原DB/会话/账本保留；累计USD26.92未知预留，非实付。r20需新冻结完整工程和原12+4真实390×844 H5，D6未PASS、无确认硬阻塞。单主DeepSeek/权限/版本/证据/发布门槛不变，未push/合并/部署；详细原证据及问题D6-38–41见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。以下为历史快照。
+
+2026-10-07 r19同冻结版完整工程通过：backend1390/1390、真实专用PG52/52（48.96秒，原随机schema套件）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端113/20/37/52及根TypeScript、H5/weapp构建。runtime首次sandbox spawn EPERM未收集业务断言，原日志保留，允许本地子进程后原配置14/14通过。固定回放两批各10对均accepted/语义一致/0模型与外部调用；首批总P50 9.916→12.485ms，quiet复核10.144→12.805ms，adapter0.348ms，约2.6ms增加两批均保留，正在有界只读定位、不宣称提速。冻结source及参数不变，原12+4真实390×844 H5从B01启动；D6未PASS、无确认硬阻塞。只读PG诊断用一次性忽略脚本`backend/.demo/d6/read-current-trip.mjs`，验证run/schema一致后BEGIN READ ONLY，原报告/数据库/账本不改写。
+
+2026-10-07 r19同冻结版本完整后端137文件1390/1390通过（184.09秒，退出0，`output/d6/backend-unit-r19-final.log`），weapp正式构建18.00秒退出0（仅工程，保留既有CSS/体积警告）。真实专用PG完整套件正在执行，随后D5及固定回放；前端四族/根TS/runtime由子任务串行验证。实际构建及配置冻结不变，原12+4真实H5尚待同版执行；D6未PASS。
+
+2026-10-07 r19已冻结并开始完整工程：源码提交`5ff50628df66b473f03c17e454897931c6beab1b`，标准v1及原旅程SHA、日期/参数/390×844布局保持。新run`6344c29a-32ba-45ca-a1fd-ed3c488f7bd6`、schema`dsh_d6_6344c29a32ba45caa1fded3c488f7bd6`、API57722/H559937、PID109176/TTY1542，目录`backend/.demo/dsh-d6-runtime/d6-final-r19`；source/backend/H5/worker实际指纹见[冻结指纹](design/budget-travel-agent/evidence/d6-r19-freeze.json)。H5编译30.711秒、2条既有体积警告；启动已安装保护与observer，0模型/搜索/fare，旧账本SHA不变。首次启动在环境读取前置因fare-env相对路径错误ENOENT退出、无schema/账本/调用，实际文件在原工作区`../../backend/.env`；仅修正命令的只读路径，未修改凭据、源码或产品路由。完整backend/专用PG/D5/runtime/前端四族/根TS及weapp构建进行中，随后同版原12固定+4探索真实H5。当前未PASS、无确认硬阻塞；旧r18失败不追认。
+
 2026-10-07 r19最终定向与联合复核：预算focused211/211、Astra固定39/39，零外呼；日期证据适配最终helper SHA`1db130f27a8869fafb05896e94423a84dd90b4f769af28f539251a3d7844bd95`下focused90/90、Astra独立35/35，零外呼。D6-35/36/37最终独立复核通过；根10文件联合367/367（17.42秒）、build退出0、新build observer1/1（1.646秒）通过。backend typecheck退出0；真实专用PG新用例所在套件3/3通过（子任务过程输出未单独落盘，最终完整PG另留日志）；新冻结完整工程/原12固定+4探索未启动。D6未PASS、无确认硬阻塞。r18真实B01仍FAIL，不追认；标准v1、原旅程/hash、Trip日期、来源与发布门槛保留，未部署。
 
 2026-10-07 r19日期独立复核初版曾发现同URL摘要/正文次序、裁剪metadata标签、CJK括号吞另一日期范围三处可修问题；当时的联合366/366及check/build/observer结果不是最终复验。三处均已补红修复并由最终90/90与Astra35/35复核覆盖，真实PG及冻结验收仍待完成。

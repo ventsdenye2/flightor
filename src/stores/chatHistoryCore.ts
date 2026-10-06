@@ -53,7 +53,10 @@ const PHASES: readonly ConversationPhase[] = ['discover', 'clarify', 'plan']
 const PRIORITIES: readonly TripState['priorities'][number][] = ['budget', 'comfort', 'few_transfers', 'culture']
 const PACES: readonly TripState['pace'][] = ['relaxed', 'balanced', 'many_cities']
 const ROUTE_KINDS: readonly RoutePick['kind'][] = ['cheapest', 'mostCities', 'mostNights']
-const LEGACY_GUIDE_MESSAGE = '此前缓存包含旧版攻略内容；预算与攻略正文已隐藏，请重新加载已发布攻略。'
+const LEGACY_GUIDE_MESSAGE = {
+  zh: '此前缓存包含旧版攻略内容；预算与攻略正文已隐藏，请重新加载已发布攻略。',
+  en: 'This cache contains an older guide. Its budget claims and guide text are hidden; reload the published guide.'
+}
 
 export interface ConversationTurnSnapshot {
   id: string
@@ -197,7 +200,7 @@ function cleanBilingual(value: unknown, max: number): { zh: string; en: string }
 function sanitizeMessage(value: unknown): ConversationMessage | null {
   if (!isRecord(value) || (value.role !== 'user' && value.role !== 'assistant')) return null
   const content = cleanText(value.content, MAX_CHAT_MESSAGE_CHARS)
-  return content ? { role: value.role, content } : null
+  return content ? { role: value.role, content, ...(value.locale === 'zh' || value.locale === 'en' ? { locale: value.locale } : {}) } : null
 }
 
 export function sanitizeTripState(value: unknown): TripState | null {
@@ -664,6 +667,25 @@ function hasGuideDelivery(value: unknown): boolean {
   return Array.isArray(value.goals) && value.goals.some(goal => hasGuideDelivery(goal))
 }
 
+function ownsPublishedGuide(delivery: ConversationDelivery | undefined, guideId: string): boolean {
+  if (delivery?.status !== 'satisfied' || !delivery.artifactIds.includes(guideId)) return false
+  return delivery.kind === 'travel_guide' || Boolean(delivery.goals?.some(goal => ownsPublishedGuide(goal, guideId)))
+}
+
+function incompleteGuideMessage(delivery: ConversationDelivery | undefined, locale: ConversationMessage['locale']): string | undefined {
+  switch (delivery?.status) {
+    case 'pending':
+    case 'partial':
+      return locale === 'en' ? 'This guide is not finished yet. Reopen the trip to check saved results.' : '本次攻略尚未完成，请重新打开行程查看已保存结果。'
+    case 'failed':
+      return locale === 'en' ? 'This guide could not be completed. Reopen the trip to check saved results.' : '本次攻略未能完成，请重新打开行程查看已保存结果。'
+    case 'cancelled':
+      return locale === 'en' ? 'This planning turn was stopped. Reopen the trip to check saved results.' : '本次规划已停止，请重新打开行程查看已保存结果。'
+    default:
+      return undefined
+  }
+}
+
 function travelGuideSourceCount(guide: TravelGuide): number {
   return guide.sources.length + guide.days.reduce(
     (count, day) => count + day.items.reduce((itemCount, item) => itemCount + item.sources.length, 0),
@@ -801,14 +823,18 @@ function sanitizeTurn(value: unknown, fallbackId: string): ConversationTurnSnaps
       : null
   if (artifactRefs === null) return null
   const travelGuide = value.travelGuide === undefined ? undefined : sanitizeTravelGuide(value.travelGuide)
+  const delivery = sanitizeDelivery(value.delivery)
   const guideReferenced = Boolean(value.travelGuide !== undefined || artifactRefs?.some(ref => ref.type === 'travel_guide') || hasGuideDelivery(value.delivery))
   // A cached assistant reply may contain old free-form budget guarantees. For
-  // any guide-associated turn, use only the trusted published reply or a
-  // static notice; user messages and unrelated turns remain untouched.
-  if (guideReferenced && assistant) assistant = { role: 'assistant', content: travelGuide?.publication?.reply ?? LEGACY_GUIDE_MESSAGE }
+  // a guide-associated turn, require its own satisfied delivery before using
+  // publication prose. Incomplete turns recover a static status, not old success.
+  if (guideReferenced && assistant) {
+    const publication = travelGuide?.publication
+    assistant = { ...assistant, content: publication && ownsPublishedGuide(delivery, publication.artifactId)
+      ? publication.reply : incompleteGuideMessage(delivery, assistant.locale) ?? LEGACY_GUIDE_MESSAGE[assistant.locale === 'en' ? 'en' : 'zh'] }
+  }
   const id = cleanText(value.id, 80) ?? fallbackId
   const error = cleanOptionalText(value.error, 240)
-  const delivery = sanitizeDelivery(value.delivery)
   return {
     id,
     user,

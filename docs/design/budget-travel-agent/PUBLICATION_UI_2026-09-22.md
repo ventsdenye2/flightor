@@ -2,11 +2,17 @@
 
 第四阶段当前增量：正式封面不再固定null，按当前版本首个有图活动取实景并标景点名；列表/详情共用活动媒体，独立GET与字段合并不重置日期或展开活动。失败收起图片区，署名/许可放二级低干扰入口；显式补图，中英文共用照片、alt随接纳标题变化。详情见[第四阶段报告](PLACE_MEDIA_2026-09-22.md)。下文“地图/媒体无Provider”仅为第二阶段当时范围。
 
-基线 main@8b51c99（上一项已独立提交）。本轮复用 [ADR 0025](../../adr/0025-bounded-guide-finalization.md) 的已接纳终稿、语言缓存及显式重试，不改变 Planner/研究/航班检索/Goal。正式组件、离线测试与平台 fixture 验证见下；不是全量 G1 或生产部署。
+2026-09-22历史基线 main@8b51c99（上一项已独立提交）。当日复用 [ADR 0025](../../adr/0025-bounded-guide-finalization.md) 的已接纳终稿、语言缓存及显式重试，不改变 Planner/研究/航班检索/Goal。正式组件、离线测试与平台 fixture 验证见当日记录；不是全量 G1 或生产部署。后续行为增量按日期标明，历史通过不替代新版本验证。
 
 ## 展示合同
 
-2026-09-26后端恢复修正：workspace取最新100条Artifact窗口，公开引用按旧→新排序；未公布且无accepted语言的初始终稿草稿不作为结果卡片引用。另一语言已accepted或历史assistant已公布的失败终稿仍保留本地化/重试入口。前端仍选择最后一个攻略引用，源码不变；详细问题和数据库回归见[DSH发布记录](DSH_PUBLICATION_2026-09-24.md)。
+2026-09-26后端恢复修正：workspace取最新100条Artifact窗口，公开引用按旧→新排序；未公布且无accepted语言的初始终稿草稿不作为结果卡片引用。另一语言已accepted或历史assistant已公布的失败终稿仍保留本地化/重试入口。前端仍选择最后一个攻略引用作为结果卡片；本轮答复的选择另受下述2026-10-07交付归属规则约束。详细问题和数据库回归见[DSH发布记录](DSH_PUBLICATION_2026-09-24.md)。
+
+2026-10-07当前答复边界：已有攻略结果卡与本轮交付独立。只有本轮 `delivery.status=satisfied`、攻略交付包含正在显示的 `guideId`，且当前owner/session/Trip/locale读取仍匹配时，Plan适配器才使用该攻略的publication回复；聚合goals还须有对应satisfied攻略goal包含同一ID。satisfied却尚未读到自己的攻略时隐藏未接纳尾句。partial/failed/pending/cancelled显示本轮同locale的受控assistant回复，旧攻略继续可查看，不借其成功文字。纯解释与Trip更新也显示本轮回复。Planner组件以本轮失败回复填充正文和中断提示，只有satisfied攻略等待自身publication时才隐藏待发布正文。
+
+本地缓存属于不可信输入：恢复时先清洗delivery，仅同一satisfied攻略交付允许恢复其publication.reply；失败或未完成的攻略关联轮次使用固定中英文状态提示，保留合法的message locale和可读旧攻略，避免放出旧预算承诺或旧成功文字。缺少可证明归属的历史成功缓存仍显示同locale的旧版内容已隐藏提示；重新读取服务端后使用当前受控公开回复。本次不新增读取副作用或隐式重试。
+
+2026-10-07离线验证：修复前，实际Plan hook与Planner JSX树均因失败轮显示旧成功答复而失败，chat-history为19通过/6失败；未把旧期待值改回以掩盖问题。修复后，`npm run test:conversation-progress`全链116项通过（含Plan19、Planner聊天6、发布组件9、telemetry8、公共错误44），`node scripts/test-chat-history.js`29项、`npm run test:session-recovery`20项、`npm run test:phase5-client`86项、`npm run test:production-presentation`全链52项均通过，共303项；根目录TypeScript通过。覆盖partial/failed/pending/cancelled、旧卡保留、成功但artifact不属于本轮、聚合交付归属、中英文缓存提示与当前locale隔离。phase5-client最初在12项后因旧VM脚手架未加载ChatStore已依赖的publicPlannerError而中断；补为真实模块加载后86项通过，没有修改产品错误选择以迁就测试。全部检查仅使用本地函数、组件树或stub运输，未调用Provider、未写数据库；尚无本修复的新H5/微信构建、平台绘制或真实端到端通过结论。此前B01失败仍保留。
 
 正式页面只显示当前 Trip/已选航班版本、目标 locale、accepted publication 的 overview、每日 theme 及稳定 activityId 的 title/description/recommendationReason。不拼原始 summary、研究摘要、取证摘录或旧版公开正文。旧版、过期、准备、技术失败、材料需修订分开显示；领域 satisfied 不授权内容发布。
 
@@ -19,7 +25,7 @@
 | 权威输入 | 展示/约束 |
 | --- | --- |
 | publication.locale/status/guideContentHash、artifactId、tripContextVersion；workspace 当前 contextVersion 和 flightSelection.revision/身份 | productionPresentation 校验后才允许正文。旧版、错语言、过期、未接纳隐藏全部活动正文；未完整的接纳投影转需要修订，不回退 summary |
-| publication.overview/reply | 概览旅行介绍、会话短回复；不与旧公开投影或研究摘要拼接。用户原始消息未修改 |
+| publication.overview/reply | 概览旅行介绍；会话短回复仅供本轮satisfied且artifactIds包含该guideId的攻略交付使用，不覆盖本轮失败/未完成状态。用户原始消息未修改 |
 | days[].theme/day、items[].id/title/timeOfDay | 每日主题、稳定身份、接纳名称、建议上午/下午/晚上；翻译标题不作主键 |
 | items[].description/recommendationReason | 列表行动简介、详情“景点简介”“为什么推荐”；不读取 planningNote 或 supportingEvidence 作为 fallback |
 | items[].city | 所在城市/区域线索；保留原地名、locationHint 的 id/name/cityCode/countryCode，不编造景点精确位置 |
@@ -40,9 +46,9 @@ enrichment 是后续素材服务的独立响应扩展位置，本轮没有 Provi
 - 同步 ref 防重复点击；原服务按 owner/session/locale/revision 合并请求。结果按语言缓存，组件按完整请求 key/authRevision 接纳，处理中换语言不覆盖当前选择。旧缓存/过期版本不会展示为完成。
 - 不新增环境变量、模型配置、依赖、迁移或后台任务。失败保留原后端草稿、费用与历史；前端只展示整理过的短状态。rollback 可回退本次 UI 提交，终稿持久合同未改变；回退旧 UI 并不保证本次清洁展示。
 
-## 验证记录
+## 2026-09-22历史验证记录
 
-| 检查 | 本轮执行结果 |
+| 检查 | 当日执行结果 |
 | --- | --- |
 | 前后端类型 | 根目录 `npx tsc --noEmit --pretty false`、backend `npm run check` 通过 |
 | 后端定向离线 | agent-cloud 3项（含新增 notes 只读测试）；travel-guides/finalization 26项；agent/cloud/finalization 1项，共30项通过 |

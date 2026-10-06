@@ -5,7 +5,7 @@ import { checkpoint, loadWorkspaceArtifact, saveWorkspaceArtifact, type Artifact
 import { researchArtifactSchema, researchTypeSchema, type ResearchArtifact } from '../../research-agent/types.js'
 import { travelGuideArtifactPayloadSchema, type TravelGuideArtifactPayload } from '../../travel-guides/artifact.js'
 import { authoredGuideInputSchema } from '../../travel-guides/authored.js'
-import { guideCandidateRef } from '../../travel-guides/candidates.js'
+import { guideCandidateRef, resolveGuideCandidate } from '../../travel-guides/candidates.js'
 import { finalTextSchema, type FinalText, type PublicationLocale } from '../../travel-guides/finalization-schema.js'
 import { publishIntegratedGuide } from '../../travel-guides/finalization-service.js'
 import { publicProseProblems, sourceRef } from '../../travel-guides/finalization.js'
@@ -132,11 +132,12 @@ export async function mergeProtectedGuide(input: CommitGuideInput, scope: Artifa
   }
   const supportingRefs = await Promise.all((guide.supportingEvidence ?? []).map(item => ref(item.sourceArtifactId, item.sourceFindingId)))
   if (input.supportingRefs || input.supportingCandidateKeys) fail('A slot edit cannot replace protected supporting evidence', { code: 'protected_supporting_evidence' })
-  return { days, supportingRefs, protectedText, protectedItems, themes: accepted.days }
+  return { days, supportingRefs, protectedText, protectedItems, themes: accepted.days, research }
 }
 
 export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore; locale: PublicationLocale; memoryEnabled?: boolean }): AgentTool {
   const researchCache = new Map<string, ResearchArtifact>()
+  let checkedEdit: { inputHash: string; value: Awaited<ReturnType<typeof mergeProtectedGuide>> } | undefined
   let candidateScope: string | undefined
   let registeredCandidates = new Map<string, string>()
   let registeredCandidateMetadata = new Map<string, { category: string; temporalEvidence?: unknown; index: number }>()
@@ -175,7 +176,10 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       recordTripLocations(scopedContext, scope.tripContext)
       if (input.days.some(day => day.items.some(item => Number(Boolean(item.candidateKey)) + Number(Boolean(item.candidateRef)) !== 1))) fail('Each item requires exactly one candidateKey or candidateRef', { code: 'candidate_binding_invalid' })
       const isPatch = input.baseGuideId !== undefined || input.expectedContentHash !== undefined || input.replaceSlots !== undefined
-      const protectedGuide = isPatch ? await mergeProtectedGuide(input, scope, options.locale) : undefined
+      const protectedGuide = isPatch ? checkedEdit?.inputHash === canonicalFingerprint(input)
+        ? checkedEdit.value : await mergeProtectedGuide(input, scope, options.locale) : undefined
+      checkedEdit = undefined
+      if (protectedGuide) for (const [id, source] of protectedGuide.research) researchCache.set(id, source)
       if (!isPatch) delete scope.guideBaseCondition
       const days = protectedGuide?.days ?? input.days
       const decisions = days.flatMap(day => day.items)
@@ -325,9 +329,31 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
     }
   }
   const wrapped = withGoalIntent(tool, ['travel_guide'], { required: true, completeAfter: true,
-    beforeAccept(raw, requested) {
+    async beforeAccept(raw, requested, context, signal) {
       if (requested.kind !== 'travel_guide') return
       const input = commitGuideInputSchema.parse(raw)
+      if (input.days.some(day => day.items.some(item => Number(Boolean(item.candidateKey)) + Number(Boolean(item.candidateRef)) !== 1))) {
+        fail('Each item requires exactly one candidateKey or candidateRef', { code: 'candidate_binding_invalid' })
+      }
+      if (input.baseGuideId || input.expectedContentHash || input.replaceSlots) {
+        const scope = await workspaceScope({ ...context, requireGuideFinalization: true }, signal)
+        const protectedGuide = await mergeProtectedGuide(input, scope, options.locale)
+        const findings = new Set<string>()
+        const cache = protectedGuide.research
+        for (const ref of [...protectedGuide.days.flatMap(day => day.items.flatMap(item => item.candidateRef ? [item.candidateRef] : [])),
+          ...protectedGuide.supportingRefs]) {
+          const candidate = await resolveGuideCandidate(ref, scope, cache)
+          if (!candidate) fail('The persisted candidate is unavailable in this edit', { code: 'candidate_evidence_unavailable' })
+          findings.add(`${candidate.researchArtifactId}:${candidate.findingId}`)
+        }
+        for (const candidateKey of protectedGuide.days.flatMap(day => day.items.flatMap(item => item.candidateKey ? [item.candidateKey] : []))) {
+          findings.add(`new:${candidateKey}`)
+        }
+        if (findings.size > requested.parameters.maxResults) fail('The edit limit must cover all protected and replacement findings', {
+          code: 'guide_edit_result_limit', selectedFindingCount: findings.size, maxResults: requested.parameters.maxResults
+        })
+        checkedEdit = { inputHash: canonicalFingerprint(input), value: protectedGuide }
+      }
       const rawKeys = new Set(input.candidates?.map(candidate => candidate.key) ?? [])
       const usesRawCandidate = input.days.some(day => day.items.some(item => item.candidateKey && rawKeys.has(item.candidateKey)))
         || input.supportingCandidateKeys?.some(key => rawKeys.has(key))

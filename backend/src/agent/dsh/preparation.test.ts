@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { emptyTripContext } from '../../trips/types.js'
 import { InMemoryArtifactRepository, assertGuideBaseCurrent, type ArtifactRecord } from '../../artifacts/repository.js'
 import { InMemoryTripContextRepository } from '../../trips/repository.js'
-import { adaptDshCommit, dshCommitInputSchema, prepareDshSnapshot } from './preparation.js'
+import { adaptDshCommit, bindPreparedEditLimits, dshCommitInputSchema, prepareDshSnapshot } from './preparation.js'
 import { workspaceScope } from '../tools/workspace-scope.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import { buildGuidePublication } from '../../travel-guides/publication.js'
@@ -34,6 +34,38 @@ const compact = { days: [{ day: 1, cityId: 'city:TYO', kind: 'visit', theme: 'Qu
   text: { reply: 'Your garden visit is ready.', overview: 'Explore a quiet garden at a relaxed pace.', days: [{ day: 1, theme: 'Quiet garden' }] } }
 
 describe('DSH model preparation and deterministic input adaptation', () => {
+  it('inherits mechanical edit limits only from the prepared guide authoritative Goal', async () => {
+    const ownerId = 'prepared-owner', goals = new InMemoryGoalRepository(ownerId)
+    const parameters = { questions: ['Initial itinerary'], researchTypes: ['activity' as const],
+      requiredEvidenceTypes: ['activity' as const], maxResults: 12, maxCities: 1, allowPartial: true }
+    const { goal } = await goals.create({ tripId: trip.id, conversationId: conv, kind: 'travel_guide',
+      parameters, createdContextVersion: 1, idempotencyKey: randomUUID() })
+    const base = { ...record(), goalId: goal.id }
+    const payload = travelGuideArtifactPayloadSchema.parse({ kind: 'trip_travel_guide', schemaVersion: 1, builderVersion: 'fixture',
+      sourceArtifactIds: ['source'], routeArtifactId: 'route', days: [{ day: 1,
+        city: { id: 'city:TYO', type: 'city', name: 'Tokyo', countryCode: 'JP' }, items: [] }],
+      unassignedActivityRefs: [], verification: { status: 'unverified', checkedAt: base.createdAt, sources: [], confidence: 0 }, warnings: [], createdAt: base.createdAt })
+    const publication = buildGuidePublication(base, payload)
+    publication.finalization = (base.payload as any).publication.finalization
+    base.payload = { ...payload, publication }
+    const prepared = await bindPreparedEditLimits({ trip, baseGuide: { id: baseId, contentHash: publication.guideContentHash, locale: 'en' } },
+      [base], goals, ownerId, new AbortController().signal)
+    const { maxResults: _cap, maxCities: _cities, ...semanticParameters } = parameters
+    const edit = { ...compact, replaceSlots: [{ day: 1, slot: 'afternoon' }],
+      intent: { kind: 'travel_guide', parameters: { ...semanticParameters, questions: ['Make the afternoon quieter'] } } }
+    expect(adaptDshCommit(edit, prepared).intent).toEqual({ kind: 'travel_guide',
+      parameters: { ...parameters, questions: ['Make the afternoon quieter'] } })
+    expect(() => adaptDshCommit({ ...edit, intent: { ...edit.intent, parameters: { ...edit.intent.parameters, maxResults: 6 } } }, prepared))
+      .toThrowError(expect.objectContaining({ code: 'DSH_GUIDE_NEEDS_REVISION', details: expect.objectContaining({ code: 'guide_edit_limit_conflict' }) }))
+    expect(await goals.get(goal.id)).toEqual(goal)
+    const missing = await bindPreparedEditLimits({ trip, baseGuide: prepared.baseGuide }, [{ ...base, goalId: randomUUID() }], goals, ownerId, new AbortController().signal)
+    expect(() => adaptDshCommit(edit, missing)).toThrowError(expect.objectContaining({ code: 'DSH_GUIDE_NEEDS_REVISION' }))
+    const foreign = await bindPreparedEditLimits({ trip, baseGuide: prepared.baseGuide }, [base], goals, 'foreign-owner', new AbortController().signal)
+    expect(foreign).not.toHaveProperty('editLimits')
+    expect(() => adaptDshCommit({ ...edit, replaceSlots: undefined }, prepared)).toThrow()
+    expect(() => adaptDshCommit({ ...compact, replaceSlots: edit.replaceSlots }, prepared)).not.toThrow()
+    expect(adaptDshCommit({ ...compact, replaceSlots: edit.replaceSlots }, prepared)).not.toHaveProperty('intent')
+  })
   it('states that candidate keys require explicit source registration in the current preparation', () => {
     const itemSchema = dshCommitInputSchema.shape.days.element.shape.items.element
     expect(itemSchema.shape.candidateKey.description).toContain('candidates[].key')
@@ -109,7 +141,8 @@ describe('DSH model preparation and deterministic input adaptation', () => {
     const persistedCandidate = guideCandidateRef({ ownerId, tripId, tripContextVersion: 1 }, researchRecord.payload as any, 'garden')
 
     const editGeneration = randomUUID()
-    const editPrepared = prepareDshSnapshot({ trip: preparedTrip, records: [firstRecord], conversationId, selectedFlight: null, locale: 'en' })
+    const editPrepared = await bindPreparedEditLimits(prepareDshSnapshot({ trip: preparedTrip, records: [firstRecord], conversationId, selectedFlight: null, locale: 'en' }),
+      [firstRecord], goals, ownerId, new AbortController().signal)
     expect(editPrepared.baseGuide).toEqual({ id: firstRecord.id, contentHash: firstResult.guideContentHash, locale: 'en' })
     const editReferences = new DshReferences({ ownerId, tripId, conversationId, generationId: editGeneration, tripContextVersion: 1 })
     const shortCandidate = editReferences.registerCandidate(persistedCandidate)!

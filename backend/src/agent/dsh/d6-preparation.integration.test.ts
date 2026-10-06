@@ -22,7 +22,7 @@ import { travelGuideArtifactPayloadSchema } from '../../travel-guides/artifact.j
 import { guideCandidateRef } from '../../travel-guides/candidates.js'
 import { DshEvidenceStore } from './evidence.js'
 import { createCommitGuideTool } from './commit-guide.js'
-import { prepareDshSnapshot } from './preparation.js'
+import { adaptDshCommit, bindPreparedEditLimits, prepareDshSnapshot } from './preparation.js'
 
 const databaseUrl = process.env.TEST_DATABASE_URL
 const suite = databaseUrl ? describe : describe.skip
@@ -159,8 +159,11 @@ suite('D6 DSH preparation and PostgreSQL publication CAS', () => {
       title: 'Tokyo festival', summary: 'A cultural event during the selected dates.', category: 'event' as const,
       locationId: city.id, temporalEvidence: { from: '2026-10-10', to: '2026-10-11',
         sourceRef: eventSources.sourceRefs[0]!, quote: '2026年10月10日(土)～10月11日(日)' } } as any)
+    const supportKeys = ['transit', 'market', 'craft-street', 'history']
+    candidates.push(...supportKeys.map(key => ({ key, sourceRefs: activitySources.sourceRefs,
+      title: `Tokyo ${key}`, summary: 'Supplemental cultural material for the trip.', category: 'activity' as const, locationId: city.id })))
     const args = {
-      intent: eventIntent, candidates,
+      intent: eventIntent, candidates, supportingCandidateKeys: supportKeys,
       days: [
         { day: 1, cityId: city.id, kind: 'visit' as const, theme: 'Culture and festival', items: [
           { activityKey: 'festival', candidateKey: 'festival', timeOfDay: 'morning' as const, planningNote: 'Explore the festival at a relaxed pace.' },
@@ -206,6 +209,42 @@ suite('D6 DSH preparation and PostgreSQL publication CAS', () => {
       selectedFlight: null, locale: 'en' }).baseGuide?.id).toBe(guide.id)
     expect(guideCandidateRef({ ownerId, tripId: trip.id, tripContextVersion: freshTrip.version }, research, 'festival'))
       .toMatch(/^gc1\./)
+    const freshGoals = new PostgresGoalRepository(recoveryDb, ownerId)
+    const freshRuns = new PostgresGoalRunRepository(recoveryDb, ownerId)
+    const prepared = await bindPreparedEditLimits(prepareDshSnapshot({ trip: freshTrip, records,
+      conversationId: conversation.id, selectedFlight: null, locale: 'en' }), records, freshGoals, ownerId, new AbortController().signal)
+    expect(prepared.editLimits).toEqual({ maxResults: 10, maxCities: 1 })
+    const edit = adaptDshCommit({ intent: { kind: 'travel_guide', parameters: {
+      questions: ['Make the second afternoon quieter'], researchTypes: ['activity', 'event'],
+      requiredEvidenceTypes: ['activity'], allowPartial: true } }, replaceSlots: [{ day: 2, slot: 'afternoon' }],
+      days: [{ day: 2, kind: 'visit', theme: 'Quiet garden', items: [{
+        candidateRef: guideCandidateRef({ ownerId, tripId: trip.id, tripContextVersion: freshTrip.version }, research, 'garden'),
+        timeOfDay: 'afternoon', planningNote: 'Enjoy a quiet garden visit at a slower pace.', text: {
+          name: 'Quiet garden visit', introduction: 'Walk through quiet garden paths.', recommendationReason: 'A slower visit fits the requested pace.' } }] }],
+      text: { reply: 'The second afternoon has a quieter garden visit.', overview: 'Keep the cultural visits and take a slower garden afternoon.',
+        days: [{ day: 2, theme: 'Quiet garden' }] } }, prepared)
+    const editGeneration = randomUUID()
+    const editContext = { ...context, generationId: editGeneration, requestId: randomUUID(), artifacts: freshArtifacts,
+      goalRepository: freshGoals, goalRunRepository: freshRuns, guideBaseCondition: prepared.baseGuide,
+      activeGoalId: undefined, activeGoalRunId: undefined, activeGoalKind: undefined, activeGoalContextVersion: undefined, acceptedGoalIntent: undefined } as ToolExecutionContext
+    const editTool = createCommitGuideTool({ evidenceStore: new DshEvidenceStore({ ownerId, tripId: trip.id,
+      conversationId: conversation.id, generationId: editGeneration, tripContextVersion: freshTrip.version }), locale: 'en' })
+    const originalGoal = await freshGoals.get(guide.goalId!)
+    const beforeRecords = await freshArtifacts.listForTrip(trip.id)
+    const tooSmall = { ...edit, intent: { kind: 'travel_guide', parameters: { ...(edit.intent as any).parameters, maxResults: 6 } } }
+    await expect(editTool.execute(editTool.inputSchema.parse(tooSmall), editContext, new AbortController().signal))
+      .rejects.toMatchObject({ details: { code: 'guide_edit_result_limit', selectedFindingCount: 8, maxResults: 6 } })
+    expect(editContext.activeGoalId).toBeUndefined()
+    expect(await freshArtifacts.listForTrip(trip.id)).toEqual(beforeRecords)
+    const result = await editTool.execute(editTool.inputSchema.parse(edit), editContext, new AbortController().signal) as any
+    expect(result).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    const restored = (await new PostgresArtifactRepository(db, ownerId).get(result.artifact.id))!
+    const afterGuide = travelGuideArtifactPayloadSchema.parse(restored.payload), beforeGuide = travelGuideArtifactPayloadSchema.parse(guide.payload)
+    expect(afterGuide.days[0]).toEqual(beforeGuide.days[0])
+    expect(afterGuide.days[1]!.items[0]).toEqual(beforeGuide.days[1]!.items[0])
+    expect(afterGuide.supportingEvidence).toEqual(beforeGuide.supportingEvidence)
+    expect(publicationFor(restored)?.finalization?.variants.en?.status).toBe('accepted')
+    expect(await freshGoals.get(guide.goalId!)).toEqual(originalGoal)
   }, 30_000)
 
   it('captures the exact accepted guide from preparation and rejects a waiting edit after a concurrent winner publishes', async () => {

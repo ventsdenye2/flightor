@@ -149,6 +149,31 @@ export function textProblems(text: FinalText, input: FinalizationInput): string[
   return [...new Set(errors)]
 }
 
+const budgetExpense = '(?:机票|飞机票|航空票|住宿|酒店|旅馆|餐饮|交通|门票|airfare|flights?|air tickets?|accommodation|lodging|hotels?|meals?|transport|admission)'
+const budgetScopePatterns = [
+  new RegExp(`(?:不含|不包括|不包含|不涵盖|排除|不算|不计入).{0,24}${budgetExpense}`, 'gi'),
+  new RegExp(`${budgetExpense}.{0,24}(?:另计|另外计算|单独计算|不计入|不包含在|不纳入|在(?:全程)?预算之外|预算以外)`, 'gi'),
+  new RegExp(`(?:预算|总额).{0,24}(?:只|仅)(?:用于|含|包括|覆盖|涵盖).{0,20}(?:${budgetExpense}|活动|游玩)`, 'gi'),
+  new RegExp(`\\b(?:excludes?|excluding|without|does not (?:include|cover))\\b.{0,40}\\b${budgetExpense}\\b`, 'gi'),
+  new RegExp(`\\b${budgetExpense}\\b.{0,45}\\b(?:outside|excluded|not (?:included|covered)|counted separately|extra)\\b`, 'gi'),
+  new RegExp(`\\b${budgetExpense}\\b.{0,55}\\bpaid separately\\b.{0,30}\\bbudget\\b`, 'gi'),
+  /\bbudget\b.{0,30}\bonly (?:covers?|includes?)\b.{0,30}\b(?:meals?|food|activities|transport|airfare|accommodation|lodging|hotels?)\b/gi,
+  /\bbudget\b.{0,20}\bfor\b.{0,30}\b(?:meals?|food|activities|transport|airfare|accommodation|lodging|hotels?)\b.{0,30}\bonly\b/gi,
+  new RegExp(`\\bcount\\b.{0,30}\\b${budgetExpense}\\b.{0,20}\\bseparately\\b`, 'gi')
+]
+function narrowsWholeTripBudget(prose: string): boolean {
+  return prose.split(/[.!?。！？；;\n]/).some(clause => budgetScopePatterns.some(pattern => [...clause.matchAll(pattern)].some(match => {
+    const prefix = clause.slice(0, match.index).slice(-35)
+    const expression = match[0] + clause.slice(match.index! + match[0].length, match.index! + match[0].length + 40)
+    // A ticket/pass inclusion or an itinerary scope is not a budget exclusion.
+    if (!/(?:budget|预算|总额)/i.test(prefix + match[0]) && (
+      /(?:不包含在|不含在).{0,15}(?:通票|套票|套餐)|\bnot included (?:in|on) (?:the |this |your )?(?:itinerary|pass|package)\b/i.test(expression)
+      || /(?:\b(?:itinerary|pass|package)\b|通票|套票|套餐|行程安排).{0,12}$/i.test(prefix))) return false
+    // Negating an exclusion keeps scope; uncertainty about costs does not authorize it.
+    return !/(?:不|不能(?:把|将)?|不要(?:把|将)?|不可(?:把|将)?|并非|不是|不应(?:把|将)?|does not |do not |must not |should not |never )$/i.test(prefix)
+  })))
+}
+
 /** Expression checks only: no factual certification, model call or semantic critic. */
 export function publicProseProblems(fields: string[], locale: PublicationLocale, options: {
   languageBodies?: string[]
@@ -158,6 +183,7 @@ export function publicProseProblems(fields: string[], locale: PublicationLocale,
 } = {}): string[] {
   const errors: string[] = []
   const prose = fields.join('\n')
+  if (options.budget?.scope === 'trip' && narrowsWholeTripBudget(prose)) errors.push('budget_scope_changed')
   if (/(?:I (?:will|should|need to) (?:now |next )?(?:summarize|respond|finalize)|as an AI|tool_call|save_travel_guide|接下来我(?:将|会).*总结|现在我(?:将|来).*总结|内部审核|模型已验证)/i.test(prose)) errors.push('internal_narration')
   const guaranteePatterns = [
     /(?:guarantee.{0,30}budget|within (?:your|the) budget|保证.{0,20}预算|不会超支)/i,

@@ -2,7 +2,7 @@ import { publicProseProblems } from '../../travel-guides/finalization.js'
 import type { PublicationLocale } from '../../travel-guides/finalization-schema.js'
 
 export const PRESENTATION_PROBLEM_CODES = [
-  'internal_narration', 'budget_guarantee', 'excluded_precise_claim', 'excluded_admission_or_hours',
+  'internal_narration', 'budget_guarantee', 'budget_scope_changed', 'excluded_precise_claim', 'excluded_admission_or_hours',
   'unsupported_asset_or_url', 'language', 'duplicated_or_foreign_prose', 'empty_reply'
 ] as const
 export type PresentationProblem = { code: typeof PRESENTATION_PROBLEM_CODES[number]; fieldPath: string }

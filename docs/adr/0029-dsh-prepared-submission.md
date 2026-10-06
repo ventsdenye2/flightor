@@ -1,5 +1,7 @@
 # ADR 0029：DSH 准备快照与紧凑提交
 
+2026-10-07 r20局改补充（实现中，未最终验收）：紧凑编辑仍需新的显式语义intent，但maxResults/maxCities可省略，服务端用准备时确切accepted基底Artifact谱系对应的owner/Trip/conversation/version合法Goal原限额补齐。该读取仅对存在基底的turn增加一次owner-scoped Goal get；不使用默认20、不读取另一Goal、不修改已接受Goal。显式不相等限额或取不到权威合同在接受前拒绝，主模型须省略机械限额，不能丢受保护证据。领域commit在首次intent/goalRef接受前校验candidate选择XOR、base/hash/flight/slot及完整合并结果（protected visits＋support＋replacement）的finding计数；只读合并结果只在相同输入的立即执行复用，后续领域验证与publication CAS保持。新攻略与legacy完整限额合同不变，原配置/额度不变。
+
 2026-10-06 r16补充：紧凑提交的表达拒绝返回原输入白名单字段和共享validator的受控码，不回显拒绝原文、不改发布判据或持久FinalIssue。局部保护字段不作为新输入定位；额度耗尽保留最后实质失败阶段。合同与定向红绿记录见[字段反馈](../design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)，最终冻结验收尚未完成。
 
 2026-10-06；Accepted for D6 implementation，验证见 [冻结验收](../design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)，尚非全量真实验收通过。
