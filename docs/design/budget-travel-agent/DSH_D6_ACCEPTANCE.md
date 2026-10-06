@@ -1,5 +1,7 @@
 # DSH D6 冻结验收与结果
 
+2026-10-07 r18窄修复准备完成：合法全程预算名词关系与逐费用/每日谓词局部否定已实现，保留整句肯定费用/每日用途阻断、所有金额/币种/票价/保证反例及原权限/证据/版本/修订限额。两文件182/182、根联合8文件297/297、check/build、observer1/1通过；Astra对源码SHA5a5b6efb的25项独立纯函数复核符合预期。未改原文的[完整第二稿重放](evidence/d6-r18-original-budget-replay.json)使用真实PG草稿、两份兼容research（13 findings；6活动与1 practical绑定在第二份7 findings）及原text，按发布服务顺序纳入材料；r17冻结构建仅因excluded_precise_claim blocked，r18构建accepted且issues/omitted为空，0模型/外部调用。seq95只核对合法预算文字，不追认其缺practical的首稿；重放也不追认任何正文或H5通过。旧红测、构建与原材料保留。下一步本地提交、新r18隔离run/schema/构建冻结、同版完整工程及原12+4；当前未PASS。
+
 2026-10-07 续作：**r17 真实 B01 FAIL，D6 未 PASS，无已确认硬阻塞**。同冻结源码 `ee29139` 完整工程通过，真实390×844页面首轮101ms受理、110.962秒到终态、113.665秒流程；0 accepted攻略，后续8动作blocked。实际终态completed、delivery partial且缺accepted_publication，不是180秒超时，也不是用户交付成功。r17服务已于2026-10-06T15:58:42.898Z正常关闭，PID84864已退出、两端口ECONNREFUSED、锁释放、guard installed/closed各1且forbiddenCalls0；原schema、会话、失败报告和账本保留。
 
 r17实际计量20模型/10搜索/14次web_fetch工具尝试/0票价，30 settled、pending0；prompt559978、completion9002、total568980，USD2为预留、实际费用未知。历史账本SHA未变。[脱敏B01失败审计](evidence/d6-r17-b01-failure.json)保留原报告、截图、真实PG读取、session、observer及关闭证明的SHA；原件位于忽略目录`backend/.demo/dsh-d6-runtime/d6-final-r17`。冻结副本`private/runtime-frozen`与覆盖前dist的783文件逐字节一致，按launcher同款算法SHA均125b1bdd；冻结状态已更新为失败关闭，旧启动信息仅作历史。
@@ -160,7 +162,7 @@ The D6 H5 runner uses the prior H5 harness's 390x844 viewport and records browse
 | D6-31 | r15原source烤制甜甜圈被写炸制、周日建议混入周二/三；免费入场中文漏检 | 语义问题保留给主模型新自然输入审阅；中文免费开放/入场/进入补原合同拒绝回归，Wi-Fi/资料不误拦 | 机械校验通过不能追认正文；最终新H5逐字段审阅待执行 |
 | D6-32 | r16完整backend的3个既有shortReply正例回归，合法英文for-the-trip、两天总预算、total budget否定每日被新span目标识别误拦；复审又确认小数切分、句末金额及daily-budget前缀边界 | 原期望保留，补reply文件到受影响必跑范围；仅权威scope=trip短答可确认总预算，出版仍需全程范围；逐金额拒绝每日肯定/其他金额，句点仅两边均数字时作小数点 | r16原1290/1293与关闭证据保留；r17四文件165/165及联合8文件267/267通过，首次联合启动EPERM无测试、允许同命令重跑日志保留；新冻结完整复验待执行 |
 | D6-33 | H5 stop旧脚本接受cancel请求后的任意终态，可能将普通失败/完成算作成功停止 | 按实际cancelAndWait合同要求精确failed/AGENT_TURN_CANCELLED及页面停止/非busy，不改变产品API；cancel响应本身权威，不能强求取消后UI继续轮询；断言前保留实际取消材料 | 红测15/16→绿测16/16，根最终16/16、runner语法通过；B09/B10真实持久/迟到写检查待完整冻结验收 |
-| D6-34 | r17真实B01原seq95/129的全程预算为与非每日/非已确认花费被词法规则误拦；第二稿已补实际practical材料但仍无accepted | Astra冻结原材料零调用复现；预算关系不强求目标口令，按谓词限制否定范围，保留后续肯定费用/每日/错误金额币种/保证拒绝，不增加修订额度 | r17完整工程通过但B01 FAIL，20模型/10搜索且0accepted；红回归与窄修复进行中，r18同版完整工程及12+4待执行 |
+| D6-34 | r17真实B01原seq95/129的全程预算为与非每日/非已确认花费被词法规则误拦；第二稿已补实际practical材料但仍无accepted | 预算关系不强求目标口令，按谓词限制否定范围，保留整句后续肯定费用/每日/错误金额币种/保证拒绝，不增加修订额度；复审核实并修复单金额分句费用/daily、plural/compound费用否定边界 | 有效红测6失败/159通过，最终focused182/182、joint297/297、check/build与observer1/1通过；完整原文第二稿r17 blocked→r18 accepted，0调用。r17B01仍FAIL，r18新冻结完整工程及12+4待执行 |
 | D6-15 | Taro 初始 main tab 页面尚未完成首次 ready 时，H5 原生 tabbar 可先发起另一标签的切换；native 与 custom 导航未共享页面就绪条件 | 任一 main tab 的 `useReady` 前禁用原生 H5/custom tab 点击，首次 main tab ready 后恢复原 `switchTab`；初始直达任一 main tab 可解锁，详情返回不重置门 | 已实施；session-recovery fixture 20/20、H5 build通过；真实H5复验待新run，late-hide因果仍未证实 |
 | D6-07 | `update_trip_context` 的空 patch 返回 `changed: false`，但仍重建同 scope 的 evidence store 并复位 source alias sequence；旧模型引用可能映射到后续不同证据 | 同 generation 在 setter 前后记录相同内容、不同 URL，要求 source alias 不重复，并断言 Trip version 与 accepted base 不变 | 修复及定向绿测通过；最终冻结验收待运行 |
 | D6-10 | 准备阶段按当前语言选取任一旧 accepted guide，而发布 CAS 将同 conversation/version 最新任一语言 accepted guide 视为当前基底，可能错误允许回退到旧版或在提交时无故冲突 | 同作用域新英/旧中组合不得把旧中文 guide 当编辑基底；新guide补齐中文 accepted后必须绑定新guide | 准备规则已实施，定向7/7通过；最终冻结验收待运行 |

@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "scope": "zero-egress original-material deterministic replay; not factual or H5 acceptance",
+  "sessionSha256": "aa941666639d9619a42f43eea2af74beaaa73af3834e11df45abdacc4315e308",
+  "readbackSha256": "7e29c3eec5581c20eda61daa3b82d6a08515177650bcc4d5a8695d1a297bedd6",
+  "modelCalls": 0,
+  "externalCalls": 0,
+  "researchArtifacts": 2,
+  "researchFindings": 13,
+  "variants": [
+    {
+      "label": "r17-frozen",
+      "finalizationModuleSha256": "831b78979b7be56c6e4430937ec738efc8abd4e01b7403b8fa2e8c8c8d434248",
+      "fields": [
+        {
+          "seq": 95,
+          "problems": [
+            "excluded_precise_claim"
+          ]
+        },
+        {
+          "seq": 129,
+          "problems": [
+            "excluded_precise_claim"
+          ]
+        }
+      ],
+      "completeSeq129": {
+        "status": "blocked",
+        "issues": [
+          {
+            "code": "format",
+            "detail": "excluded_precise_claim",
+            "activityId": null
+          }
+        ],
+        "omitted": [],
+        "calls": 0
+      }
+    },
+    {
+      "label": "r18-current",
+      "finalizationModuleSha256": "16481d7b843319f45eb293fd864fab8772abe11ac7e535f3466f7c27e97077a4",
+      "fields": [
+        {
+          "seq": 95,
+          "problems": []
+        },
+        {
+          "seq": 129,
+          "problems": []
+        }
+      ],
+      "completeSeq129": {
+        "status": "accepted",
+        "issues": [],
+        "omitted": [],
+        "calls": 0
+      }
+    }
+  ]
+}

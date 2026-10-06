@@ -43,56 +43,78 @@ const budgetAmountPattern = (amount: number, currency: string, flags = 'i') => {
   return new RegExp(`(?:${currencyPattern}\\s*${exactAmount}(?!\\d|\\.\\d)|(?<![\\d.])${exactAmount}\\s*${currencyPattern})`, flags)
 }
 
-const affirmativeDailyBudgetTarget = (clause: string) =>
-  /\bdaily\b.{0,20}\b(?:total\s+)?budget\b|(?:每天|每日)(?:的)?(?:总)?预算(?:目标)?/i.test(clause)
+const dailyBudgetPattern = /\bdaily\b.{0,20}\b(?:total\s+)?budget\b|(?:每天|每日)(?:的)?(?:总)?预算(?:目标)?/gi
+const isLocallyNegated = (text: string, start: number, end: number) => {
+  const before = text.slice(0, start)
+  const after = text.slice(end)
+  return /(?:\bnot\s+(?:(?:a|the)\s+)?(?:(?:yet|currently|actually)\s+)?(?:(?:confirmed|verified|actual)\s+)?|(?:并非|而非|亦非|不是|非)(?:(?:已|已经)?(?:确认|核实))?\s*)$/i.test(before)
+    || /^\s*(?:(?:(?:is|are|was|were|has been|have been)\s+)?not\s+(?:(?:yet|currently)\s+)?(?:confirmed|verified)\b|(?:未确认|尚未确认|尚未核实|仍待核实|尚待核实|有待核实))/i.test(after)
+}
+
+const affirmativeDailyBudgetTarget = (clause: string) => [...clause.matchAll(dailyBudgetPattern)]
+  .some(match => !isLocallyNegated(clause, match.index ?? 0, (match.index ?? 0) + match[0].length))
 
 const tripBudgetTargetClause = (clause: string, allowShortTotalBudget = false) => {
   const englishTarget = /\b(?:(?:whole|entire|full)[-\s]+trip|trip|journey)\b.{0,40}\b(?:budget\s+)?(?:total\s+)?(?:target|goal)\b|\bbudget\b.{0,50}\b(?:whole[-\s]+trip|trip\s+total|in total|for (?:both|all) days)\b|\b(?:total\s+)?budget\s+(?:target|goal)\b.{0,40}\bfor (?:the )?(?:whole )?trip\b/i.test(clause)
-  const chineseTarget = /(?:全程|整个行程|整趟行程|整个旅程).{0,24}(?:总预算(?:目标|为|是)?|预算目标|总目标|目标|合计)|(?:全程|整个行程|整趟行程)总预算(?:目标|为|是|合计)|预算(?:目标|总额|合计).{0,24}(?:全程|整个行程|两天|三天|\d+天合计)|(?:[一二三四五六七八九十\d]+天|[一二三四五六七八九十\d]+日)的?总预算(?:目标|为|是|合计)?/.test(clause)
+  const chineseTarget = /(?:全程|整个行程|整趟行程|整个旅程).{0,24}(?:总预算(?:目标|为|是)?|预算(?:目标|总额|为|是|合计)?|总目标|目标|合计)|(?:全程|整个行程|整趟行程)总预算(?:目标|为|是|合计)|预算(?:目标|总额|合计).{0,24}(?:全程|整个行程|两天|三天|\d+天合计)|(?:[一二三四五六七八九十\d]+天|[一二三四五六七八九十\d]+日)的?总预算(?:目标|为|是|合计)?/.test(clause)
+  const englishWholeTripBudget = /\b(?:whole|entire|full)[-\s]+trip budget\b/i.test(clause)
   const shortTotalBudget = allowShortTotalBudget && (
     /\b(?:total budget|whole[-\s]+trip budget|budget.{0,40}(?:in total|both days|whole[-\s]+trip))\b/i.test(clause)
       || /(?:全程|总)预算(?:目标|总额|为|是|合计)?/.test(clause))
-  return (englishTarget || chineseTarget || shortTotalBudget)
+  return (englishTarget || chineseTarget || englishWholeTripBudget || shortTotalBudget)
     && !affirmativeDailyBudgetTarget(clause)
-    && !/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
 }
 
 const maskAuthoritativeTripBudgetAmounts = (prose: string, budget: { amount: number; currency: string }, allowShortTotalBudget = false) => {
   const amountPattern = budgetAmountPattern(budget.amount, budget.currency, 'gi')
   const targetAmountPattern = budgetAmountPattern(budget.amount, budget.currency)
   const cautiousBudgetLanguage = /(?:无法确认|无法判断|不能确认|不能判断|不确定|尚未确认|尚未核实|仍待核实|尚待核实|有待核实|是否|不保证|不能保证|不承诺|uncertain|unknown|not sure|cannot confirm|can't confirm|cannot determine|can't determine|not yet (?:known|verified)|whether|may be|might be)/i
-  return prose.split(/(?<=[!?;。！？；\n])|(?<!\d)\.|\.(?!\d)/).map(sentence => {
-    const clauses = sentence.split(/([,，])/)
-    const hasTripTarget = clauses.some(clause => tripBudgetTargetClause(clause, allowShortTotalBudget) && targetAmountPattern.test(clause))
-    const unsupportedCostClaim = clauses.some((clause, index) => {
-      if (!/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
-        || cautiousBudgetLanguage.test(clause)
-        || /不构成.{0,20}(?:费用|花费|开销|支出|可负担性).{0,12}(?:保证|承诺)/.test(clause)
-        || /(?:需|需要|应|请).{0,16}(?:核对|查询|确认|检查|核实)/.test(clause)
-        || /\b(?:need to be checked|needs checking|need checking)\b/i.test(clause)) return false
-      const adjacent = clauses.slice(index, index + 2).join('')
+  return prose.split(/(?<=[!?。！？\n])|(?<!\d)\.|\.(?!\d)/).map(sentence => {
+    const clauses = sentence.split(/([,，;；])/)
+    const hasTripTarget = clauses.some(clause => clause.split(/\b(?:but|however|although|whereas|and)\b|但|不过|然而|而是|且|并且/gi)
+      .some(assertion => tripBudgetTargetClause(assertion, allowShortTotalBudget) && targetAmountPattern.test(assertion)))
+    const isUnsupportedCostAssertion = (assertion: string, adjacent: string) => {
+      const costPattern = /(?:tickets?|admissions?|fares?|costs?|prices?)(?:\s+(?:costs?|prices?))?|门票|票价|费用|花费|消费/gi
+      const costMentions = [...assertion.matchAll(costPattern)]
+      if (!costMentions.some(match => !isLocallyNegated(assertion, match.index ?? 0, (match.index ?? 0) + match[0].length))
+        || cautiousBudgetLanguage.test(assertion) && !/(?:confirmed|verified|已确认|已核实)/i.test(assertion)
+        || /不构成.{0,20}(?:费用|花费|开销|支出|可负担性).{0,12}(?:保证|承诺)/.test(assertion)
+        || /(?:需|需要|应|请).{0,16}(?:核对|查询|确认|检查|核实)/.test(assertion)
+        || /\b(?:need to be checked|needs checking|need checking)\b/i.test(assertion)) return false
       const supportedVariableCostExplanation = !/(?:ticket|admission|fare|price|门票|票价)/i.test(adjacent)
         && !/(?:已核实|已确认|已经核实|已经确认|verified|confirmed)/i.test(adjacent)
         && (/(?:实际)?(?:花费|费用|开销|支出)(?:会|将|可能)?(?:因|随|取决于).{0,60}(?:住宿|餐饮|购物|选择|消费习惯|安排).{0,20}(?:而(?:不同|变化|变动|异)|(?:不同|变化|变动|有差异))/.test(adjacent)
           || /\b(?:actual\s+)?(?:costs?|expenses?|spending)\b.{0,40}\b(?:vary|varies|change|changes|depend|depends)\b.{0,60}\b(?:choice|choices|selection|accommodation|lodging|dining|shopping)\b/i.test(adjacent))
       return !supportedVariableCostExplanation
-    })
-    return clauses.map(clause => {
-      const isTargetClause = tripBudgetTargetClause(clause, allowShortTotalBudget) && targetAmountPattern.test(clause)
-      const targetAmountOffset = isTargetClause ? clause.search(targetAmountPattern) : -1
-      const hasCostContext = /(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
-      return clause.replace(amountPattern, (match, offset: number) => {
-        const after = clause.slice(offset + match.length)
-        const prefix = clause.slice(0, offset)
-        const negatedDaily = /(?:不是|并非|而非)\s*(?:每天|每日)\s*$/i.test(prefix)
-          || /\bnot\s*$/i.test(prefix) && /^\s+per day\b/i.test(after)
-        const positiveDaily = (!negatedDaily && /(?:每天|每日|daily)\s*$/i.test(prefix))
-          || (!negatedDaily && /^\s*(?:per day|a day)\b/i.test(after))
-          || (!negatedDaily && /^\s*(?:每天|每日|每一天)/i.test(after))
-        const allowedTarget = isTargetClause && offset === targetAmountOffset && !positiveDaily && !unsupportedCostClaim
-        const allowedNegatedDaily = hasTripTarget && !hasCostContext && negatedDaily
-        return allowedTarget || allowedNegatedDaily ? 'budget target' : match
-      })
+    }
+    const hasAffirmativeCostClaim = clauses.some((clause, index) => index % 2 === 0
+      && clause.split(/\b(?:but|however|although|whereas|and)\b|但|不过|然而|而是|且|并且/gi)
+        .some(assertion => isUnsupportedCostAssertion(assertion, clauses.slice(index, index + 2).join(''))))
+    const hasAffirmativeDailyClaim = clauses.some((clause, index) => index % 2 === 0
+      && clause.split(/\b(?:but|however|although|whereas|and)\b|但|不过|然而|而是|且|并且/gi)
+        .some(affirmativeDailyBudgetTarget))
+    return clauses.map((clause, index) => {
+      if (index % 2 === 1) return clause
+      const assertions = clause.split(/(\b(?:but|however|although|whereas|and)\b|但|不过|然而|而是|且|并且)/gi)
+      return assertions.map((assertion, assertionIndex) => {
+        if (assertionIndex % 2 === 1) return assertion
+        const isTargetClause = tripBudgetTargetClause(assertion, allowShortTotalBudget) && targetAmountPattern.test(assertion)
+        const targetAmountOffset = isTargetClause ? assertion.search(targetAmountPattern) : -1
+        const hasCostContext = /(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(assertion)
+        return assertion.replace(amountPattern, (match, offset: number) => {
+          const after = assertion.slice(offset + match.length)
+          const prefix = assertion.slice(0, offset)
+          const negatedDaily = /(?:不是|并非|而非)\s*(?:每天|每日)\s*$/i.test(prefix)
+            || /\bnot\s*$/i.test(prefix) && /^\s+per day\b/i.test(after)
+          const positiveDaily = (!negatedDaily && /(?:每天|每日|daily)\s*$/i.test(prefix))
+            || (!negatedDaily && /^\s*(?:per day|a day)\b/i.test(after))
+            || (!negatedDaily && /^\s*(?:每天|每日|每一天)/i.test(after))
+          const allowedTarget = isTargetClause && offset === targetAmountOffset && !positiveDaily
+            && !hasAffirmativeCostClaim && !hasAffirmativeDailyClaim
+          const allowedNegatedDaily = hasTripTarget && !hasCostContext && negatedDaily
+          return allowedTarget || allowedNegatedDaily ? 'budget target' : match
+        })
+      }).join('')
     }).join('')
   }).join('')
 }

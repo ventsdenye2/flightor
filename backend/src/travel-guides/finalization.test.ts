@@ -136,6 +136,36 @@ describe('integrated main Agent publication', () => {
     })).not.toContain('excluded_precise_claim')
   })
   it.each([
+    ['r17 seq95 reply', '已为你们排好11月3日至4日的东京两天行程：第一天以浅草寺、仲见世通与浅草小吃为主，第二天走谷中银座老街、根津神社，并以明治神宫收尾，整体步调轻松。全程预算1200元人民币为你们设定的目标（含住宿、交通、餐饮等，属目标而非确认花费）。需要我据此再调整或补充交通细节吗？'],
+    ['r17 seq95 overview', '这是一条围绕传统文化与当地小吃、节奏轻松的两日东京行程。第一天集中在浅草一带：上午从雷门进入浅草寺与仲见世通，慢逛寺院与老街；下午在仲见世通与浅草六区边走边吃传统小吃，也可体验和服散步；傍晚顺路逛合羽桥道具街，感受日本饮食器物文化。第二天走访谷根千（谷中、根津）老街：上午在谷中银座商店街边走边吃古早味小吃，下午看根津神社的千本鸟居并到Kayaba老咖啡馆歇息，傍晚以明治神宫的镇守之森参拜收尾。你们设定的全程预算1200元人民币为目标（涵盖住宿、交通与餐饮等，非每日、亦非已确认花费）。'],
+    ['r17 seq129 reply', '已按11月3日至4日为你们排好东京两天：第一天浅草寺、仲见世通与浅草小吃，第二天谷中银座老街、根津神社，并以明治神宫收尾，整体步调轻松。你们设定的全程预算为1200元人民币（涵盖住宿、交通与餐饮等的整体目标，而非每日预算）。需要我再补充交通走法或其他传统体验吗？'],
+    ['English whole-trip budget without target label', 'The whole-trip budget is CNY 1200.', false],
+    ['Chinese whole-trip budget without target label', '全程预算1200元人民币。', false],
+    ['explicit whole-trip total without a target label', '全程预算为1200元人民币。', false],
+    ['local daily and cost negations', '全程预算目标为1200元（非每日预算、亦非已确认花费）。', false],
+    ['negated cost claim in parentheses', 'The whole-trip budget target is CNY 1200 (not confirmed costs).', false],
+    ['negated plural cost after predicate', 'The whole-trip budget target is CNY 1200 (actual costs are not confirmed).', false],
+    ['negated compound ticket price', 'The whole-trip budget target is CNY 1200 (not confirmed ticket prices).', false],
+    ['negated daily amount after a comma', 'The whole-trip budget target is CNY 1200, not CNY 1200 per day.', false],
+    ['unnegated certainty follows a negated phrase', 'The whole-trip budget is CNY 1200 (not a daily budget and not confirmed costs), but actual costs are confirmed at CNY 1200.', true],
+    ['affirmed cost follows a negated cost with no second amount', 'The whole-trip budget target is CNY 1200 (not confirmed costs, but accommodation costs are confirmed).', true],
+    ['affirmed ticket price follows a negated cost', 'The whole-trip budget target is CNY 1200 (not confirmed costs and confirmed ticket prices).', true],
+    ['not only does not negate costs', 'The whole-trip budget target is CNY 1200 (not only confirmed costs).', true],
+    ['affirmed cost follows a negated cost in Chinese', '全程预算目标为1200元人民币（尚未确认费用，但住宿花费已确认）。', true],
+    ['daily affirmation follows a daily negation', '全程预算目标为1200元人民币（非每日预算，但也作为每日预算）。', true],
+    ['daily affirmation in a parenthetical', '全程预算目标为1200元人民币（整体目标，也作为每日预算）。', true],
+    ['later assertion after “not daily”', '全程预算为1200元，虽非每日预算，但实际费用已确认1200元。', true],
+    ['whole-trip costs are not a budget', '全程费用1200元人民币。', true],
+    ['daily budget is not a whole-trip budget', '每日预算1200元人民币。', true],
+    ['publication budget lacks whole-trip scope', '预算1200元人民币。', true],
+  ] as const)('classifies %s with local budget/cost negation', (_case, content, shouldReject) => {
+    const result = publicProseProblems([content], content.includes('CNY') || content.startsWith('The') ? 'en' : 'zh', {
+      languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })
+    if (shouldReject) expect(result).toContain('excluded_precise_claim')
+    else expect(result).not.toContain('excluded_precise_claim')
+  })
+  it.each([
     ['mismatched_amount', { amount: 1300, currency: 'CNY', scope: 'trip' }, '全程预算目标是1500元，实际费用仍待核实。'],
     ['wrong_scope', { amount: 1500, currency: 'CNY', scope: 'airfare' }, '全程预算目标是1500元，实际费用仍待核实。'],
     ['wrong_currency', { amount: 1500, currency: 'JPY', scope: 'trip' }, '全程预算目标是1500元，实际费用仍待核实。'],
