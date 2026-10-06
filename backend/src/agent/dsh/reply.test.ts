@@ -3,6 +3,10 @@ import { publicProseProblems } from '../../travel-guides/finalization.js'
 
 const budget = { amount: 1200, currency: 'CNY', scope: 'trip' }
 describe('DSH lightweight public explanation boundary', () => {
+  it('withholds the complete r22 B01 explanation with unverified small-expense and spending-share claims', () => {
+    const text = '第二天下午安排的是**小石川后乐园**，这项安排和你们的偏好是契合的：\n\n**契合「传统文化」**\n后乐园是江户时代遗留的诸侯庭园，园内以池泉、假山、茶亭构成回游式庭园景致，本身就是江户历史与造园文化的代表，和第一天浅草寺、第二天的神社形成「寺—宫—园」的传统文化主线，没有把行程稀释成现代商业景点。\n\n**契合「轻松步调」**\n它属于庭园散步型景点：园内沿园路慢走、随时可以坐下休息，不需要排队打卡或赶时段，也没有强烈的体力要求。放在明治神宫之后的下午，正好是半天里走路放缓、以内园闲逛为主的一段，符合你们不想赶行程的节奏。\n\n**与前后行程顺**\n上午明治神宫在原宿一带，下午换到后乐园所在的旧城区，傍晚再往谷中银座一带，整体是从神社到庭园再到老街里弄的过渡，动线上不需要来回折返，所以第二天只落在少数几个区域，不会变成整天在路上。\n\n**关于费用**\n只作为参考提示：这一段属于门票类开销，具体票价我没有在场工具核实，你们按当日园方公告准备即可——在全程1200元的总预算下，这类门票是需要留出的小额支出之一，但整体仍以「住宿＋交通为主、小吃代替正餐」来控制。\n\n按你的要求，这里只做解释，不重新生成也不修改现有行程。'
+    expect(publicProseProblems([text], 'zh', { shortReply: true, budget })).toContain('budget_guarantee')
+  })
   it.each([
     ['en', 'Which day would you like to change?'],
     ['en', 'It matches your cultural interests.'],

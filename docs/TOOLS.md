@@ -1,5 +1,7 @@
 # FlightOR Agent Tool Registry
 
+2026-10-07 D6-45预算文案合同（已实现、定向验证通过）：攻略各公开字段与DSH短解释复用`budget_guarantee`拒绝无成本支撑的预算宽紧、费用大小/主要开销及“替换餐食/住宿就可控制在总预算内”等肯定关系。准确全程目标、未知成本、局部条件假设/用户自述/控制费用的目的、小吃偏好保留；费用对象变化或进入条件后件时不得沿用前文的未确认豁免。`commit_travel_guide`的overview schema与工具预算说明、主模型来源合同同步要求成本结论有支撑，参考性提示不替代依据；反馈仍仅为既有原因码和提交字段路径，不回显原文，不改变修订额度或自动重写。14文件545/545、backend typecheck通过，零真实Provider/数据库业务写；详见[ADR0025](adr/0025-bounded-guide-finalization.md)和[字段反馈证据](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。完整新冻结与真实H5待验证，原r22不追认。
+
 2026-10-07 r22初稿数量合同（已实现，定向验证通过）：DSH `commit_travel_guide`在首个intent/goalRef接受及research保存前检查完整所选finding数。日程与supporting中的持久引用按`researchArtifactId:findingId`去重，新候选按已注册key计数；不同finding共享同一raw来源仍分别计数，未选择的候选不计数。超出显式上限返回arguments类`guide_initial_result_limit`、完整`selectedFindingCount`、原`maxResults`及schema合法`maxAllowedResults=20`，由主模型在用户请求支持时显式纠正尚未接受的新intent；服务端不抬上限、不删活动/支持证据。工具说明同步完整数量口径、supporting只选择未安排的额外finding且不重复，以及前置未接受时仍需intent/完整候选定义；明确免费入场声明属于原公开限制。新攻略仍必须显式提供maxResults/maxCities，局改原Goal限额、已接受/恢复Goal的不可变性、重复证据领域拒绝及legacy工具合同保持。最终12文件473/473及typecheck通过，完整新冻结与真实H5仍待验证；细则与红绿证据见[字段反馈](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。
 
 2026-10-07 r20局改合同（实现待验）：DSH compact的travel_guide intent仍显式描述新用户编辑目标；maxResults/maxCities对新完整攻略仍必需，对局部编辑可省略并携带准备基底原Goal的确切限额。显式冲突或基底合同不可取返回受控前置错误，不静默改Goal。首次接受前完整计数包括受保护活动、support和replacement，绑定错误先拒绝，不耗内容修订。公开文字新增budget_scope_changed：权威scope=trip时，不允许通过“不含机票住宿/另计/只包括”等文案收窄全程范围；已买票不是排除授权，实际费用未知仍允许。无新产品LLM/API/表，详细行为归ADR0029与字段反馈合同。

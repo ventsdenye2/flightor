@@ -76,14 +76,15 @@ const recordTurnArtifacts = (record, action) => {
     ...valid(progressRefs).map(ref => ({ ...ref, source: 'turn-progress' })),
     ...valid(responseRefs).map(ref => ({ ...ref, source: 'final-response' })),
   ]
-  const newGuideRef = observed.find(ref => ref.type === 'travel_guide')
-  if (newGuideRef || record.terminal?.response?.delivery?.kind === 'travel_guide') {
+  const hasNewGuideRef = observed.some(ref => ref.type === 'travel_guide' && ref.id !== acceptedGuideRef?.id)
+  if (hasNewGuideRef || record.terminal?.response?.delivery?.kind === 'travel_guide') {
     const transition = assertGuideTurnTransition(record.terminal, acceptedGuideRef?.id || null)
     record.guideTurnTransition = transition
-    assert.ok(newGuideRef && transition.outcome === 'guide-published', 'Guide delivery did not publish a new Artifact')
-    acceptedGuideRef = newGuideRef
+    assert.ok(transition.outcome === 'guide-published', 'Guide delivery did not publish a new Artifact')
+    acceptedGuideRef = { id: transition.guideId, type: 'travel_guide' }
   }
-  acceptedArtifactRefs = observed.length ? observed : acceptedGuideRef ? [acceptedGuideRef] : []
+  const currentRefs = observed.filter(ref => ref.type !== 'travel_guide' || ref.id === acceptedGuideRef?.id)
+  acceptedArtifactRefs = currentRefs.length ? currentRefs : acceptedGuideRef ? [acceptedGuideRef] : []
   record.acceptedArtifactRefs = observed.map(ref => ({ id: ref.id, type: ref.type, source: ref.source, revision: ref.revision ?? null }))
   record.artifactRefsBySource = {
     turnProgress: valid(progressRefs).map(ref => ({ id: ref.id, type: ref.type })),

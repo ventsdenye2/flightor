@@ -1,0 +1,270 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "at": "2026-10-06T21:57:16.148911+00:00",
+  "codeHead": "b875b2cac21326ba95c4ddd3b7685baf54360658",
+  "runId": "f01dc2b5-a1f9-49a4-bc32-2de35e5e08c5",
+  "status": "real_ui_failed",
+  "reports": [
+    {
+      "report": "backend/.demo/dsh-d6-runtime/d6-final-r22/evidence/B01-2026-10-06T21-37-23-643Z.json",
+      "sha256": "cb6b9ca39a6e275b0779787074209b43ee8bd89294da594ce177dc1ea8b1bee4",
+      "runnerResult": "observed",
+      "reviewVerdict": "content_failed",
+      "durationMs": 76731,
+      "actionCount": 9,
+      "blockedActionIndices": [],
+      "sends": [
+        {
+          "actionIndex": 0,
+          "submitToAcceptedMs": 126,
+          "submitToTerminalMs": 38562,
+          "status": "completed",
+          "stopReason": "completed",
+          "deliveryStatus": "satisfied",
+          "deliveryArtifactIds": [
+            "01a11326-ec29-72b4-98b6-7116a1888ca3"
+          ],
+          "progressRefs": [
+            {
+              "id": "01a11326-ec29-72b4-98b6-7116a1888ca3",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "tripContextVersion": 1,
+              "presentationHint": "travel_guide"
+            }
+          ],
+          "responseRefs": [
+            {
+              "id": "01a11326-ec29-72b4-98b6-7116a1888ca3",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "presentationHint": "travel_guide"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "actionIndex": 3,
+          "submitToAcceptedMs": 37,
+          "submitToTerminalMs": 4129,
+          "status": "completed",
+          "stopReason": "responded",
+          "deliveryStatus": "not_requested",
+          "deliveryArtifactIds": [],
+          "progressRefs": [],
+          "responseRefs": [],
+          "warnings": []
+        },
+        {
+          "actionIndex": 4,
+          "submitToAcceptedMs": 35,
+          "submitToTerminalMs": 22210,
+          "status": "completed",
+          "stopReason": "completed",
+          "deliveryStatus": "satisfied",
+          "deliveryArtifactIds": [
+            "01a11327-6c8a-72f3-87f2-57b9ae089281"
+          ],
+          "progressRefs": [
+            {
+              "id": "01a11327-6c8a-72f3-87f2-57b9ae089281",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "tripContextVersion": 1,
+              "presentationHint": "travel_guide"
+            }
+          ],
+          "responseRefs": [
+            {
+              "id": "01a11327-6c8a-72f3-87f2-57b9ae089281",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "presentationHint": "travel_guide"
+            }
+          ],
+          "warnings": []
+        }
+      ],
+      "runnerFailure": null
+    },
+    {
+      "report": "backend/.demo/dsh-d6-runtime/d6-final-r22/evidence/B02-2026-10-06T21-44-40-501Z.json",
+      "sha256": "5cc3e10cf6ad966ee09637002af71bb34a09c8860b07a353fc357a8f4874851b",
+      "runnerResult": "failed",
+      "reviewVerdict": "explanation_failed_and_harness_failed",
+      "durationMs": 165944,
+      "actionCount": 9,
+      "blockedActionIndices": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "sends": [
+        {
+          "actionIndex": 0,
+          "submitToAcceptedMs": 71,
+          "submitToTerminalMs": 100815,
+          "status": "completed",
+          "stopReason": "completed",
+          "deliveryStatus": "satisfied",
+          "deliveryArtifactIds": [
+            "01a1132e-8af2-70a7-b69c-6967f485f4cf"
+          ],
+          "progressRefs": [
+            {
+              "id": "01a1132e-8af2-70a7-b69c-6967f485f4cf",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "tripContextVersion": 1,
+              "presentationHint": "travel_guide"
+            }
+          ],
+          "responseRefs": [
+            {
+              "id": "01a1132e-8af2-70a7-b69c-6967f485f4cf",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "presentationHint": "travel_guide"
+            }
+          ],
+          "warnings": []
+        },
+        {
+          "actionIndex": 3,
+          "submitToAcceptedMs": 34,
+          "submitToTerminalMs": 4087,
+          "status": "completed",
+          "stopReason": "responded",
+          "deliveryStatus": "not_requested",
+          "deliveryArtifactIds": [],
+          "progressRefs": [],
+          "responseRefs": [],
+          "warnings": [
+            "dsh_reply_withheld"
+          ]
+        },
+        {
+          "actionIndex": 4,
+          "submitToAcceptedMs": 32,
+          "submitToTerminalMs": 54484,
+          "status": "completed",
+          "stopReason": "completed",
+          "deliveryStatus": "satisfied",
+          "deliveryArtifactIds": [
+            "01a1132f-7d16-7479-a527-47bb3a2bb531"
+          ],
+          "progressRefs": [
+            {
+              "id": "01a1132e-8af2-70a7-b69c-6967f485f4cf",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "tripContextVersion": 1,
+              "presentationHint": "travel_guide"
+            },
+            {
+              "id": "01a1132f-7d16-7479-a527-47bb3a2bb531",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "tripContextVersion": 1,
+              "presentationHint": "travel_guide"
+            }
+          ],
+          "responseRefs": [
+            {
+              "id": "01a1132e-8af2-70a7-b69c-6967f485f4cf",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "presentationHint": "travel_guide"
+            },
+            {
+              "id": "01a1132f-7d16-7479-a527-47bb3a2bb531",
+              "type": "travel_guide",
+              "schemaVersion": 1,
+              "presentationHint": "travel_guide"
+            }
+          ],
+          "warnings": []
+        }
+      ],
+      "runnerFailure": "AssertionError [ERR_ASSERTION]: Satisfied guide delivery must reference exactly one new travel_guide Artifact\n\n2 !== 1\n\n    at assertGuideTurnTransition (D:\\FunnyProject\\flightor-repo\\.worktrees\\dsh-reliability-d6\\scripts\\dsh-h5-assertions.cjs:33:12)\n    at recordTurnArtifacts (D:\\FunnyProject\\flightor-repo\\.worktrees\\dsh-reliability-d6\\scripts\\qa-dsh-d6-h5.cjs:81:24)\n    at run (D:\\FunnyProject\\flightor-repo\\.worktrees\\dsh-reliability-d6\\scripts\\qa-dsh-d6-h5.cjs:642:38)"
+    }
+  ],
+  "confirmedProblems": [
+    {
+      "id": "D6-45",
+      "problem": "B01 public reply judges CNY1200 tight and recommends substitutions to stay within total budget despite an undetermined cost assessment. Explanation also calls admission a small expense. Target scope itself is preserved."
+    },
+    {
+      "id": "D6-46",
+      "problem": "B02 accepted local edit has one new delivery Artifact but both old base and new guide appear in read/result references. Harness counts both as new. Failure screenshot and read-only PG match new overview; later reload/details remain blocked."
+    },
+    {
+      "id": "D6-47",
+      "problem": "B02 explanation gives a withheld failure message. Actual zh input locale and English raw reply replay produce only language and duplicated_or_foreign_prose errors; en control has none. No language-gate relaxation is justified. The harness let the action continue because it checked only no new guide."
+    },
+    {
+      "id": "D6-48",
+      "problem": "DSH publishes artifact_committed from a read_artifact output reference. Existing references do not prove a write. Service fixture red test confirms read notification; removing duplicate output publish preserves the real workspace callback and its single notification."
+    }
+  ],
+  "notRun": [
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B09",
+    "B10",
+    "B11",
+    "B12",
+    "E01",
+    "E02",
+    "E03",
+    "E04"
+  ],
+  "closure": {
+    "pid": 121516,
+    "serverSession": 90518,
+    "guardsInstalled": 1,
+    "guardsClosed": 1,
+    "forbiddenCalls": 0,
+    "locksRemaining": [],
+    "historicLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126"
+  },
+  "costAccounting": {
+    "r22": {
+      "modelAdmissions": 48,
+      "searchAdmissions": 22,
+      "settled": 70,
+      "pending": 0,
+      "modelTokens": 1388799,
+      "knownCostCalls": 0,
+      "unknownReservedUsdMicros": 4560000,
+      "fareMethodCalls": 0
+    },
+    "cumulative": {
+      "modelAdmissions": 375,
+      "searchAdmissions": 170,
+      "settled": 545,
+      "pending": 0,
+      "promptTokens": 12697423,
+      "completionTokens": 177298,
+      "modelTokens": 12874721,
+      "modelCallsWithoutUsage": 0,
+      "knownCostCalls": 0,
+      "knownCostUsdMicros": 0,
+      "unknownCostCalls": 545,
+      "unknownReservedUsdMicros": 35400000,
+      "fareMethodCalls": 0
+    },
+    "summary": "backend/.demo/d6/cumulative-ledgers-2026-10-06T21-53-54-650Z.json",
+    "notice": "Reserved amounts with no cost receipt are unknown, not actual paid costs."
+  },
+  "privateReviews": [
+    "backend/.demo/dsh-d6-runtime/d6-final-r22/private/reviews/B01-r22-independent-review.private.json",
+    "backend/.demo/dsh-d6-runtime/d6-final-r22/private/reviews/B02-r20-budget-direction-review.private.json"
+  ]
+}

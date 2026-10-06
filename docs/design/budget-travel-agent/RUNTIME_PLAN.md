@@ -100,6 +100,8 @@
 
 ## 5. 首个可操作结果与交互
 
+2026-10-07 DSH修正：`read_artifact`返回已有引用不等于产生新成果，进度只接收真正workspace提交的回调。最终response仍可带合法读引用，Goal delivery必须绑定本轮新成果；验收必须按该身份打开新稿，不能把旧基底当第二份新稿或用旧稿替代失败。每轮系统persona同时给出可信公开locale的具体语言，解释沿用该语言；错误语种继续拒绝，不追加翻译模型或自动重试。新冻结真实页面验证仍待完成。
+
 **B4 当前实现**：领域 `saveWorkspaceArtifact` 等待仓库提交，再复核取消/Trip 版本/航班选择后回调 runtime。仅 `flight_search` 和 `travel_guide` 转为 `artifact_committed`；工具返回值中的自报引用、research、derived route 和未保存草稿不能触发提前发布。通知失败不能回滚或谎报已提交写入；取消也不撤销已经完成的事务。事件只含紧凑引用及作用域，不携带 payload、思维链、工具参数或用户原文。
 
 接单与轮询绑定 `tripId/conversationId/generationId`。快照新增单调 `artifactRevision` 与最多 24 个引用（id/type/schemaVersion/tripContextVersion/presentationHint）；每次是当前完整集合，不是 append 指令。提交按 ID 去重；引用增删均递增 revision。阶段来自真实 runtime 活动，引用数量仅代表已提交结果数，不是完成率。GET 在认证后重新读取当前 Trip/航班选择，只保留匹配版本的引用；并发更新期间不得用较旧上下文破坏性过滤较新发布。最终回复也过滤过期结果，已失效引用不能被迟到最终回复恢复。

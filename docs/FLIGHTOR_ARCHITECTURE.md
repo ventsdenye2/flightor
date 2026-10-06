@@ -1,5 +1,7 @@
 # FlightOR Agent Architecture v1
 
+2026-10-07 DSH进度边界修正：工具输出的Artifact引用可以来自读取，不再因此发出`artifact_committed`；只有既有workspace实际提交后的回调提供通知。最终response的读基底引用与Goal delivery的新成果身份分开，公开API不变。每轮可信persona显式绑定当前zh/en公开语言，用户输入或外部材料语言不替代该UI合同；原发布/语言门槛和模型调用/修订额度保留，不增加翻译LLM。读取零写与下一次fixture写单通知回归通过；新冻结真实H5仍待完成。详见[ADR0015](adr/0015-transient-planner-progress.md)与[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
+
 2026-10-07 r20局部编辑已实现：准备层在原accepted base谱系上读取一次合法Goal机械限额；compact新编辑intent可省maxResults/maxCities，按原值绑定，不提升已接受上限。首次接受前对完整编辑结果（含protected supporting evidence）执行选择/版本/基底/slot及finding计数前置检查，后续领域与最终publication CAS保留。预算scope=trip的公开文案禁止擅自排除或另计已含支出；仅未知费用不是违规。联合313/313、最后预算交叉复核241/241、真实专用PG定向3/3、check/build及observer1/1通过；新冻结全量与真实H5尚待完成，不宣称D6通过。
 
 ## 2026-10-06 DSH准备与条件发布

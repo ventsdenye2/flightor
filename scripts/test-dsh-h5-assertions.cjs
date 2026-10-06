@@ -161,6 +161,21 @@ test('guide send requires a satisfied new publication, while explanation keeps t
   const explanation = { status: 'completed', artifactRevision: 0, artifactRefs: [], response: {
     stopReason: 'responded', artifactRefs: [], delivery: { status: 'not_requested' } } }
   assert.deepEqual(assertGuideTurnTransition(explanation, 'guide-1'), { outcome: 'no-guide-publication', currentGuideId: 'guide-1' })
+  const readPreviousGuide = structuredClone(explanation)
+  readPreviousGuide.response.reply = 'This explains the saved guide.'
+  readPreviousGuide.response.artifactRefs = [guide('guide-1')]
+  assert.deepEqual(assertGuideTurnTransition(readPreviousGuide, 'guide-1', { requireNoGuide: true }), {
+    outcome: 'no-guide-publication', currentGuideId: 'guide-1' })
+  for (const mutate of [
+    next => { next.artifactRefs = [guide('guide-1')] },
+    next => { next.response.artifactRefs = [guide('guide-2')] },
+    next => { next.response.artifactRefs = [{ id: 'route-1', type: 'route' }] },
+    next => { next.response.delivery.artifactIds = ['guide-1'] },
+  ]) {
+    const invalid = structuredClone(readPreviousGuide)
+    mutate(invalid)
+    assert.throws(() => assertGuideTurnTransition(invalid, 'guide-1', { requireNoGuide: true }))
+  }
   assert.throws(() => assertGuideTurnTransition(explanation, 'guide-1', { requireGuide: true }), /not satisfied/)
   assert.throws(() => assertGuideTurnTransition(accepted, 'guide-1', { requireNoGuide: true }), /must not request or publish/)
   assert.throws(() => assertGuideTurnTransition(explanation, null, { requireNoGuide: true }), /previously accepted guide/)
@@ -174,7 +189,41 @@ test('guide send requires a satisfied new publication, while explanation keeps t
   assert.throws(() => assertGuideTurnTransition(partialEdit, 'guide-1'), /not satisfied/)
   assert.throws(() => assertGuideTurnTransition({ ...accepted, artifactRefs: [guide('guide-1')], response: { ...accepted.response, artifactRefs: [guide('guide-1')] } }, 'guide-1'), /new travel_guide Artifact/)
   assert.throws(() => assertGuideTurnTransition({ ...explanation, artifactRevision: 1 }, 'guide-1'), /changed Artifact revision/)
-  assert.throws(() => assertGuideTurnTransition({ ...explanation, response: { ...explanation.response, artifactRefs: [guide('guide-2')] } }, 'guide-1'), /not_requested turn created artifacts/)
+  assert.throws(() => assertGuideTurnTransition({ ...explanation, response: { ...explanation.response, artifactRefs: [guide('guide-2')] } }, 'guide-1'), /only its exact previously accepted guide/)
+})
+test('guide transition binds the unique new guide and explanation requires a real, non-withheld reply', () => {
+  const guide = id => ({ id, type: 'travel_guide' })
+  const validEdit = { status: 'completed', artifactRevision: 1, artifactRefs: [guide('guide-old'), guide('guide-new')], response: {
+    stopReason: 'completed', artifactRefs: [guide('guide-old'), guide('guide-new')],
+    delivery: { status: 'satisfied', kind: 'travel_guide', artifactIds: ['guide-new'] } } }
+  assert.deepEqual(assertGuideTurnTransition(validEdit, 'guide-old'), {
+    outcome: 'guide-published', previousGuideId: 'guide-old', guideId: 'guide-new' })
+
+  const twoNewGuides = structuredClone(validEdit)
+  twoNewGuides.artifactRefs.push(guide('guide-another-new'))
+  assert.throws(() => assertGuideTurnTransition(twoNewGuides, 'guide-old'), /exactly one new travel_guide Artifact/)
+  const bindsOldGuide = structuredClone(validEdit)
+  bindsOldGuide.response.delivery.artifactIds = ['guide-old', 'guide-new']
+  assert.throws(() => assertGuideTurnTransition(bindsOldGuide, 'guide-old'), /must bind its new Artifact ID/)
+  const partialWithOldAndNew = structuredClone(validEdit)
+  partialWithOldAndNew.response.delivery.status = 'partial'
+  assert.throws(() => assertGuideTurnTransition(partialWithOldAndNew, 'guide-old'), /not satisfied/)
+
+  const explanation = { status: 'completed', artifactRevision: 0, artifactRefs: [], response: {
+    stopReason: 'responded', reply: '这是基于当前行程的说明。', artifactRefs: [],
+    delivery: { status: 'not_requested' } } }
+  assert.deepEqual(assertGuideTurnTransition(explanation, 'guide-old', { requireNoGuide: true }), {
+    outcome: 'no-guide-publication', currentGuideId: 'guide-old' })
+  for (const mutate of [
+    next => { next.response.warnings = ['dsh_reply_withheld'] },
+    next => { next.response.warnings = ['dsh_model_incomplete'] },
+    next => { next.response.reply = '   ' },
+    next => { next.response.reply = undefined },
+  ]) {
+    const invalid = structuredClone(explanation)
+    mutate(invalid)
+    assert.throws(() => assertGuideTurnTransition(invalid, 'guide-old', { requireNoGuide: true }))
+  }
 })
 test('frozen journey/action mapping drives guide-turn requirements independently of delivery kind', () => {
   assert.equal(guideTurnTransitionRequirement('B01', 3, 'guide'), 'no-guide')
@@ -185,6 +234,56 @@ test('frozen journey/action mapping drives guide-turn requirements independently
   assert.equal(guideTurnTransitionRequirement('B06', 2, 'guide'), 'guide')
   assert.equal(guideTurnTransitionRequirement('B06', 2, null), null)
   assert.equal(guideTurnTransitionRequirement('B01', 0, null), null)
+})
+test('runner carries the unique new guide through refs that list the old guide first', () => {
+  const fs = require('node:fs')
+  const vm = require('node:vm')
+  const runner = fs.readFileSync(path.join(__dirname, 'qa-dsh-d6-h5.cjs'), 'utf8')
+  const start = runner.indexOf('const recordTurnArtifacts =')
+  const end = runner.indexOf('\nconst visibleControls =', start)
+  assert.ok(start >= 0 && end > start, 'Could not isolate the runner artifact-recording behavior')
+  const setup = () => vm.runInNewContext(`
+    let acceptedGuideRef = { id: 'guide-old', type: 'travel_guide' }
+    let acceptedArtifactRefs = []
+    ${runner.slice(start, end)}
+    ({ recordTurnArtifacts, getState: () => ({ acceptedGuideRef, acceptedArtifactRefs }) })
+  `, { assert, assertGuideTurnTransition })
+  const guide = id => ({ id, type: 'travel_guide' })
+  const route = { id: 'route-new', type: 'route' }
+  const accepted = { status: 'completed', artifactRevision: 1,
+    artifactRefs: [guide('guide-old'), route, guide('guide-new')], response: {
+      stopReason: 'completed', artifactRefs: [guide('guide-old'), guide('guide-new')],
+      delivery: { status: 'satisfied', kind: 'travel_guide', artifactIds: ['guide-new'] } } }
+  const harness = setup()
+  const record = { terminal: accepted }
+  assert.deepEqual(harness.recordTurnArtifacts(record, { assert: { artifactTypes: ['travel_guide'] } }), [])
+  const state = harness.getState()
+  assert.equal(state.acceptedGuideRef.id, 'guide-new')
+  const readableGuideIds = [...new Set(Array.from(state.acceptedArtifactRefs)
+    .filter(ref => ref.type === 'travel_guide').map(ref => ref.id))]
+  assert.deepEqual(readableGuideIds, ['guide-new'])
+  assert.ok(state.acceptedArtifactRefs.some(ref => ref.id === 'route-new'), 'Keep current non-guide artifact references')
+  assert.ok(state.acceptedArtifactRefs.some(ref => ref.id === record.guideTurnTransition.guideId),
+    'The latest readable-result contract must allow the newly accepted guide ID')
+
+  const explanation = setup()
+  const readOnlyTurn = { terminal: { status: 'completed', artifactRevision: 0, artifactRefs: [], response: {
+    stopReason: 'responded', reply: 'This explains the saved guide.', artifactRefs: [guide('guide-old')],
+    delivery: { status: 'not_requested', artifactIds: [] } } } }
+  explanation.recordTurnArtifacts(readOnlyTurn, {})
+  assert.deepEqual(assertGuideTurnTransition(readOnlyTurn.terminal, explanation.getState().acceptedGuideRef.id,
+    { requireNoGuide: true }), { outcome: 'no-guide-publication', currentGuideId: 'guide-old' })
+  assert.deepEqual(Array.from(explanation.getState().acceptedArtifactRefs, ref => ref.id), ['guide-old'])
+
+  const partial = setup()
+  const partialTerminal = structuredClone(accepted)
+  partialTerminal.response.delivery.status = 'partial'
+  assert.throws(() => partial.recordTurnArtifacts({ terminal: partialTerminal }, {}), /not satisfied/)
+
+  const twoNew = setup()
+  const twoNewTerminal = structuredClone(accepted)
+  twoNewTerminal.artifactRefs.push(guide('guide-another-new'))
+  assert.throws(() => twoNew.recordTurnArtifacts({ terminal: twoNewTerminal }, {}), /exactly one new travel_guide Artifact/)
 })
 test('actual runner budget inspection reads the scoped workspace contract and handles absent budgets', async () => {
   const fs = require('node:fs')

@@ -1,5 +1,9 @@
 # D6 发布字段反馈
 
+2026-10-07 D6-45预算判断修复（已实现、定向验证通过）：r22 B01原首稿完整reply和解释全文作为未改文本回归。共享检查按费用/预算对象与程度、份额、达标谓词匹配，拒绝肯定“预算紧张/门票小额/住宿交通为主要开销/替换餐食就可控制在总预算内”；沿用`budget_guarantee`及提交字段路径。未知、假设、用户自述和费用控制目的限定在对应关系，不能通过前文“参考/未核实”豁免新的费用主语或条件后件。准确预算目标及小吃偏好保持，表达式预编译；DSH overview schema/工具预算说明、主模型来源合同和legacy终稿指令同步。没有自动删除正文、万能免责声明、第二模型或新增修订次数；此规则是有界表达防线，不宣称通用费用/旅行事实认证。
+
+首次3文件红测19失败/285通过（3.61秒），其中18项为预算漏拦，1项为新增正例中文不足正文语言阈值的夹具错误，后者不算预算缺口；首次修后303/304仅余该夹具，补足文本后314/314（3.70秒）。14文件中间联合538/538（27.01秒）及typecheck通过。并列范围复核补“且/同时/and/条件后件”和目的正例，发现2失败/348通过（4.58秒）：中文“门票费用无法确认且住宿是主要开销”和英文“ticket prices and lodging is”把未确认宾语误视作后续判断的一部分。修复当前匹配前的并列分界及英文复合主语/谓词关系，同时保留中英真正复合费用主语的不确定讨论。最终14文件545/545（32.48秒）及backend typecheck通过，范围含finalization/reply/presentation-problems/budget-scope、commit/recovery、Goal/schema、官方fixture worker、预算派生与路线答复。所有日志留在忽略目录`backend/output/d6/r23-budget-affordability-{red,red-retry,first-green,green,joint,scope-red,final-joint,check,final-check}.log`；最初red.log为sandbox esbuild spawn EPERM，未收集业务断言，随后原离线命令允许本地子进程执行。零新增真实Provider与业务数据库写，原r22材料/失败保持；完整新冻结和真实H5仍待执行。
+
 2026-10-07 r22模型可见合同同步：DSH maxResults描述明确全攻略所有distinct排程及补充findings总数，不按日期或raw source去重，未选择的候选定义不计；supporting字段、工具说明与persona一致要求补充finding不得再排程或重复已排finding。紧凑工具说明明确禁止入场费用/免费入场声明。仅说明现有领域合同，不自动删除/替换候选、不改变合法上限、已接受Goal、证据或发布规则；最终联合473/473通过，真实新冻结仍待执行。
 
 2026-10-07 r22初稿数量前置（已实现，定向验证通过）：r21真实形状的10个不同finding与显式maxResults=8冲突现于Goal接受和research保存前拒绝。独立`guide_initial_result_limit`归arguments，返回完整`selectedFindingCount`（0–460整数）、原显式`maxResults`（既有1–20 schema）及服务端schema的`maxAllowedResults=20`，字段固定为`intent.parameters.maxResults`，不接纳传入的合法上限、正文或任意字段路径。主模型仅能在符合用户请求时显式纠正尚未接受的新intent；不得删必需活动/支持证据、将已安排活动重复列为supporting、提高已接受/恢复Goal上限或虚构候选。首稿重提仍带语义intent及完整候选定义，数量修正占既有参数额度、不占内容修订；领域`issues: [guide_result_limit]`与重复证据保持content拒绝。共享raw来源不合并不同finding，未选候选不计数，支持项完整计入；预算保证/免费声明照常验证。

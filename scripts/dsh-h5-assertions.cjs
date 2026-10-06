@@ -15,14 +15,26 @@ function assertGuideTurnTransition(terminal, previousGuideId, { requireGuide = f
   const delivery = response.delivery ?? {}
   const refs = [...(terminal.artifactRefs || []), ...(response.artifactRefs || [])]
     .filter(ref => typeof ref?.id === 'string' && typeof ref?.type === 'string')
+  const progressRefs = (terminal.artifactRefs || [])
+    .filter(ref => typeof ref?.id === 'string' && typeof ref?.type === 'string')
+  const responseRefs = (response.artifactRefs || [])
+    .filter(ref => typeof ref?.id === 'string' && typeof ref?.type === 'string')
   const guideIds = [...new Set(refs.filter(ref => ref.type === 'travel_guide').map(ref => ref.id))]
   if (requireGuide) assert.equal(delivery.status, 'satisfied', 'Travel guide delivery is not satisfied')
   if (requireNoGuide) assert.ok(previousGuideId, 'Explanation requires a previously accepted guide')
   if (delivery.status === 'not_requested' && previousGuideId) {
     assert.equal(response.stopReason, 'responded', 'No-op explanation did not finish as a response')
+    if (requireNoGuide) {
+      const warnings = Array.isArray(response.warnings) ? response.warnings : []
+      assert.ok(!warnings.includes('dsh_reply_withheld'), 'Explanation reply was withheld')
+      assert.ok(!warnings.includes('dsh_model_incomplete'), 'Explanation ended with an incomplete model response')
+      assert.ok(typeof response.reply === 'string' && response.reply.trim(), 'Explanation has no readable reply')
+    }
     assert.equal(delivery.kind, undefined, 'No-op explanation unexpectedly declared a delivery kind')
     assert.deepEqual(delivery.artifactIds || [], [], 'not_requested turn listed new Artifact IDs')
-    assert.deepEqual(refs, [], 'not_requested turn created artifacts')
+    assert.deepEqual(progressRefs, [], 'not_requested turn reported newly committed Artifacts')
+    assert.ok(responseRefs.length <= 1 && responseRefs.every(ref => ref.type === 'travel_guide' && ref.id === previousGuideId),
+      'not_requested turn may reference only its exact previously accepted guide')
     assert.equal(terminal.artifactRevision, 0, 'not_requested turn changed Artifact revision')
     return { outcome: 'no-guide-publication', currentGuideId: previousGuideId }
   }
@@ -30,9 +42,9 @@ function assertGuideTurnTransition(terminal, previousGuideId, { requireGuide = f
   if (requireGuide || delivery.kind === 'travel_guide' || guideIds.length) {
     assert.equal(delivery.status, 'satisfied', 'Travel guide delivery is not satisfied')
     assert.equal(delivery.kind, 'travel_guide', 'Guide Artifact is not backed by travel_guide delivery')
-    assert.equal(guideIds.length, 1, 'Satisfied guide delivery must reference exactly one new travel_guide Artifact')
-    const guideId = guideIds[0]
-    assert.notEqual(guideId, previousGuideId, 'Guide update did not publish a new travel_guide Artifact')
+    const newGuideIds = guideIds.filter(id => id !== previousGuideId)
+    assert.equal(newGuideIds.length, 1, 'Satisfied guide delivery must reference exactly one new travel_guide Artifact')
+    const guideId = newGuideIds[0]
     assert.deepEqual(delivery.artifactIds, [guideId], 'Satisfied guide delivery must bind its new Artifact ID')
     return { outcome: 'guide-published', previousGuideId: previousGuideId ?? null, guideId }
   }

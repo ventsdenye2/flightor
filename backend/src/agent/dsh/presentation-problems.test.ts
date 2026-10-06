@@ -34,4 +34,16 @@ describe('DSH submitted publication diagnostics', () => {
     input.text.activities[0]!.introduction = '沿街散步需要15分钟。'
     expect(submittedPresentationProblems(input, 'zh', budget, ['excluded_precise_claim'], { includeDayThemes: false })).toEqual([])
   })
+  it('points affordability feedback to submitted claims while preserving a target and snack preference', () => {
+    const input = submission()
+    input.text.reply = '全程预算1200元会相当紧张，住宿与交通是主要开销。'
+    input.text.activities[0]!.introduction = '门票是需要留出的小额支出之一。'
+    input.text.activities[0]!.recommendationReason = '你喜欢当地小吃，适合边逛老街边品尝。'
+    const rejected = publicProseProblems([input.text.reply, input.text.overview, input.text.activities[0]!.introduction], 'zh', { budget, budgetTarget: true })
+    expect(rejected).toContain('budget_guarantee')
+    expect(submittedPresentationProblems(input, 'zh', budget, rejected)).toEqual([
+      { code: 'budget_guarantee', fieldPath: 'text.reply' },
+      { code: 'budget_guarantee', fieldPath: 'days.0.items.0.text.introduction' }
+    ])
+  })
 })

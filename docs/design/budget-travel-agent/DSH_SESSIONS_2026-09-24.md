@@ -16,6 +16,8 @@ worker 的 tool_start/tool_end activity 有严格 toolName/toolCallId 分支；`
 
 每个 owner/Trip/conversation 组合用 SHA-256 文件名持久映射到随机 sessionId、配置 profile hash 与 Memory epoch hash；不把身份或 Memory 正文写入映射。persona、模型路由、工具 schema 或 Memory epoch 变化会退休旧 worker 并创建新 session，旧数据不被删除。进程重启/空闲回收后通过 DSH 官方 resume 重新打开相同 session；若映射/会话不可读则明确失败，不能静默替换成新历史。
 
+2026-10-07公开语言绑定：每轮persona以可信UI locale明确Chinese(zh)/English(en)，外部材料及用户输入语言不覆盖该合同。语言改变会沿用上述profile变化退休/建新session流程，原会话日志和持久公共历史保留，不修改Memory、账本或路由；每轮仍从当前持久状态准备。原错语种公开拒绝保持，不自动翻译/增加模型调用。旧跨语言fixture曾假设调用序列连续推进，现回归显式覆盖新profile起始、错误英文仍withheld及同profile下一合法中文回复；真实新冻结仍待验。
+
 目录使用 `manager.lock`、独占创建与进程 PID/token；已存活 PID、无法核实或损坏的锁拒绝启动，只有确认 PID 退出后才尝试回收。不能在网络文件系统或多主机共享此目录。模型 key 只进入当前 fork 的私有环境；不继承 HOME、全局 DSH 配置、PATH、代理、其他 Provider 凭证或模型配置。环境仅保留 Windows/SystemRoot、临时目录与明确 DSH key；fixture 只有显式测试路由才启用。
 
 同 scope 并发在任何 await 前拒绝；容量包含正在 open 的 worker，已空闲 worker 可回收。`onAdmitted` 在获得 scope 锁且 worker open 成功后、发出 turn 前执行，供服务恰好一次写入本轮用户消息；它不是数据库幂等请求的替代。公开 GET/刷新不进入 run。消息有严格 Zod envelope、1 MB 上限、开会话/轮次/取消超时、工具白名单、generation fencing 与同 IPC tool id 去重。

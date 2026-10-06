@@ -1,5 +1,9 @@
 # 文档维护规则与本轮清理记录
 
+2026-10-07 r22 DSH H5 no-guide引用边界：真实`read_artifact`旧攻略引用仅允许精确previousGuideId出现在response refs，不能计作新提交；progress refs、Artifact revision与delivery仍为零。定向断言21/21、runner/helper语法和`git diff --check`通过；`node scripts/check-docs.cjs`被sandbox `spawnSync git EPERM`阻止，文档链接/同步检查未确认。行为合同与结果见[DSH D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)和[progress](design/budget-travel-agent/progress.md)。
+
+2026-10-07 r22真实B01复审后修正：解释轮必须有非空实际答复，且不得带`dsh_reply_withheld`或`dsh_model_incomplete`，同时保持零新Artifact；accepted guide交付从同轮引用中排除已知previousGuideId旧基底后，仍须唯一绑定一个新guide。runner以断言返回的新ID更新基准，并从可读结果白名单剔除旧guide，保留同轮route/research引用。合同初测红2项，随后真实`recordTurnArtifacts`函数VM行为测试红1项以复现旧ID仍被允许打开；修后断言21/21、runner语法通过。未重跑Provider或冻结H5。用途和边界见[DSH D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)。
+
 2026-10-07 r22前置原因观察：既有observer白名单新增`guide_initial_result_limit`，用于区分尚未接受Goal的初稿数量参数错误与已接受Goal的领域`guide_result_limit`。仅采受控原因码，不输出候选、来源或任意details；同一官方fixture保留未知码/正文/秘密过滤反例。定向红0/1与修后绿1/1（1.181秒，零外呼）已保存，新构建及真实新冻结结果由[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)和验收记录维护，不改变发布或修订额度。
 
 2026-10-07 r20 H5验收修正：qa-dsh-d6-h5沿用原自然输入与分母，guide交付检查satisfied/本轮Artifact ID，mandatory局改不能以not_requested或旧稿读取替代，解释不能生成新稿；按真实workspace GET合同取得预算，检查采用backend公开文案规则。helper19/19与runner语法通过，真实H5尚待新冻结；用途与范围归[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)，原r19 observed结果另判FAIL，不改原报告。

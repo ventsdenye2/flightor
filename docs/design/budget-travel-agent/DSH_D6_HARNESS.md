@@ -1,5 +1,11 @@
 # DSH D6 Isolated Verification Harness
 
+2026-10-07 r22解释轮引用断言修正：合法`read_artifact`会把同scope、同版本的已保存攻略作为reference保留在终态response.artifactRefs；它不触发`artifact_committed`、progress artifactRefs或Artifact revision。no-guide断言因此要求progress refs为空、revision为0、delivery无kind/IDs，并至多允许response携带精确previousGuideId；未知/新guide、route及新delivery ID仍拒绝。该最小合同不把response引用视作新交付；其他非-guide引用仍需单独以只读持久记录证明后才能纳入。
+
+2026-10-07 r22 B01真实报告复审：`observed`不单独构成内容PASS。该初稿的Trip为2人、2026-11-03至04、全程CNY 1200；持久`budgetAssessment`为`undetermined`、`knownSubtotal=null`、`scopeCoverage=incomplete`，而可见reply/overview及解释轮称预算“紧张”、把门票称“小额支出”、建议以小吃替代正餐即可控制在总预算内，缺少明细支持，判预算可负担性FAIL。小石川后乐园绑定的GO TOKYO `spot/24`正文确有秋季红叶依据；浅草寺绑定的GO TOKYO attractions-index正文有了解江户/东京历史的导语和浅草寺专段，未发现归源错配。明治神宫planningNote称“周日上午”但活动日期2026-11-04为周三，公开活动简介未显示该句，列内部数据问题待确认是否渲染。B01解释action3无新Artifact/Goal/Trip版本；局改仅替换D2下午；reload打开最新accepted guide。独立脱敏逐项审阅留存于运行私有`backend/.demo/dsh-d6-runtime/d6-final-r22/private/reviews/`，不是仓库验收报告。
+
+2026-10-07 r22验收合同修复：B01/B02解释轮除responded/not_requested、零新产物外，必须含非空实际答复且无`dsh_reply_withheld`/`dsh_model_incomplete`。guide转移可携带已知previousGuideId旧基底引用，但delivery必须只绑定唯一新guide；断言先排除previousGuideId后计数，runner按转移结果新ID维护当前基线，并从可读结果允许列表剔除旧guide，保留同轮route/research引用。离线测试直接在VM中执行真实`recordTurnArtifacts`闭包及正式断言helper，验证旧基底先于新refs时新guide成为唯一可读guide、非guide引用保留、partial与两个新guide仍拒绝；解释轮空/被抑制答复反例也保留。合同初测红2项，后续runner行为用例红20/21复现旧ID仍可被允许打开，修后完整断言21/21及runner语法通过。此为harness断言修复，不改变冻结journey、自然输入、分母或产品代码；真实新运行仍需重新验证。
+
 2026-10-07 r22前置数量观察：`guide_initial_result_limit`作为既有observer的受控revisionReason采集，区分初稿Goal接受前的数量参数纠正与已接受Goal后的领域超限；不记录原始details、候选/来源文本或任意字段值。官方fixture补红0/1确认旧白名单漏采，修复后同命令绿1/1（1.181秒），同时通过现有未知码、正文、秘密及presentation路径过滤；原红绿日志分别保留于`output/d6/observer-r22-initial-limit-{red,green}.log`。新构建及真实冻结批次尚待复验。观察记录不能授权扩大Goal限额、增加内容修订额度或追认r21失败。
 
 2026-10-07 r20验收修正：全部travel_guide交付必须completed/satisfied、引用唯一新guide ID且delivery.artifactIds同ID绑定；partial/failed/cancelled不得沿旧refs继续。原固定B01/B02 index4与B05 index3明确必须局改交付，B01/B02 index3解释只允许responded/not_requested、零新产物，B06 index2在已有accepted攻略时要求新编辑。合法解释保留已接受攻略可读，不把其复用当新发布。inspect-latest-result在实际全部详情读取后，通过当前浏览器身份仅GET确切Artifact与同Trip/conversation的workspace，用tripContextSummary.budget和已构建publicProseProblems检查预算保证/范围；无预算旅程保留未设置状态，不猜费用。辅助回归19/19、runner语法通过，原journeys/hash与r19 observed报告不改写。真实最终批次仍须全文/详情/PG/费用审阅，observed不代表PASS。

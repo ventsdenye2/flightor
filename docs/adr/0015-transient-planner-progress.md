@@ -66,6 +66,15 @@ separately in [the session boundary report](../design/budget-travel-agent/DSH_SE
 
 ### 2026-09-20 amendment: committed results and cancellation (B4)
 
+2026-10-07 DSH correction: reading a saved Artifact does not announce an
+`artifact_committed` event. Only the existing workspace post-commit callback
+supplies those notifications; a tool output reference cannot establish a write.
+Final response references may still include a read base, whereas Goal delivery
+binds the new result. A service fixture regression first failed on a read event,
+then passed with no Trip/Goal/Artifact write on reading and exactly one event
+for a subsequent real fixture workspace commit. Frozen H5 verification remains
+required; the 300/315/330-second deadlines are unchanged.
+
 The existing single-process resource now carries Trip/conversation/generation
 scope, a monotonic artifact revision and a bounded current set of compact committed
 flight/guide references. Runtime receives notifications only after workspace

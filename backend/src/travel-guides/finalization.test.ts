@@ -94,6 +94,76 @@ describe('integrated main Agent publication', () => {
     expect(validateIntegratedFinalText({ ...other.input, requirements: 'x'.repeat(180001) }, other.text).issues[0]!.code).toBe('context_budget')
     expect(validateIntegratedFinalText({ ...other.input, omitted: ['material missing'] }, other.text).status).toBe('blocked')
   })
+  it('blocks the complete r22 B01 reply without treating its exact target as a price', async () => {
+    const f = await application()
+    f.guide.budget = { amount: 1200, currency: 'CNY', scope: 'trip' }
+    f.text.reply = '已按11月3日至4日、两人行程为你排好东京两天行程，机票不涉及。整体围绕传统文化与当地小吃，每天只集中在一两个区域：第1天浅草寺、仲见世通加上野阿美横丁，傍晚回浅草后街吃串烧；第2天明治神宫、小石川后乐园，傍晚到谷中银座。全程预算1200元会相当紧张，住宿与交通是主要开销，建议优先挑选浅草或上野一带的经济住宿、以小吃代替正餐来控制在总预算内。'
+    const checked = validateIntegratedFinalText({ ...f.finalizationInput, guide: f.guide }, f.text)
+    expect(checked.status).toBe('blocked')
+    expect(checked.issues).toContainEqual(expect.objectContaining({ code: 'format', detail: expect.stringContaining('budget_guarantee') }))
+    expect(publicProseProblems([f.text.reply], 'zh', { budget: f.guide.budget, budgetTarget: true })).not.toContain('excluded_precise_claim')
+  })
+  it.each([
+    ['zh', '全程预算1200元会相当紧张。'],
+    ['en', 'The whole-trip budget of CNY 1200 will be tight.'],
+    ['zh', '这类门票是需要留出的小额支出之一。'],
+    ['en', 'Admission is a minor expense.'],
+    ['zh', '住宿与交通是主要开销。'],
+    ['en', 'Lodging and transport are the main expenses.'],
+    ['zh', '小吃的花费很低。'],
+    ['en', 'Snacks cost very little.'],
+    ['zh', '建议以小吃代替正餐来控制在总预算内。'],
+    ['en', 'Replacing meals with snacks keeps the trip within the total budget.'],
+    ['zh', '费用仍未知，但小吃能让全程预算够用。'],
+    ['en', 'Actual costs are unknown, but this budget is tight.'],
+    ['zh', '不能确认住宿很贵，但门票很便宜。'],
+    ['en', 'Although affordability is uncertain, snacks make the trip affordable.'],
+    ['zh', '只作为参考提示：门票是小额支出。'],
+    ['zh', '具体票价没有核实，这类门票属于小额支出。'],
+    ['zh', '门票是否为小额支出尚待确认；住宿是主要开销。'],
+  ] as const)('rejects an asserted %s affordability relationship: %s', (locale, text) => {
+    expect(publicProseProblems([text], locale, { budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true })).toContain('budget_guarantee')
+  })
+  it.each([
+    ['zh', '你的全程预算目标仍为1200元，门票费用仍待核实。'],
+    ['zh', '目前预算是否紧张仍未确认，需要先核实费用。'],
+    ['zh', '无法判断住宿和交通是否为主要开销。'],
+    ['zh', '门票可能是小额支出，具体仍需核实。'],
+    ['zh', '如果门票只是小额支出，余款仍需覆盖其他费用。'],
+    ['zh', '假设住宿是主要开销，可以先核实住宿再讨论其他选择。'],
+    ['zh', '假设预算紧张，可以先核实住宿选择，不能据此确认费用够用。'],
+    ['en', 'We cannot determine whether the budget is tight until costs are checked.'],
+    ['en', 'We cannot determine whether lodging and transport are the main expenses.'],
+    ['zh', '不能确认住宿且交通是主要开销，需要核实费用。'],
+    ['en', 'Admission might be a minor expense; it still needs checking.'],
+    ['en', 'If lodging is the main expense, compare its current costs before deciding.'],
+    ['zh', '你喜欢小吃，建议下午在老街品尝当地小吃。'],
+    ['en', 'Try local snacks to explore the neighborhood food culture.'],
+    ['zh', '可以对比住宿、交通和餐饮选择来讨论节省办法，实际费用尚未确认。'],
+    ['zh', '你说预算紧张，希望多吃当地小吃。'],
+    ['en', 'You described your budget as tight and asked to try local snacks.'],
+    ['zh', '如果预算足够，可以再讨论其他活动，这只是一个假设。'],
+    ['en', 'If the budget is sufficient, we can discuss other activities.'],
+    ['zh', '为了控制在预算内，建议先核实住宿与餐饮费用。'],
+    ['en', 'We aim to stay within the budget; actual costs still need checking.'],
+    ['en', 'I am not sure this plan fits your budget.'],
+    ['zh', '目标是控制在总预算内，费用仍未知。'],
+  ] as const)('preserves scoped %s uncertainty, assumptions and preferences: %s', (locale, text) => {
+    expect(publicProseProblems([text], locale, { budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true })).toEqual([])
+  })
+  it.each([
+    ['zh', '门票费用没有核实，而且住宿是主要开销。'],
+    ['en', 'We cannot confirm the price and admission is a minor expense.'],
+    ['zh', '如果选择小吃，那么全程预算足够。'],
+    ['en', 'If you choose snacks, then the budget is sufficient.'],
+    ['zh', '预算并不紧张，这些活动都可以安排。'],
+    ['zh', '门票费用无法确认且住宿是主要开销。'],
+    ['zh', '不能确认门票是否便宜，同时全程预算很充裕。'],
+    ['en', 'I cannot confirm ticket prices and lodging is the main expense.'],
+    ['zh', '门票是否便宜仍未知，但以小吃代替正餐就能控制在总预算内。'],
+  ] as const)('does not carry %s caution into an independent cost assertion: %s', (locale, text) => {
+    expect(publicProseProblems([text], locale, { budgetTarget: true })).toContain('budget_guarantee')
+  })
   it.each([
     ['zh', 'reply', '全程预算目标是1500元，实际费用仍待核实。'],
     ['en', 'reply', 'The whole-trip budget target is CNY 1500; actual costs remain unknown.'],
