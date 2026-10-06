@@ -8,6 +8,22 @@ function assertPublicBudgetProse(guide, publicProseProblems, extraFields = []) {
   return { policy: 'backend publicProseProblems', fields: fields.length, unsupportedBudgetGuarantee: false, affordability: 'not_verified' }
 }
 const normalizePlannerReply = value => String(value || '').replace(/\*\*/g, '').replace(/\s+/g, '').trim()
+function assertStopCancellation(input) {
+  assert.equal(input.cancelRequestCount, 1, 'Stop must submit exactly one cancel request')
+  assert.ok(input.cancelResponse && input.cancelResponse.status >= 200 && input.cancelResponse.status < 300,
+    'Cancel endpoint did not successfully acknowledge the stop request')
+  const terminal = input.cancelResponse.body
+  assert.equal(terminal?.status, 'failed', 'Cancel response did not report the API cancellation terminal')
+  assert.equal(terminal?.error?.code, 'AGENT_TURN_CANCELLED', 'Cancel response is an ordinary failure or completion, not cancellation')
+  for (const snapshot of input.terminalReadbacks || []) {
+    assert.equal(snapshot?.status, terminal.status, 'Observed turn readback conflicts with the cancel response')
+    assert.equal(snapshot?.error?.code, terminal.error.code, 'Observed turn readback conflicts with the cancel error code')
+  }
+  assert.equal(input.stoppedUiVisible, true, 'Visible Planner did not confirm that planning stopped')
+  assert.equal(input.busyUiVisible, false, 'Planner still appears busy after cancellation acknowledgement')
+  return { apiStatus: terminal.status, errorCode: terminal.error.code, cancellationConfirmed: true,
+    terminalSource: input.terminalReadbacks?.length ? 'ui-poll-readback' : 'cancel-response' }
+}
 function assertNewVersionLocalization(predecessor, current, english) {
   assert.equal(predecessor.mode, 'localize'); assert.equal(predecessor.result, 'observed'); assert.ok(predecessor.finishedAt)
   assert.ok(!predecessor.newVersionLocalization, 'New version must bind to the retained original localization attempt')
@@ -333,4 +349,4 @@ function assertLocalization(before, after, english, budgetBefore, budgetAfter, e
   assert.equal(mutations[0].path, `/v1/artifacts/${original.id}/localization`, 'Localization started a planner or another write')
   return { sameGuide: true, samePlanAndSources: true, searchCalls: 0, mainAgentCalls: 0, localizationCalls: calls.length }
 }
-module.exports = { acceptedGuide, assertPatch, assertTotalBudget, assertLocalization, assertEmptySeedRecovery, assertAdoptedFlight, assertBudgetRetryCandidate, assertBudgetConfirmCandidate, assertStableBudgetConfirmationBase, assertBudgetConfirmationResult, isBUnpublishedModelFailure, isBContextOnlyModelFailure, isBCommitIdempotencyFailure, assertBCommitIdempotencyObserver, normalizePlannerReply, assertRestoredPlannerReply, assertNewVersionLocalization, assertAcceptedEnglish, assertPublicBudgetProse }
+module.exports = { acceptedGuide, assertPatch, assertTotalBudget, assertLocalization, assertEmptySeedRecovery, assertAdoptedFlight, assertBudgetRetryCandidate, assertBudgetConfirmCandidate, assertStableBudgetConfirmationBase, assertBudgetConfirmationResult, isBUnpublishedModelFailure, isBContextOnlyModelFailure, isBCommitIdempotencyFailure, assertBCommitIdempotencyObserver, normalizePlannerReply, assertRestoredPlannerReply, assertNewVersionLocalization, assertAcceptedEnglish, assertPublicBudgetProse, assertStopCancellation }

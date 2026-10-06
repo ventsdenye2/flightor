@@ -1,5 +1,7 @@
 # ADR 0025：有界终稿与按语言发布
 
+2026-10-06 D6预算表达边界：共享公开文案检查按具体金额词段豁免权威Trip全程预算目标，不豁免费用、价格、肯定每日金额或预算保证。出版散文须明确全程范围；只读短答复可在权威scope=`trip`时确认准确总预算。中英文目标/范围词序和小数金额由同一检查处理，否定每日复述仍须与目标处于同一句。实现及红绿回归见[D6公开文案合同](../design/budget-travel-agent/DSH_D6_PUBLIC_ERRORS.md)；不新增模型、事实认证或修改原发布权限/版本/来源门槛。
+
 2026-09-24 DSH 路线增量：首次攻略允许主 Agent 同次生成安排与当前语言 `FinalText`，由 `publishIntegratedGuide` 执行程序校验和 publication-only 保存，不额外调用 `GuideFinalizer`。legacy 及显式本地化保留原有有界编辑流程。下面 9 月 22 日的独立编辑调用记录属于 legacy 和当时验证，不能据此要求 DSH 再调用编辑模型。集成接口、校验能力与离线证据见 [DSH 集成发布记录](../design/budget-travel-agent/DSH_PUBLICATION_2026-09-24.md)。
 
 集成发布与 legacy 共享 `prepareFinalization` 中活动唯一身份、材料存在、practical 角色、结构化 claim 冲突、完整材料字符预算/omitted 检查，并共享 `textProblems` 的语言、日/活动顺序、精确来源绑定、占位、内部叙述、预算保证、价格/耗时及资源 URL 表达检查。集成只接受原始 `FinalText`，不接受模型提供的 accepted 状态、费用或观测；服务端根据校验结果生成 accepted/blocked。此状态表示满足发布程序合同，不是独立事实认证，也不新增第二次语义审查；主 Agent 仍须结合全部支持/反证完成语义判断，领域攻略 validator 仍在隐藏草稿保存前执行。

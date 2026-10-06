@@ -2,7 +2,22 @@ const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
-const { assertPatch, assertTotalBudget, assertLocalization, assertEmptySeedRecovery, assertAdoptedFlight, assertBudgetRetryCandidate, assertBudgetConfirmCandidate, assertStableBudgetConfirmationBase, assertBudgetConfirmationResult, isBUnpublishedModelFailure, isBContextOnlyModelFailure, isBCommitIdempotencyFailure, assertBCommitIdempotencyObserver, assertRestoredPlannerReply, assertNewVersionLocalization, assertAcceptedEnglish, assertPublicBudgetProse } = require('./dsh-h5-assertions.cjs')
+const { assertPatch, assertTotalBudget, assertLocalization, assertEmptySeedRecovery, assertAdoptedFlight, assertBudgetRetryCandidate, assertBudgetConfirmCandidate, assertStableBudgetConfirmationBase, assertBudgetConfirmationResult, isBUnpublishedModelFailure, isBContextOnlyModelFailure, isBCommitIdempotencyFailure, assertBCommitIdempotencyObserver, assertRestoredPlannerReply, assertNewVersionLocalization, assertAcceptedEnglish, assertPublicBudgetProse, assertStopCancellation } = require('./dsh-h5-assertions.cjs')
+test('stop requires accepted cancel request, cancellation terminal, and visible stopped UI', () => {
+  const input = { cancelRequestCount: 1, cancelResponse: { status: 200, body: { status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' } } },
+    terminalReadbacks: [], stoppedUiVisible: true, busyUiVisible: false }
+  assert.deepEqual(assertStopCancellation(input), { apiStatus: 'failed', errorCode: 'AGENT_TURN_CANCELLED', cancellationConfirmed: true, terminalSource: 'cancel-response' })
+  assert.equal(assertStopCancellation({ ...input, terminalReadbacks: [{ status: 'failed', error: { code: 'AGENT_TURN_CANCELLED' } }] }).terminalSource, 'ui-poll-readback')
+  for (const mutate of [
+    next => { next.cancelRequestCount = 0 },
+    next => { next.cancelResponse.status = 500 },
+    next => { next.cancelResponse.body.status = 'completed' },
+    next => { next.cancelResponse.body.error.code = 'OTHER_FAILURE' },
+    next => { next.terminalReadbacks = [{ status: 'completed' }] },
+    next => { next.stoppedUiVisible = false },
+    next => { next.busyUiVisible = true },
+  ]) { const invalid = structuredClone(input); mutate(invalid); assert.throws(() => assertStopCancellation(invalid)) }
+})
 test('empty harness seed recovery rejects real or mismatched browser/cloud conversations', () => {
   const entry = { tripId: 'trip', conversationId: 'conversation' }
   const history = { version: 1, currentSessionId: 'cloud-conversation', sessions: [] }

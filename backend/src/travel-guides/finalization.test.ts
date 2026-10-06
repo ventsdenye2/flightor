@@ -120,6 +120,12 @@ describe('integrated main Agent publication', () => {
       languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
     })).not.toContain('excluded_precise_claim')
   })
+  it('preserves decimal points when matching the exact authoritative trip budget', () => {
+    const content = 'The whole-trip budget target is CNY 1200.5, not CNY 1200.5 per day.'
+    expect(publicProseProblems([content], 'en', {
+      languageBodies: [content], budget: { amount: 1200.5, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).not.toContain('excluded_precise_claim')
+  })
   it.each([
     ['r15 retained reply', '你给的1200元是整个行程的总目标（不是每天1200元），住宿、交通与餐饮等实际花费需在预算内自行核对，本方案不构成费用或可负担性保证。', 'zh'],
     ['whole-trip target without the budget noun', '全程总预算目标为1200元人民币，不是每天1200元。', 'zh'],

@@ -40,28 +40,36 @@ const budgetCurrencyPattern = (currency: string) => {
 const budgetAmountPattern = (amount: number, currency: string, flags = 'i') => {
   const exactAmount = String(amount).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const currencyPattern = budgetCurrencyPattern(currency)
-  return new RegExp(`(?:${currencyPattern}\\s*${exactAmount}(?![\\d.])|(?<![\\d.])${exactAmount}\\s*${currencyPattern})`, flags)
+  return new RegExp(`(?:${currencyPattern}\\s*${exactAmount}(?!\\d|\\.\\d)|(?<![\\d.])${exactAmount}\\s*${currencyPattern})`, flags)
 }
 
-const tripBudgetTargetClause = (clause: string) => {
-  const englishTarget = /\b(?:(?:whole|entire|full)[-\s]+trip|trip|journey)\b.{0,40}\b(?:budget\s+)?(?:total\s+)?(?:target|goal)\b|\bbudget\b.{0,50}\b(?:whole[-\s]+trip|trip\s+total|in total|for (?:both|all) days)\b/i.test(clause)
-  const chineseTarget = /(?:全程|整个行程|整趟行程|整个旅程).{0,24}(?:总预算(?:目标|为|是)?|预算目标|总目标|目标|合计)|(?:全程|整个行程|整趟行程)总预算(?:目标|为|是|合计)|预算(?:目标|总额|合计).{0,24}(?:全程|整个行程|两天|三天|\d+天合计)/.test(clause)
-  return (englishTarget || chineseTarget)
+const affirmativeDailyBudgetTarget = (clause: string) =>
+  /\bdaily\b.{0,20}\b(?:total\s+)?budget\b|(?:每天|每日)(?:的)?(?:总)?预算(?:目标)?/i.test(clause)
+
+const tripBudgetTargetClause = (clause: string, allowShortTotalBudget = false) => {
+  const englishTarget = /\b(?:(?:whole|entire|full)[-\s]+trip|trip|journey)\b.{0,40}\b(?:budget\s+)?(?:total\s+)?(?:target|goal)\b|\bbudget\b.{0,50}\b(?:whole[-\s]+trip|trip\s+total|in total|for (?:both|all) days)\b|\b(?:total\s+)?budget\s+(?:target|goal)\b.{0,40}\bfor (?:the )?(?:whole )?trip\b/i.test(clause)
+  const chineseTarget = /(?:全程|整个行程|整趟行程|整个旅程).{0,24}(?:总预算(?:目标|为|是)?|预算目标|总目标|目标|合计)|(?:全程|整个行程|整趟行程)总预算(?:目标|为|是|合计)|预算(?:目标|总额|合计).{0,24}(?:全程|整个行程|两天|三天|\d+天合计)|(?:[一二三四五六七八九十\d]+天|[一二三四五六七八九十\d]+日)的?总预算(?:目标|为|是|合计)?/.test(clause)
+  const shortTotalBudget = allowShortTotalBudget && (
+    /\b(?:total budget|whole[-\s]+trip budget|budget.{0,40}(?:in total|both days|whole[-\s]+trip))\b/i.test(clause)
+      || /(?:全程|总)预算(?:目标|总额|为|是|合计)?/.test(clause))
+  return (englishTarget || chineseTarget || shortTotalBudget)
+    && !affirmativeDailyBudgetTarget(clause)
     && !/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
 }
 
-const maskAuthoritativeTripBudgetAmounts = (prose: string, budget: { amount: number; currency: string }) => {
+const maskAuthoritativeTripBudgetAmounts = (prose: string, budget: { amount: number; currency: string }, allowShortTotalBudget = false) => {
   const amountPattern = budgetAmountPattern(budget.amount, budget.currency, 'gi')
   const targetAmountPattern = budgetAmountPattern(budget.amount, budget.currency)
   const cautiousBudgetLanguage = /(?:无法确认|无法判断|不能确认|不能判断|不确定|尚未确认|尚未核实|仍待核实|尚待核实|有待核实|是否|不保证|不能保证|不承诺|uncertain|unknown|not sure|cannot confirm|can't confirm|cannot determine|can't determine|not yet (?:known|verified)|whether|may be|might be)/i
-  return prose.split(/(?<=[.!?;。！？；\n])/).map(sentence => {
+  return prose.split(/(?<=[!?;。！？；\n])|(?<!\d)\.|\.(?!\d)/).map(sentence => {
     const clauses = sentence.split(/([,，])/)
-    const hasTripTarget = clauses.some(clause => tripBudgetTargetClause(clause) && targetAmountPattern.test(clause))
+    const hasTripTarget = clauses.some(clause => tripBudgetTargetClause(clause, allowShortTotalBudget) && targetAmountPattern.test(clause))
     const unsupportedCostClaim = clauses.some((clause, index) => {
       if (!/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
         || cautiousBudgetLanguage.test(clause)
         || /不构成.{0,20}(?:费用|花费|开销|支出|可负担性).{0,12}(?:保证|承诺)/.test(clause)
-        || /(?:需|需要|应|请).{0,16}(?:核对|查询|确认|检查)/.test(clause)) return false
+        || /(?:需|需要|应|请).{0,16}(?:核对|查询|确认|检查|核实)/.test(clause)
+        || /\b(?:need to be checked|needs checking|need checking)\b/i.test(clause)) return false
       const adjacent = clauses.slice(index, index + 2).join('')
       const supportedVariableCostExplanation = !/(?:ticket|admission|fare|price|门票|票价)/i.test(adjacent)
         && !/(?:已核实|已确认|已经核实|已经确认|verified|confirmed)/i.test(adjacent)
@@ -70,7 +78,7 @@ const maskAuthoritativeTripBudgetAmounts = (prose: string, budget: { amount: num
       return !supportedVariableCostExplanation
     })
     return clauses.map(clause => {
-      const isTargetClause = tripBudgetTargetClause(clause) && targetAmountPattern.test(clause)
+      const isTargetClause = tripBudgetTargetClause(clause, allowShortTotalBudget) && targetAmountPattern.test(clause)
       const targetAmountOffset = isTargetClause ? clause.search(targetAmountPattern) : -1
       const hasCostContext = /(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
       return clause.replace(amountPattern, (match, offset: number) => {
@@ -80,6 +88,7 @@ const maskAuthoritativeTripBudgetAmounts = (prose: string, budget: { amount: num
           || /\bnot\s*$/i.test(prefix) && /^\s+per day\b/i.test(after)
         const positiveDaily = (!negatedDaily && /(?:每天|每日|daily)\s*$/i.test(prefix))
           || (!negatedDaily && /^\s*(?:per day|a day)\b/i.test(after))
+          || (!negatedDaily && /^\s*(?:每天|每日|每一天)/i.test(after))
         const allowedTarget = isTargetClause && offset === targetAmountOffset && !positiveDaily && !unsupportedCostClaim
         const allowedNegatedDaily = hasTripTarget && !hasCostContext && negatedDaily
         return allowedTarget || allowedNegatedDaily ? 'budget target' : match
@@ -132,7 +141,7 @@ export function publicProseProblems(fields: string[], locale: PublicationLocale,
   // A short answer may repeat the authoritative total budget, but never a price or affordability claim.
   let claimProse = prose
   if ((options.shortReply || options.budgetTarget) && options.budget?.scope === 'trip') {
-    claimProse = maskAuthoritativeTripBudgetAmounts(prose, options.budget)
+    claimProse = maskAuthoritativeTripBudgetAmounts(prose, options.budget, Boolean(options.shortReply))
   }
   if (/(?:[$€£¥￥]\s*\d|\d+\s*(?:元|日元|美元|minutes?\b|分钟)|\b(?:CNY|RMB|USD|EUR|GBP|JPY)\s*\d|\d+\s*(?:CNY|RMB|USD|EUR|GBP|JPY)\b|\b\d{1,2}:\d{2}\b|(?:ticket|admission|门票).{0,20}\d)/i.test(claimProse)) errors.push('excluded_precise_claim')
   if (/(?:free admission|always open|open year.round|全年开放|始终对公众开放|免费参观|免费(?:开放|入场|进入)|门票.{0,8}(?:免费|收费))/i.test(prose)) errors.push('excluded_admission_or_hours')

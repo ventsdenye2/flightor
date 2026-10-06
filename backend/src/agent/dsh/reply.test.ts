@@ -21,6 +21,20 @@ describe('DSH lightweight public explanation boundary', () => {
   ] as const)('preserves relevant %s explanation: %s', (locale, text) => {
     expect(publicProseProblems([text], locale, { shortReply: true, budget })).toEqual([])
   })
+  it('allows the authoritative total budget before a terminal sentence period', () => {
+    expect(publicProseProblems(['Your total budget is CNY 1200.'], 'en', { shortReply: true, budget })).toEqual([])
+  })
+  it('allows an exact decimal authoritative amount before a terminal sentence period', () => {
+    const decimalBudget = { ...budget, amount: 1200.5 }
+    expect(publicProseProblems(['Your total budget is CNY 1200.5.'], 'en', { shortReply: true, budget: decimalBudget })).toEqual([])
+  })
+  it('does not carry a total budget target into a later sentence negating a daily amount', () => {
+    const text = 'Your total budget is CNY 1200. Not CNY 1200 per day.'
+    expect(publicProseProblems([text], 'en', { shortReply: true, budget })).toContain('excluded_precise_claim')
+  })
+  it('does not treat a decimal as the authoritative integer budget', () => {
+    expect(publicProseProblems(['Your total budget is CNY 1200.5.'], 'en', { shortReply: true, budget })).toContain('excluded_precise_claim')
+  })
   it.each([
     ['zh', 'It matches your cultural interests.', 'language'],
     ['zh', '好的。It matches your cultural interests.', 'language'],
@@ -56,6 +70,9 @@ describe('DSH lightweight public explanation boundary', () => {
     ['zh', '总预算是1200元，门票不是每天1200元。', 'excluded_precise_claim'],
     ['zh', '总预算是1200元，每天1200元。', 'excluded_precise_claim'],
     ['zh', '不是每天1200元。', 'excluded_precise_claim'],
+    ['en', 'Your daily total budget is CNY 1200.', 'excluded_precise_claim'],
+    ['zh', '每天的总预算是1200元。', 'excluded_precise_claim'],
+    ['en', 'Your daily budget target is CNY 1200 for the trip.', 'excluded_precise_claim'],
     ['en', 'Tickets cost CNY 1200, matching your total budget.', 'excluded_precise_claim'],
     ['en', '', 'empty_reply'],
   ] as const)('withholds %s unsafe expression: %s', (locale, text, reason) => {

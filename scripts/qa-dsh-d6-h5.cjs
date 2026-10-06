@@ -4,6 +4,7 @@ const path = require('node:path')
 const assert = require('node:assert/strict')
 const readline = require('node:readline/promises')
 const { chromium } = require('playwright')
+const { assertStopCancellation } = require('./dsh-h5-assertions.cjs')
 
 const args = process.argv.slice(2)
 const value = name => args.includes(name) ? args[args.indexOf(name) + 1] : args.find(arg => arg.startsWith(`${name}=`))?.slice(name.length + 1)
@@ -607,21 +608,39 @@ async function run() {
       } else if (action.type === 'stop') {
         assert.ok(activeTurnId, 'stop requires a prior send with awaitTerminal:false')
         const cancelPath = `/v1/agent/turns/${activeTurnId}/cancel`
-        const before = report.events.filter(event => event.kind === 'request' && event.method === 'POST' && event.path === cancelPath).length
+        const eventCursor = report.events.length
         await page.locator('.pl-stop').click({ timeout: action.timeoutMs || 10000 })
         const deadline = performance.now() + (action.timeoutMs || 30000)
-        let cancelObserved = false, terminal = false
+        let cancelRequest, cancelResponse
         while (performance.now() < deadline) {
-          cancelObserved = report.events.filter(event => event.kind === 'request' && event.method === 'POST' && event.path === cancelPath).length === before + 1
-          terminal = report.events.some(event => event.kind === 'response' && event.path.endsWith(`/v1/agent/turns/${activeTurnId}`)
-            && ['cancelled', 'failed', 'completed'].includes(event.body?.status))
-          if (cancelObserved && terminal && !await page.locator('.pl-generating').isVisible().catch(() => false)) break
+          const events = report.events.slice(eventCursor)
+          const cancelRequests = events.filter(event => event.kind === 'request' && event.method === 'POST' && event.path === cancelPath)
+          cancelRequest = cancelRequests[0]
+          cancelResponse = cancelRequest && events.find(event => event.kind === 'response' && event.method === 'POST'
+            && event.path === cancelPath && event.atMs >= cancelRequest.atMs)
+          const stoppedUiVisible = await page.locator('.pl-cancelled:visible').count() > 0
+          const busyUiVisible = await page.locator('.pl-generating:visible').count() > 0
+          if (cancelRequests.length === 1 && cancelResponse && stoppedUiVisible && !busyUiVisible) break
           await page.waitForTimeout(200)
         }
-        assert.ok(cancelObserved, 'Visible stop did not submit the turn cancellation request')
-        assert.ok(terminal, 'Cancellation request did not reach an observed terminal turn state')
+        const events = report.events.slice(eventCursor)
+        const cancelRequests = events.filter(event => event.kind === 'request' && event.method === 'POST' && event.path === cancelPath)
+        const stoppedUiVisible = await page.locator('.pl-cancelled:visible').count() > 0
+        const busyUiVisible = await page.locator('.pl-generating:visible').count() > 0
+        const terminalReadbacks = events.filter(event => event.kind === 'response' && event.method === 'GET'
+          && event.path === `/v1/agent/turns/${activeTurnId}` && event.atMs >= (cancelResponse?.atMs ?? Infinity))
+          .map(event => event.body)
+        record.cancelRequestCount = cancelRequests.length
+        record.cancelResponseStatus = cancelResponse?.status ?? null
+        record.cancelApiSnapshot = cancelResponse?.body ?? null
+        record.terminal = cancelResponse?.body ?? null
+        record.terminalSource = 'cancel-response'
         record.turnId = activeTurnId
-        record.terminal = report.events.filter(event => event.kind === 'response' && event.path.endsWith(`/v1/agent/turns/${activeTurnId}`) && event.body?.status).at(-1)?.body
+        record.stopUiVisibleText = await visibleText(page)
+        record.stopCancellation = assertStopCancellation({ cancelRequestCount: cancelRequests.length,
+          cancelResponse: cancelResponse && { status: cancelResponse.status, body: cancelResponse.body },
+          terminalReadbacks, stoppedUiVisible, busyUiVisible })
+        record.terminalSource = record.stopCancellation.terminalSource
       } else if (action.type === 'read-page' || action.type === 'read-artifact') {
         if (action.type === 'read-artifact' && action.openLatest) {
           await openVisibleLatestResult(page, action, record)

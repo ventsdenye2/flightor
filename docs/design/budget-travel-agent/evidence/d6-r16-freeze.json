@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "status": "FAIL_engineering_before_live",
+  "createdAt": "2026-10-06T15:01:20.358Z",
+  "codeHead": "c901d396a6c6d724073a50e574962e7039ce4eb1",
+  "runId": "6bf545f8-e51d-4e96-a309-e520fc4e4a26",
+  "schema": "dsh_d6_6bf545f8e51d4e96a309e520fc4e4a26",
+  "pid": 101984,
+  "apiPort": 57909,
+  "h5Port": 49212,
+  "sourceFingerprint": "4f35c92c6626cb858232940e8c13340e2a69ff1ded85d650170d5c67799bce3e",
+  "backendFingerprint": "603f2f974f5f451954cc2c8b304fffc0a827b69c1308d072a3019a772dc1af45",
+  "h5Fingerprint": "3bd47c29accd5de2f1dc32fc57d4b347ed38705d7574ac689637109ab7a76137",
+  "workerFingerprint": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+  "configuration": {
+    "modelProvider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "searchProvider": "deepseek-official",
+    "maxTokens": 8192,
+    "thinking": "disabled",
+    "nativeResearchProvider": "serpapi"
+  },
+  "journeysSha256": "91240ac6c741a990ad4a233451cc5982702b9d3856eb85597fa88206be943780",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false
+  },
+  "authorization": {
+    "deepseek": "current user authorization; unlimited amount, per-call metering retained",
+    "serpapi": "existing authorized account allowance only; no purchase"
+  },
+  "platform": "H5; WeChat page acceptance deferred by user; WeChat build still required",
+  "h5Build": {
+    "durationMs": 28273,
+    "warnings": 2,
+    "result": "compiled"
+  },
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "backendUnit": {
+    "files": 137,
+    "passed": 1290,
+    "failed": 3,
+    "total": 1293,
+    "durationSeconds": 183.28,
+    "failures": "Existing DSH reply budget confirmations regressed; no original expectation changed"
+  },
+  "realCalls": {
+    "model": 0,
+    "search": 0,
+    "fetch": 0,
+    "fare": 0,
+    "pending": 0
+  },
+  "closure": {
+    "pidAbsent": 101984,
+    "serverAndManagerLocksAbsent": true,
+    "ports": {
+      "57909": "ECONNREFUSED",
+      "49212": "ECONNREFUSED"
+    },
+    "guardsInstalled": 1,
+    "guardsClosed": 1,
+    "forbiddenCalls": 0,
+    "closedAt": "2026-10-06T15:06:39.367Z"
+  }
+}

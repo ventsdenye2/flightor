@@ -1,5 +1,11 @@
 # 当前进度与验证
 
+2026-10-06 r17准备完成：r16工程FAIL与关闭证据保留。预算短答三项原正例、小数、句末金额、独立每日否定及daily-budget前缀均先红后绿；四文件165/165、根联合8文件267/267通过。check/build、observer1/1、停止harness最终16/16、根TypeScript、runner语法/diff与docs114份765链接通过；联合与docs首次受限启动失败分别保留，允许原本地子进程后通过。停止按cancelAndWait权威响应及UI停止/非busy判断，普通failed/completed不能算取消，也不强求已停止UI继续poll。源码及harness停止修改，准备本地提交/新冻结完整工程/PG/D5/H5 12+4；当前零新增真实调用、未PASS。
+
+2026-10-06 r16冻结记录（本批随后工程FAIL）：本地提交`c901d396a6c6d724073a50e574962e7039ce4eb1`，远端codex/dsh-backend只读复核仍`f2ec6c1f75000d368d4d83b7ae6428c17dea3e0c`。标准v1与原12固定+4探索输入/未来日期不变；DeepSeek v4 flash、official搜索、thinking disabled、max_tokens8192、原超时/修订额度和地点配置保持。新隔离目录`backend/.demo/dsh-d6-runtime/d6-final-r16`H5构建后已关闭，原TTY30880；实际run/schema/source/backend/H5/worker指纹见下述保留记录。先完成完整工程/PG/D5，再真实390×844 B01与剩余旅程；此状态不是PASS。
+
+r16实际构建/配置已冻结，见[冻结指纹](evidence/d6-r16-freeze.json)：run`6bf545f8-e51d-4e96-a309-e520fc4e4a26`，schema`dsh_d6_6bf545f8e51d4e96a309e520fc4e4a26`，API57909/H549212，PID101984/TTY30880；源码`4f35c92c6626cb858232940e8c13340e2a69ff1ded85d650170d5c67799bce3e`，backend`603f2f974f5f451954cc2c8b304fffc0a827b69c1308d072a3019a772dc1af45`，H5`3bd47c29accd5de2f1dc32fc57d4b347ed38705d7574ac689637109ab7a76137`，worker`657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e`。H5编译28.273秒、保留2条体积警告；配置/原自然输入与手机布局保持。完整backend结束：137文件1290通过/3失败（183.28秒），全部为既有reply预算确认的合法短答复误拦；原期望保留。r16未调用模型/搜索/fare，完整批次FAIL，隔离服务已关闭，修复后建立新冻结完整复验。未执行PG/D5/前端/平台构建或真实UI，不把已有定向/构建计作完整通过。
+
 2026-10-06 r16修复进行中：Astra max原材料诊断确认预算目标误拦、模糊字段反馈和无效Goal schema分支。预算94/94；本批联合7文件209/209、check/build及observer1/1通过；原r15未改材料回放预算误拦消除，两稿仍被免费入场合同拦截并准确定位活动字段。详见[字段反馈合同](DSH_D6_PRESENTATION_FEEDBACK.md)与[D6验收](DSH_D6_ACCEPTANCE.md)。未新增产品LLM，参数/超时/额度与冻结分母不变。r15真实FAIL，r16新冻结完整工程及H5 12+4尚待执行。
 
 2026-10-06 最新冻结r15（源码2a7a16b）完整工程通过：backend1265/1265（首次整套app5秒超时保留，构建结束后原配置整套184.52秒复验通过）、真实隔离PG51/51、D5 30/30 codeUnchanged=true、runtime14/14、observer1/1、前端113/20/37/52、根TypeScript及H5/weapp构建。r14旧证据alias的严格文件异常已修，实际setter版本推进的证据失效回执、通用准备顺序与最多110条多城市安全反馈已验证；不改变权限/版本/证据/发布或限额。新run/schema/构建指纹见[D6验收](DSH_D6_ACCEPTANCE.md)。390×844真实H5 B01已FAIL（119ms受理、196.271秒终态、0 accepted攻略、后续8动作blocked），12固定+4探索完整内容/详情/持久化验收待完成；r14失败不追认、目前不能声明用户流程已解决或D6 PASS。无已确认硬阻塞，原工作区/数据库/会话/账本保留，不push、合并或部署。
