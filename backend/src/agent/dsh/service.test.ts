@@ -17,6 +17,7 @@ import { DshPlannerService, dshGoalRequestId } from './service.js'
 import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repository.js'
 import { createDefaultGoalVerifierRegistry } from '../goals/default-verifiers.js'
 import { emptyTripContext } from '../../trips/types.js'
+import { publicFailureReply } from './public-errors.js'
 
 describe('DSH durable Goal request identity', () => {
   it('replays one running generation despite a changed transport ID and rejects changed accepted constraints', async () => {
@@ -45,6 +46,64 @@ describe('DSH durable Goal request identity', () => {
 })
 
 describe('DSH service with the official worker and loop', () => {
+  it.each(['completed', 'output_limit'] as const)('keeps the publication cause at repair exhaustion, with %s worker result', async workerResult => {
+    const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-publication-limit-'))
+    const sessions = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [{ text: 'Unused fixture' }] })
+    const receipts: any[] = []
+    vi.spyOn(sessions, 'run').mockImplementation(async request => {
+      await request.onAdmitted!()
+      const signal = new AbortController().signal
+      const source = await request.execute('__record_web', { tool: 'web_search', args: {}, value: {
+        sources: [{ url: 'https://www.gotokyo.org/en/spot/15/index.html', title: 'Temple culture',
+          snippet: 'Explore the temple grounds, traditional architecture and the historic neighborhood culture.' }]
+      } }, 'source', signal) as { evidenceRefs: string[] }
+      const input = { intent: { kind: 'travel_guide', parameters: { questions: ['Culture'], researchTypes: ['activity'],
+        requiredEvidenceTypes: ['activity'], maxResults: 1, maxCities: 1, allowPartial: true } },
+        candidates: [{ key: 'temple', sourceRefs: source.evidenceRefs, title: 'Tokyo temple',
+          summary: 'Explore the temple grounds and traditional architecture.', category: 'activity' }],
+        days: [{ day: 1, kind: 'visit', theme: 'Temple culture', items: [{ candidateKey: 'temple', timeOfDay: 'afternoon',
+          planningNote: 'Explore temple culture.', text: { name: 'Temple visit',
+            introduction: 'Explore the temple grounds and traditional architecture.',
+            recommendationReason: 'The visit matches your interest in traditional culture.' } }] }],
+        text: { reply: 'Explore the Tokyo temple and its neighborhood culture.',
+          overview: 'The walk takes 15 minutes through the historic neighborhood.', days: [{ day: 1, theme: 'Temple culture' }] } }
+      receipts.push(await request.execute('commit_travel_guide', input, 'commit-1', signal))
+      const { intent: _intent, candidates: _candidates, ...repair } = input
+      receipts.push(await request.execute('commit_travel_guide', repair, 'commit-2', signal))
+      receipts.push(await request.execute('commit_travel_guide', repair, 'commit-3', signal))
+      return { reply: 'PRIVATE_RAW_REPLY', reason: workerResult === 'completed' ? 'completed' : 'error',
+        ...(workerResult === 'output_limit' ? { errorCode: 'MODEL_OUTPUT_LIMIT' } : {}), calls: 4, resumed: false, cancelled: false }
+    })
+    try {
+      const trips = new InMemoryTripRepository(), trip = await trips.create({ initialContext: {
+        travelDays: 1, departureWindow: { from: '2026-11-03', to: '2026-11-03', precision: 'exact' },
+        destinationIntent: { mode: 'explicit', required: [{ id: 'city:TYO', type: 'city', name: 'Tokyo', countryCode: 'JP', cityCode: 'TYO' }], preferred: [], excluded: [] }
+      } })
+      const ownerId = 'publication-limit-owner', owned = new Set([trip.id])
+      const conversations = new InMemoryConversationRepository(ownerId, owned), conversation = await conversations.create({ tripId: trip.id })
+      const artifacts = new InMemoryArtifactRepository(ownerId, owned)
+      const goals = new InMemoryGoalRepository(ownerId), runs = new InMemoryGoalRunRepository(ownerId, goals)
+      const service = new DshPlannerService({ ownerId, trips, conversations, sessions, artifacts,
+        goalRepository: goals, goalRunRepository: runs, goalVerifiers: createDefaultGoalVerifierRegistry(),
+        memory: new InMemoryUserMemoryRepository(), aviation: new MockAviationProvider(), fares: new MockFareProvider(),
+        web: { provider: 'deepseek-official', serpapi: { searchOrganic: vi.fn(() => { throw Error('Unexpected outgoing request') }) } },
+        research: new UnavailableResearchAgent(), connectionSearch: new UnavailableConnectionSearchService(),
+        flightRoutePlanner: new UnavailableFlightRoutePlanner(), routeOptimizer: new UnavailableRouteOptimizer(),
+        createFinalizer: vi.fn(() => { throw Error('Unexpected finalizer') }) })
+      const result = await service.runTurn({ requestId: 'publication-limit', generationId: 'publication-limit-generation',
+        tripId: trip.id, conversationId: conversation.id, message: 'Plan a cultural day in Tokyo.', locale: 'en' })
+      expect(receipts.slice(0, 2).map(receipt => receipt.error.publicationIssues)).toEqual([
+        [{ code: 'format' }], [{ code: 'format' }]
+      ])
+      expect(receipts[2]).toMatchObject({ ok: false, error: { code: 'DSH_REPAIR_LIMIT', recovery: {
+        calls: 2, contentAttempts: 2, lastFailure: 'content' } } })
+      expect(result.reply).toBe(publicFailureReply(workerResult === 'completed' ? 'publication' : 'output_limit', 'en'))
+      expect(result.delivery).toMatchObject({ status: 'partial', artifactIds: [], missing: ['accepted_publication'] })
+      const assistant = (await conversations.listMessages(conversation.id)).at(-1)!
+      expect(assistant.metadata.commit_recovery).toMatchObject({ calls: 2, contentAttempts: 2, lastFailure: 'content' })
+      expect(result.reply).not.toContain('PRIVATE_')
+    } finally { await sessions.close(); await rm(root, { recursive: true, force: true }) }
+  })
   it('shows the Trip location preparation failure without inventing a Goal or adopting the model day city', async () => {
     const root = await mkdtemp(join(tmpdir(), 'flightor-dsh-location-preparation-'))
     const sessions = new DshSessionManager({ root, route: { provider: 'fixture', model: 'fixture' }, fixture: [
@@ -253,6 +312,18 @@ describe('DSH service with the official worker and loop', () => {
       expect(first.reply).toBe('Tokyo is your destination.')
       const request = sessionRun.mock.calls[0]![0]
       const commit = request.tools.find(tool => tool.name === 'commit_travel_guide')!
+      const kinds = (value: unknown): string[] => {
+        if (!value || typeof value !== 'object') return []
+        const data = value as Record<string, any>
+        const kind = data.properties?.kind?.const
+        return [...(typeof kind === 'string' ? [kind] : []), ...Object.values(data).flatMap(kinds)]
+      }
+      for (const [name, kind] of [['commit_travel_guide', 'travel_guide'], ['update_trip_context', 'trip_context_update'],
+        ['search_flights', 'flight_search'], ['search_flexible_flights', 'flight_search'], ['confirm_flight_price', 'flight_search']]) {
+        const visible = request.tools.find(tool => tool.name === name)!
+        expect(visible).toBeDefined()
+        expect(kinds((visible.rawSchema.properties as Record<string, unknown>).intent)).toEqual([kind])
+      }
       expect(commit.rawSchema).not.toHaveProperty('anyOf')
       expect(commit.description).toContain('same-turn repairs omit it')
       expect(commit.rawSchema.properties).not.toHaveProperty('baseGuideId')

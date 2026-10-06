@@ -5,6 +5,7 @@ import type { PlannerServicePort, PlannerTurnInput, PlannerTurnResult } from '..
 import type { CloudPlannerDependencies } from '../cloud/service.js'
 import { preparePlanningContext } from '../cloud/planning-context.js'
 import { createPlannerToolRegistry } from '../tools/core.js'
+import { modelVisibleToolSchema } from '../tools/goal-intent.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import { emitActivity } from '../runtime/activity.js'
 import { completeGoal, noGoalDelivery, summarizeGoalDelivery, type GoalDelivery } from '../goals/completion.js'
@@ -143,7 +144,7 @@ export class DshPlannerService implements PlannerServicePort {
     const tools: Array<{ name: string; description: string; rawSchema: Record<string, unknown> }> = DSH_DOMAIN_TOOLS.flatMap(name => {
       const tool = registry.get(name)
       if (!tool) return []
-      const schema = z.toJSONSchema(tool.inputSchema) as Record<string, unknown>
+      const schema = modelVisibleToolSchema(tool)
       if (name === 'update_trip_context' && schema.properties) delete (schema.properties as Record<string, unknown>).expectedVersion
       const intentSchema = (schema.properties as Record<string, Record<string, unknown>> | undefined)?.intent
       if (intentSchema) intentSchema.description = 'Accept the explicit user objective on the first durable operation of this prepared attempt. Repairs preserve its immutable constraints. An explicit satisfied Trip setter with an advanced version ends that binding; the next durable objective needs a new semantic intent.'
@@ -151,7 +152,7 @@ export class DshPlannerService implements PlannerServicePort {
       return [{ name, description, rawSchema: schema }]
     })
     const compactSchema = z.toJSONSchema(dshCommitInputSchema) as Record<string, unknown>
-    const domainSchema = z.toJSONSchema(commit.inputSchema) as { properties: Record<string, unknown> }
+    const domainSchema = modelVisibleToolSchema(commit) as { properties: Record<string, unknown> }
     Object.assign(compactSchema.properties as Record<string, unknown>, { intent: domainSchema.properties.intent })
     tools.push({ name: commit.name, description: SOURCE_GROUNDING + ' Commit a sourced itinerary and current-locale text together. The first submission requires semantic intent; same-turn repairs omit it and preserve the accepted Goal. Ordinary raw-web material is reference-only: its new travel_guide intent needs allowPartial=true, unless the user requires independently verified facts, in which case explain this limitation instead. Never weaken an accepted Goal. Choose a distinct candidate for each visit; place its name/introduction/recommendationReason inside that item.text. New candidates use current web sourceRefs and are selected by candidateKey; every selected candidateKey must exactly match candidates[].key submitted in this call or already registered in this prepared attempt and scope. web_search/web_fetch source receipts alone do not register candidates. If a key is missing, use the bounded registration feedback to complete candidates from current-turn sourceRefs; do not rename keys or infer a place-to-source match. Existing persisted candidates use returned candidateRef. Supplemental new candidates use supportingCandidateKeys; supportingRefs accepts persisted candidate references only, never URLs. For a local edit provide replaceSlots and only replacement items; the server binds the prepared accepted guide and content hash. Current evidence and compatible persisted candidates retain their original scope. No budget guarantees, invented sources, precise prices, hours or transport durations. Publication and completion remain server validated.', rawSchema: compactSchema })
     if (deps.web) tools.push(...DSH_WEB_TOOLS)
@@ -295,14 +296,18 @@ export class DshPlannerService implements PlannerServicePort {
           // Only this server-owned revision error may expose its actionable message to the model.
           // Arbitrary provider/runtime messages remain withheld, and no tool error is public prose.
           if (name === 'commit_travel_guide') {
-            const kind = commitRecovery.failed(error)
-            lastCommitCode = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
+            const exhausted = isAppError(error) && ['DSH_COMMIT_CALL_LIMIT', 'DSH_ARGUMENT_CORRECTION_LIMIT', 'DSH_REPAIR_LIMIT'].includes(error.code)
+            const kind = exhausted ? commitRecovery.lastFailure ?? 'system' : commitRecovery.failed(error)
             const details = isAppError(error) && error.details && typeof error.details === 'object' && !Array.isArray(error.details)
               ? error.details as Record<string, unknown> : undefined
-            lastCommitCause = details?.code === 'candidate_key_unavailable' || details?.code === 'candidate_location_unresolved'
-              ? details.code : undefined
-            lastCommitStage = classifyDshFailure(lastCommitCode, details ?? null)
-              ?? (kind === 'prerequisite' ? 'evidence' : kind === 'content' ? 'publication' : 'commit')
+            // An admission limit rejects a new attempt; it does not replace the cause of the last evaluated submission.
+            if (!exhausted) {
+              lastCommitCode = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
+              lastCommitCause = details?.code === 'candidate_key_unavailable' || details?.code === 'candidate_location_unresolved'
+                ? details.code : undefined
+              lastCommitStage = classifyDshFailure(lastCommitCode, details ?? null)
+                ?? (kind === 'prerequisite' ? 'evidence' : kind === 'content' ? 'publication' : 'commit')
+            }
             return { ok: false, error: modelReferences({ ...safeCommitFeedback(error, kind,
               { acceptedGoal: context.acceptedGoalIntent !== undefined }), recovery: commitRecovery.snapshot() }) }
           }

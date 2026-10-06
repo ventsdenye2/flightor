@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { AppError, isAppError } from '../../lib/errors.js'
 import { researchTypeSchema } from '../../research-agent/types.js'
+import { sanitizePresentationProblems } from './presentation-problems.js'
 
 export type CommitFailureKind = 'arguments' | 'prerequisite' | 'content' | 'system'
 const MAX_CALLS = 6
@@ -68,7 +69,9 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
     : 'If a Goal is accepted, omit intent/goalRef and preserve its immutable constraints; otherwise preserve the original intent on the first durable submission.'
   const strings = (value: unknown, limit = 30) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string').slice(0, limit) : []
   const code = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
-  const feedback: Record<string, unknown> = { code, kind, instruction: code === 'GOAL_INTENT_REQUIRED'
+  const feedback: Record<string, unknown> = { code, kind, instruction: ['DSH_COMMIT_CALL_LIMIT', 'DSH_ARGUMENT_CORRECTION_LIMIT', 'DSH_REPAIR_LIMIT'].includes(code)
+    ? 'The bounded submission allowance is exhausted. Do not submit again in this turn; no publication is implied. Report the last failed delivery.'
+    : code === 'GOAL_INTENT_REQUIRED'
     ? 'The first durable operation requires semantic intent matching the explicit user objective. Include the original intent on this corrected first submission.'
     : code === 'DSH_CANDIDATE_REFERENCE_UNAVAILABLE'
     ? 'Correct the indicated reference field: candidateRef/supportingRefs accept only candidate references returned in this preparation, not source URLs. For submitted supplemental candidates use supportingCandidateKeys. Do not invent or drop required evidence. If no Goal was accepted, the corrected first submission still needs its semantic intent; otherwise preserve the accepted immutable Goal and omit intent/goalRef.'
@@ -151,6 +154,8 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
     feedback.fields = [details.fieldPath]
   }
   if (kind === 'content' || kind === 'prerequisite') {
+    const presentationProblems = sanitizePresentationProblems(details.presentationProblems)
+    if (presentationProblems.length) feedback.presentationProblems = presentationProblems
     if (details.code === 'raw_evidence_requires_partial') {
       feedback.fields = ['intent.parameters.allowPartial']
       feedback.correction = 'No Goal has been accepted for this submission. New raw-web candidates are partially verified, reference-only material. Correct the first intent to allowPartial=true only if this matches the user request. If the user requires independently verified facts, explain that these sources cannot satisfy that requirement and clarify; do not silently weaken the requested objective or an accepted Goal. Reuse current evidence and repair public text without repeating valid research.'

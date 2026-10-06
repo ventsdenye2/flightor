@@ -2,6 +2,7 @@ export type PublicFailureStage = 'provider' | 'output_limit' | 'location' | 'evi
 export type PublicationLocale = 'zh' | 'en'
 
 const stageForCode = (code: string): PublicFailureStage | undefined => {
+  if (!/^[A-Za-z][A-Za-z0-9_-]{0,99}$/.test(code)) return undefined
   if (['MODEL_OUTPUT_LIMIT', 'model_output_limit', 'output_limit'].includes(code)) return 'output_limit'
   if (/^(?:PROVIDER_|provider_)/.test(code) || ['AUTH', 'INVALID_REQUEST', 'BUDGET', 'SERVER', 'RATE_LIMIT', 'TIMEOUT', 'TRANSPORT', 'model_failure'].includes(code)) return 'provider'
   if (/^(?:PLANNER_CONTEXT_CHANGED|TRIP_CONTEXT_VERSION_CONFLICT|FLIGHT_SELECTION_CHANGED|ARTIFACT_CONTEXT_VERSION_MISMATCH|PUBLICATION_CONTENT_CHANGED|DSH_GUIDE_BASE_UNAVAILABLE|context_conflict)$/.test(code)) return 'context_conflict'
@@ -10,6 +11,9 @@ const stageForCode = (code: string): PublicFailureStage | undefined => {
   if (/(?:EVIDENCE|SOURCE|missing_material|candidate_evidence_unavailable|candidate_key_unavailable|DSH_CANDIDATE_REFERENCE_UNAVAILABLE)/i.test(code)) return 'evidence'
   if (/^(?:DSH_COMMIT_[A-Z0-9_]+|DSH_ARGUMENT_CORRECTION_LIMIT|DSH_REPAIR_LIMIT|commit)$/.test(code)) return 'commit'
   if (/(?:PUBLICATION|GUIDE_NEEDS_REVISION|publication)/i.test(code)) return 'publication'
+  if (['conflict', 'context_budget', 'invalid_plan', 'language', 'format', 'budget_guarantee',
+    'excluded_precise_claim', 'excluded_admission_or_hours', 'internal_narration', 'unsupported_asset_or_url',
+    'duplicated_or_foreign_prose', 'empty_reply'].includes(code)) return 'publication'
   return undefined
 }
 
@@ -54,10 +58,15 @@ export function classifyDshFailure(code: string, details: unknown = null): Publi
   const inspectDetails = ['DSH_GUIDE_NEEDS_REVISION', 'DSH_TOOL_FAILURE', 'publication'].includes(code)
   if (topLevel && !inspectDetails) return topLevel
   if (details && typeof details === 'object' && !Array.isArray(details)) {
-    const values = Object.values(details as Record<string, unknown>).flatMap(value => Array.isArray(value) ? value : [value])
+    const data = details as Record<string, unknown>
+    const repair = data.repair && typeof data.repair === 'object' && !Array.isArray(data.repair)
+      ? data.repair as Record<string, unknown> : {}
+    const values = [data.code, ...['issues', 'publicationIssues', 'presentationIssues', 'presentationProblems', 'details']
+      .flatMap(field => Array.isArray(data[field]) ? data[field] as unknown[] : []),
+      ...(Array.isArray(repair.issues) ? repair.issues : [])]
     for (const value of values) {
       if (typeof value === 'string') {
-        const stage = stageForCode(value)
+        const stage = stageForCode(value.split(':', 1)[0]!)
         if (stage) return stage
         if (['missing_material', 'candidate_evidence_unavailable'].includes(value)) return 'evidence'
         if (['conflict', 'provider_failure', 'context_budget', 'invalid_plan', 'language', 'format'].includes(value)) return 'publication'

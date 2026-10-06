@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-06 r16：预算目标逐span识别、受控发布字段反馈、实际失败原因保留及公开分类修复已实现；DSH可见schema按既有kind权限收敛，领域/legacy执行schema不变。联合209/209、check/build与observer1/1通过。r15真实390×844 B01仍FAIL（196.271秒终态、0 accepted），原材料回放不追认正文，最终新冻结完整工程/12+4 H5待执行，见[字段反馈合同](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。单主DeepSeek、参数/超时/修订限额不变，未部署。
+
 2026-10-06 r14失败修复已完成定向验证：旧短引用误传严格文件repository的TypeError路径已修为受控不可用，保留canonical作用域校验和真实文件损坏的失败关闭。实际Trip版本推进才向主模型声明旧raw证据失效；同值/空patch无该字段，公开API不新增字段。通用persona要求先保存用户明确的目的地、日期/天数及条件再取证，代码不猜选择。地点准备错误以白名单一次返回最多110个遗漏字段，并保留多城市逐项选择。新7文件联合74/74（17.96秒）、backend check/build通过；此前24/24、地点48/48及110边界31/31为各自验证记录。r14真实390×844 B01仍无accepted攻略，下一冻结版本的完整工程和H5 12+4待执行，D6未通过，见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
 
 2026-10-06 D6实施增量：单主DSH使用准备时Trip/flight/base快照，模型紧凑提交每活动内的文字与局部修改slot，内部身份/hash由服务端绑定。同轮修复复用已接受Goal，外部变化拒绝；短引用还原后保留领域验证；发布基底条件在短事务检查。源码已实现、全量/真实平台验收未完成，见[ADR0029](adr/0029-dsh-prepared-submission.md)及[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。未部署、未加入第二产品LLM；本轮DeepSeek不限金额授权来自用户当前消息，不继承旧unlimited。

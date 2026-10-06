@@ -49,6 +49,20 @@ async function fixture() {
 }
 
 describe('DSH combined guide commit', () => {
+  it('locates rejected prose in submitted compact paths without exposing content or source bodies', async () => {
+    const f = await fixture()
+    const input = structuredClone(f.input)
+    input.text.overview = 'The walk takes 15 minutes through the historic Tokyo neighborhoods.'
+    input.text.activities[2]!.recommendationReason = 'Admission costs 40元 for this garden visit.'
+    const error = await f.execute(input).catch(error => error)
+    expect(error).toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: { presentationProblems: [
+      { code: 'excluded_precise_claim', fieldPath: 'text.overview' },
+      { code: 'excluded_precise_claim', fieldPath: 'days.1.items.1.text.recommendationReason' }
+    ] } })
+    expect(JSON.stringify(error.details.presentationProblems)).not.toMatch(/15 minutes|40元|https:/)
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'travel_guide')
+      .every(record => publicationFor(record)?.finalization?.variants.en?.status === 'blocked')).toBe(true)
+  })
   it('rejects missing candidate registration before accepting a Goal or saving research', async () => {
     const f = await fixture()
     const input = structuredClone(f.input)

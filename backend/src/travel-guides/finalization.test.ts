@@ -121,6 +121,15 @@ describe('integrated main Agent publication', () => {
     })).not.toContain('excluded_precise_claim')
   })
   it.each([
+    ['r15 retained reply', '你给的1200元是整个行程的总目标（不是每天1200元），住宿、交通与餐饮等实际花费需在预算内自行核对，本方案不构成费用或可负担性保证。', 'zh'],
+    ['whole-trip target without the budget noun', '全程总预算目标为1200元人民币，不是每天1200元。', 'zh'],
+    ['English total target and same-amount negated daily restatement', 'The total trip target is CNY 1200, not CNY 1200 per day; actual costs remain unknown.', 'en'],
+  ] as const)('allows %s while keeping the same amount scoped to the trip', (_case, content, locale) => {
+    expect(publicProseProblems([content], locale, {
+      languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).not.toContain('excluded_precise_claim')
+  })
+  it.each([
     ['mismatched_amount', { amount: 1300, currency: 'CNY', scope: 'trip' }, '全程预算目标是1500元，实际费用仍待核实。'],
     ['wrong_scope', { amount: 1500, currency: 'CNY', scope: 'airfare' }, '全程预算目标是1500元，实际费用仍待核实。'],
     ['wrong_currency', { amount: 1500, currency: 'JPY', scope: 'trip' }, '全程预算目标是1500元，实际费用仍待核实。'],
@@ -138,10 +147,24 @@ describe('integrated main Agent publication', () => {
     ['verified actual spending', '全程预算目标为1200元人民币（非每日），实际花费已核实为1200元人民币。'],
     ['another amount', '全程预算目标为1200元人民币（非每日），另有住宿花费为300元人民币。'],
     ['daily amount', '全程预算目标为1200元人民币（非每日），另把1200元人民币列为每日金额。'],
+    ['daily amount in a different currency', '全程总预算目标为1200元人民币，不是每天1200美元。'],
+    ['negated daily amount without a trip target', '不是每天1200元人民币。'],
+    ['target amount without whole-trip scope', '总预算目标为1200元人民币。'],
+    ['same-amount admission in target clause', '全程总预算目标为1200元人民币，门票价格为1200元人民币。'],
+    ['amount with an extra digit', '全程总预算目标为1200元人民币，门票价格为12000元人民币。'],
+    ['decimal extension of the target amount', 'The whole-trip budget target is CNY 1200.5, not CNY 1200.5 per day.'],
+    ['repeated same amount outside target span', '全程总预算目标为1200元，再将1200元作为独立参考数。'],
+    ['positive daily amount in target clause', '全程总预算目标为1200元，其中每天1200元。'],
   ] as const)('keeps %s outside the exact-target allowance', (_case, content) => {
     expect(publicProseProblems([content], 'zh', {
       languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
     })).toContain('excluded_precise_claim')
+  })
+  it.each(['境内免费开放', '免费入场', '免费进入'])('rejects Chinese free-admission claim %s', content => {
+    expect(publicProseProblems([content], 'zh', { languageBodies: [content] })).toContain('excluded_admission_or_hours')
+  })
+  it.each(['提供免费Wi-Fi', '可领取免费导览资料'])('allows non-admission free item %s', content => {
+    expect(publicProseProblems([content], 'zh', { languageBodies: [content] })).not.toContain('excluded_admission_or_hours')
   })
   it.each([
     ['zh', '目前无法确认费用是否在预算内。'],

@@ -14,6 +14,8 @@
 
 已核实缺口：`withGoalIntent` 已允许同轮省略重复意图，但 commit description、JSON schema anyOf、persona、turnState 仍强制每次 intent/goalRef；局部编辑仍要求模型抄写 baseGuideId/hash；工作区默认在工具执行时读 Trip 而非显式使用模型依据的快照；公开文本规则及纠正说明禁止预算目标中的金额。候选与地点、真实错误分类、去重边界由定向测试进一步确认，不凭提示文档推断它们已坏或已通过。
 
+R16 协议减负：`modelVisibleToolSchema` 只在 DSH 模型请求序列化时，根据 `withGoalIntent` 既有 `kinds` 收窄可见 `intent.kind`；wrapper 的运行 `inputSchema` 与全局/legacy `plannerGoalIntentSchema` 保持原样，Goal 接受权限及 `GOAL_KIND_MISMATCH` 执行拒绝不变。metadata 绑定 schema identity，DSH commit 工具经 spread 包装后仍保留 allowlist。真实 DSH 请求中五个带 Goal 的工具为 commit-guide（`travel_guide`）、Trip setter（`trip_context_update`）及三个 flight 工具（`flight_search`）；不为无 intent 的 `search_budget_routes` 加字段。新增schema回归先红（3项各多暴露另外两种 kind），绿测 `goal-intent.test.ts` 17/17；既有 `commit-guide.test.ts` 46/46、backend TypeScript check通过。红绿记录见 `output/d6/r16-tool-schema-red.log` 与 `output/d6/r16-tool-schema-green.log`。没有调用模型/provider；未执行全套验证。
+
 实施边界：薄 DSH 输入适配与准备快照；短引用只映射已校验材料；唯一城市身份补齐；证据与候选保留原作用域；公开错误与预算确认修复；必要的 UI 恢复小修；隔离测试/观察脚本。第一业务操作仍须真实语义 intent。编辑跨消息新建 Goal，不复活历史 satisfied/cancelled Goal。受控 Trip update 后重新准备，不把旧草稿/证据贴成新版本。
 
 不做：第二产品 LLM、Research/Critic Agent、新 workflow/Goal/数据库真相、UI 重做、降低权限/版本/证据/发布校验、改变模型/路由/thinking/max_tokens/超时默认值。

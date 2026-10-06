@@ -1,5 +1,7 @@
 # 文档维护规则与本轮清理记录
 
+2026-10-06 D6 observer修订：既有`backend/scripts/dsh-e2e-observation.mjs`采集内部publicationIssues，以及共享白名单过滤的presentationProblems码/compact路径；不采原文、Provider正文或任意details。构建后用`node --test backend/scripts/dsh-e2e-observation.test.mjs`验证官方fixture worker、增量记录与脱敏，红测0/1保留，绿测结果由当前D6报告维护；观测不授权发布、不改变业务执行。详见[字段反馈合同](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。
+
 2026-09-25：最小commit真实通过后，runner曾用API的`status=completed`覆盖probe的`status=passed`，导致浏览器写入gate错误关闭。现将API终态独立为`turnStatus`，probe状态最后写入；当前已验收commit回执按同一turn的satisfied、真实GET保存的accepted Artifact及GET账本不变证据修正状态，原attempt保留且追加纠正原因。不修改Artifact或publication，不重新收费跑已通过probe。
 
 2026-09-25：H5 DSH验收脚本按正式workspace的`id desc`顺序取最新攻略，不再反转成最旧攻略；否则局部编辑/预算修改后的断言会错误检查旧版本。此为验收读取修正，未改正式前端或API排序。

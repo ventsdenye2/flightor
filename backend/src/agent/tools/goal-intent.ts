@@ -15,6 +15,22 @@ const acceptedGoalSchema = z.object({
   goalId: z.string().uuid(), runId: z.string().uuid(), kind: z.enum(['travel_guide', 'flight_search', 'trip_context_update']),
   contextVersion: z.number().int().nonnegative()
 }).strict()
+const modelIntentSchemas = new WeakMap<z.ZodType, z.ZodType>()
+const intentDescription = 'On the first durable operation, accept the user objective once. For new travel guides, explicitly set requiredEvidenceTypes for user-required coverage separately from researchTypes exploration. Omission preserves the legacy rule that every researchType is required. Keep all accepted constraints fixed for this turn.'
+
+/** Serialize a tool contract for DSH while narrowing only what the model sees. */
+export function modelVisibleToolSchema(tool: AgentTool): Record<string, unknown> {
+  const schema = z.toJSONSchema(tool.inputSchema) as Record<string, unknown>
+  const visibleIntent = modelIntentSchemas.get(tool.inputSchema)
+  const properties = schema.properties as Record<string, unknown> | undefined
+  if (!visibleIntent || !properties?.intent) return schema
+  const intent = z.toJSONSchema(visibleIntent) as Record<string, unknown>
+  delete intent.$schema
+  const description = (properties.intent as Record<string, unknown>).description
+  if (description !== undefined) intent.description = description
+  properties.intent = intent
+  return schema
+}
 
 function checkpoint(context: ToolExecutionContext, signal: AbortSignal) {
   signal.throwIfAborted()
@@ -32,15 +48,19 @@ export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, ki
   if (!(tool.inputSchema instanceof z.ZodObject) || !(tool.outputSchema instanceof z.ZodObject)) {
     throw new Error(`Goal intent requires object contracts: ${tool.name}`)
   }
+  const intentVariants = plannerGoalIntentSchema.options.filter(variant => kinds.includes(variant.shape.kind.value))
+  if (!intentVariants.length) throw new Error(`Goal intent requires allowed kinds: ${tool.name}`)
+  const visibleIntentSchema = z.discriminatedUnion('kind',
+    intentVariants as [typeof plannerGoalIntentSchema.options[number], ...typeof plannerGoalIntentSchema.options])
   const inputSchema = tool.inputSchema.safeExtend({
-    intent: plannerGoalIntentSchema.optional().describe('On the first durable operation, accept the user objective once. For new travel guides, explicitly set requiredEvidenceTypes for user-required coverage separately from researchTypes exploration. Omission preserves the legacy rule that every researchType is required. Keep all accepted constraints fixed for this turn.'),
+    intent: plannerGoalIntentSchema.optional().describe(intentDescription),
     goalRef: z.string().uuid().optional().describe('Alternatively resume this existing Goal only if its parameters match the current user request.')
   }).superRefine((value, issue) => {
     if (value.intent !== undefined && value.goalRef !== undefined) issue.addIssue({ code: 'custom', message: 'Use intent or goalRef, not both.' })
   })
   // Leave room for acceptance/finalization without changing the whole-turn deadline.
   const timeoutMs = Math.min(120_000, tool.timeoutMs + 5_000)
-  return {
+  const wrapped: AgentTool = {
     ...tool,
     description: `${tool.description} Lean Goal protocol: first durable operation carries intent or goalRef; later operations use the same accepted goal without repeating it. Allowed goal kinds: ${kinds.join(', ')}. ${options.required ? 'An accepted goal is required.' : 'Omit both for an ephemeral operation before accepting any goal.'} Completion feedback is server-owned; no declare/resume/finish call is needed.`,
     inputSchema,
@@ -169,4 +189,6 @@ export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, ki
       return { ...result, acceptedGoal, ...(completion ? { completion } : {}) }
     }
   }
+  modelIntentSchemas.set(inputSchema, visibleIntentSchema.optional().describe(intentDescription))
+  return wrapped
 }

@@ -20,6 +20,7 @@ import { withGoalIntent } from '../tools/goal-intent.js'
 import { canonicalResolvedLocation, recordTripLocations } from '../tools/resolved-locations.js'
 import { workspaceScope } from '../tools/workspace-scope.js'
 import { convertCandidatesToResearch, type DshEvidenceStore } from './evidence.js'
+import { submittedPresentationProblems } from './presentation-problems.js'
 
 const key = z.string().trim().min(1).max(120)
 const slot = z.enum(['morning', 'afternoon', 'evening', 'flexible'])
@@ -246,6 +247,8 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         fail('The itinerary requires revision', { ...saved,
           ...(dayCoverage ? { dayCoverage } : {}),
           ...(presentationIssues.length ? { presentationIssues } : {}),
+          presentationProblems: submittedPresentationProblems(input, options.locale, scope.tripContext.budget ?? null, presentationIssues,
+            { includeDayThemes: !protectedGuide }),
           ...(saved.repair ? { repair: { issues: saved.repair.issues, availableCandidates: saved.repair.availableCandidates,
             candidateSearchComplete: saved.repair.candidateSearchComplete } } : {}),
           revisionGuidance: repairHint, repairHint })
@@ -272,6 +275,8 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       const publication = publicationFor(published)
       const variant = publication?.finalization?.variants[options.locale]
       if (variant?.status !== 'accepted') fail('The final text requires revision', { artifactId: published.id, issues: variant?.issues ?? [],
+        presentationProblems: submittedPresentationProblems(input, options.locale, scope.tripContext.budget ?? null,
+          variant?.issues.flatMap(issue => issue.detail.split(', ')) ?? [], { includeDayThemes: !protectedGuide }),
         ...(variant?.issues.some(issue => issue.detail.split(', ').includes('excluded_precise_claim')) ? {
           repairHint: 'Remove ALL monetary amounts, unless restating the exact authoritative whole-trip budget target (for example 1500元), from text.reply, text.overview, text.days[].theme and every text.activities field. The UI displays the authoritative budget separately. Also remove clock times and exact minutes/durations. Keep the itinerary, evidence bindings and accepted Goal unchanged; repair only the rejected presentation text. Resubmit complete days and text; you may omit candidates to reuse the candidateKeys already registered in this same turn, Goal and unchanged Trip/flight context.'
         } : {}) })

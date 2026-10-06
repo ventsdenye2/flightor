@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "scope": "Model-visible intent serialization only; no model/database/network calls, no latency or content quality claim",
+  "rows": [
+    {
+      "name": "commit_travel_guide",
+      "beforeChars": 4169,
+      "afterChars": 2768
+    },
+    {
+      "name": "update_trip_context",
+      "beforeChars": 4169,
+      "afterChars": 890
+    },
+    {
+      "name": "search_flights",
+      "beforeChars": 4169,
+      "afterChars": 1199
+    },
+    {
+      "name": "search_flexible_flights",
+      "beforeChars": 4169,
+      "afterChars": 1199
+    },
+    {
+      "name": "confirm_flight_price",
+      "beforeChars": 4169,
+      "afterChars": 1199
+    }
+  ],
+  "beforeChars": 20845,
+  "afterChars": 7255,
+  "savedChars": 13590
+}

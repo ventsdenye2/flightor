@@ -11,6 +11,7 @@ import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repo
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import { AgentRuntime } from '../runtime/runtime.js'
 import { createPlannerToolRegistry } from './core.js'
+import { modelVisibleToolSchema } from './goal-intent.js'
 import type { AuthoredGuideInput } from '../../travel-guides/authored.js'
 
 const city: LocationRef = { id: 'city:TYO', type: 'city', name: 'Tokyo', countryCode: 'JP', cityCode: 'TYO' }
@@ -68,6 +69,46 @@ async function runSave(test: Awaited<ReturnType<typeof fixture>>, extra: Record<
 }
 
 describe('Lean Goal intent protocol', () => {
+  it.each([
+    ['update_trip_context', ['trip_context_update']],
+    ['search_flights', ['flight_search']],
+    ['save_travel_guide', ['travel_guide']]
+  ] as const)('exposes only allowed intent kinds to %s', (toolName, expectedKinds) => {
+    const tool = createPlannerToolRegistry({ leanGoalsEnabled: true }).get(toolName)!
+    const schema = modelVisibleToolSchema({ ...tool, description: `${tool.description} cloned` }) as Record<string, any>
+    const intentSchema = schema.properties.intent
+    expect(schema.$schema).toBeDefined()
+    expect(intentSchema.$schema).toBeUndefined()
+    const kinds = new Set<string>()
+    const visit = (node: unknown): void => {
+      if (!node || typeof node !== 'object') return
+      if (Array.isArray(node)) {
+        node.forEach(visit)
+        return
+      }
+      const record = node as Record<string, unknown>
+      if (record.kind && typeof record.kind === 'object') {
+        const kind = record.kind as Record<string, unknown>
+        if (typeof kind.const === 'string') kinds.add(kind.const)
+        if (Array.isArray(kind.enum)) kind.enum.filter((value): value is string => typeof value === 'string').forEach(value => kinds.add(value))
+      }
+      Object.values(record).forEach(visit)
+    }
+    visit(intentSchema)
+    expect([...kinds].sort()).toEqual([...expectedKinds].sort())
+  })
+
+  it('keeps the full execution schema and rejects a disallowed kind in the domain wrapper', async () => {
+    const test = await fixture()
+    const tool = createPlannerToolRegistry({ leanGoalsEnabled: true }).get('save_travel_guide')!
+    const args = { ...test.input, intent: { kind: 'flight_search', parameters: { requestKey: 'flight-request' } } }
+    const parsed = tool.inputSchema.safeParse(args)
+    expect(parsed.success).toBe(true)
+    if (!parsed.success) throw parsed.error
+    await expect(tool.execute(parsed.data, test.context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'GOAL_KIND_MISMATCH' })
+  })
+
   it('confirms a real same-value Trip setter without changing frozen Goal parameters', async () => {
     const test = await fixture()
     const budget = { amount: 1200, currency: 'CNY', scope: 'trip' as const }

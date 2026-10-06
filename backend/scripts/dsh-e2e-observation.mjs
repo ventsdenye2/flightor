@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { createHash, randomUUID } from 'node:crypto'
+import { sanitizePresentationProblems } from '../dist/agent/dsh/presentation-problems.js'
 
 const installation = Symbol.for('flightor.dsh.e2e.observation')
 const identifier = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(value) ? value : undefined
@@ -45,7 +46,8 @@ function revisionReasons(value) {
   const data = object(value), error = object(data.error), details = object(error.details)
   const candidates = [
     ...array(data.issues), ...array(data.presentationIssues), ...array(object(data.repair).issues),
-    ...array(error.issues), ...array(error.presentationIssues), ...array(object(error.repair).issues),
+    ...array(error.issues), ...array(error.presentationIssues), ...array(error.publicationIssues),
+    ...sanitizePresentationProblems(error.presentationProblems), ...array(object(error.repair).issues),
     ...array(details.issues), ...array(details.presentationIssues), ...array(object(details.repair).issues),
     error.revisionCode, details.code,
   ]
@@ -97,6 +99,7 @@ function toolOutput(name, args, value) {
     const accepted = result.status === 'accepted' && Boolean(uuid(object(result.artifact).id))
     return { ...base, status: code(result.status), artifactId: uuid(object(result.artifact).id),
       guideContentHash: hash(result.guideContentHash), deliveryStatus: code(object(result.completion).status), revisionReasons: revisionReasons(result),
+      presentationProblems: sanitizePresentationProblems(error.presentationProblems),
       submissionShape: submitted,
       publicationOutcome: accepted ? { accepted: true, activityBindingCount: array(result.activityBindings).length,
         serverFilledCityIdCount: submitted.omittedCityIdCount, serverFilledCandidateLocationIdCount: submitted.candidateLocationIdMissingCount,

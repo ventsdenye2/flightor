@@ -4,6 +4,28 @@ import { AppError } from '../../lib/errors.js'
 import { CommitRecovery, classifyCommitFailure, safeCommitFeedback } from './commit-recovery.js'
 
 describe('DSH commit recovery policy', () => {
+  it('exposes only controlled publication reasons and compact input paths', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_PROVIDER_BODY', 422, {
+      issues: [{ code: 'format', detail: 'PRIVATE_TEXT', activityId: null }],
+      presentationProblems: [
+        { code: 'excluded_precise_claim', fieldPath: 'text.overview', value: 'PRIVATE_TEXT' },
+        { code: 'budget_guarantee', fieldPath: 'days.1.items.2.text.recommendationReason' },
+        { code: 'excluded_precise_claim', fieldPath: 'text.overview' },
+        { code: 'PRIVATE_CODE', fieldPath: 'text.reply' },
+        { code: 'excluded_precise_claim', fieldPath: 'days.60.items.0.text.name' },
+        { code: 'excluded_precise_claim', fieldPath: 'days.01.items.0.text.name' },
+        { code: 'excluded_precise_claim', fieldPath: 'days.0.items.6.text.name' },
+        { code: 'excluded_precise_claim', fieldPath: 'text.activities.0.name' },
+        { code: 'excluded_precise_claim', fieldPath: 'PRIVATE_FIELD' }
+      ]
+    })
+    const feedback = safeCommitFeedback(error, 'content')
+    expect(feedback.presentationProblems).toEqual([
+      { code: 'excluded_precise_claim', fieldPath: 'text.overview' },
+      { code: 'budget_guarantee', fieldPath: 'days.1.items.2.text.recommendationReason' }
+    ])
+    expect(JSON.stringify(feedback)).not.toMatch(/PRIVATE_|text.activities|days.60|days.01|items.6/)
+  })
   it('reports the r12 raw-source verification mismatch as a prerequisite without consuming a content attempt', () => {
     const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_RAW_SOURCE', 422,
       { code: 'raw_evidence_requires_partial', fieldPath: 'intent.parameters.allowPartial', providerBody: 'PRIVATE_RAW_SOURCE' })

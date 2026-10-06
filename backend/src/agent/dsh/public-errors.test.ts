@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { classifyDshFailure, publicFailureReply } from './public-errors.js'
 
 describe('public DSH failure classification', () => {
+  it('classifies publication labels without interpreting repair instructions or provider prose as codes', () => {
+    expect(classifyDshFailure('DSH_GUIDE_NEEDS_REVISION', {
+      issues: [{ code: 'format', detail: 'excluded_precise_claim' }],
+      repairHint: 'Reuse the existing source and evidence bindings.', providerBody: 'LOCATION SOURCE PRIVATE BODY'
+    })).toBe('publication')
+    expect(classifyDshFailure('DSH_TOOL_FAILURE', { providerBody: 'LOCATION SOURCE PRIVATE BODY' })).toBeUndefined()
+  })
   it.each([
     ['PROVIDER_TIMEOUT', null, 'provider'],
     ['MODEL_OUTPUT_LIMIT', null, 'output_limit'],

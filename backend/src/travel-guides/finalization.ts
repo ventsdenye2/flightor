@@ -37,6 +37,57 @@ const budgetCurrencyPattern = (currency: string) => {
   return terms[currency] ?? currency.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+const budgetAmountPattern = (amount: number, currency: string, flags = 'i') => {
+  const exactAmount = String(amount).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const currencyPattern = budgetCurrencyPattern(currency)
+  return new RegExp(`(?:${currencyPattern}\\s*${exactAmount}(?![\\d.])|(?<![\\d.])${exactAmount}\\s*${currencyPattern})`, flags)
+}
+
+const tripBudgetTargetClause = (clause: string) => {
+  const englishTarget = /\b(?:(?:whole|entire|full)[-\s]+trip|trip|journey)\b.{0,40}\b(?:budget\s+)?(?:total\s+)?(?:target|goal)\b|\bbudget\b.{0,50}\b(?:whole[-\s]+trip|trip\s+total|in total|for (?:both|all) days)\b/i.test(clause)
+  const chineseTarget = /(?:全程|整个行程|整趟行程|整个旅程).{0,24}(?:总预算(?:目标|为|是)?|预算目标|总目标|目标|合计)|(?:全程|整个行程|整趟行程)总预算(?:目标|为|是|合计)|预算(?:目标|总额|合计).{0,24}(?:全程|整个行程|两天|三天|\d+天合计)/.test(clause)
+  return (englishTarget || chineseTarget)
+    && !/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
+}
+
+const maskAuthoritativeTripBudgetAmounts = (prose: string, budget: { amount: number; currency: string }) => {
+  const amountPattern = budgetAmountPattern(budget.amount, budget.currency, 'gi')
+  const targetAmountPattern = budgetAmountPattern(budget.amount, budget.currency)
+  const cautiousBudgetLanguage = /(?:无法确认|无法判断|不能确认|不能判断|不确定|尚未确认|尚未核实|仍待核实|尚待核实|有待核实|是否|不保证|不能保证|不承诺|uncertain|unknown|not sure|cannot confirm|can't confirm|cannot determine|can't determine|not yet (?:known|verified)|whether|may be|might be)/i
+  return prose.split(/(?<=[.!?;。！？；\n])/).map(sentence => {
+    const clauses = sentence.split(/([,，])/)
+    const hasTripTarget = clauses.some(clause => tripBudgetTargetClause(clause) && targetAmountPattern.test(clause))
+    const unsupportedCostClaim = clauses.some((clause, index) => {
+      if (!/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
+        || cautiousBudgetLanguage.test(clause)
+        || /不构成.{0,20}(?:费用|花费|开销|支出|可负担性).{0,12}(?:保证|承诺)/.test(clause)
+        || /(?:需|需要|应|请).{0,16}(?:核对|查询|确认|检查)/.test(clause)) return false
+      const adjacent = clauses.slice(index, index + 2).join('')
+      const supportedVariableCostExplanation = !/(?:ticket|admission|fare|price|门票|票价)/i.test(adjacent)
+        && !/(?:已核实|已确认|已经核实|已经确认|verified|confirmed)/i.test(adjacent)
+        && (/(?:实际)?(?:花费|费用|开销|支出)(?:会|将|可能)?(?:因|随|取决于).{0,60}(?:住宿|餐饮|购物|选择|消费习惯|安排).{0,20}(?:而(?:不同|变化|变动|异)|(?:不同|变化|变动|有差异))/.test(adjacent)
+          || /\b(?:actual\s+)?(?:costs?|expenses?|spending)\b.{0,40}\b(?:vary|varies|change|changes|depend|depends)\b.{0,60}\b(?:choice|choices|selection|accommodation|lodging|dining|shopping)\b/i.test(adjacent))
+      return !supportedVariableCostExplanation
+    })
+    return clauses.map(clause => {
+      const isTargetClause = tripBudgetTargetClause(clause) && targetAmountPattern.test(clause)
+      const targetAmountOffset = isTargetClause ? clause.search(targetAmountPattern) : -1
+      const hasCostContext = /(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
+      return clause.replace(amountPattern, (match, offset: number) => {
+        const after = clause.slice(offset + match.length)
+        const prefix = clause.slice(0, offset)
+        const negatedDaily = /(?:不是|并非|而非)\s*(?:每天|每日)\s*$/i.test(prefix)
+          || /\bnot\s*$/i.test(prefix) && /^\s+per day\b/i.test(after)
+        const positiveDaily = (!negatedDaily && /(?:每天|每日|daily)\s*$/i.test(prefix))
+          || (!negatedDaily && /^\s*(?:per day|a day)\b/i.test(after))
+        const allowedTarget = isTargetClause && offset === targetAmountOffset && !positiveDaily && !unsupportedCostClaim
+        const allowedNegatedDaily = hasTripTarget && !hasCostContext && negatedDaily
+        return allowedTarget || allowedNegatedDaily ? 'budget target' : match
+      })
+    }).join('')
+  }).join('')
+}
+
 /** Narrow defense-in-depth checks, not a claim of independent factual certification. */
 export function textProblems(text: FinalText, input: FinalizationInput): string[] {
   const errors: string[] = []
@@ -80,58 +131,11 @@ export function publicProseProblems(fields: string[], locale: PublicationLocale,
   }
   // A short answer may repeat the authoritative total budget, but never a price or affordability claim.
   let claimProse = prose
-  if (options.shortReply && options.budget?.scope === 'trip') {
-    const budget = options.budget
-    const amount = String(budget.amount).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const currency = budgetCurrencyPattern(budget.currency)
-    const money = new RegExp(`(?:${currency}\\s*${amount}(?![\\d.])|(?<![\\d.])${amount}\\s*${currency})`, 'gi')
-    // Repeating the authoritative amount to reject a daily interpretation is
-    // not a new price. Require an explicit total-budget statement and keep
-    // any ticket/cost clause subject to the ordinary precise-claim check.
-    const totalBudgetStatement = /(?:total budget|whole[-\s]+trip budget|budget.{0,100}(?:in total|both days|whole[-\s]+trip)|(?:全程|整个行程)预算(?:目标|是|为)?|总预算|预算(?:目标|是|为).{0,40}(?:合计|两天|全程))/i
-    const hasTotalBudget = totalBudgetStatement.test(prose)
-    const negativeDaily = new RegExp(`(?:不是|并非|而非)\\s*(?:每天|每日)\\s*(?:${currency}\\s*${amount}(?![\\d.])|(?<![\\d.])${amount}\\s*${currency})(?:人民币)?|\\bnot\\s+(?:${currency}\\s*${amount}(?![\\d.])|(?<![\\d.])${amount}\\s*${currency})\\s+per day\\b`, 'gi')
-    const budgetProse = prose.split(/(?<=[.!?,;。！？，；\n])/).map(sentence => hasTotalBudget
-      && !/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(sentence)
-        ? sentence.replace(negativeDaily, 'not a daily budget') : sentence).join('')
-    claimProse = budgetProse.split(/(?<=[.!?,;。！？，；\n])/).map(sentence =>
-      totalBudgetStatement.test(sentence)
-      && !/(?:per day|daily|每天|每日|一天)/i.test(sentence)
-      && !/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(sentence)
-        ? sentence.replace(money, 'budget target') : sentence).join('')
-  }
-  if (options.budgetTarget && options.budget?.scope === 'trip') {
-    const budget = options.budget
-    const amount = String(budget.amount).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const currency = budgetCurrencyPattern(budget.currency)
-    const money = new RegExp(`(?:${currency}\\s*${amount}(?![\\d.])|(?<![\\d.])${amount}\\s*${currency})`, 'i')
-    const exactTotalTarget = (sentence: string) => {
-      const clauses = sentence.split(/[,，]/)
-      const hasTargetAmount = clauses.some(clause => {
-        const hasTarget = /\bbudget\b/i.test(clause)
-          && /\b(?:target|goal|current|total|set)\b/i.test(clause)
-          && /\b(?:whole|entire|full)[-\s]+(?:trip|journey|stay)\b|\b(?:trip|journey)\s+total\b|\bin total\b|\bfor (?:both|all)\s+days\b/i.test(clause)
-          || /预算/.test(clause) && /(?:目标|总额|总预算|全程预算|行程预算)/.test(clause)
-            && /(?:全程|整个行程|两天|三天|[一二三四五六七八九十\d]+天合计|总额|合计)/.test(clause)
-        return hasTarget && money.test(clause)
-      })
-      const unsupportedCostClaim = clauses.some((clause, index) => {
-        if (!/(?:ticket|admission|fare|cost|price|门票|票价|费用|花费|消费)/i.test(clause)
-          || cautiousBudgetLanguage.test(clause)) return false
-        const adjacent = clauses.slice(index, index + 2).join('')
-        const supportedVariableCostExplanation = !/(?:ticket|admission|fare|price|门票|票价)/i.test(adjacent)
-          && !/(?:已核实|已确认|已经核实|已经确认|verified|confirmed)/i.test(adjacent)
-          && (/(?:实际)?(?:花费|费用|开销|支出)(?:会|将|可能)?(?:因|随|取决于).{0,60}(?:住宿|餐饮|购物|选择|消费习惯|安排).{0,20}(?:而(?:不同|变化|变动|异)|(?:不同|变化|变动|有差异))/.test(adjacent)
-            || /\b(?:actual\s+)?(?:costs?|expenses?|spending)\b.{0,40}\b(?:vary|varies|change|changes|depend|depends)\b.{0,60}\b(?:choice|choices|selection|accommodation|lodging|dining|shopping)\b/i.test(adjacent))
-        return !supportedVariableCostExplanation
-      })
-      return hasTargetAmount && !unsupportedCostClaim
-    }
-    claimProse = claimProse.split(/(?<=[.!?;。！？；\n])/).map(sentence =>
-      exactTotalTarget(sentence) ? sentence.replace(money, 'budget target') : sentence).join('')
+  if ((options.shortReply || options.budgetTarget) && options.budget?.scope === 'trip') {
+    claimProse = maskAuthoritativeTripBudgetAmounts(prose, options.budget)
   }
   if (/(?:[$€£¥￥]\s*\d|\d+\s*(?:元|日元|美元|minutes?\b|分钟)|\b(?:CNY|RMB|USD|EUR|GBP|JPY)\s*\d|\d+\s*(?:CNY|RMB|USD|EUR|GBP|JPY)\b|\b\d{1,2}:\d{2}\b|(?:ticket|admission|门票).{0,20}\d)/i.test(claimProse)) errors.push('excluded_precise_claim')
-  if (/(?:free admission|always open|open year.round|全年开放|始终对公众开放|免费参观|门票.{0,8}(?:免费|收费))/i.test(prose)) errors.push('excluded_admission_or_hours')
+  if (/(?:free admission|always open|open year.round|全年开放|始终对公众开放|免费参观|免费(?:开放|入场|进入)|门票.{0,8}(?:免费|收费))/i.test(prose)) errors.push('excluded_admission_or_hours')
   if (/(?:https?:\/\/|latitude|longitude)/i.test(prose)) errors.push('unsupported_asset_or_url')
   if (options.shortReply) {
     if (/(?:\b(?:debug|stack\s?trace|system prompt|chain.of.thought|AgentLoop|DSH|JSON|UUID)\b|\b(?:tool|artifact|candidate|evidence|goal|run|generation|session)(?:_?(?:id|ref|refs)|CallId)\b|\b(?:commit_travel_guide|web_search|web_fetch|update_trip_context|read_artifact|get_trip_context)\b|内部(?:流程|推理|工具)|系统提示词|调试信息|工具调用)/i.test(prose)) errors.push('internal_metadata')

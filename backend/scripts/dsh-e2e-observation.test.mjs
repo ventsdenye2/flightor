@@ -49,6 +49,9 @@ test('observes an official fixture worker incrementally without raw model/tool s
             issues: ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type:PRIVATE_CATEGORY',
               'PRIVATE_REVISION_REASON', 'https://private.example/path?token=SECRET'],
             presentationIssues: ['excluded_precise_claim', randomUUID(), 'SENSITIVE_API_KEY'],
+            publicationIssues: [{ code: 'language', detail: 'SENSITIVE_DETAIL' }, { code: 'PRIVATE_CODE' }],
+            presentationProblems: [{ code: 'budget_guarantee', fieldPath: 'text.overview', value: 'SENSITIVE_PROSE' },
+              { code: 'PRIVATE_CODE', fieldPath: 'text.reply' }, { code: 'budget_guarantee', fieldPath: 'SENSITIVE_FIELD' }],
             repair: { issues: [{ code: 'verified_evidence', classification: 'evidence_missing', fieldPath: 'SENSITIVE_FIELD' }] },
             recovery: { calls: 2, argumentCorrections: 1, contentAttempts: 1,
             lastFailure: 'content', privateKey: 'SENSITIVE_RECOVERY' },
@@ -83,9 +86,10 @@ test('observes an official fixture worker incrementally without raw model/tool s
     assert.deepEqual(commits[1].submissionShape, submitted)
     assert.deepEqual(commits[0].revisionReasons,
       ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type',
-        'excluded_precise_claim', 'guide_day_count', 'format', 'source_missing', 'raw_evidence_requires_partial',
+        'excluded_precise_claim', 'language', 'budget_guarantee', 'guide_day_count', 'format', 'source_missing', 'raw_evidence_requires_partial',
         'candidate_category_outside_goal'])
     assert.deepEqual(commits[0].publicationOutcome, { accepted: false })
+    assert.deepEqual(commits[0].presentationProblems, [{ code: 'budget_guarantee', fieldPath: 'text.overview' }])
     assert.deepEqual(commits[0].recovery, { calls: 2, argumentCorrections: 1, contentAttempts: 1, lastFailure: 'content' })
     assert.deepEqual(commits[1].publicationOutcome, { accepted: true, activityBindingCount: 1,
       serverFilledCityIdCount: 1, serverFilledCandidateLocationIdCount: 1, serverSuppliedBaseAndHash: true })

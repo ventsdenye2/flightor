@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "scope": "Read-only replay of unmodified r15 session prose and persisted guide/research; no original record write or external call, mechanical validation only",
+  "results": [
+    {
+      "guideId": "01a11181-73fc-711a-8f0c-a11af5f70a6a",
+      "sessionSeq": 196,
+      "status": "blocked",
+      "issues": [
+        {
+          "code": "format",
+          "detail": "excluded_admission_or_hours"
+        }
+      ],
+      "presentationProblems": [
+        {
+          "code": "excluded_admission_or_hours",
+          "fieldPath": "days.1.items.4.text.introduction"
+        }
+      ],
+      "unchangedOriginalBudgetOverviewAccepted": true
+    },
+    {
+      "guideId": "01a11181-94f3-759e-8337-bef3389654d4",
+      "sessionSeq": 201,
+      "status": "blocked",
+      "issues": [
+        {
+          "code": "format",
+          "detail": "excluded_admission_or_hours"
+        }
+      ],
+      "presentationProblems": [
+        {
+          "code": "excluded_admission_or_hours",
+          "fieldPath": "days.1.items.4.text.introduction"
+        }
+      ],
+      "unchangedOriginalBudgetOverviewAccepted": true
+    }
+  ],
+  "inputs": [
+    {
+      "path": "backend/.demo/dsh-d6-runtime/d6-iteration-b01-r15/private/b01-scoped-readback.private.json",
+      "sha256": "348bdfe2b27b8689689bc085d56183c8245d0a3a9a7f06474dffc8e203d556a6"
+    },
+    {
+      "path": "backend/.demo/dsh-d6-runtime/d6-iteration-b01-r15/private/dsh-data/sessions/_no-cwd/50f80289-799e-4e65-86a0-424f2d7d5015/session.v4.jsonl",
+      "sha256": "20c04071ea7bbb7374b9ac2210a7aeba5b8321571888ed8833915c10e24883d2"
+    }
+  ],
+  "validatorBuild": [
+    {
+      "path": "backend/dist/travel-guides/finalization.js",
+      "sha256": "029912b9a782b84ff8c1f73ac4ee50d6e77895b221f6b2aa4ef3ea3aaeca260e"
+    },
+    {
+      "path": "backend/dist/agent/dsh/presentation-problems.js",
+      "sha256": "59f91e4c455c7bfeb069a4d2027d37d86c639672c44200076967c8842c0edd29"
+    }
+  ]
+}

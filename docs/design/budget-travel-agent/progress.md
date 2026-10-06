@@ -1,6 +1,8 @@
 # 当前进度与验证
 
-2026-10-06 最新状态：r14完整工程backend1256/1256、专用真实PG51/51、D5 30/30通过，但390×844真实H5 B01仍0 accepted攻略、157.339秒终态失败、后续8动作blocked；没有180秒timeout证据。旧证据alias跨Trip版本误入严格文件repository的TypeError路径已修为受控拒绝，保留canonical作用域和真实文件损坏保护；setter实际版本推进才向模型声明raw证据失效。通用准备顺序、地点前置反馈已实现；20路径截断已改为最多110条完整白名单。新7文件74/74（17.96秒）、backend check/build通过，110边界有效红测2失败/29通过→31/31绿测。下一步本地提交、新冻结完整工程和390×844真实H5 12固定+4探索；目前不能声明此前用户流程失败已解决或D6 PASS，无已确认硬阻塞。原工作区/数据库/会话/账本保留，不push、合并或部署。
+2026-10-06 r16修复进行中：Astra max原材料诊断确认预算目标误拦、模糊字段反馈和无效Goal schema分支。预算94/94；本批联合7文件209/209、check/build及observer1/1通过；原r15未改材料回放预算误拦消除，两稿仍被免费入场合同拦截并准确定位活动字段。详见[字段反馈合同](DSH_D6_PRESENTATION_FEEDBACK.md)与[D6验收](DSH_D6_ACCEPTANCE.md)。未新增产品LLM，参数/超时/额度与冻结分母不变。r15真实FAIL，r16新冻结完整工程及H5 12+4尚待执行。
+
+2026-10-06 最新冻结r15（源码2a7a16b）完整工程通过：backend1265/1265（首次整套app5秒超时保留，构建结束后原配置整套184.52秒复验通过）、真实隔离PG51/51、D5 30/30 codeUnchanged=true、runtime14/14、observer1/1、前端113/20/37/52、根TypeScript及H5/weapp构建。r14旧证据alias的严格文件异常已修，实际setter版本推进的证据失效回执、通用准备顺序与最多110条多城市安全反馈已验证；不改变权限/版本/证据/发布或限额。新run/schema/构建指纹见[D6验收](DSH_D6_ACCEPTANCE.md)。390×844真实H5 B01已FAIL（119ms受理、196.271秒终态、0 accepted攻略、后续8动作blocked），12固定+4探索完整内容/详情/持久化验收待完成；r14失败不追认、目前不能声明用户流程已解决或D6 PASS。无已确认硬阻塞，原工作区/数据库/会话/账本保留，不push、合并或部署。
 
 2026-10-06 r13失败后的候选注册/公开关联提示/无Goal失败状态修复已完成定向验证：联合8文件112/112、check/build通过。首次候选与raw-evidence检查已移到原runtime/kind/Trip snapshot/flight guards后、Goal接受前，原Goal及scope复用规则保留，没有新增DB读取或产品模型。官方worker2/2验证漏定义零写→同NEW intent与同来源注册并发布，以及成功setter后两次漏定义仍partial/goal_partial且不伪造Goal。中间夹具错误不作产品红测；联合首次111/112的旧局改not_requested断言已更正为完整partial结构，原日志保留。源码尚待本地提交及新冻结完整backend/PG/D5/H5 12+4，r13真实B01失败不改写为通过。
 

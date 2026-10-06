@@ -1,5 +1,9 @@
 # FlightOR Agent Tool Registry
 
+2026-10-06 DSH模型Goal schema仅暴露该工具withGoalIntent已允许的kind，原领域/legacy inputSchema、显式错误kind拒绝及immutable Goal校验保持。实际commit/setter/search_flights/search_flexible_flights/confirm_flight_price共减13590字符（仅intent序列化，不是耗时或质量结论），见[schema测量](design/budget-travel-agent/evidence/d6-r16-intent-schema.json)。
+
+2026-10-06 r16内部发布反馈：`commit_travel_guide`复用原规则返回受控问题码与compact输入字段路径，不透原文，不映射受保护旧slot为本次输入。准入限额耗尽保留最后实质失败阶段；公开分类不把repairHint中的source/location文字当错误码。observer采同一受控原因。公开API、持久schema与修订额度不变，详见[字段反馈合同](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。定向验证不代表真实H5或D6通过。
+
 2026-10-06 r14准备与来源顺序修复：主模型须先在权威Trip保存用户明确的地点、日期/天数、预算及偏好，再取当前版本证据；代码不从day.cityId或正文猜候选地点。实际setter版本推进的内部回执声明旧raw sourceRefs/evidenceRefs失效，同值/空patch不声明失效，公开API不新增字段。未知非canonical alias在文件repository前返回不可用；canonical引用仍查原作用域，损坏文件继续失败关闭。无唯一已选城市时，compact提交省略地点字段返回受控前置反馈，一次最多110个白名单字段，保留多城市选择与原修复限额。新7文件联合74/74、backend check/build通过；新冻结真实H5和全量工程仍待执行，见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
 
 2026-10-06 D6首次提交前置检查：`commit_travel_guide`在接受新Goal前拒绝“选中本次raw-web候选且allowPartial=false”的不兼容intent，返回受控`raw_evidence_requires_partial`与`intent.parameters.allowPartial`纠正字段；不写Goal/研究、不消耗内容修订次数。主模型须按用户真实要求显式纠正首次intent或说明独立核实无法满足，服务端不自动弱化目标。已接受/恢复Goal的严格证据与不可变参数检查保持，legacy工具合同不变；详见[ADR0029](adr/0029-dsh-prepared-submission.md)及[公共反馈](design/budget-travel-agent/DSH_D6_PUBLIC_ERRORS.md)。

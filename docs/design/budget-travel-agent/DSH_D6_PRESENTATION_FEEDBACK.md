@@ -1,0 +1,23 @@
+# D6 发布字段反馈
+
+2026-10-06，内部协议实现与定向验证；不是完整 D6 PASS。冻结分母仍为[验收 v1](DSH_D6_ACCEPTANCE.md)的工程、真实隔离 PostgreSQL、D5、12 固定及 4 探索 H5 旅程。
+
+`commit_travel_guide`在发布拒绝或领域保存拒绝附带表达问题时，返回内部`presentationProblems: [{code, fieldPath}]`。它复用`publicProseProblems`，只诊断原聚合校验已拒绝的规则，不形成第二套发布判据或事实审核。路径为`text.reply/overview`、`text.days.<0–59>.theme`、`days.<0–59>.items.<0–5>.text.name/introduction/recommendationReason`。活动按本次提交的activityKey映射；继承活动及局部编辑中忽略的主题不伪装成本次输入。语言阈值对完整正文判断，定位整个`text`，不将短主题或专名误判为错误语言。
+
+受控码为`internal_narration`、`budget_guarantee`、`excluded_precise_claim`、`excluded_admission_or_hours`、`unsupported_asset_or_url`、`language`、`duplicated_or_foreign_prose`、`empty_reply`。反馈先验证码和规范索引路径，再去重，不回显错误原文、来源、Provider正文或任意details。不改公开API、持久FinalIssue schema、权限、版本、候选/证据绑定、受保护slot或修订额度。
+
+准入额度耗尽仍返回原限额码并要求停止提交，同时保留最后实质失败类型与公开阶段。新的Provider/output-limit失败仍优先显示。公开分类只读取code/issue字段，不从repairHint、providerBody或异常prose中寻找source/location字样。observer复用同一字段过滤器，并采集publicationIssues和受控presentationProblems的原因码/路径；不输出原文，不改变发布结果。
+
+## 验证与原失败
+
+字段反馈红测2失败/63通过，修后两文件65/65。原因保留测试首次遗漏fixture配置，修正后2失败/8通过，复现repair limit将lastFailure改为system；公开分类红测1失败/19通过，复现repairHint将format误归evidence。observer红测0/1，复现漏采publicationIssues。日志在忽略目录`output/d6/r16-*`保留，完整联验和新冻结真实H5仍待完成。
+
+[r15脱敏证据](evidence/d6-r15-b01.json)保留原报告哈希、调用/token/费用及关闭证明。已人工查看失败截图：119ms受理、196.271秒终态、199.318秒流程，0 accepted攻略，后续8动作blocked；已保存Trip卡不等于发布攻略。28模型/16搜索/27fetch/0fare，44settled/0pending；USD3.04为预留非实付，cacheRead单列。
+
+Trip准备只推进一次版本且条件正确。首次漏候选注册正确前置拒绝，随后两稿因overview的合法预算目标误拦，修复限额最终耗尽。Astra max用原session/真实只读PG副本，仅内存换预算句后两稿机械accepted，证明误拦因果；原件未改，不能追认正文通过。另发现烤制甜甜圈误写炸制、周日建议不适配周二/周三、散文合同禁止的免费入场中文漏检，新冻结须逐字段联合审阅。
+
+r15服务已关闭：PID66536不存在，API55587/H562275拒绝连接，server/manager lock不存在，guard 1 installed/1 closed、违规调用0。schema/session/草稿/账本/报告保留。源码修改后不得resume r15；r16须完整重跑原分母，目前无确认硬阻塞。
+
+2026-10-06 本批最终定向验证：7文件209/209、backend check/build及observer1/1通过。联合过程曾受并行schema实施状态影响，后又因新增测试自身将无intent的budget工具列入五工具而失败；原日志均保留，修正为commit/setter/search_flights/search_flexible_flights/confirm_flight_price后完整联验209/209。领域错误kind拒绝、protected范围和公开stage回归均在同次通过。
+
+[原始r15材料新validator回放](evidence/d6-r16-original-r15-replay.json)使用未改的seq196/201文字与真实持久guide/research，零业务写入/出站。两份原overview均不再被预算规则拦截；两份仍因中文免费入场声明被正确blocked，并准确定位days.1.items.4.text.introduction。未将旧稿改为accepted，语义问题仍待新自然输入H5审阅。
