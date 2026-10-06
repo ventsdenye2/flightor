@@ -1,7 +1,7 @@
 {
   "version": 1,
   "acceptanceVersion": "D6-v1",
-  "status": "frozen_engineering_pending",
+  "status": "frozen_engineering_passed_real_ui_pending",
   "createdAt": "2026-10-06T23:18:14.577Z",
   "codeHead": "fee07e5dd4cff9afb402b91be721eb8cf2a5da44",
   "runId": "c7c8b0b0-feac-434e-80bc-eb26e818cbf5",
@@ -56,5 +56,111 @@
   },
   "h5Audit": {
     "matchesFrozenManifest": true
-  }
+  },
+  "engineering": {
+    "backend": {
+      "files": 139,
+      "passed": 1609,
+      "total": 1609,
+      "durationSeconds": 201.43,
+      "log": "backend/output/d6/r24-backend-unit-final.log"
+    },
+    "postgres": {
+      "files": 11,
+      "passed": 52,
+      "total": 52,
+      "durationSeconds": 52.12,
+      "log": "backend/output/d6/r24-postgres-final.log",
+      "database": "dedicated loopback flightor_d6_validation; original suites random isolated schemas"
+    },
+    "d5": {
+      "passed": 30,
+      "total": 30,
+      "report": "docs/design/budget-travel-agent/evidence/d5-2026-10-06T23-24-29-824Z.json",
+      "mode": "local HTTP simulation and persisted fare fixtures",
+      "codeUnchanged": true,
+      "realProvider": false,
+      "log": "backend/output/d6/r24-d5-final.log"
+    },
+    "runtime": {
+      "passed": 14,
+      "total": 14,
+      "durationMs": 8590.5291,
+      "log": "backend/output/d6/r24-runtime-final.log"
+    },
+    "observer": {
+      "passed": 1,
+      "total": 1,
+      "durationMs": 1543.5616,
+      "log": "backend/output/d6/r24-observer-final.log"
+    },
+    "frontend": {
+      "conversationProgress": 116,
+      "sessionRecovery": 20,
+      "artifacts": 37,
+      "productionPresentation": 52,
+      "rootTypescript": "passed",
+      "helper": 21,
+      "helperLog": "backend/output/d6/r24-h5-assertions-final.log",
+      "summary": "backend/output/d6/r24-frontend-full-summary.json",
+      "scopeNote": "same unchanged frontend source before docs-only/source commit naming; actual H5 built at startup on fee07e5"
+    },
+    "checkBuild": {
+      "check": "passed",
+      "build": "passed",
+      "logs": [
+        "backend/output/d6/r24-root-check.log",
+        "backend/output/d6/r24-root-build.log"
+      ]
+    },
+    "h5Build": {
+      "compiledMilliseconds": 30383,
+      "warnings": 2,
+      "fullLog": "backend/output/d6/r24-isolated-server.log"
+    },
+    "weappBuild": {
+      "exitCode": 0,
+      "compiledSeconds": 21.24,
+      "totalSeconds": 33.919,
+      "log": "backend/output/d6/r24-frontend-build-weapp-escalated.log",
+      "sandboxFirstAttempt": "spawnSync git EPERM before compilation; original log retained; same command local escalation passed",
+      "platformUi": "deferred by user"
+    },
+    "fixedReplay": {
+      "cohorts": [
+        "docs/design/budget-travel-agent/evidence/d6-r24-fixed-replay.json",
+        "docs/design/budget-travel-agent/evidence/d6-r24-fixed-replay-quiet.json"
+      ],
+      "pairedSamplesEach": 10,
+      "eachBaselineAccepted": 10,
+      "eachD6Accepted": 10,
+      "semanticMatches": true,
+      "modelCalls": 0,
+      "externalCalls": 0,
+      "p50TotalMs": [
+        {
+          "baseline": 11.3849,
+          "d6": 15.25405
+        },
+        {
+          "baseline": 10.3377,
+          "d6": 13.0771
+        }
+      ],
+      "methodCalls": {
+        "baselineTripsGet": 20,
+        "d6TripsGet": 19,
+        "noAdditionalRepositoryRoundTripsInMemoryReplay": true
+      },
+      "proseProfile": "backend/.demo/dsh-d6-runtime/d6-final-r24/private/r24-prose-cost-profile.private.json",
+      "profileMedianMsPerCall": {
+        "r23": 0.36117075,
+        "r24": 0.403148
+      },
+      "performanceClaim": "local assembly overhead retained; scoped prose repair adds about 0.042 ms per pure check, existing D6 verifications and jitter remain in end-to-end total; no production speedup claim"
+    },
+    "postChecksFingerprintAudit": "backend/.demo/dsh-d6-runtime/d6-final-r24/private/pre-ui-fingerprint-audit.private.json",
+    "independentReadOnlyAudit": "backend/.demo/dsh-d6-runtime/d6-final-r24/private/reviews/r24-freeze-independent-review.private.json"
+  },
+  "engineeringReviewedAt": "2026-10-06T23:31:40.886Z"
 }

@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 r24完整工程通过：[同版冻结证据](design/budget-travel-agent/evidence/d6-r24-freeze.json)记录backend1609/1609、真实专用PG52/52、D5本地fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端四族/根TS/helper21/21及两端构建完整日志。两批固定10对全部accepted/语义一致/零外呼，保留P50组装增加2.7–3.9ms及约0.042ms/次回指检查定位，无新增仓库往返、不宣称生产提速。工程后source/backend/H5/worker/归档及历史ledger实际六项SHA一致；单主模型/原参数/授权/日期与390×844配置不变，新批仍零真实调用。现在从B01执行原12+4真实H5，D6未PASS、无确认硬阻塞；下述过程状态为历史快照。
+
 2026-10-07 r24已冻结并执行完整工程：源码fee07e5，新隔离run c7c8b0b0-feac-434e-80bc-eb26e818cbf5、schema dsh_d6_c7c8b0b0feac434e80bceb26e818cbf5、PID128072/TTY89212、API63207/H551018；实际source/backend/H5/worker指纹与783文件归档一致，[冻结证据](design/budget-travel-agent/evidence/d6-r24-freeze.json)保留。H5编译30.383秒/2警告、完整日志已保存，当前零新真实调用。完整backend进行中，随后真实专用PG/D5/runtime/observer/固定回放和原12+4手机390×844 H5；仅同run --resume冷重启，旧schema/会话/费用保留。D6未PASS，无确认硬阻塞；下述提交前及r23为历史快照。
 
 2026-10-07 r24修复与提交前验证完成：同字段合法预算目标回指已修复，闭合谓词仍拒绝将同额用于餐饮/住宿/每日或费用；预算相关14文件600/600、最终compact反馈正式配置38/38、新build后H5 helper21/21、backend check/build通过。反馈只列当前compact文本字段，未知键/值不回显，合同见[ADR0025](adr/0025-bounded-guide-finalization.md)及[字段反馈](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。前端116/20/37/52、根TS与weapp构建通过，完整日志保留；零新增真实调用。下一步新隔离冻结完整工程与原12+4手机390×844 H5，不复用r23失败作成功。最新远端仍f2ec6c1f；其他工树、两份用户未提交配置、数据库/会话/账本保留。D6未PASS，无确认硬阻塞；下述r23结果为历史快照。
