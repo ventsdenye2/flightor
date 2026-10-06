@@ -63,6 +63,8 @@ export interface ToolExecutionContext {
   activeGoalKind?: GoalKind
   activeGoalRunId?: string
   activeGoalContextVersion?: number
+  /** Server-owned Trip update scope copied only from a verified active Goal/run. */
+  tripContextUpdateGoalScope?: { goalId: string; runId: string; contextVersion: number; fields: readonly string[] }
   /** Server-owned semantic acceptance lock for the opt-in lean protocol. */
   acceptedGoalIntent?: { goalId: string; runId: string; kind: GoalKind; contextVersion: number; fingerprint: string }
   /** One bounded, same-generation invalid guide draft. Never model-authored context. */
@@ -122,6 +124,7 @@ function asSafeMessage(value: unknown): string {
     if (value.code === 'USER_MEMORY_DISABLED') return 'User Memory is disabled'
     if (value.code === 'GOAL_INTENT_REQUIRED') return 'Pass intent or goalRef with the first durable business operation.'
     if (value.code === 'GOAL_INTENT_CONFLICT') return 'Keep the accepted Goal and its constraints. Correct the result without weakening the objective; changed requirements need a new user turn.'
+    if (value.code === 'GOAL_FIELD_SCOPE_MISMATCH') return 'Submit only Trip fields listed in the accepted Trip update Goal. Keep its accepted intent unchanged.'
     if (value.code === 'GOAL_KIND_MISMATCH') return 'The business operation does not match the accepted Goal kind.'
     if (value.code === 'GOAL_RUN_ALREADY_RUNNING') return 'Another operation owns this Goal run. Wait for it to finish; do not take it over.'
     if (value.code === 'GOAL_NOT_RUNNABLE') return 'The Goal is satisfied or cancelled, or its attempt has ended. Do not continue writing to it.'
@@ -144,6 +147,7 @@ function errorContent(code: ToolErrorCode, message: string, details?: unknown, c
 
 function classifyDomainError(domainCode: string | undefined, tool: AgentTool, errorCode: ToolErrorCode): ToolErrorClassification | undefined {
   if (errorCode === 'INVALID_ARGUMENTS' || errorCode === 'MALFORMED_ARGUMENTS') return 'draft_invalid'
+  if (domainCode === 'GOAL_FIELD_SCOPE_MISMATCH') return 'draft_invalid'
   if (errorCode === 'TOOL_TIMEOUT' && (tool.name === 'research_destination' || tool.name === 'web_research')) return 'provider_unavailable'
   if (domainCode === 'PROVIDER_RATE_LIMITED' || domainCode === 'PROVIDER_UNAVAILABLE' || domainCode === 'PROVIDER_TIMEOUT') return 'provider_unavailable'
   if (domainCode === 'TRIP_CONTEXT_VERSION_CONFLICT' || domainCode === 'FLIGHT_SELECTION_CHANGED' || domainCode?.startsWith('ARTIFACT_CONTEXT_VERSION_')) return 'context_conflict'

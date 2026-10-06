@@ -5,6 +5,7 @@ import { canonicalFingerprint } from '../goals/repository.js'
 import { closeGoalRunAttempt } from '../goals/attempt.js'
 import { completeGoal } from '../goals/completion.js'
 import { goalVerificationSchema } from '../goals/verifier.js'
+import { tripContextUpdateGoalParametersSchema } from '../goals/types.js'
 import type { GoalKind } from '../goals/types.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
 import { syncActiveGoalWorkingSet } from '../goals/working-set-observer.js'
@@ -87,6 +88,11 @@ export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, ki
           if (canonicalFingerprint({ kind: goal.kind, parameters: goal.parameters }) !== bound.fingerprint) {
             throw new AppError('GOAL_INTENT_CONFLICT', 'Accepted Goal parameters changed', 409)
           }
+          context.acceptedGoalIntent = { ...bound }
+          if (goal.kind === 'trip_context_update' && run.status === 'running') {
+            context.tripContextUpdateGoalScope = { goalId: goal.id, runId: run.id, contextVersion: run.contextVersion,
+              fields: tripContextUpdateGoalParametersSchema.parse(goal.parameters).fields }
+          } else delete context.tripContextUpdateGoalScope
           if (goal.status === 'cancelled' || goal.status === 'satisfied' || run.status !== 'running') {
             throw new AppError('GOAL_NOT_RUNNABLE', 'The accepted Goal no longer accepts business writes', 409)
           }
@@ -105,6 +111,10 @@ export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, ki
           context.activeGoalContextVersion = run.contextVersion
           context.acceptedGoalIntent = { goalId: goal.id, runId: run.id, kind: goal.kind,
             contextVersion: run.contextVersion, fingerprint: canonicalFingerprint({ kind: goal.kind, parameters: goal.parameters }) }
+          if (goal.kind === 'trip_context_update' && run.status === 'running') {
+            context.tripContextUpdateGoalScope = { goalId: goal.id, runId: run.id, contextVersion: run.contextVersion,
+              fields: tripContextUpdateGoalParametersSchema.parse(goal.parameters).fields }
+          } else delete context.tripContextUpdateGoalScope
           try { checkpoint(context, signal) } catch (error) {
             await closeGoalRunAttempt({ ownerId: context.ownerId, tripId: context.tripId,
               generationId: context.generationId, runs: context.goalRunRepository }, { goalId: goal.id, runId: run.id, status: 'cancelled' })

@@ -5,7 +5,8 @@ import {
   goalRunRecordSchema,
   goalKindSchema,
   type GoalRecord,
-  type GoalRunRecord
+  type GoalRunRecord,
+  tripContextUpdateGoalParametersSchema
 } from '../goals/types.js'
 import type { GoalRepository, GoalRunRepository } from '../goals/repository.js'
 import { goalVerificationSchema, type GoalVerifierRegistry } from '../goals/verifier.js'
@@ -47,6 +48,28 @@ function runMatchesGoal(
     && (contextVersion === undefined || run.contextVersion === contextVersion)
 }
 
+function bindActiveGoal(
+  context: Parameters<NonNullable<AgentTool['execute']>>[1],
+  goal: GoalRecord,
+  run?: GoalRunRecord
+) {
+  context.activeGoalId = goal.id
+  context.activeGoalKind = goal.kind
+  if (run) {
+    context.activeGoalRunId = run.id
+    context.activeGoalContextVersion = run.contextVersion
+  } else {
+    delete context.activeGoalRunId
+    delete context.activeGoalContextVersion
+  }
+  if (goal.kind === 'trip_context_update' && run?.status === 'running'
+    && run.ownerId === owner(context) && run.tripId === context.tripId && run.goalId === goal.id
+    && run.generationId === context.generationId) {
+    context.tripContextUpdateGoalScope = { goalId: goal.id, runId: run.id, contextVersion: run.contextVersion,
+      fields: tripContextUpdateGoalParametersSchema.parse(goal.parameters).fields }
+  } else delete context.tripContextUpdateGoalScope
+}
+
 async function ensureCurrentRun(
   context: Parameters<NonNullable<AgentTool['execute']>>[1],
   goal: GoalRecord,
@@ -77,15 +100,7 @@ async function ensureCurrentRun(
         idempotencyKey: `resume:${context.generationId}`
       })).run
   if (run) await checkRunActivation(context, goal, run, runs, signal)
-  context.activeGoalId = goal.id
-  context.activeGoalKind = goal.kind
-  if (run) {
-    context.activeGoalRunId = run.id
-    context.activeGoalContextVersion = run.contextVersion
-  } else {
-    delete context.activeGoalRunId
-    delete context.activeGoalContextVersion
-  }
+  bindActiveGoal(context, goal, run)
   return run
 }
 
@@ -139,10 +154,7 @@ export const declareGoalTool: AgentTool = {
       idempotencyKey: `generation:${context.generationId}`
     })
     await checkRunActivation(context, created.goal, run.run, runs, signal)
-    context.activeGoalId = created.goal.id
-    context.activeGoalKind = created.goal.kind
-    context.activeGoalRunId = run.run.id
-    context.activeGoalContextVersion = run.run.contextVersion
+    bindActiveGoal(context, created.goal, run.run)
     return { goal: created.goal, run: run.run }
   }
 }
@@ -199,13 +211,18 @@ export const finishGoalTool: AgentTool = {
   async execute(input, context, signal) {
     const { goals, runs, verifiers } = repos(context)
     const goalId = (input as z.infer<typeof goalIdInputSchema>).goalId
-    return completeGoal({
+    const result = await completeGoal({
       ownerId: owner(context), tripId: context.tripId, trips: context.trips,
       artifacts: context.artifacts, goals, runs, verifiers, signal,
       ...(context.selectedFlight ? { selectedFlight: context.selectedFlight } : {}),
       ...(context.assertFlightSelectionCurrent ? { assertFlightSelectionCurrent: context.assertFlightSelectionCurrent } : {}),
       ...(context.isGenerationCurrent ? { isCurrent: context.isGenerationCurrent } : {})
     }, { goalId, ...(context.activeGoalRunId ? { runId: context.activeGoalRunId } : {}), closePartialRun: false })
+    if (context.tripContextUpdateGoalScope?.goalId === goalId
+      && (result.goal.status === 'satisfied' || result.goal.status === 'cancelled' || result.run.status !== 'running')) {
+      delete context.tripContextUpdateGoalScope
+    }
+    return result
   }
 }
 
@@ -234,8 +251,11 @@ export const cancelGoalTool: AgentTool = {
       context.activeGoalKind = result.goal.kind
       context.activeGoalRunId = result.run.id
       context.activeGoalContextVersion = result.run.contextVersion
+      delete context.tripContextUpdateGoalScope
       return result
     }
-    return { goal: await goals.update(goal.id, goal.revision, { status: 'cancelled' }) }
+    const updated = await goals.update(goal.id, goal.revision, { status: 'cancelled' })
+    if (context.tripContextUpdateGoalScope?.goalId === goal.id) delete context.tripContextUpdateGoalScope
+    return { goal: updated }
   }
 }

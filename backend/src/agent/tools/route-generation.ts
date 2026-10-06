@@ -154,6 +154,7 @@ export const searchBudgetRoutesTool: AgentTool<Record<string, never>, z.infer<ty
       context.activeGoalRunId = started.run.goalRunId
       context.activeGoalContextVersion = started.run.contextVersion
       delete context.acceptedGoalIntent
+      delete context.tripContextUpdateGoalScope
 
       parentSignal.throwIfAborted()
       await context.assertFlightSelectionCurrent?.()

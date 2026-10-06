@@ -61,6 +61,7 @@ describe('D6 same-turn controlled Trip update then guide publication', () => {
     const fixture = [
       { tool: 'web_search', args: { queries: [query] } },
       { tool: 'update_trip_context', args: { patch: { budget }, intent: updateIntent } },
+      { tool: 'update_trip_context', args: { patch: {} } },
       { tool: 'commit_travel_guide', args: compactCommit(oldAlias, false) },
       { tool: 'commit_travel_guide', args: compactCommit(oldAlias, true) },
       { tool: 'web_search', args: { queries: [query] } },
@@ -94,8 +95,11 @@ describe('D6 same-turn controlled Trip update then guide publication', () => {
         conversationId: conversation.id, locale: 'en', message: 'Set my whole-trip budget to CNY 1200 and make a one-day cultural guide for Tokyo.' })
       const updates = toolResults.filter(value => value.name === 'update_trip_context')
       const commits = toolResults.filter(value => value.name === 'commit_travel_guide')
-      expect(updates).toHaveLength(1)
+      expect(updates).toHaveLength(2)
       expect(updates[0]!.result).toMatchObject({ completion: { status: 'satisfied' }, acceptedGoal: { kind: 'trip_context_update' } })
+      expect(updates[1]!.result).toMatchObject({ changed: false })
+      expect(updates[1]!.result).not.toHaveProperty('acceptedGoal')
+      expect(updates[1]!.result).not.toHaveProperty('error')
       expect(commits).toHaveLength(3)
       expect(commits[0]!.args.intent).toBeUndefined()
       expect(commits[0]!.result).toMatchObject({ ok: false, error: { code: 'GOAL_INTENT_REQUIRED' } })
@@ -144,6 +148,7 @@ describe('D6 same-turn controlled Trip update then guide publication', () => {
     const owned = new Set([trip.id])
     const conversations = new InMemoryConversationRepository(ownerId, owned)
     const conversation = await conversations.create({ tripId: trip.id })
+    const updateIntent = { kind: 'trip_context_update', parameters: { fields: ['budget', 'notes'] } }
     const commitIntent = { kind: 'travel_guide', parameters: { questions: ['Visit a cultural museum in Tokyo'], researchTypes: ['activity'],
       requiredEvidenceTypes: ['activity'], maxResults: 1, maxCities: 1, allowPartial: true } }
     const args = { intent: commitIntent, candidates: [{ key: 'tokyo-museum', sourceRefs: ['s1.stale.abc1234567.1'],

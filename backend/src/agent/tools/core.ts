@@ -24,6 +24,7 @@ import { withGoalIntent } from './goal-intent.js'
 import { AppError } from '../../lib/errors.js'
 import { applyTripContextPatch } from '../../trips/repository.js'
 import { canonicalFingerprint } from '../goals/repository.js'
+import { tripContextUpdateGoalParametersSchema } from '../goals/types.js'
 
 const emptyObjectSchema = z.object({}).strict()
 const getTripContextOutputSchema = z.object({ tripContext: tripContextSchema }).strict()
@@ -188,6 +189,28 @@ const updateTripContextTool: AgentTool<
     const current = await context.trips.get(context.tripId)
     if (!current) throw new Error('Active trip context was not found')
     const patch = canonicalTripPatch(input.patch, context, current)
+    const acceptedIntent = context.acceptedGoalIntent
+    const goalScope = context.tripContextUpdateGoalScope
+    if (context.activeGoalKind === 'trip_context_update' || acceptedIntent?.kind === 'trip_context_update' || goalScope) {
+      if (!goalScope || context.activeGoalKind !== 'trip_context_update'
+        || context.activeGoalId !== goalScope.goalId || context.activeGoalRunId !== goalScope.runId
+        || context.activeGoalContextVersion !== goalScope.contextVersion
+        || (acceptedIntent && (acceptedIntent.kind !== 'trip_context_update'
+          || acceptedIntent.goalId !== goalScope.goalId || acceptedIntent.runId !== goalScope.runId
+          || acceptedIntent.contextVersion !== goalScope.contextVersion))) {
+        throw new AppError('GOAL_FIELD_SCOPE_MISMATCH', 'A trusted Trip update Goal binding is required before this write', 409)
+      }
+      const allowed = new Set<string>(tripContextUpdateGoalParametersSchema.parse({ fields: goalScope.fields }).fields)
+      const unexpected = Object.entries(patch).filter(([, value]) => value !== undefined)
+        .map(([field]) => field).filter(field => !allowed.has(field))
+      if (unexpected.length) {
+        throw new AppError('GOAL_FIELD_SCOPE_MISMATCH', 'Trip update fields exceed the accepted Goal', 409,
+          { allowedFields: [...allowed].sort(), rejectedFields: unexpected.sort() })
+      }
+      if (current.version !== goalScope.contextVersion) {
+        throw new AppError('TRIP_CONTEXT_VERSION_CONFLICT', 'Trip changed after its update Goal was activated', 409)
+      }
+    }
     if (Object.keys(input.patch).length === 0) {
       return { tripContext: current, changed: false }
     }

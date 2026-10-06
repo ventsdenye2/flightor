@@ -282,6 +282,8 @@ route generation. Tools never supply their own duplicate lineage-write policy.
 
 2026-09-26：同值显式设置通过真实 setter 写入新 Trip 版本后，服务器将实际提交字段的 canonical SHA-256、owner/Trip/run/generation/写入版本作为可选 `tripUpdateReceipt` 保存在既有 Run working set；先独立读回与预期 patch 全量比对。该回执不是模型入参、不修改已接受 Goal 参数。完成验证仅在回执作用域、当前版本及全部请求字段 hash 一致时确认同值更新；完全无回执的历史记录沿用既有字段差异规则；已有回执却scope、版本、值或字段覆盖不匹配则返回pending / trip_update_receipt_stale，不回落差异规则。不能把当前字段存在当作保存完成。取消、版本竞争或 owner 不一致不能生成有效回执；最终完成仍经共享 verifier 与原子 completion。
 
+2026-10-06：存在 `trip_context_update` Goal 时，Trip setter 只接受服务器绑定到当前 Goal/run/context version 的 `parameters.fields`。lean Goal wrapper 在 repository 校验后建立此 scope；legacy `declare_goal`/`resume_goal` 也在验证 owner、Trip、当前 generation 的活动 run 后建立相同 scope，因此合法 legacy 调用保持兼容。仅伪造 active Goal 标识、缺 scope 或身份不匹配仍失败关闭；Trip 在激活后换版本也拒绝旧 scope 写入。任何实际 patch 字段超出 scope 均以 `GOAL_FIELD_SCOPE_MISMATCH` 拒绝，写入前不改变 Trip 或创建更新回执；同轮重提不能扩大字段，改变目标需由后续用户回合建立新 Goal。DSH 完成 setter 转入新 run 时、route-generation 替换 active Goal 时及 Goal 真正终态时会清除旧 scope；`finish_goal` 返回 pending/partial 且 Run 仍 running 时保留 scope 供当前目标继续纠正，取消始终清除。省略字段不算写入，显式 `null`/空数组仍是清除操作；空 patch 保持无写入。字段 scope 是单一 server-owned 内部绑定，不出现在公开 completion 投影。
+
 - Status: **Implemented** (Phase 2 PostgreSQL optimistic concurrency + in-memory test seam)
 - Purpose: Apply explicit, trip-local user constraints and preferences.
 - Date contract: `exact` windows identify one date; `approximate` windows may
@@ -327,8 +329,17 @@ route generation. Tools never supply their own duplicate lineage-write policy.
 - Side effects: None.
 - Cost class: `cheap`.
 - Authority: Aviation provider data normalized by FlightOR.
-- Provider dependencies: Primary `AviationProvider` (AeroDataBox); optional OAG
-  fallback; mock provider in tests.
+- Provider dependencies: Airport and mixed-type requests use the primary
+  `AviationProvider` (AeroDataBox) and optional OAG fallback. An exactly
+  city-only request checks the local FlightOR city directory first; only a local
+  miss can use the configured Nominatim-compatible city resolver. That fallback
+  requires both its endpoint URL and User-Agent.
+- City fallback contract: Nominatim jsonv2 `class` is authoritative when
+  present; `category` is used only when `class` is absent. Only named OSM
+  city/town `place` or `boundary`/`administrative` records with valid OSM
+  identity, city/town address type, country code and finite coordinates are
+  admitted. Names and supplied comma-separated qualifiers must match exactly.
+  The fallback does not handle airports/mixed queries or resolve POIs.
 - Cache behavior: Long-lived normalized cache by query, locale, and provider
   dataset version, subject to provider licence terms.
 - Failure behavior: Empty matches are valid. Provider unavailability, timeout,

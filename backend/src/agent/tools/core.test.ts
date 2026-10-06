@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { randomUUID } from 'node:crypto'
 import { MockAviationProvider } from '../../aviation/providers/mock.js'
 import type { AirportLookupInput } from '../../aviation/providers/provider.js'
 import { MockFareProvider } from '../../fares/providers/mock.js'
@@ -9,6 +10,8 @@ import { createCoreToolRegistry, createPlannerToolRegistry } from './core.js'
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import { InMemoryArtifactRepository } from '../../artifacts/repository.js'
 import { InMemoryUserMemoryRepository } from '../../memory/repository.js'
+import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repository.js'
+import { createDefaultGoalVerifierRegistry } from '../goals/default-verifiers.js'
 import { UnavailableResearchAgent } from '../../research-agent/unavailable.js'
 import { UnavailableConnectionSearchService, UnavailableFlightRoutePlanner, UnavailableRouteOptimizer } from '../../flight-routing/unavailable.js'
 
@@ -42,6 +45,19 @@ function context(): ToolExecutionContext {
     routeOptimizer: new UnavailableRouteOptimizer(),
     resolvedLocationKeys: new Set([locationRefKey(location), locationRefKey(destination)])
   }
+}
+
+async function tripUpdateContext(): Promise<ToolExecutionContext> {
+  const ctx = context()
+  ctx.ownerId = 'user-1'
+  ctx.conversationId = randomUUID()
+  ctx.requestId = randomUUID()
+  ctx.tripContextSnapshot = await ctx.trips.get(ctx.tripId)
+  const goals = new InMemoryGoalRepository(ctx.ownerId)
+  ctx.goalRepository = goals
+  ctx.goalRunRepository = new InMemoryGoalRunRepository(ctx.ownerId, goals)
+  ctx.goalVerifiers = createDefaultGoalVerifierRegistry()
+  return ctx
 }
 
 const call = (id: string, name: string, args: unknown) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } })
@@ -81,7 +97,7 @@ describe('core agent tools', () => {
   it('searches flights and emits a deterministic artifact/provenance', async () => {
     const result = await createCoreToolRegistry().execute(call('fare-1', 'search_flights', { departureDate: fareResult.query.departureDate, currency: fareResult.query.currency, travelClass: fareResult.query.travelClass, origin: 'PVG', destination: 'NRT' }), context(), new AbortController().signal)
     const body = JSON.parse(result.content)
-    expect(result.ok).toBe(true)
+    expect(result.ok, result.content).toBe(true)
     expect(result.artifactIds).toHaveLength(1)
     expect(body.data.artifact.type).toBe('flight_search')
     expect(body.data.summary.provider).toBe('mock-fares')
@@ -147,6 +163,154 @@ describe('core agent tools', () => {
     const conflict = await registry.execute(call('u-2', 'update_trip_context', { patch: { notes: ['stale'] }, expectedVersion: 0 }), ctx, new AbortController().signal)
     expect(conflict.errorCode).toBe('TOOL_FAILURE')
     expect(conflict.content).toContain('Trip context version conflict')
+  })
+
+  it('rejects Trip patch fields outside the accepted Goal without changing Trip or writing a receipt', async () => {
+    const ctx = await tripUpdateContext()
+    const before = await ctx.trips.get(ctx.tripId)
+    const result = await createPlannerToolRegistry({ leanGoalsEnabled: true }).execute(call('goal-update-1', 'update_trip_context', {
+      intent: { kind: 'trip_context_update', parameters: { fields: ['budget'] } },
+      patch: { budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, notes: ['not requested'] }
+    }), ctx, new AbortController().signal)
+
+    expect(result).toMatchObject({ ok: false, domainErrorCode: 'GOAL_FIELD_SCOPE_MISMATCH' })
+    expect(await ctx.trips.get(ctx.tripId)).toEqual(before)
+    const [goal] = await ctx.goalRepository!.listForTrip(ctx.tripId)
+    expect(goal).toBeDefined()
+    const [run] = await ctx.goalRunRepository!.listForGoal(goal!.id)
+    expect(run?.workingSet.tripUpdateReceipt).toBeUndefined()
+    expect(run?.status).toBe('running')
+  })
+
+  it('allows exactly the accepted Trip fields and keeps an empty patch write-free', async () => {
+    const ctx = await tripUpdateContext()
+    const intent = { kind: 'trip_context_update' as const, parameters: { fields: ['budget', 'notes'] } }
+    const registry = createPlannerToolRegistry({ leanGoalsEnabled: true })
+    const result = await registry.execute(call('goal-update-2', 'update_trip_context', {
+      intent, patch: { budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, notes: ['requested'] }
+    }), ctx, new AbortController().signal)
+
+    expect(result.ok).toBe(true)
+    expect(JSON.parse(result.content).data.completion.status).toBe('satisfied')
+    const updated = await ctx.trips.get(ctx.tripId)
+    expect(updated).toMatchObject({ version: 1, budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, notes: ['requested'] })
+    const [goal] = await ctx.goalRepository!.listForTrip(ctx.tripId)
+    const [run] = await ctx.goalRunRepository!.listForGoal(goal!.id)
+    expect(Object.keys(run!.workingSet.tripUpdateReceipt!.fieldHashes).sort()).toEqual(['budget', 'notes'])
+
+    const empty = await tripUpdateContext()
+    const beforeEmpty = await empty.trips.get(empty.tripId)
+    const emptyResult = await createPlannerToolRegistry({ leanGoalsEnabled: true }).execute(call('goal-update-empty', 'update_trip_context', {
+      intent: { kind: 'trip_context_update', parameters: { fields: ['budget'] } }, patch: {}
+    }), empty, new AbortController().signal)
+    expect(emptyResult.ok).toBe(true)
+    expect(JSON.parse(emptyResult.content).data).toMatchObject({ changed: false, completion: { status: 'pending' } })
+    expect(await empty.trips.get(empty.tripId)).toEqual(beforeEmpty)
+    const [emptyGoal] = await empty.goalRepository!.listForTrip(empty.tripId)
+    const [emptyRun] = await empty.goalRunRepository!.listForGoal(emptyGoal!.id)
+    expect(emptyRun?.workingSet.tripUpdateReceipt).toBeUndefined()
+  })
+
+  it('does not allow a same-turn setter correction to expand accepted Goal fields', async () => {
+    const ctx = await tripUpdateContext()
+    const registry = createPlannerToolRegistry({ leanGoalsEnabled: true })
+    const before = await ctx.trips.get(ctx.tripId)
+    await registry.execute(call('goal-update-narrow', 'update_trip_context', {
+      intent: { kind: 'trip_context_update', parameters: { fields: ['budget'] } },
+      patch: { budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, notes: ['not requested'] }
+    }), ctx, new AbortController().signal)
+    const expanded = await registry.execute(call('goal-update-expand', 'update_trip_context', {
+      intent: { kind: 'trip_context_update', parameters: { fields: ['budget', 'notes'] } },
+      patch: { budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, notes: ['not requested'] }
+    }), ctx, new AbortController().signal)
+
+    expect(expanded).toMatchObject({ ok: false, domainErrorCode: 'GOAL_INTENT_CONFLICT' })
+    expect(await ctx.trips.get(ctx.tripId)).toEqual(before)
+    const [goal] = await ctx.goalRepository!.listForTrip(ctx.tripId)
+    const [run] = await ctx.goalRunRepository!.listForGoal(goal!.id)
+    expect(run?.workingSet.tripUpdateReceipt).toBeUndefined()
+  })
+
+  it('fails closed when a legacy active Trip update Goal has no accepted field binding', async () => {
+    const ctx = context()
+    ctx.activeGoalId = randomUUID()
+    ctx.activeGoalKind = 'trip_context_update'
+    const before = await ctx.trips.get(ctx.tripId)
+    const result = await createCoreToolRegistry().execute(call('legacy-goal-update', 'update_trip_context', {
+      patch: { budget: { amount: 1200, currency: 'CNY', scope: 'trip' } }
+    }), ctx, new AbortController().signal)
+
+    expect(result).toMatchObject({ ok: false, domainErrorCode: 'GOAL_FIELD_SCOPE_MISMATCH' })
+    expect(await ctx.trips.get(ctx.tripId)).toEqual(before)
+  })
+
+  it('allows a legacy declare_goal activation to update only its accepted Trip fields', async () => {
+    const ctx = await tripUpdateContext()
+    const registry = createPlannerToolRegistry()
+    const declared = await registry.execute(call('legacy-declare-budget', 'declare_goal', {
+      kind: 'trip_context_update', parameters: { fields: ['budget'] }
+    }), ctx, new AbortController().signal)
+    expect(declared.ok).toBe(true)
+
+    const updated = await registry.execute(call('legacy-set-budget', 'update_trip_context', {
+      patch: { budget: { amount: 1200, currency: 'CNY', scope: 'trip' } }
+    }), ctx, new AbortController().signal)
+
+    expect(updated.ok).toBe(true)
+    expect(await ctx.trips.get(ctx.tripId)).toMatchObject({ version: 1, budget: { amount: 1200, currency: 'CNY', scope: 'trip' } })
+    const [goal] = await ctx.goalRepository!.listForTrip(ctx.tripId)
+    const [run] = await ctx.goalRunRepository!.listForGoal(goal!.id)
+    expect(Object.keys(run!.workingSet.tripUpdateReceipt!.fieldHashes)).toEqual(['budget'])
+    const outsideScope = await registry.execute(call('legacy-set-notes', 'update_trip_context', {
+      patch: { notes: ['out of scope'] }
+    }), ctx, new AbortController().signal)
+    expect(outsideScope).toMatchObject({ ok: false, domainErrorCode: 'GOAL_FIELD_SCOPE_MISMATCH' })
+    expect(await ctx.trips.get(ctx.tripId)).toMatchObject({ version: 1, notes: [] })
+  })
+
+  it('allows a legacy resume_goal activation to update only its persisted Goal fields', async () => {
+    const ctx = await tripUpdateContext()
+    const created = await ctx.goalRepository!.create({ tripId: ctx.tripId, conversationId: ctx.conversationId,
+      kind: 'trip_context_update', parameters: { fields: ['budget'] }, createdContextVersion: 0,
+      idempotencyKey: 'legacy-resume-budget' })
+    const previous = await ctx.goalRunRepository!.create({ goalId: created.goal.id, tripId: ctx.tripId,
+      generationId: 'old-generation', contextVersion: 0, contextSnapshot: await ctx.trips.get(ctx.tripId),
+      idempotencyKey: 'legacy-resume-old-run' })
+    await ctx.goalRunRepository!.update(previous.run.id, previous.run.revision,
+      { status: 'failed', workingSet: previous.run.workingSet })
+
+    const registry = createPlannerToolRegistry()
+    const resumed = await registry.execute(call('legacy-resume-budget', 'resume_goal', { goalId: created.goal.id }), ctx, new AbortController().signal)
+    expect(resumed.ok).toBe(true)
+    const updated = await registry.execute(call('legacy-resumed-set-budget', 'update_trip_context', {
+      patch: { budget: { amount: 1200, currency: 'CNY', scope: 'trip' } }
+    }), ctx, new AbortController().signal)
+
+    expect(updated.ok).toBe(true)
+    expect(await ctx.trips.get(ctx.tripId)).toMatchObject({ version: 1, budget: { amount: 1200, currency: 'CNY', scope: 'trip' } })
+  })
+
+  it('keeps a legacy Trip update scope after finish_goal returns pending on a running attempt', async () => {
+    const ctx = await tripUpdateContext()
+    const registry = createPlannerToolRegistry()
+    expect((await registry.execute(call('legacy-declare-budget-notes', 'declare_goal', {
+      kind: 'trip_context_update', parameters: { fields: ['budget', 'notes'] }
+    }), ctx, new AbortController().signal)).ok).toBe(true)
+    const [goal] = await ctx.goalRepository!.listForTrip(ctx.tripId)
+
+    const finished = await registry.execute(call('legacy-finish-pending-update', 'finish_goal', { goalId: goal!.id }),
+      ctx, new AbortController().signal)
+    expect(finished.ok).toBe(true)
+    expect(JSON.parse(finished.content).data).toMatchObject({
+      verification: { status: 'pending' }, run: { status: 'running' }
+    })
+    expect(ctx.tripContextUpdateGoalScope).toMatchObject({ goalId: goal!.id, fields: ['budget', 'notes'] })
+
+    const updated = await registry.execute(call('legacy-write-after-pending-finish', 'update_trip_context', {
+      patch: { budget: { amount: 1200, currency: 'CNY', scope: 'trip' } }
+    }), ctx, new AbortController().signal)
+    expect(updated.ok).toBe(true)
+    expect(await ctx.trips.get(ctx.tripId)).toMatchObject({ version: 1, budget: { amount: 1200, currency: 'CNY', scope: 'trip' } })
   })
 
   it('does not commit a delayed context mutation after cancellation', async () => {

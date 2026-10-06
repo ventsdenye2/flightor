@@ -255,6 +255,7 @@ export class DshPlannerService implements PlannerServicePort {
               delete context.activeGoalKind
               delete context.activeGoalContextVersion
               delete context.acceptedGoalIntent
+              delete context.tripContextUpdateGoalScope
               delete context.guideDraft
             }
           }
@@ -276,6 +277,14 @@ export class DshPlannerService implements PlannerServicePort {
         } catch (error) {
           executionSignal.throwIfAborted()
           if (isAppError(error) && ['TRIP_CONTEXT_VERSION_CONFLICT', 'FLIGHT_SELECTION_CHANGED'].includes(error.code)) throw error
+          if (name === 'update_trip_context' && isAppError(error) && error.code === 'GOAL_FIELD_SCOPE_MISMATCH') {
+            const details = error.details && typeof error.details === 'object' && !Array.isArray(error.details)
+              ? error.details as Record<string, unknown> : {}
+            return { ok: false, error: { code: error.code,
+              instruction: 'Submit only patch fields listed in the accepted trip_context_update Goal. Keep its intent and immutable fields unchanged.',
+              ...(Array.isArray(details.allowedFields) ? { allowedFields: details.allowedFields.filter((field): field is string => typeof field === 'string') } : {}),
+              ...(Array.isArray(details.rejectedFields) ? { rejectedFields: details.rejectedFields.filter((field): field is string => typeof field === 'string') } : {}) } }
+          }
           // Only this server-owned revision error may expose its actionable message to the model.
           // Arbitrary provider/runtime messages remain withheld, and no tool error is public prose.
           if (name === 'commit_travel_guide') {
