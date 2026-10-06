@@ -29,6 +29,7 @@ dist-h5/
 dist-h5-d6-*/
 dist-h5-replay/
 dist-weapp-demo/
+dist-weapp-d6-*/
 output/playwright/
 output/weapp/
 tools/demo-video/public/*.wav

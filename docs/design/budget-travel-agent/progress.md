@@ -1,5 +1,9 @@
 # 当前进度与验证
 
+## 2026-10-06：r9a B01 真实 H5 选择器修正
+
+r9 在 H5 Webpack setup 遇 Windows `spawn EPERM`，Provider 调用0，run/schema保留；获准同一本地子进程后另启 r9a，未覆盖 r9。r9a首次发送97ms受理，通用`.pl-result`成果卡67.071s首次可见，终态70.760s；这些不是可读accepted攻略计时。运行结算12次model/5次search、pending0，费用回执未知。首轮已产出accepted两日/7活动攻略，所有活动详情均已读取；失败发生在 runner `inspect-latest-result` 查找 demo 专用 `返回行程概览`，实际生产 published header 使用 `trip.back`（中文`返回`、英文`Back`），同一箭头按当前 tab 返回概览或触发宿主返回。故为 harness selector failure，不是产品导航失败或旅程PASS；解释/局改未运行。修正 runner helper 与 B11 的四处选择器，保留 overview 与可见 Planner 等待；`node scripts/test-production-presentation.cjs` 转译并运行实际PublishedTripExperience，检查中英accessible label、days→overview→onBack两步行为及B11目标页等待。runner新增独立accepted攻略可读时刻：当前route与accepted travel_guide ID绑定且全部活动详情读取后记录；交互澄清 checkpoint也按同一Artifact关联到真实生成turn，无法可靠对应submit时duration为null，原submit→terminal保留。r9a TTY正常关闭：无 server.lock、guard审计恰一条关闭、PID退出、API/H5端口关闭；D6 ledger pending0、历史 ledger SHA未变。未证明同run cold resume；r9a不是最终冻结源码/构建。原失败报告未改。详情见[D6验收台账](DSH_D6_ACCEPTANCE.md)与[H5 harness](DSH_D6_HARNESS.md)。
+
 ## 2026-10-06 D6当前实施
 
 2026-10-06 D6-16：B01 r8 只读故障定位发现，已接受 Goal 的 `researchTypes` 不含候选 `event` 时，旧适配器抛出的普通异常被误分类为 `DSH_TOOL_FAILURE`。提交现在在证据转换前按 Goal 类别范围拒绝越界候选，并返回受控字段位置；修复仅作为参数纠正，不消耗内容修订额度，不自动重分类/删除候选/扩大 Goal，反馈不包含被拒类别值或来源正文。`commit-guide.test.ts` 与 `commit-recovery.test.ts` 定向2文件/44项通过，backend `npm run check` 通过；日志及完整 r8 证据边界见 [D6验收](DSH_D6_ACCEPTANCE.md)。未进行真实模型、搜索、票价重试；最终 H5 与冻结 12+4 仍待完成。

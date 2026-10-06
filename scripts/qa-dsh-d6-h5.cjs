@@ -112,6 +112,12 @@ const visibleChoiceCandidates = async (page, selector) => {
   }
   return values
 }
+const clickPublishedHeaderBack = async (page, destinationSelector, timeoutMs) => {
+  const back = page.locator('.ux-published .ux-header .ux-icon-button')
+    .and(page.getByRole('button', { name: /^(返回|Back)$/, exact: true }))
+  await back.click({ timeout: timeoutMs })
+  await page.locator(destinationSelector).waitFor({ state: 'visible', timeout: timeoutMs })
+}
 const chooseVisibleOption = async (page, action, record) => {
   assert.ok(interactive, 'operatorChoice requires --interactive so a human can select a visible option')
   const choices = await visibleChoiceCandidates(page, action.selector)
@@ -281,17 +287,36 @@ const readEveryActivityDetail = async (page, record, timeoutMs) => {
   assert.ok(details.length > 0, 'Published trip contains no activity detail sheets to inspect')
   record.detailCoverage = { dayCount, activityCount: details.length, activities: details }
 }
+const recordAcceptedGuideReadability = async (page, record) => {
+  await page.locator('.ux-published .ux-publication-state--accepted').waitFor({ state: 'visible', timeout: 30000 })
+  const currentArtifactId = new URLSearchParams(page.url().split('?').slice(1).join('?')).get('artifactId')
+  const openedArtifactId = record.openedArtifactId || [...report.actions].reverse().find(item => item.openedArtifactId)?.openedArtifactId
+  assert.ok(currentArtifactId && openedArtifactId, 'Readable guide timing requires the current published Artifact route')
+  assert.equal(currentArtifactId, openedArtifactId, 'Readable guide timing route changed before activity details were read')
+  assert.ok(record.detailCoverage?.activityCount > 0, 'Readable guide timing requires every activity detail to be read')
+  const sourceActions = [
+    ...report.actions,
+    ...(report.interactiveCheckpoints || []).flatMap(checkpoint => checkpoint.actions || [])
+  ]
+  const source = sourceActions.reverse().find(item => item.acceptedArtifactRefs?.some(ref => ref.type === 'travel_guide' && ref.id === currentArtifactId))
+  record.acceptedGuideArtifactId = currentArtifactId
+  record.acceptedGuideReadableAtMs = elapsed()
+  record.acceptedGuideReadableObservation = 'accepted publication visible, current route matched the opened Artifact, and every activity detail sheet was read'
+  record.acceptedGuideTripId = source?.tripId || null
+  record.acceptedGuideTurnId = source?.turnId || null
+  record.acceptedGuideReferenceObserved = Boolean(source)
+  record.submitToAcceptedGuideReadableMs = source && Number.isFinite(source.submitAtMs)
+    ? record.acceptedGuideReadableAtMs - source.submitAtMs : null
+  record.acceptedGuideReadableTiming = source && Number.isFinite(source.submitAtMs) ? 'measured-from-matching-accepted-guide-turn' : 'unknown-source-turn'
+}
 const inspectLatestAcceptedResult = async (page, action, record) => {
   await openVisibleLatestResult(page, action, record)
   await page.locator('.ux-published .ux-publication-state--accepted').waitFor({ state: 'visible', timeout: action.timeoutMs || 30000 })
   await readEveryActivityDetail(page, record, action.timeoutMs || 15000)
-  const returnToOverview = page.locator('.ux-published .ux-header .ux-icon-button').and(page.getByRole('button', { name: '返回行程概览', exact: true }))
-  await returnToOverview.click({ timeout: action.timeoutMs || 10000 })
-  await page.locator('.ux-published .ux-overview').waitFor({ state: 'visible', timeout: action.timeoutMs || 15000 })
+  await recordAcceptedGuideReadability(page, record)
+  await clickPublishedHeaderBack(page, '.ux-published .ux-overview', action.timeoutMs || 15000)
   record.overviewText = (await page.locator('.ux-published .ux-overview').innerText()).trim()
-  const returnToPlanner = page.locator('.ux-published .ux-header .ux-icon-button').and(page.getByRole('button', { name: '返回上一页', exact: true }))
-  await returnToPlanner.click({ timeout: action.timeoutMs || 10000 })
-  await page.locator('.pl-result:visible').waitFor({ state: 'visible', timeout: action.timeoutMs || 15000 })
+  await clickPublishedHeaderBack(page, '.pl-result:visible', action.timeoutMs || 15000)
   record.returnedToPlanner = true
 }
 const waitForReadablePage = async (page, action) => {
@@ -607,6 +632,12 @@ async function run() {
           assert.ok(typeof action.ariaLabel === 'string' && action.ariaLabel.length < 160, 'ariaLabel must be bounded')
           target = target.and(page.getByRole('button', { name: action.ariaLabel, exact: true }))
         }
+        if (action.ariaLabels) {
+          assert.ok(Array.isArray(action.ariaLabels) && action.ariaLabels.length > 0
+            && action.ariaLabels.every(label => typeof label === 'string' && label.length > 0 && label.length < 160), 'ariaLabels must be a bounded non-empty string list')
+          const labels = action.ariaLabels.map(label => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+          target = target.and(page.getByRole('button', { name: new RegExp(`^(?:${labels})$`), exact: true }))
+        }
         }
         const awaitTerminal = action.awaitTerminal === true
         const previousResults = await visibleResultTexts(page)
@@ -707,9 +738,16 @@ async function run() {
           continue
         }
         await readEveryActivityDetail(page, record, action.timeoutMs || 15000)
+        await recordAcceptedGuideReadability(page, record)
       } else if (action.type === 'new-trip') {
-        const label = action.textExact || (locale === 'en' ? 'New trip' : '新旅行')
-        await page.getByText(label, { exact: true }).filter({ visible: true }).last().click({ timeout: action.timeoutMs || 10000 })
+        const labels = action.textExact ? [action.textExact] : ['新旅行', 'New trip']
+        let newTripControl
+        for (const label of labels) {
+          const candidate = page.getByText(label, { exact: true }).filter({ visible: true })
+          if (await candidate.count()) { newTripControl = candidate.last(); break }
+        }
+        assert.ok(newTripControl, 'No visible localized New trip control was found')
+        await newTripControl.click({ timeout: action.timeoutMs || 10000 })
         await plannerComposer.waitFor({ state: 'visible', timeout: 15000 })
         record.tripReset = 'visible Planner New trip control clicked; no Trip/conversation state injected'
       } else if (action.type === 'reload') {

@@ -309,6 +309,56 @@ check('active planner receives the latest progress and removes it when finished'
   h.render()
   assert.equal(h.nodes().filter(node => node.type === 'PlannerProgress').length, 0)
 })
+function publishedTripHarness(locale) {
+  const slots = []
+  let cursor = 0, dirty = false, tree, backCount = 0
+  const hooks = {
+    useState(initial) {
+      const index = cursor++
+      if (!(index in slots)) slots[index] = initial
+      return [slots[index], value => {
+        const next = typeof value === 'function' ? value(slots[index]) : value
+        if (!Object.is(next, slots[index])) { slots[index] = next; dirty = true }
+      }]
+    },
+    useEffect() {}
+  }
+  const componentFile = path.join(root, 'src/features/ui-experience/PublishedTripExperience.tsx')
+  const output = ts.transpileModule(fs.readFileSync(componentFile, 'utf8'), { compilerOptions: {
+    target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX
+  } }).outputText
+  const componentModule = { exports: {} }
+  vm.runInNewContext(output, { module: componentModule, exports: componentModule.exports, require: dependency => {
+    if (dependency === 'react') return hooks
+    if (dependency === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }), Fragment: 'Fragment' }
+    if (dependency === '@tarojs/components') return Object.fromEntries(['Button', 'Text', 'View'].map(name => [name, name]))
+    if (dependency === '../../i18n') return { localeStore: { setLocale() {} } }
+    if (dependency.endsWith('/i18n/trip')) return tripCopy.exports
+    if (dependency === './DayPlan' || dependency === './FlightTicket') return { [dependency === './DayPlan' ? 'DayPlan' : 'FlightTicket']: dependency }
+    if (dependency === './VisualMedia') return { Icon: 'Icon', Photo: 'Photo' }
+    if (dependency === '../maps/TripMap') return { default: 'TripMap' }
+    throw new Error(`Unexpected published-trip dependency: ${dependency}`)
+  } }, { filename: componentFile })
+  const trip = { id: 'trip-1', locale, destination: 'Tokyo', route: ['Tokyo'], dates: { start: null, end: null }, durationDays: 2,
+    publication: { status: 'accepted', artifactId: 'guide-1', contentVersion: 'hash', issues: [] }, flightArrangement: 'self_provided', flights: [],
+    days: [{ id: 'day-1', label: locale === 'zh' ? '第1天' : 'Day 1', title: 'Tokyo', activities: [] }], risks: [], sources: [], description: 'Accepted trip' }
+  const props = { trip, initialTab: 'days', onBack: () => { backCount += 1 } }
+  function render() {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      dirty = false; cursor = 0
+      tree = componentModule.exports.default(props)
+      if (!dirty) return tree
+    }
+    throw new Error('Published trip render did not settle')
+  }
+  function nodes(value = tree) {
+    if (!value || typeof value !== 'object') return []
+    if (Array.isArray(value)) return value.flatMap(item => nodes(item ?? null))
+    return [value, ...nodes(value.props?.children ?? null)]
+  }
+  render()
+  return { nodes, render, get backCount() { return backCount } }
+}
 function productionServiceHarness(artifacts, workspaceValue, readPlaces=async()=>undefined) {
   const serviceFile = path.join(root, 'src/services/productionTripService.ts')
   const output = ts.transpileModule(fs.readFileSync(serviceFile, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText
@@ -329,6 +379,32 @@ function productionServiceHarness(artifacts, workspaceValue, readPlaces=async()=
 }
 
 ;(async () => {
+  await checkAsync('published header uses locale trip.back and returns days to overview then invokes onBack', async () => {
+    for (const locale of ['zh', 'en']) {
+      const harness = publishedTripHarness(locale)
+      const backLabel = locale === 'zh' ? '返回' : 'Back'
+      const findBack = () => harness.nodes().find(node => node.type === 'Button'
+        && node.props.className === 'ux-icon-button' && node.props.ariaLabel === backLabel)
+      let back = findBack()
+      assert.ok(back, `Published header should expose ${backLabel} for ${locale}`)
+      back.props.onClick()
+      harness.render()
+      assert.ok(harness.nodes().some(node => node.props?.className === 'ux-overview'), `${locale} back from days should render overview`)
+      assert.equal(harness.backCount, 0, 'Tab-to-overview must not invoke the host callback')
+      back = findBack()
+      assert.ok(back, `Overview should retain ${backLabel} for ${locale}`)
+      back.props.onClick()
+      assert.equal(harness.backCount, 1, 'Overview back should invoke the host callback')
+    }
+    const journeys = JSON.parse(fs.readFileSync('docs/design/budget-travel-agent/d6-journeys.json', 'utf8'))
+    const b11 = journeys.journeys.find(journey => journey.id === 'B11')
+    const backActions = b11.actions.filter(action => action.type === 'click' && action.selector === '.ux-published .ux-header .ux-icon-button')
+    assert.equal(backActions.length, 4)
+    assert.ok(backActions.every(action => JSON.stringify(action.ariaLabels) === JSON.stringify(['返回', 'Back'])))
+    assert.deepEqual(backActions.map(action => action.waitFor?.selectorsVisible?.[0]), [
+      '.ux-published .ux-overview', '.pl-result:visible', '.ux-published .ux-overview', '.pl-result:visible'
+    ])
+  })
   const selectedRoute = { ...routeArtifact, payload: { ...route, tripContextVersion: 4 } }
   const exact = productionServiceHarness({ 'route-1': selectedRoute, 'route-set-1': savedRouteArtifact }, savedWorkspace)
   const exactResult = await exact.load('route-1', {})
