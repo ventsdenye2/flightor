@@ -1,5 +1,9 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 r20同冻结版本完整工程通过：backend138文件1420/1420（202.09秒）、真实专用PG52/52（54.92秒）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端六族116/20/37/52/29/86及根TS、H5/weapp构建。正式固定回放10对两版均accepted、语义一致、0模型/外呼；总P50基线11.158ms/D613.782ms、adapter0.452ms，增加2.624ms保留全部样本，正在只读定位、不宣称提速。源码c1853ad及实际构建/参数不变；原12+4真实390×844 H5从B01开始（TTY98023），尚未通过。D6未PASS、无确认硬阻塞，原失败/DB/会话/账本保留。
+
+2026-10-07 r20冻结源码c1853ad：新run2ef9cfb7-c7d1-4114-aa87-5bcb6cd6a4f4，API61341/H549895、PID113804/TTY83280，目录backend/.demo/dsh-d6-runtime/d6-final-r20；实际构建及783文件副本核对一致。PG52/52、D5本地fixture30/30且指纹不变、runtime14/14、observer1/1、前端116/20/37/52/29/86及根TS、check/build、H5/weapp构建通过；完整backend仍在运行，原12+4真实390×844 H5未启动，0新真实调用。详细边界见[D6冻结验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)，D6未PASS，未部署。
+
 2026-10-07 当前r20修复已通过定向：后端313/313、最终预算241/241、真实专用PG3/3、check/build/observer1/1；前端303项及根TS；H5 helper19/19。r19真实B01仍FAIL：189.534秒初稿accepted但预算范围收窄，54.451秒局改partial，旧页面及runner读取旧稿造成误判。服务已关闭、原DB/会话/账本保留；累计USD26.92未知预留，非实付。r20需新冻结完整工程和原12+4真实390×844 H5，D6未PASS、无确认硬阻塞。单主DeepSeek/权限/版本/证据/发布门槛不变，未push/合并/部署；详细原证据及问题D6-38–41见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。以下为历史快照。
 
 2026-10-07 r19同冻结版完整工程通过：backend1390/1390、真实专用PG52/52（48.96秒，原随机schema套件）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端113/20/37/52及根TypeScript、H5/weapp构建。runtime首次sandbox spawn EPERM未收集业务断言，原日志保留，允许本地子进程后原配置14/14通过。固定回放两批各10对均accepted/语义一致/0模型与外部调用；首批总P50 9.916→12.485ms，quiet复核10.144→12.805ms，adapter0.348ms，约2.6ms增加两批均保留，正在有界只读定位、不宣称提速。冻结source及参数不变，原12+4真实390×844 H5从B01启动；D6未PASS、无确认硬阻塞。只读PG诊断用一次性忽略脚本`backend/.demo/d6/read-current-trip.mjs`，验证run/schema一致后BEGIN READ ONLY，原报告/数据库/账本不改写。

@@ -1,5 +1,7 @@
 # DSH D6 工程计划
 
+2026-10-07 r20同冻结版本完整工程通过：backend138文件1420/1420（202.09秒）、真实专用PG52/52（54.92秒）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端六族116/20/37/52/29/86及根TS、H5/weapp构建。正式固定回放10对两版均accepted、语义一致、0模型/外呼；总P50基线11.158ms/D613.782ms、adapter0.452ms，增加2.624ms保留全部样本，正在只读定位、不宣称提速。源码c1853ad及实际构建/参数不变；原12+4真实390×844 H5从B01开始（TTY98023），尚未通过。D6未PASS、无确认硬阻塞，原失败/DB/会话/账本保留。
+
 2026-10-07 当前r20收尾：r19完整工程虽通过，真实B01因预算范围、局改完整finding上限及旧回复/runner假阳性FAIL，已关闭隔离服务并保留全部材料。D6-38–41修复及定向验证已完成；下一步本地提交、r20实际源码/构建/配置冻结，再同版完整backend/真实PG/D5/runtime/前端/TS/双构建与原12+4真实手机尺寸H5。标准v1、原旅程输入与分母、日期及产品参数不变。尚未PASS、无确认硬阻塞；详见[D6验收](DSH_D6_ACCEPTANCE.md)，以下为历史计划快照。
 
 2026-10-07 r19同冻结版完整工程通过：backend1390/1390、真实专用PG52/52（48.96秒，原随机schema套件）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端113/20/37/52及根TypeScript、H5/weapp构建。runtime首次sandbox spawn EPERM未收集业务断言，原日志保留，允许本地子进程后原配置14/14通过。固定回放两批各10对均accepted/语义一致/0模型与外部调用；首批总P50 9.916→12.485ms，quiet复核10.144→12.805ms，adapter0.348ms，约2.6ms增加两批均保留，正在有界只读定位、不宣称提速。冻结source及参数不变，原12+4真实390×844 H5从B01启动；D6未PASS、无确认硬阻塞。只读PG诊断用一次性忽略脚本`backend/.demo/d6/read-current-trip.mjs`，验证run/schema一致后BEGIN READ ONLY，原报告/数据库/账本不改写。
