@@ -1,8 +1,10 @@
 # DSH D6 冻结验收与结果
 
-标准 v1：2026-10-06（Asia/Shanghai），业务代码修改前冻结。状态：实施与迭代验证中，最终 UI 批次未运行；不能引用 D5/D4 的旧通过数替代。计划与当前授权见 [工程计划](DSH_D6_ENGINEERING_PLAN.md)。标准修订保留原版、理由和分母影响。
+标准 v1：2026-10-06（Asia/Shanghai），业务代码修改前冻结。状态：实施与迭代验证中，候选冻结批次r11已在B01失败，最终合格 UI 批次尚未完成；不能引用 D5/D4 的旧通过数替代。计划与当前授权见 [工程计划](DSH_D6_ENGINEERING_PLAN.md)。标准修订保留原版、理由和分母影响。
 
 ## A：确定性与真实持久化
+
+2026-10-06 r11 完整工程保留失败：backend1223/1224，cloud-state授权单例触及5秒测试时限，原文件单独复验3/3；真实专用PG50/51，Goal持久化文件单独仍11/12。PG的同值setter fixture只手工设置active Goal IDs，缺少D6-14要求的真实服务器激活范围，写前正确以GOAL_FIELD_SCOPE_MISMATCH拒绝。原测试改为先检查未激活零写，再通过真实`resume_goal`工具绑定已接受同generation run，然后保留原持久回执、fresh repository与stale proof断言；不手填scope，不修改产品保护。修改后 `npm run test:db -- src/agent/goals/postgres.integration.test.ts` 在真实专用PG定向12/12通过（10.38秒）；完整PG复验已11文件51/51通过（95.35秒），最终冻结完整套仍待完成。D5本版30/30、runtime14/14、前端4族/根TypeScript及weapp构建通过，不能掩盖两个原完整suite失败，也不能替代H5旅程。
 
 2026-10-06 D6-17 / r10 提交反馈修复：原session的五次commit依次为缺8个category、未接受Goal却省略intent、三天安排违反两天Trip并含精确耗时、只交text而缺days、最后两天安排被参数纠正上限拒绝。category缺失现在列出原枚举和字段；反馈读取现有context的Goal接受状态，未接受则保留真实首次intent，已接受则省略并保持Goal；日覆盖返回从准备Trip派生的预期天数/提交日序/日期窗口，完整重提days和text，同时保留来源重复与精确文字纠正。不自动补语义、截断天数或增加任何额度。
 
@@ -24,6 +26,8 @@
 执行：实际 package.json 的 backend check/build/test/test:db；DSH runtime 独立测试及 D5 runner；前端 conversation-progress、session-recovery、artifacts、production-presentation；H5/weapp build；docs 检查和 diff --check。先审查出站边界，PostgreSQL 使用独立 loopback 数据库/schema，不访问 public 业务数据。每次命令/分母/结果及未运行边界追加到本报告。
 
 ## B：最终真实 UI 固定旅程
+
+2026-10-06 真实交互前冻结候选完整批次 r11：源码提交 `57d2c1b`，工作树核心源码指纹 `b3225344c05ce07b81121494f8e2e036cd395a2678a0793fefb35ba3dc3d6151`，backend构建 `58ae2a14c2c79036ff9fc68706512ccf7ef29de13a99a52da3afaebb8a65bf1d`，H5构建 `f5c0f88764e57565c462cc596ab98c49d6a23865d3416e2f7d0bf06e1e499181`。run `13d1f214-6ee4-4a55-a190-7070b7cb1542` 保存于私有 `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r11`；API56227/H559502，TTY14746。配置仍为deepseek-v4-flash / deepseek-official / thinking disabled / max_tokens8192，SerpAPI只用本轮授权既有余额，逐次计量；手机viewport390×844。本批从原B01开始，全部12固定+4探索及完整工程回归须在相同版本完成；任何源码/核心配置修改立即使整批失效，不保留成功例凑分母。当前尚无旅程通过声明。
 
 冻结日期使用 2026-11-03 至 2026-11-09 的未来窗口，不随运行日漂移。北京出发单程范围为 2026-11-03 至 2026-11-05；需要澄清时如实记录，禁止教产品工具协议。最终总分母12；生成样本与澄清/停止类分开统计。初始身份使用项目合法本地测试登录，其余创建行程/消息/采用航班/详情/停止/刷新/重进均 UI；不注入攻略，不 mock 最终真实 Provider。
 
@@ -53,6 +57,20 @@
 E01 模糊但合理的“想找安静的文化城市”推荐与连续追问；E02 中途改变旅行主意和目的地；E03 陌生合理目的地塔林 2026-11-03 至 06 的四日需求；E04 推荐→只读解释→明确选择→规划的连续对话。开始前记录自然输入，探索与修复回归分开统计。要求没有未解决阻塞级问题，不能改测试提示词教 Agent 内部字段。
 
 ## C：判定、证据与平台
+
+2026-10-06 r11 候选批次已失败，保留原件 `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r11/evidence/B01-2026-10-06T08-37-21-687Z.json`：真实手机实测viewport/screen均390×844，Chrome默认UA，非微信设备仿真。首发送114ms受理、64982ms终态，accepted攻略两天6项；匹配当前Artifact并逐活动读完详情后可读计时69488ms。随后runner在header返回按钮的CSS宿主与`getByRole(button, name=返回|Back)`相交定位超时，故解释、局改、刷新仍未执行，完整B01及本批12+4均不通过。正在核对真实编译后DOM；不能只凭组件props、API/Goal satisfied或此次首成果宣布修复或验收通过。
+
+同scope只读数据库确认一份accepted攻略，Trip日期2026-11-03至04、两天、Tokyo、relaxed、全程CNY1200；11model/3search/6fetch/0fare，14条费用回执全部结算/pending0，预留USD0.80、实际费用未知。含4条available来源的后续正文/语义联合评阅见下。连同此前D6迭代累计110model/46search/0fare、预留USD9.92，不把未知预留写成已付费用。当前r11服务仍运行，禁止重发本次B01来掩盖失败；先做零Provider导航定位再修复。此前r10失败及冻结指纹保留。
+
+2026-10-06 r11 逐引用内容评阅：按提交的实际 `sourceRefs`→原始evidence记录→已抓正文核对，未按相同URL合并证据。仲见世、Hoppy通、谷中银座、阿美横丁共用的街头饮食文章确有各地点材料；明治神宫的JNTO正文有对应地点。浅草寺/雷门候选却绑定到GO TOKYO通用景点分类页，其实际4768字正文不含该地点或相关寺庙内容，是已确认的来源覆盖缺口，accepted/Goal satisfied不构成内容通过。第二天跨区较多；“边逛边吃”与停下进食提醒、以及“住宿与较大额开销另行安排”相对全程预算有表述歧义，尚不把这些判断写成已确认数据错误。预算结构仍为全程1200、未验证可负担，人数及费用涵盖未明确。r11两次web_fetch确实请求同一JNTO URL且正文hash相同，是本轮真实重复抓取；r10所有fetch URL均独一，不能把r11证据反推为r10重复。正在定位最小修复与回归，未新增Provider调用；完整B01保持失败。
+
+D6-18：针对r11确证的同URL重复抓取，新增真实安全reader/受控HTTP定向回归 `fetch-reuse.test.ts`：要求同准备轮次精确URL并发仅一次HTTP，后续调用复用原receipt/hash/retrievedAt；403不缓存，URL查询参数、generation和Trip version不同不共享。第二个并发工具结果标 `sharedFetch`，区别于已有receipt命中 `cacheHit`；各调用保留取消检查，启动reader的signal控制实际请求，取消的非owner等待者不产生receipt或停止owner请求。它不代表语义验证，也不宣称跨轮通用网页缓存。
+
+D6-18红绿记录：首次沙箱esbuild spawn EPERM未执行测试；允许已授权本地测试子进程后，原真实reader回归修前1失败/1通过，失败明确为精确同URL发生两次HTTP。并发扩展回归也先复现一次调用发出两次HTTP；修复后 `fetch-reuse.test.ts` 5/5通过，覆盖并发共享结果/receipt身份与时间/hash、失败和scope隔离、共享等待者取消不写receipt，以及owner取消会中止共享reader并允许重试。先前 `fetch-reuse/web/evidence/evidence-file`四文件23/23通过（11.51秒），backend check通过；主service/worker与web/reuse联合19/19通过（11.38秒），backend build通过；observer官方fixture worker审计1/1通过（1.42秒），当时只核对cacheHit布尔值且正文/私钥/URL查询不泄露。共享中的 `sharedFetch` observer allowlist与fixture复验由本批后续完成；不得将并发工具调用数等同真实HTTP数。真实新冻结批次尚未开始。真实PG完整复验11文件51/51通过（95.35秒，`output/d6/postgres-r11-fixture-recheck.log`），原r11 50/51保留，不冒称最终同版整批通过。
+
+D6-19：r11通用GO TOKYO正文已经完整交给主模型，缺陷是具体候选与来源的语义选择。现有主模型tool/persona合同明确逐候选检查正文，不以城市目录/URL标题/权威标签替代具体地点支持；正文仅提名字不支持额外菜品设施规则。缺口针对研究或选有支持的活动，保留原天数和兴趣；全程预算不能自行排除住宿及大项。没有新增字段、第二模型或字符串词典“证明”语义。旧r11 accepted攻略仍有来源覆盖缺口，修后真实内容行为须新批次再验，不凭静态提示词单测声称改善。
+
+D6-18并发扩展后联合回归：`fetch-reuse/web/evidence/evidence-file/service`五文件33/33通过（17.66秒，`output/d6/d6-18-expanded-green.log`），当前check/build通过；sharedFetch与cacheHit的observer官方fixture worker审计1/1通过（1.26秒，`output/d6/d6-18-shared-observer-green.log`）。受控HTTP并发证明一份read与原receipt；取消原始reader会使shared请求失败且可后续重试，取消非发起waiter只拒绝自己。源地址/DNS检查可在HTTP前失败，不能将新reader尝试数自动等同实际HTTP。真实新完整冻结批次尚未启动。
 
 生成必须有实际可读、可恢复的 accepted 攻略，日期/航班/日程覆盖/预算/偏好/编辑范围符合要求；无错误日期、伪造来源、无依据价格或预算保证。全页面和详情人工评阅，保存截图/可见文字/network/console/只读DB/日志。API200、worker完成、delivery均不能单独判PASS。
 
@@ -178,3 +196,13 @@ D6-06定向修复后，commit反馈与受控setter批次2文件/9项通过（`ou
 2026-10-06 用户明确回复“暂时不用验收微信小程序内的内容，先验证H5”。本轮平台验收范围调整为H5；原v1微信条件和CLI关闭实测保留，微信页面不执行、不宣布PASS，也不开服务端口。A八类、PG、D5分母30、H5固定12+探索4与内容/恢复标准不变，weapp构建只列工程验证。此为用户范围指令，不是因测试失败降低H5标准。
 
 2026-10-06 B01 官方 web_search evidence 合同只读核查：5次搜索均成功，但5个 `__record_web` 回执均为空。私有 evidence 目录36行中，30条搜索来源为29 `no_body`（安全 URL、无 snippet）和1 `invalid_url`（非 HTTP(S) 地址）；其余6条来自web_fetch，均为 `available/fetched_body` 并返回 refs。锁定 DSH 工具将官方结构化 sources 保留在 canonical `value.sources`，运行时已将该值传给记录器；DeepSeek 官方 provider 可在缺少 text citation 时返回 URL/title 而没有 snippet。零搜索 refs 符合“无可引用正文不成为证据”的合同，不是当前B01未接纳的根因修复或验收通过；需按证据/地点文档所述尽早fetch正文、被阻则换来源。运行材料仍只保留在私有 `backend/.demo/dsh-d6-runtime/d6-iteration-b01`，未复制或提交原始记录。
+
+2026-10-06 r11 header-back failure diagnosis and bounded recheck: the original H5 journey opened accepted guide `01a1105d-3228-751e-8832-c1c9963ac327`, then timed out in `clickPublishedHeaderBack` before later actions. On the same guide through visible Profile login and My Trips, DOM evidence records CSS host count 1, exact role count 0, header-scoped role count 0, and `.and()` intersection count 0. The host is `<taro-button-core aria-label="返回">` with no explicit role; the selector failure is in the runner's role-based intersection, not product back behavior. The runner now filters visible CSS candidates and intersects them with exact `[aria-label]` selectors for header and generic label actions. `node --check` passed, and the actual helper loaded from the changed runner source successfully navigated days → overview → the visible My Trips card on the same accepted guide. The navigation emitted the expected local-login POST and no agent-turn POST; all subsequent trip/workspace/artifact/media/places requests were GET-only. The saved-conversation route showed no visible `.pl-result`, so the separate Planner destination wait remains unverified. Original r11 report and timeout are preserved as failed; this recheck is not a frozen-journey PASS. Private DOM JSON and 390×844 screenshots are retained under `backend/.demo/d6/` and `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r11/private/`.
+
+2026-10-06 r11 saved-conversation return follow-up supersedes the preceding “Planner destination wait remains unverified” observation: visible My Trips navigation selected conversation `01a1105c-42a3-71c8-9c0b-c5d1992247e1`; its conversation-scoped workspace GET returned HTTP 200 with two messages and the accepted guide ref `01a1105d-3228-751e-8832-c1c9963ac327`. Once settled, Planner showed the restored assistant reply and exactly one visible `.pl-result`; returning from that guide ended at `#/pages/plan/index` with `.ux-published:visible` hidden. A second runner-source diagnostic exercised generic click `waitFor` with both the hidden published route and visible result requirements. Only visible local login used POST; no agent-turn/business POST occurred, and the r11 D6 ledger hash stayed `59f00752eed459a72acc7ba0867d923ae59da974f8429982f3bf1ce2105c62ed`. Private settled-state evidence is `backend/.demo/d6/r11-planner-return-settled.json`; generic-click report and screenshots are under `backend/.demo/d6/r11-generic-click-wait/`. This is bounded read-only recovery/runner evidence, not a frozen B11 journey pass; the original r11 timeout remains failed.
+
+### D6-20：Artifact 恢复公开错误边界
+
+已复现的 r11 现象为：390×844 H5 恢复原 saved conversation 时，迟到 Artifact GET 先显示“本次规划未完成 / Artifact request was superseded”，约700ms后恢复原 accepted 卡片。根因为 `ArtifactService.acceptResponse` 以普通 `Error` 报告同 key 请求已被取代，Plan 与 Route 读取 effect 又把异常 `message` 直接写入页面；这既误报规划失败，也暴露内部文字。修复为受控 `ArtifactRequestSupersededError`。Plan 忽略此回调；仍 active 的 Route 使用固定 `ui_restore` 提示和刷新入口，终止无错误的加载态。对其他仍有效的未知读取异常只显示固定双语恢复说明；scope、generation 和 session 围栏保持有效，真实读取失败仍可见。
+
+红测先在未修复 service 上因缺少受控错误类型而失败（`scripts/test-artifacts.js` 对 `ArtifactRequestSupersededError` 的身份断言触发 TypeError）；修后 `node scripts/test-artifacts.js` 为29/29，`npm run test:artifacts` 的附加 finalization-client 检查8项通过。`node scripts/test-public-planner-errors.cjs` 增补恢复文案/抢占类型断言后共44项通过。实际 PlanPage hook 回归17项覆盖双语敏感读取失败与当前 scope 的 superseded 忽略；RoutePage hook 将旧消费者被另一 GET 取代的情形复现为无错误永久 loading，修后验证其结束 loading、显示固定提示及刷新动作，同时真实未知读取失败不泄露敏感正文；原媒体 owner/session/Trip/generation/content-version 迟到检查仍通过。生产 ArtifactService 两个并发 GET 验证旧请求变为superseded。所有本地日志仅写入忽略目录 `output/d6/`；没有 Provider、数据库业务写或密钥读取。H5回归由主任务后续复验，以上离线验证不构成 H5 恢复或整套 D6 验收通过。

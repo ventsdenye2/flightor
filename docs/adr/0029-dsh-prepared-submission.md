@@ -16,6 +16,8 @@
 
 短 source 引用映射本轮原始 UUID 与内容 hash，不改变持久证据格式或 scope 检查。短 C 引用映射已校验持久候选，恢复完整 locator 后仍经过原 owner/Trip/version/过期验证。唯一已选择的 Trip city 可补省略 cityId/locationId，机场或多城市不猜；它不执行 POI、Provider 或目的地变更。
 
+同准备尝试精确请求URL的成功正文可通过内存索引复用原始source receipt/hash/retrievedAt；索引只读取当前scope记录并复核正文hash，不跨generation/version、不缓存失败、不将redirect等同于另一请求URL。取消检查保持生效。模型逐候选核对实际正文支持是语义责任，通用目录页、域名权威及引用存在都不是具体地点的事实证明；不加入另一LLM或地名字符串猜测。observer记录脱敏cacheHit以区分工具请求和真正HTTP，细则见[D6证据合同](../design/budget-travel-agent/DSH_D6_EVIDENCE_AND_LOCATIONS.md)。
+
 局部编辑的 publication-only 最终合并使用现有短事务，Trip 行独占锁串行化 Trip、航班选择及并发发布；同 owner/Trip/conversation/version 的最新 accepted 基底必须仍为准备 id/hash/locale，否则拒绝发布。新隐藏草稿可留审计，不能覆盖/显示成正式成果；accepted 语言仍不可覆写。网络与模型在事务外，无新增表或迁移。
 
 事务中的原始行以内部 conversation_id 定位；比较领域基底前必须在同一 owner-scoped 锁查询取得公开 conversationId，与普通 repository 投影保持一致。不能混用两类ID产生伪冲突，也不能为规避冲突删除会话范围校验。

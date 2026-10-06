@@ -66,6 +66,7 @@ export interface DshFetchResult {
   body?: { kind: 'text' | 'html'; content: string }
   error?: unknown
   truncated?: boolean
+  sharedFetch?: boolean
 }
 
 export interface DshEvidenceReferenceList {
@@ -103,6 +104,9 @@ export class DshEvidenceStore {
   private readonly now: () => Date
   private readonly sourceScope: string
   private readonly sourceRecords = new Map<string, string>()
+  private readonly fetchedRecords = new Map<string, string>()
+  private readonly fetchFlights = new Map<string, Promise<DshFetchResult>>()
+  private readonly fetchRecordFlights = new Map<string, Promise<void>>()
   private sourceSequence = 0
 
   constructor(private readonly scope: DshEvidenceScope, options: { repository?: DshEvidenceRepository; now?: () => Date } = {}) {
@@ -131,6 +135,21 @@ export class DshEvidenceStore {
 
   async recordFetch(requestUrl: string, result: DshFetchResult, provider: string, toolCallId: string): Promise<DshEvidenceReferenceList> {
     const requested = safeHttpUrl(requestUrl)
+    const canReuse = requested && result?.error === undefined && result?.statusCode !== undefined
+      && result.statusCode >= 200 && result.statusCode < 300
+      && (result.body?.kind === 'text' || result.body?.kind === 'html') && result.body.content.trim().length > 0
+    if (!canReuse) return this.recordFetchResult(requestUrl, result, provider, toolCallId)
+    const previous = this.fetchRecordFlights.get(requested)
+    let release!: () => void
+    const lock = new Promise<void>(resolve => { release = resolve })
+    this.fetchRecordFlights.set(requested, lock)
+    await previous
+    try { return await this.recordFetchResult(requestUrl, result, provider, toolCallId) }
+    finally { release(); if (this.fetchRecordFlights.get(requested) === lock) this.fetchRecordFlights.delete(requested) }
+  }
+
+  private async recordFetchResult(requestUrl: string, result: DshFetchResult, provider: string, toolCallId: string): Promise<DshEvidenceReferenceList> {
+    const requested = safeHttpUrl(requestUrl)
     const url = requested ?? requestUrl.slice(0, 500)
     const finalUrl = safeHttpUrl(result?.url)
     const statusCode = result?.statusCode
@@ -141,10 +160,60 @@ export class DshEvidenceStore {
     const truncated = result?.truncated === true || (typeof bodyValue === 'string' && bodyValue.length > 12_000)
     const failed = !requested || result?.error !== undefined || statusCode === undefined || statusCode < 200 || statusCode >= 300
     const status: DshEvidenceStatus = !requested ? 'invalid_url' : failed ? (statusCode !== undefined && (statusCode < 200 || statusCode >= 300) ? 'http_error' : 'tool_error') : !body ? 'no_body' : 'available'
+    const existing = requested && status === 'available' ? await this.reusableFetch(requested) : null
+    if (existing && existing.body === body && existing.statusCode === statusCode
+      && (existing.finalUrl ?? existing.url) === (finalUrl ?? requested) && existing.truncated === truncated) {
+      this.fetchFlights.delete(requested!)
+      return this.references([existing])
+    }
     const record = await this.save({ url, ...(finalUrl && finalUrl !== url ? { finalUrl } : {}), ...(typeof result?.title === 'string' ? { title: result.title.trim().slice(0, 240) } : {}),
       ...(snippet ? { snippet } : {}), ...(body ? { body } : {}), depth: status === 'available' ? 'fetched_body' : 'none', status, truncated,
       ...(statusCode === undefined ? {} : { statusCode }) }, provider, toolCallId)
+    if (requested && status === 'available') this.fetchedRecords.set(requested, record.evidenceRef)
+    if (requested) this.fetchFlights.delete(requested)
     return this.references([record])
+  }
+
+  async fetchOnce(requestUrl: string, signal: AbortSignal, fetcher: (signal: AbortSignal) => Promise<DshFetchResult>): Promise<DshFetchResult> {
+    signal.throwIfAborted()
+    const requested = safeHttpUrl(requestUrl)
+    if (!requested) return fetcher(signal)
+    let flight = this.fetchFlights.get(requested)
+    const shared = flight !== undefined
+    if (!flight) {
+      const created = Promise.resolve().then(() => fetcher(signal)).then(result => {
+        const body = result?.body && ['text', 'html'].includes(result.body.kind) ? result.body.content.trim() : ''
+        if (result?.error !== undefined || result?.statusCode === undefined || result.statusCode < 200 || result.statusCode >= 300 || !body) {
+          if (this.fetchFlights.get(requested) === created) this.fetchFlights.delete(requested)
+        }
+        return result
+      }, error => {
+        if (this.fetchFlights.get(requested) === created) this.fetchFlights.delete(requested)
+        throw error
+      })
+      this.fetchFlights.set(requested, created)
+      flight = created
+    }
+    const result = await new Promise<DshFetchResult>((resolve, reject) => {
+      const abort = () => reject(signal.reason ?? new DOMException('The operation was aborted', 'AbortError'))
+      signal.addEventListener('abort', abort, { once: true })
+      flight!.then(value => {
+        signal.removeEventListener('abort', abort)
+        try { signal.throwIfAborted(); resolve(value) } catch (error) { reject(error) }
+      }, error => { signal.removeEventListener('abort', abort); reject(error) })
+    })
+    return shared ? { ...result, sharedFetch: true } : result
+  }
+
+  /** This index belongs only to this prepared attempt; it cannot load old-turn URL receipts. */
+  async reusableFetch(requestUrl: string): Promise<DshEvidenceRecord | null> {
+    const requested = safeHttpUrl(requestUrl)
+    const ref = requested && this.fetchedRecords.get(requested)
+    if (!ref) return null
+    const record = await this.get(ref)
+    return record && record.url === requested && record.status === 'available' && record.depth === 'fetched_body'
+      && record.body && record.contentHash === createHash('sha256').update(record.body).digest('hex')
+      ? record : null
   }
 
   async get(evidenceRef: string): Promise<DshEvidenceRecord | null> {

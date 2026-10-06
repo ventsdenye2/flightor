@@ -15,6 +15,7 @@ import { getCloudWorkspace, type WorkspaceTrip } from '../../services/workspaceS
 import { FlightDecisionPanel } from '../../features/ui-experience/FlightDecisionPanel'
 import { displayOffers, displayOfferById, record } from '../../components/artifacts/payload'
 import { plannerTelemetry } from '../../services/plannerTelemetry'
+import { publicPlannerRestoreError } from '../../utils/publicPlannerError'
 import './index.scss'
 
 type SubmitScope = { ownerId: string | undefined; authRevision: number; sessionId: string; tripId: string }
@@ -78,7 +79,10 @@ function PlanPage() {
         reply: value.presentation.publication?.status === 'accepted' ? record(record(value.guide?.payload)?.publication)?.reply as string | undefined
           : value.presentation.publication ? t(`trip.${value.presentation.publication.status}`) : undefined,
         verificationStatus: artifactVerificationStatus(value.guide) }); setProductionError('') } })
-      .catch(error => { if (active && authRevision === userStore.sessionRevision && ownerId === userStore.profile?.uid && sessionId === chatStore.currentSessionId && tripId === chatStore.tripId) setProductionError(error instanceof Error ? error.message : '行程结果暂不可用') })
+      .catch(error => {
+        const restoreError = publicPlannerRestoreError(error, locale)
+        if (restoreError && active && authRevision === userStore.sessionRevision && ownerId === userStore.profile?.uid && sessionId === chatStore.currentSessionId && tripId === chatStore.tripId) setProductionError(restoreError)
+      })
     return () => { active = false }
   }, [resultKey])
 

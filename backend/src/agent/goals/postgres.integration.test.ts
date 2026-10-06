@@ -68,11 +68,27 @@ suite('PostgreSQL durable planning goals', () => {
       contextSnapshot: trip.context, intent: { kind: 'trip_context_update', parameters: { fields: ['budget'] } } })
     const context = { ownerId: userId, tripId: trip.id, requestId: 'same-value-setter', conversationId: '',
       generationId: 'setter-generation', trips, goalRunRepository: runs,
+      goalRepository: new PostgresGoalRepository(db, userId), goalVerifiers: createDefaultGoalVerifierRegistry(),
       activeGoalId: accepted.goal.id, activeGoalRunId: accepted.run.id, activeGoalKind: 'trip_context_update',
       isGenerationCurrent: () => true } as ToolExecutionContext
-    const outcome = await createCoreToolRegistry().execute({ id: 'set-budget', type: 'function', function: {
+    const registry = createCoreToolRegistry(), signal = new AbortController().signal
+    const unbound = await registry.execute({ id: 'unbound-set-budget', type: 'function', function: {
       name: 'update_trip_context', arguments: JSON.stringify({ patch: { budget }, expectedVersion: trip.context.version })
-    } }, context, new AbortController().signal)
+    } }, context, signal)
+    expect(unbound).toMatchObject({ ok: false, domainErrorCode: 'GOAL_FIELD_SCOPE_MISMATCH' })
+    expect(await trips.get(trip.id)).toEqual(trip.context)
+    expect((await runs.get(accepted.run.id))?.workingSet.tripUpdateReceipt).toBeUndefined()
+    // Activate the actual same-generation run through its authenticated tool.
+    // Copying active IDs alone is not a server-owned authorization scope.
+    const resumed = await registry.execute({ id: 'activate-setter', type: 'function', function: {
+      name: 'resume_goal', arguments: JSON.stringify({ goalId: accepted.goal.id })
+    } }, context, signal)
+    expect(resumed.ok).toBe(true)
+    expect(context.tripContextUpdateGoalScope).toEqual({ goalId: accepted.goal.id, runId: accepted.run.id,
+      contextVersion: trip.context.version, fields: ['budget'] })
+    const outcome = await registry.execute({ id: 'set-budget', type: 'function', function: {
+      name: 'update_trip_context', arguments: JSON.stringify({ patch: { budget }, expectedVersion: trip.context.version })
+    } }, context, signal)
     expect(outcome.ok).toBe(true)
     const version = trip.context.version + 1
     const freshRuns = new PostgresGoalRunRepository(db, userId)

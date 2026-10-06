@@ -1,5 +1,9 @@
 # 当前进度与验证
 
+当前前端 Artifact 恢复对被替代请求不显示规划失败：Plan 忽略旧回调，active Route 显示固定 `ui_restore` 指引和刷新入口；PlanPage/RoutePage hook、ArtifactService与文案回归通过，完整记录见[D6-20](DSH_D6_ACCEPTANCE.md)。
+
+2026-10-06 r11：手机390×844首轮114ms受理、64.982秒终态、69.488秒逐详情可读；随后返回控件role定位失败，B01解释/局改/恢复未执行，候选冻结整批不通过。真实DOM确认`taro-button-core aria-label=返回`无button role；正在用原攻略零Provider导航修复复验。内容按实际alias→原始正文审阅，浅草寺绑定通用目录页是来源覆盖缺口，不能以accepted/satisfied宣称内容合格。真实PG原50/51修fixture为真实resume_goal激活后，完整11文件51/51（95.35秒）；backend原1223/1224超时保留，单独3/3不冒称全量通过，D5新30/30证据保留。D6-18成功fetch仅同prepared store精确canonical请求URL复用原record/hash/time，修前1失败、修后证据4文件23/23及service/web/reuse19/19、check/build、observer安全审计1/1；D6-19明确主模型按正文逐候选选源，不新增模型/协议字段，真实内容尚待复验。源码及冻结指纹变化后必须完整新批12+4，详见[D6验收](DSH_D6_ACCEPTANCE.md)及[证据合同](DSH_D6_EVIDENCE_AND_LOCATIONS.md)。
+
 ## 2026-10-06：D6 H5 runner 手机尺寸记录
 
 `scripts/qa-dsh-d6-h5.cjs` 沿用既有 DSH E2E H5 runner 的 `390x844` CSS viewport 与 `deviceScaleFactor: 1`，显式让 screen 与 viewport 同尺寸；`mobile`/`touch` 维持旧默认 false，保留 Chrome 默认 user agent，不声称微信或原生设备仿真。每个报告新增 `browserEnvironment`，记录 Chrome 版本及运行时实测 viewport、screen、deviceScaleFactor、UA 和 mobile/touch 设定。未运行浏览器或 Provider；本批只做静态语法、差异和报告字段验证。详见 [D6 H5 harness](DSH_D6_HARNESS.md)。

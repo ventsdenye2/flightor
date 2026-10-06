@@ -66,6 +66,9 @@ const service = loadTypeScript('src/services/artifactService.ts', {
   './airportTime': airportTime,
   '../utils/request': { request: requestStub }
 })
+const publicPlannerError = loadTypeScript('src/utils/publicPlannerError.ts', {
+  '../services/artifactService': service
+})
 const registry = loadTypeScript('src/components/artifacts/registry.ts', {
   '../../services/artifactService': {}
 })
@@ -270,6 +273,32 @@ for (let i = 0; i < service.ARTIFACT_CACHE_LIMIT + 4; i++) {
   await artifactService.fetchArtifact(`bounded-${i}`, { ownerId: 'owner-b', sessionId: 'session-b' })
 }
 check('cache remains bounded', cache.size === service.ARTIFACT_CACHE_LIMIT)
+
+console.log('\n【Artifact service】superseded reads and public restore errors')
+let settleFirstArtifact
+let settleSecondArtifact
+let artifactRequestNumber = 0
+const overlappingService = new service.ArtifactService(() => new Promise(resolve => {
+  artifactRequestNumber += 1
+  if (artifactRequestNumber === 1) settleFirstArtifact = resolve
+  else settleSecondArtifact = resolve
+}))
+const oldRead = overlappingService.fetchArtifact('overlap', { force: true })
+const currentRead = overlappingService.fetchArtifact('overlap', { force: true })
+settleSecondArtifact({ artifact: valid })
+await currentRead
+let staleError
+try { settleFirstArtifact({ artifact: valid }); await oldRead } catch (error) { staleError = error }
+check('a superseded response has a stable typed identity', typeof service.ArtifactRequestSupersededError === 'function' && staleError instanceof service.ArtifactRequestSupersededError && staleError.code === 'ARTIFACT_REQUEST_SUPERSEDED')
+check('unknown transport details map to fixed bilingual restore guidance',
+  publicPlannerError.publicPlannerRestoreError(new Error('HTTP body: bearer-secret stack=private'), 'zh') === '本次请求状态暂时无法恢复。请重新打开行程并检查已保存结果，再决定是否重试。' &&
+  publicPlannerError.publicPlannerRestoreError(new Error('HTTP body: bearer-secret stack=private'), 'en') === 'The request status could not be restored. Reopen the trip and check saved results before deciding whether to retry.' &&
+  !publicPlannerError.publicPlannerRestoreError(new Error('HTTP body: bearer-secret stack=private'), 'en').includes('bearer-secret'))
+let visibleWrites = 0
+if (publicPlannerError.publicPlannerRestoreError(staleError, 'en') !== undefined) visibleWrites += 1
+check('a superseded callback cannot publish a late failure', visibleWrites === 0)
+check('a real restore failure remains visible with safe actionable copy',
+  publicPlannerError.publicPlannerRestoreError(new Error('sensitive provider response'), 'zh')?.includes('重新打开行程') === true)
 
 console.log(`\nArtifact 回归：${passed} 通过 / ${failed} 失败`)
 process.exit(failed > 0 ? 1 : 0)

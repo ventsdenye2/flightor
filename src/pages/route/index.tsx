@@ -20,6 +20,7 @@ import type { TripPresentation } from '../../features/ui-experience/presentation
 import { safeSourceUrl } from '../../features/ui-experience/productionPresentation'
 import { EmptyState, PageHeader } from '../../features/ui-experience/SharedUI'
 import { decodeRouteParam, ROUTE_DETAIL_SHELL_CLASS, resolveRouteDetailView, type RouteDetailView } from './dispatch'
+import { publicPlannerFailureMessage, publicPlannerRestoreError } from '../../utils/publicPlannerError'
 import '../../features/ui-experience/experience.scss'
 import './index.scss'
 
@@ -77,7 +78,10 @@ function RoutePage() {
           supplementPlaces(loaded, context, ticket)
         }
       } else setState({ key, artifact, ...(resolution.key.startsWith('route_set:') ? { routes: readRouteArtifact(artifact) } : {}) })
-    }).catch(error => { if (active && generation.current === ticket) setState({ key, error: error instanceof Error ? error.message : '加载失败，请重试' }) })
+    }).catch(error => {
+      const restoreError = publicPlannerRestoreError(error, locale) ?? publicPlannerFailureMessage('ui_restore', locale)
+      if (active && generation.current === ticket) setState({ key, error: restoreError })
+    })
     return () => { active = false; generation.current++ }
   }, [key, attempt])
   const current = state.key === key ? state : undefined
@@ -222,7 +226,7 @@ function RouteDetailBody({ view, routeId, saving, saved, layoverPreference, onLa
   if (view.kind === 'guest') return <EmptyState icon='user' title='登录后查看行程' description='登录后可以读取已保存的路线、攻略与航班结果。' actionLabel='前往我的行程' onAction={() => Taro.switchTab({ url: '/pages/trips/index' })} />
   if (view.kind === 'missing') return <EmptyState icon='calendar' title='这条行程链接已经失效' description='请从规划结果或“我的行程”重新打开。' actionLabel='查看我的行程' onAction={() => Taro.switchTab({ url: '/pages/trips/index' })} />
   if (view.kind === 'loading') return <View className='route-production__loading' role='status'><View className='route-production__loading-line' /><Text className='route-production__state-title'>{t('trip.loading')}</Text><Text className='ux-muted'>{t('trip.saved')}</Text></View>
-  if (view.kind === 'error') return <EmptyState icon='calendar' title={t('trip.loadFailed')} description={t('trip.requestFailed')} actionLabel={t('trip.refresh')} onAction={onRetry} />
+  if (view.kind === 'error') return <EmptyState icon='calendar' title={t('trip.loadFailed')} description={view.message || t('trip.requestFailed')} actionLabel={t('trip.refresh')} onAction={onRetry} />
   if (view.kind === 'unavailable') return <EmptyState icon='calendar' title='此内容暂时无法展示' description={unavailableCopy(view)} />
   if (view.kind === 'route-set') return <><RouteWorkspace routes={view.routes} initialRouteId={routeId} onSave={onSave}
     saving={saving} layoverPreference={layoverPreference} onLayoverPreference={onLayoverPreference} />{(saving || saved) && <Text className='route-production__save-state'>{saving ? '正在保存…' : saved}</Text>}</>

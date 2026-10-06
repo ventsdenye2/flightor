@@ -8,6 +8,20 @@ const ts = require('typescript')
 const compiled = ts.transpileModule(fs.readFileSync('src/pages/plan/index.tsx', 'utf8'), {
   compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true }
 }).outputText
+class ArtifactRequestSupersededError extends Error {}
+const publicPlannerErrorModule = { exports: {} }
+const publicPlannerErrorSource = ts.transpileModule(fs.readFileSync('src/utils/publicPlannerError.ts', 'utf8'), {
+  compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
+}).outputText
+vm.runInNewContext(publicPlannerErrorSource, {
+  module: publicPlannerErrorModule,
+  exports: publicPlannerErrorModule.exports,
+  require: name => {
+    assert.equal(name, '../services/artifactService')
+    return { ArtifactRequestSupersededError }
+  }
+})
+const publicPlannerError = publicPlannerErrorModule.exports
 const deferred = () => {
   let resolve, reject
   const promise = new Promise((yes, no) => { resolve = yes; reject = no })
@@ -47,6 +61,7 @@ function harness() {
     isThinking: false, multiLoading: false, multiConfirming: false, multiError: '', requiresLogin: false,
     refreshWorkspace: async () => {}, send: async () => true, cancelTurn: async () => {} }
   const userStore = { profile: { uid: 'owner-1' }, sessionRevision: 1 }
+  const localeStore = { locale: 'zh' }
   const requests = []
   let guideTransport = async () => { throw new Error('Unexpected guide load') }
   let transport = async id => artifact(id, chatStore.tripId)
@@ -58,12 +73,13 @@ function harness() {
     '@tarojs/taro': { useDidShow: callback => { show = callback }, setNavigationBarTitle() {}, navigateTo() {} },
     'mobx-react-lite': { observer: component => component },
     '../../stores/chatStore': { chatStore }, '../../stores/userStore': { userStore },
-    '../../i18n': { t: key => key, localeStore: { locale: 'zh' } },
+    '../../i18n': { t: key => key, localeStore },
     '../../components/navigation/ProductionTabBar': { useProductionTab() {} },
     '../../components/common/LoginSheet': { __esModule: true, default: 'LoginSheet' },
     '../../features/ui-experience/PlannerPage': { __esModule: true, default: 'PlannerPage' },
     '../../features/ui-experience/FlightDecisionPanel': { FlightDecisionPanel: 'FlightDecisionPanel' },
     '../../services/productionTripService': { loadProductionTrip: (...args) => guideTransport(...args) },
+    '../../utils/publicPlannerError': publicPlannerError,
     '../../services/plannerTelemetry': { plannerTelemetry: { now: () => 100 } },
     '../../components/artifacts/payload': { record: value => value && typeof value === 'object' ? value : undefined,
       displayOffers: payload => payload.offers ?? [], displayOfferById: (payload, id) => payload.offers?.find(offer => offer.id === id) },
@@ -85,7 +101,7 @@ function harness() {
     }
     throw new Error('Unstable render')
   }
-  return { chatStore, userStore, requests, render, show: () => show(), setTransport: value => { transport = value },
+  return { chatStore, userStore, localeStore, requests, render, show: () => show(), setTransport: value => { transport = value },
     setGuide: value => { guideTransport = value }, setWorkspace: value => { workspace = value }, planner: tree => collect(tree, 'PlannerPage')[0],
     panels: tree => collect(collect(tree, 'PlannerPage')[0]?.props.flightDecision, 'FlightDecisionPanel') }
 }
@@ -99,6 +115,26 @@ async function selectedHarness() {
 }
 
 async function main() {
+  await test('restore effect ignores superseded reads and safely reports real failures in both locales', async () => {
+    const h = harness()
+    h.chatStore.artifactRefs = [{ id: 'guide', type: 'travel_guide', schemaVersion: 1 }]
+    h.setGuide(async () => { throw new ArtifactRequestSupersededError('stale internal read') })
+    h.render(); await flush()
+    assert.equal(h.planner(h.render()).props.productionError, '', 'superseded read cannot write an error in its current scope')
+
+    h.localeStore.locale = 'en'
+    h.setGuide(async () => { throw new Error('HTTP body bearer-secret stack=private') })
+    h.render(); await flush()
+    const englishError = h.planner(h.render()).props.productionError
+    assert.equal(englishError, 'The request status could not be restored. Reopen the trip and check saved results before deciding whether to retry.')
+    assert.ok(!englishError.includes('bearer-secret'))
+
+    h.localeStore.locale = 'zh'
+    h.render(); await flush()
+    const chineseError = h.planner(h.render()).props.productionError
+    assert.equal(chineseError, '本次请求状态暂时无法恢复。请重新打开行程并检查已保存结果，再决定是否重试。')
+    assert.ok(!chineseError.includes('bearer-secret'))
+  })
   await test('planner receives the complete retained transcript and new trip starts a separate session', async () => {
     const h = harness()
     const turns = [

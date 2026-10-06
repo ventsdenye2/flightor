@@ -184,4 +184,8 @@ UI 文档引用的 `UI_PHASE_HANDOFF.md` 不存在，改为实际存在的 UI �
 
 D6隔离服务还使用 `backend/scripts/d6-runtime-guards.mjs` 对实际选中构建安装原D4禁止旧Planner/Runtime/Research/首次Finalizer的运行守卫；只有显式认证localization路由可调用本地化Finalizer。路径、状态和违规计数进入私有逐服务器JSONL，无header/query/key/正文。守卫目标缺失时拒绝启动；关闭恢复方法与审计。此为验收观察围栏，不增加产品LLM或修改发布权限。
 
+D6 `dsh-e2e-observation.mjs` 的 `__web_fetch` 完成记录保存受控 `cacheHit`（已登记正文复用）及 `sharedFetch`（同轮并发共享抓取）布尔值，区分模型抓取动作、已有正文及共享reader尝试。只保留脱敏URL路径/status及复用状态，不保存网页正文、query、引用UUID或私钥。新增共享计数后的官方fixture worker审计回归1/1通过（1.26秒），原仅cacheHit版1/1通过（1.42秒）保留；缓存功能定向与真实最终批次结果归[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。源地址/DNS检查可能在HTTP前失败，reader尝试不能自动等同HTTP；实际HTTP仍按reader/响应证据记录，不由复用声称来源语义已核实。
+
 D6每次H5构建输出 `dist-h5-d6-<run-id>/`，含只用于隔离本地测试登录的编译常量；此目录统一gitignore，仅私有保留构建hash与审阅截图，禁止误加入代码提交。旧输出与失败仍保留，不清理用户数据。
+
+2026-10-06 r11 H5 回退定位：Taro H5 的 `taro-button-core` 仅有 `aria-label`、没有隐式 `button` role，故 `getByRole` 与发布页 CSS host 的 locator intersection 为零。runner 的 header-back 与通用 `ariaLabel`/`ariaLabels` 现在对可见 CSS 候选做精确属性匹配；同一已接纳攻略真实 DOM 的 days→overview→My Trips host 点击通过，语法检查通过。原 r11 runner timeout 及 B01 失败仍保留；My Trips 返回成功不是完整旅程通过，Planner 结果卡返回等待仍未验证。具体 DOM 数量、请求边界及截图见 [D6 H5 harness](design/budget-travel-agent/DSH_D6_HARNESS.md) 与 [D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。

@@ -1,3 +1,5 @@
+import { ArtifactRequestSupersededError } from '../services/artifactService'
+
 export type PublicPlannerFailureStage = 'provider' | 'output_limit' | 'location' | 'evidence' | 'context_conflict' | 'commit' | 'publication' | 'ui_restore'
 
 const codeStages: Array<[RegExp, PublicPlannerFailureStage]> = [
@@ -53,4 +55,9 @@ export function publicPlannerFailureStage(code: string): PublicPlannerFailureSta
 export function publicPlannerFailureMessage(code: string, locale: 'zh' | 'en'): string | undefined {
   const stage = publicPlannerFailureStage(code)
   return stage ? copy[stage][locale] : undefined
+}
+
+export function publicPlannerRestoreError(error: unknown, locale: 'zh' | 'en'): string | undefined {
+  if (error instanceof ArtifactRequestSupersededError) return undefined
+  return publicPlannerFailureMessage('ui_restore', locale)
 }

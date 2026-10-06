@@ -62,6 +62,8 @@
 
 公开失败说明按provider、output limit、地点、资料、版本冲突、提交、发布与恢复阶段提供中英文安全文案，未知错误仍使用安全缺省说明，不显示内部异常正文。2026-10-06 r7离线 `test:conversation-progress` 与 `test:production-presentation` 完整通过，其中公开错误40项、聊天组件5项；取消未确认仍保持busy的断言保留。日志在 `output/d6/frontend-conversation-r7.log` 和 `output/d6/frontend-presentation-r7.log`。这些是组件与状态回归，不代表H5旅程已验收。
 
+2026-10-06 D6 Artifact 恢复：`ArtifactRequestSupersededError` 只用于识别同 key 读取已被新请求取代；Plan effect 忽略该回调，避免把恢复竞态显示为规划失败；仍 active 的 Route consumer 显示固定 `ui_restore` 提示和现有刷新动作，避免永久停留在加载状态。owner、auth revision、session、Trip、active 与 generation 检查保持有效。所有有效读取失败都使用固定双语提示，不展示未知 `error.message`、stack、token 或 HTTP 正文。生产 PlanPage hook 回归17项通过；实际 RoutePage hook 验证 superseded/真实读取失败均显示安全提示和刷新回调，原延迟媒体 scope/version检查保留。`npm run test:artifacts` 覆盖实际 ArtifactService 重叠 GET（29项）和 finalization-client（8项）；D6-20完整证据见[验收台账](budget-travel-agent/DSH_D6_ACCEPTANCE.md)。离线检查不替代真实H5恢复复验。
+
 `node scripts/test-planner-publication.cjs` 运行真实组件代码，通过确定性 hooks 与 Taro host stubs 验证等待分支卡片、草稿输入/保留、取消反馈和航段展开。它不启动浏览器、真实 React renderer 或微信设备；平台滚动、样式、输入法与真实网络表现仍待验收。当前所有验证命令和结果见 [progress](budget-travel-agent/progress.md)。
 
 ## 来源资料适用性提示（当前实现）

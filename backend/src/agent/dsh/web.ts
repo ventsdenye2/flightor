@@ -23,23 +23,29 @@ export async function executeDshWeb(name: string, args: unknown, callId: string,
   }
   if (name === '__web_fetch') {
     const input = z.object({ url: z.url().max(500) }).strict().parse(args)
-    try {
-      const page = await (deps.reader ?? new PublicResearchSourceReader()).read(input.url, { signal, rejectChallengePage: true })
-      return { url: page.url, statusCode: page.statusCode, body: { kind: 'text', content: page.text }, truncated: page.truncated }
-    } catch (error) {
-      signal.throwIfAborted()
-      const statusCode = (error as { statusCode?: number }).statusCode
-      if (statusCode !== undefined) return { url: input.url, statusCode, body: { kind: 'text', content: '' }, truncated: false }
-      const known = new Set(['SOURCE_TIMEOUT', 'SOURCE_CANCELLED', 'SOURCE_URL_INVALID', 'SOURCE_URL_REJECTED', 'SOURCE_HOST_REJECTED',
-        'SOURCE_DNS_REJECTED', 'SOURCE_ENCODING_REJECTED', 'SOURCE_CONTENT_TYPE_REJECTED', 'SOURCE_BODY_LIMIT', 'SOURCE_CHALLENGE_REJECTED'])
-      const name = error instanceof Error ? error.name : ''
-      const code = known.has(name) ? name : 'SOURCE_FETCH_FAILED'
-      return { error: { code, hint: code === 'SOURCE_CHALLENGE_REJECTED'
-        ? 'The source returned an access challenge, not page content. Use another retrieved source; this fetch supplies no evidence.'
-        : code === 'SOURCE_TIMEOUT'
-        ? 'The source fetch timed out. Use another retrieved source; this failed fetch supplies no evidence.'
-        : 'The source could not be safely retrieved. Use another retrieved source; this failed fetch supplies no evidence.' } }
-    }
+    const cached = await evidence.reusableFetch(input.url)
+    signal.throwIfAborted()
+    if (cached) return { url: cached.finalUrl ?? cached.url, statusCode: cached.statusCode,
+      body: { kind: 'text', content: cached.body! }, truncated: cached.truncated, cacheHit: true }
+    return await evidence.fetchOnce(input.url, signal, async fetchSignal => {
+      try {
+        const page = await (deps.reader ?? new PublicResearchSourceReader()).read(input.url, { signal: fetchSignal, rejectChallengePage: true })
+        return { url: page.url, statusCode: page.statusCode, body: { kind: 'text' as const, content: page.text }, truncated: page.truncated }
+      } catch (error) {
+        fetchSignal.throwIfAborted()
+        const statusCode = (error as { statusCode?: number }).statusCode
+        if (statusCode !== undefined) return { url: input.url, statusCode, body: { kind: 'text' as const, content: '' }, truncated: false }
+        const known = new Set(['SOURCE_TIMEOUT', 'SOURCE_CANCELLED', 'SOURCE_URL_INVALID', 'SOURCE_URL_REJECTED', 'SOURCE_HOST_REJECTED',
+          'SOURCE_DNS_REJECTED', 'SOURCE_ENCODING_REJECTED', 'SOURCE_CONTENT_TYPE_REJECTED', 'SOURCE_BODY_LIMIT', 'SOURCE_CHALLENGE_REJECTED'])
+        const errorName = error instanceof Error ? error.name : ''
+        const code = known.has(errorName) ? errorName : 'SOURCE_FETCH_FAILED'
+        return { error: { code, hint: code === 'SOURCE_CHALLENGE_REJECTED'
+          ? 'The source returned an access challenge, not page content. Use another retrieved source; this fetch supplies no evidence.'
+          : code === 'SOURCE_TIMEOUT'
+          ? 'The source fetch timed out. Use another retrieved source; this failed fetch supplies no evidence.'
+          : 'The source could not be safely retrieved. Use another retrieved source; this failed fetch supplies no evidence.' } }
+      }
+    })
   }
   if (name === '__record_web') {
     const input = z.object({ tool: z.enum(['web_search', 'web_fetch']), args: z.record(z.string(), z.unknown()), value: z.record(z.string(), z.unknown()) }).strict().parse(args)

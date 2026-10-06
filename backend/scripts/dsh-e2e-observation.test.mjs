@@ -20,6 +20,8 @@ test('observes an official fixture worker incrementally without raw model/tool s
     web: { provider: 'serpapi-raw' }, fixture: [
       { tool: 'web_search', args: { queries: ['SENSITIVE_QUERY'] } }, { tool: 'commit_travel_guide', args },
       { tool: 'commit_travel_guide', args },
+      { tool: 'web_fetch', args: { url: 'https://example.com/museum?token=SENSITIVE_URL' } },
+      { tool: 'web_fetch', args: { url: 'https://example.com/museum?token=SENSITIVE_URL' } },
       { text: 'SENSITIVE_RAW_REPLY' },
     ] })
     const calls = [], activities = []
@@ -39,6 +41,9 @@ test('observes an official fixture worker incrementally without raw model/tool s
         if (name.endsWith('_receipt')) return { ok: true }
         if (name === '__web_search') return { sources: [{ url: 'https://example.com/museum?token=SENSITIVE_URL', title: 'Museum', snippet: 'SENSITIVE_SOURCE_BODY' }], truncated: false }
         if (name === '__record_web') return { evidenceRefs: [evidenceRef], urls: ['https://example.com/museum?token=SENSITIVE_URL'] }
+        if (name === '__web_fetch') return { url: 'https://example.com/museum?token=SENSITIVE_URL', statusCode: 200,
+          body: { kind: 'text', content: 'SENSITIVE_SOURCE_BODY' }, truncated: false,
+          ...(calls.filter(call => call.name === name).length === 1 ? { cacheHit: true } : { sharedFetch: true }) }
         if (name === 'commit_travel_guide' && calls.filter(call => call.name === name).length === 1) return { ok: false,
           error: { code: 'DSH_GUIDE_NEEDS_REVISION', recovery: { calls: 2, argumentCorrections: 1, contentAttempts: 1,
             lastFailure: 'content', privateKey: 'SENSITIVE_RECOVERY' },
@@ -76,6 +81,17 @@ test('observes an official fixture worker incrementally without raw model/tool s
     const receipt = records.find(row => row.type === 'tool_end' && row.toolName === '__record_web')
     assert.equal(receipt.evidenceRefCount, 1); assert.equal('evidenceRefs' in receipt, false)
     assert.deepEqual(receipt.urls, ['https://example.com/museum'])
+    const fetches = records.filter(row => row.type === 'tool_end' && row.toolName === '__web_fetch')
+    assert.equal(fetches.length, 2)
+    const fetch = fetches[0]
+    assert.equal(fetch.cacheHit, true)
+    assert.equal(fetch.sharedFetch, false)
+    assert.equal(fetch.url, 'https://example.com/museum')
+    assert.equal(fetch.statusCode, 200)
+    assert.equal('body' in fetch, false)
+    assert.equal(fetches[1].cacheHit, false)
+    assert.equal(fetches[1].sharedFetch, true)
+    assert.equal('body' in fetches[1], false)
     assert.ok(records.some(row => row.type === 'tool_start' && row.toolName === '__model_receipt' && typeof row.meter.usage.inputTokens === 'number'))
     assert.ok(records.some(row => row.type === 'activity' && row.toolName === 'web_search' && row.activity === 'tool_end'))
     assert.match(records.find(row => row.type === 'session_mapping').profile, /^[a-f0-9]{64}$/)

@@ -154,6 +154,15 @@ export interface ArtifactRequestTransport {
   <T>(options: { url: string; method?: 'GET'; retry?: number; timeout?: number }): Promise<T>
 }
 
+export class ArtifactRequestSupersededError extends Error {
+  readonly code = 'ARTIFACT_REQUEST_SUPERSEDED'
+
+  constructor() {
+    super('Artifact request was superseded')
+    this.name = 'ArtifactRequestSupersededError'
+  }
+}
+
 export class ArtifactService {
   private readonly cache: BoundedArtifactCache
   private readonly requests = new Map<string, object>()
@@ -173,7 +182,7 @@ export class ArtifactService {
   clearCache(): void { this.cache.clear(); this.requests.clear() }
 
   private acceptResponse(key: string, token: object, artifact: ArtifactEnvelope): ArtifactEnvelope {
-    if (this.requests.get(key) !== token) throw new Error('Artifact request was superseded')
+    if (this.requests.get(key) !== token) throw new ArtifactRequestSupersededError()
     const publication = isRecord(artifact.payload) && isRecord(artifact.payload.publication) ? artifact.payload.publication : undefined
     if (!publication?.status || publication.status === 'accepted') this.cache.set(key, artifact)
     else this.cache.delete(key)

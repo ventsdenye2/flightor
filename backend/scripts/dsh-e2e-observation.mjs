@@ -81,7 +81,8 @@ function toolOutput(name, args, value) {
     evidenceRefCount: array(result.evidenceRefs).length,
     urls: array(result.urls).map(safeUrl).filter(Boolean).slice(0, 100) }
   if (name === '__web_search') return { ...base, urls: array(result.sources).map(source => safeUrl(object(source).url)).filter(Boolean).slice(0, 100) }
-  if (name === '__web_fetch') return { ...base, url: safeUrl(result.url), statusCode: number(result.statusCode) }
+  if (name === '__web_fetch') return { ...base, url: safeUrl(result.url), statusCode: number(result.statusCode),
+    cacheHit: result.cacheHit === true, sharedFetch: result.sharedFetch === true }
   return base
 }
 

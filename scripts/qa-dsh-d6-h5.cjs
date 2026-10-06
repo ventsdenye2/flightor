@@ -112,10 +112,21 @@ const visibleChoiceCandidates = async (page, selector) => {
   }
   return values
 }
+const cssString = value => `"${[...value].map(character => {
+  const code = character.codePointAt(0)
+  if (character === '"' || character === '\\') return `\\${character}`
+  if (code === 0) return '\\fffd '
+  if (code <= 0x1f || code === 0x7f) return `\\${code.toString(16)} `
+  return character
+}).join('')}"`
+const withExactAriaLabels = (page, candidates, labels) => candidates.filter({ visible: true }).and(page.locator(
+  labels.map(label => `[aria-label=${cssString(label)}]`).join(', ')))
 const clickPublishedHeaderBack = async (page, destinationSelector, timeoutMs) => {
-  const back = page.locator('.ux-published .ux-header .ux-icon-button')
-    .and(page.getByRole('button', { name: /^(返回|Back)$/, exact: true }))
+  const back = withExactAriaLabels(page, page.locator('.ux-published .ux-header .ux-icon-button'), ['返回', 'Back'])
   await back.click({ timeout: timeoutMs })
+  if (!destinationSelector.startsWith('.ux-published')) {
+    await page.locator('.ux-published:visible').waitFor({ state: 'hidden', timeout: timeoutMs })
+  }
   await page.locator(destinationSelector).waitFor({ state: 'visible', timeout: timeoutMs })
 }
 const chooseVisibleOption = async (page, action, record) => {
@@ -321,14 +332,18 @@ const inspectLatestAcceptedResult = async (page, action, record) => {
 }
 const waitForReadablePage = async (page, action) => {
   const timeout = action.timeoutMs || 30000
-  if (action.waitFor?.selectorsVisible?.length) {
-    for (const selector of action.waitFor.selectorsVisible) await page.locator(selector).first().waitFor({ state: 'visible', timeout })
-  } else if (action.waitFor?.textIncludes?.length) {
+  const selectorsVisible = action.waitFor?.selectorsVisible || []
+  const selectorsHidden = action.waitFor?.selectorsHidden || []
+  const textIncludes = action.waitFor?.textIncludes || []
+  for (const selector of selectorsHidden) await page.locator(selector).first().waitFor({ state: 'hidden', timeout })
+  for (const selector of selectorsVisible) await page.locator(selector).first().waitFor({ state: 'visible', timeout })
+  if (textIncludes.length) {
     await page.waitForFunction(needles => {
       const text = document.body?.innerText || ''
       return needles.every(needle => text.includes(needle))
-    }, action.waitFor.textIncludes, { timeout })
-  } else {
+    }, textIncludes, { timeout })
+  }
+  if (!selectorsVisible.length && !selectorsHidden.length && !textIncludes.length) {
     await page.waitForFunction(() => {
       const text = (document.body?.innerText || '').trim()
       const detail = Array.from(document.querySelectorAll('.ux-published, .route-workspace, .pl-result'))
@@ -644,13 +659,12 @@ async function run() {
         }
         if (action.ariaLabel) {
           assert.ok(typeof action.ariaLabel === 'string' && action.ariaLabel.length < 160, 'ariaLabel must be bounded')
-          target = target.and(page.getByRole('button', { name: action.ariaLabel, exact: true }))
+          target = withExactAriaLabels(page, target, [action.ariaLabel])
         }
         if (action.ariaLabels) {
           assert.ok(Array.isArray(action.ariaLabels) && action.ariaLabels.length > 0
             && action.ariaLabels.every(label => typeof label === 'string' && label.length > 0 && label.length < 160), 'ariaLabels must be a bounded non-empty string list')
-          const labels = action.ariaLabels.map(label => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
-          target = target.and(page.getByRole('button', { name: new RegExp(`^(?:${labels})$`), exact: true }))
+          target = withExactAriaLabels(page, target, action.ariaLabels)
         }
         }
         const awaitTerminal = action.awaitTerminal === true
@@ -739,6 +753,9 @@ async function run() {
           assert.equal(response.status, expectedStatus, `Unexpected response status for ${request.path}`)
           record.awaitHttp = { method: request.method, path: request.path, status: response.status,
             elapsedMs: response.atMs - record.awaitHttpStartedAtMs, matchingRequestsBefore: awaitHttpBefore }
+          await waitForReadablePage(page, action)
+        }
+        else if (action.waitFor?.selectorsVisible?.length || action.waitFor?.selectorsHidden?.length || action.waitFor?.textIncludes?.length) {
           await waitForReadablePage(page, action)
         }
       } else if (action.type === 'read-each-detail') {
