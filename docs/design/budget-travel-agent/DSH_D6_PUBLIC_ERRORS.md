@@ -18,6 +18,8 @@ DSH 的固定映射函数 `classifyDshFailure` 将已知故障分为 `provider`�
 
 后端生成的已完成响应继续使用既有 `reply`、`stopReason` 与 `warnings` 字段；失败 turn 继续使用既有错误 `code`。客户端只把已知错误码转成固定用户提示，忽略服务端任意异常正文。该变更不增加公开 API 字段。
 
+DSH `commit_travel_guide` 的模型可见纠错回执只从 schema 路径与受控领域字段组装。候选缺少 `category` 时返回具体 `candidates.<index>.category` 字段及共享 `researchTypeSchema` 全部类别；不回显候选原值、错误消息或 Provider 正文。服务按本轮 `acceptedGoalIntent` 判断首次提交状态：尚无已接受 Goal 时要求保留本次用户目标的原始 intent 并随纠正后的首次持久操作提交；Goal 已接受时要求省略 `intent/goalRef`，保留其不可变参数。日覆盖提示仅允许 `expectedDays`（1–60）、`submittedDays`（元素均为1–60且最多60项）和合法 ISO 日期 `travelWindow.from/to`；未知或越界字段丢弃。覆盖修正与既有精确价格/时刻文案修正合并，任意 `repairHint` 不透传。此回执不改变参数/内容修订分类、Goal 限制、证据检查或纠错额度。
+
 ## 验证
 
 当前定向验证：`backend npm run check` 通过；D6 public-error、service wiring、preparation 3文件/29项通过，覆盖缺当前语言基底的双语公开回复以及不泄露内部码；`node scripts/test-public-planner-errors.cjs` 的 40 项分类、固定双语文案及 failed-turn 接线断言通过。既有 `npm test -- src/agent/dsh/public-errors.test.ts` 14/14 与 `npm test -- src/travel-guides/finalization.test.ts src/agent/dsh/reply.test.ts src/agent/dsh/public-errors.test.ts src/agent/dsh/commit-recovery.test.ts` 4文件/138项，以及 `npm run test:production-presentation` 的呈现36项、格式化回复6项、生产库7项、媒体客户端1项和媒体迟到结果1项为先前检查，不替代当前完整回归。当前批次 `node scripts/check-docs.cjs` 检查113份Markdown和709个相对链接及同批文档更新通过；`git diff --check` 通过。真实 Provider、H5、微信和完整 D6 验收均未由这些定向检查证明。

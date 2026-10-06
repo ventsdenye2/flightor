@@ -26,6 +26,8 @@
 
 ## 表达与错误
 
+日程覆盖拒绝仍由原领域校验决定。DSH 在 `guide_day_coverage` 反馈中从准备 Trip 派生预期天数、提交日序与研究日期窗口，不从模型文本猜日期。修复必须完整提交 `days` 和 `text`，休息或交通日计入同一范围，不追加第三天、不自动截断日程；正文精确事实问题同时反馈，复用当前有效候选与同一不可变 Goal。该反馈不额外读取数据库或调用模型。
+
 精确且匹配结构化 Trip 的全程预算目标可确认，不能据此承诺费用足够。结构化航班字段仍在对应 UI 展示，自由散文不获万能精确事实豁免。固定安全错误按 provider/output_limit/location/evidence/context_conflict/commit/publication/UI_restore 区分；不增加公开 response 字段、不泄露原错误正文。细则见 [公开合同](../design/budget-travel-agent/DSH_D6_PUBLIC_ERRORS.md) 和 [引用/地点](../design/budget-travel-agent/DSH_D6_EVIDENCE_AND_LOCATIONS.md)。
 
 ## 验证要求

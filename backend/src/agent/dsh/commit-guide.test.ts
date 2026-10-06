@@ -49,6 +49,33 @@ async function fixture() {
 }
 
 describe('DSH combined guide commit', () => {
+  it('reports the r10 extra-day rejection alongside presentation issues and reuses the same material for a complete repair', async () => {
+    const f = await fixture()
+    const invalid = structuredClone(f.input)
+    const extraItem = invalid.days[1]!.items.pop()!
+    invalid.days.push({ day: 3, cityId: city.id, kind: 'rest', theme: 'Optional neighborhood visit', items: [extraItem] })
+    invalid.text.days.push({ day: 3, theme: 'Optional neighborhood visit' })
+    invalid.text.overview += ' Allow exactly 20 minutes for transport.'
+    await expect(f.execute(invalid)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      issues: expect.arrayContaining(['guide_day_coverage']), presentationIssues: ['excluded_precise_claim'],
+      dayCoverage: { expectedDays: 2, submittedDays: [1, 2, 3], travelWindow: { from: '2026-10-10', to: '2026-10-11' } },
+      repairHint: expect.stringContaining('exactly 2 days'),
+      repair: { availableCandidates: expect.arrayContaining([expect.objectContaining({ findingId: 'garden' })]) }
+    } })
+    const goalId = f.context.activeGoalId!
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'travel_guide')).toHaveLength(0)
+    const corrected = { ...f.input, candidates: undefined }
+    const result = await f.tool.execute(f.tool.inputSchema.parse(corrected), f.context, new AbortController().signal) as any
+    expect(result).toMatchObject({ status: 'accepted', acceptedGoal: { goalId }, completion: { status: 'satisfied' } })
+    expect((await f.goals.get(goalId))?.parameters).toEqual(intent.parameters)
+    expect(await f.goals.listForTrip(f.trip.id)).toHaveLength(1)
+    const records = await f.artifacts.listForTrip(f.trip.id)
+    expect(records.filter(record => record.type === 'research')).toHaveLength(1)
+    const guide = travelGuideArtifactPayloadSchema.parse(records.find(record => record.id === result.artifact.id)!.payload)
+    expect(guide.days.map(day => day.day)).toEqual([1, 2])
+    expect(guide.days.flatMap(day => day.items.map(item => item.sourceFindingId))).toEqual(['temple', 'museum', 'garden'])
+  })
+
   it.each(['intent', 'goalRef', 'bound-runtime'] as const)('keeps one accepted Goal during a %s repair', async mode => {
     const f = await fixture(), accept = vi.spyOn(f.runs, 'accept')
     const invalid = structuredClone(f.input)

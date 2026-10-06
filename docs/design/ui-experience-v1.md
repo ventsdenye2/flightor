@@ -104,7 +104,9 @@
 
 诊断确认一个可复现的分类时序缺口：`src/app.config.ts` 的 main tab `pagePath` 原为无前导斜杠；Taro 3.6.40 H5 `PageHandler.isTabBar` 给路由补斜杠后直接与 `tabBar.list[].pagePath` 比较，而 `taro-tabbar` 的 `componentWillLoad` 才原地给配置项加斜杠。对实际 3.6.40 `PageHandler.isTabBar` 的确定性检查，原始列表分类结果为 `false`，执行同一 slash normalization 后为 `true`。这与 r8 缺少 `taro_tabbar_page` 相符，但原失败当时 tab list 的瞬时值没有直接抓到，故保留该观测限制。
 
-当前 app config 仅在 `TARO_ENV=h5` 时预先规范化四个主 tab 路径；Weapp 输出维持无前导斜杠格式。新增 `npm run test:tabbar-path-config` 检查两个编译目标的配置路径合同。H5 构建和新的原十次导航复验仍需单独记录；本修正不改变 page visible/shade class，也不把旧 r8 结果追认为通过。导航诊断仅含受控登录与 memory GET，业务写/Provider 调用为零；详细失败原件索引见 [D6 harness](budget-travel-agent/DSH_D6_HARNESS.md)。
+当前 app config 仅在 `TARO_ENV=h5` 时预先规范化四个主 tab 路径；Weapp 输出维持无前导斜杠格式。`npm run test:tabbar-path-config` 检查两个编译目标的路径合同并通过，`npx tsc --noEmit --pretty false` 通过。修复后 H5 构建来源指纹为 `5cc9f688cfe40e2a8dbea3642d42a5022e54c6ec997a1f96fb465ed67541577d`，H5 产物 hash 为 `10c1be9568507b9141acfdd1cd3d1b57b4600ee1d9691b7f76559c60f5b3ba73`，r10 后端 runtime hash 为 `c846cfd5dce438446d7b7dd794f5df916ca5cb3a528a3528b4e872efe0ae4805`。新建的 r10 隔离服务上运行原十上下文导航：10/10 到达可见 Planner，最终 Plan class 均含 `taro_tabbar_page`；逐轮 `apiWrites` 为空。浏览器请求限于 r10 loopback H5/API，其中 API 只有 local auth POST 与 memory GET；没有 trips/conversations/agent-turn 或 fare 请求，未创建 `fare-calls.private.jsonl`。报告与截图保存在忽略目录 `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r10/private/navigation-ten-ungated-contexts.json`、`navigation-ungated-run-01.png` 至 `navigation-ungated-run-10.png`。r10 与 B01 其他工作共用新账本，本报告不以账本总量/差值推算导航调用费用。
+
+r8 的 9/10 结果仍保留为修复前证据；上述成功不追认 r8 通过。原失败 navTrace 从首次记录即没有 `taro_tabbar_page`，但没有直接记录当时 `tabBar.list` 的瞬时值，因此路径比较时序是有实际 PageHandler 确定性复现支持的根因，而非原失败上下文中直接采到的 list 快照。该修正不改变 Taro page visible/shade class。
 
 2026-10-06 配置修复后的本地 Weapp 构建通过（`output/d6/weapp-config-build-r2.log`），实际输出 `app.json` 的四条 tab 路径均维持 `pages/.../index`，没有前导斜杠。该任务专用构建输出 `dist-weapp-d6-*/` 与 H5 专用构建一样忽略提交，原件保留。首个构建命令因测试输出目录参数不符合仓库“单层目录名”约束而在编译前拒绝，原日志 `output/d6/weapp-config-build.log` 保留；修正参数后未改变源码。构建不代表微信内部运行验收，本轮仍按用户要求只验 H5。
 

@@ -1,5 +1,13 @@
 # 当前进度与验证
 
+## 2026-10-06：D6 H5 runner 手机尺寸记录
+
+`scripts/qa-dsh-d6-h5.cjs` 沿用既有 DSH E2E H5 runner 的 `390x844` CSS viewport 与 `deviceScaleFactor: 1`，显式让 screen 与 viewport 同尺寸；`mobile`/`touch` 维持旧默认 false，保留 Chrome 默认 user agent，不声称微信或原生设备仿真。每个报告新增 `browserEnvironment`，记录 Chrome 版本及运行时实测 viewport、screen、deviceScaleFactor、UA 和 mobile/touch 设定。未运行浏览器或 Provider；本批只做静态语法、差异和报告字段验证。详见 [D6 H5 harness](DSH_D6_HARNESS.md)。
+
+## 2026-10-06：r10 B01 研究耗时与账本只读审计
+
+r10 首次 `commit_travel_guide` 在166.712秒开始，前有26次模型、14次官方search、22次fetch；commit工具本身9ms返回失败。终态197.647秒，无accepted Artifact及可见结果；首发送失败，计划后续8动作blocked，不是通过。最终31 model/14 search全部settled、pending0，fare calls0，token receipt合计1,182,504（prompt1,168,641/completion13,863），仅reserve US$2.92（model $1.24/search $1.68），不代表实际账单。历史账本984项/pending1，SHA-256保持`3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126`。TTY Ctrl+C后PID退出、server/manager锁消失、52403/56889关闭、`guards_closed`恰1。14个search query与22个fetch URL哈希均唯一；99条source metadata中14个URL出现两次，另有7个响应正文落在两个重复hash中，资料正文是否语义覆盖不能仅凭metadata判断。最小可确定性优化候选为同一turn/context version按canonical URL复用已`available`的fetched body，search-only/no-body不得冒充正文，不复用不匹配freshness的来源。未改产品、runner、输入或预算，未重试Provider；明细见[D6验收](DSH_D6_ACCEPTANCE.md)。
+
 ## 2026-10-06：r9a B01 真实 H5 选择器修正
 
 r9 在 H5 Webpack setup 遇 Windows `spawn EPERM`，Provider 调用0，run/schema保留；获准同一本地子进程后另启 r9a，未覆盖 r9。r9a首次发送97ms受理，通用`.pl-result`成果卡67.071s首次可见，终态70.760s；这些不是可读accepted攻略计时。运行结算12次model/5次search、pending0，费用回执未知。首轮已产出accepted两日/7活动攻略，所有活动详情均已读取；失败发生在 runner `inspect-latest-result` 查找 demo 专用 `返回行程概览`，实际生产 published header 使用 `trip.back`（中文`返回`、英文`Back`），同一箭头按当前 tab 返回概览或触发宿主返回。故为 harness selector failure，不是产品导航失败或旅程PASS；解释/局改未运行。修正 runner helper 与 B11 的四处选择器，保留 overview 与可见 Planner 等待；`node scripts/test-production-presentation.cjs` 转译并运行实际PublishedTripExperience，检查中英accessible label、days→overview→onBack两步行为及B11目标页等待。runner新增独立accepted攻略可读时刻：当前route与accepted travel_guide ID绑定且全部活动详情读取后记录；交互澄清 checkpoint也按同一Artifact关联到真实生成turn，无法可靠对应submit时duration为null，原submit→terminal保留。r9a TTY正常关闭：无 server.lock、guard审计恰一条关闭、PID退出、API/H5端口关闭；D6 ledger pending0、历史 ledger SHA未变。未证明同run cold resume；r9a不是最终冻结源码/构建。原失败报告未改。详情见[D6验收台账](DSH_D6_ACCEPTANCE.md)与[H5 harness](DSH_D6_HARNESS.md)。

@@ -42,21 +42,40 @@ describe('DSH commit recovery policy', () => {
   })
   it('explains source-reference parameter errors without copying submitted source text', () => {
     const error = new z.ZodError([{ code: 'custom', path: ['candidates', 0, 'sourceRefs', 0], message: 'PRIVATE_SOURCE_BODY' }])
-    const feedback = safeCommitFeedback(error, 'arguments')
+    const feedback = safeCommitFeedback(error, 'arguments', { acceptedGoal: false })
     expect(feedback.fields).toEqual(['candidates.0.sourceRefs.0'])
     expect(feedback.correction).toContain('sourceRefs returned by web_search/web_fetch')
     expect(feedback.correction).toContain('not URLs')
+    expect(feedback.instruction).toContain('preserve the original semantic intent')
     expect(JSON.stringify(feedback)).not.toContain('PRIVATE_SOURCE_BODY')
+  })
+
+  it('returns every missing candidate category path and the shared category enum while preserving first intent', () => {
+    const error = new z.ZodError(Array.from({ length: 8 }, (_, index) => ({
+      code: 'custom', path: ['candidates', index, 'category'], message: 'PRIVATE_CANDIDATE_VALUE'
+    })))
+    const feedback = safeCommitFeedback(error, 'arguments', { acceptedGoal: false })
+    expect(feedback.fields).toEqual(Array.from({ length: 8 }, (_, index) => `candidates.${index}.category`))
+    expect(feedback.allowedCategories).toEqual(['event', 'seasonal', 'activity', 'stopover', 'practical'])
+    expect(feedback.correction).toContain('Classify candidates from their evidence')
+    expect(feedback.instruction).toContain('preserve the original semantic intent')
+    expect(JSON.stringify(feedback)).not.toContain('PRIVATE_CANDIDATE_VALUE')
   })
   it('asks for the first objective once and keeps later corrections on the immutable accepted Goal', () => {
     const missing = safeCommitFeedback(new AppError('GOAL_INTENT_REQUIRED', 'untrusted', 409), 'arguments')
-    expect(missing.instruction).toContain('new semantic intent')
+    expect(missing.instruction).toContain('Include the original intent')
     const conflict = safeCommitFeedback(new AppError('GOAL_INTENT_CONFLICT', 'untrusted', 409), 'arguments')
     expect(conflict.instruction).toContain('omit intent/goalRef')
     expect(conflict.instruction).toContain('immutable')
     expect(conflict.instruction).not.toContain('Repeat exactly')
     const correction = safeCommitFeedback(new z.ZodError([]), 'arguments')
     expect(correction.instruction).toContain('omit intent/goalRef')
+    const firstSubmission = safeCommitFeedback(new z.ZodError([]), 'arguments', { acceptedGoal: false })
+    expect(firstSubmission.instruction).toContain('preserve the original semantic intent')
+    expect(firstSubmission.instruction).not.toContain('omit intent/goalRef')
+    const acceptedCorrection = safeCommitFeedback(new z.ZodError([]), 'arguments', { acceptedGoal: true })
+    expect(acceptedCorrection.instruction).toContain('The Goal is accepted; omit intent/goalRef')
+    expect(acceptedCorrection.instruction).not.toContain('preserve the original semantic intent')
   })
 
   it('keeps argument and prerequisites outside the one content repair quota', () => {
@@ -117,5 +136,29 @@ describe('DSH commit recovery policy', () => {
     expect(feedback.correction).toContain('exact current trip budget amount only as a total-trip target')
     expect(feedback.correction).toContain('do not claim that costs fit it')
     expect(feedback.correction).not.toContain('Remove monetary amounts')
+  })
+
+  it('exposes only validated day-coverage fields and keeps presentation corrections', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_PROVIDER_BODY', 422, {
+      issues: ['guide_day_coverage', 'guide_duplicate_evidence'], presentationIssues: ['excluded_precise_claim'],
+      dayCoverage: { expectedDays: 2, submittedDays: [1, 2, 3], travelWindow: { from: '2026-11-03', to: '2026-11-04' }, injected: 'PRIVATE' },
+      repairHint: 'PRIVATE_PROVIDER_BODY'
+    })
+    const feedback = safeCommitFeedback(error, 'content', { acceptedGoal: true })
+    expect(feedback.dayCoverage).toEqual({ expectedDays: 2, submittedDays: [1, 2, 3],
+      travelWindow: { from: '2026-11-03', to: '2026-11-04' } })
+    expect(feedback.correction).toContain('exactly 2 sequential day(s)')
+    expect(feedback.correction).toContain('exact current trip budget amount only as a total-trip target')
+    expect(feedback.correction).toContain('Use a distinct candidate/finding for each scheduled visit')
+    expect(JSON.stringify(feedback)).not.toContain('PRIVATE_PROVIDER_BODY')
+    expect(JSON.stringify(feedback)).not.toContain('injected')
+  })
+
+  it('drops malformed or out-of-range day-coverage values', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'untrusted', 422, {
+      dayCoverage: { expectedDays: 61, submittedDays: [1, '2'], travelWindow: { from: 'not-a-date' } }
+    })
+    const feedback = safeCommitFeedback(error, 'content', { acceptedGoal: true })
+    expect(feedback).not.toHaveProperty('dayCoverage')
   })
 })

@@ -52,7 +52,8 @@ export const dshCommitInputSchema = commitGuideInputSchema.omit({ baseGuideId: t
       .describe('Select only sourceRefs returned by web_search/web_fetch in this turn after the latest Trip update; never source URLs or invented IDs.'),
       title: z.string().trim().min(1).max(240), summary: z.string().trim().min(1).max(1500),
       category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']), locationId: z.string().min(1).max(160).optional() }).strict()).min(1).max(50).optional(),
-    days: z.array(commitGuideInputSchema.shape.days.element.extend({ cityId: z.string().min(1).max(160).optional(), items: z.array(item).max(6) })).min(1).max(60),
+    days: z.array(commitGuideInputSchema.shape.days.element.extend({ cityId: z.string().min(1).max(160).optional(), items: z.array(item).max(6) })).min(1).max(60)
+      .describe('For a first guide or failed first-guide repair, submit the COMPLETE itinerary covering exactly the authoritative Trip duration with consecutive day numbers starting at 1, including rest/travel days within that span. Do not append an optional extra day. For a local edit of an accepted guide, submit only the selected replacement slots; the server preserves other days. Always include both days and text in a corrected submission.'),
     supportingRefs: z.array(candidateReference).max(50).optional()
       .describe('Optional supplemental persisted candidate references, not source URLs. For candidates submitted here, use supportingCandidateKeys instead.'),
     supportingCandidateKeys: commitGuideInputSchema.shape.supportingCandidateKeys

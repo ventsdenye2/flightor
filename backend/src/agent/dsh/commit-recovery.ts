@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { AppError, isAppError } from '../../lib/errors.js'
+import { researchTypeSchema } from '../../research-agent/types.js'
 
 export type CommitFailureKind = 'arguments' | 'prerequisite' | 'content' | 'system'
 const MAX_CALLS = 6
@@ -56,19 +57,25 @@ export function classifyCommitFailure(error: unknown): CommitFailureKind {
 }
 
 /** Model-visible feedback is assembled from known fields; provider messages and arbitrary details never cross this boundary. */
-export function safeCommitFeedback(error: unknown, kind: CommitFailureKind) {
+export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, options: { acceptedGoal?: boolean } = {}) {
   const details = isAppError(error) && error.details && typeof error.details === 'object' && !Array.isArray(error.details)
     ? error.details as Record<string, unknown> : {}
+  const acceptedGoal = options.acceptedGoal === true
+  const goalAcceptanceKnown = options.acceptedGoal !== undefined
+  const goalCorrection = goalAcceptanceKnown
+    ? acceptedGoal ? 'The Goal is accepted; omit intent/goalRef and preserve its immutable constraints.'
+      : 'No Goal is accepted yet; preserve the original semantic intent on the corrected first durable submission.'
+    : 'If a Goal is accepted, omit intent/goalRef and preserve its immutable constraints; otherwise preserve the original intent on the first durable submission.'
   const strings = (value: unknown) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string').slice(0, 30) : []
   const code = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
   const feedback: Record<string, unknown> = { code, kind, instruction: code === 'GOAL_INTENT_REQUIRED'
-    ? 'The first durable operation of this prepared attempt requires a new semantic intent matching the explicit user objective.'
+    ? 'The first durable operation requires semantic intent matching the explicit user objective. Include the original intent on this corrected first submission.'
     : code === 'DSH_CANDIDATE_REFERENCE_UNAVAILABLE'
     ? 'Correct the indicated reference field: candidateRef/supportingRefs accept only candidate references returned in this preparation, not source URLs. For submitted supplemental candidates use supportingCandidateKeys. Do not invent or drop required evidence. If no Goal was accepted, the corrected first submission still needs its semantic intent; otherwise preserve the accepted immutable Goal and omit intent/goalRef.'
     : code === 'GOAL_INTENT_CONFLICT' || code === 'GOAL_IDEMPOTENCY_CONFLICT'
     ? 'The accepted Goal constraints are immutable. For its repair, omit intent/goalRef and preserve those constraints; do not weaken or replace the objective.'
     : kind === 'arguments'
-    ? 'Correct only the stated commit fields. If a Goal is already accepted, omit intent/goalRef and preserve its immutable constraints. Current-turn candidates and evidence remain available.'
+    ? `Correct only the stated commit fields. ${goalCorrection} Current-turn candidates and evidence remain available.`
     : kind === 'prerequisite' ? 'Correct the missing or stale prerequisite before resubmitting. Reuse current-turn candidates and evidence when their scope is unchanged.'
       : kind === 'content' ? 'Revise the rejected itinerary or public text once, preserving the accepted Goal and protected slots.'
         : 'The guide submission could not be processed. Do not infer acceptance.' }
@@ -78,6 +85,14 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind) {
       'For new candidates select only sourceRefs returned by web_search/web_fetch in this current preparation, not URLs. Reuse the existing current receipts; do not invent references or repeat valid research.'
     else if (error.issues.some(issue => issue.path.includes('candidateRef') || issue.path.includes('supportingRefs'))) feedback.correction =
       'Select only persisted candidate references returned in this preparation for candidateRef/supportingRefs, not source URLs. For new supplemental candidates use supportingCandidateKeys.'
+    const categoryFields = error.issues.filter(issue => issue.path.length === 3 && issue.path[0] === 'candidates'
+      && Number.isInteger(issue.path[1]) && Number(issue.path[1]) >= 0 && Number(issue.path[1]) < 50
+      && issue.path[2] === 'category').map(issue => issue.path.join('.'))
+    if (categoryFields.length) {
+      feedback.fields = [...new Set([...(feedback.fields as string[]), ...categoryFields])]
+      feedback.allowedCategories = [...researchTypeSchema.options]
+      feedback.correction = 'Provide a research category at each indicated field using allowedCategories. Classify candidates from their evidence; do not relabel or remove candidates to satisfy a requirement.'
+    }
   }
   if (code === 'DSH_GUIDE_NEEDS_REVISION' && details.code === 'candidate_category_outside_goal') {
     const categories = new Set(['event', 'seasonal', 'activity', 'stopover', 'practical'])
@@ -155,12 +170,39 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind) {
           cityIds: strings(candidate.cityIds).slice(0, 12) }
       }) : [] }
     }
-    if (strings(details.issues).includes('guide_duplicate_evidence')) feedback.correction =
-      'Use a distinct candidate/finding for each scheduled visit and supporting item. One current source may support several truly distinct places; do not rename the same visit. Keep accepted Goal constraints and protected slots unchanged.'
-    else if (strings(details.presentationIssues).includes('excluded_precise_claim')) feedback.correction =
-      'Remove unsupported prices, clock times and precise durations from public text. You may retain the exact current trip budget amount only as a total-trip target; do not claim that costs fit it.'
-    else if (details.code === 'activity_text_exact_cover') feedback.correction =
-      'Provide exactly one text activity per requiredActivityKey. Put practical material in supportingCandidateKeys, not text.activities.'
+    const coverage = details.dayCoverage && typeof details.dayCoverage === 'object' && !Array.isArray(details.dayCoverage)
+      ? details.dayCoverage as Record<string, unknown> : undefined
+    if (coverage && Number.isInteger(coverage.expectedDays) && Number(coverage.expectedDays) >= 1 && Number(coverage.expectedDays) <= 60
+      && Array.isArray(coverage.submittedDays) && coverage.submittedDays.length <= 60
+      && coverage.submittedDays.every(day => Number.isInteger(day) && Number(day) >= 1 && Number(day) <= 60)) {
+      const window = coverage.travelWindow && typeof coverage.travelWindow === 'object' && !Array.isArray(coverage.travelWindow)
+        ? coverage.travelWindow as Record<string, unknown> : undefined
+      const isDate = (value: unknown): value is string => typeof value === 'string' && z.iso.date().safeParse(value).success
+      const windowValid = window && Object.keys(window).every(key => key === 'from' || key === 'to')
+        && (window.from === undefined || isDate(window.from)) && (window.to === undefined || isDate(window.to))
+      const travelWindow = windowValid && window && (window.from !== undefined || window.to !== undefined)
+        ? { ...(isDate(window.from) ? { from: window.from } : {}), ...(isDate(window.to) ? { to: window.to } : {}) }
+        : undefined
+      feedback.dayCoverage = { expectedDays: Number(coverage.expectedDays), submittedDays: coverage.submittedDays,
+        ...(travelWindow ? { travelWindow } : {}) }
+    }
+    const contentCorrections: string[] = []
+    if (strings(details.issues).includes('guide_duplicate_evidence')) contentCorrections.push(
+      'Use a distinct candidate/finding for each scheduled visit and supporting item. One current source may support several truly distinct places; do not rename the same visit. Keep accepted Goal constraints and protected slots unchanged.')
+    if (strings(details.presentationIssues).includes('excluded_precise_claim')) contentCorrections.push(
+      'Remove unsupported prices, clock times and precise durations from public text. You may retain the exact current trip budget amount only as a total-trip target; do not claim that costs fit it.')
+    if (details.code === 'activity_text_exact_cover') contentCorrections.push(
+      'Provide exactly one text activity per requiredActivityKey. Put practical material in supportingCandidateKeys, not text.activities.')
+    if (contentCorrections.length) feedback.correction = [typeof feedback.correction === 'string' ? feedback.correction : undefined,
+      ...contentCorrections].filter(Boolean).join(' ')
+  }
+  if (goalAcceptanceKnown && !acceptedGoal) {
+    feedback.instruction = `${feedback.instruction} No Goal has been accepted in this turn; preserve the original semantic intent on the corrected first durable submission.`
+  }
+  const coverage = feedback.dayCoverage as { expectedDays?: number } | undefined
+  if (coverage) {
+    const correction = `Submit exactly ${coverage.expectedDays} sequential day(s) for the current Trip window, with the complete corrected days and text. Do not add optional days outside the Trip.`
+    feedback.correction = [correction, typeof feedback.correction === 'string' ? feedback.correction : undefined].filter(Boolean).join(' ')
   }
   return feedback
 }

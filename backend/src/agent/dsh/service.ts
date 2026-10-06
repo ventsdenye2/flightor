@@ -292,7 +292,8 @@ export class DshPlannerService implements PlannerServicePort {
             lastCommitCode = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
             lastCommitStage = classifyDshFailure(lastCommitCode, isAppError(error) ? error.details : null)
               ?? (kind === 'prerequisite' ? 'evidence' : kind === 'content' ? 'publication' : 'commit')
-            return { ok: false, error: modelReferences({ ...safeCommitFeedback(error, kind), recovery: commitRecovery.snapshot() }) }
+            return { ok: false, error: modelReferences({ ...safeCommitFeedback(error, kind,
+              { acceptedGoal: context.acceptedGoalIntent !== undefined }), recovery: commitRecovery.snapshot() }) }
           }
           return { ok: false, error: { code: isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE' } }
         } finally { emitActivity(input.onActivity, { type: 'tool_end', toolName: name, toolCallId: callId }) }

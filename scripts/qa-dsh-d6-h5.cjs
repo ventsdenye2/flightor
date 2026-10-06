@@ -446,8 +446,22 @@ const checkPageContract = async (page, contract, label) => {
 
 async function run() {
   browser = await chromium.launch({ channel: 'chrome', headless: false })
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } })
+  const browserContextOptions = { viewport: { width: 390, height: 844 }, screen: { width: 390, height: 844 },
+    deviceScaleFactor: 1, isMobile: false, hasTouch: false }
+  const context = await browser.newContext(browserContextOptions)
   const page = await context.newPage()
+  report.browserEnvironment = {
+    name: 'Chrome', version: browser.version(),
+    ...(await page.evaluate(() => ({
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      screen: { width: window.screen.width, height: window.screen.height },
+      deviceScaleFactor: window.devicePixelRatio,
+      userAgent: navigator.userAgent,
+    }))),
+    mobile: browserContextOptions.isMobile, touch: browserContextOptions.hasTouch,
+    emulation: 'phone-sized viewport; default Chrome user agent; mobile and touch emulation disabled',
+  }
+  write()
   const plannerComposer = page.locator('.pl-composer textarea')
   page.on('pageerror', error => report.browserErrors.push(sanitize(error.message)))
   page.on('console', message => { if (message.type() === 'error') report.browserErrors.push(sanitize(message.text())) })

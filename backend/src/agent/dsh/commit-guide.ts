@@ -10,7 +10,7 @@ import { finalTextSchema, type FinalText, type PublicationLocale } from '../../t
 import { publishIntegratedGuide } from '../../travel-guides/finalization-service.js'
 import { publicProseProblems, sourceRef } from '../../travel-guides/finalization.js'
 import { publicationFor } from '../../travel-guides/publication.js'
-import { tripTravelWindow } from '../../trips/dates.js'
+import { tripDatesConsistent, tripDurationDays, tripTravelWindow } from '../../trips/dates.js'
 import { tripRoutePlanPayloadSchema } from '../../trip-planning/types.js'
 import { canonicalFingerprint } from '../goals/repository.js'
 import { travelGuideGoalParametersSchema } from '../goals/types.js'
@@ -210,15 +210,21 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         const bodies = [input.text.reply, input.text.overview, ...(protectedGuide?.themes ?? input.text.days).map(day => day.theme),
           ...proposedActivities.flatMap(activity => [activity.introduction, activity.recommendationReason])]
         const presentationIssues = publicProseProblems([...bodies, ...proposedActivities.map(activity => activity.name)], options.locale, { languageBodies: bodies, budget: scope.tripContext.budget ?? null, budgetTarget: true })
+        const expectedDays = saved.issues.includes('guide_day_coverage') && tripDatesConsistent(scope.tripContext)
+          ? tripDurationDays(scope.tripContext) : undefined
+        const dayCoverage = expectedDays === undefined ? undefined : { expectedDays,
+          submittedDays: days.map(day => day.day), travelWindow: tripTravelWindow(scope.tripContext) ?? {} }
         const repairHint = (saved.issues.includes('guide_duplicate_evidence')
           ? 'Select a distinct candidate/finding for each scheduled visit and supporting entry; the same finding cannot occupy multiple slots. A single raw source may support multiple genuinely distinct places or experiences, with separate candidate keys and accurately supported descriptions; do not merely rename duplicate visits. '
           : '') + (isPatch
           ? 'Resubmit the complete corrected replacement days and text for the original selected slots, using the same real accepted baseGuideId and expectedContentHash. '
           : 'Resubmit COMPLETE corrected days and text with the same accepted Goal. This first-guide repair needs no baseGuideId, expectedContentHash or replaceSlots; do not invent these values. ')
           + 'Reuse availableCandidates or current evidence for supported corrections; research only genuinely missing material. Keep accepted constraints unchanged.'
+          + (dayCoverage ? ` Cover exactly ${dayCoverage.expectedDays} days, numbered 1 through ${dayCoverage.expectedDays}, matching the authoritative Trip. The submitted day numbers were ${dayCoverage.submittedDays.join(', ')}. A rest or travel day still counts within that span; do not append an optional extra day. Correct both days and text.days without reducing the requested coverage.` : '')
           + (presentationIssues.includes('excluded_precise_claim')
             ? ' ALSO remove ALL monetary amounts, unless restating the exact authoritative whole-trip budget target, clock times and exact minutes/durations from every text field; the UI displays the authoritative budget separately.' : '')
         fail('The itinerary requires revision', { ...saved,
+          ...(dayCoverage ? { dayCoverage } : {}),
           ...(presentationIssues.length ? { presentationIssues } : {}),
           ...(saved.repair ? { repair: { issues: saved.repair.issues, availableCandidates: saved.repair.availableCandidates,
             candidateSearchComplete: saved.repair.candidateSearchComplete } } : {}),
