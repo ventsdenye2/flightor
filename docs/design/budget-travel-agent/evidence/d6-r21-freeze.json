@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "status": "engineering_passed_real_h5_running",
+  "createdAt": "2026-10-06T20:50:56.975Z",
+  "codeHead": "bfc3e139209368968ed53d27bdc0495165162a32",
+  "runId": "679f365c-784b-4ed8-ac64-f0f2cb008306",
+  "schema": "dsh_d6_679f365c784b4ed8ac64f0f2cb008306",
+  "pid": 119356,
+  "serverSession": 29022,
+  "apiPort": 63857,
+  "h5Port": 57375,
+  "sourceFingerprint": "710809d71e9d579b1b4c22420b046eae47a9587a558773918f9d8d4d5035d4ad",
+  "backendFingerprint": "3993399fb9ef86d17ee2adb85ad76a2d665dfc11e0d8b6ef298b282ad87eea71",
+  "h5Fingerprint": "c349c908b0d824eb41038ad15d1106f506ad783647d0346dfdbc83f8a5c469e2",
+  "workerFingerprint": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+  "configuration": {
+    "modelProvider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "searchProvider": "deepseek-official",
+    "maxTokens": 8192,
+    "thinking": "disabled",
+    "nativeResearchProvider": "serpapi",
+    "places": {
+      "url": "https://nominatim.openstreetmap.org/",
+      "userAgent": "FlightOR-D6/1.0 (+https://github.com/ventsdenye2/flightor)",
+      "proxy": "http://127.0.0.1:7890"
+    }
+  },
+  "journeysSha256": "91240ac6c741a990ad4a233451cc5982702b9d3856eb85597fa88206be943780",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false
+  },
+  "authorization": {
+    "deepseek": "current user authorization; unlimited amount, per-call metering retained",
+    "serpapi": "existing authorized account allowance only; no purchase"
+  },
+  "platform": "H5; WeChat page acceptance deferred by user; WeChat build still required",
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "runtimeArchive": "backend/.demo/dsh-d6-runtime/d6-final-r21/private/runtime-frozen",
+  "runtimeArchiveAudit": {
+    "sha256": "3993399fb9ef86d17ee2adb85ad76a2d665dfc11e0d8b6ef298b282ad87eea71",
+    "files": 783,
+    "matchesRunningBackend": true
+  },
+  "sourceAudit": {
+    "matchesFrozenManifest": true,
+    "at": "2026-10-06T20:50:57.138Z"
+  },
+  "backendAudit": {
+    "matchesFrozenManifest": true
+  },
+  "h5Audit": {
+    "matchesFrozenManifest": true
+  },
+  "backendUnit": {
+    "files": 138,
+    "passed": 1475,
+    "total": 1475,
+    "failed": 0,
+    "durationSeconds": 221.37,
+    "log": "output/d6/backend-unit-r21-final.log"
+  },
+  "postgres": {
+    "passed": 52,
+    "total": 52,
+    "durationSeconds": 70.75,
+    "dedicatedLoopbackDatabase": true,
+    "log": "output/d6/postgres-r21-final.log"
+  },
+  "d5": {
+    "passed": 30,
+    "total": 30,
+    "codeUnchanged": true,
+    "realProvider": false,
+    "evidence": "d5-2026-10-06T20-50-06-428Z.json"
+  },
+  "h5Build": {
+    "durationMs": 38846,
+    "warnings": 2,
+    "result": "compiled",
+    "evidence": "private/h5-build-terminal-output.log is a retained terminal tail; intermediate output was truncated, not a complete standalone build log"
+  },
+  "weappBuild": {
+    "result": "exit_0",
+    "durationMs": 19070,
+    "warnings": "Existing CSS order and bundle size warnings retained",
+    "log": "output/d6/weapp-r21-final.log"
+  },
+  "h5Helpers": {
+    "passed": 19,
+    "total": 19,
+    "log": "output/d6/h5-helpers-r21-final.log"
+  },
+  "initialRealCalls": {
+    "model": 0,
+    "search": 0,
+    "fare": 0,
+    "pending": 0
+  },
+  "fixedReplay": [
+    {
+      "evidence": "d6-r21-fixed-replay.json",
+      "acceptedSamples": {
+        "baseline": 10,
+        "d6": 10
+      },
+      "semanticMatches": true,
+      "modelCalls": 0,
+      "externalCalls": 0,
+      "p50": {
+        "baselineExecuteMs": 11.422449999999913,
+        "d6AdapterMs": 0.5145500000000425,
+        "d6ExecuteMs": 12.37945000000002,
+        "baselineTotalMs": 13.47564999999986,
+        "d6TotalMs": 14.447350000000142
+      }
+    }
+  ],
+  "frontend": {
+    "conversationProgress": 116,
+    "sessionRecovery": 20,
+    "artifacts": 37,
+    "productionPresentation": 52,
+    "plannerReply": 6,
+    "plannerPublication": 36,
+    "rootTypescript": "exit_0",
+    "offlineOnly": true,
+    "logPattern": "output/d6/*-r21-final.log"
+  },
+  "runtime": {
+    "passed": 14,
+    "total": 14,
+    "initialSandboxFailure": "Test workers could not spawn (EPERM), no business assertions started",
+    "log": "output/d6/dsh-runtime-r21-final-elevated.log"
+  },
+  "observer": {
+    "passed": 1,
+    "total": 1,
+    "initialSandboxFailure": "Fixture worker could not spawn (EPERM), no business assertions started",
+    "log": "output/d6/dsh-e2e-observation-r21-final-elevated.log"
+  },
+  "backendCheck": {
+    "result": "exit_0",
+    "log": "output/d6/backend-check-r21-final.log"
+  },
+  "backendBuild": {
+    "result": "exit_0",
+    "log": "output/d6/backend-build-r21-pre.log",
+    "note": "Built after final budget source stabilized; filename pre refers to before full frozen engineering, not an earlier source revision."
+  },
+  "realH5": {
+    "status": "running",
+    "journeyId": "B01",
+    "runnerSession": 63759
+  }
+}

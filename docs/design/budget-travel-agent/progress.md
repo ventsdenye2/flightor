@@ -1,5 +1,7 @@
 # 当前进度与验证
 
+2026-10-07 r21同版工程复验已结束：backend138文件1475/1475（221.37秒）、真实专用PG52/52（70.75秒）、D5本地HTTP/持久票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端六族116/20/37/52/6/36及根TS、H5/weapp构建、helper19/19均通过。runtime/observer首次sandbox EPERM未执行业务断言，同命令提权复跑通过并保留首日志。源码bfc3e13，新run679f365c-784b-4ed8-ac64-f0f2cb008306、schema dsh_d6_679f365c784b4ed8ac64f0f2cb008306、API63857/H557375、PID119356/TTY29022；源码/实际构建及783文件归档核对一致，0新真实调用。原12+4真实390×844 H5已从B01开始（TTY63759），D6未PASS、无确认硬阻塞；原r20失败不追认。详见[冻结证据](evidence/d6-r21-freeze.json)。
+
 2026-10-07 r21预算关系结构修复已完成定向：最终12文件461/461，根backend check/build及实际构建独立24/24零外呼回放通过。以局部费用谓词/金额绑定替代费用名词默认误拦，跨句金额指代、whether未确认问句与另行计算边界补回归；不放宽费用估计/保证、权威金额/币种/全程口径或原修订额度。完整后端已开始复验，新冻结完整工程及原12固定+4探索真实390×844 H5仍待执行；r20原失败仍FAIL，D6未PASS、无确认硬阻塞，未push/合并/部署。
 
 2026-10-07 r20真实B01失败后续作：94ms受理、129.101秒终态、0accepted/后8动作blocked；两稿合法全程预算说明被excluded_precise_claim误拦，Astra max已冻结函数复现并正在结构修复，未重发付费请求。PID113804退出、TTY83280结束、server锁释放、guards正常关闭/违规0，原DB/会话/账本/冻结副本保留。原报告与PG路径、21model/12search/658498 tokens、USD2.28预留非实付及累计费用见[D6失败审计](evidence/d6-r20-b01-failure.json)。下一步回收Astra最小修复/红绿回归、合并定向/真实PG、提交、r21新schema/run/ledger与实际构建冻结、完整工程及原12+4真实390×844 H5。D6未PASS、无确认硬阻塞；以下为历史快照。
