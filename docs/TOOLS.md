@@ -2,6 +2,8 @@
 
 2026-10-06 D6首次提交前置检查：`commit_travel_guide`在接受新Goal前拒绝“选中本次raw-web候选且allowPartial=false”的不兼容intent，返回受控`raw_evidence_requires_partial`与`intent.parameters.allowPartial`纠正字段；不写Goal/研究、不消耗内容修订次数。主模型须按用户真实要求显式纠正首次intent或说明独立核实无法满足，服务端不自动弱化目标。已接受/恢复Goal的严格证据与不可变参数检查保持，legacy工具合同不变；详见[ADR0029](adr/0029-dsh-prepared-submission.md)及[公共反馈](design/budget-travel-agent/DSH_D6_PUBLIC_ERRORS.md)。
 
+2026-10-06 D6候选注册前置：每个`candidateKey`必须精确匹配本次`candidates[].key`，或同一准备尝试与scope内已登记的key；仅调用`web_search`/`web_fetch`不会登记候选。新Goal在原有intent/runtime/kind/Trip快照/航班检查后、接受前检查key覆盖，已接受Goal在scope确认后、候选研究持久化前检查。受控拒绝返回registration状态、缺失key、当前可用key及`candidates`字段路径；不会按地点或网页正文猜配来源、自动造候选或通过重命名绕过。注册列表省略仅可复用同scope现存候选或持久`candidateRef`，显式列表仍整体替换并重验。无Goal的失败终态返回`partial/travel_guide`与`accepted_publication`缺口，不伪造Goal ID；详见D6工程计划的r13续作记录及定向测试。
+
 2026-10-06 D6 `web_fetch` 同准备轮次可复用精确请求URL的成功正文：命中时返回 `cacheHit: true` 并保持原始evidence UUID、hash、retrievedAt及完整owner/Trip/conversation/generation/version校验，不跨轮或改版本复用原始引用；失败/空正文/challenge不缓存，同URL并发读取共享safe-reader并返回sharedFetch=true，同URL回执串行比较实际正文后复用。抓取请求动作、已存命中、并发共享、新reader尝试和实际HTTP需分别统计，不将缓存当语义核实。主模型需逐候选核对正文支持，通用目录/URL标题/权威来源不构成具体地点证据，不自行排除全程预算范围。修前定向回归已复现重复HTTP，修后四文件23/23、service/web/reuse19/19、check/build及observer1/1通过，真实最终内容仍待验；合同见 [D6证据与地点](design/budget-travel-agent/DSH_D6_EVIDENCE_AND_LOCATIONS.md)。
 
 2026-09-27 D5：新增零参数 `search_budget_routes`，用于用户明确找便宜/可绕行的单程查询；先保存 canonical Trip 条件，独立票须明确允许 self-transfer。它同步复用 route-generation Goal/Run，返回路线 Artifact 与代表方案，不更新 selected flight；110 秒工具 deadline 与父取消共同约束。`start_route_generation` 原排队入口保留；普通查票仍可 `search_flights`。DSH Provider 每次 HTTP 请求计量，最多两次额外 transient retry；模型总次数不固定为12。commit 参数纠正与一次内容修订分开；详情与验证见 [D5 报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。

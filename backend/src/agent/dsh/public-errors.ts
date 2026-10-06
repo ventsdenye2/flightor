@@ -7,7 +7,7 @@ const stageForCode = (code: string): PublicFailureStage | undefined => {
   if (/^(?:PLANNER_CONTEXT_CHANGED|TRIP_CONTEXT_VERSION_CONFLICT|FLIGHT_SELECTION_CHANGED|ARTIFACT_CONTEXT_VERSION_MISMATCH|PUBLICATION_CONTENT_CHANGED|DSH_GUIDE_BASE_UNAVAILABLE|context_conflict)$/.test(code)) return 'context_conflict'
   if (/^(?:CONVERSATION_TURN_NOT_FOUND|CONVERSATION_TURN_TIMEOUT|AGENT_TURN_TIMEOUT|STALE_CONVERSATION_TURN|ui_restore)$/.test(code)) return 'ui_restore'
   if (/(?:LOCATION|PLACE|candidate_location_unresolved)/i.test(code)) return 'location'
-  if (/(?:EVIDENCE|SOURCE|missing_material|candidate_evidence_unavailable|DSH_CANDIDATE_REFERENCE_UNAVAILABLE)/i.test(code)) return 'evidence'
+  if (/(?:EVIDENCE|SOURCE|missing_material|candidate_evidence_unavailable|candidate_key_unavailable|DSH_CANDIDATE_REFERENCE_UNAVAILABLE)/i.test(code)) return 'evidence'
   if (/^(?:DSH_COMMIT_[A-Z0-9_]+|DSH_ARGUMENT_CORRECTION_LIMIT|DSH_REPAIR_LIMIT|commit)$/.test(code)) return 'commit'
   if (/(?:PUBLICATION|GUIDE_NEEDS_REVISION|publication)/i.test(code)) return 'publication'
   return undefined
@@ -78,8 +78,14 @@ const unavailableGuideBaseCopy: Record<PublicationLocale, string> = {
   en: 'There is no published guide available for a local edit. Reopen the current guide and complete preparation in the displayed language before requesting a local edit.'
 }
 
+const unavailableCandidateKeyCopy: Record<PublicationLocale, string> = {
+  zh: '行程活动与参考资料未能正确关联，本轮未确认新的攻略结果。请先查看行程中已保存的结果，再重试本次请求。',
+  en: 'A trip activity could not be correctly linked to its reference material, so no new guide was confirmed. Check the saved results in your trip before retrying this request.'
+}
+
 export function publicFailureReply(stage: PublicFailureStage, locale: PublicationLocale, causeCode?: string): string {
   if (causeCode === 'DSH_GUIDE_BASE_UNAVAILABLE') return unavailableGuideBaseCopy[locale]
+  if (causeCode === 'candidate_key_unavailable') return unavailableCandidateKeyCopy[locale]
   const value = copy[stage][locale]
   return `${value.message} ${value.action}`
 }

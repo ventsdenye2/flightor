@@ -49,6 +49,91 @@ async function fixture() {
 }
 
 describe('DSH combined guide commit', () => {
+  it('rejects missing candidate registration before accepting a Goal or saving research', async () => {
+    const f = await fixture()
+    const input = structuredClone(f.input)
+    delete input.candidates
+    const accept = vi.spyOn(f.runs, 'accept')
+
+    await expect(f.execute(input)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'candidate_key_unavailable', fieldPath: 'candidates', registrationStatus: 'not_submitted',
+      missingCandidateKeys: ['temple', 'museum', 'garden'], availableCandidateKeys: []
+    } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.goals.listForTrip(f.trip.id)).toEqual([])
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+
+    const accepted = await f.execute()
+    expect(accepted).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    expect(accept).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects selected keys missing from a supplied candidate replacement before any write', async () => {
+    const f = await fixture()
+    const input = structuredClone(f.input)
+    input.candidates = input.candidates!.filter(candidate => candidate.key !== 'garden')
+    const accept = vi.spyOn(f.runs, 'accept')
+
+    await expect(f.execute(input)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'candidate_key_unavailable', fieldPath: 'candidates', registrationStatus: 'submitted_incomplete',
+      missingCandidateKeys: ['garden'], availableCandidateKeys: ['temple', 'museum']
+    } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.goals.listForTrip(f.trip.id)).toEqual([])
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+  })
+
+  it('keeps current registered keys and reports a missing renamed key without another research write', async () => {
+    const f = await fixture()
+    const invalid = structuredClone(f.input)
+    invalid.text.reply = 'The budget target is 4000元.'
+    await expect(f.execute(invalid)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION' })
+    const goalId = f.context.activeGoalId
+    const artifactsBefore = await f.artifacts.listForTrip(f.trip.id)
+    const renamed = structuredClone(f.input)
+    delete renamed.candidates
+    renamed.days[0]!.items[0]!.candidateKey = 'temple-renamed'
+
+    await expect(f.execute(renamed)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'candidate_key_unavailable', fieldPath: 'candidates', registrationStatus: 'not_submitted',
+      missingCandidateKeys: ['temple-renamed'], availableCandidateKeys: ['temple', 'museum', 'garden']
+    } })
+    expect(f.context.activeGoalId).toBe(goalId)
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual(artifactsBefore)
+  })
+
+  it('preserves semantic authorization errors before candidate preflight', async () => {
+    const f = await fixture()
+    const wrongKind = { kind: 'flight_search' as const, parameters: { requestKey: 'flights' } }
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...f.input, intent: wrongKind }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'GOAL_KIND_MISMATCH' })
+    const missingIntent = structuredClone(f.input)
+    delete (missingIntent as any).intent
+    await expect(f.tool.execute(f.tool.inputSchema.parse(missingIntent), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'GOAL_INTENT_REQUIRED' })
+    expect(await f.goals.listForTrip(f.trip.id)).toEqual([])
+  })
+
+  it.each(['runtime', 'stale-trip', 'flight'] as const)('preserves %s rejection priority over candidate preflight', async cause => {
+    const f = await fixture()
+    const missing = structuredClone(f.input)
+    delete missing.candidates
+    if (cause === 'runtime') delete (f.context as any).goalRepository
+    if (cause === 'stale-trip') {
+      Object.assign(f.context, { tripContextSnapshot: structuredClone(f.trip) })
+      await f.trips.update(f.trip.id, { notes: ['Changed after preparation'] }, 1)
+    }
+    if (cause === 'flight') Object.assign(f.context, { assertFlightSelectionCurrent: async () => {
+      throw new (await import('../../lib/errors.js')).AppError('FLIGHT_SELECTION_CHANGED', 'flight changed', 409)
+    } })
+    const expected = cause === 'runtime' ? 'GOAL_RUNTIME_UNAVAILABLE'
+      : cause === 'stale-trip' ? 'TRIP_CONTEXT_VERSION_CONFLICT' : 'FLIGHT_SELECTION_CHANGED'
+
+    await expect(f.execute(missing)).rejects.toMatchObject({ code: expected })
+    expect(await f.goals.listForTrip(f.trip.id)).toEqual([])
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+  })
+
   it('rejects a first raw-source submission that requires fully verified evidence before accepting or writing a Goal', async () => {
     const f = await fixture()
     const strictIntent = { ...intent, parameters: { ...intent.parameters, allowPartial: false } }
@@ -243,7 +328,10 @@ describe('DSH combined guide commit', () => {
     await expect(f.execute(invalid)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION' })
     const replacement = structuredClone(f.input)
     replacement.candidates = replacement.candidates!.slice(0, 1)
-    await expect(f.execute(replacement)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', message: 'Candidate key is unavailable: museum' })
+    await expect(f.execute(replacement)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'candidate_key_unavailable', registrationStatus: 'submitted_incomplete',
+      missingCandidateKeys: ['museum', 'garden'], availableCandidateKeys: ['temple']
+    } })
   })
 
   it('does not register keys when research persistence failed', async () => {
@@ -252,7 +340,10 @@ describe('DSH combined guide commit', () => {
     await expect(f.execute()).rejects.toThrow('research save unavailable')
     const repair = structuredClone(f.input)
     delete repair.candidates
-    await expect(f.execute(repair)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', message: 'Candidate key is unavailable: temple' })
+    await expect(f.execute(repair)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'candidate_key_unavailable', registrationStatus: 'not_submitted',
+      missingCandidateKeys: ['temple', 'museum', 'garden'], availableCandidateKeys: []
+    } })
     expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
   })
 

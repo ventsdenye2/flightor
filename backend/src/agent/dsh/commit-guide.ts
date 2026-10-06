@@ -13,7 +13,6 @@ import { publicationFor } from '../../travel-guides/publication.js'
 import { tripDatesConsistent, tripDurationDays, tripTravelWindow } from '../../trips/dates.js'
 import { tripRoutePlanPayloadSchema } from '../../trip-planning/types.js'
 import { canonicalFingerprint } from '../goals/repository.js'
-import { plannerGoalIntentSchema } from '../goals/acceptance-types.js'
 import { travelGuideGoalParametersSchema } from '../goals/types.js'
 import type { AgentTool, ToolExecutionContext } from '../runtime/registry.js'
 import { saveTravelGuideTool } from '../tools/authored-travel-guide.js'
@@ -51,6 +50,21 @@ export const commitGuideInputSchema = z.object({
 export type CommitGuideInput = z.infer<typeof commitGuideInputSchema>
 type DecisionDay = CommitGuideInput['days'][number]
 function fail(message: string, details?: unknown): never { throw new AppError('DSH_GUIDE_NEEDS_REVISION', message, 422, details) }
+
+function candidateScopeFingerprint(context: ToolExecutionContext, scope: ArtifactWorkspace): string {
+  return canonicalFingerprint({ ownerId: context.ownerId, tripId: scope.tripId,
+    conversationId: context.conversationId, generationId: context.generationId, contextVersion: scope.tripContextVersion,
+    goalId: scope.goalId, runId: scope.runId, selectedFlight: scope.selectedFlight ?? null })
+}
+
+function requireRegisteredCandidateKeys(selectedKeys: readonly string[], availableKeys: readonly string[], registrationStatus: 'not_submitted' | 'submitted_incomplete'): void {
+  const available = new Set(availableKeys)
+  const missingCandidateKeys = [...new Set(selectedKeys)].filter(candidateKey => !available.has(candidateKey))
+  if (missingCandidateKeys.length) fail('Every candidateKey must be explicitly registered from current-turn sourceRefs before it can be selected', {
+    code: 'candidate_key_unavailable', fieldPath: 'candidates', registrationStatus,
+    missingCandidateKeys, availableCandidateKeys: [...new Set(availableKeys)].slice(0, 50)
+  })
+}
 
 /** Merge only explicitly selected slots. Untouched day metadata and accepted prose are server-owned. */
 export async function mergeProtectedGuide(input: CommitGuideInput, scope: ArtifactWorkspace, locale: PublicationLocale) {
@@ -125,14 +139,19 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       if (!context.ownerId) throw new AppError('UNAUTHORIZED', 'An authenticated owner is required', 401)
       const scopedContext: ToolExecutionContext = { ...context, requireGuideFinalization: true }
       const scope = await workspaceScope(scopedContext, signal)
-      const currentCandidateScope = canonicalFingerprint({ ownerId: context.ownerId, tripId: scope.tripId,
-        conversationId: context.conversationId, generationId: context.generationId, contextVersion: scope.tripContextVersion,
-        goalId: scope.goalId, runId: scope.runId, selectedFlight: scope.selectedFlight ?? null })
+      const currentCandidateScope = candidateScopeFingerprint(context, scope)
       if (candidateScope !== currentCandidateScope) {
         candidateScope = currentCandidateScope
         registeredCandidates = new Map()
         researchCache.clear()
       }
+      const selectedKeys = [
+        ...input.days.flatMap(day => day.items.flatMap(item => item.candidateKey ? [item.candidateKey] : [])),
+        ...(input.supportingCandidateKeys ?? [])
+      ]
+      const availableKeys = input.candidates?.map(candidate => candidate.key) ?? [...registeredCandidates.keys()]
+      requireRegisteredCandidateKeys(selectedKeys, availableKeys,
+        input.candidates ? 'submitted_incomplete' : 'not_submitted')
       recordTripLocations(scopedContext, scope.tripContext)
       if (input.days.some(day => day.items.some(item => Number(Boolean(item.candidateKey)) + Number(Boolean(item.candidateRef)) !== 1))) fail('Each item requires exactly one candidateKey or candidateRef', { code: 'candidate_binding_invalid' })
       const isPatch = input.baseGuideId !== undefined || input.expectedContentHash !== undefined || input.replaceSlots !== undefined
@@ -263,27 +282,27 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         activityBindings: activities.map((item, index) => ({ activityKey: decisions[index]!.activityKey, activityId: item.activityId, sourceRefs: item.sourceRefs })) }
     }
   }
-  const wrapped = withGoalIntent(tool, ['travel_guide'], { required: true, completeAfter: true })
-  return { ...wrapped,
-    description: `${tool.description} DSH Goal protocol: the first submission requires a NEW semantic travel_guide intent matching this user request, or an explicitly resumable goalRef. Later same-turn repairs reuse the accepted immutable Goal automatically; omit intent/goalRef. An explicitly changed intent remains a conflict. Completion feedback is server-owned.`,
-    async execute(raw, context, signal) {
-      signal.throwIfAborted()
-      // New raw candidates are always reference-only. Reject an impossible
-      // first intent before its immutable Goal or research can be persisted.
-      // Existing/resumed Goals retain their original domain validation.
-      const input = raw as CommitGuideInput & { intent?: unknown }
-      if (!context.acceptedGoalIntent && !context.activeGoalId && input.intent !== undefined) {
-        const requested = plannerGoalIntentSchema.parse(input.intent)
-        const rawKeys = new Set(input.candidates?.map(candidate => candidate.key) ?? [])
-        const usesRawCandidate = input.days.some(day => day.items.some(item => item.candidateKey && rawKeys.has(item.candidateKey)))
-          || input.supportingCandidateKeys?.some(key => rawKeys.has(key))
-        if (requested.kind === 'travel_guide' && !requested.parameters.allowPartial && usesRawCandidate) {
-          fail('Raw web candidates cannot satisfy independently verified evidence', {
-            code: 'raw_evidence_requires_partial', fieldPath: 'intent.parameters.allowPartial'
-          })
-        }
+  const wrapped = withGoalIntent(tool, ['travel_guide'], { required: true, completeAfter: true,
+    beforeAccept(raw, requested) {
+      if (requested.kind !== 'travel_guide') return
+      const input = commitGuideInputSchema.parse(raw)
+      const rawKeys = new Set(input.candidates?.map(candidate => candidate.key) ?? [])
+      const usesRawCandidate = input.days.some(day => day.items.some(item => item.candidateKey && rawKeys.has(item.candidateKey)))
+        || input.supportingCandidateKeys?.some(key => rawKeys.has(key))
+      if (!requested.parameters.allowPartial && usesRawCandidate) {
+        fail('Raw web candidates cannot satisfy independently verified evidence', {
+          code: 'raw_evidence_requires_partial', fieldPath: 'intent.parameters.allowPartial'
+        })
       }
-      return wrapped.execute(raw, context, signal)
+      const selectedKeys = [
+        ...input.days.flatMap(day => day.items.flatMap(item => item.candidateKey ? [item.candidateKey] : [])),
+        ...(input.supportingCandidateKeys ?? [])
+      ]
+      requireRegisteredCandidateKeys(selectedKeys, input.candidates?.map(candidate => candidate.key) ?? [],
+        input.candidates ? 'submitted_incomplete' : 'not_submitted')
     }
+  })
+  return { ...wrapped,
+    description: `${tool.description} DSH Goal protocol: the first submission requires a NEW semantic travel_guide intent matching this user request, or an explicitly resumable goalRef. Later same-turn repairs reuse the accepted immutable Goal automatically; omit intent/goalRef. An explicitly changed intent remains a conflict. Completion feedback is server-owned.`
   }
 }

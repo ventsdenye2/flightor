@@ -35,6 +35,23 @@ describe('DSH commit recovery policy', () => {
     recovery.admit(); recovery.failed(error)
     expect(recovery.snapshot()).toMatchObject({ calls: 1, contentAttempts: 0, lastFailure: 'prerequisite' })
   })
+  it.each([
+    [{ registrationStatus: 'not_submitted', missingCandidateKeys: ['nakamise'], availableCandidateKeys: [] }, 'No candidates are registered'],
+    [{ registrationStatus: 'not_submitted', missingCandidateKeys: ['new-key'], availableCandidateKeys: ['temple'] }, 'Only availableCandidateKeys are registered'],
+    [{ registrationStatus: 'submitted_incomplete', missingCandidateKeys: ['garden'], availableCandidateKeys: ['temple'] }, 'submitted candidate list replaces']
+  ] as const)('returns bounded registration guidance for missing candidate keys', (details, correction) => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_PROVIDER_BODY', 422,
+      { code: 'candidate_key_unavailable', fieldPath: 'candidates', ...details, providerBody: 'PRIVATE_PROVIDER_BODY' })
+    const kind = classifyCommitFailure(error)
+    expect(kind).toBe('prerequisite')
+    const feedback = safeCommitFeedback(error, kind, { acceptedGoal: true })
+    expect(feedback).toMatchObject({ revisionCode: 'candidate_key_unavailable', fieldPath: 'candidates',
+      registrationStatus: details.registrationStatus, missingCandidateKeys: details.missingCandidateKeys,
+      availableCandidateKeys: details.availableCandidateKeys })
+    expect(feedback.correction).toContain(correction)
+    expect(feedback.correction).toContain('current-turn sourceRefs')
+    expect(JSON.stringify(feedback)).not.toContain('PRIVATE_PROVIDER_BODY')
+  })
   it('classifies out-of-Goal candidate categories as bounded argument corrections without exposing submitted values', () => {
     const secret = 'PRIVATE_CANDIDATE_OR_SOURCE'
     const error = new AppError('DSH_GUIDE_NEEDS_REVISION', secret, 422, {

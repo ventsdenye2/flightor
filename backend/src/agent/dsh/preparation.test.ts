@@ -34,6 +34,14 @@ const compact = { days: [{ day: 1, cityId: 'city:TYO', kind: 'visit', theme: 'Qu
   text: { reply: 'Your garden visit is ready.', overview: 'Explore a quiet garden at a relaxed pace.', days: [{ day: 1, theme: 'Quiet garden' }] } }
 
 describe('DSH model preparation and deterministic input adaptation', () => {
+  it('states that candidate keys require explicit source registration in the current preparation', () => {
+    const itemSchema = dshCommitInputSchema.shape.days.element.shape.items.element
+    expect(itemSchema.shape.candidateKey.description).toContain('candidates[].key')
+    expect(itemSchema.shape.candidateKey.description).toContain('web_search/web_fetch receipts do not register candidates')
+    expect(dshCommitInputSchema.shape.candidates.description).toContain('Define every new key')
+    expect(dshCommitInputSchema.shape.candidates.description).toContain('same prepared attempt and scope')
+  })
+
   it('accepts a compact first submission and a prepared local edit through the commit tool', async () => {
     const ownerId = 'prepared-commit-owner', tripId = randomUUID(), conversationId = randomUUID()
     const preparedTrip = { ...emptyTripContext(tripId), version: 1, travelDays: 2,

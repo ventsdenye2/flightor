@@ -66,7 +66,7 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
     ? acceptedGoal ? 'The Goal is accepted; omit intent/goalRef and preserve its immutable constraints.'
       : 'No Goal is accepted yet; preserve the original semantic intent on the corrected first durable submission.'
     : 'If a Goal is accepted, omit intent/goalRef and preserve its immutable constraints; otherwise preserve the original intent on the first durable submission.'
-  const strings = (value: unknown) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string').slice(0, 30) : []
+  const strings = (value: unknown, limit = 30) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string').slice(0, limit) : []
   const code = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
   const feedback: Record<string, unknown> = { code, kind, instruction: code === 'GOAL_INTENT_REQUIRED'
     ? 'The first durable operation requires semantic intent matching the explicit user objective. Include the original intent on this corrected first submission.'
@@ -106,6 +106,22 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
     const allowedCategories = strings(details.allowedCategories).filter(value => categories.has(value)).slice(0, 5)
     if (allowedCategories.length) feedback.allowedCategories = allowedCategories
     feedback.correction = 'Keep the accepted Goal unchanged. Submit only candidates whose actual category is in allowedCategories; do not relabel unsupported material. Correct or replace the indicated candidate explicitly, using current-turn evidence where needed.'
+  }
+  if (details.code === 'candidate_key_unavailable') {
+    const fieldPath = details.fieldPath === 'candidates' ? 'candidates' : undefined
+    const registrationStatus = ['not_submitted', 'submitted_incomplete'].includes(String(details.registrationStatus))
+      ? details.registrationStatus as 'not_submitted' | 'submitted_incomplete' : undefined
+    const missingCandidateKeys = strings(details.missingCandidateKeys, 50).map(value => value.slice(0, 120))
+    const availableCandidateKeys = strings(details.availableCandidateKeys, 50).map(value => value.slice(0, 120))
+    if (fieldPath) feedback.fieldPath = fieldPath
+    if (registrationStatus) feedback.registrationStatus = registrationStatus
+    if (missingCandidateKeys.length) feedback.missingCandidateKeys = missingCandidateKeys
+    feedback.availableCandidateKeys = availableCandidateKeys
+    feedback.correction = registrationStatus === 'not_submitted' && availableCandidateKeys.length === 0
+      ? 'No candidates are registered for this prepared attempt. Add candidates entries for every missingCandidateKeys value, using an explicit key and current-turn sourceRefs returned by web_search/web_fetch. Then use those exact keys in the scheduled items. Web source receipts are not candidate definitions; do not invent or rename keys to bypass registration.'
+      : registrationStatus === 'not_submitted'
+        ? 'Only availableCandidateKeys are registered in this prepared attempt. Use one of those exact keys, or explicitly submit a complete candidates list that defines each missingCandidateKeys value with supported details and current-turn sourceRefs returned by web_search/web_fetch. Do not merely rename a scheduled key.'
+        : 'The submitted candidate list replaces the earlier registration and does not define every selected key. Complete candidates with each missingCandidateKeys value, its supported title/summary/category/locationId, and current-turn sourceRefs returned by web_search/web_fetch. Use the exact defined keys in scheduled items. Do not invent or rename keys to bypass registration.'
   }
   if (code === 'DSH_CANDIDATE_REFERENCE_UNAVAILABLE' && typeof details.fieldPath === 'string'
     && /^(?:supportingRefs\.\d{1,3}|days\.\d{1,3}\.items\.\d{1,3}\.candidateRef)$/.test(details.fieldPath)) {

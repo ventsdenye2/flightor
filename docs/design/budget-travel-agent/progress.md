@@ -1,5 +1,9 @@
 # 当前进度与验证
 
+2026-10-06 r13失败后的候选注册/公开关联提示/无Goal失败状态修复已完成定向验证：联合8文件112/112、check/build通过。首次候选与raw-evidence检查已移到原runtime/kind/Trip snapshot/flight guards后、Goal接受前，原Goal及scope复用规则保留，没有新增DB读取或产品模型。官方worker2/2验证漏定义零写→同NEW intent与同来源注册并发布，以及成功setter后两次漏定义仍partial/goal_partial且不伪造Goal。中间夹具错误不作产品红测；联合首次111/112的旧局改not_requested断言已更正为完整partial结构，原日志保留。源码尚待本地提交及新冻结完整backend/PG/D5/H5 12+4，r13真实B01失败不改写为通过。
+
+2026-10-06 r13已冻结本地代码743fddd及源码/backend/H5/worker/旅程指纹，私有run/schema和端口见[D6验收](DSH_D6_ACCEPTANCE.md)。模型、输出配置、标准v1和12+4输入不变；完整backend1240/1240、专用PG51/51、D5本版30/30、runtime14/14、observer1/1、四前端族113/20/37/52及根TypeScript均通过，H5/weapp构建完成。weapp首次spawnSync git EPERM及授权重跑日志分别保留，仅工程、不计微信页面。固定材料baseline/D6各10/10、逐例语义一致、0模型/外部调用。最新390×844真实H5 B01仍失败：107ms受理、111.202秒终态、整段115.748秒、0 accepted攻略、后续8动作blocked；没有180秒超时证据。两次commit均candidate_key_unavailable前置拒绝，contentAttempts0；正对照原会话和候选注册定位，不盲重发。只读PG联合审阅确认Trip和全程预算正确、无Guide；21model/11search/14fetch/0fare、pending0、727783 tokens、USD2.16预留非实付。完整12+4及最终内容/持久化验收未完成，不宣布PASS。用户其他工作树及未提交内容保留，未推送/合并/部署。
+
 2026-10-06 r12已在真实交互前冻结源码d9954f4及源码/backend/H5/旅程指纹，完整记录见[D6验收](DSH_D6_ACCEPTANCE.md)。本版完整工程回归已通过：backend1229/1229、独立PG51/51、runtime14/14、observer1/1、D5完整30/30；固定材料baseline/D6各10/10语义一致。最新390×844真实H5 B01首发送99ms受理、66.680秒终态失败、0 accepted攻略，解释/局改/恢复等后续8动作blocked，完整批次不通过。两次内容提交被拒，第三次触及原内容修订上限；正从原会话确认具体拒绝原因，不提高额度或盲重发。12model/4search/5fetch/0fare、pending0、393653 tokens、USD0.96预留非实付，原报告/会话/数据库/账本保留。完整12固定+4探索及内容/持久化联合评阅尚未完成，不宣布PASS。weapp44.84秒构建通过只计工程，微信页面按用户指令暂缓。
 
 当前前端 Artifact 恢复对被替代请求不显示规划失败：Plan 忽略旧回调，active Route 显示固定 `ui_restore` 指引和刷新入口；PlanPage/RoutePage hook、ArtifactService与文案回归通过，完整记录见[D6-20](DSH_D6_ACCEPTANCE.md)。

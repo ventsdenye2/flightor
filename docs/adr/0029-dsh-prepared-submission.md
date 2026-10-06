@@ -8,6 +8,8 @@
 
 模型可见 commit 输入中每个 `days[].items[]` 包含自己的 `text`，无需复制活动键；服务端统一生成关联键，重复候选仍按原规则拒绝。引用字段保持不同语义：新候选只从本轮 `sourceRefs` 取来源，每次活动用 `candidateKey` 绑定本次候选；既有持久候选用当前快照或本轮 `read_artifact` 返回的 `candidateRef`。补充的新候选用 `supportingCandidateKeys`，补充的持久候选用 `supportingRefs`；source URL 不能充作任一 locator。模型仅给 `replaceSlots` 与替换内容，服务端从准备快照绑定 accepted `baseGuideId/hash`。legacy 工具合同和公开前端 API 不变。
 
+每个新增或补充 `candidateKey` 必须精确对应显式提交的 `candidates[].key`；网页 source receipt 本身不注册候选。首次新攻略在原授权、目标 kind、Trip snapshot 和航班检查之后、接受 Goal 之前检查所有选择键，缺定义时不写 Goal 或研究。已登记候选只能在同准备尝试和原 scope 内复用；重新提供 candidates 列表按完整替换检查，不能靠改键名绕过。受控反馈只返回有界缺失/可用键和字段说明，主模型仍须按实际正文明确选择来源与活动。首次候选检查只读提交，scope 检查复用原有读取，候选复用检查使用原有工作区读取，不新增数据库往返或模型调用，也不弱化已有授权/Goal 冲突校验。
+
 首个持久操作必须提供与当前明确用户目标一致的新语义 `intent`。普通 raw-web reference-only 材料不能独立核实事实；用它提交普通攻略时，首个 `travel_guide` Goal 必须显式含 `allowPartial=true`，该标记保留来源不确定性，不豁免日程、类别、publication 或其他约束。用户明确要求独立核实事实时，不能以该路径满足要求或弱化其 Goal，应说明限制并澄清。Goal 接受前的参数/前置纠正仍须提供初始 intent；首次 Goal 接受后的内容修复省略 `intent/goalRef` 并复用不可变 Goal。若显式 Trip setter 返回持久 `satisfied` 且 version 推进，其 Goal 完成并结束绑定；后续新持久目标需新的匹配 intent。失败、pending、空 patch、普通攻略修复不推进 Goal。
 
 所有领域工作区和首次 Goal 接受使用该准备 Trip 版本；外部变化明确 context conflict，不在 commit 时填最新值。显式 update_trip_context 以准备版本执行现有 CAS，只有确认版本推进后才受控更新快照，丢弃旧 raw evidence/candidate aliases/编辑基底；空patch等无版本变化的更新保留原准备、引用映射及基底，不能重置相同scope的序号使旧alias改指另一记录；模型得到新版本条件，须重新准备，不能把旧证据重贴版本。
@@ -15,6 +17,8 @@
 首次提交前先检查可确定的资料能力兼容性：当日程或补充材料选择本次新增raw-web候选时，这些候选必为reference-only/partially_verified，故`allowPartial=false`的新intent不能进入Goal接受及研究保存。DSH返回受控前置错误和字段说明，不替模型改写intent；主模型只能在仍符合用户请求时显式纠正首次intent。用户要求独立核实时应说明不能满足，已接受/恢复的严格Goal仍由原领域校验执行且不可弱化。此检查仅使用已解析提交，不读取数据库、不请求网页或模型、不更改原修订额度。
 
 同轮显式 setter 携带语义 `trip_context_update` intent、确实推进版本且已有持久 `satisfied` 完成回执时，保存该 setter 的交付结果，再结束其活动绑定并开始独立的准备后尝试。新尝试的请求身份由原可信 owner/Trip/conversation/generation identity 加当前已确认准备版本派生；generation、会话、谱系和费用计量连续保留，原Goal不可复活或修改。后续攻略仍需新的真实 `travel_guide` intent；DSH工具说明、persona与snapshot同时说明这一准备尝试边界，legacy的同一Goal协议保持不变。同轮攻略内容修复继续复用原不可变Goal，不执行这一setter边界；失败、pending或外部版本变化不获自动推进。
+
+只要本轮尝试提交攻略但没有成功确认其 publication，最终攻略交付为 `partial/travel_guide`、缺 `accepted_publication`。若前置拒绝尚未接受攻略 Goal，`goals` 为空，不伪造 Goal 身份，也不继承前一 setter 的 `satisfied` 或当成普通澄清。前一 setter 的独立持久完成记录保留。候选关联前置失败采用固定双语公开提示；内部键、错误码和原始异常正文不进入用户回复。
 
 短 source 引用映射本轮原始 UUID 与内容 hash，不改变持久证据格式或 scope 检查。短 C 引用映射已校验持久候选，恢复完整 locator 后仍经过原 owner/Trip/version/过期验证。唯一已选择的 Trip city 可补省略 cityId/locationId，机场或多城市不猜；它不执行 POI、Provider 或目的地变更。
 

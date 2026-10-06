@@ -76,7 +76,9 @@ describe('DSH service with the official worker and loop', () => {
       expect(toolResults[0]?.result).toMatchObject({ error: { code: 'DSH_GUIDE_BASE_UNAVAILABLE' } })
       expect(result.reply).toBe('There is no published guide available for a local edit. Reopen the current guide and complete preparation in the displayed language before requesting a local edit.')
       expect(result.reply).not.toMatch(/changed while|DSH_GUIDE_BASE_UNAVAILABLE|stack|token=/i)
-      expect(result.delivery.status).toBe('not_requested')
+      expect(result.delivery).toEqual({ status: 'partial', kind: 'travel_guide', artifactIds: [],
+        missing: ['accepted_publication'], warnings: [], goals: [] })
+      expect(result.stopReason).toBe('goal_partial')
     } finally { await sessions.close(); await rm(root, { recursive: true, force: true }) }
   }, 20_000)
 

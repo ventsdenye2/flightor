@@ -7,6 +7,7 @@ describe('public DSH failure classification', () => {
     ['MODEL_OUTPUT_LIMIT', null, 'output_limit'],
     ['DSH_GUIDE_NEEDS_REVISION', { code: 'candidate_location_unresolved' }, 'location'],
     ['DSH_GUIDE_NEEDS_REVISION', { issues: [{ code: 'missing_material' }] }, 'evidence'],
+    ['DSH_GUIDE_NEEDS_REVISION', { code: 'candidate_key_unavailable', candidateKey: 'private-candidate' }, 'evidence'],
     ['DSH_GUIDE_NEEDS_REVISION', { issues: [{ code: 'conflict' }] }, 'publication'],
     ['TRIP_CONTEXT_VERSION_CONFLICT', null, 'context_conflict'],
     ['PUBLICATION_CONTENT_CHANGED', null, 'context_conflict'],
@@ -24,6 +25,25 @@ describe('public DSH failure classification', () => {
     expect(publicFailureReply('publication', 'zh')).toContain('草稿没有作为正式结果显示')
     expect(publicFailureReply('context_conflict', 'en')).toContain('did not replace the current content')
     expect(publicFailureReply('provider', 'en')).not.toMatch(/stack|api.?key|provider body/i)
+  })
+
+  it('uses precise safe copy for an unavailable candidate key prerequisite', () => {
+    const details = { code: 'candidate_key_unavailable', candidateKey: 'private-candidate' }
+    const stage = classifyDshFailure('DSH_GUIDE_NEEDS_REVISION', details)!
+    const zh = publicFailureReply(stage, 'zh', details.code)
+    const en = publicFailureReply(stage, 'en', details.code)
+    expect(zh).toContain('行程活动与参考资料未能正确关联')
+    expect(zh).toContain('先查看行程中已保存的结果')
+    expect(en).toContain('trip activity could not be correctly linked')
+    expect(en).toContain('Check the saved results in your trip')
+    expect(`${zh} ${en}`).not.toMatch(/candidate_key_unavailable|private-candidate|DSH_GUIDE_NEEDS_REVISION/i)
+  })
+
+  it('ignores unknown cause codes and keeps the stage fallback copy', () => {
+    expect(publicFailureReply('evidence', 'zh', 'private_unknown_cause'))
+      .toBe(publicFailureReply('evidence', 'zh'))
+    expect(publicFailureReply('evidence', 'en', 'private_unknown_cause'))
+      .toBe(publicFailureReply('evidence', 'en'))
   })
 
   it('explains an unavailable local-edit base without claiming the trip changed', () => {

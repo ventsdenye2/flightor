@@ -26,6 +26,8 @@ function checkpoint(context: ToolExecutionContext, signal: AbortSignal) {
 export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, kinds: readonly GoalKind[], options: {
   required?: boolean
   completeAfter?: boolean
+  beforeAccept?: (input: Record<string, unknown>, intent: z.infer<typeof plannerGoalIntentSchema>, context: ToolExecutionContext,
+    signal: AbortSignal) => void | Promise<void>
 } = {}): AgentTool {
   if (!(tool.inputSchema instanceof z.ZodObject) || !(tool.outputSchema instanceof z.ZodObject)) {
     throw new Error(`Goal intent requires object contracts: ${tool.name}`)
@@ -98,6 +100,8 @@ export function withGoalIntent<Input, Output>(tool: AgentTool<Input, Output>, ki
           }
         } else {
           await context.assertFlightSelectionCurrent?.()
+          checkpoint(context, signal)
+          if (requested && options.beforeAccept) await options.beforeAccept(args, requested, context, signal)
           checkpoint(context, signal)
           const { goal, run } = await context.goalRunRepository.accept({
             tripId: context.tripId, conversationId: context.conversationId, requestId: context.requestId,

@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "batch": "d6-iteration-b01-r13",
+  "rubricVersion": 1,
+  "journey": "B01",
+  "sourceHead": "743fddd82685f37ed6222e2a30dad0de533e622d",
+  "sourceFingerprint": "72e7811182a6e9c0ada051cd5cbce8c4ef3b18648da3dba4d94164e860eeb2ac",
+  "result": "failed",
+  "pass": false,
+  "hardBlockConfirmed": false,
+  "provider": {
+    "model": "deepseek-v4-flash",
+    "search": "deepseek-official",
+    "thinking": "disabled",
+    "maxTokens": 8192
+  },
+  "browser": {
+    "name": "Chrome",
+    "version": "154.0.8037.98",
+    "viewport": { "width": 390, "height": 844 },
+    "screen": { "width": 390, "height": 844 },
+    "deviceScaleFactor": 1,
+    "userAgentPolicy": "default desktop Chrome",
+    "mobile": false,
+    "touch": false
+  },
+  "ui": {
+    "submittedActions": 1,
+    "failedActions": 1,
+    "blockedDependentActions": 8,
+    "submitToRequestAcceptedMs": 107,
+    "submitToTerminalMs": 111202,
+    "submitToAcceptedGuideReadableMs": null,
+    "wholeJourneyMs": 115748,
+    "terminalState": "completed",
+    "acceptedGuides": 0,
+    "timeout180sObserved": false,
+    "outputLimitObserved": false
+  },
+  "readOnlyPersistenceReview": {
+    "tripVersion": 1,
+    "destination": "Tokyo, JP, TYO",
+    "dates": { "from": "2026-11-03", "to": "2026-11-04" },
+    "travelDays": 2,
+    "budget": { "amount": 1200, "currency": "CNY", "scope": "trip" },
+    "pace": "relaxed",
+    "tripUpdateSatisfied": true,
+    "guideGoalSatisfied": false,
+    "guideArtifacts": 0,
+    "acceptedGuideVersions": 0
+  },
+  "commitAttempts": [
+    { "order": 1, "candidateDefinitions": 0, "selectedKeys": 6, "allowPartial": true,
+      "error": "DSH_GUIDE_NEEDS_REVISION", "revisionReason": "candidate_key_unavailable",
+      "kind": "prerequisite", "contentAttempts": 0, "argumentCorrections": 0 },
+    { "order": 2, "candidateDefinitions": 0, "selectedKeys": 6, "renamedKeysWithoutDefinitions": true,
+      "error": "DSH_GUIDE_NEEDS_REVISION", "revisionReason": "candidate_key_unavailable",
+      "kind": "prerequisite", "contentAttempts": 0, "argumentCorrections": 0 }
+  ],
+  "accounting": {
+    "modelCalls": 21,
+    "searchCalls": 11,
+    "fetchToolCalls": 14,
+    "fareCalls": 0,
+    "settledEntries": 32,
+    "pendingEntries": 0,
+    "inputTokens": 721895,
+    "outputTokens": 5888,
+    "totalTokens": 727783,
+    "reservedUsdMicros": 2160000,
+    "knownActualUsdMicros": null,
+    "unknownCostEntries": 32
+  },
+  "normalShutdown": {
+    "processExited": true,
+    "apiAndH5PortsClosed": true,
+    "serverAndManagerLocksReleased": true,
+    "guardsInstalled": 1,
+    "guardsClosed": 1,
+    "forbiddenCalls": 0,
+    "allRunDataPreserved": true
+  },
+  "limitations": [
+    "No accepted guide was available for content, detail, local-edit or restore acceptance.",
+    "This run did not reach domain save or publication validation; earlier budget and evidence-intent fixes are not claimed as real-flow passes.",
+    "Engineering regression passed separately on this source; it does not turn this real H5 journey into a pass.",
+    "Private raw browser, source, worker and database records remain ignored and are not embedded here."
+  ]
+}

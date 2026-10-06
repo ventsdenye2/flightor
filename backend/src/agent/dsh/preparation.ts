@@ -45,13 +45,16 @@ const candidateReference = z.string().min(1).max(160).refine(value =>
   'Select a candidate reference returned in the current preparation, not a source URL.')
   .describe('Only persisted candidate references returned by the current snapshot/read_artifact. Never source URLs or new candidate keys.')
 const item = commitGuideInputSchema.shape.days.element.shape.items.element.omit({ activityKey: true })
-  .extend({ candidateRef: candidateReference.optional(), text: activity }).strict()
+  .extend({ candidateKey: z.string().trim().min(1).max(120).optional()
+    .describe('Select only a key explicitly defined by candidates[].key in this submission or already registered in this same prepared attempt and scope. Every new candidateKey needs a candidates entry with current-turn sourceRefs; web_search/web_fetch receipts do not register candidates. Do not rename a missing key.'),
+    candidateRef: candidateReference.optional(), text: activity }).strict()
 /** DSH-only model contract. The legacy domain and frontend contracts stay intact. */
 export const dshCommitInputSchema = commitGuideInputSchema.omit({ baseGuideId: true, expectedContentHash: true, days: true, text: true, candidates: true })
   .extend({ candidates: z.array(z.object({ key: z.string().trim().min(1).max(120), sourceRefs: z.array(sourceReference).min(1).max(20)
       .describe('Select only sourceRefs returned by web_search/web_fetch in this turn after the latest Trip update; never source URLs or invented IDs.'),
       title: z.string().trim().min(1).max(240), summary: z.string().trim().min(1).max(1500),
-      category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']), locationId: z.string().min(1).max(160).optional() }).strict()).min(1).max(50).optional(),
+      category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']), locationId: z.string().min(1).max(160).optional() }).strict()).min(1).max(50).optional()
+      .describe('Define every new key selected by days[].items[].candidateKey or supportingCandidateKeys. Each entry binds its exact key to supported current-turn sourceRefs; web source receipts alone are not registered candidates. Omitting this list is allowed only when reusing candidates already registered in this same prepared attempt and scope, or when using persisted candidateRef values.'),
     days: z.array(commitGuideInputSchema.shape.days.element.extend({ cityId: z.string().min(1).max(160).optional(), items: z.array(item).max(6) })).min(1).max(60)
       .describe('For a first guide or failed first-guide repair, submit the COMPLETE itinerary covering exactly the authoritative Trip duration with consecutive day numbers starting at 1, including rest/travel days within that span. Do not append an optional extra day. For a local edit of an accepted guide, submit only the selected replacement slots; the server preserves other days. Always include both days and text in a corrected submission.'),
     supportingRefs: z.array(candidateReference).max(50).optional()
