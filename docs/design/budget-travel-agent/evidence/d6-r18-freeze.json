@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "status": "engineering_passed_real_h5_pending",
+  "createdAt": "2026-10-06T16:52:58.015Z",
+  "codeHead": "91352c368dab7542bdce866a8e08c0cc51fca7ad",
+  "runId": "eadf455a-5523-4a79-8e4c-834061446ceb",
+  "schema": "dsh_d6_eadf455a55234a798e4c834061446ceb",
+  "pid": 93668,
+  "serverSession": 26207,
+  "apiPort": 55171,
+  "h5Port": 51443,
+  "sourceFingerprint": "ce5e96de70c62a827f90a2743e2ca6b8af71a5679510aaf5e5363a7bdf57898d",
+  "backendFingerprint": "45eee817d9c381356195a99c9771c91410a58baff14772c09250aefc6052b6d0",
+  "h5Fingerprint": "13d2f4f3b00d25dd7782ac5c743b54858eab9fd00510737a262c53ca50e89a51",
+  "workerFingerprint": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+  "configuration": {
+    "modelProvider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "searchProvider": "deepseek-official",
+    "maxTokens": 8192,
+    "thinking": "disabled",
+    "nativeResearchProvider": "serpapi",
+    "places": {
+      "url": "https://nominatim.openstreetmap.org/",
+      "userAgent": "FlightOR-D6/1.0 (+https://github.com/ventsdenye2/flightor)",
+      "proxy": "http://127.0.0.1:7890"
+    }
+  },
+  "journeysSha256": "91240ac6c741a990ad4a233451cc5982702b9d3856eb85597fa88206be943780",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false
+  },
+  "authorization": {
+    "deepseek": "current user authorization; unlimited amount, per-call metering retained",
+    "serpapi": "existing authorized account allowance only; no purchase"
+  },
+  "platform": "H5; WeChat page acceptance deferred by user; WeChat build still required",
+  "h5Build": {
+    "durationMs": 27955,
+    "warnings": 2,
+    "result": "compiled"
+  },
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "realCalls": {
+    "model": 0,
+    "search": 0,
+    "fetch": 0,
+    "fare": 0,
+    "pending": 0
+  },
+  "backendUnit": {
+    "files": 137,
+    "passed": 1331,
+    "failed": 0,
+    "total": 1331,
+    "durationSeconds": 183.16,
+    "log": "output/d6/backend-unit-r18-final.log"
+  },
+  "postgres": {
+    "files": 11,
+    "passed": 51,
+    "failed": 0,
+    "total": 51,
+    "durationSeconds": 50.53,
+    "log": "output/d6/postgres-r18-final.log",
+    "database": "dedicated loopback flightor_d6_validation"
+  },
+  "d5": {
+    "passed": 30,
+    "total": 30,
+    "codeUnchanged": true,
+    "realProvider": false,
+    "evidence": "d5-2026-10-06T16-59-18-210Z.json"
+  },
+  "runtime": {
+    "passed": 14,
+    "total": 14,
+    "log": "output/d6/runtime-suite-r18-final.log"
+  },
+  "observer": {
+    "passed": 1,
+    "total": 1,
+    "log": "output/d6/observer-r18-before-freeze.log",
+    "sameBackendBuild": true
+  },
+  "frontend": {
+    "conversationProgress": "passed",
+    "sessionRecovery": "passed",
+    "artifacts": "passed",
+    "productionPresentation": "passed",
+    "typescript": "passed"
+  },
+  "weappBuild": {
+    "durationSeconds": 17.28,
+    "result": "compiled",
+    "exitCode": 0,
+    "warnings": "existing CSS order and bundle-size warnings",
+    "log": "output/d6/weapp-build-r18-final.log"
+  },
+  "fixedReplay": {
+    "baselineAccepted": 10,
+    "externalCalls": 0,
+    "d6Accepted": 10,
+    "evidence": "d6-r18-fixed-replay.json",
+    "semanticMatches": true,
+    "pairedSamples": 10,
+    "modelCalls": 0
+  }
+}

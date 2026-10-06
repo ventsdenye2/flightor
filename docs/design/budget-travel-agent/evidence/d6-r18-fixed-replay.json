@@ -1,0 +1,2706 @@
+{
+  "mode": "offline-fixed-replay",
+  "baselineDist": "D:\\FunnyProject\\flightor-repo\\.worktrees\\dsh-reliability-d6\\backend\\.demo\\d6-baseline\\backend\\dist",
+  "currentDist": "D:\\FunnyProject\\flightor-repo\\.worktrees\\dsh-reliability-d6\\backend\\dist",
+  "fixedScenario": "Tokyo two days, three distinct visits, one synthetic search snippet",
+  "baselineSourceCommit": "f2ec6c1f75000d368d4d83b7ae6428c17dea3e0c",
+  "fingerprints": {
+    "baselineSource": {
+      "sha256": "c818f206c295a87c70624f80004684c4e87c84df0a0d2cc735177e37e2c33bfd",
+      "fileCount": 389
+    },
+    "d6Source": {
+      "sha256": "9cac635dee0c6d5e68e73509a6dee7f8cbcc26acb7f34e0fbcd4e0dec7c17a79",
+      "fileCount": 409
+    },
+    "baselineDist": {
+      "sha256": "2142816c920911a270dafe3827026abe90e56274ad06e455d473d66f49c50317",
+      "fileCount": 762
+    },
+    "d6Dist": {
+      "sha256": "54b42984aae86b78a8fd9336ec0f9a7dd6f45d6757a7fddeb522da4bf158cf88",
+      "fileCount": 783
+    }
+  },
+  "warmupsPerVersion": 1,
+  "pairedSamples": 10,
+  "modelCalls": 0,
+  "externalCalls": 0,
+  "acceptedSamples": {
+    "baseline": 10,
+    "d6": 10
+  },
+  "semanticMatches": true,
+  "p50": {
+    "baselineExecuteMs": 9.48275000000001,
+    "d6AdapterMs": 0.47390000000001464,
+    "d6ExecuteMs": 9.704700000000003,
+    "baselineTotalMs": 10.629999999999995,
+    "d6TotalMs": 11.86099999999999
+  },
+  "failures": [],
+  "rows": [
+    {
+      "style": "baseline",
+      "pairIndex": 0,
+      "warmup": true,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 70.34159999999997,
+      "totalMs": 534.1256000000001,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 0,
+      "warmup": true,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 5.680600000000027,
+      "executeMs": 55.39729999999997,
+      "totalMs": 285.8777,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 1,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 12.969299999999976,
+      "totalMs": 14.933999999999969,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 1,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.48270000000002256,
+      "executeMs": 13.094899999999939,
+      "totalMs": 14.854800000000068,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 2,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 8.973700000000008,
+      "totalMs": 10.001999999999953,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 2,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.5567999999999529,
+      "executeMs": 11.032999999999902,
+      "totalMs": 12.586999999999989,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 3,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 15.105800000000045,
+      "totalMs": 16.110900000000015,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 3,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.37360000000001037,
+      "executeMs": 17.324700000000007,
+      "totalMs": 24.780700000000024,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 4,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 8.848299999999995,
+      "totalMs": 9.907500000000027,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 4,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.46510000000000673,
+      "executeMs": 8.521200000000022,
+      "totalMs": 10.281499999999937,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 5,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 13.696900000000028,
+      "totalMs": 14.559799999999996,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 5,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.365099999999984,
+      "executeMs": 8.37760000000003,
+      "totalMs": 9.960400000000163,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 6,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 6.65729999999985,
+      "totalMs": 7.766300000000001,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 6,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.24680000000012114,
+      "executeMs": 9.192499999999882,
+      "totalMs": 10.433300000000145,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 7,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 7.077399999999898,
+      "totalMs": 7.962399999999889,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 7,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.5067999999998847,
+      "executeMs": 11.905099999999948,
+      "totalMs": 13.792999999999893,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 8,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 9.991800000000012,
+      "totalMs": 11.910399999999981,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 8,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.973700000000008,
+      "executeMs": 10.216900000000123,
+      "totalMs": 13.139200000000073,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 9,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 10.070400000000063,
+      "totalMs": 11.258000000000038,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 9,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.6754000000000815,
+      "executeMs": 8.93340000000012,
+      "totalMs": 11.134999999999991,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "baseline",
+      "pairIndex": 10,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0,
+      "executeMs": 8.218999999999824,
+      "totalMs": 9.181600000000117,
+      "methodCalls": {
+        "trips.get": 20,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    {
+      "style": "d6",
+      "pairIndex": 10,
+      "warmup": false,
+      "accepted": true,
+      "error": null,
+      "adapterMs": 0.2399000000000342,
+      "executeMs": 8.98070000000007,
+      "totalMs": 10.358499999999822,
+      "methodCalls": {
+        "trips.get": 18,
+        "goals.get": 3,
+        "artifacts.create": 3,
+        "artifacts.get": 15,
+        "artifacts.getForScope": 6,
+        "artifacts.listForTrip": 2,
+        "artifacts.saveFinalVariant": 1,
+        "goalRuns.get": 2,
+        "goalRuns.update": 1,
+        "artifacts.listForRun": 1
+      },
+      "artifactCount": 3,
+      "tripCount": 1,
+      "semantic": {
+        "days": [
+          {
+            "day": 1,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Traditional Tokyo",
+            "notes": null,
+            "items": [
+              {
+                "title": "Temple grounds",
+                "description": "Explore the temple grounds and traditional architecture.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Explore traditional architecture at a relaxed pace."
+              },
+              {
+                "title": "Cultural exhibits",
+                "description": "Explore indoor cultural exhibits.",
+                "category": "activity",
+                "timeOfDay": "afternoon",
+                "planningNote": "Explore indoor cultural exhibits."
+              }
+            ]
+          },
+          {
+            "day": 2,
+            "city": {
+              "id": "city:TYO",
+              "type": "city",
+              "name": "Tokyo",
+              "countryCode": "JP",
+              "cityCode": "TYO",
+              "iata": null
+            },
+            "kind": "visit",
+            "theme": "Culture and gardens",
+            "notes": null,
+            "items": [
+              {
+                "title": "Garden walk",
+                "description": "Enjoy a relaxed garden walk.",
+                "category": "activity",
+                "timeOfDay": "morning",
+                "planningNote": "Enjoy a relaxed garden walk."
+              }
+            ]
+          }
+        ],
+        "budget": {
+          "amount": 1200,
+          "currency": "CNY",
+          "scope": "trip",
+          "partyBasis": "unspecified",
+          "period": "trip_total"
+        },
+        "text": {
+          "reply": "Your two-day Tokyo cultural guide is ready.",
+          "overview": "Explore traditional culture and enjoy local places at a relaxed pace.",
+          "days": [
+            {
+              "day": 1,
+              "theme": "Traditional Tokyo"
+            },
+            {
+              "day": 2,
+              "theme": "Culture and gardens"
+            }
+          ],
+          "activities": [
+            {
+              "name": "Temple grounds",
+              "introduction": "Explore the temple grounds and traditional architecture.",
+              "recommendationReason": "This visit fits your interest in traditional culture."
+            },
+            {
+              "name": "Cultural exhibits",
+              "introduction": "Explore indoor cultural exhibits.",
+              "recommendationReason": "This visit adds an indoor cultural stop."
+            },
+            {
+              "name": "Garden walk",
+              "introduction": "Enjoy a relaxed garden walk.",
+              "recommendationReason": "This visit leaves room for a quiet local experience."
+            }
+          ]
+        }
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 r18完整工程通过：backend1331/1331、真实专用PG51/51、D5本地fixture30/30、runtime14/14、observer1/1、前端四族/根TS及H5/weapp构建；固定回放两版各10/10语义一致且0调用。原12+4真实390×844 H5仍待验，D6未PASS；微信页面按用户要求暂缓，构建不算页面验收。r17失败与全部历史保留，未push/合并/部署。当前冻结版及详细边界见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。下列记录保留为各阶段历史。
+
 2026-10-07 r18预算窄修复已实现，focused182/182、joint297/297、check/build和observer1/1通过；原第二稿未改文字在r17冻结构建blocked、r18完整校验accepted，0模型/外部调用。仅修正权威全程预算名词关系和局部否定，保留肯定费用/每日、金额币种、保证及原领域限制。新冻结完整工程与真实390×844 H5原12+4仍待执行，D6未PASS；r17真实失败不追认，原会话/账本保留，未部署。详见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
 
 2026-10-07 D6续作：r17同版完整backend1301/1301、专用PG51/51、D5本地HTTP/票价fixture30/30及runtime14/14通过，但真实390×844 H5 B01 FAIL，110.962秒终态、0accepted（不是180秒超时）。冻结材料诊断确认合法预算关系及否定费用/每日语句仍误拦，D6-34窄修复进行中；原服务正常关闭、数据/会话/账本保留，修复后必须新冻结完整工程及原12+4。当前未PASS、无确认硬阻塞，单产品主DSH、配置/权限/证据/版本/限额不变、未部署。结果及历史见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。

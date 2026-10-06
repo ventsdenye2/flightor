@@ -1,5 +1,9 @@
 # DSH D6 冻结验收与结果
 
+2026-10-07 r18完整工程完成，真实H5待验：代码`91352c368dab7542bdce866a8e08c0cc51fca7ad`，实际指纹/配置见[冻结记录](evidence/d6-r18-freeze.json)。新run`eadf455a-5523-4a79-8e4c-834061446ceb`、schema`dsh_d6_eadf455a55234a798e4c834061446ceb`、API55171/H551443、PID93668/TTY26207，目录`backend/.demo/dsh-d6-runtime/d6-final-r18`。完整backend137文件1331/1331（183.16秒）、真实专用PG11文件51/51（50.53秒）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端四族/根TypeScript均通过。H5编译27.955秒/2条既有体积警告；最终输出片段保存在私有`h5-build-final-output.log`，不是此前全部进度的完整日志；weapp编译17.28秒、退出码0，保留CSS顺序/体积警告，仅为构建，不是微信页面验收。构建结束后才开始完整backend，避免大型构建并发。启动与冻结时0真实调用，旧账本hash不变；标准v1、原旅程SHA、日期、参数/限额及390×844布局不变。12+4真实H5仍待同版执行；当前不是PASS，下段准备记录保留为历史。
+
+r18[固定回放](evidence/d6-r18-fixed-replay.json)两版各10/10 accepted，逐例语义一致、0模型/外部调用。p50总耗时基线10.630ms/D6 11.861ms，D6适配0.474ms；内存仓库Trip读取20→18，其余调用及三产物数量一致，无新增数据库往返证据。总耗时增加1.231ms，逐例时间全部保留，不宣称更快；该10对固定材料仅衡量本地组装，不能替代真实PG或用户看到成果耗时。远端再次只读核对仍为f2ec6c1f，未push/合并/部署。
+
 2026-10-07 r18窄修复准备完成：合法全程预算名词关系与逐费用/每日谓词局部否定已实现，保留整句肯定费用/每日用途阻断、所有金额/币种/票价/保证反例及原权限/证据/版本/修订限额。两文件182/182、根联合8文件297/297、check/build、observer1/1通过；Astra对源码SHA5a5b6efb的25项独立纯函数复核符合预期。未改原文的[完整第二稿重放](evidence/d6-r18-original-budget-replay.json)使用真实PG草稿、两份兼容research（13 findings；6活动与1 practical绑定在第二份7 findings）及原text，按发布服务顺序纳入材料；r17冻结构建仅因excluded_precise_claim blocked，r18构建accepted且issues/omitted为空，0模型/外部调用。seq95只核对合法预算文字，不追认其缺practical的首稿；重放也不追认任何正文或H5通过。旧红测、构建与原材料保留。下一步本地提交、新r18隔离run/schema/构建冻结、同版完整工程及原12+4；当前未PASS。
 
 2026-10-07 续作：**r17 真实 B01 FAIL，D6 未 PASS，无已确认硬阻塞**。同冻结源码 `ee29139` 完整工程通过，真实390×844页面首轮101ms受理、110.962秒到终态、113.665秒流程；0 accepted攻略，后续8动作blocked。实际终态completed、delivery partial且缺accepted_publication，不是180秒超时，也不是用户交付成功。r17服务已于2026-10-06T15:58:42.898Z正常关闭，PID84864已退出、两端口ECONNREFUSED、锁释放、guard installed/closed各1且forbiddenCalls0；原schema、会话、失败报告和账本保留。

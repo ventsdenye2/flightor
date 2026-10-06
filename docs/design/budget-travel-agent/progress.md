@@ -1,5 +1,13 @@
 # 当前进度与验证
 
+2026-10-07 r18同冻结版本完整工程完成：backend1331/1331、真实专用PG51/51、D5本地HTTP/票价fixture30/30/codeUnchanged、runtime14/14、observer1/1、前端四族/根TS、H5及weapp构建通过（weapp17.28秒，既有CSS顺序/体积警告保留）。[固定回放](evidence/d6-r18-fixed-replay.json)两版各10/10语义一致、0调用；p50总耗时10.630→11.861ms、适配0.474ms，Trip读取20→18，其余仓库调用一致，不宣称真实性能改善。API55171/H551443及PID93668仍运行，远端f2ec6c1f未变；下一步同版原B01至B12/E01至E04真实390×844页面全文/详情/持久化联合验收，D6未PASS，无确认硬阻塞。下面的“正在执行”均为此前时间点记录。
+
+2026-10-07 r18真实专用PG完整11文件51/51通过（50.53秒，退出码0）；同版backend1331/1331已通过。D5完整30例、runtime完整package与前端四族/根TS正在执行，weapp构建及真实H5原12+4随后运行；未PASS。
+
+2026-10-07 r18同冻结版本完整backend137文件1331/1331通过（183.16秒，`output/d6/backend-unit-r18-final.log`），进程退出码0。真实专用PG完整测试已开始，随后D5/runtime/前端/平台构建及原12+4真实H5；当前还没有本版UI或PASS声明，冻结详情见下段。
+
+2026-10-07 r18已冻结91352c3，run/schema/source/backend/H5/worker/原旅程指纹见[冻结记录](evidence/d6-r18-freeze.json)。API55171/H551443、PID93668/TTY26207，独立目录`backend/.demo/dsh-d6-runtime/d6-final-r18`；H5编译27.955秒/2条既有体积警告完成后才启动完整backend。启动/冻结时真实调用0，历史账本hash未变；标准/原12+4/未来日期/参数及390×844保持。完整backend正在运行，其余完整工程和真实H5正文/持久化联合验收待执行，未PASS。
+
 2026-10-07 r18预算窄修复准备完成：focused182/182、根8文件joint297/297、check/build、observer1/1通过，Astra固定源码25/25窄复核一致。权威全程预算无需目标口令、否定仅绑定具体费用/每日谓词，整句后续肯定费用和每日用途仍拒绝；不改模型/参数/权限/版本/证据/修订额度。真实PG原第二稿完整未改文字重放r17 blocked→r18 accepted、issues/omitted空且0调用，见[回放证据](evidence/d6-r18-original-budget-replay.json)；机械回放不是正文或H5通过。r17失败/关闭文档已提交c255b1e。当前准备代码本地提交及新r18冻结完整工程/PG/D5/H5 12+4，未PASS、无确认硬阻塞。
 
 2026-10-07 续作：r17完整工程通过，但真实390×844 B01 FAIL（101ms受理、110.962秒终态、113.665秒流程、0accepted/后续8blocked），并非180秒超时。20模型/10搜索/14次web_fetch工具尝试/0fare，token568980、USD2预留且实际费用未知、pending0。服务已正常关闭、PID/锁/端口释放、guard违规0及历史账本hash不变；原schema/会话/报告/账本保留。Astra max用冻结构建和真实第二稿零出站复现“全程预算为”及局部否定误拦，详见[D6-34](DSH_D6_ACCEPTANCE.md)；Luna正在补正负红回归及窄修复。D6未PASS、无确认硬阻塞，修复后新r18冻结完整工程/原12+4，标准/自然输入/参数/修订限额不变。下段r17启动记录是历史快照，不是仍运行。
