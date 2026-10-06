@@ -1,5 +1,9 @@
 # 当前进度与验证
 
+2026-10-07 续作：r17完整工程通过，但真实390×844 B01 FAIL（101ms受理、110.962秒终态、113.665秒流程、0accepted/后续8blocked），并非180秒超时。20模型/10搜索/14次web_fetch工具尝试/0fare，token568980、USD2预留且实际费用未知、pending0。服务已正常关闭、PID/锁/端口释放、guard违规0及历史账本hash不变；原schema/会话/报告/账本保留。Astra max用冻结构建和真实第二稿零出站复现“全程预算为”及局部否定误拦，详见[D6-34](DSH_D6_ACCEPTANCE.md)；Luna正在补正负红回归及窄修复。D6未PASS、无确认硬阻塞，修复后新r18冻结完整工程/原12+4，标准/自然输入/参数/修订限额不变。下段r17启动记录是历史快照，不是仍运行。
+
+2026-10-06 r17已冻结`ee29139`，独立run/schema与源码/backend/H5/worker/旅程指纹见[D6验收](DSH_D6_ACCEPTANCE.md)及[冻结记录](evidence/d6-r17-freeze.json)。H5构建27.591秒完成后才启动完整backend，避免构建负载并发；完整backend137文件1301/1301通过（184.22秒），服务TTY22201/PID84864保持。专用PG51/51、D5本版30/30/codeUnchanged=true、runtime14/14、observer1/1、前端四族/根TypeScript及weapp构建通过；D5是本地HTTP/票价fixture。固定回放两版各10/10语义一致、0出站，适配p50 0.386ms。真实390×844 B01开始（TTY80121），正文/持久及完整12+4尚未通过，当前未PASS。
+
 2026-10-06 r17准备完成：r16工程FAIL与关闭证据保留。预算短答三项原正例、小数、句末金额、独立每日否定及daily-budget前缀均先红后绿；四文件165/165、根联合8文件267/267通过。check/build、observer1/1、停止harness最终16/16、根TypeScript、runner语法/diff与docs114份765链接通过；联合与docs首次受限启动失败分别保留，允许原本地子进程后通过。停止按cancelAndWait权威响应及UI停止/非busy判断，普通failed/completed不能算取消，也不强求已停止UI继续poll。源码及harness停止修改，准备本地提交/新冻结完整工程/PG/D5/H5 12+4；当前零新增真实调用、未PASS。
 
 2026-10-06 r16冻结记录（本批随后工程FAIL）：本地提交`c901d396a6c6d724073a50e574962e7039ce4eb1`，远端codex/dsh-backend只读复核仍`f2ec6c1f75000d368d4d83b7ae6428c17dea3e0c`。标准v1与原12固定+4探索输入/未来日期不变；DeepSeek v4 flash、official搜索、thinking disabled、max_tokens8192、原超时/修订额度和地点配置保持。新隔离目录`backend/.demo/dsh-d6-runtime/d6-final-r16`H5构建后已关闭，原TTY30880；实际run/schema/source/backend/H5/worker指纹见下述保留记录。先完成完整工程/PG/D5，再真实390×844 B01与剩余旅程；此状态不是PASS。

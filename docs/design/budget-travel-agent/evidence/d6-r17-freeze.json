@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "status": "frozen_b01_failed_closed",
+  "createdAt": "2026-10-06T15:37:46.265Z",
+  "codeHead": "ee29139c21d16f166b39652f76124d6da4b48189",
+  "runId": "fa5887a0-a12c-42a9-ae42-2b900461f824",
+  "schema": "dsh_d6_fa5887a0a12c42a9ae422b900461f824",
+  "pid": 84864,
+  "apiPort": 49304,
+  "h5Port": 51734,
+  "sourceFingerprint": "f10c5ab029130e7468b91aa80db1e4ed06bc30e0e14aecbebc2ff6f9d6bdf607",
+  "backendFingerprint": "125b1bdd0aaa3c285bdaa32d2461d436f1649d7abcc971acc46501dc7bbdbf8e",
+  "h5Fingerprint": "ea659379d31842ca92a02e43aab42c136f6c201aae459f0465cdc592c93db1ba",
+  "workerFingerprint": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+  "configuration": {
+    "modelProvider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "searchProvider": "deepseek-official",
+    "maxTokens": 8192,
+    "thinking": "disabled",
+    "nativeResearchProvider": "serpapi",
+    "places": {
+      "url": "https://nominatim.openstreetmap.org/",
+      "userAgent": "FlightOR-D6/1.0 (+https://github.com/ventsdenye2/flightor)",
+      "proxy": "http://127.0.0.1:7890"
+    }
+  },
+  "journeysSha256": "91240ac6c741a990ad4a233451cc5982702b9d3856eb85597fa88206be943780",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false
+  },
+  "authorization": {
+    "deepseek": "current user authorization; unlimited amount, per-call metering retained",
+    "serpapi": "existing authorized account allowance only; no purchase"
+  },
+  "platform": "H5; WeChat page acceptance deferred by user; WeChat build still required",
+  "h5Build": {
+    "durationMs": 27591,
+    "warnings": 2,
+    "result": "compiled"
+  },
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "realCalls": {
+    "model": 20,
+    "search": 10,
+    "fetch": 14,
+    "fare": 0,
+    "pending": 0,
+    "fetchMethod": "original session web_fetch tool attempts, not physical HTTP request count",
+    "settled": 30,
+    "reservedUsdMicros": 2000000,
+    "actualCost": "unknown",
+    "promptTokens": 559978,
+    "completionTokens": 9002,
+    "totalTokens": 568980
+  },
+  "b01": {
+    "result": "FAIL",
+    "acceptedGuides": 0,
+    "subsequentBlockedActions": 8,
+    "submitToAcceptedMs": 101,
+    "submitToTerminalMs": 110962,
+    "flowDurationMs": 113665,
+    "terminalStatus": "completed",
+    "delivery": "partial",
+    "missing": ["accepted_publication"],
+    "timeout180Seconds": false,
+    "privateReport": "backend/.demo/dsh-d6-runtime/d6-final-r17/evidence/B01-2026-10-06T15-49-38-745Z.json"
+  },
+  "closure": {
+    "closedAt": "2026-10-06T15:58:42.898Z",
+    "pidAbsent": true,
+    "locksReleased": true,
+    "ports": "49304 and 51734 ECONNREFUSED",
+    "guardInstalled": 1,
+    "guardClosed": 1,
+    "forbiddenCalls": 0,
+    "historyLedgerUnchanged": true,
+    "preserved": ["schema", "sessions", "failed reports", "D6 ledger", "frozen runtime copy"]
+  },
+  "backendUnit": {
+    "files": 137,
+    "passed": 1301,
+    "failed": 0,
+    "total": 1301,
+    "durationSeconds": 184.22,
+    "log": "output/d6/backend-unit-r17-final.log"
+  },
+  "postgres": {
+    "files": 11,
+    "passed": 51,
+    "failed": 0,
+    "durationSeconds": 52.63,
+    "log": "output/d6/postgres-r17-final.log",
+    "database": "dedicated loopback flightor_d6_validation"
+  },
+  "d5": {
+    "passed": 30,
+    "total": 30,
+    "codeUnchanged": true,
+    "realProvider": false,
+    "evidence": "d5-2026-10-06T15-45-25-443Z.json"
+  },
+  "runtime": {
+    "passed": 14,
+    "total": 14,
+    "log": "output/d6/runtime-suite-r17-final.log"
+  },
+  "observer": {
+    "passed": 1,
+    "total": 1,
+    "log": "output/d6/observer-r17-final.log"
+  },
+  "frontend": {
+    "conversationProgress": "passed",
+    "sessionRecovery": "passed",
+    "artifacts": "passed",
+    "productionPresentation": "passed",
+    "typescript": "passed"
+  },
+  "weappBuild": {
+    "result": "passed",
+    "log": "output/d6/weapp-build-r17-final.log",
+    "warnings": "existing CSS chunk order and asset-size warnings; no page acceptance"
+  },
+  "fixedReplay": {
+    "accepted": {
+      "baseline": 10,
+      "d6": 10
+    },
+    "semanticMatches": true,
+    "externalCalls": 0,
+    "adapterP50Ms": 0.38565,
+    "totalP50Ms": {
+      "baseline": 11.2192,
+      "d6": 11.7967
+    },
+    "log": "output/d6/fixed-replay-r17-final.log"
+  }
+}

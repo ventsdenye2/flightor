@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 D6续作：r17同版完整backend1301/1301、专用PG51/51、D5本地HTTP/票价fixture30/30及runtime14/14通过，但真实390×844 H5 B01 FAIL，110.962秒终态、0accepted（不是180秒超时）。冻结材料诊断确认合法预算关系及否定费用/每日语句仍误拦，D6-34窄修复进行中；原服务正常关闭、数据/会话/账本保留，修复后必须新冻结完整工程及原12+4。当前未PASS、无确认硬阻塞，单产品主DSH、配置/权限/证据/版本/限额不变、未部署。结果及历史见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
+
 2026-10-06 r17准备：r16完整backend为1290通过/3失败，失败均是合法预算短答复误拦，已关闭隔离服务、保留原证据与零调用账本。已修复短答复/出版散文的预算范围区别、小数与句号边界，并收紧H5停止验收为精确取消回执加页面停止态；联合267/267、check/build、observer1/1及停止断言16/16通过。真实H5 12+4与新冻结完整工程尚未通过，不继承r16定向通过；当前结果见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
 
 2026-10-06 r16：预算目标逐span识别、受控发布字段反馈、实际失败原因保留及公开分类修复已实现；DSH可见schema按既有kind权限收敛，领域/legacy执行schema不变。联合209/209、check/build与observer1/1通过。r15真实390×844 B01仍FAIL（196.271秒终态、0 accepted），原材料回放不追认正文，最终新冻结完整工程/12+4 H5待执行，见[字段反馈合同](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。单主DeepSeek、参数/超时/修订限额不变，未部署。

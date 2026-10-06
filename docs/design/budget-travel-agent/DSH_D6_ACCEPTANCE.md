@@ -1,5 +1,15 @@
 # DSH D6 冻结验收与结果
 
+2026-10-07 续作：**r17 真实 B01 FAIL，D6 未 PASS，无已确认硬阻塞**。同冻结源码 `ee29139` 完整工程通过，真实390×844页面首轮101ms受理、110.962秒到终态、113.665秒流程；0 accepted攻略，后续8动作blocked。实际终态completed、delivery partial且缺accepted_publication，不是180秒超时，也不是用户交付成功。r17服务已于2026-10-06T15:58:42.898Z正常关闭，PID84864已退出、两端口ECONNREFUSED、锁释放、guard installed/closed各1且forbiddenCalls0；原schema、会话、失败报告和账本保留。
+
+r17实际计量20模型/10搜索/14次web_fetch工具尝试/0票价，30 settled、pending0；prompt559978、completion9002、total568980，USD2为预留、实际费用未知。历史账本SHA未变。[脱敏B01失败审计](evidence/d6-r17-b01-failure.json)保留原报告、截图、真实PG读取、session、observer及关闭证明的SHA；原件位于忽略目录`backend/.demo/dsh-d6-runtime/d6-final-r17`。冻结副本`private/runtime-frozen`与覆盖前dist的783文件逐字节一致，按launcher同款算法SHA均125b1bdd；冻结状态已更新为失败关闭，旧启动信息仅作历史。
+
+Astra max零出站诊断以冻结构建、真实PG第二稿、7条finding及原6活动重放：seq129原文只报excluded_precise_claim；仅在内存把“全程预算为”改为“全程预算目标为”后完整校验accepted、issues/omitted为空、calls0。seq95首先确有practical必需证据不足，但合法预算目标与“而非每日/亦非已确认花费”也被机械误拦。seq129补齐practical后仍被误拦，seq134正确触发既有修订限额。D6-34继续修复预算关系与局部否定，保留全部费用/每日/保证反例、证据和修订限额；机械回放不追认正文或H5。修复后必须新冻结r18、完整重跑原12固定+4探索，不能续用r17凑成功分母。
+
+下段为r17启动时历史快照，现已失败并关闭。
+
+2026-10-06 r17已冻结并开始完整工程：代码`ee29139c21d16f166b39652f76124d6da4b48189`，实际指纹及配置见[本批冻结](evidence/d6-r17-freeze.json)。独立run`fa5887a0-a12c-42a9-ae42-2b900461f824`，schema`dsh_d6_fa5887a0a12c42a9ae422b900461f824`，API49304/H551734，PID84864/TTY22201，目录`backend/.demo/dsh-d6-runtime/d6-final-r17`。H5编译27.591秒、2条既有体积警告；完整backend137文件1301/1301通过（184.22秒）、专用PG11文件51/51（52.63秒）、D5本版30/30/codeUnchanged=true、runtime14/14、observer1/1、前端四族及根TypeScript通过，weapp构建成功（既有CSS顺序/体积警告）。D5为本地HTTP/票价fixture；固定回放两版各10/10语义一致、0外部调用、适配p50 0.386ms/总耗时11.219/11.797ms。真实390×844 B01已通过headed UI启动（TTY80121），正文/详情/持久联合验收待完成。标准/旅程SHA/原自然输入/参数/390×844布局保持，源码已停止修改。完整同版验收仍未完成，不计PASS。
+
 2026-10-06 r17准备完成：原r16完整backend三项合法预算短答复失败及零真实调用证据保留。权威全程目标短答、小数/句号与每日肯定边界修复联合8文件267/267通过；check/build、observer1/1、停止harness16/16、根TypeScript、runner语法与diff通过。文档门禁114份/765链接通过。原测试期望、标准v1、12固定+4探索、模型参数/修订额度与390×844 H5尺寸保持。远端再次只读核对仍为`f2ec6c1f75000d368d4d83b7ae6428c17dea3e0c`。本地提交后建立新冻结完整工程/PG/D5/UI，当前不是PASS。
 
 2026-10-06 r16冻结记录（本批随后工程FAIL）：本地提交`c901d396a6c6d724073a50e574962e7039ce4eb1`，远端codex/dsh-backend只读复核仍`f2ec6c1f75000d368d4d83b7ae6428c17dea3e0c`。标准v1与原12固定+4探索输入/未来日期不变；DeepSeek v4 flash、official搜索、thinking disabled、max_tokens8192、原超时/修订额度和地点配置保持。新隔离目录`backend/.demo/dsh-d6-runtime/d6-final-r16`H5构建后已关闭，原TTY30880；实际run/schema/source/backend/H5/worker指纹见下述保留记录。先完成完整工程/PG/D5，再真实390×844 B01与剩余旅程；此状态不是PASS。
@@ -150,6 +160,7 @@ The D6 H5 runner uses the prior H5 harness's 390x844 viewport and records browse
 | D6-31 | r15原source烤制甜甜圈被写炸制、周日建议混入周二/三；免费入场中文漏检 | 语义问题保留给主模型新自然输入审阅；中文免费开放/入场/进入补原合同拒绝回归，Wi-Fi/资料不误拦 | 机械校验通过不能追认正文；最终新H5逐字段审阅待执行 |
 | D6-32 | r16完整backend的3个既有shortReply正例回归，合法英文for-the-trip、两天总预算、total budget否定每日被新span目标识别误拦；复审又确认小数切分、句末金额及daily-budget前缀边界 | 原期望保留，补reply文件到受影响必跑范围；仅权威scope=trip短答可确认总预算，出版仍需全程范围；逐金额拒绝每日肯定/其他金额，句点仅两边均数字时作小数点 | r16原1290/1293与关闭证据保留；r17四文件165/165及联合8文件267/267通过，首次联合启动EPERM无测试、允许同命令重跑日志保留；新冻结完整复验待执行 |
 | D6-33 | H5 stop旧脚本接受cancel请求后的任意终态，可能将普通失败/完成算作成功停止 | 按实际cancelAndWait合同要求精确failed/AGENT_TURN_CANCELLED及页面停止/非busy，不改变产品API；cancel响应本身权威，不能强求取消后UI继续轮询；断言前保留实际取消材料 | 红测15/16→绿测16/16，根最终16/16、runner语法通过；B09/B10真实持久/迟到写检查待完整冻结验收 |
+| D6-34 | r17真实B01原seq95/129的全程预算为与非每日/非已确认花费被词法规则误拦；第二稿已补实际practical材料但仍无accepted | Astra冻结原材料零调用复现；预算关系不强求目标口令，按谓词限制否定范围，保留后续肯定费用/每日/错误金额币种/保证拒绝，不增加修订额度 | r17完整工程通过但B01 FAIL，20模型/10搜索且0accepted；红回归与窄修复进行中，r18同版完整工程及12+4待执行 |
 | D6-15 | Taro 初始 main tab 页面尚未完成首次 ready 时，H5 原生 tabbar 可先发起另一标签的切换；native 与 custom 导航未共享页面就绪条件 | 任一 main tab 的 `useReady` 前禁用原生 H5/custom tab 点击，首次 main tab ready 后恢复原 `switchTab`；初始直达任一 main tab 可解锁，详情返回不重置门 | 已实施；session-recovery fixture 20/20、H5 build通过；真实H5复验待新run，late-hide因果仍未证实 |
 | D6-07 | `update_trip_context` 的空 patch 返回 `changed: false`，但仍重建同 scope 的 evidence store 并复位 source alias sequence；旧模型引用可能映射到后续不同证据 | 同 generation 在 setter 前后记录相同内容、不同 URL，要求 source alias 不重复，并断言 Trip version 与 accepted base 不变 | 修复及定向绿测通过；最终冻结验收待运行 |
 | D6-10 | 准备阶段按当前语言选取任一旧 accepted guide，而发布 CAS 将同 conversation/version 最新任一语言 accepted guide 视为当前基底，可能错误允许回退到旧版或在提交时无故冲突 | 同作用域新英/旧中组合不得把旧中文 guide 当编辑基底；新guide补齐中文 accepted后必须绑定新guide | 准备规则已实施，定向7/7通过；最终冻结验收待运行 |

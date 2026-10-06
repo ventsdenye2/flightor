@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "codeHead": "ee29139c21d16f166b39652f76124d6da4b48189",
+  "runId": "fa5887a0-a12c-42a9-ae42-2b900461f824",
+  "schema": "dsh_d6_fa5887a0a12c42a9ae422b900461f824",
+  "result": "FAIL",
+  "journeyId": "B01",
+  "startedAt": "2026-10-06T15:49:38.745Z",
+  "finishedAt": "2026-10-06T15:51:32.410Z",
+  "flowDurationMs": 113665,
+  "submitToAcceptedMs": 101,
+  "submitToTerminalMs": 110962,
+  "acceptedGuides": 0,
+  "subsequentBlockedActions": 8,
+  "terminal": {
+    "status": "completed",
+    "delivery": "partial",
+    "missing": [
+      "accepted_publication"
+    ]
+  },
+  "timeout180Seconds": false,
+  "scope": {
+    "currentTripVersion": 1,
+    "travelDays": 2,
+    "budget": {
+      "scope": "trip",
+      "amount": 1200,
+      "currency": "CNY"
+    },
+    "guideLocaleStatus": "zh blocked with null text",
+    "goalStates": "setter satisfied, guide pending, guide Run failed"
+  },
+  "calls": {
+    "model": 20,
+    "search": 10,
+    "webFetchToolAttempts": 14,
+    "physicalFetchRequests": "not asserted",
+    "fare": 0,
+    "settled": 30,
+    "pending": 0
+  },
+  "tokens": {
+    "prompt": 559978,
+    "completion": 9002,
+    "total": 568980
+  },
+  "cost": {
+    "reservedUsdMicros": 2000000,
+    "actual": "unknown"
+  },
+  "closure": {
+    "closedAt": "2026-10-06T15:58:42.898Z",
+    "pidAbsent": true,
+    "locks": [],
+    "ports": [
+      {
+        "port": 49304,
+        "status": "ECONNREFUSED"
+      },
+      {
+        "port": 51734,
+        "status": "ECONNREFUSED"
+      }
+    ],
+    "guardInstalled": 1,
+    "guardClosed": 1,
+    "forbiddenCalls": 0,
+    "historyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+    "historyLedgerUnchanged": true
+  },
+  "frozenRuntimeCopy": {
+    "files": 783,
+    "sha256": "125b1bdd0aaa3c285bdaa32d2461d436f1649d7abcc971acc46501dc7bbdbf8e",
+    "identicalToCurrentDistBeforeR18Build": true,
+    "verifiedAt": "2026-10-06T16:15:39.345Z"
+  },
+  "diagnosis": {
+    "method": "Astra max and root zero-egress original material replay",
+    "firstCommit": "seq95 missing practical evidence and false positive budget prose",
+    "secondCommit": "seq129 practical evidence supplemented; budget prose still false positive",
+    "thirdCommit": "seq134 correctly exhausted unchanged content repair limit",
+    "completeOriginalSeq129": "blocked only format/excluded_precise_claim",
+    "singleInMemoryWordingSubstitution": "accepted after replacing 全程预算为 with 全程预算目标为; not a factual or H5 pass",
+    "modelCalls": 0,
+    "externalCalls": 0
+  },
+  "originals": {
+    "report": {
+      "privatePath": "backend/.demo/dsh-d6-runtime/d6-final-r17/evidence/B01-2026-10-06T15-49-38-745Z.json",
+      "sha256": "1546b75cd141a7e96d9da142ed818ff6cb35c9f22e9f50194aee49c19a4d2221",
+      "present": true
+    },
+    "screenshot": {
+      "privatePath": "backend/.demo/dsh-d6-runtime/d6-final-r17/evidence/B01-2026-10-06T15-49-38-745Z-failure.png",
+      "sha256": "11a07f32eb633fa3bcbc357318f7594c9c1c49540e72b6f77c23127375b7d597",
+      "present": true
+    },
+    "readback": {
+      "privatePath": "backend/.demo/dsh-d6-runtime/d6-final-r17/private/b01-scoped-readback.private.json",
+      "sha256": "7e29c3eec5581c20eda61daa3b82d6a08515177650bcc4d5a8695d1a297bedd6",
+      "present": true
+    },
+    "session": {
+      "privatePath": "backend/.demo/dsh-d6-runtime/d6-final-r17/private/dsh-data/sessions/_no-cwd/94e39ee6-a8cd-4ccf-b05a-6ab1b271e8b4/session.v4.jsonl",
+      "sha256": "aa941666639d9619a42f43eea2af74beaaa73af3834e11df45abdacc4315e308",
+      "present": true
+    },
+    "observer": {
+      "privatePath": "backend/.demo/dsh-d6-runtime/d6-final-r17/private/observation/executions/9fd9e74b-6f05-4a96-a5df-5bd57d544f4b.jsonl",
+      "sha256": "386b5fe6f1f6e89a7ccab104d50a465476ee80fbf7356deffedab17fb4f2f56a",
+      "present": true
+    },
+    "closure": {
+      "privatePath": "backend/.demo/dsh-d6-runtime/d6-final-r17/private/closure-summary.private.json",
+      "sha256": "b00f722ec32af87f0f7c513a15423f4bc35e4a64fe1041a022db2fd627484966",
+      "present": true
+    }
+  },
+  "continuation": "D6-34 scoped regression/fix then new r18 freeze and full original 12+4; r17 data and failures preserved"
+}
