@@ -1,5 +1,7 @@
 # DSH D6 冻结验收与结果
 
+2026-10-07 r23真实B01仍FAIL：105ms受理、92.883秒终态、96.204秒完整runner，partial/0accepted/后8动作blocked，不是180秒超时。首稿免费进入为真实违规；第二内容稿text.reply将同字段已明确全程1200后的“1200元只是整体目标”误按精确费用拒绝，Astra max用实际冻结dist离线原文回放研判有界目标指代；参数错误只列text的反馈另查，不增修订额度、不放宽实际费用。隔离PID115836/TTY6313已关闭，guard恰1安装/1关闭、forbidden0，数据/会话/构建保留，历史ledger SHA不变。r23共19model/10search/540791tokens/pending0/fare0、USD1.96未知预留；累计USD37.36未知预留（非实付）。B02–B12/E01–E04未运行，新代码修复后须新冻结完整验收，D6未PASS、无确认硬阻塞；详见[原失败与关闭审计](evidence/d6-r23-b01-failure.json)。以下r23工程通过为交互前快照。
+
 2026-10-07 r23同冻结版本完整工程通过：源码f6fe7d0，backend139文件1554/1554（211.67秒）、真实专用PG11文件52/52（51.01秒）、D5本地HTTP/持久票价fixture30/30且codeUnchanged、runtime完整14/14、构建observer1/1、前端116/20/37/52及helper21/21和根TS、check/build、H5/weapp构建通过。前端与两端构建仅tool输出及私有审阅摘要，无完整持久日志，明确此证据限制；backend/PG/D5/runtime/observer/helper日志保留。固定回放10对accepted/语义一致/零模型外呼，P50基线9.859ms/D6 11.704ms；约1.845ms差值保留当前Trip安全检查，不能声称生产提速。工程后再次实际计算source/backend/H5指纹仍与运行manifest一致。原12固定+4探索真实390×844 H5现在从B01开始，尚未PASS，无确认硬阻塞；原失败不追认，详见[完整冻结工程证据](evidence/d6-r23-freeze.json)。
 
 2026-10-07 r23已冻结并开始完整工程：源码f6fe7d0，run 77cb28e0-f848-44d5-8c69-f5d7f3aa343a、schema dsh_d6_77cb28e0f84844d58c69f5d7f3aa343a、PID115836/TTY6313、API63202/H560415，目录backend/.demo/dsh-d6-runtime/d6-final-r23；source/backend/H5/worker指纹及783文件归档一致。H5编译29.277秒、两条既有体积警告；当前新批零真实调用，核心模型/搜索/参数、原旅程SHA与日期、390×844/DPR1/default-UA/mobile=false/touch=false不变。完整backend进行中，随后真实专用PG、D5/固定回放与原12固定+4探索；此前定向与前端通过不替代完整验收。D6未PASS、无确认硬阻塞；冷重启仅按本隔离run --resume，保留同schema/账本/身份及H5，其他运行与用户数据不修改。冻结证据见[本批冻结](evidence/d6-r23-freeze.json)。
@@ -226,6 +228,7 @@ The D6 H5 runner uses the prior H5 harness's 390x844 viewport and records browse
 | D6-46 | r22 B02唯一新delivery，但harness将合法旧基底引用计为第二新稿，还会取首条旧ref | 排除已知previousGuideId后检唯一新ID并绑定delivery；可读guide只绑定新ID，保留非guide ref及partial/旧稿/两个新稿反例 | VM实际函数行为红20/21→绿21/21及语法通过，零外呼；新冻结H5待验 |
 | D6-47 | r22 B02中文locale下英文解释被正确withheld，harness却继续 | 每轮可信persona明确当前公开语言；保留语言检查；解释须有实际非空答复且无withheld/incomplete | helper21/21，语言约束已实施但模型实际行为待新冻结；不新增翻译模型、不追认原解释 |
 | D6-48 | read_artifact读旧记录也触发artifact_committed进度 | 移除工具输出引用重复publish，只由workspace真正提交回调通知；最终引用语义保留 | service-progress红1/1→绿1/1（5.23秒），零外呼；读取零Trip/Goal/Artifact写，后续真实fixture写仅一条通知；新完整冻结待验 |
+| D6-49 | r23修订reply在准确全程1200目标后以同额“只是整体目标”复述，却仍被精确费用拦截；参数反馈只列text | 离线原文与中英作用域/费用/每日反例诊断；保留金额/币种/费用/限额边界，未修源码 | Astra max诊断中；r23原B01 FAIL，不是180秒超时 |
 
 2026-10-07 对r20未发布原稿的只读内容审查：两稿安排相同7项，均非accepted成果。已保存JNTO滨离宫正文描述茶屋/水上巴士，但没有开闭园或茶屋营业时刻，因此其evening建议未获得现有资料的时段核实；离线证据不足以证明与某个真实闭园时刻冲突，不编造时刻、不追认旧稿。Hoppy来源支持日落后体验，Yanaka已保存店铺时刻与afternoon不直接冲突；其余粗时段仍不是逐时钟排程/交通可行性证明。后续真实正文验收须独立审阅这些边界，不能以预算校验通过替代内容验收。未修改数据库、会话、来源、原报告或账本，未作外呼。
 | D6-15 | Taro 初始 main tab 页面尚未完成首次 ready 时，H5 原生 tabbar 可先发起另一标签的切换；native 与 custom 导航未共享页面就绪条件 | 任一 main tab 的 `useReady` 前禁用原生 H5/custom tab 点击，首次 main tab ready 后恢复原 `switchTab`；初始直达任一 main tab 可解锁，详情返回不重置门 | 已实施；session-recovery fixture 20/20、H5 build通过；真实H5复验待新run，late-hide因果仍未证实 |

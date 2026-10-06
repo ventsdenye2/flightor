@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "status": "FAIL",
+  "recordedAt": "2026-10-06T22:44:41.143019+00:00",
+  "sourceHead": "f6fe7d0",
+  "runId": "77cb28e0-f848-44d5-8c69-f5d7f3aa343a",
+  "originalReport": "backend/.demo/dsh-d6-runtime/d6-final-r23/evidence/B01-2026-10-06T22-37-37-955Z.json",
+  "originalReportSha256": "0e2661382316d34ad7b22701de147acbd8a895438dff7981b446ea7ce8654f5e",
+  "journey": "B01",
+  "ui": {
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "deviceScaleFactor": 1,
+      "isMobile": false,
+      "hasTouch": false
+    },
+    "durationMs": 96204,
+    "submitToAcceptedMs": 105,
+    "submitToTerminalMs": 92883,
+    "terminal": "completed/partial/travel_guide",
+    "acceptedGuideCount": 0,
+    "blockedActions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "screenshotVisuallyReviewed": true,
+    "resourceErrors": []
+  },
+  "diagnosis": {
+    "initialSubmission": {
+      "outcome": "rejected correctly for free-entry claim; scope and precise-money checks also failed",
+      "reasonCodes": [
+        "budget_scope_changed",
+        "excluded_precise_claim",
+        "excluded_admission_or_hours"
+      ]
+    },
+    "secondContentSubmission": {
+      "field": "text.reply",
+      "reasonCodes": [
+        "excluded_precise_claim"
+      ],
+      "minimalRejectedClause": "实际花费需要你自己把控，1200 元只是你设定的整体目标。",
+      "sameFieldPriorTarget": "全程总预算目标 1200 元，即整个行程合计",
+      "offlineReplayedAgainstFrozenBuild": true,
+      "finding": "scoped budget target anaphora requires diagnosis; no general cost exemption",
+      "state": "Astra max minimum-fix diagnosis in progress"
+    },
+    "intermediateArguments": "INVALID_ARGUMENTS with only fields:[text]; exact issue diagnosis pending",
+    "finalSubmission": "DSH_REPAIR_LIMIT; original recovery bounds preserved"
+  },
+  "persistence": {
+    "readOnlySnapshot": "backend/.demo/dsh-d6-runtime/d6-final-r23/private/readbacks/B01-2026-10-06T22-37-37-955Z.postgres.private.json",
+    "hiddenDraftCount": 2,
+    "acceptedGuideCount": 0,
+    "sourceAndTextReview": "pending independent read-only review"
+  },
+  "closure": {
+    "serverPid": 115836,
+    "serverSession": 6313,
+    "pidExited": true,
+    "listenersAbsent": true,
+    "lockAbsent": true,
+    "guardsInstalled": 1,
+    "guardsClosed": 1,
+    "forbiddenCalls": 0,
+    "dataSessionsBuildAndLedgerPreserved": true
+  },
+  "batchAccounting": {
+    "directory": "d6-final-r23",
+    "batchId": "c7e8e5b1-af82-4aee-a0d4-f13f591bf71c",
+    "hasManifest": true,
+    "ledgerSha256": "43d877619e9e8d7fcd1e54af602507c93e62fb997f2306072630b53ce7bf2ab3",
+    "modelAdmissions": 19,
+    "searchAdmissions": 10,
+    "settled": 29,
+    "pending": 0,
+    "promptTokens": 529702,
+    "completionTokens": 11089,
+    "modelTokens": 540791,
+    "modelCallsWithoutUsage": 0,
+    "knownCostCalls": 0,
+    "knownCostUsdMicros": 0,
+    "unknownCostCalls": 29,
+    "unknownReservedUsdMicros": 1960000,
+    "fareMethodCalls": 0,
+    "reports": [
+      {
+        "name": "B01-2026-10-06T22-37-37-955Z.json",
+        "sha256": "0e2661382316d34ad7b22701de147acbd8a895438dff7981b446ea7ce8654f5e",
+        "journeyId": "B01",
+        "result": "failed",
+        "durationMs": 96204,
+        "sends": [
+          {
+            "index": 0,
+            "status": "failed",
+            "submitToAcceptedMs": 105,
+            "submitToTerminalMs": 92883,
+            "acceptedArtifactCount": 0,
+            "apiStatus": "completed",
+            "deliveryStatus": "partial"
+          },
+          {
+            "index": 3,
+            "status": "blocked",
+            "acceptedArtifactCount": 0
+          },
+          {
+            "index": 4,
+            "status": "blocked",
+            "acceptedArtifactCount": 0
+          }
+        ]
+      }
+    ]
+  },
+  "cumulativeAccounting": {
+    "modelAdmissions": 394,
+    "searchAdmissions": 180,
+    "settled": 574,
+    "pending": 0,
+    "promptTokens": 13227125,
+    "completionTokens": 188387,
+    "modelTokens": 13415512,
+    "modelCallsWithoutUsage": 0,
+    "knownCostCalls": 0,
+    "knownCostUsdMicros": 0,
+    "unknownCostCalls": 574,
+    "unknownReservedUsdMicros": 37360000,
+    "fareMethodCalls": 0
+  },
+  "costNote": "all amounts are unknown-cost reservations, not actual charges",
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "continuation": {
+    "mustUseNewFrozenRunAfterCodeFix": true,
+    "unrun": [
+      "B02-B12",
+      "E01-E04"
+    ],
+    "mustRepeatFullFrozenAcceptance": true,
+    "hardBlockConfirmed": false
+  }
+}
