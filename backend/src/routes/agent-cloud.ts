@@ -13,8 +13,7 @@ import type { AppContext } from '../app/context.js'
 import { authenticateRequest } from '../auth/service.js'
 import { AppError } from '../lib/errors.js'
 import { PostgresArtifactRepository } from '../artifacts/postgres.js'
-import { PostgresLocationResolver } from '../aviation/location-resolver.js'
-import { CompositeAviationProvider } from '../aviation/providers/composite.js'
+import { createCompositeAviationProvider } from '../aviation/composition.js'
 import { PostgresConversationRepository } from '../conversations/postgres.js'
 import { PostgresUserMemoryRepository } from '../memory/postgres.js'
 import { PostgresTripRepository } from '../trips/postgres.js'
@@ -159,7 +158,7 @@ function defaultFactory(context: AppContext, logger: FastifyBaseLogger, app: Fas
       trace: trace => logger.info({ toolTrace: trace }, 'Planner tool completed')
     })
     const topology = new PostgresTopologyRepository(context.db)
-    const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))
+    const aviation = createCompositeAviationProvider(context.db, context.providers.aviation, context.env)
     const flightSelections = new PostgresWorkspaceRepository(context.db, userId)
     return new CloudPlannerService({
       finalizationObservation: observation => logger.info({ finalization: observation, model: context.env.PLANNER_MODEL }, 'Guide finalization completed'),

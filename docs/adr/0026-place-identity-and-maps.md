@@ -16,6 +16,8 @@
 
 只使用一个配置的 Nominatim 兼容服务；首版使用获授权的 OSM 公共服务。发送原始/已接纳名称、城市、国家；已有来源只在本地进行候选消歧，不发送用户原话、偏好、研究正文、凭证。检验国家、地区、名称和实体粒度；对返回地址的城市辖区及 metropolis 独立字段兼容。名称同名时可用已有精确官网/OSM 实体来源消歧，否则 ambiguous；不选第一条。主题美食、多地点组合保持 unresolved，不以车站/城市/机场代替。主场馆、街区与街道粒度明确。
 
+2026-10-06航空城市补充：航空 `resolve_location` 的精确 city-only 查询先读 FlightOR 城市目录；本地无命中后，仅当既有 Nominatim URL 与 User-Agent 均显式配置才查询。该分支使用同一 Nominatim transport/proxy、`place_query_cache` 和 `place_provider_calls` 租约，并传递原 AbortSignal；请求使用城市特征/address layer，结果限于带 OSM 类型/数字 ID、坐标及真实 `address.country_code` 的 `place` city/town 或市级 `boundary/administrative` city/town-address 实体。城市名须精确命中返回 `name`/`namedetails`；逗号后的国家/地区限定须逐项精确命中返回地址字段。国家码与 `osm:{type}:{id}` 来自返回实体，多个候选保持为多个匹配；机场、POI、区县及混合 city/airport 查询不走此分支。无配置返回空的 unverified，不猜测、不写入 Trip，不能改写用户已选的 FlightOR canonical city ID。两个 aviation composition 入口共用同一显式配置工厂，地图 POI 解析合同不变。
+
 一次动作最多12条线索、总截止25秒、单请求8秒、单实例串行；同 owner/攻略/hash 合并在途动作，同查询合并在途请求；数据库租约保证整个部署至少1100ms间隔且只有一个外部请求在途。达到动作上限记录 unavailable/action_limit，后续只能显式点击继续。公网服务还有自身限额/可用性限制，不能把此机制当作无限公共批量服务。
 
 缓存 key 含服务 URL/解析版本、原始名称、城市、国家、city/activity 范围及排序去重的来源 URL；不含 locale 或活动序号。来源参与 key，避免不同消歧证据错误复用同名实体。resolved 缓存30天，技术失败5分钟，其他结果1天；当前内容已有非技术结果的绑定直接复用，不自动重评。技术失败仅显式操作在缓存到期后可查询。新内容需新绑定；同查询缓存过期后出现不同实体时记录 conflict，禁止悄悄替换。跨实例网络限流由数据库保证；并发请求/查询合并是进程内的，不宣称跨实例只调用一次。

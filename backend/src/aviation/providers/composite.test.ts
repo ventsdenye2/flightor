@@ -20,4 +20,37 @@ describe('CompositeAviationProvider', () => {
     const local: LocationResolver = { resolveLocation: vi.fn().mockResolvedValue({ matches: [city], verification }) }
     await expect(new CompositeAviationProvider(remote, local).resolveLocation({ query: 'Tokyo' })).resolves.toMatchObject({ matches: [city] })
   })
+
+  it('uses the city fallback only after a city-only local miss', async () => {
+    const remote = new MockAviationProvider({ failure: new Error('aviation provider must not be called') })
+    const fallback = { resolveLocation: vi.fn().mockResolvedValue({ matches: [city], verification }) }
+    const local: LocationResolver = { resolveLocation: vi.fn().mockResolvedValue({ matches: [], verification: { ...verification, status: 'unverified', confidence: 0 } }) }
+    const result = await new CompositeAviationProvider(remote, local, fallback).resolveLocation({ query: 'Kyoto', types: ['city'] })
+    expect(result.matches).toEqual([city])
+    expect(fallback.resolveLocation).toHaveBeenCalledOnce()
+    expect(fallback.resolveLocation).toHaveBeenCalledWith({ query: 'Kyoto', types: ['city'] }, undefined)
+  })
+
+  it('does not use the city fallback for local hits, airport queries, or mixed queries', async () => {
+    const remote = new MockAviationProvider()
+    const fallback = { resolveLocation: vi.fn().mockResolvedValue({ matches: [], verification }) }
+    const local: LocationResolver = { resolveLocation: vi.fn()
+      .mockResolvedValueOnce({ matches: [city], verification })
+      .mockResolvedValue({ matches: [], verification: { ...verification, status: 'unverified', confidence: 0 } }) }
+    const composite = new CompositeAviationProvider(remote, local, fallback)
+    await composite.resolveLocation({ query: 'Tokyo', types: ['city'] })
+    await composite.resolveLocation({ query: 'Kansai', types: ['airport'] })
+    await composite.resolveLocation({ query: 'Osaka', types: ['city', 'airport'] })
+    expect(fallback.resolveLocation).not.toHaveBeenCalled()
+  })
+
+  it('passes the caller cancellation signal into the city fallback', async () => {
+    const remote = new MockAviationProvider()
+    const local: LocationResolver = { resolveLocation: vi.fn().mockResolvedValue({ matches: [], verification: { ...verification, status: 'unverified', confidence: 0 } }) }
+    const fallback = { resolveLocation: vi.fn().mockResolvedValue({ matches: [], verification }) }
+    const controller = new AbortController()
+    const composite = new CompositeAviationProvider(remote, local, fallback)
+    await composite.resolveLocation({ query: 'Tallinn', types: ['city'] }, { signal: controller.signal })
+    expect(fallback.resolveLocation).toHaveBeenCalledWith({ query: 'Tallinn', types: ['city'] }, { signal: controller.signal })
+  })
 })

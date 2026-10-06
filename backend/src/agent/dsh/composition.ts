@@ -8,8 +8,7 @@ import { PostgresUserMemoryRepository } from '../../memory/postgres.js'
 import { PostgresWorkspaceRepository } from '../../workspaces/postgres.js'
 import { PostgresGoalRepository, PostgresGoalRunRepository } from '../goals/postgres.js'
 import { createDefaultGoalVerifierRegistry } from '../goals/default-verifiers.js'
-import { CompositeAviationProvider } from '../../aviation/providers/composite.js'
-import { PostgresLocationResolver } from '../../aviation/location-resolver.js'
+import { createCompositeAviationProvider } from '../../aviation/composition.js'
 import { PostgresTopologyRepository } from '../../topology/postgres.js'
 import { DeterministicFlightRoutePlanner, ParetoRouteOptimizer, ProductionConnectionSearchService } from '../../flight-routing/services.js'
 import { CatalogDestinationDiscoveryService } from '../../destinations/discovery.js'
@@ -51,7 +50,7 @@ export function createDshManager(context: AppContext): DshSessionManager {
 export function createDshService(context: AppContext, userId: string, sessions: DshSessionManager): DshPlannerService {
   const env = context.env
   const budget = budgetFor(context)
-  const aviation = new CompositeAviationProvider(context.providers.aviation, new PostgresLocationResolver(context.db))
+  const aviation = createCompositeAviationProvider(context.db, context.providers.aviation, env)
   // Localization has a direct model client, never a hidden legacy Planner/Runtime.
   const localizationClient = createDshLocalizationClient(env, context.providers.openrouter, budget)
   return new DshPlannerService({ ownerId: userId, sessions,

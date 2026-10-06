@@ -10,6 +10,7 @@ import { publicationFor } from '../travel-guides/publication.js'
 import { AppError } from '../lib/errors.js'
 import { placeSnapshot, type PlaceRepository, type PlaceSnapshot } from './service.js'
 import type { AirportPoint, PlaceEnrichment, PlaceResolution } from './types.js'
+import { locationResolutionSchema, type LocationResolution } from '../aviation/types.js'
 
 const json=(value:unknown):any=>typeof value==='string'?JSON.parse(value):value
 export class PostgresPlaceRepository implements PlaceRepository {
@@ -59,6 +60,32 @@ export class PostgresPlaceRepository implements PlaceRepository {
   })
  }
  async cached(key:string){const r=await sql<{result_json:unknown}>`select result_json from place_query_cache where query_key=${key} and expires_at>now()`.execute(this.db);return r.rows[0]?json(r.rows[0].result_json) as PlaceResolution:undefined}
+ async cachedCityQuery(key:string):Promise<LocationResolution|undefined>{
+  const r=await sql<{result_json:unknown}>`select result_json from place_query_cache where query_key=${key} and expires_at>now()`.execute(this.db)
+  if(!r.rows[0])return undefined
+  const parsed=locationResolutionSchema.safeParse(json(r.rows[0].result_json))
+  return parsed.success?parsed.data:undefined
+ }
+ async cacheCityQuery(key:string,result:LocationResolution):Promise<LocationResolution>{
+  return this.db.transaction().execute(async trx=>{
+   await sql`select pg_advisory_xact_lock(hashtextextended(${key},0))`.execute(trx)
+   const old=await sql<{result_json:unknown;active:boolean}>`select result_json,expires_at>now() as active from place_query_cache where query_key=${key} for update`.execute(trx)
+   const row=old.rows[0], prior=row?.active?locationResolutionSchema.safeParse(json(row.result_json)):undefined
+   if(prior?.success){
+    if(prior.data.matches.length===0&&result.matches.length>0&&result.verification.status==='verified'){
+     await sql`update place_query_cache set result_json=${JSON.stringify(result)}::jsonb where query_key=${key}`.execute(trx)
+     return result
+    }
+    const matches=new Map(prior.data.matches.map(match=>[match.id,match]))
+    for(const match of result.matches){if(matches.size>=20)break;if(!matches.has(match.id))matches.set(match.id,match)}
+    result={matches:[...matches.values()],verification:prior.data.verification}
+    await sql`update place_query_cache set result_json=${JSON.stringify(result)}::jsonb where query_key=${key}`.execute(trx)
+    return result
+   }
+   await sql`insert into place_query_cache(query_key,result_json,expires_at) values(${key},${JSON.stringify(result)}::jsonb,now()+interval '1 day') on conflict(query_key) do update set result_json=excluded.result_json,expires_at=excluded.expires_at`.execute(trx)
+   return result
+  })
+ }
  async cache(key:string,result:PlaceResolution){
   return this.db.transaction().execute(async trx=>{
    await sql`select pg_advisory_xact_lock(hashtextextended(${key},0))`.execute(trx)
@@ -74,7 +101,7 @@ export class PostgresPlaceRepository implements PlaceRepository {
   })
  }
  /** Global DB lease prevents multi-instance requests exceeding public-service limits. No network in transaction. */
- async reserve(signal:AbortSignal){
+ async reserve(signal:AbortSignal,cacheReady?:()=>Promise<boolean>){
   for(;;){signal.throwIfAborted();const id=randomUUID()
    const obtained=await this.db.transaction().execute(async trx=>{
     await sql`select pg_advisory_xact_lock(79130241)`.execute(trx)
@@ -83,6 +110,7 @@ export class PostgresPlaceRepository implements PlaceRepository {
     await sql`insert into place_provider_calls(id,lease_until) values(${id}::uuid,now()+interval '30 seconds')`.execute(trx);return true
    })
    if(obtained)return async(outcome='finished')=>{await sql`update place_provider_calls set finished_at=now(),lease_until=now(),status=${outcome.slice(0,40)} where id=${id}::uuid`.execute(this.db)}
+   if(cacheReady&&await cacheReady())return undefined
    await delay(250,undefined,{signal})
   }
  }

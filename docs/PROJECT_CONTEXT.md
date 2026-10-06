@@ -1,5 +1,9 @@
 # FlightOR 当前项目上下文
 
+2026-10-06 D6实施增量：单主DSH使用准备时Trip/flight/base快照，模型紧凑提交每活动内的文字与局部修改slot，内部身份/hash由服务端绑定。同轮修复复用已接受Goal，外部变化拒绝；短引用还原后保留领域验证；发布基底条件在短事务检查。源码已实现、全量/真实平台验收未完成，见[ADR0029](adr/0029-dsh-prepared-submission.md)及[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。未部署、未加入第二产品LLM；本轮DeepSeek不限金额授权来自用户当前消息，不继承旧unlimited。
+
+2026-10-06城市身份补充：航空 city-only 查询本地 FlightOR 目录未命中时，可在既有 Nominatim URL/User-Agent 显式配置下查 OSM place city/town 或市级 administrative city/town-address 实体。城市名及逗号分隔的地区限定须精确匹配 OSM name/namedetails/address；共用地点 transport、缓存及全局租约，保留 AbortSignal 和多匹配歧义。国家及 `osm:*` 身份只取自 OSM 结果。本地命中零外部请求；无配置返回空 unverified；机场、POI、混合类型隔离。返回的外部身份只进入当前 trusted resolver 结果，不覆盖 Trip 已选 canonical city，也不扩展 Trip。具体合同及当前测试边界见 [D6地点说明](design/budget-travel-agent/DSH_D6_EVIDENCE_AND_LOCATIONS.md) 与 [ADR0026](adr/0026-place-identity-and-maps.md)。
+
 2026-09-27 D5 最终：A/B已实现，冻结10类×3次30/30（本地HTTP/fixture）、backend1132项、runtime9项、数据库7项通过；另一次官方DeepSeek模型+搜索正式API攻略accepted+satisfied，24.653s。没有本轮实价路线或新版H5通过声明，G1仍未放行。代码HEAD9cae53b，详情见 [D5报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。
 
 2026-09-27 D5：模型真实请求逐次计量，不再固定 12 次；Provider 有界恢复、commit 参数/内容修订分开、官方 Session 工作上下文压缩已实现。新增 search_budget_routes 复用 route-generation、真实 fare Artifact 和确定性 planner/optimizer；明确省钱意图可触发，无需内部“最终路线”术语，搜索不等于采用。状态与新验证见 [D5 报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)，以下旧日期为历史快照。

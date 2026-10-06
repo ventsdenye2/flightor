@@ -2,6 +2,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import type { Place, PlaceHint, PlaceProvider, PlaceResolution } from './types.js'
 import { placeSchema } from './types.js'
 import { createPlaceFetch } from './transport.js'
+import { locationResolutionSchema, type LocationRef, type LocationResolution } from '../aviation/types.js'
 
 const normalize = (s: string) => s.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
 export const queryName = (s: string) => s.replace(/\s+(?:neighbou?rhood|cultural area|museum district)$/i, '').trim()
@@ -61,11 +62,49 @@ export class NominatimProvider implements PlaceProvider {
   private tail: Promise<unknown> = Promise.resolve()
   private nextAt = 0
   private readonly fetchImpl:typeof fetch
-  constructor(private readonly options: {baseUrl:string;userAgent:string;proxyUrl?:string;fetch?:typeof fetch;reserve?: (signal:AbortSignal)=>Promise<(outcome?:string)=>Promise<void>>}) {
+  constructor(private readonly options: {baseUrl:string;userAgent:string;proxyUrl?:string;fetch?:typeof fetch;reserve?: (signal:AbortSignal,cacheReady?:()=>Promise<boolean>)=>Promise<((outcome?:string)=>Promise<void>)|undefined>}) {
     this.fetchImpl=options.fetch??createPlaceFetch(options.proxyUrl??'')
   }
-  search(hint: PlaceHint, signal: AbortSignal): Promise<PlaceResolution> {
-    const run = this.tail.catch(()=>{}).then(()=>this.perform(hint,signal));this.tail=run;return run
+  private schedule<T>(task:()=>Promise<T>):Promise<T> { const run=this.tail.catch(()=>{}).then(task);this.tail=run;return run }
+  search(hint: PlaceHint, signal: AbortSignal): Promise<PlaceResolution> { return this.schedule(()=>this.perform(hint,signal)) }
+
+  /** City-only aviation lookup. Results must be OSM city/town address entities. */
+  searchCity(query:string,signal:AbortSignal,limit=20,readCache?:()=>Promise<LocationResolution|undefined>):Promise<LocationResolution> {
+    return this.schedule(()=>this.performCitySearch(query,signal,limit,readCache))
+  }
+
+  private async performCitySearch(query:string,signal:AbortSignal,limit:number,readCache?:()=>Promise<LocationResolution|undefined>):Promise<LocationResolution> {
+    signal.throwIfAborted()
+    const checkedAt=new Date().toISOString(), normalized=query.normalize('NFKC').trim().replace(/\s+/g,' ')
+    const empty=()=>locationResolutionSchema.parse({matches:[],verification:{status:'unverified',checkedAt,confidence:0,sources:[{provider:'nominatim',...(normalized?{reference:normalized.slice(0,500)}:{})}]}})
+    if(normalized.length<2 || !this.options.baseUrl || !this.options.userAgent)return empty()
+    const wait=Math.max(0,this.nextAt-Date.now());if(wait)await delay(wait,undefined,{signal})
+    let release=await this.options.reserve?.(signal,readCache?async()=>Boolean(await readCache()):undefined)
+    let outcome='cancelled'
+    try {
+      signal.throwIfAborted()
+      let cached=await readCache?.()
+      signal.throwIfAborted()
+      if(!cached&&!release&&this.options.reserve){
+        release=await this.options.reserve(signal)
+        cached=await readCache?.()
+        signal.throwIfAborted()
+      }
+      if(cached){outcome='cache_hit';return locationResolutionSchema.parse(cached)}
+      this.nextAt=Date.now()+1100
+      const url=new URL('search',this.options.baseUrl.endsWith('/')?this.options.baseUrl:this.options.baseUrl+'/')
+      url.search=new URLSearchParams({q:normalized,featureType:'city',layer:'address',format:'jsonv2',addressdetails:'1',namedetails:'1',limit:String(Math.max(1,Math.min(limit,20))),'accept-language':'en'}).toString()
+      const response=await this.fetchImpl(url,{headers:{'User-Agent':this.options.userAgent,Accept:'application/json'},signal:AbortSignal.any([signal,AbortSignal.timeout(8000)]),redirect:'error'})
+      if(!response.ok)throw new Error(`place_http_${response.status}`)
+      const body=await response.text();if(body.length>200000)throw new Error('place_response_too_large')
+      const raw=JSON.parse(body), queryParts=normalized.split(',').map(part=>part.trim()).filter(Boolean)
+      const matches=(Array.isArray(raw)?raw:[]).slice(0,20).map(value=>parseCityCandidate(value,queryParts[0]??normalized,queryParts.slice(1))).filter((place):place is LocationRef=>!!place)
+      const unique=[...new Map(matches.map(place=>[place.id,place])).values()].slice(0,Math.max(1,Math.min(limit,20)))
+      const result=locationResolutionSchema.parse({matches:unique,verification:{status:unique.length?'verified':'unverified',checkedAt:new Date().toISOString(),confidence:unique.length?0.9:0,sources:[{provider:'nominatim',reference:normalized.slice(0,500)}]}})
+      outcome=result.verification.status
+      return result
+    } catch(error){outcome=signal.aborted?'cancelled':error instanceof Error&&error.name==='TimeoutError'?'timeout':'provider_failure';throw error}
+    finally {await release?.(outcome)}
   }
   private async perform(hint:PlaceHint,signal:AbortSignal):Promise<PlaceResolution> {
     signal.throwIfAborted()
@@ -88,4 +127,23 @@ export class NominatimProvider implements PlaceProvider {
     } catch(error){outcome=signal.aborted?'cancelled':error instanceof Error&&error.name==='TimeoutError'?'timeout':'provider_failure';throw error}
     finally {await release?.(outcome)}
   }
+}
+
+function parseCityCandidate(raw:any,query:string,qualifiers:string[]):LocationRef|undefined {
+  if(!raw||!['node','way','relation'].includes(raw.osm_type)||!/^\d+$/.test(String(raw.osm_id)))return
+  const type=String(raw.type),addresstype=String(raw.addresstype)
+  const placeCity=raw.class==='place'&&['city','town'].includes(type)
+  const administrativeCity=raw.class==='boundary'&&type==='administrative'
+  if((!placeCity&&!administrativeCity)||!['city','town'].includes(addresstype))return
+  const name=typeof raw.name==='string'?raw.name.trim():''
+  const names=[name,...Object.values(raw.namedetails??{}).filter((value):value is string=>typeof value==='string')]
+  if(!names.some(value=>normalize(value)===normalize(query)))return
+  const countryCode=typeof raw.address?.country_code==='string'?raw.address.country_code.toUpperCase():''
+  const address=raw.address&&typeof raw.address==='object'?raw.address:{}
+  const administrativeValues=['country','country_code','state','state_district','province','region','county','municipality','city','town','city_district','borough','suburb','village','hamlet']
+    .map(key=>address[key]).filter((value):value is string=>typeof value==='string').map(normalize)
+  if(qualifiers.some(qualifier=>!administrativeValues.includes(normalize(qualifier))))return
+  const latitude=Number(raw.lat),longitude=Number(raw.lon)
+  if(!name||name.length>160||! /^[A-Z]{2}$/.test(countryCode)||!Number.isFinite(latitude)||latitude < -90||latitude>90||!Number.isFinite(longitude)||longitude < -180||longitude>180)return
+  return {id:`osm:${raw.osm_type}:${raw.osm_id}`,type:'city',name,countryCode,latitude,longitude}
 }

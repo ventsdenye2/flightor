@@ -2,8 +2,10 @@ import { describe,it,expect,vi } from 'vitest'
 import { NominatimProvider,resolveCandidates,unresolvedReason } from './nominatim.js'
 import { PlaceService,type PlaceRepository,type PlaceSnapshot } from './service.js'
 import type { PlaceHint,PlaceResolution,PlaceEnrichment } from './types.js'
+import type { LocationResolution } from '../aviation/types.js'
 const hint:PlaceHint={activityId:'a',name:'Ueno Park',aliases:['上野公园'],city:'Tokyo',countryCode:'JP',sourceUrls:[]}
 const candidate=(overrides:Record<string,unknown>={})=>({osm_type:'way',osm_id:123,name:'Ueno Park',namedetails:{'name:en':'Ueno Park'},lat:'35.714',lon:'139.774',class:'leisure',type:'park',address:{city:'Tokyo',country_code:'jp'},...overrides})
+const cityCandidate=(overrides:Record<string,unknown>={})=>({osm_type:'relation',osm_id:987,name:'Kyoto',lat:'35.0116',lon:'135.7681',class:'place',type:'city',addresstype:'city',address:{city:'Kyoto',country:'Japan',country_code:'jp'},...overrides})
 describe('place identity without model inference',()=>{
  it('matches Tokyo venues by name, country and region; never city/airport coordinates',()=>{
   expect(resolveCandidates([candidate()],hint).place).toMatchObject({placeId:'osm:way:123',kind:'park',coordinates:{system:'WGS84',latitude:35.714}})
@@ -44,6 +46,80 @@ describe('place identity without model inference',()=>{
   expect((await provider.search(hint,new AbortController().signal)).status).toBe('resolved')
   expect(String(fetcher.mock.calls[0]?.[0])).toContain('countrycodes=jp')
   expect(fetcher.mock.calls[0]?.[1]?.headers).toMatchObject({'User-Agent':'FlightOR-test'})
+ })
+ it('returns only OSM city/town identities with the country and identity from the result',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([
+   cityCandidate(),
+   cityCandidate({osm_type:'node',osm_id:654,name:'Kyoto',type:'town',addresstype:'town'}),
+   cityCandidate({osm_id:321,class:'boundary',type:'administrative',addresstype:'town'}),
+   cityCandidate({osm_id:999,class:'amenity',type:'town'}),
+   cityCandidate({osm_id:1000,address:{}}),
+   cityCandidate({osm_type:'',osm_id:1001}),
+   cityCandidate({osm_id:1002,name:'Tallinn'}),
+   cityCandidate({osm_id:1003,class:'boundary',type:'administrative',addresstype:'county'}),
+   cityCandidate({osm_id:1004,address:{city:'Kyoto',country:'China',country_code:'cn'}})
+  ])))
+  const provider=new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:fetcher})
+  const result=await provider.searchCity('Kyoto',new AbortController().signal)
+  expect(result.matches).toEqual([
+   {id:'osm:relation:987',type:'city',name:'Kyoto',countryCode:'JP',latitude:35.0116,longitude:135.7681},
+   {id:'osm:node:654',type:'city',name:'Kyoto',countryCode:'JP',latitude:35.0116,longitude:135.7681},
+   {id:'osm:relation:321',type:'city',name:'Kyoto',countryCode:'JP',latitude:35.0116,longitude:135.7681},
+   {id:'osm:relation:1004',type:'city',name:'Kyoto',countryCode:'CN',latitude:35.0116,longitude:135.7681}
+  ])
+  expect(result.verification.status).toBe('verified')
+  const url=new URL(String(fetcher.mock.calls[0]?.[0]))
+  expect(url.searchParams.get('featureType')).toBe('city')
+  expect(url.searchParams.get('layer')).toBe('address')
+  expect(url.searchParams.get('q')).toBe('Kyoto')
+ })
+ it('requires every explicit comma-delimited city qualifier to match OSM address data',async()=>{
+  const valid=new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([
+   cityCandidate({address:{city:'Kyoto',country:'Japan',country_code:'jp'}})
+  ])))})
+  await expect(valid.searchCity('Kyoto, Japan',new AbortController().signal)).resolves.toMatchObject({matches:[{id:'osm:relation:987',countryCode:'JP'}]})
+  const wrongCountry=new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([
+   cityCandidate({address:{city:'Kyoto',country:'Japan',country_code:'jp'}})
+  ])))})
+  await expect(wrongCountry.searchCity('Kyoto, China',new AbortController().signal)).resolves.toMatchObject({matches:[]})
+  const validRegion=new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([
+   cityCandidate({name:'San Jose',address:{city:'San Jose',state:'California',country:'United States',country_code:'us'}})
+  ])))})
+  await expect(validRegion.searchCity('San Jose, California, United States',new AbortController().signal)).resolves.toMatchObject({matches:[{id:'osm:relation:987',countryCode:'US'}]})
+  const wrongRegion=new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([
+   cityCandidate({name:'San Jose',address:{city:'San Jose',state:'California',country:'United States',country_code:'us'}})
+  ])))})
+  await expect(wrongRegion.searchCity('San Jose, Texas, United States',new AbortController().signal)).resolves.toMatchObject({matches:[]})
+ })
+ it('does not invent country or city identity when Nominatim is unconfigured or omits source fields',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([cityCandidate({address:{}})])))
+  const unconfigured=await new NominatimProvider({baseUrl:'',userAgent:'',fetch:fetcher}).searchCity('Tallinn',new AbortController().signal)
+  expect(unconfigured).toMatchObject({matches:[],verification:{status:'unverified',confidence:0}})
+  expect(fetcher).not.toHaveBeenCalled()
+  const configured=await new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:fetcher}).searchCity('Tallinn',new AbortController().signal)
+  expect(configured.matches).toEqual([])
+ })
+ it('rechecks the shared cache after the provider lease is obtained and propagates cancellation',async()=>{
+  const fetcher=vi.fn<typeof fetch>()
+  let outcome=''
+  const provider=new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:fetcher,
+   reserve:async()=>async(value)=>{outcome=value}})
+  const cached:LocationResolution={matches:[{id:'osm:node:45',type:'city',name:'Tallinn',countryCode:'EE'}],verification:{status:'verified',checkedAt:new Date().toISOString(),confidence:1,sources:[{provider:'nominatim'}]}}
+  const result=await provider.searchCity('Tallinn',new AbortController().signal,20,async()=>cached)
+  expect(result).toEqual(cached)
+  expect(outcome).toBe('cache_hit')
+  expect(fetcher).not.toHaveBeenCalled()
+  const controller=new AbortController();controller.abort()
+  await expect(provider.searchCity('Kyoto',controller.signal)).rejects.toMatchObject({name:'AbortError'})
+ })
+ it('lets the shared lease poll the cache while waiting so cached work does not reserve a provider call',async()=>{
+  const fetcher=vi.fn<typeof fetch>(),cached:LocationResolution={matches:[],verification:{status:'verified',checkedAt:new Date().toISOString(),confidence:1,sources:[{provider:'nominatim'}]}}
+  const reserve=vi.fn(async(_signal:AbortSignal,cacheReady?:()=>Promise<boolean>)=>{
+   expect(cacheReady).toBeTypeOf('function');expect(await cacheReady?.()).toBe(true);return undefined
+  })
+  const provider=new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:fetcher,reserve})
+  await expect(provider.searchCity('Tallinn',new AbortController().signal,20,async()=>cached)).resolves.toEqual(cached)
+  expect(reserve).toHaveBeenCalledOnce();expect(fetcher).not.toHaveBeenCalled()
  })
 })
 function harness(){

@@ -7,12 +7,15 @@ import type {
 
 export class CompositeAviationProvider implements AviationProvider {
   readonly name = 'flightor-aviation'
-  constructor(private readonly primary: AviationProvider, private readonly local: LocationResolver) {}
+  constructor(private readonly primary: AviationProvider, private readonly local: LocationResolver, private readonly cityFallback?: LocationResolver) {}
 
   async resolveLocation(input: ResolveLocationInput, options?: ProviderCallOptions): Promise<LocationResolution> {
     const local = await this.local.resolveLocation(input, options)
     const cityOnly = input.types?.length === 1 && input.types[0] === 'city'
-    if (cityOnly) return local
+    if (cityOnly) {
+      if (local.matches.length || !this.cityFallback) return local
+      return this.cityFallback.resolveLocation(input, options)
+    }
     let remote: LocationResolution
     try {
       remote = await this.primary.resolveLocation({ ...input, types: ['airport'] }, options)
