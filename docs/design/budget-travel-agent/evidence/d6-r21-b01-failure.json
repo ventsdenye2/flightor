@@ -1,0 +1,199 @@
+{
+  "version": 1,
+  "result": "failed",
+  "acceptanceVersion": "D6-v1",
+  "codeHead": "bfc3e13",
+  "runId": "679f365c-784b-4ed8-ac64-f0f2cb008306",
+  "schema": "dsh_d6_679f365c784b4ed8ac64f0f2cb008306",
+  "originalReport": "backend/.demo/dsh-d6-runtime/d6-final-r21/evidence/B01-2026-10-06T20-55-29-929Z.json",
+  "originalReportSha256": "f4aeb7d5fc7bf6be95ec0595b472e81109c3feb92160cf0f7a71c03c0cb3b8e8",
+  "readOnlyPostgres": "private/readbacks/B01-2026-10-06T20-55-29-929Z.postgres.private.json",
+  "timing": {
+    "submitToAcceptedMs": 102,
+    "submitToTerminalMs": 93053,
+    "runnerDurationMs": 96226,
+    "not180SecondTimeout": true
+  },
+  "delivery": {
+    "status": "partial",
+    "acceptedArtifactCount": 0,
+    "missing": [
+      "accepted_publication"
+    ],
+    "dependentActionsBlocked": 8
+  },
+  "commitAttempts": [
+    {
+      "sequence": 235,
+      "elapsedMs": 73806.25419999997,
+      "durationMs": 208.3939000000246,
+      "errorCode": "DSH_GUIDE_NEEDS_REVISION",
+      "revisionReasons": [
+        "guide_result_limit",
+        "budget_guarantee",
+        "excluded_admission_or_hours"
+      ],
+      "presentationProblems": [
+        {
+          "code": "budget_guarantee",
+          "fieldPath": "text.overview"
+        },
+        {
+          "code": "excluded_admission_or_hours",
+          "fieldPath": "days.1.items.0.text.recommendationReason"
+        }
+      ],
+      "submissionShape": {
+        "submissionShape": "submitted_model_input",
+        "itemTextCount": 10,
+        "omittedCityIdCount": 0,
+        "candidateLocationIdMissingCount": 0,
+        "candidateAliasSelectionCount": 0,
+        "sourceAliasSelectionCount": 13,
+        "replaceSlots": [],
+        "serverBaseIdOmitted": true,
+        "serverContentHashOmitted": true
+      },
+      "publicationOutcome": {
+        "accepted": false
+      },
+      "recovery": {
+        "calls": 1,
+        "argumentCorrections": 0,
+        "contentAttempts": 1,
+        "lastFailure": "content"
+      }
+    },
+    {
+      "sequence": 243,
+      "elapsedMs": 82288.65830000001,
+      "durationMs": 89.27629999996861,
+      "errorCode": "DSH_GUIDE_NEEDS_REVISION",
+      "revisionReasons": [
+        "guide_duplicate_evidence",
+        "guide_result_limit",
+        "excluded_admission_or_hours"
+      ],
+      "presentationProblems": [
+        {
+          "code": "excluded_admission_or_hours",
+          "fieldPath": "text.overview"
+        }
+      ],
+      "submissionShape": {
+        "submissionShape": "submitted_model_input",
+        "itemTextCount": 10,
+        "omittedCityIdCount": 0,
+        "candidateLocationIdMissingCount": 0,
+        "candidateAliasSelectionCount": 10,
+        "sourceAliasSelectionCount": 0,
+        "replaceSlots": [],
+        "serverBaseIdOmitted": true,
+        "serverContentHashOmitted": true
+      },
+      "publicationOutcome": {
+        "accepted": false
+      },
+      "recovery": {
+        "calls": 2,
+        "argumentCorrections": 0,
+        "contentAttempts": 2,
+        "lastFailure": "content"
+      }
+    },
+    {
+      "sequence": 251,
+      "elapsedMs": 89647.07939999999,
+      "durationMs": 1.6193000000203028,
+      "errorCode": "DSH_REPAIR_LIMIT",
+      "revisionReasons": [],
+      "presentationProblems": [],
+      "submissionShape": {
+        "submissionShape": "submitted_model_input",
+        "itemTextCount": 10,
+        "omittedCityIdCount": 0,
+        "candidateLocationIdMissingCount": 0,
+        "candidateAliasSelectionCount": 0,
+        "sourceAliasSelectionCount": 0,
+        "replaceSlots": [],
+        "serverBaseIdOmitted": true,
+        "serverContentHashOmitted": true
+      },
+      "publicationOutcome": {
+        "accepted": false
+      },
+      "recovery": {
+        "calls": 2,
+        "argumentCorrections": 0,
+        "contentAttempts": 2,
+        "lastFailure": "content"
+      }
+    }
+  ],
+  "confirmedFacts": [
+    "First draft has 10 activities/candidates but explicit NEW Goal maxResults=8; the pending Goal and research with 10 findings were persisted before the result-limit rejection.",
+    "Initial overview promises keeping costs within the budget; initial Nezu recommendation states free admission. Revised overview still states free admission. These assertions remain forbidden.",
+    "The revised draft lists all scheduled candidates again as supportingRefs, causing a genuine duplicate-evidence rejection."
+  ],
+  "diagnosis": "NEW guide pre-accept finding-count check and actionable parameter feedback are under repair; no historical accepted state or source text is changed.",
+  "failureScreenshotReviewed": true,
+  "shutdown": {
+    "pid": 119356,
+    "pidExited": true,
+    "serverSession": 29022,
+    "serverLockReleased": true,
+    "guardClosedCount": 1,
+    "forbiddenCalls": 0,
+    "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126"
+  },
+  "runBilling": {
+    "ledgerSha256": "bf5018ad941e5b8ce27e10af10429c5fe22368a9c06d876069cd24203420a619",
+    "modelAdmissions": 17,
+    "searchAdmissions": 8,
+    "settled": 25,
+    "pending": 0,
+    "promptTokens": 544269,
+    "completionTokens": 10989,
+    "modelTokens": 555258,
+    "modelCallsWithoutUsage": 0,
+    "knownCostCalls": 0,
+    "knownCostUsdMicros": 0,
+    "unknownCostCalls": 25,
+    "unknownReservedUsdMicros": 1640000,
+    "fareMethodCalls": 0
+  },
+  "cumulativeBilling": {
+    "modelAdmissions": 327,
+    "searchAdmissions": 148,
+    "settled": 475,
+    "pending": 0,
+    "promptTokens": 11321622,
+    "completionTokens": 164300,
+    "modelTokens": 11485922,
+    "modelCallsWithoutUsage": 0,
+    "knownCostCalls": 0,
+    "knownCostUsdMicros": 0,
+    "unknownCostCalls": 475,
+    "unknownReservedUsdMicros": 30840000,
+    "fareMethodCalls": 0
+  },
+  "billingMeaning": "Unknown reserved cost is not actual provider cost. All current calls settled; historical ledger pending remains untouched.",
+  "notRun": [
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B09",
+    "B10",
+    "B11",
+    "B12",
+    "E01",
+    "E02",
+    "E03",
+    "E04"
+  ],
+  "status": "D6 not PASS; no confirmed hard blocker; continue repairs and a new frozen complete batch."
+}

@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 r21真实B01仍FAIL：102ms受理、93.053秒终态、96.226秒完整runner，partial/0accepted/后8动作blocked，不是180秒超时。已确认初稿10活动/10findings先接受maxResults8的Goal并写research后才拒，修订把全部已排候选重复列入supportingRefs；预算保证/免费表达本身也真实违规，不能放宽规则。Astra max正修初稿Goal接受/研究写前的计数与参数反馈；新r22必须重新冻结完整工程和原12+4，r21原失败不追认。服务PID119356/TTY29022已关闭、锁释放、guards_closed1/forbiddenCalls0；历史账本SHA不变，本轮17model/8search/555258tokens/pending0/USD1.64未知预留，累计USD30.84未知预留（均非实付）、fare0。[失败审计](design/budget-travel-agent/evidence/d6-r21-b01-failure.json)及只读PG/会话/页面截图保留。D6未PASS、无确认硬阻塞，继续实施。以下为此前工程快照。
+
 2026-10-07 r21同版工程复验已结束：backend138文件1475/1475（221.37秒）、真实专用PG52/52（70.75秒）、D5本地HTTP/持久票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端六族116/20/37/52/6/36及根TS、H5/weapp构建、helper19/19均通过。runtime/observer首次sandbox EPERM未执行业务断言，同命令提权复跑通过并保留首日志。源码bfc3e13，新run679f365c-784b-4ed8-ac64-f0f2cb008306、schema dsh_d6_679f365c784b4ed8ac64f0f2cb008306、API63857/H557375、PID119356/TTY29022；源码/实际构建及783文件归档核对一致，0新真实调用。原12+4真实390×844 H5已从B01开始（TTY63759），D6未PASS、无确认硬阻塞；原r20失败不追认。详见[冻结证据](design/budget-travel-agent/evidence/d6-r21-freeze.json)。
 
 2026-10-07 r21预算关系结构修复已完成定向：最终12文件461/461，根backend check/build及实际构建独立24/24零外呼回放通过。以局部费用谓词/金额绑定替代费用名词默认误拦，跨句金额指代、whether未确认问句与另行计算边界补回归；不放宽费用估计/保证、权威金额/币种/全程口径或原修订额度。完整后端已开始复验，新冻结完整工程及原12固定+4探索真实390×844 H5仍待执行；r20原失败仍FAIL，D6未PASS、无确认硬阻塞，未push/合并/部署。

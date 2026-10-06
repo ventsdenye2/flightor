@@ -1,7 +1,7 @@
 {
   "version": 1,
   "acceptanceVersion": "D6-v1",
-  "status": "engineering_passed_real_h5_running",
+  "status": "engineering_passed_real_h5_failed",
   "createdAt": "2026-10-06T20:50:56.975Z",
   "codeHead": "bfc3e139209368968ed53d27bdc0495165162a32",
   "runId": "679f365c-784b-4ed8-ac64-f0f2cb008306",
@@ -154,8 +154,25 @@
     "note": "Built after final budget source stabilized; filename pre refers to before full frozen engineering, not an earlier source revision."
   },
   "realH5": {
-    "status": "running",
     "journeyId": "B01",
-    "runnerSession": 63759
+    "result": "failed",
+    "evidence": "d6-r21-b01-failure.json",
+    "notRun": [
+      "B02",
+      "B03",
+      "B04",
+      "B05",
+      "B06",
+      "B07",
+      "B08",
+      "B09",
+      "B10",
+      "B11",
+      "B12",
+      "E01",
+      "E02",
+      "E03",
+      "E04"
+    ]
   }
 }
