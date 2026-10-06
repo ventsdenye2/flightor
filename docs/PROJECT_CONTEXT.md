@@ -1,5 +1,9 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 r23同冻结版本完整工程通过：源码f6fe7d0，backend139文件1554/1554（211.67秒）、真实专用PG11文件52/52（51.01秒）、D5本地HTTP/持久票价fixture30/30且codeUnchanged、runtime完整14/14、构建observer1/1、前端116/20/37/52及helper21/21和根TS、check/build、H5/weapp构建通过。前端与两端构建仅tool输出及私有审阅摘要，无完整持久日志，明确此证据限制；backend/PG/D5/runtime/observer/helper日志保留。固定回放10对accepted/语义一致/零模型外呼，P50基线9.859ms/D6 11.704ms；约1.845ms差值保留当前Trip安全检查，不能声称生产提速。工程后再次实际计算source/backend/H5指纹仍与运行manifest一致。原12固定+4探索真实390×844 H5现在从B01开始，尚未PASS，无确认硬阻塞；原失败不追认，详见[完整冻结工程证据](design/budget-travel-agent/evidence/d6-r23-freeze.json)。
+
+2026-10-07 r23已冻结并开始完整工程：源码f6fe7d0，run 77cb28e0-f848-44d5-8c69-f5d7f3aa343a、schema dsh_d6_77cb28e0f84844d58c69f5d7f3aa343a、PID115836/TTY6313、API63202/H560415，目录backend/.demo/dsh-d6-runtime/d6-final-r23；source/backend/H5/worker指纹及783文件归档一致。H5编译29.277秒、两条既有体积警告；当前新批零真实调用，核心模型/搜索/参数、原旅程SHA与日期、390×844/DPR1/default-UA/mobile=false/touch=false不变。完整backend进行中，随后真实专用PG、D5/固定回放与原12固定+4探索；此前定向与前端通过不替代完整验收。D6未PASS、无确认硬阻塞；冷重启仅按本隔离run --resume，保留同schema/账本/身份及H5，其他运行与用户数据不修改。冻结证据见[本批冻结](design/budget-travel-agent/evidence/d6-r23-freeze.json)。
+
 2026-10-07 r23定向修复已完成：预算判断复用受控budget_guarantee码，按当前费用主语/谓词及局部未知或条件范围检查；原r22 B01完整reply/解释、并列后件漏拦与合法目标/偏好均补回归。最终后端联合14文件545/545（32.48秒）、官方worker读引用/语言/云回合联合3文件23/23（12.78秒）、backend check通过。真实提交通知只由workspace提交回调触发，读取旧攻略保留引用而零写零提交事件；后续fixture写恰一条通知。harness21/21含VM执行真实函数，排除旧基底只允许唯一新guide且解释须实际非空、无withheld/incomplete；明确每轮locale并保留原语种门槛。docs114份/834链接及同批检查通过。均零新增真实Provider；新r23完整冻结工程和原12固定+4探索390×844 H5待执行，D6未PASS、无确认硬阻塞；原r22失败不追认，其他工树/历史数据库/会话/账本保留。
 
 2026-10-07 r22真实H5仍FAIL、r23修复中：B01预算可负担性文案无成本证据；B02唯一新局改accepted及新页面概览已确认，runner误计旧基底，中文页面英文解释被正确withheld而脚本漏判。不是180秒超时，原12+4未完成。r22隔离服务已关闭、数据及会话保留；本批48model/22search/USD4.56未知预留，累计USD35.40未知预留（非实付），pending0/fare0/历史ledger SHA不变。[失败与关闭证据](design/budget-travel-agent/evidence/d6-r22-user-failures.json)。下述r22“0新真实调用”是发送前快照。

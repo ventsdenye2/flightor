@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "status": "frozen_engineering_passed_real_ui_pending",
+  "createdAt": "2026-10-06T22:27:18.910Z",
+  "codeHead": "f6fe7d0bed48600d009c3c944f9a63d7f530948a",
+  "runId": "77cb28e0-f848-44d5-8c69-f5d7f3aa343a",
+  "schema": "dsh_d6_77cb28e0f84844d58c69f5d7f3aa343a",
+  "pid": 115836,
+  "serverSession": 6313,
+  "apiPort": 63202,
+  "h5Port": 60415,
+  "sourceFingerprint": "9b9c7156ce24b6ccfe119bcd0bf858a5a0b9c96ab780b0e19f0dea3afd80c748",
+  "backendFingerprint": "efce9474c366ce06517d0bf4dab47467e3962d3aac334d46cf89c876472ff00c",
+  "h5Fingerprint": "7054e24a0883d8dab19092077ad032281fe727987ec77895d19ae5991bf7ac27",
+  "workerFingerprint": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+  "configuration": {
+    "modelProvider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "searchProvider": "deepseek-official",
+    "maxTokens": 8192,
+    "thinking": "disabled",
+    "nativeResearchProvider": "serpapi",
+    "places": {
+      "url": "https://nominatim.openstreetmap.org/",
+      "userAgent": "FlightOR-D6/1.0 (+https://github.com/ventsdenye2/flightor)",
+      "proxy": "http://127.0.0.1:7890"
+    }
+  },
+  "journeysSha256": "91240ac6c741a990ad4a233451cc5982702b9d3856eb85597fa88206be943780",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false
+  },
+  "authorization": {
+    "deepseek": "current user authorization; unlimited amount, per-call metering retained",
+    "serpapi": "existing authorized account allowance only; no purchase"
+  },
+  "platform": "H5; WeChat page acceptance deferred by user; WeChat build still required",
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "runtimeArchive": "backend/.demo/dsh-d6-runtime/d6-final-r23/private/runtime-frozen",
+  "runtimeArchiveAudit": {
+    "sha256": "efce9474c366ce06517d0bf4dab47467e3962d3aac334d46cf89c876472ff00c",
+    "files": 783,
+    "matchesRunningBackend": true
+  },
+  "sourceAudit": {
+    "matchesFrozenManifest": true,
+    "at": "2026-10-06T22:27:19.054Z"
+  },
+  "backendAudit": {
+    "matchesFrozenManifest": true
+  },
+  "h5Audit": {
+    "matchesFrozenManifest": true
+  },
+  "engineering": {
+    "backend": {
+      "files": 139,
+      "passed": 1554,
+      "total": 1554,
+      "durationSeconds": 211.67,
+      "log": "backend/output/d6/backend-unit-r23-final.log"
+    },
+    "postgres": {
+      "files": 11,
+      "passed": 52,
+      "total": 52,
+      "durationSeconds": 51.01,
+      "log": "backend/output/d6/postgres-r23-final.log"
+    },
+    "d5": {
+      "passed": 30,
+      "total": 30,
+      "codeUnchanged": true,
+      "realProvider": false,
+      "report": "docs/design/budget-travel-agent/evidence/d5-2026-10-06T22-32-57-398Z.json"
+    },
+    "runtime": {
+      "passed": 14,
+      "total": 14,
+      "durationSeconds": 8.407321,
+      "command": "npm --prefix backend/dsh-runtime test",
+      "log": "backend/output/d6/runtime-r23-complete.log",
+      "initialSubset": {
+        "passed": 2,
+        "total": 2,
+        "log": "backend/output/d6/runtime-r23-final.log"
+      }
+    },
+    "observer": {
+      "passed": 1,
+      "total": 1,
+      "durationSeconds": 1.4102464,
+      "log": "backend/output/d6/r23-observer-build.log"
+    },
+    "frontend": {
+      "conversationProgress": 116,
+      "sessionRecovery": 20,
+      "artifacts": 37,
+      "productionPresentation": 52,
+      "h5Assertions": 21,
+      "typecheckExit": 0,
+      "offlineOnly": true,
+      "fullConsoleLogsPersisted": false,
+      "evidence": "backend/.demo/dsh-d6-runtime/d6-final-r23/private/reviews/exclusive-r23-preflight.json",
+      "h5AssertionsLog": "backend/output/d6/r23-h5-helper.log"
+    },
+    "backendCheckExit": 0,
+    "backendBuildExit": 0,
+    "h5Build": {
+      "exit": 0,
+      "compileMs": 29277,
+      "warnings": "2 existing bundle-size warnings",
+      "evidence": "server TTY6313 tool output; full console log not persisted"
+    },
+    "weappBuild": {
+      "exit": 0,
+      "compileSeconds": 18.86,
+      "warnings": "existing CSS/bundle recommendations",
+      "pageAcceptance": "deferred by user",
+      "evidence": "agent command-output receipt; full log not persisted",
+      "sandboxFirstAttempt": "spawnSync git EPERM; no build; original reported output retained in task"
+    },
+    "fixedReplay": {
+      "report": "docs/design/budget-travel-agent/evidence/d6-r23-fixed-replay.json",
+      "pairedSamples": 10,
+      "semanticMatches": true,
+      "accepted": {
+        "baseline": 10,
+        "d6": 10
+      },
+      "p50": {
+        "baselineExecuteMs": 8.666450000000054,
+        "d6AdapterMs": 0.5327000000000339,
+        "d6ExecuteMs": 9.919900000000041,
+        "baselineTotalMs": 9.859000000000037,
+        "d6TotalMs": 11.704150000000027
+      },
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    "postChecksFingerprintAudit": "backend/.demo/dsh-d6-runtime/d6-final-r23/private/pre-ui-fingerprint-audit.private.json"
+  },
+  "engineeringReviewedAt": "2026-10-06T22:36:42.606147+00:00"
+}
