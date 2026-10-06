@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { AppError, isAppError } from '../../lib/errors.js'
 import { researchTypeSchema } from '../../research-agent/types.js'
+import { finalTextSchema } from '../../travel-guides/finalization-schema.js'
 import { travelGuideGoalParametersSchema } from '../goals/types.js'
 import { sanitizePresentationProblems } from './presentation-problems.js'
 
@@ -8,7 +9,22 @@ export type CommitFailureKind = 'arguments' | 'prerequisite' | 'content' | 'syst
 const MAX_CALLS = 6
 const MAX_ARGUMENT_CORRECTIONS = 3
 const MAX_CONTENT_ATTEMPTS = 2
+const compactTextFields = Object.keys(finalTextSchema.shape).filter(field => field !== 'locale' && field !== 'activities')
+const compactDayTextFields = Object.keys(finalTextSchema.shape.days.element.shape)
+const compactActivityTextFields = Object.keys(finalTextSchema.shape.activities.element.shape)
+  .filter(field => field !== 'activityId' && field !== 'sourceRefs')
 
+function allowedTextObject(path: readonly PropertyKey[]): { fieldPath: string; fields: string[] } | undefined {
+  if (path.length === 1 && path[0] === 'text') return { fieldPath: 'text', fields: compactTextFields }
+  if (path.length === 3 && path[0] === 'text' && path[1] === 'days'
+    && typeof path[2] === 'number' && Number.isInteger(path[2]) && path[2] >= 0 && path[2] < 60)
+    return { fieldPath: `text.days.${path[2]}`, fields: compactDayTextFields }
+  if (path.length === 5 && path[0] === 'days' && typeof path[1] === 'number' && Number.isInteger(path[1])
+    && path[1] >= 0 && path[1] < 60 && path[2] === 'items' && typeof path[3] === 'number'
+    && Number.isInteger(path[3]) && path[3] >= 0 && path[3] < 6 && path[4] === 'text')
+    return { fieldPath: `days.${path[1]}.items.${path[3]}.text`, fields: compactActivityTextFields }
+  return undefined
+}
 /** Counts attempted tool calls separately from complete, evaluable guide submissions. */
 export class CommitRecovery {
   calls = 0
@@ -134,6 +150,20 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
   }
   if (kind === 'arguments' && error instanceof z.ZodError) {
     feedback.fields = error.issues.slice(0, 20).map(issue => issue.path.join('.'))
+    const allowedFields: { fieldPath: string; fields: string[] }[] = []
+    const seenTextPaths = new Set<string>()
+    for (const issue of error.issues) {
+      if (issue.code !== 'unrecognized_keys') continue
+      const entry = allowedTextObject(issue.path)
+      if (!entry || seenTextPaths.has(entry.fieldPath)) continue
+      seenTextPaths.add(entry.fieldPath)
+      allowedFields.push(entry)
+      if (allowedFields.length === 20) break
+    }
+    if (allowedFields.length) {
+      feedback.allowedFields = allowedFields
+      feedback.correction = 'For each indicated text object, remove unrecognized properties and use only the allowed fields listed. Preserve the guide content and accepted Goal constraints.'
+    }
     if (error.issues.some(issue => issue.path.includes('sourceRefs'))) feedback.correction =
       'For new candidates select only sourceRefs returned by web_search/web_fetch in this current preparation, not URLs. Reuse the existing current receipts; do not invent references or repeat valid research.'
     else if (error.issues.some(issue => issue.path.includes('candidateRef') || issue.path.includes('supportingRefs'))) feedback.correction =

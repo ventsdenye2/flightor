@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { AppError } from '../../lib/errors.js'
 import { CommitRecovery, classifyCommitFailure, safeCommitFeedback } from './commit-recovery.js'
+import { dshCommitInputSchema } from './preparation.js'
 
 describe('DSH commit recovery policy', () => {
   it('reports the complete initial finding count as a bounded argument correction without consuming content repair', () => {
@@ -246,6 +247,46 @@ describe('DSH commit recovery policy', () => {
     expect(feedback.instruction).toContain('preserve the original semantic intent')
     expect(JSON.stringify(feedback)).not.toContain('PRIVATE_CANDIDATE_VALUE')
   })
+
+  it('explains unknown keys at the compact text path without echoing unknown names or values', () => {
+    const textSchema = dshCommitInputSchema.shape.text
+    const unknownIssue = (schema: z.ZodTypeAny, value: unknown, path: (string | number)[]) => {
+      const parsed = schema.safeParse(value)
+      if (parsed.success) throw new Error('Expected the compact text schema to reject unknown keys')
+      const issue = parsed.error.issues.find(issue => issue.code === 'unrecognized_keys')
+      if (!issue) throw new Error('Expected a Zod unrecognized_keys issue')
+      return { ...issue, path: [...path, ...issue.path] }
+    }
+    const error = new z.ZodError([
+      unknownIssue(textSchema, {
+      reply: 'A short guide reply.', overview: 'A short guide overview.',
+      days: [{ day: 1, theme: 'Culture' }],
+      days2: 'PRIVATE_DAYS2_VALUE', activities: 'PRIVATE_DOMAIN_VALUE', PRIVATE_AUTH_TOKEN: 'PRIVATE_UNKNOWN_VALUE'
+      }, ['text']),
+      unknownIssue(textSchema.shape.days.element, { day: 1, theme: 'Culture', PRIVATE_DAY_FIELD: 'PRIVATE_DAY_VALUE' }, ['text', 'days', 0]),
+      unknownIssue(dshCommitInputSchema.shape.days.element.shape.items.element.shape.text,
+        { name: 'Temple', introduction: 'Visit the temple.', recommendationReason: 'It fits the request.',
+          activityId: 'PRIVATE_ACTIVITY_ID', PRIVATE_ITEM_TEXT: 'PRIVATE_ITEM_TEXT_VALUE' }, ['days', 0, 'items', 0, 'text'])
+    ])
+    const recovery = new CommitRecovery()
+    recovery.admit()
+    const kind = recovery.failed(error)
+    const feedback = safeCommitFeedback(error, kind, { acceptedGoal: true })
+
+    expect(kind).toBe('arguments')
+    expect(feedback).toMatchObject({
+      fields: ['text', 'text.days.0', 'days.0.items.0.text'],
+      allowedFields: [
+        { fieldPath: 'text', fields: ['reply', 'overview', 'days'] },
+        { fieldPath: 'text.days.0', fields: ['day', 'theme'] },
+        { fieldPath: 'days.0.items.0.text', fields: ['name', 'introduction', 'recommendationReason'] }
+      ]
+    })
+    expect(feedback.correction).toContain('allowed fields')
+    expect(recovery.snapshot()).toMatchObject({ calls: 1, argumentCorrections: 1, contentAttempts: 0 })
+    expect(JSON.stringify(feedback)).not.toMatch(/days2|activities|sourceRefs|activityId|PRIVATE_AUTH_TOKEN|PRIVATE_DAYS2_VALUE|PRIVATE_DOMAIN_VALUE|PRIVATE_UNKNOWN_VALUE|PRIVATE_DAY_FIELD|PRIVATE_DAY_VALUE|PRIVATE_ITEM_TEXT|PRIVATE_ACTIVITY_ID/)
+  })
+
   it('asks for the first objective once and keeps later corrections on the immutable accepted Goal', () => {
     const missing = safeCommitFeedback(new AppError('GOAL_INTENT_REQUIRED', 'untrusted', 409), 'arguments')
     expect(missing.instruction).toContain('Include the original intent')

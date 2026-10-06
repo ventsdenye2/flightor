@@ -1,5 +1,11 @@
 # D6 发布字段反馈
 
+2026-10-07 D6-50 紧凑正文未知字段反馈（已实现、定向验证通过）：`commit_travel_guide` 的紧凑文本对象保持严格 schema 拒绝未知键；参数反馈对受控路径 `text`、`text.days.<0–59>`、`days.<0–59>.items.<0–5>.text` 分别列出允许字段：`text` 仅 `reply/overview/days`，每日文本仅 `day/theme`，活动文本仅 `name/introduction/recommendationReason`。`locale`、`activities`、`activityId`、`sourceRefs` 等领域字段不属于文本对象允许字段。反馈仅从服务端 schema allowlist 提示纠正，不回传未知键名、其值、正文或任意 Zod details；未知字段仍是arguments纠正，不自动删键或改变提交。既有最多6次工具调用、3次参数纠正及2次完整内容尝试额度不变，参数纠正不占内容额度。
+
+根协调最终使用正式配置 `npm --prefix backend test -- src/agent/dsh/commit-recovery.test.ts` 复验38/38（3.12秒，`backend/output/d6/r24-compact-feedback-green.log`），backend check/build通过（`r24-root-{check,build}.log`），未包含baseline副本。此前红绿过程保留如下。
+
+回归以实际 `dshCommitInputSchema` 产生 `unrecognized_keys` 错误，覆盖顶层、日对象与活动文本对象，并包含恶意键名和值不泄露断言；先前实现的红测在活动文本对象允许字段缺失处失败，日志为 `backend/output/d6/r23-unrecognized-keys-compact-red.log`。最终活动 `commit-recovery.test.ts` 通过38/38。另一次从仓库根目录运行的日志也发现`backend/.demo/d6-baseline`下4个复制测试，故总计42/42仅是两处副本的过程总数，不是当前backend正式测试数；绿测日志为 `backend/output/d6/r23-unrecognized-keys-green.log`。backend typecheck通过，日志为 `r23-unrecognized-keys-check.log`。首次沙箱 worker `spawn EPERM` 未收集测试断言，允许本地子进程执行的复跑通过。无 Provider 或业务数据库调用；此定向结果不构成D6整体验收或H5验收。
+
 2026-10-07 D6-45预算判断修复（已实现、定向验证通过）：r22 B01原首稿完整reply和解释全文作为未改文本回归。共享检查按费用/预算对象与程度、份额、达标谓词匹配，拒绝肯定“预算紧张/门票小额/住宿交通为主要开销/替换餐食就可控制在总预算内”；沿用`budget_guarantee`及提交字段路径。未知、假设、用户自述和费用控制目的限定在对应关系，不能通过前文“参考/未核实”豁免新的费用主语或条件后件。准确预算目标及小吃偏好保持，表达式预编译；DSH overview schema/工具预算说明、主模型来源合同和legacy终稿指令同步。没有自动删除正文、万能免责声明、第二模型或新增修订次数；此规则是有界表达防线，不宣称通用费用/旅行事实认证。
 
 首次3文件红测19失败/285通过（3.61秒），其中18项为预算漏拦，1项为新增正例中文不足正文语言阈值的夹具错误，后者不算预算缺口；首次修后303/304仅余该夹具，补足文本后314/314（3.70秒）。14文件中间联合538/538（27.01秒）及typecheck通过。并列范围复核补“且/同时/and/条件后件”和目的正例，发现2失败/348通过（4.58秒）：中文“门票费用无法确认且住宿是主要开销”和英文“ticket prices and lodging is”把未确认宾语误视作后续判断的一部分。修复当前匹配前的并列分界及英文复合主语/谓词关系，同时保留中英真正复合费用主语的不确定讨论。最终14文件545/545（32.48秒）及backend typecheck通过，范围含finalization/reply/presentation-problems/budget-scope、commit/recovery、Goal/schema、官方fixture worker、预算派生与路线答复。所有日志留在忽略目录`backend/output/d6/r23-budget-affordability-{red,red-retry,first-green,green,joint,scope-red,final-joint,check,final-check}.log`；最初red.log为sandbox esbuild spawn EPERM，未收集业务断言，随后原离线命令允许本地子进程执行。零新增真实Provider与业务数据库写，原r22材料/失败保持；完整新冻结和真实H5仍待执行。

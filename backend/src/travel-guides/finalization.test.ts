@@ -184,6 +184,66 @@ describe('integrated main Agent publication', () => {
       languageBodies: [overview], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
     })).not.toContain('excluded_precise_claim')
   })
+  it('allows the complete r23 second-content reply with a later reference to its stated whole-trip target', () => {
+    const f = fixture()
+    f.guide.budget = { amount: 1200, currency: 'CNY', scope: 'trip' }
+    f.text.reply = '已经按你的条件排好两天轻松行程了（11 月 3–4 日｜东京｜2 人｜传统文化 + 当地小吃｜全程总预算目标 1200 元，即整个行程合计）。机票你自己已买好，我没有做任何票务操作。\n\n第一天走浅草下町路线：上午浅草寺（雷门、宝藏门、五重塔、二天门）＋仲见世商店街边走边吃，下午到合羽桥道具街看厨具与陶器，傍晚回浅草寺看正殿与宝塔点灯。第二天在上野一带：上午上野恩赐公园与园内的上野东照宫、宽永寺、不忍池，下午阿美横丁逛市场吃小吃，再转到谷中银座商店街，黄昏在夕阳台阶看街景收尾。\n\n几点说明：每天只安排三个左右的点，中间留了休息与通勤余量；实际花费需要你自己把控，1200 元只是你设定的整体目标。若想调整某个点、换成更偏逛街或更偏寺庙的方向，或想把这份行程保存成正式指南，告诉我即可。'
+    expect(validateIntegratedFinalText({ ...f.input, guide: f.guide }, f.text).status).toBe('accepted')
+  })
+  it.each([
+    ['zh', '全程预算目标为1200元。实际费用还没确定；1200元仅是你给出的规划目标。'],
+    ['zh', '整个行程的预算是1200元。这里把1200元保留为你的目标，而不是已核实费用。'],
+    ['zh', '全程预算目标为1200元。你的规划目标仍为1200元，实际费用还需要核实。'],
+    ['zh', '全程预算目标为1200元。\n\n1200元只是你设定的整体目标，实际费用仍未知。'],
+    ['zh', '全程预算目标为1200元。1200元只是你的整体目标，而不是已核实费用。'],
+    ['zh', '全程预算目标为1200元。1200元只是你的整体目标而不是已核实费用。'],
+    ['zh', '全程预算目标为1200元。（1200元仍是你的规划目标）。'],
+    ['en', 'The whole-trip budget target is CNY 1200. CNY 1200 remains your planning target; actual costs are not confirmed.'],
+    ['en', 'Your budget for the whole trip is CNY 1200. That CNY 1200 is only the goal you set, not confirmed spending.'],
+    ['en', 'The whole-trip budget target is CNY 1200. Your planning target remains CNY 1200; actual costs remain unknown.'],
+    ['en', 'The whole-trip budget target is CNY 1200. That amount of CNY 1200 remains your target; costs remain unknown.'],
+    ['en', 'The whole-trip budget target is CNY 1200. That target remains CNY 1200; costs remain unknown.'],
+    ['en', 'The whole-trip budget target is CNY 1200. That amount remains your target; costs remain unknown.'],
+    ['en', 'The whole-trip budget target is CNY 1200. CNY 1200 remains your planning target not confirmed spending.'],
+    ['en', 'The whole-trip budget target is CNY 1200. (Your planning target remains CNY 1200).'],
+  ] as const)('resolves a later %s target predicate within the same public field: %s', (locale, text) => {
+    expect(publicProseProblems([text], locale, { budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true })).toEqual([])
+  })
+  it.each([
+    ['zh', ['实际花费需要你自己把控，1200元只是你设定的整体目标。']],
+    ['zh', ['1200元只是你设定的整体目标。全程预算目标为1200元。']],
+    ['zh', ['全程预算目标为1200元。', '实际费用仍未知，1200元只是你设定的整体目标。']],
+    ['en', ['The whole-trip budget target is CNY 1200.', 'CNY 1200 remains your planning target; actual costs remain unknown.']],
+    ['zh', ['总预算是1200元。1200元仍是你的预算目标。']],
+    ['en', ['The total budget is CNY 1200. CNY 1200 remains your budget target.']],
+    ['zh', ['全程预算目标为1200元。实际费用仍未知，1300元只是你设定的整体目标。']],
+    ['zh', ['全程预算目标为1200元。实际费用仍未知，1200美元只是你设定的整体目标。']],
+    ['zh', ['每日预算目标为1200元。1200元只是你设定的整体目标，费用仍未知。']],
+    ['zh', ['全程预算目标为1300元。1200元只是你设定的整体目标，费用仍未知。']],
+    ['en', ['The whole-trip budget target is USD 1200. CNY 1200 remains your planning target; costs remain unknown.']],
+    ['zh', ['全程预算目标为1200元。每天的预算也为1200元。']],
+    ['zh', ['全程预算目标为1200元。不是每天1200元。']],
+    ['zh', ['全程预算目标为1200元，再将1200元作为独立参考数。']],
+    ['zh', ['全程预算目标为1200元。门票预算1200元只是你设定的整体目标。']],
+    ['zh', ['全程预算目标为1200元。1200元只是你的整体目标中的餐饮部分。']],
+    ['zh', ['全程预算目标为1200元。1200元仍是你的规划目标用于住宿。']],
+    ['zh', ['全程预算目标为1200元。你的规划目标仍为1200元用于住宿。']],
+    ['en', ['The whole-trip budget target is CNY 1200. CNY 1200 is only your planning target for lodging.']],
+    ['en', ['The whole-trip budget target is CNY 1200. Your planning target is CNY 1200 for lodging.']],
+    ['en', ['The whole-trip budget target is CNY 1200. CNY 1200 remains your planning target allocation for meals.']],
+    ['en', ['The whole-trip budget target is CNY 1200. Your planning target is CNY 1200 (for lodging).']],
+    ['zh', ['全程预算目标为1200元。1200元只是你设定的整体目标。实际费用就是1200元。']],
+    ['zh', ['全程预算目标为1200元。1200元只是你设定的整体目标。门票费用就是这个金额。']],
+    ['zh', ['全程预算目标为1200元。', '门票费用就是这个金额。']],
+    ['en', ['The whole-trip budget target is CNY 1200. That amount is the confirmed ticket cost.']],
+    ['en', ['The whole-trip budget target is CNY 1200. CNY 1200 remains your planning target. The actual cost is CNY 1200.']],
+  ] as const)('keeps a %s amount outside the target reference allowance: %s', (locale, fields) => {
+    expect(publicProseProblems([...fields], locale, { budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true })).toContain('excluded_precise_claim')
+  })
+  it('does not turn a same-field target reference into affordability or spending-share evidence', () => {
+    const text = '全程预算目标为1200元。1200元只是你设定的整体目标。住宿与交通是主要开销。'
+    expect(publicProseProblems([text], 'zh', { budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true })).toContain('budget_guarantee')
+  })
   it('allows the exact trip target with a scoped English variable-spending explanation', () => {
     const content = 'The whole-trip budget target is CNY 1200, and actual costs vary depending on lodging, dining, and shopping choices; unknown portions remain unknown.'
     expect(publicProseProblems([content], 'en', {

@@ -54,14 +54,34 @@
       "finding": "scoped budget target anaphora requires diagnosis; no general cost exemption",
       "state": "Astra max minimum-fix diagnosis in progress"
     },
-    "intermediateArguments": "INVALID_ARGUMENTS with only fields:[text]; exact issue diagnosis pending",
+    "intermediateArguments": {
+      "code": "INVALID_ARGUMENTS",
+      "actualIssue": {
+        "code": "unrecognized_keys",
+        "path": [
+          "text"
+        ],
+        "keys": [
+          "days2"
+        ]
+      },
+      "state": "actual schema rejection; removed before the second content submission; controlled field feedback to be improved"
+    },
     "finalSubmission": "DSH_REPAIR_LIMIT; original recovery bounds preserved"
   },
   "persistence": {
     "readOnlySnapshot": "backend/.demo/dsh-d6-runtime/d6-final-r23/private/readbacks/B01-2026-10-06T22-37-37-955Z.postgres.private.json",
     "hiddenDraftCount": 2,
     "acceptedGuideCount": 0,
-    "sourceAndTextReview": "pending independent read-only review"
+    "sourceAndTextReview": "pending independent read-only review",
+    "snapshotCounts": {
+      "trip_context_versions": 2,
+      "artifacts": 5,
+      "planning_goals": 2,
+      "planning_goal_runs": 2,
+      "conversations": 1,
+      "conversation_messages": 2
+    }
   },
   "closure": {
     "serverPid": 115836,

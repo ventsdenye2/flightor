@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 r24修复与提交前验证完成：同字段合法预算目标回指已修复，闭合谓词仍拒绝将同额用于餐饮/住宿/每日或费用；预算相关14文件600/600、最终compact反馈正式配置38/38、新build后H5 helper21/21、backend check/build通过。反馈只列当前compact文本字段，未知键/值不回显，合同见[ADR0025](adr/0025-bounded-guide-finalization.md)及[字段反馈](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。前端116/20/37/52、根TS与weapp构建通过，完整日志保留；零新增真实调用。下一步新隔离冻结完整工程与原12+4手机390×844 H5，不复用r23失败作成功。最新远端仍f2ec6c1f；其他工树、两份用户未提交配置、数据库/会话/账本保留。D6未PASS，无确认硬阻塞；下述r23结果为历史快照。
+
 2026-10-07 r23真实B01仍FAIL：105ms受理、92.883秒终态、96.204秒完整runner，partial/0accepted/后8动作blocked，不是180秒超时。首稿免费进入为真实违规；第二内容稿text.reply将同字段已明确全程1200后的“1200元只是整体目标”误按精确费用拒绝，Astra max用实际冻结dist离线原文回放研判有界目标指代；参数错误只列text的反馈另查，不增修订额度、不放宽实际费用。隔离PID115836/TTY6313已关闭，guard恰1安装/1关闭、forbidden0，数据/会话/构建保留，历史ledger SHA不变。r23共19model/10search/540791tokens/pending0/fare0、USD1.96未知预留；累计USD37.36未知预留（非实付）。B02–B12/E01–E04未运行，新代码修复后须新冻结完整验收，D6未PASS、无确认硬阻塞；详见[原失败与关闭审计](design/budget-travel-agent/evidence/d6-r23-b01-failure.json)。以下r23工程通过为交互前快照。
 
 2026-10-07 r23同冻结版本完整工程通过：源码f6fe7d0，backend139文件1554/1554（211.67秒）、真实专用PG11文件52/52（51.01秒）、D5本地HTTP/持久票价fixture30/30且codeUnchanged、runtime完整14/14、构建observer1/1、前端116/20/37/52及helper21/21和根TS、check/build、H5/weapp构建通过。前端与两端构建仅tool输出及私有审阅摘要，无完整持久日志，明确此证据限制；backend/PG/D5/runtime/observer/helper日志保留。固定回放10对accepted/语义一致/零模型外呼，P50基线9.859ms/D6 11.704ms；约1.845ms差值保留当前Trip安全检查，不能声称生产提速。工程后再次实际计算source/backend/H5指纹仍与运行manifest一致。原12固定+4探索真实390×844 H5现在从B01开始，尚未PASS，无确认硬阻塞；原失败不追认，详见[完整冻结工程证据](design/budget-travel-agent/evidence/d6-r23-freeze.json)。

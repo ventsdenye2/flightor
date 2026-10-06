@@ -658,6 +658,8 @@ DSH 模型可见的受控业务工具包括 `get_trip_context`、`get_trip_artif
 
 首个持久操作必须带与当前明确用户目标匹配的新语义 `intent`；若该目标使用普通 raw-web reference-only 材料，其 `travel_guide` intent 还须在接受首个 Goal 前显式设 `allowPartial=true`。这只允许保留“部分验证”的不确定性，不豁免日程、类别和发布校验；若用户要求独立核实事实，raw-web 路径不能满足要求，应说明限制并澄清。首个 Goal 接受前的参数/前置修正仍须带上首次 intent；Goal 接受后的同轮攻略修复省略重复 `intent`/`goalRef` 并复用不可变约束。显式 Trip setter 只有在持久 `satisfied` 且 Trip version 确实推进后才结束旧绑定，之后的新持久目标须有新的匹配 intent；失败、pending、空 patch 和攻略内容修复不推进 Goal。
 
+紧凑文本对象对未知键严格拒绝。`unrecognized_keys` 参数反馈按对象路径提示允许字段：`text` 为 `reply`、`overview`、`days`；`text.days.<0–59>` 为 `day`、`theme`；`days.<0–59>.items.<0–5>.text` 为 `name`、`introduction`、`recommendationReason`。领域字段（例如 `activities`、`activityId`、`sourceRefs`）不因出现在扩展领域 schema 而允许放进紧凑文本；反馈不回显未知键名、未知值、正文或任意 Zod details。此类反馈仍归参数纠正；每回合最多6次提交调用、3次参数纠正、2次完整内容尝试的额度不变，参数纠正不消耗内容额度。定向回归及验证结果见[DSH D6 发布字段反馈](design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。
+
 每个活动的 text 跟随紧凑 `days[].items[].text`，服务端生成关联键；局部编辑只传 `replaceSlots` 和替换活动，服务端绑定准备时 accepted guide 的 ID/hash，Trip/flight/base变化则拒绝。唯一已选Trip city可补缺省身份，机场/多城市不猜；精确匹配的全程预算目标可确认，费用保证及自由生成精确事实仍拒绝。legacy公开合同/API保持不变。细则见[ADR0029](adr/0029-dsh-prepared-submission.md)及[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。
 
 DSH `web_search` 的实际模型schema通过官方prompt assembly钩子限制单query，公开pre-execute钩子在预算准入前拒绝空/多query等不可执行参数，历史预留不改。DSH `web_fetch`对明确短Incapsula/Cloudflare/captcha挑战壳返回`SOURCE_CHALLENGE_REJECTED`，不产出可用来源，不绕过站点保护；通用reader仅此DSH调用启用检测，legacy默认关闭。具体识别条件和离线验证见[来源适配边界](design/budget-travel-agent/DSH_EVIDENCE_2026-09-24.md)。

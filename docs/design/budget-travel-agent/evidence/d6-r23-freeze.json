@@ -1,7 +1,7 @@
 {
   "version": 1,
   "acceptanceVersion": "D6-v1",
-  "status": "frozen_engineering_passed_real_ui_pending",
+  "status": "frozen_engineering_passed_real_ui_failed",
   "createdAt": "2026-10-06T22:27:18.910Z",
   "codeHead": "f6fe7d0bed48600d009c3c944f9a63d7f530948a",
   "runId": "77cb28e0-f848-44d5-8c69-f5d7f3aa343a",
@@ -145,5 +145,14 @@
     },
     "postChecksFingerprintAudit": "backend/.demo/dsh-d6-runtime/d6-final-r23/private/pre-ui-fingerprint-audit.private.json"
   },
-  "engineeringReviewedAt": "2026-10-06T22:36:42.606147+00:00"
+  "engineeringReviewedAt": "2026-10-06T22:36:42.606147+00:00",
+  "realUi": {
+    "journey": "B01",
+    "status": "FAIL",
+    "report": "docs/design/budget-travel-agent/evidence/d6-r23-b01-failure.json",
+    "completeFrozenBatch": false,
+    "acceptedGuideCount": 0,
+    "serviceClosed": true,
+    "laterCodeChangesRequireNewRun": true
+  }
 }
