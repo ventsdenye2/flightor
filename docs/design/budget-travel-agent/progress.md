@@ -1,5 +1,7 @@
 # 当前进度与验证
 
+2026-10-07 r20真实B01失败后续作：94ms受理、129.101秒终态、0accepted/后8动作blocked；两稿合法全程预算说明被excluded_precise_claim误拦，Astra max已冻结函数复现并正在结构修复，未重发付费请求。PID113804退出、TTY83280结束、server锁释放、guards正常关闭/违规0，原DB/会话/账本/冻结副本保留。原报告与PG路径、21model/12search/658498 tokens、USD2.28预留非实付及累计费用见[D6失败审计](evidence/d6-r20-b01-failure.json)。下一步回收Astra最小修复/红绿回归、合并定向/真实PG、提交、r21新schema/run/ledger与实际构建冻结、完整工程及原12+4真实390×844 H5。D6未PASS、无确认硬阻塞；以下为历史快照。
+
 2026-10-07 r20同冻结版本完整工程通过：backend138文件1420/1420（202.09秒）、真实专用PG52/52（54.92秒）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端六族116/20/37/52/29/86及根TS、H5/weapp构建。正式固定回放10对两版均accepted、语义一致、0模型/外呼；总P50基线11.158ms/D613.782ms、adapter0.452ms，增加2.624ms保留全部样本，正在只读定位、不宣称提速。源码c1853ad及实际构建/参数不变；原12+4真实390×844 H5从B01开始（TTY98023），尚未通过。D6未PASS、无确认硬阻塞，原失败/DB/会话/账本保留。
 
 2026-10-07 r20冻结检查点：c1853ad，run2ef9cfb7-c7d1-4114-aa87-5bcb6cd6a4f4/PID113804/TTY83280，API61341/H549895，实际source/backend/H5/worker及构建副本指纹一致。PG52/52、D5 fixture30/30/codeUnchanged、runtime14/14、observer1/1、前端六族及根TS、check/build/H5/weapp均通过；完整backend运行中，随后原12+4真实390×844 H5。B01命令仍为qa-dsh-d6-h5.cjs --transport backend/.demo/dsh-d6-runtime/d6-final-r20/private/transport.private.json --journeys docs/design/budget-travel-agent/d6-journeys.json --journey B01 --output-dir backend/.demo/dsh-d6-runtime/d6-final-r20/evidence --interactive。0新模型/搜索/fare，不追认旧r19失败；D6未PASS。

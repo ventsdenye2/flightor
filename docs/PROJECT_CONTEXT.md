@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 r20真实B01仍FAIL：129.101秒终态、0accepted、后8动作blocked，新脚本准确拒绝partial，没有读取旧稿凑成功。Astra max以原session确认合法预算目标邻接谨慎费用提示被词法模板误拦，正做结构修复；另核对未发布原稿内容，不追认任何旧材料。r20服务已关闭、guards_closed1/forbiddenCalls0、历史账本SHA不变；本轮21model/12search、USD2.28未知预留，累计USD29.20未知预留（均非实付）、pending0、fare0。新r21需完整冻结重跑，D6未PASS、无确认硬阻塞；详见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。以下为当时快照。
+
 2026-10-07 r20同冻结版本完整工程通过：backend138文件1420/1420（202.09秒）、真实专用PG52/52（54.92秒）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端六族116/20/37/52/29/86及根TS、H5/weapp构建。正式固定回放10对两版均accepted、语义一致、0模型/外呼；总P50基线11.158ms/D613.782ms、adapter0.452ms，增加2.624ms保留全部样本，正在只读定位、不宣称提速。源码c1853ad及实际构建/参数不变；原12+4真实390×844 H5从B01开始（TTY98023），尚未通过。D6未PASS、无确认硬阻塞，原失败/DB/会话/账本保留。
 
 2026-10-07 r20冻结源码c1853ad：新run2ef9cfb7-c7d1-4114-aa87-5bcb6cd6a4f4，API61341/H549895、PID113804/TTY83280，目录backend/.demo/dsh-d6-runtime/d6-final-r20；实际构建及783文件副本核对一致。PG52/52、D5本地fixture30/30且指纹不变、runtime14/14、observer1/1、前端116/20/37/52/29/86及根TS、check/build、H5/weapp构建通过；完整backend仍在运行，原12+4真实390×844 H5未启动，0新真实调用。详细边界见[D6冻结验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)，D6未PASS，未部署。

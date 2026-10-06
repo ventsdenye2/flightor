@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "capturedAt": "2026-10-06T20:25:37.892244+00:00",
+  "codeHead": "c1853ad4ac06c2071dd5819bdd678fac526137b2",
+  "runId": "2ef9cfb7-c7d1-4114-aa87-5bcb6cd6a4f4",
+  "journeyId": "B01",
+  "result": "failed",
+  "startedAt": "2026-10-06T20:14:17.477Z",
+  "finishedAt": "2026-10-06T20:16:29.398Z",
+  "durations": {
+    "flowMs": 131921,
+    "submitToAcceptedMs": 94,
+    "submitToTerminalMs": 129101
+  },
+  "terminalStatus": "completed",
+  "delivery": {
+    "status": "partial",
+    "goalId": "01a112db-fd8c-734b-ae1d-464c8b0d1dce",
+    "kind": "travel_guide",
+    "artifactIds": [],
+    "missing": [
+      "accepted_publication"
+    ],
+    "warnings": [],
+    "goals": [
+      {
+        "status": "partial",
+        "artifactIds": [],
+        "missing": [
+          "accepted_publication"
+        ],
+        "warnings": [],
+        "goalId": "01a112db-fd8c-734b-ae1d-464c8b0d1dce",
+        "kind": "travel_guide"
+      }
+    ]
+  },
+  "acceptedGuides": 0,
+  "blockedActions": 8,
+  "drafts": [
+    {
+      "id": "01a112db-fe27-75e9-a469-c062f00c8f64",
+      "status": "blocked",
+      "issues": [
+        {
+          "code": "format",
+          "detail": "excluded_precise_claim",
+          "activityId": null
+        }
+      ],
+      "budget": {
+        "scope": "trip",
+        "amount": 1200,
+        "period": "trip_total",
+        "currency": "CNY",
+        "partyBasis": "unspecified"
+      }
+    },
+    {
+      "id": "01a112dc-1df3-71cc-b722-82dc245b158c",
+      "status": "blocked",
+      "issues": [
+        {
+          "code": "format",
+          "detail": "excluded_precise_claim",
+          "activityId": null
+        }
+      ],
+      "budget": {
+        "scope": "trip",
+        "amount": 1200,
+        "period": "trip_total",
+        "currency": "CNY",
+        "partyBasis": "unspecified"
+      }
+    }
+  ],
+  "commits": [
+    {
+      "sequence": 305,
+      "elapsedMs": 109990.24879999994,
+      "errorCode": "DSH_GUIDE_NEEDS_REVISION",
+      "revisionReasons": [
+        "format",
+        "excluded_precise_claim"
+      ],
+      "presentationProblems": [
+        {
+          "code": "excluded_precise_claim",
+          "fieldPath": "text.overview"
+        }
+      ],
+      "recovery": {
+        "calls": 1,
+        "argumentCorrections": 0,
+        "contentAttempts": 1,
+        "lastFailure": "content"
+      }
+    },
+    {
+      "sequence": 313,
+      "elapsedMs": 118083.10389999999,
+      "errorCode": "DSH_GUIDE_NEEDS_REVISION",
+      "revisionReasons": [
+        "format",
+        "excluded_precise_claim"
+      ],
+      "presentationProblems": [
+        {
+          "code": "excluded_precise_claim",
+          "fieldPath": "text.overview"
+        }
+      ],
+      "recovery": {
+        "calls": 2,
+        "argumentCorrections": 0,
+        "contentAttempts": 2,
+        "lastFailure": "content"
+      }
+    },
+    {
+      "sequence": 321,
+      "elapsedMs": 125921.549,
+      "errorCode": "DSH_REPAIR_LIMIT",
+      "revisionReasons": [],
+      "presentationProblems": [],
+      "recovery": {
+        "calls": 2,
+        "argumentCorrections": 0,
+        "contentAttempts": 2,
+        "lastFailure": "content"
+      }
+    }
+  ],
+  "evidence": {
+    "rawReport": "backend/.demo/dsh-d6-runtime/d6-final-r20/evidence/B01-2026-10-06T20-14-17-477Z.json",
+    "rawReportSha256": "97b2b286f476834391f8ed3eace1c884f3f534839aec8f167ee1f4b3e2d55e54",
+    "readOnlyPostgres": "backend/.demo/dsh-d6-runtime/d6-final-r20/private/readbacks/B01-2026-10-06T20-14-17-477Z.postgres.private.json",
+    "postgresSha256": "04cc89195004522f0b2c20f8ac75d88ac1509eaa6b1a0ea58681dd3a374b6477",
+    "originalSession": "private/dsh-data/sessions/_no-cwd/8c6064c7-e27a-4468-85bc-eb02f3d12d3a/session.v4.jsonl",
+    "originalSessionToolSequences": [
+      141,
+      146,
+      151
+    ],
+    "originalReportsModified": false
+  },
+  "diagnosis": {
+    "stage": "publication",
+    "reason": "excluded_precise_claim",
+    "field": "text.overview",
+    "verifiedCause": "Legitimate authoritative budget target is rejected when adjacent cautious cost nouns fail the narrow defer-to-local template; punctuation alone changes rejection. Astra is implementing a structural repair.",
+    "thirdAttempt": "Removed amount but exhausted unchanged semantic revision allowance; not accepted or counted as passed."
+  },
+  "metering": {
+    "batchId": "d54481e8-75b9-4b36-86d9-51c6f9314f90",
+    "hasManifest": true,
+    "ledgerSha256": "5f02b16ad9587dba0b308aca5323b0ee5c963f816fefc0c0e368b363fe60a0bf",
+    "modelAdmissions": 21,
+    "searchAdmissions": 12,
+    "settled": 33,
+    "pending": 0,
+    "promptTokens": 648314,
+    "completionTokens": 10184,
+    "modelTokens": 658498,
+    "modelCallsWithoutUsage": 0,
+    "knownCostCalls": 0,
+    "knownCostUsdMicros": 0,
+    "unknownCostCalls": 33,
+    "unknownReservedUsdMicros": 2280000,
+    "fareMethodCalls": 0
+  },
+  "cumulative": {
+    "runCount": 20,
+    "reportCount": 21,
+    "totals": {
+      "modelAdmissions": 310,
+      "searchAdmissions": 140,
+      "settled": 450,
+      "pending": 0,
+      "promptTokens": 10777353,
+      "completionTokens": 153311,
+      "modelTokens": 10930664,
+      "modelCallsWithoutUsage": 0,
+      "knownCostCalls": 0,
+      "knownCostUsdMicros": 0,
+      "unknownCostCalls": 450,
+      "unknownReservedUsdMicros": 29200000,
+      "fareMethodCalls": 0
+    }
+  },
+  "closeAudit": {
+    "pid": 113804,
+    "serverSession": 83280,
+    "guardsClosed": 1,
+    "forbiddenCalls": 0,
+    "serverLockAbsent": true,
+    "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+    "fareMethodCalls": 0
+  }
+}

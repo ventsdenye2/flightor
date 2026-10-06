@@ -1,5 +1,7 @@
 # DSH D6 Evidence and Locations
 
+2026-10-07 r20固定回放与有界诊断：正式10对全部accepted且语义一致、0模型/外呼，完整逐例见[固定回放](evidence/d6-r20-fixed-replay.json)；总P50基线11.15845ms/D613.78205ms，增2.624ms，adapter0.45155ms。r19两批增2.570/2.660ms也保留，不挑最快、不宣称提速。被计数的Artifact/Goal/GoalRun调用相同，Trip.get每例20→18（10对200→180），未发现新增被计数仓库往返；此为内存fixture，不能替代真实PG往返测量。一次进程内固定文本微基准（7批×2500次/版本）由子任务测得textProblems中位21.0→211.7µs/次，反映新增预算表达检查的确定性成本，工具路径两次检查约0.38ms；该辅助诊断只有任务工具输出、无独立完整日志。adapter和表达检查只解释部分差额，剩余约1.9ms无法由现有证据精确归因，保留为未量化同步CPU/测量差异，不据此推导生产延迟。原实时H5 r20仍FAIL，预算结构修复后必须新冻结复测。
+
 Status: implementation work in progress, 2026-10-06. This document records the current contracts and the D6 reference helper behavior. It does not claim end-to-end DSH integration or acceptance; see [D6 acceptance](DSH_D6_ACCEPTANCE.md).
 
 2026-10-06 r14 repair verification: the four-file evidence/evidence-file/controlled-update/service suite passed 24/24 in 16.97 seconds (`output/d6/r15-evidence-service.log`). This includes a stored SHA-256 record returned only in its exact owner/version scope, an unknown old alias rejected before the strict file repository, damaged registered evidence still failing closed, the official fixture worker recovering with new-version evidence, and the safe location reply without Goal acceptance, Trip changes or Artifact creation. It made no external calls. The earlier 16/16 focused result preceded the final SHA-backed record and service tests; it does not substitute for this joint result. Full new-freeze engineering and real H5 acceptance remain pending.
