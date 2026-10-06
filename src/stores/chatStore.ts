@@ -38,6 +38,7 @@ import {
   type ConversationTurnSnapshot
 } from './chatHistory'
 import { USE_MOCK, ApiRequestError } from '../utils/request'
+import { publicPlannerFailureMessage } from '../utils/publicPlannerError'
 import { plannerTelemetry, type PlannerTelemetryScope, type PlannerUiCommit } from '../services/plannerTelemetry'
 import { registerUserSessionClearHandler, userStore } from './userStore'
 import {
@@ -547,6 +548,8 @@ export class ChatStore {
     if (code === 'CONVERSATION_TURN_TIMEOUT' || code === 'AGENT_TURN_TIMEOUT') {
       return locale === 'zh' ? '本次处理等待超时。请从行程重新打开，查看已保存的结果后再继续对话。' : 'This request took too long. Reopen your trip to check saved results before continuing the conversation.'
     }
+    const classified = publicPlannerFailureMessage(code, locale)
+    if (classified) return classified
     return locale === 'zh' ? '规划服务暂时不可用，请重试。' : 'Planning service is unavailable. Please try again.'
   }
 

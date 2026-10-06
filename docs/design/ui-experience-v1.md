@@ -58,6 +58,10 @@
 
 空草稿在执行期间也可编辑，完成后保留尚未发送的草稿；新的提交、采用和更换航班保持禁用。取消显示等待确认，取消请求失败时继续显示进度与停止未确认提示，确认后才释放提交占用。取消/中断保留已保存成果。账号、auth revision、会话和 Trip 同时约束异步加载和错误回写；被替代的提交不得给新轮写入旧错误。
 
+生产 Planner 保留同一对话的user/assistant时间线，并始终提供持久输入框；追问即使尚无攻略产物，也作为对话继续，不切成空结果态。失败或中断时显示本地化原因和明确的重新规划动作，重试沿用已提交内容。已完成回复按时间线显示，其后的“当前行程”卡属于独立的当前状态区；它应排在回复之后，不能插到本轮聊天内容之前。
+
+公开失败说明按provider、output limit、地点、资料、版本冲突、提交、发布与恢复阶段提供中英文安全文案，未知错误仍使用安全缺省说明，不显示内部异常正文。2026-10-06 r7离线 `test:conversation-progress` 与 `test:production-presentation` 完整通过，其中公开错误40项、聊天组件5项；取消未确认仍保持busy的断言保留。日志在 `output/d6/frontend-conversation-r7.log` 和 `output/d6/frontend-presentation-r7.log`。这些是组件与状态回归，不代表H5旅程已验收。
+
 `node scripts/test-planner-publication.cjs` 运行真实组件代码，通过确定性 hooks 与 Taro host stubs 验证等待分支卡片、草稿输入/保留、取消反馈和航段展开。它不启动浏览器、真实 React renderer 或微信设备；平台滚动、样式、输入法与真实网络表现仍待验收。当前所有验证命令和结果见 [progress](budget-travel-agent/progress.md)。
 
 ## 来源资料适用性提示（当前实现）

@@ -61,6 +61,7 @@ function harness(file, name, props, dependencies = {}) {
   function content(value) {
     if (value == null || typeof value === 'boolean') return ''
     if (Array.isArray(value)) return value.map(content).join('')
+    if (value?.type === 'PlannerReply') return value.props.content
     return typeof value === 'object' ? content(value.props?.children) : String(value)
   }
   render()

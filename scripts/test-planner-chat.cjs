@@ -76,7 +76,8 @@ function nodes(value) {
 }
 const text = value => value === undefined || value === null || typeof value === 'boolean' ? ''
   : typeof value !== 'object' ? String(value)
-    : Array.isArray(value) ? value.map(text).join('') : text(value.props?.children)
+    : Array.isArray(value) ? value.map(text).join('')
+      : typeof value.type === 'function' ? text(value.type(value.props ?? {})) : text(value.props?.children)
 const byClass = (tree, className) => nodes(tree).filter(node => node.props?.className?.split(' ').includes(className))
 const oneClass = (tree, className) => {
   const matches = byClass(tree, className)

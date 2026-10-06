@@ -198,7 +198,12 @@ export function PlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
             : null}
           {productionBusy ? <View className='pl-generating'><PlannerProgress progress={productionProgress} locale={locale} compact active /><View className='pl-loading-skeleton'><View /><View /><View /></View></View> : null}
         </View>}
-        {showProductionInterruption ? <View className='pl-cancelled pl-interrupted' role='alert'><Text className='ux-section-title'>{interruptionTitle}</Text><Text className='ux-muted'>{productionError || (locale === 'en' ? 'You can send another message or try again.' : '可以继续发送消息，或稍后重试。')}</Text></View> : null}
+        {showProductionInterruption ? <View className='pl-cancelled pl-interrupted' role='alert'>
+          <Text className='ux-section-title'>{interruptionTitle}</Text>
+          <PlannerReply className='ux-muted' content={interruptionMessage} />
+          <View className='pl-inline-actions'><Button className='ux-text-button' disabled={productionBusy || !(submitted || productionPrompt)}
+            onClick={() => start(submitted || productionPrompt)}>{locale === 'en' ? 'Plan again' : '重新规划'}</Button></View>
+        </View> : null}
         {hasResult || flightDecision ? <View className='pl-current-state'>
           {hasResult && <View className='pl-current-state__trip'>
             <Text className='pl-current-state__label'>{locale === 'en' ? 'Current trip' : '当前行程'}</Text>

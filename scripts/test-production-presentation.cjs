@@ -192,7 +192,7 @@ function plannerHarness(overrides = {}) {
   const slots = [], effects = [], sent = []
   let cursor = 0, dirty = false, tree
   const props = { trip: { ...artifactToTripPresentation(routeArtifact, undefined, workspace), description: 'FALLBACK_DESCRIPTION', days: [] },
-    onOpenTrip() {}, onSearchFlights() {}, onSubmitPrompt: message => sent.push(message),
+    onOpenTrip() {}, onSearchFlights() {}, onSubmitPrompt: message => { sent.push(message); props.productionBusy = true },
     productionPrompt: '东京玩两天，文化景点和街区散步。', productionReply: '本轮处理未完整结束。',
     productionResultAvailable: false, ...overrides }
   const hooks = {
@@ -277,19 +277,19 @@ check('a satisfied result stays successful even after a research rate-limit warn
   assert.equal(h.button('重新规划'), undefined)
   assert.ok(h.nodes().some(node => node.props?.className === 'pl-result'))
 })
-check('clarification without an artifact stays a conversation instead of a result', () => {
+check('clarification without an artifact stays a conversation with the persistent composer', () => {
   const h = plannerHarness({ productionStopReason: 'responded', productionReply: '想从哪里出发？' })
   assert.ok(h.content().includes('想从哪里出发？'))
   assert.ok(!h.content().includes('本次规划未完成'))
   assert.ok(!h.content().includes('每日安排尚未补充'))
-  assert.ok(h.button('继续补充想法'))
+  assert.ok(h.nodes().some(node => node.props?.className === 'pl-composer'))
 })
-check('saved itinerary appears before the full formatted reply without an empty photo', () => {
+check('saved itinerary follows the full formatted reply without an empty photo', () => {
   const h = plannerHarness({ productionStopReason: 'completed', productionResultAvailable: true, productionReply: '**东京两天**\n\n- 浅草寺\n- 上野公园' })
   const nodes = h.nodes()
   const resultIndex = nodes.findIndex(node => node.props?.className === 'pl-result')
   const replyIndex = nodes.findIndex(node => node.type === 'PlannerReply')
-  assert.ok(resultIndex >= 0 && replyIndex > resultIndex)
+  assert.ok(resultIndex > replyIndex && replyIndex >= 0)
   assert.ok(!nodes.some(node => node.props?.className === 'pl-result-photo'))
   assert.equal(nodes[replyIndex].props.content, h.props.productionReply)
 })
