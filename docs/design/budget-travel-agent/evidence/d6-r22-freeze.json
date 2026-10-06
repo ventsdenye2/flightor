@@ -1,0 +1,154 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "status": "frozen_engineering_passed_real_ui_pending",
+  "createdAt": "2026-10-06T21:32:56.571Z",
+  "codeHead": "b875b2cac21326ba95c4ddd3b7685baf54360658",
+  "runId": "f01dc2b5-a1f9-49a4-bc32-2de35e5e08c5",
+  "schema": "dsh_d6_f01dc2b5a1f949a4bc322de35e5e08c5",
+  "pid": 121516,
+  "serverSession": 90518,
+  "apiPort": 63989,
+  "h5Port": 64279,
+  "sourceFingerprint": "3b89f71ef3c68bd7ba1f05340db569d5a3ad4b83c14dec44ef9e5a8d78f5bc26",
+  "backendFingerprint": "a693ca718e21e7ff39bffc5dc7228b7d8de1a9243d14a198745e9e66038e5664",
+  "h5Fingerprint": "161fd04b66fb1c2fb33bf560d76f8eec62252145499d7d3618db3a7d282139c6",
+  "workerFingerprint": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+  "configuration": {
+    "modelProvider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "searchProvider": "deepseek-official",
+    "maxTokens": 8192,
+    "thinking": "disabled",
+    "nativeResearchProvider": "serpapi",
+    "places": {
+      "url": "https://nominatim.openstreetmap.org/",
+      "userAgent": "FlightOR-D6/1.0 (+https://github.com/ventsdenye2/flightor)",
+      "proxy": "http://127.0.0.1:7890"
+    }
+  },
+  "journeysSha256": "91240ac6c741a990ad4a233451cc5982702b9d3856eb85597fa88206be943780",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false
+  },
+  "authorization": {
+    "deepseek": "current user authorization; unlimited amount, per-call metering retained",
+    "serpapi": "existing authorized account allowance only; no purchase"
+  },
+  "platform": "H5; WeChat page acceptance deferred by user; WeChat build still required",
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "runtimeArchive": "backend/.demo/dsh-d6-runtime/d6-final-r22/private/runtime-frozen",
+  "runtimeArchiveAudit": {
+    "sha256": "a693ca718e21e7ff39bffc5dc7228b7d8de1a9243d14a198745e9e66038e5664",
+    "files": 783,
+    "matchesRunningBackend": true
+  },
+  "sourceAudit": {
+    "matchesFrozenManifest": true,
+    "at": "2026-10-06T21:32:56.780Z"
+  },
+  "backendAudit": {
+    "matchesFrozenManifest": true
+  },
+  "h5Audit": {
+    "matchesFrozenManifest": true
+  },
+  "engineering": {
+    "backend": {
+      "files": 138,
+      "passed": 1501,
+      "total": 1501,
+      "durationSeconds": 211.89,
+      "log": "output/d6/backend-unit-r22-final.log"
+    },
+    "postgres": {
+      "files": 11,
+      "passed": 52,
+      "total": 52,
+      "durationSeconds": 53.37,
+      "log": "output/d6/postgres-r22-final.log"
+    },
+    "d5": {
+      "passed": 30,
+      "total": 30,
+      "codeUnchanged": true,
+      "realProvider": false,
+      "report": "docs/design/budget-travel-agent/evidence/d5-2026-10-06T21-31-30-469Z.json"
+    },
+    "runtime": {
+      "passed": 14,
+      "total": 14,
+      "durationSeconds": 9.3546467,
+      "log": "output/d6/runtime-r22-final.log"
+    },
+    "observer": {
+      "passed": 1,
+      "total": 1,
+      "durationSeconds": 0.9203203,
+      "log": "output/d6/observer-r22-final-build.log"
+    },
+    "frontend": {
+      "conversationProgress": 116,
+      "sessionRecovery": 20,
+      "productionPresentation": 52,
+      "artifacts": 37,
+      "plannerReply": 6,
+      "h5Assertions": 19,
+      "typecheckExit": 0,
+      "logPattern": "output/d6/*-r22-final.log",
+      "offlineOnly": true
+    },
+    "backendCheckExit": 0,
+    "backendBuildExit": 0,
+    "h5Build": {
+      "exit": 0,
+      "compileMs": 33105,
+      "warnings": "2 existing bundle size warnings"
+    },
+    "weappBuild": {
+      "exit": 0,
+      "compileSeconds": 18.47,
+      "warnings": "existing CSS/bundle recommendations",
+      "pageAcceptance": "deferred by user",
+      "log": "output/d6/weapp-build-r22-final.log"
+    },
+    "fixedReplay": {
+      "report": "docs/design/budget-travel-agent/evidence/d6-r22-fixed-replay.json",
+      "pairedSamples": 10,
+      "accepted": {
+        "baseline": 10,
+        "d6": 10
+      },
+      "semanticMatches": true,
+      "p50": {
+        "baselineExecuteMs": 9.805950000000053,
+        "d6AdapterMs": 0.5400500000000648,
+        "d6ExecuteMs": 11.500300000000038,
+        "baselineTotalMs": 11.416300000000092,
+        "d6TotalMs": 13.48135000000002
+      },
+      "modelCalls": 0,
+      "externalCalls": 0,
+      "baselineTripGets": [
+        20
+      ],
+      "d6TripGets": [
+        19
+      ]
+    }
+  },
+  "startupFailure": {
+    "runId": "548a8c06-5406-4908-81cb-3a774db58e13",
+    "stage": "route_guard",
+    "code": "D6_CONFIGURED_DEEPSEEK_ROUTE_REQUIRED",
+    "cause": "launcher referenced historical dsh-manual.env; corrected to current .env.dsh.local without changing it",
+    "beforeSchemaOrLedgerCreation": true,
+    "realCalls": 0,
+    "evidence": "Retained terminal tool output; route_guard is before fs.mkdir/lock/database setup in launcher source"
+  },
+  "engineeringReviewedAt": "2026-10-06T21:35:57.449584+00:00"
+}

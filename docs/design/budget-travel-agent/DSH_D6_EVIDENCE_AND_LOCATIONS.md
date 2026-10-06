@@ -1,5 +1,7 @@
 # DSH D6 Evidence and Locations
 
+2026-10-07 r22[固定回放](evidence/d6-r22-fixed-replay.json)10对均accepted、语义一致、零模型/外部调用；总P50基线11.416ms/D613.481ms，增2.065ms，adapter0.540ms。Trip.get每例20→19，相对r21的18多一次首稿前置scope checkpoint以再次校验当前Trip；其他被计数仓库方法相同。保留所有旧批次，新增校验、预算表达检查及测量差异共同进入总耗时，现有证据不能精确拆分这2.065ms，不宣称生产提速或真实数据库往返耗时改善。真实专用PG52/52仍分别验证持久化，不能以内存回放代替。
+
 2026-10-07 r22数量回归的独立负例进一步发现英文肯定声明 `Admission is free for all temples on this trip.` 漏检。新增免费入场拒绝与尚未确认的否定表述允许回归，红测191/192确认缺少`excluded_admission_or_hours`（3.04秒，`output/d6/r22-english-free-red-retry.log`）；第一次sandbox EPERM未执行业务断言另存原日志。窄修增加`admission is free`表述匹配，finalization/budget-scope/presentation-problems最终226/226通过（3.24秒，`output/d6/r22-english-free-green.log`），保留“尚未确认免费”的否定表达和已有免费Wi-Fi/资料允许用例。不因数量参数纠正豁免费用规则，不把词法检查当价格研究。完整新冻结工程与真实页面仍待执行，原r21状态保持FAIL。
 
 2026-10-07 r21正式固定回放保留10对逐样本：[完整证据](evidence/d6-r21-fixed-replay.json)，两版均10/10accepted、语义一致、0模型/外呼，总P50基线13.476ms、D614.447ms，增加0.972ms，adapter0.515ms。与r19/r20较大增量的历史批次一并保留，不选择最快结果，不宣称生产提速或数据库往返改善。r21预算修复属于局部费用关系的确定性校验，不新增LLM或网络请求；资料/身份/版本边界不变。
