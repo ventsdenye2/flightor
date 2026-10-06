@@ -9,6 +9,11 @@ page {
   min-height: 100%;
 }
 
+html:not(.production-navigation-ready) taro-tabbar,
+html:not(.production-navigation-ready) .production-nav {
+  pointer-events: none;
+}
+
 // 等宽效果方案：letter-spacing 模拟 + 系统等宽字体回退（颜色随上下文，避免满屏蓝字）
 .font-code {
   font-family: Menlo, 'Courier New', monospace;

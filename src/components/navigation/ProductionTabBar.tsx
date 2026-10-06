@@ -1,5 +1,5 @@
 import { Button, Text, View } from '@tarojs/components'
-import Taro, { useDidShow } from '@tarojs/taro'
+import Taro, { useDidShow, useReady } from '@tarojs/taro'
 import { makeAutoObservable } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import { localeStore } from '../../i18n'
@@ -16,8 +16,10 @@ const tabs = [
 const navigation = makeAutoObservable({
   selected: 'plan' as ProductionSection,
   hidden: false,
+  ready: false,
   select(section: ProductionSection) { this.selected = section },
-  setHidden(hidden: boolean) { this.hidden = hidden }
+  setHidden(hidden: boolean) { this.hidden = hidden },
+  setReady() { this.ready = true }
 })
 
 export function setProductionTabBarHidden(hidden: boolean) {
@@ -27,6 +29,10 @@ export function setProductionTabBarHidden(hidden: boolean) {
 /** Each native tab confirms selection when shown, including programmatic navigation. */
 export function useProductionTab(section: ProductionSection) {
   useDidShow(() => { navigation.select(section) })
+  useReady(() => {
+    navigation.setReady()
+    if (typeof document !== 'undefined') document.documentElement.classList.add('production-navigation-ready')
+  })
 }
 
 export const ProductionTabBar = observer(function ProductionTabBar({ selected, embedded = false }: {
@@ -36,9 +42,9 @@ export const ProductionTabBar = observer(function ProductionTabBar({ selected, e
   if (!embedded && navigation.hidden) return null
   const active = selected ?? navigation.selected
   return <View className={`production-nav${embedded ? ' production-nav--embedded' : ''}`} ariaLabel='主导航'>
-    {tabs.map(tab => <Button key={tab.id} className={`production-nav__item${active === tab.id ? ' is-active' : ''}`}
+    {tabs.map(tab => <Button key={tab.id} disabled={!navigation.ready} className={`production-nav__item${active === tab.id ? ' is-active' : ''}`}
       aria-pressed={active === tab.id} onClick={() => {
-        if (tab.id !== active) void Taro.switchTab({ url: `/pages/${tab.id}/index` }).catch(() => Taro.showToast({ title: '页面暂时未能打开，请重试', icon: 'none' }))
+        if (navigation.ready && tab.id !== active) void Taro.switchTab({ url: `/pages/${tab.id}/index` }).catch(() => Taro.showToast({ title: '页面暂时未能打开，请重试', icon: 'none' }))
       }}><Icon name={active === tab.id ? tab.activeIcon : tab.icon} /><Text>{localeStore.locale === 'en' ? tab.en : tab.zh}</Text></Button>)}
   </View>
 })

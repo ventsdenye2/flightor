@@ -325,23 +325,39 @@ await test('closing a pending login sheet prevents a late success from resuming 
 })
 
 await test('the custom production tab bar hides for login sheets without suppressing embedded navigation', async () => {
+  let ready
+  let switches = 0
+  const htmlClasses = new Set()
   const load = loader({
     'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
     '@tarojs/components': { View: 'View', Text: 'Text', Button: 'Button' },
-    '@tarojs/taro': { useDidShow() {}, switchTab: async () => {}, showToast() {} },
+    '@tarojs/taro': { useDidShow() {}, useReady: callback => { ready = callback }, switchTab: async () => { switches += 1 }, showToast() {} },
     mobx: { makeAutoObservable: value => value },
     'mobx-react-lite': { observer: component => component },
     '../../i18n': { localeStore: { locale: 'zh' } },
     '../../i18n/index': { localeStore: { locale: 'zh' } },
     '../../features/ui-experience/VisualMedia': { Icon: () => null }
-  })
+  }, { document: { documentElement: { classList: { add: name => htmlClasses.add(name) } } } })
   const tabBar = load('src/components/navigation/ProductionTabBar.tsx')
+  tabBar.useProductionTab('profile')
+  const beforeReady = find(tabBar.ProductionTabBar({}), node => node.props.className?.includes('production-nav__item') && !node.props.className.includes('is-active'))
+  assert.equal(beforeReady.props.disabled, true)
+  beforeReady.props.onClick()
+  assert.equal(switches, 0)
+  ready()
+  assert.ok(htmlClasses.has('production-navigation-ready'))
+  const afterReady = find(tabBar.ProductionTabBar({}), node => node.props.className?.includes('production-nav__item') && !node.props.className.includes('is-active'))
+  assert.equal(afterReady.props.disabled, false)
+  afterReady.props.onClick()
+  assert.equal(switches, 1)
   assert.ok(find(tabBar.ProductionTabBar({}), node => node.props.className === 'production-nav'))
   tabBar.setProductionTabBarHidden(true)
   assert.equal(tabBar.ProductionTabBar({}), null)
   assert.ok(find(tabBar.ProductionTabBar({ embedded: true }), node => node.props.className === 'production-nav production-nav--embedded'))
   tabBar.setProductionTabBarHidden(false)
   assert.ok(find(tabBar.ProductionTabBar({}), node => node.props.className === 'production-nav'))
+  const globalStyles = fs.readFileSync(path.join(root, 'src/app.scss'), 'utf8')
+  assert.match(globalStyles, /html:not\(\.production-navigation-ready\) taro-tabbar[\s\S]*html:not\(\.production-navigation-ready\) \.production-nav[\s\S]*pointer-events:\s*none/)
 })
 
 await test('delivery labels never equate a model response or pending goal with completion', async () => {
