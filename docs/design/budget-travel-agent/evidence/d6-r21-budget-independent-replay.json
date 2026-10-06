@@ -1,0 +1,317 @@
+{
+  "method": "Actual compiled publicProseProblems; fixed independent inputs; no network/model/DB calls",
+  "createdAt": "2026-10-06T20:45:24.696Z",
+  "sourceSha256": "ec294c11f9d607dd993d118a217933c64aab2ba2aa00734dde5360749370ea29",
+  "buildSha256": "0f3925bc3284cbc26f93961b2d62a3abd916024d96c33354a51f968240f25313",
+  "reviewSha256": "9797e62c7e361dd1b99a06e06858dbfa66852bc4bba4cbc37193b604869a5f78",
+  "passed": 24,
+  "total": 24,
+  "results": [
+    {
+      "id": "01-zh-target-cautious-cost",
+      "locale": "zh",
+      "text": "1200元是全程总预算目标。实际住宿和餐饮花费视选择而定，是否满足目标尚不能确认。",
+      "expectedCodes": [],
+      "actualCodes": [],
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "02-en-target-cautious-cost",
+      "locale": "en",
+      "text": "CNY 1200 is the total-trip budget target. Actual lodging and meal costs vary, and budget fit remains unconfirmed.",
+      "expectedCodes": [],
+      "actualCodes": [],
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "03-zh-unverified-ticket-question",
+      "locale": "zh",
+      "text": "全程预算目标为1200元。门票费用是否为这个金额，尚未核实。",
+      "expectedCodes": [],
+      "actualCodes": [],
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "04-en-unverified-ticket-anaphora",
+      "locale": "en",
+      "text": "The whole-trip target is CNY 1200. Whether ticket costs are this amount has not been confirmed.",
+      "expectedCodes": [],
+      "actualCodes": [],
+      "finding": "False positive: unconfirmed question about the relation, not an estimate.",
+      "originalCodes": [
+        "excluded_precise_claim"
+      ],
+      "pass": true
+    },
+    {
+      "id": "05-zh-unverified-lodging-anaphora",
+      "locale": "zh",
+      "text": "1200元是全程预算目标。住宿费用是否为该金额还未核实。",
+      "expectedCodes": [],
+      "actualCodes": [],
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "06-en-may-cost",
+      "locale": "en",
+      "text": "The CNY 1200 whole-trip target is set. Admission may cost this amount, but that is not known.",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "review": "Root review: this states a possible admission amount, which is a prohibited cost estimate; keep blocked, consistent with the existing 'Costs may be that amount' negative case.",
+      "originalCodes": [
+        "excluded_precise_claim"
+      ],
+      "pass": true
+    },
+    {
+      "id": "07-en-ticket-costs-that-amount",
+      "locale": "en",
+      "text": "The whole-trip budget target is CNY 1200. Tickets cost that amount.",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "originalCodes": [
+        "excluded_precise_claim"
+      ],
+      "pass": true
+    },
+    {
+      "id": "08-en-ticket-will-cost",
+      "locale": "en",
+      "text": "The whole-trip budget target is CNY 1200. Tickets will cost this amount.",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "originalCodes": [
+        "excluded_precise_claim"
+      ],
+      "pass": true
+    },
+    {
+      "id": "09-en-admission-amounts-to",
+      "locale": "en",
+      "text": "The whole-trip target is CNY 1200. Admission amounts to that figure.",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "finding": "False negative: amounts-to predicate ties admission to target amount.",
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "10-en-lodging-requires",
+      "locale": "en",
+      "text": "CNY 1200 is the whole-trip budget target. Lodging requires that same amount.",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "finding": "False negative: lodging requirement is an affirmative cost relation.",
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "11-zh-tickets-total-anaphora",
+      "locale": "zh",
+      "text": "全程总预算目标为1200元。门票费用共计这个金额。",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "finding": "False negative: ticket expense is asserted to total the target amount.",
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "12-zh-lodging-needs-anaphora",
+      "locale": "zh",
+      "text": "全程预算目标1200元。住宿需要这个金额。",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "finding": "False negative: lodging is asserted to require the target amount.",
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "13-zh-spent-this-money",
+      "locale": "zh",
+      "text": "全程预算目标1200元。已经花了这笔钱。",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "finding": "False negative: asserts the target amount has already been spent.",
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "14-zh-ticket-needs-question",
+      "locale": "zh",
+      "text": "全程预算目标1200元。门票是否需要这个金额尚未核实。",
+      "expectedCodes": [],
+      "actualCodes": [],
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "15-zh-daily-extension",
+      "locale": "zh",
+      "text": "全程预算目标为1200元，不是每日预算。这1200元每天都可以使用。",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "originalCodes": [
+        "excluded_precise_claim"
+      ],
+      "pass": true
+    },
+    {
+      "id": "16-en-daily-extension",
+      "locale": "en",
+      "text": "CNY 1200 is the total-trip budget target. The same CNY 1200 applies each day.",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "originalCodes": [
+        "excluded_precise_claim"
+      ],
+      "pass": true
+    },
+    {
+      "id": "17-en-scope-excludes",
+      "locale": "en",
+      "text": "The whole-trip budget target is CNY 1200. It excludes lodging and airfare.",
+      "expectedCodes": [
+        "budget_scope_changed"
+      ],
+      "actualCodes": [
+        "budget_scope_changed"
+      ],
+      "originalCodes": [
+        "budget_scope_changed"
+      ],
+      "pass": true
+    },
+    {
+      "id": "18-zh-scope-separate",
+      "locale": "zh",
+      "text": "全程预算目标1200元。机票和住宿另行计算。",
+      "expectedCodes": [
+        "budget_scope_changed"
+      ],
+      "actualCodes": [
+        "budget_scope_changed"
+      ],
+      "finding": "Potential cross-sentence scope miss; expectation interprets the second sentence as a continuation of the whole-trip budget context.",
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "19-zh-negated-scope",
+      "locale": "zh",
+      "text": "全程预算目标1200元，并不排除住宿或机票。",
+      "expectedCodes": [],
+      "actualCodes": [],
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "20-en-cost-subtotal",
+      "locale": "en",
+      "text": "The whole-trip budget target is CNY 1200. Dining needs CNY 900 of it.",
+      "expectedCodes": [
+        "excluded_precise_claim"
+      ],
+      "actualCodes": [
+        "excluded_precise_claim"
+      ],
+      "originalCodes": [
+        "excluded_precise_claim"
+      ],
+      "pass": true
+    },
+    {
+      "id": "21-zh-guarantee",
+      "locale": "zh",
+      "text": "1200元是全程预算目标，实际花费不确定，但保证不会超支。",
+      "expectedCodes": [
+        "budget_guarantee"
+      ],
+      "actualCodes": [
+        "budget_guarantee"
+      ],
+      "originalCodes": [
+        "budget_guarantee"
+      ],
+      "pass": true
+    },
+    {
+      "id": "22-en-guarantee",
+      "locale": "en",
+      "text": "CNY 1200 is the total-trip target. Actual costs are uncertain, but the trip will stay within budget.",
+      "expectedCodes": [
+        "budget_guarantee"
+      ],
+      "actualCodes": [
+        "budget_guarantee"
+      ],
+      "originalCodes": [
+        "budget_guarantee"
+      ],
+      "pass": true
+    },
+    {
+      "id": "23-zh-cautious-fit",
+      "locale": "zh",
+      "text": "是否能满足全程预算目标目前无法确认，住宿与餐饮实际费用仍待核实。",
+      "expectedCodes": [],
+      "actualCodes": [],
+      "originalCodes": [],
+      "pass": true
+    },
+    {
+      "id": "24-en-cautious-fit",
+      "locale": "en",
+      "text": "I cannot confirm whether the trip will fit the CNY 1200 target; actual costs remain unknown.",
+      "expectedCodes": [],
+      "actualCodes": [],
+      "originalCodes": [],
+      "pass": true
+    }
+  ],
+  "originalReviewSourceSha256": null,
+  "originalReviewLimitation": "The independent initial invocation did not record the source SHA. These fixed inputs were replayed against the actual current build with source/build hashes recorded; historical failures are not reclassified."
+}

@@ -120,6 +120,74 @@ describe('integrated main Agent publication', () => {
       languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
     })).not.toContain('excluded_precise_claim')
   })
+  it.each([
+    ['r20 original overview', '两天的东京行程围绕“传统文化+当地小吃+轻松步调”设计：第一天在浅草寺与雷门参拜、逛仲见世通小吃街、看合羽桥道具街的传统美食工艺，傍晚在Hoppy街用串烧和当地小吃收尾；第二天上午到明治神宫的都市森林参拜，下午在谷中银座老街边逛边吃，傍晚到滨离宫恩赐庭园的水上茶屋品抹茶和和菓子。整体景点集中、以散步和小吃为主，预订的1200元人民币全程预算作为目标保留，门票、餐饮等实际花费以现场为准，未知费用不作估算。'],
+    ['r20 revised overview', '两天的东京行程围绕“传统文化+当地小吃+轻松步调”设计：第一天在浅草寺与雷门参拜、逛仲见世通小吃街、看合羽桥道具街的传统美食工艺，傍晚在Hoppy街用串烧和当地小吃收尾；第二天上午到明治神宫的都市森林参拜，下午在谷中银座老街边逛边吃，傍晚到滨离宫恩赐庭园的水上茶屋品抹茶和和菓子。景点集中、以散步和小吃为主。你的全程预算目标为1200元人民币，这里仅作为目标保留；门票、餐饮等实际花费请以现场为准，我不对是否够用作保证。'],
+    ['cost noun list with a deferred check', '全程预算目标为1200元人民币，门票、餐饮等实际花费请以现场为准。'],
+    ['unknown spending without an estimate', '全程预算目标为1200元人民币，未知费用不作估算。'],
+    ['nominal cost reference without a factual predicate', '全程预算目标为1200元人民币，另附餐饮、住宿费用的查询渠道。'],
+    ['English nominal cost reference', 'The whole-trip budget target is CNY 1200; consult the venue for ticket prices and dining costs.'],
+    ['negated cost reference across sentences', '全程预算目标为1200元人民币。门票费用不是这个金额，费用尚未核实。'],
+    ['English negated cost reference across sentences', 'The whole-trip budget target is CNY 1200. This amount is not confirmed spending.'],
+    ['cautious cost reference across sentences', '全程预算目标为1200元人民币。无法确认实际费用是否为这个金额。'],
+    ['unconfirmed compound cost relation', '全程预算目标为1200元人民币。不能确认门票费用为这个金额。'],
+    ['negated English cost identity', 'The whole-trip budget target is CNY 1200. This amount does not represent actual costs.']
+  ])('does not infer confirmed costs from %s', (_case, content) => {
+    expect(publicProseProblems([content], content.startsWith('The') ? 'en' : 'zh', {
+      budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).not.toContain('excluded_precise_claim')
+  })
+  it.each([
+    'The whole-trip budget target is CNY 1200. Whether ticket costs are this amount has not been confirmed.',
+    'The whole-trip budget target is CNY 1200. Lodging has been confirmed; its costs remain unknown.',
+    '全程预算目标为1200元人民币。住宿已经确认，实际费用仍待核实。',
+    '全程预算目标为1200元人民币。尚未花这笔钱。',
+    '全程预算目标为1200元人民币。无法确认是否已经花了这笔钱。'
+  ])('keeps uncertainty and booking confirmation separate from spending: %s', content => {
+    expect(publicProseProblems([content], content.startsWith('The') ? 'en' : 'zh', {
+      budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).not.toContain('excluded_precise_claim')
+  })
+  it.each(['，', '；', '。', '\n'])('keeps cost anaphora rejected across %j', separator => {
+    for (const claim of ['门票费用就是这个金额', '这也是已确认的实际花费', '门票费用已确认']) {
+      const content = `全程预算目标为1200元人民币${separator}${claim}。`
+      expect(publicProseProblems([content], 'zh', {
+        budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+      })).toContain('excluded_precise_claim')
+    }
+  })
+  it.each([
+    'The whole-trip budget target is CNY 1200. Ticket prices are that amount.',
+    'The whole-trip budget target is CNY 1200. This amount is confirmed spending.',
+    'The whole-trip budget target is CNY 1200. Actual costs are confirmed.',
+    'The whole-trip budget target is CNY 1200. This amount is the actual cost.',
+    'The whole-trip budget target is CNY 1200. This amount represents ticket prices.',
+    'The whole-trip budget target is CNY 1200. Costs may be that amount.',
+    'The whole-trip budget target is CNY 1200 in actual costs.',
+    'The whole-trip budget target is the actual cost of CNY 1200.',
+    '全程预算目标是1200元的实际花费。',
+    '门票1200元作为全程预算目标。',
+    '全程预算目标为1200元人民币。门票费用预计为这个金额。',
+    '全程预算目标为1200元人民币。门票费用就是预算总额。',
+    'The whole-trip budget target is CNY 1200. Admission amounts to that figure.',
+    'The whole-trip budget target is CNY 1200. Lodging requires that same amount.',
+    'The whole-trip budget target is CNY 1200. Admission may cost this amount, but that is not known.',
+    '全程预算目标为1200元人民币。门票费用共计这个金额。',
+    '全程预算目标为1200元人民币。住宿需要这个金额。',
+    '全程预算目标为1200元人民币。已经花了这笔钱。',
+    '全程预算目标为1200元人民币。门票费用就是这个金额，实际花费请以现场为准。',
+    '全程预算目标为1200元人民币。实际花费以现场为准，但住宿费用就是这个金额。',
+    '全程预算目标为1200元人民币。未知费用不作估算，但住宿费用已确认。'
+  ])('does not let sentence boundaries hide an asserted cost: %s', content => {
+    expect(publicProseProblems([content], content.startsWith('The') ? 'en' : 'zh', {
+      budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).toContain('excluded_precise_claim')
+  })
+  it('checks all submitted fields for a monetary reference instead of resetting at a field boundary', () => {
+    expect(publicProseProblems(['全程预算目标为1200元人民币。', '门票费用就是这个金额。'], 'zh', {
+      budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
+    })).toContain('excluded_precise_claim')
+  })
   it('preserves decimal points when matching the exact authoritative trip budget', () => {
     const content = 'The whole-trip budget target is CNY 1200.5, not CNY 1200.5 per day.'
     expect(publicProseProblems([content], 'en', {

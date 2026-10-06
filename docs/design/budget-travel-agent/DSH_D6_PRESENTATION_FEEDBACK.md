@@ -1,5 +1,13 @@
 # D6 发布字段反馈
 
+2026-10-07 r21预算关系修复：r20真实B01两次原overview均因`excluded_precise_claim`被拒，原官方session seq141/146和只读PG均确认权威预算为1200 CNY/trip。冻结函数零外呼对照显示：目标句和成本提示分别可通过，逗号/分号合并则拒；“实际花费以现场为准”和“未知费用不作估算”被费用名词默认判为肯定成本。另确认句号可绕过“门票费用就是这个金额”的费用指代拒绝。现移除费用名词默认veto和当地/官方/变量支出提示模板白名单，按局部费用谓词、精确金额或其指代与成本的关系判断；目标金额仍只匹配权威Trip结构，局部否定/谨慎关系保留，不能通过句号/换行把目标转为费用事实。完整合同归[预算与精确字段](DSH_D6_PUBLIC_ERRORS.md)。没有更改预算范围、证据、权限、版本或修订额度。
+
+真实原文与跨句反例红测为14失败/246通过；首版259/260时保留“费用作为本次花费”的旧失败，名词费用/反向等同/估算指代及谨慎关系第二红为15失败/234通过。中间四族`finalization/reply/budget-scope/presentation-problems`为279/279（4.52秒），其他八个关联提交/恢复/派生套件165/165（21.44秒）。日志位于`backend/output/d6/r21-budget-relation-{red-retry,first-green,boundary-red,green,joint}.log`；首次沙箱esbuild `spawn EPERM`未收集断言，单独保留`red.log`，随后原命令允许本地子进程运行，所有旧断言保留。
+
+独立复核的明确费用谓词、未确认问句与“另行计算”范围反例补入后，三文件红测9失败/284通过；修后四族296/296（4.25秒）。保持源码不变的最终12文件联合461/461（22.64秒），含预算限额、路线答复、service官方fixture worker、提交/恢复、预算派生及公开错误；日志为`backend/output/d6/r21-budget-independent-{red,green}.log`、`r21-budget-final-joint.log`。根协调完成实际build及独立[24例回放](evidence/d6-r21-budget-independent-replay.json)，没有真实Provider或业务数据写入。
+
+原官方session seq141/146完整文字保持原样，按持久攻略活动顺序绑定既有7个activity/source身份，并使用原research及首次接受的Goal要求，在内存调用完整`validateIntegratedFinalText`：r20冻结函数两稿均`blocked/format/excluded_precise_claim`，当前函数两稿均机械`accepted`，0模型调用/0持久写。来源码SHA为`ec294c11f9d607dd993d118a217933c64aab2ba2aa00734dde5360749370ea29`，对照在`backend/output/d6/r21-original-budget-replay.log`。这只证明预算误拦的因果，不认证来源时段、活动语义或旧稿用户交付；原r20两稿仍为blocked，失败、会话、数据库、账本及冻结构建保留。完整新冻结、真实PG、原12+4真实H5仍需r21验证，D6未PASS。
+
 2026-10-07 r20最后预算交叉复核：Astra再次指出非预算itinerary/行程安排前缀豁免会放行“itinerary budget excludes flights/行程安排的预算不含机票住宿”。已将明确budget/预算/总额优先于范围豁免，新增2例后27个scope例及4文件241/241通过。最新backend check/build通过；observer新增三个edit前置码及scope字段过滤fixture1/1（1.285秒）通过。
 
 2026-10-07 r20定向复核：初始2文件红测10失败/59通过（首次沙箱spawn EPERM未执行业务断言另存）；局改/准备/预算scope84/84、随后9文件联合313/313与backend typecheck通过。Astra有界审阅发现4个scope漏拦和2个票品/行程范围误拦，另补3个边界，新增25例先7失败/18通过，修复后4文件239/239。regex在module scope编译；明确通票/套餐/itinerary包含范围不等同预算排除，未知费用与否定排除保留。规则只证明这些受控表达边界，不宣称通用语义或价格审核。扩展真实专用PG套件3/3通过（8.33秒），含fresh repository恢复、原Goal限额读取、完整8 findings先于accept拒绝小cap及支持证据/非目标活动持久保护，零外呼。完整新冻结与真实H5仍待执行。

@@ -15,7 +15,8 @@ describe('authoritative whole-trip budget scope', () => {
     '全程预算不算机票和住宿。', '机票与住宿费用在预算之外。',
     'Flights and accommodation will be paid separately from the whole-trip budget.',
     'The whole-trip budget is for meals and activities only.',
-    'The itinerary budget excludes flights.', '行程安排的预算不含机票和住宿。'
+    'The itinerary budget excludes flights.', '行程安排的预算不含机票和住宿。',
+    '全程预算目标1200元。机票和住宿另行计算。'
   ])('rejects an invented exclusion: %s', text => {
     expect(publicProseProblems([text], /[\u3400-\u9fff]/.test(text) ? 'zh' : 'en', { budget, shortReply: true }))
       .toContain('budget_scope_changed')
@@ -31,7 +32,9 @@ describe('authoritative whole-trip budget scope', () => {
     '博物馆门票不包含在通票内。', 'Flights are not included in the itinerary because you already have tickets.',
     'The itinerary excludes flights; the whole-trip budget remains unchanged.',
     '全程预算只作为目标记录，实际费用未知。',
-    'The budget target covers the whole trip only; costs remain unknown.'
+    'The budget target covers the whole trip only; costs remain unknown.',
+    '全程预算目标1200元。不能将机票和住宿另行计算。',
+    '套票中的门票另行计算。', '套餐住宿另行计算。'
   ])('preserves unknown costs and negated exclusions: %s', text => {
     expect(publicProseProblems([text], /[\u3400-\u9fff]/.test(text) ? 'zh' : 'en', { budget, shortReply: true }))
       .not.toContain('budget_scope_changed')

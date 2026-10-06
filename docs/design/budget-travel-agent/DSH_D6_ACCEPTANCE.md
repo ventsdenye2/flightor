@@ -1,5 +1,7 @@
 # DSH D6 冻结验收与结果
 
+2026-10-07 r21预算关系结构修复已完成定向：最终12文件461/461，根backend check/build及实际构建独立24/24零外呼回放通过。以局部费用谓词/金额绑定替代费用名词默认误拦，跨句金额指代、whether未确认问句与另行计算边界补回归；不放宽费用估计/保证、权威金额/币种/全程口径或原修订额度。完整后端已开始复验，新冻结完整工程及原12固定+4探索真实390×844 H5仍待执行；r20原失败仍FAIL，D6未PASS、无确认硬阻塞，未push/合并/部署。
+
 2026-10-07 r20真实B01 **FAIL**：94ms受理、129.101秒终态、131.921秒完整runner，completed/partial、0accepted、后8动作blocked；不是180秒超时。两稿仅text.overview的excluded_precise_claim被拒，第三稿撞原修订上限；Astra max用冻结函数确认合法预算目标与“门票、餐饮等实际花费以现场为准”被窄模板误拦，标点改变会影响结果，同时发现同额费用指代的反向漏检。结构修复进行中，不仅添加“现场”词表，不放宽金额/每日/费用/保证或修订额度；之后必须新r21冻结完整工程及原12+4。已看失败截图，真实只读PG和原session保留，原报告不改。[失败与关闭审计](evidence/d6-r20-b01-failure.json)：PID113804/TTY83280退出、锁释放、guards_closed1/forbiddenCalls0，历史账本SHA不变。r20为21model/12search/658498 tokens/33 settled/pending0、USD2.28未知预留（非实付）、fare0；累计20账本/21报告、310model/140search/450 settled/pending0、10930664 tokens、USD29.20未知预留、fare0。B02–B12/E01–E04未运行，D6未PASS、无确认硬阻塞。以下“正在B01”是发送前历史快照。
 
 2026-10-07 r20同冻结版本完整工程通过：backend138文件1420/1420（202.09秒）、真实专用PG52/52（54.92秒）、D5本地HTTP/票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端六族116/20/37/52/29/86及根TS、H5/weapp构建。正式固定回放10对两版均accepted、语义一致、0模型/外呼；总P50基线11.158ms/D613.782ms、adapter0.452ms，增加2.624ms保留全部样本，正在只读定位、不宣称提速。源码c1853ad及实际构建/参数不变；原12+4真实390×844 H5从B01开始（TTY98023），尚未通过。D6未PASS、无确认硬阻塞，原失败/DB/会话/账本保留。
@@ -202,6 +204,9 @@ The D6 H5 runner uses the prior H5 harness's 390x844 viewport and records browse
 | D6-39 | r19公开回复擅自将全程预算排除机票/住宿或另计 | budget_scope_changed拒绝受控中英排除/另计表达；未知费用、否定排除及票品/行程范围保留；Astra两轮复核后收窄豁免 | 27个scope例、4文件241/241，check/build/observer通过；真实正文待新冻结复验 |
 | D6-40 | r19 partial局改的安全答复被旧publication.reply覆盖，刷新仍显示旧成功 | 当前reply仅由本轮satisfied且Artifact ID绑定的publication替代；缓存partial/failed/cancelled恢复固定双语状态，旧攻略继续可读 | 前端定向303项和根TS通过；真实页面及恢复待新冻结复验 |
 | D6-41 | r19 runner将局改partial和随后旧攻略读取记observed，可能误判成功 | 全部guide delivery检查satisfied及本轮ID；mandatory局改不得not_requested；解释无新攻略；正文按权威workspace budget检查，不改原journeys分母/输入/历史报告 | helper19/19及runner语法通过；实际读取函数另覆盖正确workspace路径、无预算、权威预算收窄及会话错绑；真实批次必须人工全文/详情/PG/费用复核，observed仍不是PASS |
+| D6-42 | r20 B01两稿合法全程预算目标邻接“门票、餐饮等实际花费以现场为准”被误拦；换句号会通过，跨句“门票费用为这个金额”反而漏放 | 移除费用名词默认肯定及谨慎措辞白名单，改查局部肯定费用谓词、确切金额绑定和跨句金额指代；保留金额/币种/全程口径、每日、保证、费用与原修订上限 | 初版四族279/279后独立24例暴露5种肯定费用谓词/金额指代漏拦和whether问句误拦，新增红9失败/284通过→四族296/296；根check/build及实际构建[24例固定回放](evidence/d6-r21-budget-independent-replay.json)24/24。may cost金额估计仍拒绝；原r20仍FAIL，最终新冻结全量/12+4待执行 |
+
+2026-10-07 对r20未发布原稿的只读内容审查：两稿安排相同7项，均非accepted成果。已保存JNTO滨离宫正文描述茶屋/水上巴士，但没有开闭园或茶屋营业时刻，因此其evening建议未获得现有资料的时段核实；离线证据不足以证明与某个真实闭园时刻冲突，不编造时刻、不追认旧稿。Hoppy来源支持日落后体验，Yanaka已保存店铺时刻与afternoon不直接冲突；其余粗时段仍不是逐时钟排程/交通可行性证明。后续真实正文验收须独立审阅这些边界，不能以预算校验通过替代内容验收。未修改数据库、会话、来源、原报告或账本，未作外呼。
 | D6-15 | Taro 初始 main tab 页面尚未完成首次 ready 时，H5 原生 tabbar 可先发起另一标签的切换；native 与 custom 导航未共享页面就绪条件 | 任一 main tab 的 `useReady` 前禁用原生 H5/custom tab 点击，首次 main tab ready 后恢复原 `switchTab`；初始直达任一 main tab 可解锁，详情返回不重置门 | 已实施；session-recovery fixture 20/20、H5 build通过；真实H5复验待新run，late-hide因果仍未证实 |
 | D6-07 | `update_trip_context` 的空 patch 返回 `changed: false`，但仍重建同 scope 的 evidence store 并复位 source alias sequence；旧模型引用可能映射到后续不同证据 | 同 generation 在 setter 前后记录相同内容、不同 URL，要求 source alias 不重复，并断言 Trip version 与 accepted base 不变 | 修复及定向绿测通过；最终冻结验收待运行 |
 | D6-10 | 准备阶段按当前语言选取任一旧 accepted guide，而发布 CAS 将同 conversation/version 最新任一语言 accepted guide 视为当前基底，可能错误允许回退到旧版或在提交时无故冲突 | 同作用域新英/旧中组合不得把旧中文 guide 当编辑基底；新guide补齐中文 accepted后必须绑定新guide | 准备规则已实施，定向7/7通过；最终冻结验收待运行 |

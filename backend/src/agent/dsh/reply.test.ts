@@ -22,6 +22,10 @@ describe('DSH lightweight public explanation boundary', () => {
     ['zh', '预算只是目标，实际费用仍待核实，不承诺未知费用一定够。'],
     ['zh', '已保留总预算目标，费用是否足够仍需核实。'],
     ['en', 'The budget remains a target; actual costs still need checking.'],
+    ['zh', '全程预算目标为1200元人民币，门票、餐饮等实际花费请以现场为准，未知费用不作估算。'],
+    ['en', 'Your total budget is CNY 1200; consult the venue for ticket prices and dining costs.'],
+    ['zh', '全程预算目标为1200元人民币。不能确认门票费用为这个金额。'],
+    ['en', 'Your total budget is CNY 1200. Whether ticket costs are this amount has not been confirmed.'],
   ] as const)('preserves relevant %s explanation: %s', (locale, text) => {
     expect(publicProseProblems([text], locale, { shortReply: true, budget })).toEqual([])
   })
@@ -82,6 +86,11 @@ describe('DSH lightweight public explanation boundary', () => {
     ['zh', '每天的总预算是1200元。', 'excluded_precise_claim'],
     ['en', 'Your daily budget target is CNY 1200 for the trip.', 'excluded_precise_claim'],
     ['en', 'Tickets cost CNY 1200, matching your total budget.', 'excluded_precise_claim'],
+    ['zh', '总预算是1200元。门票费用就是这个金额。', 'excluded_precise_claim'],
+    ['en', 'Your total budget is CNY 1200. This amount is the actual cost.', 'excluded_precise_claim'],
+    ['zh', '全程预算目标是1200元的实际花费。', 'excluded_precise_claim'],
+    ['zh', '全程预算目标为1200元人民币。门票费用预计为这个金额。', 'excluded_precise_claim'],
+    ['en', 'Your total budget is CNY 1200. Lodging requires that same amount.', 'excluded_precise_claim'],
     ['en', '', 'empty_reply'],
   ] as const)('withholds %s unsafe expression: %s', (locale, text, reason) => {
     expect(publicProseProblems([text], locale, { shortReply: true, budget })).toContain(reason)

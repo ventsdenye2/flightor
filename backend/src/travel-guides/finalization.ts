@@ -65,41 +65,66 @@ const tripBudgetTargetClause = (clause: string, allowShortTotalBudget = false) =
     && !affirmativeDailyBudgetTarget(clause)
 }
 
+const budgetExpense = '(?:机票|飞机票|航空票|住宿|酒店|旅馆|餐饮|交通|门票|airfare|flights?|air tickets?|accommodation|lodging|hotels?|meals?|transport|admission)'
+const expenseSubjects = new RegExp(budgetExpense, 'gi')
+const costModifiers = '(?:(?:的|本次|此次|实际|当前|住宿|餐饮|交通|购物|门票|总|全部|所有|部分)|\\s|\\b(?:the|actual|total|current|accommodation|dining|transport|ticket)\\b)*'
+const moneyReference = '(?:这个金额|这一金额|这个数额|此金额|该金额|同一金额|相同金额|这笔(?:钱|金额)|预算(?:总额|目标|金额)|(?:(?:this|that)(?: same)?|the same) (?:amount|sum|figure)|the (?:budget|target)(?: amount)?)'
+const moneyValue = '(?:\\d+(?:\\.\\d+)?\\s*(?:元|人民币|CNY|RMB|USD|EUR|GBP|JPY)|(?:CNY|RMB|USD|EUR|GBP|JPY)\\s*\\d+(?:\\.\\d+)?|[$€£¥￥]\\s*\\d+(?:\\.\\d+)?)'
+const costValue = `(?:${moneyReference}|${moneyValue})`
+const settledCostPrefix = new RegExp(`(?:已(?:经)?(?:确认|核实|支付|确定)|已付|亦是|也是|就是|等于|作为|用于|为|是|\\b(?:confirmed|verified|paid)\\b)${costModifiers}$`, 'i')
+const amountAsCostPrefix = new RegExp(`${costValue}\\s*(?:(?:就|也|亦)?(?:是|为)|等于|(?:is|was|equals?|represents?)\\s+)${costModifiers}$`, 'i')
+const costEquationSuffix = new RegExp(`^\\s*(?:(?:(?:预计|估计|可能)?(?:就|也|亦)?(?:是|为)|等于|共计|合计|需要|需|(?:is|are|was|were|equals?|costs?|requires?|amounts? to|of|at)\\s+|(?:may|might|will|would) (?:be|cost|require)\\s+))?\\s*${costValue}`, 'i')
+const coordinatedCostSuffix = new RegExp(`(?:并|又|也)已(?:经)?(?:确认|核实|支付|确定)(?:为|是)?\\s*${costValue}`, 'i')
+const uncertainCostPrefix = new RegExp(`(?:无法|不能|尚未)(?:确认|判断)${costModifiers}$|\\b(?:cannot|can't) (?:confirm|determine)${costModifiers}$`, 'i')
+const costQuestionPrefix = new RegExp(`^\\s*(?:whether|if)${costModifiers}$`, 'i')
+const unconfirmedQuestionSuffix = /\b(?:(?:has|have) not(?: yet)? been (?:confirmed|verified)|(?:is|are|remains?) (?:still )?unknown)\s*[.!?]?$/i
+const spendingAmount = new RegExp(`(?:(?:已(?:经)?|曾经)?(?:花了|花费了|付了|支付了?|支出了?)|\\b(?:spent|paid))\\s*${costValue}`, 'gi')
+const assertsCostEquation = (before: string, after: string) => costEquationSuffix.test(after)
+  && !uncertainCostPrefix.test(before)
+  && !(costQuestionPrefix.test(before) && unconfirmedQuestionSuffix.test(after))
+
 const maskAuthoritativeTripBudgetAmounts = (prose: string, budget: { amount: number; currency: string }, allowShortTotalBudget = false) => {
   const amountPattern = budgetAmountPattern(budget.amount, budget.currency, 'gi')
   const targetAmountPattern = budgetAmountPattern(budget.amount, budget.currency)
-  const cautiousBudgetLanguage = /(?:无法确认|无法判断|不能确认|不能判断|不确定|尚未确认|尚未核实|仍待核实|尚待核实|有待核实|是否|不保证|不能保证|不承诺|uncertain|unknown|not sure|cannot confirm|can't confirm|cannot determine|can't determine|not yet (?:known|verified)|whether|may be|might be)/i
-  return prose.split(/(?<=[!?。！？\n])|(?<!\d)\.|\.(?!\d)/).map(sentence => {
+  const amountModifiesCost = new RegExp(`${targetAmountPattern.source}\\s*(?:的|(?:in|for|of|as)\\s+)${costModifiers}$`, 'i')
+  const sentences = prose.split(/(?<=[!?。！？\n])|(?<!\d)\.|\.(?!\d)/)
+  const splitAssertions = (value: string) => value.split(/[,，;；]|\b(?:but|however|although|whereas|and)\b|但|不过|然而|而是|且|并且/gi)
+  // A cost noun is not a cost assertion. Check its local predicate rather than
+  // whitelisting every possible way to defer a check or describe uncertainty.
+  const isAssertedCost = (assertion: string) => [...assertion.matchAll(
+    /\b(?:tickets?|admissions?|fares?|costs?|prices?|expenses?|spending)\b(?:\s+(?:costs?|prices?))?|门票|票价|价格|费用|花费|消费|支出|开销/gi
+  )].some(match => {
+    const start = match.index ?? 0
+    // A preceding target confirmation cannot cross into a parenthetical cost.
+    const before = assertion.slice(0, start).split(/[()（）]/).at(-1) ?? ''
+    const after = assertion.slice(start + match[0].length).split(/[()（）]/)[0] ?? ''
+    const local = before + match[0] + after
+    if (isLocallyNegated(local, before.length, before.length + match[0].length)) return false
+    if (settledCostPrefix.test(before) || amountAsCostPrefix.test(before) || amountModifiesCost.test(before)) return true
+    // Definite confirmation/payment is a factual cost claim even without a
+    // repeated number. A later caution does not undo that local predicate.
+    if (/^\s*(?:(?:已(?:经)?|均已|都已)(?:确认|核实|支付|确定)|已付|(?:也|均|都)?计入其中|(?:(?:is|are|was|were|has been|have been)\s+)?(?:confirmed|verified|paid)\b)/i.test(after)) return true
+    if (assertsCostEquation(before, after)) return true
+    // Handle a coordinated predicate whose subject remains the same cost.
+    return coordinatedCostSuffix.test(after)
+  }) || [...assertion.matchAll(expenseSubjects)].some(match => {
+    // A confirmed booking is not a confirmed price. An expense category only
+    // becomes a monetary claim when its predicate binds an amount/reference.
+    const start = match.index ?? 0
+    const before = assertion.slice(0, start).split(/[()（）]/).at(-1) ?? ''
+    const after = assertion.slice(start + match[0].length).split(/[()（）]/)[0] ?? ''
+    return assertsCostEquation(before, after)
+  }) || [...assertion.matchAll(spendingAmount)].some(match => {
+    const before = assertion.slice(0, match.index).split(/[()（）]/).at(-1) ?? ''
+    return !/(?:是否|没有|尚未|未|不曾|\b(?:not|never|whether))\s*$/i.test(before)
+  })
+  // Sentence punctuation must not turn a target into confirmed costs by
+  // anaphora ("that amount"). All explicit cost relations remain unbacked.
+  const hasAffirmativeCostClaim = sentences.some(sentence => splitAssertions(sentence).some(isAssertedCost))
+  return sentences.map(sentence => {
     const clauses = sentence.split(/([,，;；])/)
-    const hasTripTarget = clauses.some(clause => clause.split(/\b(?:but|however|although|whereas|and)\b|但|不过|然而|而是|且|并且/gi)
+    const hasTripTarget = clauses.some(clause => splitAssertions(clause)
       .some(assertion => tripBudgetTargetClause(assertion, allowShortTotalBudget) && targetAmountPattern.test(assertion)))
-    const isUnsupportedCostAssertion = (assertion: string, adjacent: string) => {
-      const costPattern = /(?:tickets?|admissions?|fares?|costs?|prices?)(?:\s+(?:costs?|prices?))?|门票|票价|费用|花费|消费/gi
-      const costMentions = [...assertion.matchAll(costPattern)]
-      const hasAffirmativeCostMention = costMentions.some(match => {
-        const start = match.index ?? 0
-        const end = start + match[0].length
-        const after = assertion.slice(end)
-        const assertedCostPrefix = /(?:已(?:经)?(?:确认|核实|支付)|已付|亦是|也是|就是|等于|作为|用于|为|是|\b(?:confirmed|verified|paid)\b)(?:(?:的|实际|当前|住宿|餐饮|交通|购物|门票|总|全部|所有|部分)|\s|\b(?:actual|total|current|accommodation|dining|transport|ticket)\b)*$/i.test(assertion.slice(0, start))
-        const localReference = !assertedCostPrefix && /^(?:(?:价格|费用|信息)?(?:(?:、|与|和|及|，|,)\s*(?:实际|当地)?(?:门票(?:价格|费用|信息)?|票价|交通费|住宿费|餐饮费|费用|花费|消费|支出|开销|价格))*)?\s*(?:仍|尚)?以当地为准[\s。！？，,；;）)]*$/i.test(after)
-        const officialReference = !assertedCostPrefix && /^(?:(?:价格|费用|信息)?(?:[、，,]\s*(?:营业时间|预约情况|预约信息|营业信息|活动信息|信息))*(?:(?:与|和|及)(?:营业时间|预约情况|预约信息|营业信息|活动信息|信息))*)?\s*(?:请|应|需|需要)?以官方最新信息为准[\s。！？，,；;）)]*$/i.test(after)
-        const cautiousCostRelation = cautiousBudgetLanguage.test(assertion)
-          && !/(?:confirmed|verified|已确认|已核实)/i.test(assertion)
-        return !isLocallyNegated(assertion, start, end) && !localReference && !officialReference && !cautiousCostRelation
-      })
-      if (!hasAffirmativeCostMention
-        || /不构成.{0,20}(?:费用|花费|开销|支出|可负担性).{0,12}(?:保证|承诺)/.test(assertion)
-        || /(?:需|需要|应|请).{0,16}(?:核对|查询|确认|检查|核实)/.test(assertion)
-        || /\b(?:need to be checked|needs checking|need checking)\b/i.test(assertion)) return false
-      const supportedVariableCostExplanation = !/(?:ticket|admission|fare|price|门票|票价)/i.test(adjacent)
-        && !/(?:已核实|已确认|已经核实|已经确认|verified|confirmed)/i.test(adjacent)
-        && (/(?:实际)?(?:花费|费用|开销|支出)(?:会|将|可能)?(?:因|随|取决于).{0,60}(?:住宿|餐饮|购物|选择|消费习惯|安排).{0,20}(?:而(?:不同|变化|变动|异)|(?:不同|变化|变动|有差异))/.test(adjacent)
-          || /\b(?:actual\s+)?(?:costs?|expenses?|spending)\b.{0,40}\b(?:vary|varies|change|changes|depend|depends)\b.{0,60}\b(?:choice|choices|selection|accommodation|lodging|dining|shopping)\b/i.test(adjacent))
-      return !supportedVariableCostExplanation
-    }
-    const hasAffirmativeCostClaim = clauses.some((clause, index) => index % 2 === 0
-      && clause.split(/\b(?:but|however|although|whereas|and)\b|但|不过|然而|而是|且|并且/gi)
-        .some(assertion => isUnsupportedCostAssertion(assertion, clauses.slice(index, index + 2).join(''))))
     const hasAffirmativeDailyClaim = clauses.some((clause, index) => index % 2 === 0
       && clause.split(/\b(?:but|however|although|whereas|and)\b|但|不过|然而|而是|且|并且/gi)
         .some(affirmativeDailyBudgetTarget))
@@ -149,10 +174,9 @@ export function textProblems(text: FinalText, input: FinalizationInput): string[
   return [...new Set(errors)]
 }
 
-const budgetExpense = '(?:机票|飞机票|航空票|住宿|酒店|旅馆|餐饮|交通|门票|airfare|flights?|air tickets?|accommodation|lodging|hotels?|meals?|transport|admission)'
 const budgetScopePatterns = [
   new RegExp(`(?:不含|不包括|不包含|不涵盖|排除|不算|不计入).{0,24}${budgetExpense}`, 'gi'),
-  new RegExp(`${budgetExpense}.{0,24}(?:另计|另外计算|单独计算|不计入|不包含在|不纳入|在(?:全程)?预算之外|预算以外)`, 'gi'),
+  new RegExp(`${budgetExpense}.{0,24}(?:另计|另外计算|另行计算|单独计算|不计入|不包含在|不纳入|在(?:全程)?预算之外|预算以外)`, 'gi'),
   new RegExp(`(?:预算|总额).{0,24}(?:只|仅)(?:用于|含|包括|覆盖|涵盖).{0,20}(?:${budgetExpense}|活动|游玩)`, 'gi'),
   new RegExp(`\\b(?:excludes?|excluding|without|does not (?:include|cover))\\b.{0,40}\\b${budgetExpense}\\b`, 'gi'),
   new RegExp(`\\b${budgetExpense}\\b.{0,45}\\b(?:outside|excluded|not (?:included|covered)|counted separately|extra)\\b`, 'gi'),
