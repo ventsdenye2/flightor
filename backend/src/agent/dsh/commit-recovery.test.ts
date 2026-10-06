@@ -19,6 +19,27 @@ describe('DSH commit recovery policy', () => {
     recovery.admit(); recovery.failed(error)
     expect(recovery.snapshot()).toMatchObject({ calls: 1, contentAttempts: 0, lastFailure: 'prerequisite' })
   })
+  it('classifies out-of-Goal candidate categories as bounded argument corrections without exposing submitted values', () => {
+    const secret = 'PRIVATE_CANDIDATE_OR_SOURCE'
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', secret, 422, {
+      code: 'candidate_category_outside_goal', fieldPath: 'candidates.7.category', candidateIndex: 7,
+      allowedCategories: ['activity', 'practical', 'private-category'], candidateKey: secret,
+      rejectedCategory: 'event', providerBody: secret
+    })
+    const kind = classifyCommitFailure(error)
+    expect(kind).toBe('arguments')
+    const feedback = safeCommitFeedback(error, kind)
+    expect(feedback).toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', kind: 'arguments',
+      candidateIndex: 7, fieldPath: 'candidates.7.category', allowedCategories: ['activity', 'practical'] })
+    expect(feedback.correction).toContain('Keep the accepted Goal unchanged')
+    expect(feedback.correction).toContain('do not relabel unsupported material')
+    expect(feedback).not.toHaveProperty('candidateKey')
+    expect(feedback).not.toHaveProperty('rejectedCategory')
+    expect(JSON.stringify(feedback)).not.toContain(secret)
+    const recovery = new CommitRecovery()
+    recovery.admit(); recovery.failed(error)
+    expect(recovery.snapshot()).toMatchObject({ calls: 1, argumentCorrections: 1, contentAttempts: 0, lastFailure: 'arguments' })
+  })
   it('explains source-reference parameter errors without copying submitted source text', () => {
     const error = new z.ZodError([{ code: 'custom', path: ['candidates', 0, 'sourceRefs', 0], message: 'PRIVATE_SOURCE_BODY' }])
     const feedback = safeCommitFeedback(error, 'arguments')

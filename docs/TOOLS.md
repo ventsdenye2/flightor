@@ -619,6 +619,8 @@ DSH 模型可见的受控业务工具包括 `get_trip_context`、`get_trip_artif
 
 `commit_travel_guide` 的模型可见紧凑合同区分来源与候选：新候选用本轮 `web_search`/`web_fetch` 返回的 `sourceRefs`，活动条目以 `candidateKey` 选择本次注册的候选；持久候选只用当前快照或本轮 `read_artifact` 返回的 `candidateRef`。补充的新候选用 `supportingCandidateKeys`，补充的持久候选用 `supportingRefs`；后者不接收 sourceRef 或 URL。source URL、编造ID和跨轮 raw refs 均不能替代当前有效引用。原始 `evidenceRefs` 兼容只保留在单一适配边界，恢复原引用后仍执行完整 scope 与证据校验。
 
+每个提交候选的类别必须属于当前已接受 Goal 的 `researchTypes`。越界候选以受控类别校验错误拒绝，不会被隐式重分类、删除或用于扩大 Goal；模型须显式纠正真正填错的类别，或用允许范围内的真实候选替换后重提，不能仅换标签让范围外材料过关。该参数纠正不消耗内容修订额度，工具反馈仅指出允许的类别和安全字段位置，不回显候选键、被拒类别值或来源正文。已接受 Goal 的其余约束和当前 Trip 不变。
+
 首个持久操作必须带与当前明确用户目标匹配的新语义 `intent`；若该目标使用普通 raw-web reference-only 材料，其 `travel_guide` intent 还须在接受首个 Goal 前显式设 `allowPartial=true`。这只允许保留“部分验证”的不确定性，不豁免日程、类别和发布校验；若用户要求独立核实事实，raw-web 路径不能满足要求，应说明限制并澄清。首个 Goal 接受前的参数/前置修正仍须带上首次 intent；Goal 接受后的同轮攻略修复省略重复 `intent`/`goalRef` 并复用不可变约束。显式 Trip setter 只有在持久 `satisfied` 且 Trip version 确实推进后才结束旧绑定，之后的新持久目标须有新的匹配 intent；失败、pending、空 patch 和攻略内容修复不推进 Goal。
 
 每个活动的 text 跟随紧凑 `days[].items[].text`，服务端生成关联键；局部编辑只传 `replaceSlots` 和替换活动，服务端绑定准备时 accepted guide 的 ID/hash，Trip/flight/base变化则拒绝。唯一已选Trip city可补缺省身份，机场/多城市不猜；精确匹配的全程预算目标可确认，费用保证及自由生成精确事实仍拒绝。legacy公开合同/API保持不变。细则见[ADR0029](adr/0029-dsh-prepared-submission.md)及[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。

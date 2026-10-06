@@ -65,6 +65,29 @@ describe('DSH combined guide commit', () => {
     expect(f.tool.description).not.toContain('EVERY complete submission')
   })
 
+  it('returns bounded feedback for an out-of-Goal candidate category and accepts an explicit same-Goal correction', async () => {
+    const f = await fixture()
+    const invalid = structuredClone(f.input)
+    invalid.candidates![0]!.category = 'event' as any
+    const tripBefore = await f.trips.get(f.trip.id)
+
+    await expect(f.execute(invalid)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'candidate_category_outside_goal', candidateIndex: 0, fieldPath: 'candidates.0.category',
+      allowedCategories: ['activity']
+    } })
+    const acceptedGoalId = f.context.activeGoalId!
+    const acceptedGoalBefore = await f.goals.get(acceptedGoalId)
+    expect(acceptedGoalBefore).toMatchObject({ parameters: intent.parameters, status: 'pending' })
+    expect(await f.trips.get(f.trip.id)).toEqual(tripBefore)
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'research')).toEqual([])
+
+    const corrected = await f.execute()
+    expect(corrected).toMatchObject({ status: 'accepted', acceptedGoal: { goalId: acceptedGoalId }, completion: { status: 'satisfied' } })
+    expect((await f.goals.get(acceptedGoalId))?.parameters).toEqual(acceptedGoalBefore!.parameters)
+    expect(await f.goals.listForTrip(f.trip.id)).toHaveLength(1)
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => record.type === 'research')).toHaveLength(1)
+  })
+
   it('omits legacy draft tokens and accepts a full same-turn repair of duplicated findings', async () => {
     const f = await fixture()
     const duplicate = structuredClone(f.input)

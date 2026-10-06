@@ -94,6 +94,8 @@ r7追加：D5完整30/30且 `codeUnchanged=true`（[完整报告](evidence/d5-20
 
 service 级回归 `backend/src/agent/dsh/d6-controlled-update.test.ts` 使用官方 fixture worker，在同一用户请求中先以真实 `trip_context_update` intent 更新全程预算并得到 `satisfied`，再用真实 `travel_guide` intent 提交 compact 攻略。初始故障是在首个攻略提交的 alias/evidence 检查之前返回 `GOAL_INTENT_CONFLICT`：Trip update adapter 更新快照与 evidence scope 后仍保留已满足的 Goal binding。修复后，已确认 setter 保存其 delivery 并结束活动绑定，再按同一可信 scope/generation 和已确认准备版本派生独立尝试身份；后续攻略仍须提供真实 intent。回归 3/3 通过：独立 Goal/request identity 与 context version、旧 source alias 拒绝而新 alias 接受、缺 intent 拒绝、pending setter 不推进、日期冲突导致的失败 setter 不推进均有断言；不重贴 base id/hash/slot-edit字段，不调用付费 Provider。验证命令 `backend npm test -- src/agent/dsh/d6-controlled-update.test.ts`。
 
+2026-10-06 D6-16 / B01 r8 类别越界修复：只读复核保留的 session、浏览器 evidence 与私有 execution log，确认首次 `commit_travel_guide` 的 Goal 仅允许 `activity`、`seasonal`、`practical`，但候选列表包含 `event`。`convertCandidatesToResearch` 原以普通 `Error` 拒绝该类别，service 因而误报 `DSH_TOOL_FAILURE`；后续提交也失败。提交适配层现在在证据转换前按已接受 Goal 校验类别范围，返回受控原因和字段位置。修复层将该错误作为参数纠正，不消耗内容修订额度；反馈只列允许类别与受控位置，不泄露候选键、被拒值或来源正文，也不自动改类、删项或扩大 Goal。定向红测曾以1失败/34通过确认旧行为，绿测 `npm test -- src/agent/dsh/commit-guide.test.ts src/agent/dsh/commit-recovery.test.ts` 为2文件/44项通过；`npm run check` 通过。日志分别为 `output/d6/d6-16-category-red.log`、`output/d6/d6-16-category-green.log`、`output/d6/d6-16-check.log`。恢复后显式修正候选的覆盖验证同一 Goal 被接受并仅创建一份研究 Artifact。未重试真实模型、搜索或票价调用；原 session、数据库、evidence 未修改。此为定向工程修复，不代表 B01 重跑、冻结 12+4 H5 或最终 D6 验收通过。
+
 | 检查/尝试 | 实际结果 | 处理 |
 | --- | --- | --- |
 | 首次 Vitest | esbuild spawn EPERM，未执行案例 | 允许已授权本地测试子进程后重跑，未降低测试 |

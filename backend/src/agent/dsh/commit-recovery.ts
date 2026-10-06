@@ -44,6 +44,7 @@ export function classifyCommitFailure(error: unknown): CommitFailureKind {
     const details = error.details && typeof error.details === 'object' && !Array.isArray(error.details)
       ? error.details as Record<string, unknown> : {}
     const code = typeof details.code === 'string' ? details.code : ''
+    if (code === 'candidate_category_outside_goal') return 'arguments'
     if (['candidate_evidence_unavailable', 'candidate_key_unavailable', 'candidate_location_unresolved',
       'candidate_goal_missing', 'guide_edit_prerequisite', 'activity_text_exact_cover', 'candidate_binding_invalid',
       'duplicate_day_or_activity_key', 'duplicate_candidate_key'].includes(code)) return 'prerequisite'
@@ -77,6 +78,19 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind) {
       'For new candidates select only sourceRefs returned by web_search/web_fetch in this current preparation, not URLs. Reuse the existing current receipts; do not invent references or repeat valid research.'
     else if (error.issues.some(issue => issue.path.includes('candidateRef') || issue.path.includes('supportingRefs'))) feedback.correction =
       'Select only persisted candidate references returned in this preparation for candidateRef/supportingRefs, not source URLs. For new supplemental candidates use supportingCandidateKeys.'
+  }
+  if (code === 'DSH_GUIDE_NEEDS_REVISION' && details.code === 'candidate_category_outside_goal') {
+    const categories = new Set(['event', 'seasonal', 'activity', 'stopover', 'practical'])
+    const candidateIndex = details.candidateIndex
+    const fieldPath = details.fieldPath
+    if (Number.isInteger(candidateIndex) && Number(candidateIndex) >= 0 && Number(candidateIndex) < 50
+      && fieldPath === `candidates.${candidateIndex}.category`) {
+      feedback.candidateIndex = candidateIndex
+      feedback.fieldPath = fieldPath
+    }
+    const allowedCategories = strings(details.allowedCategories).filter(value => categories.has(value)).slice(0, 5)
+    if (allowedCategories.length) feedback.allowedCategories = allowedCategories
+    feedback.correction = 'Keep the accepted Goal unchanged. Submit only candidates whose actual category is in allowedCategories; do not relabel unsupported material. Correct or replace the indicated candidate explicitly, using current-turn evidence where needed.'
   }
   if (code === 'DSH_CANDIDATE_REFERENCE_UNAVAILABLE' && typeof details.fieldPath === 'string'
     && /^(?:supportingRefs\.\d{1,3}|days\.\d{1,3}\.items\.\d{1,3}\.candidateRef)$/.test(details.fieldPath)) {

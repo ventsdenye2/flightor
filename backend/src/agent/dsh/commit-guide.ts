@@ -162,6 +162,11 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
         const goal = context.activeGoalId ? await context.goalRepository?.get(context.activeGoalId) : undefined
         if (!goal || goal.kind !== 'travel_guide') fail('A current travel guide Goal is required', { code: 'candidate_goal_missing' })
         const parameters = travelGuideGoalParametersSchema.parse(goal.parameters)
+        const outOfGoalCategoryIndex = input.candidates.findIndex(candidate => !parameters.researchTypes.includes(candidate.category))
+        if (outOfGoalCategoryIndex >= 0) fail('A candidate category is outside the accepted Goal', {
+          code: 'candidate_category_outside_goal', fieldPath: `candidates.${outOfGoalCategoryIndex}.category`,
+          candidateIndex: outOfGoalCategoryIndex, allowedCategories: parameters.researchTypes
+        })
         const candidates = input.candidates.map(({ locationId, sourceRefs, evidenceRefs, ...candidate }) => {
           try { return { ...candidate, evidenceRefs: sourceRefs ?? evidenceRefs!, location: canonicalResolvedLocation(scopedContext, locationId) } }
           catch { fail('Candidate location must resolve in the current Trip', { code: 'candidate_location_unresolved', candidateKey: candidate.key }) }
