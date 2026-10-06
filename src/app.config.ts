@@ -1,3 +1,8 @@
+const tabBarPagePath = (pagePath: string) => {
+  if (process.env.TARO_ENV !== 'h5') return pagePath
+  return pagePath.startsWith('/') ? pagePath : `/${pagePath}`
+}
+
 export default defineAppConfig({
   usingComponents: process.env.TARO_ENV === 'weapp' ? { 'place-map': './components/place-map/index' } : {},
   pages: [
@@ -26,10 +31,10 @@ export default defineAppConfig({
     backgroundColor: '#ffffff',
     borderStyle: 'white',
     list: [
-      { pagePath: 'pages/plan/index', text: '规划', iconPath: 'assets/tab-plan.png', selectedIconPath: 'assets/tab-plan-active.png' },
-      { pagePath: 'pages/explore/index', text: '探索', iconPath: 'assets/tab-explore.png', selectedIconPath: 'assets/tab-explore-active.png' },
-      { pagePath: 'pages/trips/index', text: '行程', iconPath: 'assets/tab-trips.png', selectedIconPath: 'assets/tab-trips-active.png' },
-      { pagePath: 'pages/profile/index', text: '我的', iconPath: 'assets/tab-profile.png', selectedIconPath: 'assets/tab-profile-active.png' }
+      { pagePath: tabBarPagePath('pages/plan/index'), text: '规划', iconPath: 'assets/tab-plan.png', selectedIconPath: 'assets/tab-plan-active.png' },
+      { pagePath: tabBarPagePath('pages/explore/index'), text: '探索', iconPath: 'assets/tab-explore.png', selectedIconPath: 'assets/tab-explore-active.png' },
+      { pagePath: tabBarPagePath('pages/trips/index'), text: '行程', iconPath: 'assets/tab-trips.png', selectedIconPath: 'assets/tab-trips-active.png' },
+      { pagePath: tabBarPagePath('pages/profile/index'), text: '我的', iconPath: 'assets/tab-profile.png', selectedIconPath: 'assets/tab-profile-active.png' }
     ]
   },
   window: {

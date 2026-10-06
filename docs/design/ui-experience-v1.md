@@ -100,7 +100,11 @@
 
 主要动作保持至少 44px 触控区：局部替换、删除、撤销、收藏。删除后提供可逆撤销；本版收藏仅在预览会话内保留，云端保存及版本冲突属于后续联调。部分结果显示已完成范围与待补内容；图片失败显示占位和重试，不影响文字行程。
 
-2026-10-06 D6 初始导航门：四个生产 main tab 在任一 tab 首次触发 Taro `useReady` 前禁用自定义导航按钮及其 `switchTab` handler；H5 同时通过 document readiness class 让实际 `taro-tabbar` 与 `.production-nav` 暂停接收 pointer input。首个 main tab ready 后沿用原标签切换行为；门槛为单向 app-lifetime latch，非 main 详情页往返不重置。该实现不更改任何 Taro page 的 visible/shade class。离线导航 fixture 和 H5 build 已过；r8真实无脚本初始页面门的十次导航仅9次可见、1次Planner隐藏，故该保护尚不足以关闭导航问题。失败首Plan页缺少`tabbar_page`分类，后续回切仍隐藏；框架内部触发原因继续诊断，不能据此声称白屏已修或H5通过。导航诊断只含受控登录与memory GET，业务写/Provider调用为零；详细失败原件索引见[D6 harness](budget-travel-agent/DSH_D6_HARNESS.md)。
+2026-10-06 D6 初始导航门：四个生产 main tab 在任一 tab 首次触发 Taro `useReady` 前禁用自定义导航按钮及其 `switchTab` handler；H5 同时通过 document readiness class 让实际 `taro-tabbar` 与 `.production-nav` 暂停接收 pointer input。首个 main tab ready 后沿用原标签切换行为；门槛为单向 app-lifetime latch，非 main 详情页往返不重置。原 r8 十次导航有 9 次可见、1 次 Planner 隐藏；失败首 Plan 页 `navTrace` 从首次记录即没有 `taro_tabbar_page`，之后只有隐藏/`shade` 变化，没有先加后移除该 class 的证据。
+
+诊断确认一个可复现的分类时序缺口：`src/app.config.ts` 的 main tab `pagePath` 原为无前导斜杠；Taro 3.6.40 H5 `PageHandler.isTabBar` 给路由补斜杠后直接与 `tabBar.list[].pagePath` 比较，而 `taro-tabbar` 的 `componentWillLoad` 才原地给配置项加斜杠。对实际 3.6.40 `PageHandler.isTabBar` 的确定性检查，原始列表分类结果为 `false`，执行同一 slash normalization 后为 `true`。这与 r8 缺少 `taro_tabbar_page` 相符，但原失败当时 tab list 的瞬时值没有直接抓到，故保留该观测限制。
+
+当前 app config 仅在 `TARO_ENV=h5` 时预先规范化四个主 tab 路径；Weapp 输出维持无前导斜杠格式。新增 `npm run test:tabbar-path-config` 检查两个编译目标的配置路径合同。H5 构建和新的原十次导航复验仍需单独记录；本修正不改变 page visible/shade class，也不把旧 r8 结果追认为通过。导航诊断仅含受控登录与 memory GET，业务写/Provider 调用为零；详细失败原件索引见 [D6 harness](budget-travel-agent/DSH_D6_HARNESS.md)。
 
 跨页收藏和提醒由父应用持有，同一书签与“我的”数量保持一致；提醒只演示设置，不监测票价或通知。二级页面使用返回栈，收藏进入详情、提醒进入航班后返回来源页面，并保留栈内局部状态。普通主导航切换保留规划会话，“新建行程”明确开启空白输入。
 

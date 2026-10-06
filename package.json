@@ -19,6 +19,7 @@
     "qa:h5": "node scripts/qa-h5.cjs",
     "qa:weapp-ui": "node scripts/qa-weapp-ui.cjs",
     "test:weapp-build-info": "node scripts/test-weapp-build-info.cjs",
+    "test:tabbar-path-config": "node scripts/test-tabbar-path-config.cjs",
     "dev:weapp": "npm run build:weapp -- --watch",
     "gen:icons": "node scripts/gen-icons.js",
     "gen:guides": "node scripts/gen-guides.js",
