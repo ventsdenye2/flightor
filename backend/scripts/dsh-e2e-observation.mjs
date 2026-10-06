@@ -29,7 +29,7 @@ const revisionReasonCodes = new Set([
   'internal_identity', 'language', 'duplicated_or_foreign_prose', 'empty_reply', 'format', 'missing_material', 'conflict',
   'invalid_plan', 'timeout', 'cancelled', 'stale', 'provider_failure', 'context_budget',
   'guide_edit_prerequisite', 'protected_slot_conflict', 'protected_supporting_evidence', 'candidate_binding_invalid',
-  'guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable',
+  'guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable', 'guide_initial_result_limit',
   'duplicate_day_or_activity_key', 'activity_text_exact_cover', 'duplicate_candidate_key', 'candidate_goal_missing',
   'candidate_category_outside_goal', 'candidate_location_unresolved', 'candidate_evidence_unavailable',
   'candidate_key_unavailable', 'raw_evidence_requires_partial',

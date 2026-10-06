@@ -70,6 +70,21 @@ function requireRegisteredCandidateKeys(selectedKeys: readonly string[], availab
   })
 }
 
+/** Count selected findings, not source URLs or unselected candidate definitions. */
+async function selectedFindingCount(input: Pick<CommitGuideInput, 'days' | 'supportingRefs' | 'supportingCandidateKeys'>,
+  scope: ArtifactWorkspace, cache = new Map<string, ResearchArtifact>()): Promise<number> {
+  const findings = new Set<string>()
+  for (const ref of [...input.days.flatMap(day => day.items.flatMap(item => item.candidateRef ? [item.candidateRef] : [])),
+    ...(input.supportingRefs ?? [])]) {
+    const candidate = await resolveGuideCandidate(ref, scope, cache)
+    if (!candidate) fail('The persisted candidate is unavailable in this submission', { code: 'candidate_evidence_unavailable' })
+    findings.add(`${candidate.researchArtifactId}:${candidate.findingId}`)
+  }
+  for (const candidateKey of [...input.days.flatMap(day => day.items.flatMap(item => item.candidateKey ? [item.candidateKey] : [])),
+    ...(input.supportingCandidateKeys ?? [])]) findings.add(`new:${candidateKey}`)
+  return findings.size
+}
+
 function failCandidateTemporalEvidence(candidateIndex: number, reason: 'missing' | 'source_not_selected' | 'unavailable' | 'quote_not_found' | 'date_mismatch'): never {
   const code = reason === 'missing' ? 'candidate_temporal_evidence_missing' : 'candidate_temporal_evidence_invalid'
   fail('A selected event needs a current source-backed occurrence date', {
@@ -146,7 +161,7 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
     activityBindings: z.array(z.object({ activityKey: z.string(), activityId: z.string(), sourceRefs: z.array(z.string()) }).strict()) }).strict()
   const tool: AgentTool<CommitGuideInput, z.infer<typeof outputSchema>> = {
     name: 'commit_travel_guide',
-    description: 'Commit an evidence-backed itinerary and its final text together. New candidates select opaque evidenceRefs from web_search/web_fetch and trusted locationId; existing candidateRef may be reused without new research. Raw web evidence is converted to partially_verified, reference-only material, never independent fact verification. For an ordinary research-backed itinerary, set intent.parameters.allowPartial=true before accepting the first durable Goal; this keeps the source uncertainty visible and does not relax daily/category/publication checks. If the user explicitly requires independently verified facts, this raw-evidence path cannot satisfy that requirement: explain the limitation and clarify instead of committing or changing the accepted constraints. Never weaken an already accepted Goal after a rejection. Each day item and text activity share a unique activityKey; each scheduled visit selects a distinct candidate/finding. Do not invent source IDs. Text must be in the current locale, with concrete place/action and preference-based reasons. You may restate the exact authoritative whole-trip budget target as a target; it never proves affordability. Other monetary claims remain excluded. No prices, clock times, exact minutes/durations, opening hours, budget guarantees or verified-fact claims. After a first-guide needs_revision, resubmit the COMPLETE corrected days and text with the same accepted Goal; if the candidates were already registered by that attempt, omit candidates to reuse the same candidateKeys within this turn and unchanged scope. Supplying candidates replaces the list and revalidates every evidenceRef; this is not an accepted-guide local edit and needs no baseGuideId, expectedContentHash or replaceSlots. To modify only a slot of an already accepted guide, use its real persisted baseGuideId/expectedContentHash/replaceSlots and only replacement items; never invent a hash or treat a failed draft as that accepted base. The server preserves every other slot and its text. Required Goal intent is accepted before writes; completion happens only after publication accepts.',
+    description: 'Commit an evidence-backed itinerary and its final text together. New candidates select opaque evidenceRefs from web_search/web_fetch and trusted locationId; existing candidateRef may be reused without new research. Raw web evidence is converted to partially_verified, reference-only material, never independent fact verification. For an ordinary research-backed itinerary, set intent.parameters.allowPartial=true before accepting the first durable Goal; this keeps the source uncertainty visible and does not relax daily/category/publication checks. If the user explicitly requires independently verified facts, this raw-evidence path cannot satisfy that requirement: explain the limitation and clarify instead of committing or changing the accepted constraints. Never weaken an already accepted Goal after a rejection. Each day item and text activity share a unique activityKey; each scheduled visit selects a distinct candidate/finding. maxResults covers all distinct selected findings across the complete guide, including scheduled visits and supporting entries; it is not a per-day limit. Explicit first-guide limits must fit the user request and the complete selection within the existing legal bounds. supportingRefs/supportingCandidateKeys select only additional, unscheduled findings, once each; never repeat a scheduled finding as support. Different genuinely distinct findings may share one raw source and still count separately. Do not invent source IDs. Text must be in the current locale, with concrete place/action and preference-based reasons. You may restate the exact authoritative whole-trip budget target as a target; it never proves affordability. Other monetary claims remain excluded. No prices, free-admission claims, clock times, exact minutes/durations, opening hours, budget guarantees or verified-fact claims. After a first-guide needs_revision with an accepted Goal, resubmit the COMPLETE corrected days and text with the same accepted Goal; if the candidates were already registered by that attempt, omit candidates to reuse the same candidateKeys within this turn and unchanged scope. Supplying candidates replaces the list and revalidates every evidenceRef; this is not an accepted-guide local edit and needs no baseGuideId, expectedContentHash or replaceSlots. To modify only a slot of an already accepted guide, use its real persisted baseGuideId/expectedContentHash/replaceSlots and only replacement items; never invent a hash or treat a failed draft as that accepted base. The server preserves every other slot and its text. Required Goal intent is accepted before writes; completion happens only after publication accepts.',
     inputSchema: commitGuideInputSchema, outputSchema, costClass: 'cheap', costUnits: 1, sideEffect: 'state', parallelSafe: false, timeoutMs: 30_000, provider: 'travel_guide',
     async execute(input, context, signal) {
       if (!context.ownerId) throw new AppError('UNAUTHORIZED', 'An authenticated owner is required', 401)
@@ -338,19 +353,9 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       if (input.baseGuideId || input.expectedContentHash || input.replaceSlots) {
         const scope = await workspaceScope({ ...context, requireGuideFinalization: true }, signal)
         const protectedGuide = await mergeProtectedGuide(input, scope, options.locale)
-        const findings = new Set<string>()
-        const cache = protectedGuide.research
-        for (const ref of [...protectedGuide.days.flatMap(day => day.items.flatMap(item => item.candidateRef ? [item.candidateRef] : [])),
-          ...protectedGuide.supportingRefs]) {
-          const candidate = await resolveGuideCandidate(ref, scope, cache)
-          if (!candidate) fail('The persisted candidate is unavailable in this edit', { code: 'candidate_evidence_unavailable' })
-          findings.add(`${candidate.researchArtifactId}:${candidate.findingId}`)
-        }
-        for (const candidateKey of protectedGuide.days.flatMap(day => day.items.flatMap(item => item.candidateKey ? [item.candidateKey] : []))) {
-          findings.add(`new:${candidateKey}`)
-        }
-        if (findings.size > requested.parameters.maxResults) fail('The edit limit must cover all protected and replacement findings', {
-          code: 'guide_edit_result_limit', selectedFindingCount: findings.size, maxResults: requested.parameters.maxResults
+        const count = await selectedFindingCount(protectedGuide, scope, protectedGuide.research)
+        if (count > requested.parameters.maxResults) fail('The edit limit must cover all protected and replacement findings', {
+          code: 'guide_edit_result_limit', selectedFindingCount: count, maxResults: requested.parameters.maxResults
         })
         checkedEdit = { inputHash: canonicalFingerprint(input), value: protectedGuide }
       }
@@ -368,9 +373,16 @@ export function createCommitGuideTool(options: { evidenceStore: DshEvidenceStore
       ]
       requireRegisteredCandidateKeys(selectedKeys, input.candidates?.map(candidate => candidate.key) ?? [],
         input.candidates ? 'submitted_incomplete' : 'not_submitted')
+      if (!input.baseGuideId && !input.expectedContentHash && !input.replaceSlots) {
+        const scope = await workspaceScope({ ...context, requireGuideFinalization: true }, signal)
+        const count = await selectedFindingCount(input, scope)
+        if (count > requested.parameters.maxResults) fail('The initial limit must cover every selected finding before Goal acceptance', {
+          code: 'guide_initial_result_limit', selectedFindingCount: count, maxResults: requested.parameters.maxResults
+        })
+      }
     }
   })
   return { ...wrapped,
-    description: `${tool.description} DSH Goal protocol: the first submission requires a NEW semantic travel_guide intent matching this user request, or an explicitly resumable goalRef. Later same-turn repairs reuse the accepted immutable Goal automatically; omit intent/goalRef. An explicitly changed intent remains a conflict. Completion feedback is server-owned.`
+    description: `${tool.description} DSH Goal protocol: the first submission requires a NEW semantic travel_guide intent matching this user request, or an explicitly resumable goalRef. If a preflight rejects before Goal acceptance, retain the explicit first intent or unchanged resumable goalRef and candidate definitions on the corrected submission. Once accepted, later same-turn repairs reuse the accepted immutable Goal automatically; omit intent/goalRef. An explicitly changed accepted intent remains a conflict. Completion feedback is server-owned.`
   }
 }

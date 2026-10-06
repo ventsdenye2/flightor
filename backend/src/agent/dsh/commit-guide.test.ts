@@ -10,6 +10,7 @@ import { InMemoryGoalRepository, InMemoryGoalRunRepository } from '../goals/repo
 import type { ToolExecutionContext } from '../runtime/registry.js'
 import { DshEvidenceStore, InMemoryDshEvidenceRepository } from './evidence.js'
 import { createCommitGuideTool, type CommitGuideInput } from './commit-guide.js'
+import { CommitRecovery, safeCommitFeedback } from './commit-recovery.js'
 
 const city = { id: 'city:TYO', type: 'city' as const, name: 'Tokyo', countryCode: 'JP', cityCode: 'TYO' }
 const intent = { kind: 'travel_guide', parameters: { questions: ['Traditional culture'], researchTypes: ['activity'],
@@ -48,7 +49,160 @@ async function fixture() {
   return { trip, trips, context, store, tool, input, artifacts, goals, runs, execute, evidence, evidenceScope, evidenceRepository }
 }
 
+function tenCandidateInput(template: CommitGuideInput, selected = 10): CommitGuideInput {
+  const input = structuredClone(template)
+  input.candidates = Array.from({ length: 10 }, (_, index) => ({ ...input.candidates![0]!, key: `visit-${index + 1}`, title: `Tokyo cultural place ${index + 1}` }))
+  input.days = input.days.map((day, dayIndex) => ({ ...day, items: input.candidates!.slice(dayIndex * 5, Math.min(dayIndex * 5 + 5, selected))
+    .map((candidate, index) => ({ ...template.days[0]!.items[0]!, activityKey: candidate.key, candidateKey: candidate.key,
+      timeOfDay: index < 2 ? 'morning' : 'afternoon' })) }))
+  input.text.activities = input.days.flatMap(day => day.items.map(item => ({ ...template.text.activities[0]!, activityKey: item.activityKey })))
+  return input
+}
+
 describe('DSH combined guide commit', () => {
+  it('rejects ten selected findings at cap eight before Goal acceptance or research writes and permits an explicit first-intent correction', async () => {
+    const f = await fixture(), input = tenCandidateInput(f.input), accept = vi.spyOn(f.runs, 'accept')
+    const recovery = new CommitRecovery()
+    recovery.admit()
+    const error = await f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: { ...intent,
+      parameters: { ...intent.parameters, maxResults: 8 } } }), f.context, new AbortController().signal).catch(error => error)
+    expect(error).toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'guide_initial_result_limit', selectedFindingCount: 10, maxResults: 8
+    } })
+    expect(recovery.failed(error)).toBe('arguments')
+    expect(safeCommitFeedback(error, 'arguments', { acceptedGoal: false })).toMatchObject({
+      revisionCode: 'guide_initial_result_limit', selectedFindingCount: 10, maxResults: 8,
+      maxAllowedResults: 20, fields: ['intent.parameters.maxResults']
+    })
+    expect(accept).not.toHaveBeenCalled()
+    expect(f.context.acceptedGoalIntent).toBeUndefined()
+    expect(await f.goals.listForTrip(f.trip.id)).toEqual([])
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+    expect(recovery.snapshot()).toMatchObject({ calls: 1, argumentCorrections: 1, contentAttempts: 0 })
+    recovery.admit()
+    const accepted = await f.execute(input)
+    recovery.accepted()
+    expect(accepted).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+    expect(recovery.snapshot()).toMatchObject({ calls: 2, argumentCorrections: 1, contentAttempts: 1 })
+  })
+  it('counts selected supporting keys but not unselected candidate definitions sharing the same raw source', async () => {
+    const f = await fixture(), input = tenCandidateInput(f.input, 8), accept = vi.spyOn(f.runs, 'accept')
+    const execute = (value: CommitGuideInput) => f.tool.execute(f.tool.inputSchema.parse({ ...value, intent: { ...intent,
+      parameters: { ...intent.parameters, maxResults: 8 } } }), f.context, new AbortController().signal)
+    await expect(execute({ ...input, supportingCandidateKeys: ['visit-9', 'visit-10'] }))
+      .rejects.toMatchObject({ details: { code: 'guide_initial_result_limit', selectedFindingCount: 10, maxResults: 8 } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+    const accepted = await execute(input)
+    expect(accepted).toMatchObject({ status: 'accepted' })
+    expect(input.candidates).toHaveLength(10)
+    const guide = travelGuideArtifactPayloadSchema.parse((await f.artifacts.get((accepted as any).artifact.id))!.payload)
+    expect(guide.days.flatMap(day => day.items)).toHaveLength(8)
+  })
+  it('reports an impossible complete selection without raising the legal cap or dropping support', async () => {
+    const f = await fixture(), input = tenCandidateInput(f.input), accept = vi.spyOn(f.runs, 'accept')
+    input.supportingCandidateKeys = Array.from({ length: 11 }, (_, index) => `support-${index + 1}`)
+    input.candidates!.push(...input.supportingCandidateKeys.map(key => ({ ...input.candidates![0]!, key, title: key })))
+    const error = await f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: { ...intent,
+      parameters: { ...intent.parameters, maxResults: 20 } } }), f.context, new AbortController().signal).catch(error => error)
+    expect(error).toMatchObject({ details: { code: 'guide_initial_result_limit', selectedFindingCount: 21, maxResults: 20 } })
+    const feedback = safeCommitFeedback(error, 'arguments', { acceptedGoal: false })
+    expect(feedback).toMatchObject({ selectedFindingCount: 21, maxResults: 20, maxAllowedResults: 20 })
+    expect(feedback.correction).toContain('cannot fit the legal or previously accepted limit')
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+    expect(input.supportingCandidateKeys).toHaveLength(11)
+  })
+  it('validates selected candidate registration before reporting a first-intent count mismatch', async () => {
+    const f = await fixture(), input = tenCandidateInput(f.input), accept = vi.spyOn(f.runs, 'accept')
+    input.days[1]!.items[4]!.candidateKey = 'unregistered-place'
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: { ...intent,
+      parameters: { ...intent.parameters, maxResults: 8 } } }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ details: { code: 'candidate_key_unavailable', missingCandidateKeys: ['unregistered-place'] } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+  })
+  it('resolves persisted candidate bindings before reporting a first-intent count mismatch', async () => {
+    const f = await fixture(), input = tenCandidateInput(f.input), accept = vi.spyOn(f.runs, 'accept')
+    const item = input.days[1]!.items[4]!
+    delete item.candidateKey
+    item.candidateRef = 'unavailable-persisted-candidate'
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: { ...intent,
+      parameters: { ...intent.parameters, maxResults: 8 } } }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ details: { code: 'candidate_evidence_unavailable' } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+  })
+  it('preflights a resumable Goal against its existing cap without modifying or replacing it', async () => {
+    const f = await fixture()
+    const original = await f.runs.accept({ tripId: f.trip.id, conversationId: f.context.conversationId,
+      requestId: f.context.requestId, generationId: f.context.generationId, contextSnapshot: f.trip,
+      intent: { ...intent, kind: 'travel_guide', parameters: { ...intent.parameters,
+        researchTypes: ['activity'], requiredEvidenceTypes: ['activity'], maxResults: 8 } } })
+    const accept = vi.spyOn(f.runs, 'accept')
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...tenCandidateInput(f.input), goalRef: original.goal.id }),
+      f.context, new AbortController().signal)).rejects.toMatchObject({ details: {
+      code: 'guide_initial_result_limit', selectedFindingCount: 10, maxResults: 8
+    } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.goals.get(original.goal.id)).toEqual(original.goal)
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual([])
+    expect(f.context.acceptedGoalIntent).toBeUndefined()
+  })
+  it('counts canonical persisted findings once while keeping main/support duplicates a domain rejection', async () => {
+    const f = await fixture()
+    f.input.candidates!.push({ ...f.input.candidates![0]!, key: 'supplement', title: 'Cultural background' })
+    await f.execute()
+    const source = (await f.artifacts.listForTrip(f.trip.id)).find(record => record.type === 'research')!
+    const { guideCandidateRef } = await import('../../travel-guides/candidates.js')
+    const ctx = { ...f.context, requestId: randomUUID(), generationId: randomUUID() }
+    delete ctx.activeGoalId; delete ctx.activeGoalRunId; delete ctx.activeGoalKind; delete ctx.activeGoalContextVersion; delete ctx.acceptedGoalIntent
+    const input = structuredClone(f.input)
+    delete input.candidates
+    const ref = (key: string) => guideCandidateRef({ ownerId: ctx.ownerId, tripId: ctx.tripId, tripContextVersion: 1 }, source.payload as any, key)
+    input.days.forEach(day => day.items.forEach(item => { item.candidateRef = ref(item.candidateKey!); delete item.candidateKey }))
+    input.supportingRefs = [ref('temple'), ref('supplement')]
+    const accept = vi.spyOn(f.runs, 'accept'), before = await f.artifacts.listForTrip(f.trip.id)
+    const execute = (maxResults: number) => f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: { ...intent,
+      parameters: { ...intent.parameters, maxResults } } }), ctx, new AbortController().signal)
+    await expect(execute(3)).rejects.toMatchObject({ details: { code: 'guide_initial_result_limit', selectedFindingCount: 4, maxResults: 3 } })
+    expect(accept).not.toHaveBeenCalled()
+    expect(await f.artifacts.listForTrip(f.trip.id)).toEqual(before)
+    await expect(execute(4)).rejects.toMatchObject({ details: { issues: ['guide_duplicate_evidence'] } })
+    expect(accept).toHaveBeenCalledTimes(1)
+  })
+  it('preserves an already accepted cap instead of treating later over-selection as a new first-intent correction', async () => {
+    const f = await fixture(), input = tenCandidateInput(f.input, 8)
+    input.text.overview = 'Admission costs 40 USD for these cultural visits.'
+    const cappedIntent = { ...intent, parameters: { ...intent.parameters, maxResults: 8 } }
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: cappedIntent }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ details: { presentationProblems: expect.arrayContaining([{ code: 'excluded_precise_claim', fieldPath: 'text.overview' }]) } })
+    const expanded = tenCandidateInput(f.input)
+    delete expanded.candidates
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...expanded, intent }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ code: 'GOAL_INTENT_CONFLICT' })
+    const error = await f.tool.execute(f.tool.inputSchema.parse(expanded), f.context, new AbortController().signal).catch(error => error)
+    expect(error).toMatchObject({ details: { issues: ['guide_result_limit'] } })
+    const recovery = new CommitRecovery()
+    expect(recovery.failed(error)).toBe('content')
+    expect((await f.goals.get(f.context.activeGoalId!))!.parameters).toMatchObject({ maxResults: 8 })
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => publicationFor(record)?.finalization?.variants.en?.status === 'accepted')).toEqual([])
+  })
+  it.each([
+    ['Your entire trip is guaranteed to stay within budget.', 'budget_guarantee'],
+    ['Free admission is available for all temples on this trip.', 'excluded_admission_or_hours']
+  ])('still rejects real public claim %s after the first-intent count is corrected', async (overview, code) => {
+    const f = await fixture(), input = tenCandidateInput(f.input)
+    input.text.overview = overview!
+    await expect(f.tool.execute(f.tool.inputSchema.parse({ ...input, intent: { ...intent,
+      parameters: { ...intent.parameters, maxResults: 8 } } }), f.context, new AbortController().signal))
+      .rejects.toMatchObject({ details: { code: 'guide_initial_result_limit' } })
+    const error = await f.execute(input).catch(error => error)
+    expect(error).toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      presentationProblems: expect.arrayContaining([{ code, fieldPath: 'text.overview' }])
+    } })
+    expect((await f.artifacts.listForTrip(f.trip.id)).filter(record => publicationFor(record)?.finalization?.variants.en?.status === 'accepted')).toEqual([])
+  })
   it('rejects ambiguous candidate bindings before accepting an immutable Goal', async () => {
     const f = await fixture(), accept = vi.spyOn(f.runs, 'accept')
     f.input.days[0]!.items[0]!.candidateRef = 'invalid-both-bindings'

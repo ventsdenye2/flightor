@@ -185,6 +185,16 @@ suite('D6 DSH preparation and PostgreSQL publication CAS', () => {
     }
     const execute = (value: typeof args) => tool.execute(tool.inputSchema.parse(value), context, new AbortController().signal) as Promise<any>
 
+    const tooSmallInitial = { ...args, intent: { ...eventIntent, parameters: { ...eventIntent.parameters, maxResults: 6 } } }
+    await expect(execute(tooSmallInitial)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {
+      code: 'guide_initial_result_limit', selectedFindingCount: 8, maxResults: 6
+    } })
+    expect(context.activeGoalId).toBeUndefined()
+    expect(context.acceptedGoalIntent).toBeUndefined()
+    // Read through the separate recovery connection, not the executing repository instance.
+    expect(await new PostgresGoalRepository(recoveryDb, ownerId).listForTrip(trip.id)).toEqual([])
+    expect(await new PostgresArtifactRepository(recoveryDb, ownerId).listForTrip(trip.id)).toEqual([])
+
     const fake = structuredClone(args) as any
     fake.candidates[3]!.temporalEvidence.quote = '2026年10月10日(土)～10月12日(月)'
     await expect(execute(fake)).rejects.toMatchObject({ code: 'DSH_GUIDE_NEEDS_REVISION', details: {

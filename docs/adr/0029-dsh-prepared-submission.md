@@ -1,5 +1,7 @@
 # ADR 0029：DSH 准备快照与紧凑提交
 
+2026-10-07 r22初稿前置补充（已实现，定向验证通过）：DSH组合提交复用局改的完整finding计数，在新完整攻略的Goal接受与research持久化之前拒绝所选数量超过显式maxResults的提交。绑定XOR、首次raw证据能力与candidateKey注册先检查；持久candidateRef经原owner/Trip/version作用域解析为research/finding身份，日程与supporting共同计数；不同finding不按相同URL/source合并。局改继续按protected＋replacement＋原support完整计数并复用已读合并结果。新`guide_initial_result_limit`是既有有界参数修正，不消耗内容尝试，且不替主模型提高上限或改动选择；已接受Goal的领域`guide_result_limit`仍为内容拒绝。compact首稿自动派生maxResults仅评估，未实施；显式1–20限制、新攻略必填限额、恢复Goal/legacy合同及所有发布门槛保持，无新增模型调用、配置或表。最终12文件473/473含官方fixture worker从零写拒绝到显式纠正后发布；真实新冻结仍待验。受控反馈与完整红绿记录见[字段反馈](../design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)。
+
 2026-10-07 r20局改补充（实现中，未最终验收）：紧凑编辑仍需新的显式语义intent，但maxResults/maxCities可省略，服务端用准备时确切accepted基底Artifact谱系对应的owner/Trip/conversation/version合法Goal原限额补齐。该读取仅对存在基底的turn增加一次owner-scoped Goal get；不使用默认20、不读取另一Goal、不修改已接受Goal。显式不相等限额或取不到权威合同在接受前拒绝，主模型须省略机械限额，不能丢受保护证据。领域commit在首次intent/goalRef接受前校验candidate选择XOR、base/hash/flight/slot及完整合并结果（protected visits＋support＋replacement）的finding计数；只读合并结果只在相同输入的立即执行复用，后续领域验证与publication CAS保持。新攻略与legacy完整限额合同不变，原配置/额度不变。
 
 2026-10-06 r16补充：紧凑提交的表达拒绝返回原输入白名单字段和共享validator的受控码，不回显拒绝原文、不改发布判据或持久FinalIssue。局部保护字段不作为新输入定位；额度耗尽保留最后实质失败阶段。合同与定向红绿记录见[字段反馈](../design/budget-travel-agent/DSH_D6_PRESENTATION_FEEDBACK.md)，最终冻结验收尚未完成。

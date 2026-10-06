@@ -1,5 +1,7 @@
 # 文档维护规则与本轮清理记录
 
+2026-10-07 r22前置原因观察：既有observer白名单新增`guide_initial_result_limit`，用于区分尚未接受Goal的初稿数量参数错误与已接受Goal的领域`guide_result_limit`。仅采受控原因码，不输出候选、来源或任意details；同一官方fixture保留未知码/正文/秘密过滤反例。定向红0/1与修后绿1/1（1.181秒，零外呼）已保存，新构建及真实新冻结结果由[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)和验收记录维护，不改变发布或修订额度。
+
 2026-10-07 r20 H5验收修正：qa-dsh-d6-h5沿用原自然输入与分母，guide交付检查satisfied/本轮Artifact ID，mandatory局改不能以not_requested或旧稿读取替代，解释不能生成新稿；按真实workspace GET合同取得预算，检查采用backend公开文案规则。helper19/19与runner语法通过，真实H5尚待新冻结；用途与范围归[D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)，原r19 observed结果另判FAIL，不改原报告。
 
 2026-10-07 r20观察白名单：已有observer新增guide_edit_result_limit/guide_edit_limit_conflict/guide_edit_limits_unavailable和budget_scope_changed受控原因；presentationProblems仍只含白名单码和规范compact路径，不记录拒绝scope文字或任意details。扩展官方fixture worker1/1通过（1.285秒），正文/秘密/来源过滤负例仍验证；无Provider/业务DB写，实际H5需新冻结复验。

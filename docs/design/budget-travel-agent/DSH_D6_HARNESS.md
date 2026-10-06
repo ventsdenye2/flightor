@@ -1,5 +1,7 @@
 # DSH D6 Isolated Verification Harness
 
+2026-10-07 r22前置数量观察：`guide_initial_result_limit`作为既有observer的受控revisionReason采集，区分初稿Goal接受前的数量参数纠正与已接受Goal后的领域超限；不记录原始details、候选/来源文本或任意字段值。官方fixture补红0/1确认旧白名单漏采，修复后同命令绿1/1（1.181秒），同时通过现有未知码、正文、秘密及presentation路径过滤；原红绿日志分别保留于`output/d6/observer-r22-initial-limit-{red,green}.log`。新构建及真实冻结批次尚待复验。观察记录不能授权扩大Goal限额、增加内容修订额度或追认r21失败。
+
 2026-10-07 r20验收修正：全部travel_guide交付必须completed/satisfied、引用唯一新guide ID且delivery.artifactIds同ID绑定；partial/failed/cancelled不得沿旧refs继续。原固定B01/B02 index4与B05 index3明确必须局改交付，B01/B02 index3解释只允许responded/not_requested、零新产物，B06 index2在已有accepted攻略时要求新编辑。合法解释保留已接受攻略可读，不把其复用当新发布。inspect-latest-result在实际全部详情读取后，通过当前浏览器身份仅GET确切Artifact与同Trip/conversation的workspace，用tripContextSummary.budget和已构建publicProseProblems检查预算保证/范围；无预算旅程保留未设置状态，不猜费用。辅助回归19/19、runner语法通过，原journeys/hash与r19 observed报告不改写。真实最终批次仍须全文/详情/PG/费用审阅，observed不代表PASS。
 
 Status: implementation in progress, 2026-10-06. This harness is evidence collection only; it does not change the frozen journey denominator or convert observed API completion into accepted product behavior.
@@ -10,7 +12,7 @@ Status: implementation in progress, 2026-10-06. This harness is evidence collect
 
 ## PostgreSQL suite
 
-`backend/src/agent/dsh/d6-preparation.integration.test.ts` is part of `backend/vitest.db.config.ts` through the `postgresTestFiles` list. It requires an explicit `TEST_DATABASE_URL` and creates a unique schema for the run. Use only a dedicated loopback test database. The suite covers prepared accepted-guide base capture, concurrent base supersession, stale Trip context, stale selected-flight revision, and persisted retry/readback. It drops only its uniquely named schema after the suite.
+`backend/src/agent/dsh/d6-preparation.integration.test.ts` is part of `backend/vitest.db.config.ts` through the `postgresTestFiles` list. It requires an explicit `TEST_DATABASE_URL` and creates a unique schema for the run. Use only a dedicated loopback test database. The suite covers prepared accepted-guide base capture, concurrent base supersession, stale Trip context, stale selected-flight revision, and persisted retry/readback. The r22 initial-count regression selects four scheduled and four supporting findings sharing raw sources, rejects an explicit cap of six before Goal acceptance, and verifies zero persisted Goals/Artifacts through the separate recovery connection; it then explicitly submits the legal original cap and continues the existing source/date/publication and edit checks. The focused dedicated-PostgreSQL suite passed 3/3 (5.52 seconds, output/d6/postgres-r22-initial-count.log), including these new second-connection assertions; full frozen database validation remains pending. It drops only its uniquely named schema after the suite.
 
 Run it from the repository root with:
 

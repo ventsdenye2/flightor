@@ -22,6 +22,7 @@ describe('public DSH failure classification', () => {
     ['DSH_CANDIDATE_REFERENCE_UNAVAILABLE', null, 'evidence'],
     ['RATE_LIMIT', null, 'provider'],
     ['DSH_COMMIT_CALL_LIMIT', null, 'commit'],
+    ['DSH_GUIDE_NEEDS_REVISION', { code: 'guide_initial_result_limit', selectedFindingCount: 10, maxResults: 8 }, 'commit'],
     ['CONVERSATION_TURN_NOT_FOUND', null, 'ui_restore']
   ] as const)('classifies %s with details %j', (code, details, expected) => {
     expect(classifyDshFailure(code, details)).toBe(expected)

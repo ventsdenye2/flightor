@@ -9,7 +9,7 @@ const stageForCode = (code: string): PublicFailureStage | undefined => {
   if (/^(?:CONVERSATION_TURN_NOT_FOUND|CONVERSATION_TURN_TIMEOUT|AGENT_TURN_TIMEOUT|STALE_CONVERSATION_TURN|ui_restore)$/.test(code)) return 'ui_restore'
   if (/(?:LOCATION|PLACE|candidate_location_unresolved)/i.test(code)) return 'location'
   if (/(?:EVIDENCE|SOURCE|missing_material|candidate_evidence_unavailable|candidate_key_unavailable|DSH_CANDIDATE_REFERENCE_UNAVAILABLE)/i.test(code)) return 'evidence'
-  if (/^(?:DSH_COMMIT_[A-Z0-9_]+|DSH_ARGUMENT_CORRECTION_LIMIT|DSH_REPAIR_LIMIT|commit)$/.test(code)) return 'commit'
+  if (/^(?:DSH_COMMIT_[A-Z0-9_]+|DSH_ARGUMENT_CORRECTION_LIMIT|DSH_REPAIR_LIMIT|guide_initial_result_limit|commit)$/.test(code)) return 'commit'
   if (/(?:PUBLICATION|GUIDE_NEEDS_REVISION|publication)/i.test(code)) return 'publication'
   if (['conflict', 'context_budget', 'invalid_plan', 'language', 'format', 'budget_guarantee', 'budget_scope_changed',
     'excluded_precise_claim', 'excluded_admission_or_hours', 'internal_narration', 'unsupported_asset_or_url',

@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 r22修复定向已完成：初稿完整finding数量在Goal接受/研究写入前校验，参数纠正不占内容修订，已接受/恢复Goal及领域重复证据限制保持；免费参拜和英文Admission is free漏检补窄回归；DSH schema/说明/persona统一补充证据计数与排程互斥合同。最终12文件473/473（27.41秒）、专用真实PG3/3（5.52秒，另一连接核对前置拒绝零Goal/Artifact写）、check/build、runtime14/14（9.35秒）、新构建observer1/1（0.920秒）通过，零新真实调用。完整新冻结工程及原12固定+4探索390×844 H5仍待执行；r21原失败保留FAIL，D6未PASS、无确认硬阻塞。详见[D6验收](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)。以下为历史快照。
+
 2026-10-07 r21真实B01仍FAIL：102ms受理、93.053秒终态、96.226秒完整runner，partial/0accepted/后8动作blocked，不是180秒超时。已确认初稿10活动/10findings先接受maxResults8的Goal并写research后才拒，修订把全部已排候选重复列入supportingRefs；预算保证/免费表达本身也真实违规，不能放宽规则。Astra max正修初稿Goal接受/研究写前的计数与参数反馈；新r22必须重新冻结完整工程和原12+4，r21原失败不追认。服务PID119356/TTY29022已关闭、锁释放、guards_closed1/forbiddenCalls0；历史账本SHA不变，本轮17model/8search/555258tokens/pending0/USD1.64未知预留，累计USD30.84未知预留（均非实付）、fare0。[失败审计](design/budget-travel-agent/evidence/d6-r21-b01-failure.json)及只读PG/会话/页面截图保留。D6未PASS、无确认硬阻塞，继续实施。以下为此前工程快照。
 
 2026-10-07 r21同版工程复验已结束：backend138文件1475/1475（221.37秒）、真实专用PG52/52（70.75秒）、D5本地HTTP/持久票价fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端六族116/20/37/52/6/36及根TS、H5/weapp构建、helper19/19均通过。runtime/observer首次sandbox EPERM未执行业务断言，同命令提权复跑通过并保留首日志。源码bfc3e13，新run679f365c-784b-4ed8-ac64-f0f2cb008306、schema dsh_d6_679f365c784b4ed8ac64f0f2cb008306、API63857/H557375、PID119356/TTY29022；源码/实际构建及783文件归档核对一致，0新真实调用。原12+4真实390×844 H5已从B01开始（TTY63759），D6未PASS、无确认硬阻塞；原r20失败不追认。详见[冻结证据](design/budget-travel-agent/evidence/d6-r21-freeze.json)。

@@ -1,6 +1,10 @@
 # DSH D6 Evidence and Locations
 
+2026-10-07 r22数量回归的独立负例进一步发现英文肯定声明 `Admission is free for all temples on this trip.` 漏检。新增免费入场拒绝与尚未确认的否定表述允许回归，红测191/192确认缺少`excluded_admission_or_hours`（3.04秒，`output/d6/r22-english-free-red-retry.log`）；第一次sandbox EPERM未执行业务断言另存原日志。窄修增加`admission is free`表述匹配，finalization/budget-scope/presentation-problems最终226/226通过（3.24秒，`output/d6/r22-english-free-green.log`），保留“尚未确认免费”的否定表达和已有免费Wi-Fi/资料允许用例。不因数量参数纠正豁免费用规则，不把词法检查当价格研究。完整新冻结工程与真实页面仍待执行，原r21状态保持FAIL。
+
 2026-10-07 r21正式固定回放保留10对逐样本：[完整证据](evidence/d6-r21-fixed-replay.json)，两版均10/10accepted、语义一致、0模型/外呼，总P50基线13.476ms、D614.447ms，增加0.972ms，adapter0.515ms。与r19/r20较大增量的历史批次一并保留，不选择最快结果，不宣称生产提速或数据库往返改善。r21预算修复属于局部费用关系的确定性校验，不新增LLM或网络请求；资料/身份/版本边界不变。
+
+2026-10-07 finalization admission wording: the deterministic public-prose guard rejects the affirmative claim `免费参拜` as `excluded_admission_or_hours`; cautious wording `寺院参拜是否收费仍待核实` remains allowed. The new regression was red before the matcher change (189/190 focused tests; the affirmative phrase produced only `language`) and green after it (190/190). The finalization, budget-scope and presentation-problems suites passed 224/224; production presentation passed 37 checks and planner reply passed 6. A combined run including `commit-guide.test.ts` had 5 failures out of 284, all in that suite's first-intent candidate-count/registration expectations; this change does not claim those broader paths passed. The expression guard is a narrow wording check, not independent admission-price research or semantic certification; paraphrases outside its patterns and live provider/H5 behavior remain unverified.
 
 2026-10-07 r20固定回放与有界诊断：正式10对全部accepted且语义一致、0模型/外呼，完整逐例见[固定回放](evidence/d6-r20-fixed-replay.json)；总P50基线11.15845ms/D613.78205ms，增2.624ms，adapter0.45155ms。r19两批增2.570/2.660ms也保留，不挑最快、不宣称提速。被计数的Artifact/Goal/GoalRun调用相同，Trip.get每例20→18（10对200→180），未发现新增被计数仓库往返；此为内存fixture，不能替代真实PG往返测量。一次进程内固定文本微基准（7批×2500次/版本）由子任务测得textProblems中位21.0→211.7µs/次，反映新增预算表达检查的确定性成本，工具路径两次检查约0.38ms；该辅助诊断只有任务工具输出、无独立完整日志。adapter和表达检查只解释部分差额，剩余约1.9ms无法由现有证据精确归因，保留为未量化同步CPU/测量差异，不据此推导生产延迟。原实时H5 r20仍FAIL，预算结构修复后必须新冻结复测。
 

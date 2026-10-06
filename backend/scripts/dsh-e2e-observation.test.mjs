@@ -48,7 +48,7 @@ test('observes an official fixture worker incrementally without raw model/tool s
           error: { code: 'DSH_GUIDE_NEEDS_REVISION', kind: 'content', revisionCode: 'raw_evidence_requires_partial',
             issues: ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type:PRIVATE_CATEGORY',
               'candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid',
-              'guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable',
+              'guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable', 'guide_initial_result_limit',
               'PRIVATE_REVISION_REASON', 'https://private.example/path?token=SECRET'],
             presentationIssues: ['excluded_precise_claim', randomUUID(), 'SENSITIVE_API_KEY'],
             publicationIssues: [{ code: 'language', detail: 'SENSITIVE_DETAIL' }, { code: 'PRIVATE_CODE' }],
@@ -90,7 +90,7 @@ test('observes an official fixture worker incrementally without raw model/tool s
     assert.deepEqual(commits[0].revisionReasons,
       ['verified_evidence', 'guide_day_coverage', 'guide_duplicate_evidence', 'guide_research_type',
         'candidate_temporal_evidence_missing', 'candidate_temporal_evidence_invalid',
-        'guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable',
+        'guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable', 'guide_initial_result_limit',
         'excluded_precise_claim', 'language', 'budget_guarantee', 'budget_scope_changed', 'guide_day_count', 'format', 'source_missing', 'raw_evidence_requires_partial',
         'candidate_category_outside_goal'])
     assert.deepEqual(commits[0].publicationOutcome, { accepted: false })

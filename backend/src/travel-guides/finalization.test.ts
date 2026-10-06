@@ -284,8 +284,20 @@ describe('integrated main Agent publication', () => {
       languageBodies: [content], budget: { amount: 1200, currency: 'CNY', scope: 'trip' }, budgetTarget: true
     })).toContain('excluded_precise_claim')
   })
-  it.each(['境内免费开放', '免费入场', '免费进入'])('rejects Chinese free-admission claim %s', content => {
+  it.each(['境内免费开放', '免费入场', '免费进入', '免费参拜'])('rejects Chinese free-admission claim %s', content => {
     expect(publicProseProblems([content], 'zh', { languageBodies: [content] })).toContain('excluded_admission_or_hours')
+  })
+  it('allows cautious uncertainty about whether temple worship has an admission fee', () => {
+    const content = '寺院参拜是否收费仍待核实。'
+    expect(publicProseProblems([content], 'zh', { languageBodies: [content] })).not.toContain('excluded_admission_or_hours')
+  })
+  it('rejects an affirmative English admission-is-free claim', () => {
+    const content = 'Admission is free for all temples on this trip.'
+    expect(publicProseProblems([content], 'en', { languageBodies: [content] })).toContain('excluded_admission_or_hours')
+  })
+  it('allows an English statement that free admission has not been confirmed', () => {
+    const content = 'Admission is not confirmed to be free; check the venue before travelling.'
+    expect(publicProseProblems([content], 'en', { languageBodies: [content] })).not.toContain('excluded_admission_or_hours')
   })
   it.each(['提供免费Wi-Fi', '可领取免费导览资料'])('allows non-admission free item %s', content => {
     expect(publicProseProblems([content], 'zh', { languageBodies: [content] })).not.toContain('excluded_admission_or_hours')

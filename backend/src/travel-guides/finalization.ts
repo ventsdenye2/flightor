@@ -228,7 +228,7 @@ export function publicProseProblems(fields: string[], locale: PublicationLocale,
     claimProse = maskAuthoritativeTripBudgetAmounts(prose, options.budget, Boolean(options.shortReply))
   }
   if (/(?:[$€£¥￥]\s*\d|\d+\s*(?:元|日元|美元|minutes?\b|分钟)|\b(?:CNY|RMB|USD|EUR|GBP|JPY)\s*\d|\d+\s*(?:CNY|RMB|USD|EUR|GBP|JPY)\b|\b\d{1,2}:\d{2}\b|(?:ticket|admission|门票).{0,20}\d)/i.test(claimProse)) errors.push('excluded_precise_claim')
-  if (/(?:free admission|always open|open year.round|全年开放|始终对公众开放|免费参观|免费(?:开放|入场|进入)|门票.{0,8}(?:免费|收费))/i.test(prose)) errors.push('excluded_admission_or_hours')
+  if (/(?:free admission|\badmission\s+is\s+free\b|always open|open year.round|全年开放|始终对公众开放|免费参观|免费(?:开放|入场|进入|参拜)|门票.{0,8}(?:免费|收费))/i.test(prose)) errors.push('excluded_admission_or_hours')
   if (/(?:https?:\/\/|latitude|longitude)/i.test(prose)) errors.push('unsupported_asset_or_url')
   if (options.shortReply) {
     if (/(?:\b(?:debug|stack\s?trace|system prompt|chain.of.thought|AgentLoop|DSH|JSON|UUID)\b|\b(?:tool|artifact|candidate|evidence|goal|run|generation|session)(?:_?(?:id|ref|refs)|CallId)\b|\b(?:commit_travel_guide|web_search|web_fetch|update_trip_context|read_artifact|get_trip_context)\b|内部(?:流程|推理|工具)|系统提示词|调试信息|工具调用)/i.test(prose)) errors.push('internal_metadata')

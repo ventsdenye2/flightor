@@ -210,7 +210,8 @@ The D6 H5 runner uses the prior H5 harness's 390x844 viewport and records browse
 | D6-41 | r19 runner将局改partial和随后旧攻略读取记observed，可能误判成功 | 全部guide delivery检查satisfied及本轮ID；mandatory局改不得not_requested；解释无新攻略；正文按权威workspace budget检查，不改原journeys分母/输入/历史报告 | helper19/19及runner语法通过；实际读取函数另覆盖正确workspace路径、无预算、权威预算收窄及会话错绑；真实批次必须人工全文/详情/PG/费用复核，observed仍不是PASS |
 | D6-42 | r20 B01两稿合法全程预算目标邻接“门票、餐饮等实际花费以现场为准”被误拦；换句号会通过，跨句“门票费用为这个金额”反而漏放 | 移除费用名词默认肯定及谨慎措辞白名单，改查局部肯定费用谓词、确切金额绑定和跨句金额指代；保留金额/币种/全程口径、每日、保证、费用与原修订上限 | 初版四族279/279后独立24例暴露5种肯定费用谓词/金额指代漏拦和whether问句误拦，新增红9失败/284通过→四族296/296；根check/build及实际构建[24例固定回放](evidence/d6-r21-budget-independent-replay.json)24/24。may cost金额估计仍拒绝；原r20仍FAIL，最终新冻结全量/12+4待执行 |
 
-| D6-43 | r21首稿10活动/10findings却先接受maxResults8 Goal并保存research，后续内容修订受原不可变limit阻止 | 初稿完整finding计数应在Goal接受和research写前检查；显式不合法数量不能自动提高，提供受控参数纠正反馈并保留内容额度 | 已确认原session/只读PG与observer；Astra max补红修复中，完整新冻结真实验收待执行 |
+| D6-43 | r21首稿10活动/10findings却先接受maxResults8 Goal并保存research，后续内容修订受原不可变limit阻止 | 初稿完整finding计数应在Goal接受和research写前检查；显式不合法数量不能自动提高，提供受控参数纠正反馈并保留内容额度 | 原session/只读PG确认；数量红14失败/107通过，最终12文件473/473，官方fixture worker10>8→显式10纠正、一次search/零前置写通过；真实专用PG3/3二连接零写通过，observer1/1；完整新冻结真实验收待执行 |
+| D6-44 | r21原稿“免费参拜”及r22数量防御回归中的“Admission is free”未被既有免费入场声明规则拒绝；均非合法预算目标 | 扩展原免费入场表述检查，保留未知/否定表述及免费Wi-Fi/导览资料允许；不放宽来源或数量规则，不追认原稿 | 中文红189/190→绿190/190，英文红191/192→最终化/预算/反馈联合226/226；新完整冻结工程及真实页面待执行，详见来源/地点文档 |
 
 2026-10-07 对r20未发布原稿的只读内容审查：两稿安排相同7项，均非accepted成果。已保存JNTO滨离宫正文描述茶屋/水上巴士，但没有开闭园或茶屋营业时刻，因此其evening建议未获得现有资料的时段核实；离线证据不足以证明与某个真实闭园时刻冲突，不编造时刻、不追认旧稿。Hoppy来源支持日落后体验，Yanaka已保存店铺时刻与afternoon不直接冲突；其余粗时段仍不是逐时钟排程/交通可行性证明。后续真实正文验收须独立审阅这些边界，不能以预算校验通过替代内容验收。未修改数据库、会话、来源、原报告或账本，未作外呼。
 | D6-15 | Taro 初始 main tab 页面尚未完成首次 ready 时，H5 原生 tabbar 可先发起另一标签的切换；native 与 custom 导航未共享页面就绪条件 | 任一 main tab 的 `useReady` 前禁用原生 H5/custom tab 点击，首次 main tab ready 后恢复原 `switchTab`；初始直达任一 main tab 可解锁，详情返回不重置门 | 已实施；session-recovery fixture 20/20、H5 build通过；真实H5复验待新run，late-hide因果仍未证实 |

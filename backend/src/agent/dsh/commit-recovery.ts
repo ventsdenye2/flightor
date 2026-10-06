@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { AppError, isAppError } from '../../lib/errors.js'
 import { researchTypeSchema } from '../../research-agent/types.js'
+import { travelGuideGoalParametersSchema } from '../goals/types.js'
 import { sanitizePresentationProblems } from './presentation-problems.js'
 
 export type CommitFailureKind = 'arguments' | 'prerequisite' | 'content' | 'system'
@@ -46,7 +47,7 @@ export function classifyCommitFailure(error: unknown): CommitFailureKind {
     const details = error.details && typeof error.details === 'object' && !Array.isArray(error.details)
       ? error.details as Record<string, unknown> : {}
     const code = typeof details.code === 'string' ? details.code : ''
-    if (code === 'candidate_category_outside_goal') return 'arguments'
+    if (['candidate_category_outside_goal', 'guide_initial_result_limit'].includes(code)) return 'arguments'
     if (code === 'candidate_temporal_evidence_missing') return 'prerequisite'
     if (code === 'candidate_temporal_evidence_invalid') return ['source_not_selected', 'unavailable'].includes(String(details.reason))
       ? 'prerequisite' : 'content'
@@ -87,6 +88,16 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind, opti
     : kind === 'prerequisite' ? 'Correct the missing or stale prerequisite before resubmitting. Reuse current-turn candidates and evidence when their scope is unchanged.'
       : kind === 'content' ? 'Revise the rejected itinerary or public text once, preserving the accepted Goal and protected slots.'
         : 'The guide submission could not be processed. Do not infer acceptance.' }
+  if (code === 'DSH_GUIDE_NEEDS_REVISION' && details.code === 'guide_initial_result_limit') {
+    feedback.revisionCode = details.code
+    feedback.fields = ['intent.parameters.maxResults']
+    // Up to 360 visits, 50 persisted supports and 50 new supports in the existing input schema.
+    if (Number.isInteger(details.selectedFindingCount) && Number(details.selectedFindingCount) >= 0 && Number(details.selectedFindingCount) <= 460)
+      feedback.selectedFindingCount = details.selectedFindingCount
+    if (travelGuideGoalParametersSchema.shape.maxResults.safeParse(details.maxResults).success) feedback.maxResults = details.maxResults
+    feedback.maxAllowedResults = travelGuideGoalParametersSchema.shape.maxResults.maxValue
+    feedback.correction = 'No Goal has been accepted in this turn. The count covers all distinct scheduled and supporting findings across the complete guide; different findings may share one raw source. For a NEW first intent, explicitly correct maxResults to cover that count within maxAllowedResults only when consistent with the user request; keep its semantic scope and all other constraints. Do not silently drop required visits or supporting evidence, add already scheduled findings to supportingRefs, invent candidates, or change a previously accepted/resumed Goal. A corrected first submission still needs its explicit semantic intent (or the unchanged resumable goalRef) and complete candidate definitions. If the complete required selection cannot fit the legal or previously accepted limit, report the constraint without claiming publication.'
+  }
   if (code === 'DSH_GUIDE_NEEDS_REVISION' && ['guide_edit_result_limit', 'guide_edit_limit_conflict', 'guide_edit_limits_unavailable'].includes(String(details.code))) {
     feedback.revisionCode = details.code
     if (Number.isInteger(details.selectedFindingCount) && Number(details.selectedFindingCount) >= 0 && Number(details.selectedFindingCount) <= 410)

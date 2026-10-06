@@ -4,6 +4,46 @@ import { AppError } from '../../lib/errors.js'
 import { CommitRecovery, classifyCommitFailure, safeCommitFeedback } from './commit-recovery.js'
 
 describe('DSH commit recovery policy', () => {
+  it('reports the complete initial finding count as a bounded argument correction without consuming content repair', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_BODY', 422, {
+      code: 'guide_initial_result_limit', selectedFindingCount: 10, maxResults: 8,
+      maxAllowedResults: 999, fieldPath: 'PRIVATE_FIELD', providerBody: 'PRIVATE_BODY'
+    })
+    const recovery = new CommitRecovery()
+    recovery.admit()
+    const kind = recovery.failed(error)
+    expect(kind).toBe('arguments')
+    expect(recovery.snapshot()).toMatchObject({ calls: 1, argumentCorrections: 1, contentAttempts: 0 })
+    const feedback = safeCommitFeedback(error, kind, { acceptedGoal: false })
+    expect(feedback).toMatchObject({ revisionCode: 'guide_initial_result_limit', selectedFindingCount: 10, maxResults: 8,
+      maxAllowedResults: 20, fields: ['intent.parameters.maxResults'] })
+    expect(feedback.correction).toContain('No Goal has been accepted')
+    expect(feedback.correction).toContain('distinct scheduled and supporting findings')
+    expect(feedback.correction).toContain('user request')
+    expect(feedback.correction).toContain('Do not silently drop')
+    expect(JSON.stringify(feedback)).not.toMatch(/PRIVATE_|999/)
+  })
+  it.each([
+    [-1, 8], [461, 8], [1.5, 8], ['PRIVATE_COUNT', 8], [10, 0], [10, 21], [10, 'PRIVATE_LIMIT']
+  ])('filters malformed or out-of-bound initial counts %s/%s', (selectedFindingCount, maxResults) => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_BODY', 422,
+      { code: 'guide_initial_result_limit', selectedFindingCount, maxResults })
+    const feedback = safeCommitFeedback(error, 'arguments', { acceptedGoal: false })
+    if (!Number.isInteger(selectedFindingCount) || Number(selectedFindingCount) < 0 || Number(selectedFindingCount) > 460)
+      expect(feedback).not.toHaveProperty('selectedFindingCount')
+    if (!Number.isInteger(maxResults) || Number(maxResults) < 1 || Number(maxResults) > 20)
+      expect(feedback).not.toHaveProperty('maxResults')
+    expect(feedback.maxAllowedResults).toBe(20)
+    expect(JSON.stringify(feedback)).not.toMatch(/PRIVATE_/)
+  })
+  it('does not reclassify a persisted Goal result-limit failure or encourage changing its accepted cap', () => {
+    const error = new AppError('DSH_GUIDE_NEEDS_REVISION', 'PRIVATE_BODY', 422, { issues: ['guide_result_limit'] })
+    expect(classifyCommitFailure(error)).toBe('content')
+    const feedback = safeCommitFeedback(error, 'content', { acceptedGoal: true })
+    expect(feedback.instruction).toContain('preserving the accepted Goal')
+    expect(feedback).not.toHaveProperty('maxAllowedResults')
+    expect(feedback).not.toHaveProperty('selectedFindingCount')
+  })
   it.each([
     ['candidate_temporal_evidence_missing', 'missing', 'prerequisite'],
     ['candidate_temporal_evidence_invalid', 'source_not_selected', 'prerequisite'],

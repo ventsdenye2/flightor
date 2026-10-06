@@ -34,6 +34,16 @@ const compact = { days: [{ day: 1, cityId: 'city:TYO', kind: 'visit', theme: 'Qu
   text: { reply: 'Your garden visit is ready.', overview: 'Explore a quiet garden at a relaxed pace.', days: [{ day: 1, theme: 'Quiet garden' }] } }
 
 describe('DSH model preparation and deterministic input adaptation', () => {
+  it('keeps explicit first-guide limits and rejects missing or illegal limits without deriving them from the selection', () => {
+    const parameters = { questions: ['Initial itinerary'], researchTypes: ['activity' as const],
+      requiredEvidenceTypes: ['activity' as const], maxResults: 8, maxCities: 1, allowPartial: true }
+    const first = { ...compact, intent: { kind: 'travel_guide', parameters } }
+    expect(adaptDshCommit(first, { trip }).intent).toEqual(first.intent)
+    const { maxResults: _limit, ...withoutLimit } = parameters
+    expect(() => adaptDshCommit({ ...first, intent: { ...first.intent, parameters: withoutLimit } }, { trip })).toThrow()
+    expect(() => adaptDshCommit({ ...first, intent: { ...first.intent, parameters: { ...parameters, maxResults: 21 } } }, { trip })).toThrow()
+    expect(first.intent.parameters.maxResults).toBe(8)
+  })
   it('inherits mechanical edit limits only from the prepared guide authoritative Goal', async () => {
     const ownerId = 'prepared-owner', goals = new InMemoryGoalRepository(ownerId)
     const parameters = { questions: ['Initial itinerary'], researchTypes: ['activity' as const],

@@ -1,5 +1,15 @@
 # D6 发布字段反馈
 
+2026-10-07 r22模型可见合同同步：DSH maxResults描述明确全攻略所有distinct排程及补充findings总数，不按日期或raw source去重，未选择的候选定义不计；supporting字段、工具说明与persona一致要求补充finding不得再排程或重复已排finding。紧凑工具说明明确禁止入场费用/免费入场声明。仅说明现有领域合同，不自动删除/替换候选、不改变合法上限、已接受Goal、证据或发布规则；最终联合473/473通过，真实新冻结仍待执行。
+
+2026-10-07 r22初稿数量前置（已实现，定向验证通过）：r21真实形状的10个不同finding与显式maxResults=8冲突现于Goal接受和research保存前拒绝。独立`guide_initial_result_limit`归arguments，返回完整`selectedFindingCount`（0–460整数）、原显式`maxResults`（既有1–20 schema）及服务端schema的`maxAllowedResults=20`，字段固定为`intent.parameters.maxResults`，不接纳传入的合法上限、正文或任意字段路径。主模型仅能在符合用户请求时显式纠正尚未接受的新intent；不得删必需活动/支持证据、将已安排活动重复列为supporting、提高已接受/恢复Goal上限或虚构候选。首稿重提仍带语义intent及完整候选定义，数量修正占既有参数额度、不占内容修订；领域`issues: [guide_result_limit]`与重复证据保持content拒绝。共享raw来源不合并不同finding，未选候选不计数，支持项完整计入；预算保证/免费声明照常验证。
+
+三文件初始红测14失败/107通过（4.66秒），`backend/output/d6/r22-initial-limit-red-retry.log`保留；首次沙箱esbuild `spawn EPERM`未收集业务断言，另存`r22-initial-limit-red.log`。未运行新真实Provider或业务数据库写，不追认r21失败或完整D6通过。
+
+首版三文件120/121时，新增“Admission is free”负例暴露既有英文免费入场漏检，原`r22-initial-limit-first-green.log`保留并转交[免费规则窄修](DSH_D6_EVIDENCE_AND_LOCATIONS.md)；数量回归同时保留原已拒绝的free admission/预算保证测试。随后7文件157/157（15.24秒）及backend typecheck通过，日志为`r22-initial-limit-green.log`/`r22-initial-limit-check.log`。官方fixture worker的10>8参数纠正与重提、恢复Goal不可修改及persisted引用先验加入后8文件172/172（22.97秒，`r22-initial-limit-joint.log`），当时尚未包含最后21>20全选择不可合法承载用例。
+
+最终12文件473/473（27.41秒）及backend typecheck通过，日志为`backend/output/d6/r22-initial-limit-final-joint-retry.log`/`r22-initial-limit-final-check.log`。包含commit63、准备16、官方fixture intent2/registration2、service12、Goal17、恢复37、公开错误24，以及最终化192/reply74/scope31/字段反馈3；两天各5项的首稿在官方worker中返回arguments、0 Goal/Artifact，一次fixture search资料保持后显式maxResults10重提accepted+satisfied，未新增产品模型或外部调用。首次同组469/473仅因说明措辞更新使4条旧关键片段断言失配，保留`r22-initial-limit-final-joint.log`，恢复等义安全片段后原组复跑通过。完整r22工程、新冻结与真实12+4 H5仍由主验收执行，当前结果不追认r21原失败、不构成D6 PASS。
+
 2026-10-07 r21预算关系修复：r20真实B01两次原overview均因`excluded_precise_claim`被拒，原官方session seq141/146和只读PG均确认权威预算为1200 CNY/trip。冻结函数零外呼对照显示：目标句和成本提示分别可通过，逗号/分号合并则拒；“实际花费以现场为准”和“未知费用不作估算”被费用名词默认判为肯定成本。另确认句号可绕过“门票费用就是这个金额”的费用指代拒绝。现移除费用名词默认veto和当地/官方/变量支出提示模板白名单，按局部费用谓词、精确金额或其指代与成本的关系判断；目标金额仍只匹配权威Trip结构，局部否定/谨慎关系保留，不能通过句号/换行把目标转为费用事实。完整合同归[预算与精确字段](DSH_D6_PUBLIC_ERRORS.md)。没有更改预算范围、证据、权限、版本或修订额度。
 
 真实原文与跨句反例红测为14失败/246通过；首版259/260时保留“费用作为本次花费”的旧失败，名词费用/反向等同/估算指代及谨慎关系第二红为15失败/234通过。中间四族`finalization/reply/budget-scope/presentation-problems`为279/279（4.52秒），其他八个关联提交/恢复/派生套件165/165（21.44秒）。日志位于`backend/output/d6/r21-budget-relation-{red-retry,first-green,boundary-red,green,joint}.log`；首次沙箱esbuild `spawn EPERM`未收集断言，单独保留`red.log`，随后原命令允许本地子进程运行，所有旧断言保留。

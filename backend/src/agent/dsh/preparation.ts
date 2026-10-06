@@ -41,7 +41,7 @@ export async function bindPreparedEditLimits(preparation: DshPreparation, record
 export const dshCommitIntentSchema = z.object({ kind: z.literal('travel_guide'), parameters: z.object({
   ...travelGuideGoalParametersSchema.shape,
   maxResults: travelGuideGoalParametersSchema.shape.maxResults.optional()
-    .describe('Required for a new full guide. For an accepted-guide slot edit, omit: the server carries the exact prepared base Goal limit, including protected supporting findings.'),
+    .describe('Required for a new full guide: the total distinct scheduled and supplemental findings across the complete itinerary, not per day or source URL. Unselected candidate definitions do not count; distinct findings sharing one raw source count separately. For an accepted-guide slot edit, omit: the server carries the exact prepared base Goal limit, including protected supporting findings.'),
   maxCities: travelGuideGoalParametersSchema.shape.maxCities.optional()
     .describe('Required for a new full guide. For an accepted-guide slot edit, omit: the server carries the exact prepared base Goal limit.')
 }).strict() }).strict()
@@ -93,9 +93,9 @@ export const dshCommitInputSchema = commitGuideInputSchema.omit({ baseGuideId: t
       .describe('Use an explicit canonical cityId when the current Trip has multiple selected cities; only one unique selected Trip city may fill an omitted value automatically.'), items: z.array(item).max(6) })).min(1).max(60)
       .describe('For a first guide or failed first-guide repair, submit the COMPLETE itinerary covering exactly the authoritative Trip duration with consecutive day numbers starting at 1, including rest/travel days within that span. Do not append an optional extra day. For a local edit of an accepted guide, submit only the selected replacement slots; the server preserves other days. Always include both days and text in a corrected submission.'),
     supportingRefs: z.array(candidateReference).max(50).optional()
-      .describe('Optional supplemental persisted candidate references, not source URLs. For candidates submitted here, use supportingCandidateKeys instead.'),
+      .describe('Optional distinct supplemental persisted findings that are not scheduled anywhere in days; they count toward maxResults. These are candidate references, not source URLs. Never repeat a scheduled finding here. For candidates submitted here, use supportingCandidateKeys instead.'),
     supportingCandidateKeys: commitGuideInputSchema.shape.supportingCandidateKeys
-      .describe('Optional keys of supplemental/practical candidates submitted or registered by this prepared attempt; no activity text is required for these.'),
+      .describe('Optional distinct supplemental/practical candidates submitted or registered by this prepared attempt that are not scheduled anywhere in days; they count toward maxResults and require no activity text. Never repeat a scheduled finding here.'),
     text: commitGuideInputSchema.shape.text.omit({ activities: true }) }).strict()
 
 export function adaptDshCommit(raw: unknown, preparation: DshPreparation): CommitGuideInput & Record<string, unknown> {
