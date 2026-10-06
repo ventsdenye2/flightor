@@ -49,7 +49,8 @@ export function classifyCommitFailure(error: unknown): CommitFailureKind {
       'duplicate_day_or_activity_key', 'duplicate_candidate_key'].includes(code)) return 'prerequisite'
     return 'content'
   }
-  if (['ARTIFACT_CONTEXT_VERSION_MISMATCH', 'TRIP_CONTEXT_VERSION_CONFLICT', 'FLIGHT_SELECTION_CHANGED'].includes(error.code)) return 'prerequisite'
+  if (['ARTIFACT_CONTEXT_VERSION_MISMATCH', 'TRIP_CONTEXT_VERSION_CONFLICT', 'FLIGHT_SELECTION_CHANGED',
+    'DSH_CANDIDATE_REFERENCE_UNAVAILABLE'].includes(error.code)) return 'prerequisite'
   return 'system'
 }
 
@@ -61,6 +62,8 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind) {
   const code = isAppError(error) ? error.code : error instanceof z.ZodError ? 'INVALID_ARGUMENTS' : 'DSH_TOOL_FAILURE'
   const feedback: Record<string, unknown> = { code, kind, instruction: code === 'GOAL_INTENT_REQUIRED'
     ? 'The first durable operation of this prepared attempt requires a new semantic intent matching the explicit user objective.'
+    : code === 'DSH_CANDIDATE_REFERENCE_UNAVAILABLE'
+    ? 'Correct the indicated reference field: candidateRef/supportingRefs accept only candidate references returned in this preparation, not source URLs. For submitted supplemental candidates use supportingCandidateKeys. Do not invent or drop required evidence. If no Goal was accepted, the corrected first submission still needs its semantic intent; otherwise preserve the accepted immutable Goal and omit intent/goalRef.'
     : code === 'GOAL_INTENT_CONFLICT' || code === 'GOAL_IDEMPOTENCY_CONFLICT'
     ? 'The accepted Goal constraints are immutable. For its repair, omit intent/goalRef and preserve those constraints; do not weaken or replace the objective.'
     : kind === 'arguments'
@@ -68,7 +71,17 @@ export function safeCommitFeedback(error: unknown, kind: CommitFailureKind) {
     : kind === 'prerequisite' ? 'Correct the missing or stale prerequisite before resubmitting. Reuse current-turn candidates and evidence when their scope is unchanged.'
       : kind === 'content' ? 'Revise the rejected itinerary or public text once, preserving the accepted Goal and protected slots.'
         : 'The guide submission could not be processed. Do not infer acceptance.' }
-  if (kind === 'arguments' && error instanceof z.ZodError) feedback.fields = error.issues.slice(0, 20).map(issue => issue.path.join('.'))
+  if (kind === 'arguments' && error instanceof z.ZodError) {
+    feedback.fields = error.issues.slice(0, 20).map(issue => issue.path.join('.'))
+    if (error.issues.some(issue => issue.path.includes('sourceRefs'))) feedback.correction =
+      'For new candidates select only sourceRefs returned by web_search/web_fetch in this current preparation, not URLs. Reuse the existing current receipts; do not invent references or repeat valid research.'
+    else if (error.issues.some(issue => issue.path.includes('candidateRef') || issue.path.includes('supportingRefs'))) feedback.correction =
+      'Select only persisted candidate references returned in this preparation for candidateRef/supportingRefs, not source URLs. For new supplemental candidates use supportingCandidateKeys.'
+  }
+  if (code === 'DSH_CANDIDATE_REFERENCE_UNAVAILABLE' && typeof details.fieldPath === 'string'
+    && /^(?:supportingRefs\.\d{1,3}|days\.\d{1,3}\.items\.\d{1,3}\.candidateRef)$/.test(details.fieldPath)) {
+    feedback.fields = [details.fieldPath]
+  }
   if (kind === 'content' || kind === 'prerequisite') {
     for (const field of ['code', 'requiredActivityKeys', 'submittedActivityKeys', 'unexpectedActivityKeys',
       'missingActivityKeys', 'duplicateActivityKeys', 'issues', 'presentationIssues'] as const) {

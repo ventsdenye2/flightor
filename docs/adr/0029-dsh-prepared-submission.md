@@ -6,7 +6,9 @@
 
 保留官方单主 AgentLoop、公开 API、原 Goal/Run、Artifact、candidate/evidence 和 publication。DSH 首次模型调用前绑定已鉴权 Trip 快照、selected flight revision、同会话当前版本 accepted guide 的确切 id/content hash。复用 planning-context 已读取的 records，不为绑定额外读取最新数据库值。
 
-模型可见 commit 输入中每个 days.items 包含自己的 text，无需复制 activityKey 两次；服务端统一生成关联键，重复候选仍按原规则拒绝。模型仅给 replaceSlots 与替换内容，服务端从准备快照补齐 baseGuideId/hash。首个业务提交仍需真实语义 intent；同轮修复省略 intent/goalRef，服务端复用不可变 accepted Goal，显式变更仍拒绝。模型纠错反馈同样区分首次缺intent与已接受Goal的修复：首次要求真实新意图，后续省略重复intent/goalRef并保留不可变约束；不再要求重复内部协议。legacy 工具合同和公开前端 API 不变。
+模型可见 commit 输入中每个 `days[].items[]` 包含自己的 `text`，无需复制活动键；服务端统一生成关联键，重复候选仍按原规则拒绝。引用字段保持不同语义：新候选只从本轮 `sourceRefs` 取来源，每次活动用 `candidateKey` 绑定本次候选；既有持久候选用当前快照或本轮 `read_artifact` 返回的 `candidateRef`。补充的新候选用 `supportingCandidateKeys`，补充的持久候选用 `supportingRefs`；source URL 不能充作任一 locator。模型仅给 `replaceSlots` 与替换内容，服务端从准备快照绑定 accepted `baseGuideId/hash`。legacy 工具合同和公开前端 API 不变。
+
+首个持久操作必须提供与当前明确用户目标一致的新语义 `intent`。普通 raw-web reference-only 材料不能独立核实事实；用它提交普通攻略时，首个 `travel_guide` Goal 必须显式含 `allowPartial=true`，该标记保留来源不确定性，不豁免日程、类别、publication 或其他约束。用户明确要求独立核实事实时，不能以该路径满足要求或弱化其 Goal，应说明限制并澄清。Goal 接受前的参数/前置纠正仍须提供初始 intent；首次 Goal 接受后的内容修复省略 `intent/goalRef` 并复用不可变 Goal。若显式 Trip setter 返回持久 `satisfied` 且 version 推进，其 Goal 完成并结束绑定；后续新持久目标需新的匹配 intent。失败、pending、空 patch、普通攻略修复不推进 Goal。
 
 所有领域工作区和首次 Goal 接受使用该准备 Trip 版本；外部变化明确 context conflict，不在 commit 时填最新值。显式 update_trip_context 以准备版本执行现有 CAS，只有确认版本推进后才受控更新快照，丢弃旧 raw evidence/candidate aliases/编辑基底；空patch等无版本变化的更新保留原准备、引用映射及基底，不能重置相同scope的序号使旧alias改指另一记录；模型得到新版本条件，须重新准备，不能把旧证据重贴版本。
 

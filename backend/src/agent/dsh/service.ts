@@ -83,15 +83,15 @@ export class DshPlannerService implements PlannerServicePort {
     const domainReferences = (raw: unknown): unknown => {
       if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return raw
       const input = structuredClone(raw) as Record<string, any>
-      const resolve = (ref: string) => {
+      const resolve = (ref: string, fieldPath: string) => {
         const full = references.resolveCandidate(ref)
-        if (!full) throw new AppError('DSH_CANDIDATE_REFERENCE_UNAVAILABLE', 'Candidate reference is not available in this preparation', 409)
+        if (!full) throw new AppError('DSH_CANDIDATE_REFERENCE_UNAVAILABLE', 'Candidate reference is not available in this preparation', 409, { fieldPath })
         return full
       }
-      for (const day of Array.isArray(input.days) ? input.days : []) for (const item of Array.isArray(day.items) ? day.items : []) {
-        if (typeof item.candidateRef === 'string') item.candidateRef = resolve(item.candidateRef)
+      for (const [dayIndex, day] of (Array.isArray(input.days) ? input.days : []).entries()) for (const [itemIndex, item] of (Array.isArray(day.items) ? day.items : []).entries()) {
+        if (typeof item.candidateRef === 'string') item.candidateRef = resolve(item.candidateRef, `days.${dayIndex}.items.${itemIndex}.candidateRef`)
       }
-      if (Array.isArray(input.supportingRefs)) input.supportingRefs = input.supportingRefs.map((ref: unknown) => typeof ref === 'string' ? resolve(ref) : ref)
+      if (Array.isArray(input.supportingRefs)) input.supportingRefs = input.supportingRefs.map((ref: unknown, index: number) => typeof ref === 'string' ? resolve(ref, `supportingRefs.${index}`) : ref)
       return input
     }
     signal.throwIfAborted()
@@ -148,7 +148,7 @@ export class DshPlannerService implements PlannerServicePort {
     const compactSchema = z.toJSONSchema(dshCommitInputSchema) as Record<string, unknown>
     const domainSchema = z.toJSONSchema(commit.inputSchema) as { properties: Record<string, unknown> }
     Object.assign(compactSchema.properties as Record<string, unknown>, { intent: domainSchema.properties.intent })
-    tools.push({ name: commit.name, description: 'Commit a sourced itinerary and current-locale text together. The first submission requires semantic intent; same-turn repairs omit it and preserve the accepted Goal. Choose a distinct candidate for each visit; place its name/introduction/recommendationReason inside that item.text. For a local edit provide replaceSlots and only replacement items; the server binds the prepared accepted guide and content hash. Current evidence and compatible persisted candidates retain their original scope. No budget guarantees, invented sources, precise prices, hours or transport durations. Publication and completion remain server validated.', rawSchema: compactSchema })
+    tools.push({ name: commit.name, description: 'Commit a sourced itinerary and current-locale text together. The first submission requires semantic intent; same-turn repairs omit it and preserve the accepted Goal. Ordinary raw-web material is reference-only: its new travel_guide intent needs allowPartial=true, unless the user requires independently verified facts, in which case explain this limitation instead. Never weaken an accepted Goal. Choose a distinct candidate for each visit; place its name/introduction/recommendationReason inside that item.text. New candidates use current web sourceRefs and are selected by candidateKey; existing persisted candidates use returned candidateRef. Supplemental new candidates use supportingCandidateKeys; supportingRefs accepts persisted candidate references only, never URLs. For a local edit provide replaceSlots and only replacement items; the server binds the prepared accepted guide and content hash. Current evidence and compatible persisted candidates retain their original scope. No budget guarantees, invented sources, precise prices, hours or transport durations. Publication and completion remain server validated.', rawSchema: compactSchema })
     if (deps.web) tools.push(...DSH_WEB_TOOLS)
     let userSaved = false
     let result

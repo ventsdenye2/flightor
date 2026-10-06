@@ -132,8 +132,9 @@ export class NominatimProvider implements PlaceProvider {
 function parseCityCandidate(raw:any,query:string,qualifiers:string[]):LocationRef|undefined {
   if(!raw||!['node','way','relation'].includes(raw.osm_type)||!/^\d+$/.test(String(raw.osm_id)))return
   const type=String(raw.type),addresstype=String(raw.addresstype)
-  const placeCity=raw.class==='place'&&['city','town'].includes(type)
-  const administrativeCity=raw.class==='boundary'&&type==='administrative'
+  const category=raw.class??raw.category
+  const placeCity=category==='place'&&['city','town'].includes(type)
+  const administrativeCity=category==='boundary'&&type==='administrative'
   if((!placeCity&&!administrativeCity)||!['city','town'].includes(addresstype))return
   const name=typeof raw.name==='string'?raw.name.trim():''
   const names=[name,...Object.values(raw.namedetails??{}).filter((value):value is string=>typeof value==='string')]

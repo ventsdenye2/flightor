@@ -25,6 +25,8 @@
 
 冻结的自然语言输入和动作顺序见 [D6 UI journeys v1](d6-journeys.json)。执行合同为 `version: 1`、`journeys[].id` 和按序 `actions[]`；双语 `inputs` 仅是人工对照，不由runner执行。消息保持自然语言，不包含内部工具、intent、引用或版本字段。B09/B10 在生成中的取消使用 `send.awaitTerminal:false` 后立即 `stop`；B11/B12 的隔离后端冷重启是人工操作步骤，沿用同一隔离数据库、D6账本、身份密钥、构建与run目录。航班、澄清和发布均以实际页面结果为准，journey 文件不预置或伪造成功结果。
 
+2026-10-06：在不变更12+4分母与冻结自然语言输入的前提下，将B11/B12详情验收步骤具体化为UI动作。B11从Planner结果及My Trips已保存攻略双入口进入详情，逐活动打开并记录详情sheet，返回概览退出并重进，同run冷重启后重读，然后显式切英文、点击首次本地化并要求单次`POST /v1/artifacts/:id/localization` 200，再切回中文。B12在航班UI采用后等待规划turn终态，并对实际攻略逐活动读详情、同样要求首次localization POST与中文返回、刷新及冷重启。journey与runner已表达这些条件，尚未真实运行；不能把动作配置计作通过。
+
 | ID | 自然目标与必要步骤 | 通过预期 |
 | --- | --- | --- |
 | B01 | 自备票东京11/3–4，文化小吃，全程1200元；解释；仅改第二天下午；刷新 | 实际 accepted 两日；解释无新攻略；其他slot不变；恢复零生成 |
@@ -52,6 +54,8 @@ E01 模糊但合理的“想找安静的文化城市”推荐与连续追问；E
 
 最后冻结代码SHA、工作树及构建指纹、核心配置后完整B01–12；修改即新建最终批次完整重跑。保留累计失败、尝试与最终批次，严禁挑最佳12次。微信可用则真实正式构建验证发送/生成/编辑/双入口恢复/取消；H5、微信、真机分别判定，mock或构建不代表平台PASS。
 
+2026-10-06 平台范围调整：用户明确“暂时不用验收微信小程序内的内容，先验证H5”。本轮真实交互验收只覆盖H5，不开启微信开发者工具CLI安全服务端口；保留weapp构建工程检查，但微信与真机均标记未验收。A族、H5的12固定+4探索分母、同版冻结及内容/持久化/费用标准保持不变。
+
 ## 批次及问题台账（追加）
 
 当前基线 f2ec6c1；本轮已执行下述迭代测试，真实页面与最终冻结批次待运行。付费授权已明确：D6 DeepSeek API 金额不限，逐次计量；其他供应商不继承历史不限。无已完成PASS声明。
@@ -64,11 +68,22 @@ E01 模糊但合理的“想找安静的文化城市”推荐与连续追问；E
 | D6-07 | `update_trip_context` 的空 patch 返回 `changed: false`，但仍重建同 scope 的 evidence store 并复位 source alias sequence；旧模型引用可能映射到后续不同证据 | 同 generation 在 setter 前后记录相同内容、不同 URL，要求 source alias 不重复，并断言 Trip version 与 accepted base 不变 | 修复及定向绿测通过；最终冻结验收待运行 |
 | D6-10 | 准备阶段按当前语言选取任一旧 accepted guide，而发布 CAS 将同 conversation/version 最新任一语言 accepted guide 视为当前基底，可能错误允许回退到旧版或在提交时无故冲突 | 同作用域新英/旧中组合不得把旧中文 guide 当编辑基底；新guide补齐中文 accepted后必须绑定新guide | 准备规则已实施，定向7/7通过；最终冻结验收待运行 |
 | D6-08 | 隔离运行守卫以独占新建模式打开固定审计路径，冷重启沿用同目录时会触发 EEXIST，无法恢复服务 | 同一文件追加带 guard-session UUID/PID 的审计；安装、关闭、再次安装保留原字节及各次计数 | 已修复，受控 probe 9 项通过（零网络/模型）；真实 B11/B12 仍待完整验收 |
-| D6-09 | 同查询键并发返回不同 OSM city identities 时，后写缓存可能丢失仍有效的身份；空且 unverified 的有效旧缓存也会压过随后 verified 的身份，更新时间字段往返还可能损失 PostgreSQL 微秒精度 | 独立 PostgreSQL 覆盖同身份并发、异身份合并、旧身份/verification/TTL 保留、相同 OSM ID、过期替换、空未验证缓存被有效身份补齐，以及双连接单 HTTP/单 lease/缓存命中不新增 lease；有效行只更新 `result_json` 保留数据库 TTL 原值 | `postgres.integration.test.ts` 红测复现旧 verification 覆盖新结果；修复后专用 PG 5/5 通过。Nominatim 使用受控 fixture HTTP，不是真实 Provider 验收 |
+| D6-09 | 同查询键并发返回不同 OSM city identities 时，后写缓存可能丢失仍有效的身份；空且 unverified 的有效旧缓存也会压过随后 verified 的身份，更新时间字段往返还可能损失 PostgreSQL 微秒精度 | 独立 PostgreSQL 覆盖同身份并发、异身份合并、旧身份/verification/TTL 保留、相同 OSM ID、过期替换、空未验证缓存被有效身份补齐，以及双连接单 HTTP/单 lease/缓存命中不新增 lease；有效行只更新 `result_json` 保留数据库 TTL 原值 | `postgres.integration.test.ts` 红测复现旧 verification 覆盖新结果；修复后专用 PG 5/5 通过。真实免费Provider smoke另见本报告本批证据，不替代冻结验收 |
+| D6-13 | Nominatim jsonv2 可返回 `category` 而没有旧 `class` 字段；city parser 只读 `class`，将真实市级 administrative city 拒绝为空未验证 | `class` 存在时优先使用它，仅在缺失时回退到 `category`；category-only 行政城市可解析，冲突字段不得降级，已有名称/国家/类型与多身份歧义规则保持 | 离线红测复现，最小修复后 places+city-resolver 23/23、backend check/build通过。真实Kyoto再请求HTTP200解析为 `osm:relation:357794`、JP、35.0115754/135.7681441；PG缓存复查零HTTP/无新增lease。原安全摘要合并字段不能单独证明其因果字段，但后续诊断记录精确显示 category-only |
 
 续作：完成隔离PG复验、全量冻结回归及真实基线/完整页面旅程；这些迭代结果不能提前宣称通过。
 
 ### 第一批实现与保留失败
+
+2026-10-06 新的原 B01 真实 H5 迭代首轮没有 accepted 攻略，后续动作按前置失败阻塞，没有盲发解释/编辑。页面登录/规划可见，提交到受理87ms、终态56779ms；15模型/5搜索均结算，费用回执仍未知。六个安全正文fetch提供有效当前证据。保留会话工具记录确认首commit及后一次修复都把IC卡资料的网页URL写入 `supportingRefs`，同时已通过 `supportingCandidateKeys` 选择相应practical候选；服务端正确拒绝URL，但将 `DSH_CANDIDATE_REFERENCE_UNAVAILABLE` 归为system且反馈没有字段纠正，模型未修正该字段。问题 D6-12：收敛DSH引用schema、说明和安全有界反馈，保留拒绝规则、不删掉错误字段；先加离线失败回归再修复。本次报告 `backend/.demo/dsh-d6-runtime/d6-iteration-b01/evidence/B01-2026-10-06T05-17-53-059Z.json` 与旧失败都保留，不是最终批次。
+
+D6-12 首轮离线回归取得2失败/13通过：schema允许URL、引用不可用被归system。修复仅在DSH紧凑schema限定返回的candidate locator，明确 sourceRefs/candidateKey/supportingCandidateKeys 的关系，并由service提供受控字段路径；不可用引用按prerequisite计数，反馈说明正确字段和首次/已接受Goal区别，不转发URL或原始异常。不自动删除字段、不升级scope、不减弱任何原领域校验。现有官方fixture worker/no-op alias集成用例增加“URL误填→具体字段反馈→保留同份资料正确重提→只一份Goal/accepted攻略”验证，后续定向结果追加。
+
+原始会话进一步确认7项new candidates的 `sourceRefs` 也全是URL，而不是已返回的UUID或 `s1.*` receipt；第二组离线红测2失败/15通过后，DSH source schema排除URL，仍保留既有短receipt和UUID兼容，领域证据层继续核验完整作用域、内容及状态。Zod字段反馈增加受控纠正提示，要求复用当前有效receipt、不重复研究；不猜测URL所对应的事实、不自动挑来源。第一组绿测曾因旧纯schema fixture使用非法 `gc1.example` 失败2/22；将fixture改成合法locator形状后，4文件/23项通过（含官方worker同材料纠正和Goal唯一性）。后续完整定向结果追加。
+
+D6-12 追加完整定向5文件/28项通过（`output/d6/source-reference-green.log`），覆盖引用反馈、紧凑提交、官方worker服务、空patch alias和受控setter。真实B01复跑及最终冻结全批仍未通过。当前iteration服务已停止；该非TTY进程被终端Ctrl-C直接终止，实测原PID64332不存在且两端口关闭，但未执行finally、原锁文件和审计没有closing事件，原件保留。本次不作冷重启通过证据；最终同run重启需使用可验证的正常停止路径并核对身份/账本/guard追加。
+
+2026-10-06 r7 工程回归：引用字段反馈与JSONv2修复后的后端全量133文件/1211项通过（185.28秒，`output/d6/backend-unit-r7.log`），真实专用PostgreSQL 11文件/51项通过（52.70秒，`output/d6/postgres-r7.log`），官方runtime14/14通过（9.42秒，`output/d6/runtime-r7.log`）。均为工程验证，不能替代最终H5批次。B01 r7报告 `backend/.demo/dsh-d6-runtime/d6-iteration-b01-r7/evidence/B01-2026-10-06T05-49-13-863Z.json` 在登录后进入规划页时输入框隐藏，全部旅程动作阻塞，model/search/fare零调用；单次零turn复现可正常进入，间歇导航问题仍在定位，不宣称根因或修复完成。原工作区仅保留用户两份配置修改，历史账本SHA256仍为 `3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126`。
 
 已实现准备快照、模型单项文字输入、绑定base/hash、同轮Goal省略、scoped C/source引用、单一已选城市补齐，以及发布短事务的基底条件。实际状态由本轮测试决定；协议见 [ADR0029](../../adr/0029-dsh-prepared-submission.md)。
 
@@ -129,8 +144,14 @@ D6-06定向修复后，commit反馈与受控setter批次2文件/9项通过（`ou
 
 ### 微信平台准备实测（不阻止其余工作）
 
+2026-10-06 r6 完整 D5 回归已结束：30/30，`codeUnchanged: true`，21个规划场景首次完成率9/21、自动恢复后21/21；Provider retry 6、schema repair 3、semantic repair 6。P50终态1503ms、P95 2546ms仅描述本地HTTP/持久票价fixture批次，不是用户页面或真实Provider性能。完整脱敏报告见 [r6 D5](evidence/d5-2026-10-06T05-03-34-922Z.json)。此前源码变化导致无效的首批报告继续保留；后续产品变更需要最终版本完整回归。
+
+同次固定材料回放再次获得baseline/D6各10/10 accepted及逐样本语义一致，零模型/外部调用；baseline total P50 10.395ms，D6 adapter P50 0.394ms、total P50 9.933ms。全部逐样本及指纹保留于忽略目录 `backend/.demo/d6-fixed-replay/fixed-replay-2026-10-06T05-10-41.010Z.json`。仅验证适配/domain内存开销未见明显退化，不作为真实页面提速结论，最终源码/构建冻结后复测。
+
 2026-10-06 继续审查的 r5 迭代：backend check/build 均通过（`output/d6/backend-check-r5.log`、`backend-build-r5.log`）；前端 session-recovery、artifacts、production-presentation、conversation-progress 全部 exit 0（同目录 `session-r5.log`、`artifacts-r5.log`、`presentation-r5.log`、`conversation-r5.log`）。来源空 patch 回归、受控 setter 与 service 共 3 文件/10 项通过。D6-08 guard probe 9 项通过，原审计前缀保留、两次安装分配不同 session UUID，关闭计数为受控负面 probe 的 4 与第二次 0；不计入真实批次零违规证据。上述仍为迭代证据，城市缓存修复和完整页面批次待完成。
 
 2026-10-06 已发现 `C:/Program Files (x86)/Tencent/微信web开发者工具/cli.bat`。官方CLI `--help` 可运行；`islogin` 首次沙箱不能写IDE自己的连接文件，允许本地CLI后复验明确返回“IDE service port disabled / 工具的服务端口已关闭”，未取得登录状态或9432自动化连接。开启属于IDE安全设置变更，已向用户单独请求本轮许可；许可未到不执行开启。H5、代码与数据库测试继续，不能以weapp构建或mock代替实际平台运行。
 
 2026-10-06 用户明确回复“暂时不用验收微信小程序内的内容，先验证H5”。本轮平台验收范围调整为H5；原v1微信条件和CLI关闭实测保留，微信页面不执行、不宣布PASS，也不开服务端口。A八类、PG、D5分母30、H5固定12+探索4与内容/恢复标准不变，weapp构建只列工程验证。此为用户范围指令，不是因测试失败降低H5标准。
+
+2026-10-06 B01 官方 web_search evidence 合同只读核查：5次搜索均成功，但5个 `__record_web` 回执均为空。私有 evidence 目录36行中，30条搜索来源为29 `no_body`（安全 URL、无 snippet）和1 `invalid_url`（非 HTTP(S) 地址）；其余6条来自web_fetch，均为 `available/fetched_body` 并返回 refs。锁定 DSH 工具将官方结构化 sources 保留在 canonical `value.sources`，运行时已将该值传给记录器；DeepSeek 官方 provider 可在缺少 text citation 时返回 URL/title 而没有 snippet。零搜索 refs 符合“无可引用正文不成为证据”的合同，不是当前B01未接纳的根因修复或验收通过；需按证据/地点文档所述尽早fetch正文、被阻则换来源。运行材料仍只保留在私有 `backend/.demo/dsh-d6-runtime/d6-iteration-b01`，未复制或提交原始记录。

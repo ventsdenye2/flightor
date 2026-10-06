@@ -3,6 +3,7 @@ import { AppError } from '../../lib/errors.js'
 import type { ArtifactRecord, GuideBaseCondition } from '../../artifacts/repository.js'
 import { publicationFor } from '../../travel-guides/publication.js'
 import { travelGuideArtifactPayloadSchema } from '../../travel-guides/artifact.js'
+import { candidateArtifactId } from '../../travel-guides/candidates.js'
 import type { TripContext } from '../../trips/types.js'
 import type { SelectedFlightContext } from '../../workspaces/flight-selection.js'
 import type { PublicationLocale } from '../../travel-guides/finalization-schema.js'
@@ -36,14 +37,26 @@ export function prepareDshSnapshot(input: { trip: TripContext; records: readonly
 }
 
 const activity = commitGuideInputSchema.shape.text.shape.activities.element.omit({ activityKey: true })
+const sourceReference = z.string().min(1).max(160).refine(value =>
+  value.startsWith('s1.') || z.string().uuid().safeParse(value).success,
+  'Select a source receipt returned in the current preparation, not a source URL.')
+const candidateReference = z.string().min(1).max(160).refine(value =>
+  /^C-[a-f0-9]{10}-[1-9]\d*$/.test(value) || Boolean(candidateArtifactId(value)),
+  'Select a candidate reference returned in the current preparation, not a source URL.')
+  .describe('Only persisted candidate references returned by the current snapshot/read_artifact. Never source URLs or new candidate keys.')
 const item = commitGuideInputSchema.shape.days.element.shape.items.element.omit({ activityKey: true })
-  .extend({ text: activity }).strict()
+  .extend({ candidateRef: candidateReference.optional(), text: activity }).strict()
 /** DSH-only model contract. The legacy domain and frontend contracts stay intact. */
 export const dshCommitInputSchema = commitGuideInputSchema.omit({ baseGuideId: true, expectedContentHash: true, days: true, text: true, candidates: true })
-  .extend({ candidates: z.array(z.object({ key: z.string().trim().min(1).max(120), sourceRefs: z.array(z.string().min(1).max(160)).min(1).max(20),
+  .extend({ candidates: z.array(z.object({ key: z.string().trim().min(1).max(120), sourceRefs: z.array(sourceReference).min(1).max(20)
+      .describe('Select only sourceRefs returned by web_search/web_fetch in this turn after the latest Trip update; never source URLs or invented IDs.'),
       title: z.string().trim().min(1).max(240), summary: z.string().trim().min(1).max(1500),
       category: z.enum(['event', 'seasonal', 'activity', 'stopover', 'practical']), locationId: z.string().min(1).max(160).optional() }).strict()).min(1).max(50).optional(),
     days: z.array(commitGuideInputSchema.shape.days.element.extend({ cityId: z.string().min(1).max(160).optional(), items: z.array(item).max(6) })).min(1).max(60),
+    supportingRefs: z.array(candidateReference).max(50).optional()
+      .describe('Optional supplemental persisted candidate references, not source URLs. For candidates submitted here, use supportingCandidateKeys instead.'),
+    supportingCandidateKeys: commitGuideInputSchema.shape.supportingCandidateKeys
+      .describe('Optional keys of supplemental/practical candidates submitted or registered by this prepared attempt; no activity text is required for these.'),
     text: commitGuideInputSchema.shape.text.omit({ activities: true }) }).strict()
 
 export function adaptDshCommit(raw: unknown, preparation: DshPreparation): CommitGuideInput & Record<string, unknown> {

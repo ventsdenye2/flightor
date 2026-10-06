@@ -73,6 +73,18 @@ describe('place identity without model inference',()=>{
   expect(url.searchParams.get('layer')).toBe('address')
   expect(url.searchParams.get('q')).toBe('Kyoto')
  })
+ it('accepts JSONv2 category fields only when class is absent and preserves city ambiguity',async()=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([
+   cityCandidate({class:undefined,category:'boundary',type:'administrative',addresstype:'city'}),
+   cityCandidate({class:undefined,category:'boundary',type:'administrative',addresstype:'city',osm_type:'node',osm_id:654}),
+   cityCandidate({class:'amenity',category:'boundary',type:'administrative',osm_id:655}),
+   cityCandidate({class:undefined,category:'boundary',type:'administrative',osm_id:656,name:'Tallinn'})
+  ])))
+  const provider=new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:fetcher})
+  const result=await provider.searchCity('Kyoto',new AbortController().signal)
+  expect(result.matches.map(match=>match.id)).toEqual(['osm:relation:987','osm:node:654'])
+  expect(result.verification.status).toBe('verified')
+ })
  it('requires every explicit comma-delimited city qualifier to match OSM address data',async()=>{
   const valid=new NominatimProvider({baseUrl:'https://nominatim.openstreetmap.org',userAgent:'FlightOR-test',fetch:vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify([
    cityCandidate({address:{city:'Kyoto',country:'Japan',country_code:'jp'}})

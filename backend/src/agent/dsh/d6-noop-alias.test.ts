@@ -57,6 +57,7 @@ describe('D6 no-op Trip setter preserves same-generation reference identity', ()
     }
     const fixture = [
       { tool: 'web_search', args: { queries: ['Tokyo cultural museum and transit'] } },
+      { tool: 'commit_travel_guide', args: { ...firstCommit, supportingRefs: ['https://example.test/tokyo-transit'] } },
       { tool: 'commit_travel_guide', args: firstCommit },
       { text: 'Your Tokyo museum visit is saved.' },
       { tool: 'web_search', args: { queries: ['same-scope evidence A'] } },
@@ -97,6 +98,16 @@ describe('D6 no-op Trip setter preserves same-generation reference identity', ()
       const first = await service.runTurn({ requestId: 'noop-alias-first', generationId: generation1, tripId: trip.id,
         conversationId: conversation.id, locale: 'en', message: 'Make a one-day cultural guide for Tokyo.' })
       expect(first.delivery.status).toBe('satisfied')
+      const commitResults = toolResults.filter(value => value.name === 'commit_travel_guide')
+      expect(commitResults).toHaveLength(2)
+      expect(commitResults[0]!.result).toMatchObject({ ok: false, error: {
+        code: 'DSH_CANDIDATE_REFERENCE_UNAVAILABLE', kind: 'prerequisite', fields: ['supportingRefs.0'],
+        recovery: { calls: 1, argumentCorrections: 0, contentAttempts: 0 }
+      } })
+      expect(commitResults[0]!.result.error.instruction).toContain('not source URLs')
+      expect(commitResults[1]!.result).toMatchObject({ status: 'accepted', completion: { status: 'satisfied' } })
+      expect(await goals.listForTrip(trip.id)).toHaveLength(1)
+      expect(searchOrganic).toHaveBeenCalledTimes(1)
       const researchRecord = (await artifacts.listForTrip(trip.id)).find(record => record.type === 'research')!
       const researchId = researchRecord.id
       const guideId = first.artifactRefs.find(ref => ref.type === 'travel_guide')!.id

@@ -1,9 +1,32 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { AppError } from '../../lib/errors.js'
-import { CommitRecovery, safeCommitFeedback } from './commit-recovery.js'
+import { CommitRecovery, classifyCommitFailure, safeCommitFeedback } from './commit-recovery.js'
 
 describe('DSH commit recovery policy', () => {
+  it('gives a field-specific correction for a source URL used as a persisted candidate reference', () => {
+    const error = new AppError('DSH_CANDIDATE_REFERENCE_UNAVAILABLE', 'PRIVATE_PROVIDER_BODY', 409,
+      { fieldPath: 'supportingRefs.0', reference: 'https://private.test/?token=secret' })
+    const kind = classifyCommitFailure(error)
+    expect(kind).toBe('prerequisite')
+    const feedback = safeCommitFeedback(error, kind)
+    expect(feedback.fields).toEqual(['supportingRefs.0'])
+    expect(feedback.instruction).toContain('candidate references')
+    expect(feedback.instruction).toContain('supportingCandidateKeys')
+    expect(feedback.instruction).toContain('not source URLs')
+    expect(JSON.stringify(feedback)).not.toMatch(/PRIVATE_PROVIDER_BODY|private\.test|token=secret/)
+    const recovery = new CommitRecovery()
+    recovery.admit(); recovery.failed(error)
+    expect(recovery.snapshot()).toMatchObject({ calls: 1, contentAttempts: 0, lastFailure: 'prerequisite' })
+  })
+  it('explains source-reference parameter errors without copying submitted source text', () => {
+    const error = new z.ZodError([{ code: 'custom', path: ['candidates', 0, 'sourceRefs', 0], message: 'PRIVATE_SOURCE_BODY' }])
+    const feedback = safeCommitFeedback(error, 'arguments')
+    expect(feedback.fields).toEqual(['candidates.0.sourceRefs.0'])
+    expect(feedback.correction).toContain('sourceRefs returned by web_search/web_fetch')
+    expect(feedback.correction).toContain('not URLs')
+    expect(JSON.stringify(feedback)).not.toContain('PRIVATE_SOURCE_BODY')
+  })
   it('asks for the first objective once and keeps later corrections on the immutable accepted Goal', () => {
     const missing = safeCommitFeedback(new AppError('GOAL_INTENT_REQUIRED', 'untrusted', 409), 'arguments')
     expect(missing.instruction).toContain('new semantic intent')

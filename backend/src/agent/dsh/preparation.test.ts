@@ -29,7 +29,7 @@ function record(id = baseId, contentHash = hash, createdAt = '2026-10-06T01:00:0
           knownCostUsdMicros: 0, unknownCostCalls: 0, failure: null } } } } } },
     createdAt, updatedAt: createdAt }
 }
-const compact = { days: [{ day: 1, cityId: 'city:TYO', kind: 'visit', theme: 'Quiet garden', items: [{ candidateRef: 'gc1.example', timeOfDay: 'afternoon', planningNote: 'Enjoy the garden paths.',
+const compact = { days: [{ day: 1, cityId: 'city:TYO', kind: 'visit', theme: 'Quiet garden', items: [{ candidateRef: `gc1.${baseId}.${'a'.repeat(32)}`, timeOfDay: 'afternoon', planningNote: 'Enjoy the garden paths.',
   text: { name: 'Garden walk', introduction: 'Explore the garden paths at a relaxed pace.', recommendationReason: 'Matches your interest in quiet places.' } }] }],
   text: { reply: 'Your garden visit is ready.', overview: 'Explore a quiet garden at a relaxed pace.', days: [{ day: 1, theme: 'Quiet garden' }] } }
 
@@ -172,6 +172,22 @@ describe('DSH model preparation and deterministic input adaptation', () => {
     expect(result).not.toHaveProperty('intent') // the domain must require first real intent
     expect(schema.shape).not.toHaveProperty('baseGuideId')
     expect(schema.shape).not.toHaveProperty('expectedContentHash')
+  })
+  it('rejects source URLs in supporting candidate references without silently dropping them', () => {
+    const malformed = { ...compact, supportingRefs: ['https://example.test/tokyo-transit'], supportingCandidateKeys: ['transit'] }
+    const parsed = dshCommitInputSchema.safeParse(malformed)
+    expect(parsed.success).toBe(false)
+    if (!parsed.success) expect(parsed.error.issues.map(issue => issue.path.join('.'))).toContain('supportingRefs.0')
+    expect(() => adaptDshCommit(malformed, { trip })).toThrow()
+    expect(dshCommitInputSchema.shape.supportingRefs.description).toContain('not source URLs')
+    expect(dshCommitInputSchema.shape.candidates.unwrap().element.shape.sourceRefs.description).toContain('sourceRefs returned')
+  })
+  it('rejects source URLs in new candidate sourceRefs before accepting a Goal', () => {
+    const malformed = { ...compact, candidates: [{ key: 'transit', sourceRefs: ['https://example.test/tokyo-transit'],
+      title: 'Tokyo transit', summary: 'Tokyo transit guidance.', category: 'practical' }] }
+    const parsed = dshCommitInputSchema.safeParse(malformed)
+    expect(parsed.success).toBe(false)
+    if (!parsed.success) expect(parsed.error.issues.map(issue => issue.path.join('.'))).toContain('candidates.0.sourceRefs.0')
   })
   it('does not fabricate an accepted base and rejects a conflicting legacy base hash', () => {
     expect(() => adaptDshCommit({ ...compact, replaceSlots: [{ day: 1, slot: 'afternoon' }] }, { trip }))
