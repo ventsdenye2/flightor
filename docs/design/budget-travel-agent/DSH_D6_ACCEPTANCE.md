@@ -1,5 +1,7 @@
 # DSH D6 冻结验收与结果
 
+2026-10-07 r24已冻结：[实际指纹](evidence/d6-r24-freeze.json)对应源码fee07e5、run c7c8b0b0-feac-434e-80bc-eb26e818cbf5、schema dsh_d6_c7c8b0b0feac434e80bceb26e818cbf5、PID128072/TTY89212、API63207/H551018。source/backend/H5/worker及783文件构建归档核对一致；H5编译30.383秒/2既有警告，完整启动/构建日志为backend/output/d6/r24-isolated-server.log。当前新批零真实调用；完整backend开始，随后真实专用PG、D5、完整runtime、observer、固定回放与原B01–B12/E01–E04真实390×844 H5。v1、原journey hash、日期、单主模型/路由/max_tokens/thinking及额度授权边界不变，当前未PASS。
+
 2026-10-07 r24提交前验证完成：D6-49同字段预算目标回指/闭合谓词已修复，4文件406/406及相关14文件600/600（28.48秒）；D6-50 compact未知字段反馈正式backend配置38/38（3.12秒）、check/build、新build H5 helper21/21通过。前端116/20/37/52、根TS、weapp构建通过，均有完整本地日志；首次sandbox EPERM与错误扫描baseline副本的42项过程日志保留，不计入正式测试分母。零新增真实调用；原r23失败不追认。即建立新隔离run、冻结实际源码/两端构建/worker/参数与原journey hash，完成完整工程及原12固定+4探索真实390×844 H5。当前未PASS、无确认硬阻塞，标准v1及权限/证据/费用/修订上限不变。
 
 2026-10-07 r23真实B01仍FAIL：105ms受理、92.883秒终态、96.204秒完整runner，partial/0accepted/后8动作blocked，不是180秒超时。首稿免费进入为真实违规；第二内容稿text.reply将同字段已明确全程1200后的“1200元只是整体目标”误按精确费用拒绝，Astra max用实际冻结dist离线原文回放研判有界目标指代；参数错误只列text的反馈另查，不增修订额度、不放宽实际费用。隔离PID115836/TTY6313已关闭，guard恰1安装/1关闭、forbidden0，数据/会话/构建保留，历史ledger SHA不变。r23共19model/10search/540791tokens/pending0/fare0、USD1.96未知预留；累计USD37.36未知预留（非实付）。B02–B12/E01–E04未运行，新代码修复后须新冻结完整验收，D6未PASS、无确认硬阻塞；详见[原失败与关闭审计](evidence/d6-r23-b01-failure.json)。以下r23工程通过为交互前快照。

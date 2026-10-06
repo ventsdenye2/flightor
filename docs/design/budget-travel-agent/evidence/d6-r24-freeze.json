@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "acceptanceVersion": "D6-v1",
+  "status": "frozen_engineering_pending",
+  "createdAt": "2026-10-06T23:18:14.577Z",
+  "codeHead": "fee07e5dd4cff9afb402b91be721eb8cf2a5da44",
+  "runId": "c7c8b0b0-feac-434e-80bc-eb26e818cbf5",
+  "schema": "dsh_d6_c7c8b0b0feac434e80bceb26e818cbf5",
+  "pid": 128072,
+  "serverSession": 89212,
+  "apiPort": 63207,
+  "h5Port": 51018,
+  "sourceFingerprint": "7f99f7fae9ac885ba4248fb56aa758ac3b1f16fc5ba3da1947bba9744b441fbb",
+  "backendFingerprint": "408561013dd87ae5d217f8075cc9849af5c1b276e901c02c0095eb0470b8475b",
+  "h5Fingerprint": "cd39aa4d9e436dbda35b6dfd52a9c1af7efd433514143a37388627f2ce76e0ca",
+  "workerFingerprint": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+  "configuration": {
+    "modelProvider": "deepseek",
+    "model": "deepseek-v4-flash",
+    "searchProvider": "deepseek-official",
+    "maxTokens": 8192,
+    "thinking": "disabled",
+    "nativeResearchProvider": "serpapi",
+    "places": {
+      "url": "https://nominatim.openstreetmap.org/",
+      "userAgent": "FlightOR-D6/1.0 (+https://github.com/ventsdenye2/flightor)",
+      "proxy": "http://127.0.0.1:7890"
+    }
+  },
+  "journeysSha256": "91240ac6c741a990ad4a233451cc5982702b9d3856eb85597fa88206be943780",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false
+  },
+  "authorization": {
+    "deepseek": "current user authorization; unlimited amount, per-call metering retained",
+    "serpapi": "existing authorized account allowance only; no purchase"
+  },
+  "platform": "H5; WeChat page acceptance deferred by user; WeChat build still required",
+  "legacyLedgerSha256": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+  "runtimeArchive": "backend/.demo/dsh-d6-runtime/d6-final-r24/private/runtime-frozen",
+  "runtimeArchiveAudit": {
+    "sha256": "408561013dd87ae5d217f8075cc9849af5c1b276e901c02c0095eb0470b8475b",
+    "files": 783,
+    "matchesRunningBackend": true
+  },
+  "sourceAudit": {
+    "matchesFrozenManifest": true,
+    "at": "2026-10-06T23:18:14.725Z"
+  },
+  "backendAudit": {
+    "matchesFrozenManifest": true
+  },
+  "h5Audit": {
+    "matchesFrozenManifest": true
+  }
+}
