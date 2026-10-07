@@ -1,0 +1,118 @@
+{
+  "scope": {
+    "requestedThisBatch": {
+      "fixedDenominator": 12,
+      "exploratoryDenominator": 0,
+      "totalDenominator": 12
+    },
+    "fixedAttempted": 12,
+    "fixedComplete": true,
+    "fullProtocolComplete": false,
+    "deferredIds": [
+      "E01",
+      "E02",
+      "E03",
+      "E04"
+    ]
+  },
+  "B05": {
+    "sourceDetailCounts": [
+      26
+    ],
+    "projectionDetailCounts": [
+      26
+    ],
+    "sourceUtf8TextBytes": [
+      11893
+    ],
+    "projectionUtf8TextBytes": [
+      11893
+    ],
+    "aligned": true
+  },
+  "B02": [
+    {
+      "attempt": 1,
+      "report": "B02-2026-10-06T23-57-26-117Z.json",
+      "terminalCodes": {
+        "source": [
+          "AGENT_TURN_FAILED"
+        ],
+        "projection": [
+          "AGENT_TURN_FAILED"
+        ],
+        "fieldsAligned": true
+      },
+      "observerErrorCodes": {
+        "source": [
+          "DSH_DIRECTORY_LOCKED"
+        ],
+        "projection": [
+          "DSH_DIRECTORY_LOCKED"
+        ],
+        "aligned": true
+      },
+      "observerMeterIds": {
+        "sourceCount": 0,
+        "projectedCount": 0,
+        "aligned": true
+      },
+      "observerIdentityRecords": {
+        "sourceCount": 4,
+        "projectedCount": 4,
+        "aligned": true
+      }
+    },
+    {
+      "attempt": 2,
+      "report": "B02-2026-10-07T00-01-00-679Z.json",
+      "terminalCodes": {
+        "source": [
+          null
+        ],
+        "projection": [
+          null
+        ],
+        "fieldsAligned": true
+      },
+      "observerErrorCodes": {
+        "source": [
+          "LOCATION_NOT_RESOLVED",
+          "SOURCE_TIMEOUT",
+          "SOURCE_TIMEOUT",
+          "DSH_GUIDE_NEEDS_REVISION",
+          "DSH_GUIDE_NEEDS_REVISION",
+          "DSH_GUIDE_NEEDS_REVISION",
+          "DSH_REPAIR_LIMIT"
+        ],
+        "projection": [
+          "LOCATION_NOT_RESOLVED",
+          "SOURCE_TIMEOUT",
+          "SOURCE_TIMEOUT",
+          "DSH_GUIDE_NEEDS_REVISION",
+          "DSH_GUIDE_NEEDS_REVISION",
+          "DSH_GUIDE_NEEDS_REVISION",
+          "DSH_REPAIR_LIMIT"
+        ],
+        "aligned": true
+      },
+      "observerMeterIds": {
+        "sourceCount": 51,
+        "projectedCount": 51,
+        "aligned": true
+      },
+      "observerIdentityRecords": {
+        "sourceCount": 324,
+        "projectedCount": 324,
+        "aligned": true
+      }
+    }
+  ],
+  "secretScan": {
+    "passed": true,
+    "occurrenceCount": 0,
+    "uniquePathCount": 0,
+    "samplePaths": []
+  },
+  "serializedSecretScanMatches": 0
+}

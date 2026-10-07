@@ -1,0 +1,689 @@
+{
+  "status": "PAUSED_BY_USER_NOT_PASS",
+  "fixedExecuted": 12,
+  "originalAttempts": 13,
+  "runnerFailedJourneys": 9,
+  "runnerObservedJourneys": 3,
+  "independentConfirmedFailureJourneys": 11,
+  "fullScenarioPassClaims": 0,
+  "limitedSubchecksJourney": "B05",
+  "exploratoryNotRun": [
+    "E01",
+    "E02",
+    "E03",
+    "E04"
+  ],
+  "journeys": [
+    {
+      "journeyId": "B01",
+      "state": "FAIL",
+      "assessment": "Explanation withheld; unrelated edits/restore blocked; accepted first draft is not full fact acceptance.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "failed",
+          "durationMs": 59613,
+          "blockedActions": [
+            {
+              "index": 4,
+              "label": "Edit only day two afternoon",
+              "blockedBy": "Explain without replanning",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 5,
+              "label": "Reload accepted trip",
+              "blockedBy": "Explain without replanning",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 6,
+              "label": "Open the latest visible itinerary after reload",
+              "blockedBy": "Explain without replanning",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 7,
+              "label": "Observe restored trip",
+              "blockedBy": "Explain without replanning",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 8,
+              "label": "Read every accepted activity detail after edit",
+              "blockedBy": "Explain without replanning",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "4774c12106d3da9920e2ba1f9f3fd9fc08c38f2ad53b1e96fbd3c34eff4b76b7"
+        }
+      ]
+    },
+    {
+      "journeyId": "B02",
+      "state": "FAIL",
+      "assessment": "Both original environment failure and product publication rejection retained.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "failed",
+          "durationMs": 2748,
+          "blockedActions": [
+            {
+              "index": 1,
+              "label": "Inspect the first accepted guide and every activity detail",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 2,
+              "label": "Observe first result",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 3,
+              "label": "Explain without replanning",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 4,
+              "label": "Edit only day two afternoon",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 5,
+              "label": "Reload accepted trip",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 6,
+              "label": "Open the latest visible itinerary after reload",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 7,
+              "label": "Observe restored trip",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 8,
+              "label": "Read every accepted activity detail after edit",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "b5ec919906deb607c11bfb14d0d48dc2ba0d9b6ec9b95972885fda0856add745"
+        },
+        {
+          "attempt": 2,
+          "runnerResult": "failed",
+          "durationMs": 127903,
+          "blockedActions": [
+            {
+              "index": 1,
+              "label": "Inspect the first accepted guide and every activity detail",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 2,
+              "label": "Observe first result",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 3,
+              "label": "Explain without replanning",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 4,
+              "label": "Edit only day two afternoon",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 5,
+              "label": "Reload accepted trip",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 6,
+              "label": "Open the latest visible itinerary after reload",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 7,
+              "label": "Observe restored trip",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 8,
+              "label": "Read every accepted activity detail after edit",
+              "blockedBy": "Start self-ticket Tokyo plan",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "ef6813d76d16f69fbddc4033090be45d6bef9eceaf60665509228aa5eacfb7a6"
+        }
+      ]
+    },
+    {
+      "journeyId": "B03",
+      "state": "FAIL",
+      "assessment": "Real fare offers exist; no route_set delivered; path construction cause remains unresolved.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "failed",
+          "durationMs": 25458,
+          "blockedActions": [
+            {
+              "index": 1,
+              "label": "Observe actual route candidates",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 2,
+              "label": "Open route result",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 3,
+              "label": "Adopt an actually displayed route",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 4,
+              "label": "Observe adopted route in planner",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 5,
+              "label": "Plan after route adoption",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 6,
+              "label": "Open the latest visible itinerary",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 7,
+              "label": "Observe itinerary details",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 8,
+              "label": "Read every accepted activity detail",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "9b5727c072b18a024362c81b743288a165276ebf7b97fde23ce0de96c96b5ba4"
+        }
+      ]
+    },
+    {
+      "journeyId": "B04",
+      "state": "FAIL",
+      "assessment": "Real fare offers exist; no route_set delivered; path construction cause remains unresolved.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "failed",
+          "durationMs": 25269,
+          "blockedActions": [
+            {
+              "index": 1,
+              "label": "Observe actual route candidates",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets not allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 2,
+              "label": "Open route result",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets not allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 3,
+              "label": "Adopt an actually displayed route",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets not allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 4,
+              "label": "Observe adopted route in planner",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets not allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 5,
+              "label": "Plan after route adoption",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets not allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 6,
+              "label": "Open the latest visible itinerary",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets not allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 7,
+              "label": "Observe itinerary details",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets not allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 8,
+              "label": "Read every accepted activity detail",
+              "blockedBy": "Request low-cost Lisbon route; separate tickets not allowed",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "a22e919ff4b9b7ebf6478df0703011031211a16b6c20f3f7041438cdd811d9a2"
+        }
+      ]
+    },
+    {
+      "journeyId": "B05",
+      "state": "LIMITED_SUBCHECKS_PASSED",
+      "assessment": "Local edit, non-target equality and persistence checked; complete source/date/price fact verification not established.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "observed",
+          "durationMs": 272642,
+          "blockedActions": [],
+          "sourceSha256": "36f74c96107005958d1a75f4446bd5c88e313d0329424152ad80a708cf0b5a41"
+        }
+      ]
+    },
+    {
+      "journeyId": "B06",
+      "state": "FAIL",
+      "assessment": "Guide practical research prerequisite and result-limit repair failed; no accepted guide.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "failed",
+          "durationMs": 254517,
+          "blockedActions": [
+            {
+              "index": 1,
+              "label": "Observe ordered-city response",
+              "blockedBy": "Plan ordered Portugal cities",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 2,
+              "label": "Reduce shopping preference",
+              "blockedBy": "Plan ordered Portugal cities",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 3,
+              "label": "Observe adjusted response",
+              "blockedBy": "Plan ordered Portugal cities",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 4,
+              "label": "Open itinerary details if multi-city planning produced an accepted guide",
+              "blockedBy": "Plan ordered Portugal cities",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 5,
+              "label": "Read every accepted activity detail when supported",
+              "blockedBy": "Plan ordered Portugal cities",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "d98153d80df0057a0caed6c334d37a50f0b248e22da33b9e70a262d9a64b71d1"
+        }
+      ]
+    },
+    {
+      "journeyId": "B07",
+      "state": "FAIL",
+      "assessment": "Trip-total budget write/no-op passed; setting receipt and city clarification replies failed.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "observed",
+          "durationMs": 24378,
+          "blockedActions": [],
+          "sourceSha256": "0c301156a01118473cade919fba1f3b9401e22ffc50c31ec217d8aa89a120a3c"
+        }
+      ]
+    },
+    {
+      "journeyId": "B08",
+      "state": "FAIL",
+      "assessment": "Read-only budget query passed; daily-budget and city clarification replies failed.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "observed",
+          "durationMs": 24517,
+          "blockedActions": [],
+          "sourceSha256": "158fabc5c1ab1aa5fd0dcb505b0b2231cdd1621d78f15ef802ee4abff8ea2b1e"
+        }
+      ]
+    },
+    {
+      "journeyId": "B09",
+      "state": "FAIL",
+      "assessment": "Stop POST rejected before cancel handler; no acknowledgement. Original work continued.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "failed",
+          "durationMs": 32780,
+          "blockedActions": [
+            {
+              "index": 2,
+              "label": "Observe stop confirmation",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 3,
+              "label": "Change preference and continue",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 4,
+              "label": "Observe resumed itinerary",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 5,
+              "label": "Open the final accepted itinerary",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 6,
+              "label": "Read every accepted activity detail",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "5a0733516b47f56bfe2828251d12216c2d142fd7462c3653b5bbade9ce1a382d"
+        }
+      ]
+    },
+    {
+      "journeyId": "B10",
+      "state": "FAIL",
+      "assessment": "Stop POST rejected before cancel handler; no acknowledgement. Original work continued.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "failed",
+          "durationMs": 32769,
+          "blockedActions": [
+            {
+              "index": 2,
+              "label": "Observe stop confirmation",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 3,
+              "label": "Change total budget after stopping",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 4,
+              "label": "Continue under updated conditions",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 5,
+              "label": "Observe resumed itinerary",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 6,
+              "label": "Open the final accepted itinerary",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 7,
+              "label": "Read every accepted activity detail",
+              "blockedBy": "Stop the active planning turn",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "0ce7a51b782d1b0548097954351a4d8bc93a046da26fa9ab7933b73375d2915d"
+        }
+      ]
+    },
+    {
+      "journeyId": "B11",
+      "state": "FAIL",
+      "assessment": "Cold-restart same-artifact authenticated read and Chinese details recovered; subsequent return to Planner failed.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "failed",
+          "durationMs": 233060,
+          "blockedActions": [
+            {
+              "index": 17,
+              "label": "Open My Trips from the visible native tab",
+              "blockedBy": "Exit trip overview to Planner after restart",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 18,
+              "label": "Open this run's accepted guide from its My Trips workspace",
+              "blockedBy": "Exit trip overview to Planner after restart",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 19,
+              "label": "Read every activity detail from My Trips entry",
+              "blockedBy": "Exit trip overview to Planner after restart",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 20,
+              "label": "Reload the My Trips guide entry",
+              "blockedBy": "Exit trip overview to Planner after restart",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 21,
+              "label": "Verify My Trips guide survives reload",
+              "blockedBy": "Exit trip overview to Planner after restart",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "7eefeec456d4f24c159989a630bde0dab9ed773b478e920a40d72d8e7ec06845"
+        }
+      ]
+    },
+    {
+      "journeyId": "B12",
+      "state": "FAIL",
+      "assessment": "Preparation chain returned PROVIDER_NOT_CONFIGURED before fare-provider method; exact effective configuration cause not established; no artifact; downstream actions blocked.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "runnerResult": "failed",
+          "durationMs": 11031,
+          "blockedActions": [
+            {
+              "index": 1,
+              "label": "Observe actual flight search results",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 2,
+              "label": "Open flight search results",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 3,
+              "label": "Open the operator-selected displayed offer",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 4,
+              "label": "Observe offer details before adoption",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 5,
+              "label": "Adopt the displayed offer in the UI",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 6,
+              "label": "Observe adopted flight in planner",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 7,
+              "label": "Plan using the adopted flight",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 8,
+              "label": "Observe first itinerary result",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 9,
+              "label": "Open itinerary details",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 10,
+              "label": "Observe accepted trip details",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 11,
+              "label": "Read every activity detail before localization",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 12,
+              "label": "Switch to English and inspect localization readiness",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 13,
+              "label": "Create the first English localization",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 14,
+              "label": "Read every localized activity detail",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 15,
+              "label": "Switch the localized trip back to Chinese",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 16,
+              "label": "Observe Chinese trip details after localization",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 17,
+              "label": "Reload Chinese trip details",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 18,
+              "label": "Observe localized recovery",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            },
+            {
+              "index": 19,
+              "label": "Cold restart and authenticated recovery of adopted-flight trip",
+              "blockedBy": "Search actual one-way flight options",
+              "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+            }
+          ],
+          "sourceSha256": "96b55d7821f7157f6eb0b24747b051818bd71d8bc65f7b39ebe5547ad4a9bf62"
+        }
+      ]
+    },
+    {
+      "journeyId": "E01",
+      "state": "USER_DEFERRED_NOT_RUN",
+      "assessment": "User requested pause after fixed 12 scenarios; no execution.",
+      "attempts": []
+    },
+    {
+      "journeyId": "E02",
+      "state": "USER_DEFERRED_NOT_RUN",
+      "assessment": "User requested pause after fixed 12 scenarios; no execution.",
+      "attempts": []
+    },
+    {
+      "journeyId": "E03",
+      "state": "USER_DEFERRED_NOT_RUN",
+      "assessment": "User requested pause after fixed 12 scenarios; no execution.",
+      "attempts": []
+    },
+    {
+      "journeyId": "E04",
+      "state": "USER_DEFERRED_NOT_RUN",
+      "assessment": "User requested pause after fixed 12 scenarios; no execution.",
+      "attempts": []
+    }
+  ]
+}

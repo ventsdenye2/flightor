@@ -1,0 +1,446 @@
+{
+  "version": 1,
+  "status": "UNFIXED_ANALYSIS_ONLY_USER_PAUSED",
+  "allProductFixesApplied": false,
+  "B01": {
+    "actualFrozenGate": {
+      "method": "Actual raw original assistant explanation; frozen r24 pure public gate; no network/model/DB",
+      "text": "第二天下午的安排由两段组成，正好对上你们「传统文化＋当地小吃、步调轻松」这两条主线，而且彼此衔接自然：\n\n**Kayaba Coffee（カヤバ珈琲）——节奏上的缓冲点**\n- 它是一间保留老屋格局的咖啡馆，属于谷根千一带「老建筑再利用」的一环。谷根千（谷中、根津、千驮谷）本身是躲过关东大地震与二战空袭的老街区，木造老屋、老仓库保存较多，正是你们想感受的传统氛围的集中地。\n- 上午在谷中银座和根津神社走了一整段，午后坐下来喝杯东西，符合「步调轻松」；这也让下午从「逛老街」过渡到「逛集市」时不必赶时间。\n- 对「当地小吃」而言，它更像一个歇脚点：谷中银座一带的老街小吃（烤红薯、炸肉饼、烤米果之类）和这里的咖啡馆是同一个街区生态的两种面貌，串起来就是一段完整体验老街饮食节奏的下午。\n\n**阿美横町（Ameyoko Market）——下午的小吃主场**\n- 上野的阿美横町是一条集市型商业街，摊位密集、边走边吃，是东京本地气息最重的小吃聚集地之一，很贴合你们「当地小吃」的偏好，而且和一处景点式的参观不同，它本身就是「逛＋吃」的复合体验。\n- 它紧邻上野，从谷根千方向过来衔接顺，不需要为它单独安排一段长途移动，也让傍晚的收尾（上野樱木 Atari）在同一片区自然接上。\n- 集市摊位的小吃通常单价低、可少量多样地尝，对「整趟 1200 元」的预算目标来说，是把一顿正餐拆成多份小吃的灵活选择——不过这只是节省弹性的方向，并非已经核实的费用结论，住宿、交通和各摊点实际价格仍需现场确认。\n\n需要说明的是：这些摊点的具体价格、营业情况和店铺是否营业，我这边没有核实过，请以现场和店家公告为准。\n\n如果你更想某天下午改成别的方向（比如换成更像「参观」的传统体验），告诉我，我再帮你调整。",
+      "codes": [
+        "excluded_precise_claim"
+      ],
+      "modelCalls": 0,
+      "externalCalls": 0
+    },
+    "sourceSha256": "42e952a50f37404e896f131d2ecf508287b0fd3534fb81e051fed946667b0641",
+    "draftVisibility": "withheld; not shown as public explanation",
+    "confirmedFalseRejections": [
+      "bare whole-trip budget target scope",
+      "negated cost conclusion with Chinese 的"
+    ],
+    "independentUnsupportedClaims": [
+      "snacks usually have low unit prices",
+      "splitting one meal into snacks suggested as budget saving without prices"
+    ],
+    "additionalUnverifiedClaim": "Sendagi rendered as 千驮谷; likely place-name mismatch; not independently verified",
+    "readArtifactInExplanation": false,
+    "firstGuideFullFactualAcceptance": false
+  },
+  "B02": {
+    "review": {
+      "schemaVersion": 1,
+      "sourcePolicy": "Allowlisted finding summary. No credentials, authorization headers, full sessions, or raw private database records.",
+      "localeReview": {
+        "finding": "confirmed_harness_input_locale_mismatch",
+        "journeyDefinition": "docs/design/budget-travel-agent/d6-journeys.json#B02.actions[0]",
+        "journeyLocaleField": "absent",
+        "naturalInputLanguage": "English",
+        "observedSubmitLocale": "zh",
+        "evidence": "The frozen B02 action contains English text; the matching captured POST /v1/agent/turns body contains locale=zh. The journey runner selects the action message and sends it through the zh-default page context; no B02-specific locale override is defined.",
+        "assessment": "The captured run does not establish a product language-gate violation. It does establish that this test condition cannot be used as a clean English-output acceptance case. If the frozen v1 standard requires an English page/input condition, English-page coverage remains unverified because the journey did not set that condition."
+      },
+      "attempts": [
+        {
+          "attempt": 1,
+          "report": "evidence/B02-2026-10-06T23-57-26-117Z.json",
+          "reportSha256": "b5ec919906deb607c11bfb14d0d48dc2ba0d9b6ec9b95972885fda0856add745",
+          "runnerActionIndex": 0,
+          "result": "failed",
+          "terminalCode": "AGENT_TURN_FAILED",
+          "rootCause": {
+            "classification": "confirmed_environment_residual_manager_lock",
+            "confidence": "confirmed",
+            "detail": "The original attempt failed in the isolated runtime before model work because of the residual manager lock. This is an environment failure, not evidence that the product lacks the requested capability."
+          },
+          "acceptedGuide": false,
+          "remainingActions": "blocked"
+        },
+        {
+          "attempt": 2,
+          "report": "evidence/B02-2026-10-07T00-01-00-679Z.json",
+          "reportSha256": "ef6813d76d16f69fbddc4033090be45d6bef9eceaf60665509228aa5eacfb7a6",
+          "runnerActionIndex": 0,
+          "runnerResult": "failed",
+          "observedPlannerTerminal": "completed",
+          "observedDeliveryStatus": "partial",
+          "deliveryGoalStatus": "goal_partial",
+          "runnerFailure": "Travel guide delivery is not satisfied",
+          "acceptedGuide": false,
+          "draftArtifacts": 5,
+          "remainingActions": "blocked",
+          "controlledCodes": [
+            {
+              "code": "candidate_key_unavailable",
+              "sessionSeq": 132,
+              "classification": "prerequisite",
+              "detail": "The first guide commit referenced candidates that had not been registered."
+            },
+            {
+              "code": "excluded_precise_claim",
+              "sessionSeqs": [
+                137,
+                142
+              ],
+              "fields": [
+                "text.reply",
+                "text.overview"
+              ],
+              "classification": "publication_content"
+            },
+            {
+              "code": "excluded_admission_or_hours",
+              "sessionSeqs": [
+                137,
+                142
+              ],
+              "field": "text.overview",
+              "classification": "publication_content"
+            },
+            {
+              "code": "DSH_REPAIR_LIMIT",
+              "sessionSeq": 147,
+              "classification": "bounded_repair_exhausted"
+            }
+          ],
+          "rejectedBody": {
+            "visibility": "not_shown_as_accepted_publication; draft only",
+            "sourceSession": "private/dsh-data/sessions/_no-cwd/451d17da-591d-4f2c-b9d5-de2c033e73e0/session.v4.jsonl",
+            "commitCallSequences": [
+              136,
+              141
+            ],
+            "examplesByRejectedField": {
+              "text.overview": [
+                "庭园与神社多为低额度的常规入园或免费开放",
+                "上述金额尚未包含住宿与市内交通等主要支出",
+                "建议你出发前在官方网站确认各处的开放日、预约要求与当日票价"
+              ],
+              "text.reply": [
+                "六义园园内的红叶夜间特别观赏今年从11月25日才开始",
+                "根津美术馆需购票入馆才能进入庭园与咖啡馆",
+                "庭园和神社多为低额度常规入园或免费"
+              ]
+            },
+            "interpretation": "The first body was rejected for precise claims in reply/overview and admission-or-hours claims in overview. A second body was submitted after one bounded content repair and received the same controlled rejection categories; the repair allowance then ended. These excerpts identify the refused public prose and do not imply it was accepted or displayed."
+          },
+          "uiFailureText": "The UI showed a generic request to add missing itinerary or material; it did not identify the recorded precise-claim or admission/hours rejection categories.",
+          "rootCause": {
+            "classification": "confirmed_content_publication_rejection_with_non_specific_ui_feedback",
+            "confidence": "confirmed",
+            "detail": "The recorded publication validator rejected unsupported precise claims and admission/hours assertions. The generic UI message did not map to those recorded causes. The English-input/zh-locale mismatch is a separate confirmed harness condition; it is not assigned as the cause of the publication rejection."
+          }
+        }
+      ]
+    },
+    "sourceSha256": "394580a3b9dde0723f301b0ae78dc3338422d2244fb13fe90dc31be2a41db4ce"
+  },
+  "additionalIndependentContentReview": {
+    "cases": [
+      {
+        "case": "B06",
+        "attempt": 1,
+        "report": "evidence/B06-2026-10-07T00-11-55-096Z.json",
+        "reportSha256": "d98153d80df0057a0caed6c334d37a50f0b248e22da33b9e70a262d9a64b71d1",
+        "runnerActionIndex": 0,
+        "result": "failed",
+        "observedPlannerTerminal": "completed",
+        "deliveryStatus": "partial",
+        "deliveryGoalStatus": "goal_partial",
+        "acceptedGuide": false,
+        "artifactIds": [],
+        "remainingActions": "blocked",
+        "controlledCodes": [
+          {
+            "code": "evidence_missing",
+            "field": "guide_research_type:practical",
+            "classification": "evidence_requirement"
+          },
+          {
+            "code": "candidate_key_unavailable",
+            "classification": "prerequisite"
+          },
+          {
+            "code": "draft_invalid",
+            "field": "guide_result_limit",
+            "classification": "draft_validation"
+          },
+          {
+            "code": "DSH_REPAIR_LIMIT",
+            "classification": "bounded_repair_exhausted"
+          }
+        ],
+        "rejectedBody": {
+          "visibility": "no accepted guide or itinerary body was shown",
+          "availableEvidence": "The runner captured a generic publication failure message; exact private draft bodies are not included in this allowlisted summary.",
+          "uiText": "攻略未通过内容或发布检查，草稿没有作为正式结果显示。请补齐缺少的行程或资料，再进行修改。"
+        },
+        "rootCause": {
+          "classification": "confirmed_partial_guide_delivery_after_controlled_rejections",
+          "confidence": "confirmed",
+          "detail": "The controlled sequence shows a missing practical-evidence requirement, prerequisite repair, result-limit draft validation, and exhausted repair allowance. No recorded evidence establishes that multi-city travel is unsupported. The system did not communicate a support boundary before the high-cost work; the exact underlying reason for each draft rejection beyond the captured codes is unknown."
+        }
+      },
+      {
+        "case": "B07",
+        "attempt": 1,
+        "report": "evidence/B07-2026-10-07T00-16-12-540Z.json",
+        "reportSha256": "0c301156a01118473cade919fba1f3b9401e22ffc50c31ec217d8aa89a120a3c",
+        "runnerActionIndices": [
+          0,
+          2,
+          3,
+          4,
+          6
+        ],
+        "result": "observed",
+        "acceptedGuide": false,
+        "controlledCodes": [],
+        "unknownCodes": true,
+        "capturedResponses": [
+          {
+            "actionIndex": 0,
+            "visibility": "displayed",
+            "text": "当前这趟旅行记录里没有设置任何预算——预算字段为空，因此并没有可查询的金额、币种或范围。"
+          },
+          {
+            "actionIndex": 2,
+            "visibility": "displayed",
+            "text": "这次未能给出合适的说明，请换一种方式描述你想了解的问题。"
+          },
+          {
+            "actionIndex": 3,
+            "visibility": "displayed",
+            "text": "已确认：当前这趟旅行记录里的总预算是 2000 元（CNY），范围是整趟旅行总额，不是每天 2000 元。本次为只读确认，没有做任何修改。"
+          },
+          {
+            "actionIndex": 4,
+            "visibility": "displayed",
+            "text": "这次未能给出合适的说明，请换一种方式描述你想了解的问题。"
+          },
+          {
+            "actionIndex": 6,
+            "visibility": "displayed",
+            "text": "这次未能给出合适的说明，请换一种方式描述你想了解的问题。"
+          }
+        ],
+        "persistence": {
+          "budgetWrite": "one trip_context_update persisted 2000 CNY with trip-total scope after action 2",
+          "repeatConfirmation": "action 3 created no new context version; the displayed confirmation correctly described a saved no-op",
+          "locationUpdate": "none recorded after actions 4 and 6"
+        },
+        "rootCause": {
+          "classification": "confirmed_write_response_mismatch_and_location_clarification_failures",
+          "confidence": "confirmed_for_observed_state_divergence_underlying_code_unknown",
+          "detail": "The setter turn displayed a generic failure while PostgreSQL recorded the requested whole-trip budget write. Repeating the same value correctly produced a no-op confirmation. Both ambiguous and explicitly clarified San Jose turns displayed generic failures, and no location update was recorded. No controlled error code or exact underlying cause was captured for these generic responses."
+        }
+      },
+      {
+        "case": "B08",
+        "attempt": 1,
+        "report": "evidence/B08-2026-10-07T00-16-41-068Z.json",
+        "reportSha256": "158fabc5c1ab1aa5fd0dcb505b0b2231cdd1621d78f15ef802ee4abff8ea2b1e",
+        "runnerActionIndices": [
+          0,
+          1,
+          2,
+          4
+        ],
+        "result": "observed",
+        "acceptedGuide": false,
+        "controlledCodes": [],
+        "unknownCodes": true,
+        "capturedResponses": [
+          {
+            "actionIndex": 0,
+            "visibility": "displayed",
+            "text": "当前行程没有设置任何预算；预算目标一律按整趟行程总额理解和保存，不会自动按天计算。"
+          },
+          {
+            "actionIndex": 1,
+            "visibility": "displayed",
+            "text": "这次未能给出合适的说明，请换一种方式描述你想了解的问题。"
+          },
+          {
+            "actionIndex": 2,
+            "visibility": "displayed",
+            "text": "这次未能给出合适的说明，请换一种方式描述你想了解的问题。"
+          },
+          {
+            "actionIndex": 4,
+            "visibility": "displayed",
+            "text": "这次未能给出合适的说明，请换一种方式描述你想了解的问题。"
+          }
+        ],
+        "persistence": {
+          "tripContext": "initial context only; no budget or location update",
+          "artifacts": 0,
+          "goalsOrRuns": 0
+        },
+        "rootCause": {
+          "classification": "confirmed_generic_failures_without_persisted_side_effects",
+          "confidence": "confirmed_for_state_unknown_for_underlying_code",
+          "detail": "The read-only budget answer correctly reported an unset budget. The per-day amount and both San Diego turns returned generic failures. PostgreSQL showed no budget/location mutation, artifacts, goals, or runs. The underlying controlled error and cause were not captured; observed runner status alone is not a pass."
+        }
+      }
+    ],
+    "sourceSha256": "394580a3b9dde0723f301b0ae78dc3338422d2244fb13fe90dc31be2a41db4ce"
+  },
+  "B03_B04": {
+    "controlledChain": [
+      "ROUTE_ORIGIN_REQUIRED",
+      "DESTINATION_AIRPORT_REQUIRED",
+      "NO_ROUTE_PATHS"
+    ],
+    "actualOffers": {
+      "B03": 12,
+      "B04": 11
+    },
+    "successfulFareMethodCalls": {
+      "B03": 2,
+      "B04": 2
+    },
+    "routeSetDelivered": false,
+    "confirmedPublicProblem": "Response claims certain hubs/priced options unavailable while UI concurrently displays real fares through them.",
+    "pathConstructionRootCause": "not established; requires targeted route-engine diagnosis; no provider failure conclusion"
+  },
+  "B05": {
+    "days": 5,
+    "activities": 13,
+    "detailsRead": 26,
+    "nonTargetDaysItemsOrderTitlesBodyUnchanged": true,
+    "onlyReplacement": "Day 3 afternoon: Togetsukyo/Hozugawa replaced with Okochi Sanso garden",
+    "tripContextAndDatesUnchanged": true,
+    "guideArtifacts": 3,
+    "acceptedGuides": 2,
+    "blockedIntermediateGuide": 1,
+    "guideGoalsSatisfied": 2,
+    "remainingVerification": "limited content contract / partial evidence; many reference-only sources, confidence .35; no complete dated real-price verification"
+  },
+  "B06": {
+    "firstTurnTerminalMs": 252138,
+    "delivery": "partial",
+    "acceptedGuideCount": 0,
+    "controlledChain": [
+      "guide_research_type:practical",
+      "prerequisite_candidate_search_incomplete",
+      "guide_result_limit",
+      "DSH_REPAIR_LIMIT"
+    ],
+    "draftCitySequence": "All 4 rejected drafts Lisbon 4 days then Porto 3 days; not delivered itinerary evidence",
+    "confirmedPublicProblem": "Generic missing itinerary/material message gives no practical-research or limit cause despite request for early scope signal.",
+    "unsupportedConclusion": "multi-city unsupported or city order inverted not proven"
+  },
+  "B07": {
+    "budgetQueryNoWrite": true,
+    "savedBudget": {
+      "amount": 2000,
+      "currency": "CNY",
+      "scope": "trip"
+    },
+    "contextTransition": "v0 -> v1, budget field only",
+    "repeatConfirmationNoOp": true,
+    "confirmedPublicProblem": "Successful budget write displayed generic failure/rephrase reply; ambiguous San Jose and explicit California clarification both failed to give actionable reply.",
+    "cityRecognitionRootCause": "not established; no further context version/goal/artifact"
+  },
+  "B08": {
+    "budgetQueryNoWrite": true,
+    "budgetAfter": null,
+    "contextVersionCount": 1,
+    "goalCount": 0,
+    "artifactCount": 0,
+    "destinationMode": "open",
+    "confirmedPublicProblem": "Daily 500 and San Diego/explicit California messages got generic rephrase; no effective budget-days or place clarification."
+  },
+  "B09_B10": {
+    "at": "2026-10-07T00:21:01.383Z",
+    "codeVersion": "fee07e5",
+    "cases": [
+      "B09",
+      "B10"
+    ],
+    "conclusion": "FAIL",
+    "confirmedCause": {
+      "code": "FST_ERR_CTP_EMPTY_JSON_BODY",
+      "httpStatus": 400,
+      "stage": "request_content_parser_before_cancel_handler",
+      "evidence": "Each original browser report contains exactly one cancel POST, empty request body and a 400 response, followed by visible unconfirmed-stop/busy state.",
+      "frontendCall": {
+        "file": "src/services/conversationService.ts",
+        "line": 306,
+        "behavior": "cancelConversationTurn sends POST with no data"
+      },
+      "requestTransport": {
+        "file": "src/utils/request.ts",
+        "line": 56,
+        "behavior": "unconditionally sets content-type application/json while data is undefined"
+      },
+      "backendHandler": {
+        "file": "backend/src/routes/agent-cloud.ts",
+        "line": 263,
+        "behavior": "cancelAndWait exists, but content parser rejects before handler"
+      },
+      "regressionGap": {
+        "file": "backend/src/routes/agent-cloud.test.ts",
+        "line": 45,
+        "behavior": "app.inject cancellation test supplies authorization only; it does not reproduce H5 JSON content type and empty body"
+      }
+    },
+    "boundary": "No successful cancellation acknowledgement was received; activity after the rejected stop is continued original work, not proof of a write after acknowledged cancellation.",
+    "productFixApplied": false,
+    "nextSuggestedRegression": "Exercise actual frontend POST headers/body against Fastify cancellation route before implementing a minimal transport correction.",
+    "sourceSha256": "d1f5616ed257c423a2a8d33ce12e44def9484f45911827a89a4970ab57af6824",
+    "postDrainEvidence": "B09.json and B10.json postgresAfterExecutionDrain; observer.executionContinuation",
+    "finalState": {
+      "B09": {
+        "artifacts": 6,
+        "types": {
+          "research": 2,
+          "route": 2,
+          "travel_guide": 2
+        },
+        "guideVariants": {
+          "zhBlocked": 1,
+          "zhAccepted": 1
+        },
+        "newGuideGoal": "satisfied",
+        "addedAssistant": "accepted-guide response; no downstream UI recovery test"
+      },
+      "B10": {
+        "artifacts": 2,
+        "types": {
+          "research": 2
+        },
+        "guideCount": 0,
+        "newGuideGoal": "pending",
+        "newGuideRun": "failed",
+        "addedAssistant": "generic publication-failure response"
+      }
+    },
+    "interpretation": "No acknowledged cancellation; subsequent writes are continued original work, not writes after successful cancellation."
+  },
+  "B11": {
+    "coldRestartReadSucceeded": true,
+    "artifactId": "01a113bc-1746-7593-ab14-7c9632d3766b",
+    "sameBeforeAfterRoute": true,
+    "authenticatedArtifactGetStatus": 200,
+    "restoredChineseDetails": 5,
+    "failedActionIndex": 16,
+    "failedAction": "Exit trip overview to Planner after restart",
+    "waitMs": 30000,
+    "observedLocation": "same trip overview hash; no visible Planner .pl-result",
+    "deeperNavigationCause": "not established",
+    "identityEvidenceLimit": "only post-restart key hashes recorded; no independent pre-key snapshot; old browser token authenticated GET successfully"
+  },
+  "B12": {
+    "searchFlightsSelector": {
+      "origin": "BJS",
+      "destination": "LIS",
+      "departureDate": "2026-11-03"
+    },
+    "controlledCode": "PROVIDER_NOT_CONFIGURED",
+    "searchFlightsDurationMs": 18.48,
+    "fareMethodCallsThisJourney": 0,
+    "acceptedArtifactCount": 0,
+    "sourceLayerReview": "Both flight tools prepare airport pair before fare method; no B12 fare audit entry. AeroDataBox missing key is a diagnostic direction; effective launch env provenance not independently established. The code alone is provider-ambiguous; no SerpAPI outage conclusion."
+  }
+}

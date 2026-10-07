@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "review": "r24-b12-provider-diagnosis-and-post-drain-comparison",
+  "createdAt": "2026-10-07",
+  "b12": {
+    "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+    "observedToolFailures": [
+      {
+        "tool": "search_flexible_flights",
+        "errorCode": "PROVIDER_NOT_CONFIGURED"
+      },
+      {
+        "tool": "search_flights",
+        "errorCode": "PROVIDER_NOT_CONFIGURED"
+      }
+    ],
+    "diagnosis": {
+      "likelyFailureStage": "airport resolution through the aviation provider, before a recorded fare-provider call",
+      "likelyProvider": "AeroDataBox",
+      "confidence": "probable-not-confirmed",
+      "basis": [
+        "Both search tools resolve airport selectors through resolveFareAirportPair before invoking fare search.",
+        "AeroDataBox and SerpApi can both emit PROVIDER_NOT_CONFIGURED, so the error code by itself does not identify the source.",
+        "The run manifest reports the SerpApi fare credential as present; the fare-call audit has no B12-time call.",
+        "A candidate provider env file lacks both provider keys and the repository backend env file has both keys present, but the run manifest does not record which provider-env path was selected."
+      ],
+      "conclusion": "Treat as a pre-fare configuration failure with AeroDataBox as the likely source. Do not claim a confirmed SerpApi failure or an overall hard blocker; selected provider-env provenance is unresolved."
+    },
+    "references": [
+      "evidence/B12-2026-10-07T00-24-05-245Z.json",
+      "private/observation/executions/8a0912b9-a831-4f12-b5b4-9a5984693fb0.jsonl",
+      "private/run-manifest.private.json",
+      "private/fare-audit.private.json",
+      "private/fare-calls.private.jsonl",
+      "backend/src/agent/tools/core.ts:280-294",
+      "backend/src/agent/tools/flexible-flights.ts:43-57",
+      "backend/src/fares/airport-resolver.ts:44-72",
+      "backend/src/aviation/providers/aerodatabox.ts:164",
+      "backend/src/providers/serpapi/client.ts:215"
+    ]
+  },
+  "postDrainComparisons": {
+    "tripInvariant": {
+      "B09": {
+        "status": "planning",
+        "currentContextVersion": 1,
+        "workspaceVersion": 0
+      },
+      "B10": {
+        "status": "planning",
+        "currentContextVersion": 1,
+        "workspaceVersion": 0
+      }
+    },
+    "B09": {
+      "snapshots": [
+        "private/readbacks/B09-2026-10-07T00-17-07-932Z.postgres.private.json",
+        "private/readbacks/B09-2026-10-07T00-17-07-932Z-post-drain.postgres.private.json"
+      ],
+      "contextVersions": {
+        "before": 2,
+        "after": 2,
+        "added": 0,
+        "removed": 0,
+        "changed": 0,
+        "sha256ByVersion": {
+          "0": "19acee9545e4b24b4c724800618e8b479b38ad0446a7a0f0c68f77d831075fd2",
+          "1": "ffb2ac8fdd81cd05855fdc52a1abefbc8866b9a4e9e3580d2f44ee93c2566c44"
+        }
+      },
+      "artifacts": {
+        "before": 0,
+        "after": 6,
+        "added": 6,
+        "removed": 0,
+        "changed": 0,
+        "addedByType": {
+          "research": 2,
+          "route": 2,
+          "travel_guide": 2
+        },
+        "addedPayloads": [
+          {
+            "type": "research",
+            "sha256": "c494ce7a23f8fcf3d1099b292ef22933caa3597829c3a0ba79aee551a1000985"
+          },
+          {
+            "type": "route",
+            "sha256": "b095feb56b4d518bb7ec4d50af270d805f65fbeee0d0f7bf9e7e28ee8615888c"
+          },
+          {
+            "type": "travel_guide",
+            "sha256": "d229bb4654c007483e2c501854eec8f2b3c2665b6055422b8fb90fd55d2a3494"
+          },
+          {
+            "type": "research",
+            "sha256": "20520be1791adfded457813f5ceb4efc74a0ad48c89c2e6968a93dcbc55908d5"
+          },
+          {
+            "type": "route",
+            "sha256": "9b38b46d0e854f77226f7b6a118c6ce241385273fc316dd91f0f76687695547b"
+          },
+          {
+            "type": "travel_guide",
+            "sha256": "c12e5af0d3618952eb6b5eef6fa2f02eeefbe05c36d5e41b1250f6cd966a9c21"
+          }
+        ],
+        "allAddedRowsUseContextVersion": 1
+      },
+      "goals": {
+        "before": 1,
+        "after": 2,
+        "added": 1,
+        "removed": 0,
+        "changed": 0,
+        "addedGoal": {
+          "kind": "travel_guide",
+          "status": "satisfied",
+          "revision": 1,
+          "parametersSha256": "e6224f00a0209ac48f507037dbd1254c0fdc929625d7787c3a16ec92a5485745"
+        }
+      },
+      "goalRuns": {
+        "before": 1,
+        "after": 2,
+        "added": 1,
+        "removed": 0,
+        "changed": 0,
+        "addedRun": {
+          "status": "satisfied",
+          "revision": 2,
+          "workingSetSha256": "99e2babde887065b6d1c9f495c8c1ea837248e3736c4aeb782be277b0fef2df3"
+        }
+      },
+      "messages": {
+        "before": 1,
+        "after": 2,
+        "added": 1,
+        "removed": 0,
+        "changed": 0,
+        "rolesAfter": [
+          "user",
+          "assistant"
+        ],
+        "addedAssistantRowPersisted": true,
+        "contentSha256": "42bbd0f58a9746c403d984fc3948bc9b8258dbd56a6900e12ba539397560ca37",
+        "browserRenderIndependentlyConfirmed": false
+      },
+      "guideFinalization": {
+        "locale": "zh",
+        "guides": [
+          {
+            "publicId": "01a113b9-5045-72fd-90eb-27b8f7df779f",
+            "finalizationStatus": "blocked",
+            "verificationStatus": "partially_verified"
+          },
+          {
+            "publicId": "01a113b9-71fd-7439-81f9-bce26d44b8ef",
+            "finalizationStatus": "accepted",
+            "verificationStatus": "partially_verified"
+          }
+        ],
+        "acceptedGuideLinkedToSatisfiedTravelGuideGoal": true,
+        "acceptedGuidePublicId": "01a113b9-71fd-7439-81f9-bce26d44b8ef"
+      }
+    },
+    "B10": {
+      "snapshots": [
+        "private/readbacks/B10-2026-10-07T00-17-43-239Z.postgres.private.json",
+        "private/readbacks/B10-2026-10-07T00-17-43-239Z-post-drain.postgres.private.json"
+      ],
+      "contextVersions": {
+        "before": 2,
+        "after": 2,
+        "added": 0,
+        "removed": 0,
+        "changed": 0,
+        "sha256ByVersion": {
+          "0": "04d6c07bec061d096af9051581e60723835dfc763f9877d55b54a9c827a3832a",
+          "1": "8637bf2837220061c2df340837c83bd17a014bac544f494ce35c1cf4eedbbbe4"
+        }
+      },
+      "artifacts": {
+        "before": 0,
+        "after": 2,
+        "added": 2,
+        "removed": 0,
+        "changed": 0,
+        "addedByType": {
+          "research": 2
+        },
+        "addedPayloads": [
+          {
+            "type": "research",
+            "sha256": "fa4530098b7be8535a9540926d30352e603bed56e6da59a0c34202048579e1a6"
+          },
+          {
+            "type": "research",
+            "sha256": "029ca4e3ee4cfbf85f779a7474140655a274b32c644a4f2bdf49a3b9b1ce6750"
+          }
+        ],
+        "allAddedRowsUseContextVersion": 1
+      },
+      "goals": {
+        "before": 1,
+        "after": 2,
+        "added": 1,
+        "removed": 0,
+        "changed": 0,
+        "addedGoal": {
+          "kind": "travel_guide",
+          "status": "pending",
+          "revision": 0,
+          "parametersSha256": "167db6e1a17d593c6fa5107d5963e9af52a1d88746574b20626c4968c5b0e03e"
+        }
+      },
+      "goalRuns": {
+        "before": 1,
+        "after": 2,
+        "added": 1,
+        "removed": 0,
+        "changed": 0,
+        "addedRun": {
+          "status": "failed",
+          "revision": 1,
+          "workingSetSha256": "dceca8cc9aa7c3c68fa5252ece765619fca0fdbdabdc661824af1e558269dcf3"
+        }
+      },
+      "messages": {
+        "before": 1,
+        "after": 2,
+        "added": 1,
+        "removed": 0,
+        "changed": 0,
+        "rolesAfter": [
+          "user",
+          "assistant"
+        ],
+        "addedAssistantRowPersisted": true,
+        "contentSha256": "a0d8cc3c6491c53c0616ddeb61a9805d93ff8632b126e336d8fadb7cf528c2d0",
+        "browserRenderIndependentlyConfirmed": false
+      },
+      "guideFinalization": {
+        "locale": null,
+        "guides": [],
+        "acceptedGuideLinkedToSatisfiedTravelGuideGoal": false,
+        "acceptedGuidePublicId": null
+      }
+    }
+  },
+  "sourceSha256": "6660f43771635107108cdd28857f78a735ce1bd30d7208fb4b3a2007d5e5b500",
+  "scope": "Safe diagnosis and entity hash comparison; raw private rows, credentials and complete sessions excluded."
+}

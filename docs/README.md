@@ -1,6 +1,6 @@
 # FlightOR 文档入口
 
-2026-10-06 当前授权工作为 [D6工程化减负](design/budget-travel-agent/DSH_D6_ENGINEERING_PLAN.md)，[验收v1](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)已在修改前冻结。当前实施与迭代验证中，D5/D4仍仅是历史范围证据，不宣称新真实UI已通过。
+2026-10-07 当前授权的 [D6工程化减负](design/budget-travel-agent/DSH_D6_ENGINEERING_PLAN.md) 已完成冻结 r24 的 B01–B12 真实手机尺寸 H5 执行，按用户要求暂停并提交推送结果；E01–E04 与微信页面暂缓。[12 场景分析](design/budget-travel-agent/DSH_D6_R24_H5_ANALYSIS_2026-10-07.md)及[证据索引](design/budget-travel-agent/evidence/d6-r24-analysis/README.md)记录全部失败、observed 的语义边界和续作。D6 未 PASS；[验收v1](design/budget-travel-agent/DSH_D6_ACCEPTANCE.md)标准与完整12+4分母保留，D5/D4仍仅历史范围证据。
 
 2026-09-27 D5 最终：A/B已实现，冻结10类×3次30/30（本地HTTP/fixture）、backend1132项、runtime9项、数据库7项通过；另一次官方DeepSeek模型+搜索正式API攻略accepted+satisfied，24.653s。没有本轮实价路线或新版H5通过声明，G1仍未放行。代码HEAD9cae53b，详情见 [D5报告](design/budget-travel-agent/DSH_D5_RELIABILITY_AND_BUDGET_ROUTING_2026-09-27.md)。
 

@@ -1,5 +1,7 @@
 # DSH D6 冻结验收与结果
 
+2026-10-07 当前冻结 r24 的 12 个固定场景已执行到各自成功或失败终点，按用户最新要求暂停；4 个探索场景暂缓，原 v1 全 16 场景协议没有改成较小 PASS 分母。9 场 runner FAIL、3 场 observed（B07/B08 公开语义复核 FAIL，B05 仅部分流程子项获通过）；D6 未 PASS，也没有确认的本轮整体硬阻塞。原输入/日期/源码 fee07e5/构建/配置与 run/schema 不变，所有 13 attempt 和 blocked 步骤保留。当前证据归[12 场景最终分析](DSH_D6_R24_H5_ANALYSIS_2026-10-07.md)及[全量脱敏材料](evidence/d6-r24-analysis/README.md)，不靠 accepted/API completed 宣布内容通过。服务已关闭；本批仅记录、提交与普通推送，没有产品修复或重跑。下述首场暂停与工程状态为历史快照，不覆盖当前结果。
+
 2026-10-07用户要求首场景测试后暂停，已暂停：r24原B01 **FAIL**，首稿101ms受理/46.590秒终态satisfied、9活动详情读完，解释35ms受理/4.081秒终态completed/not_requested但withheld，后5动作blocked，完整59.613秒，非180秒超时。局改/刷新未运行，首稿来源/全文独立评阅未完成，不能据accepted称内容通过。[失败/关闭/费用及准确续作](evidence/d6-r24-b01-failure.json)记录实际手机环境、原报告SHA、PG/会话、Astra max复现的预算范围与否定误判以及独立单价低漏检；没有本轮后续源码修复。PID退出/无监听但日志管道停止无正常关闭事件，残留锁与异常如实保留，六项指纹/历史账本不变。本批10model/4search/USD0.88未知预留，累计USD38.24未知预留（均非实付）、pending0/fare0；原B02–B12/E01–E04未运行。恢复后先收尾诊断/来源审阅，补回归/修复，再新冻结完整工程与原12+4；D6未PASS，无确认硬阻塞。
 
 2026-10-07 r24同冻结版本完整工程通过，结果/完整日志及两次固定回放原样归[工程证据](evidence/d6-r24-freeze.json)：backend139文件1609/1609（201.43秒）、真实专用PG52/52（52.12秒）、D5 fixture30/30且codeUnchanged、完整runtime14/14、observer1/1、前端116/20/37/52、根TS/helper21/21、check/build和H5/weapp构建。固定10对两批均accepted/语义一致/0模型/外呼，P50总耗时11.385→15.254ms、10.338→13.077ms；Trip.get20→19，其余仓库调用未增加。实际同文本纯检查20批×200调用定位r23/r24约0.361/0.403ms每次，新增回指约0.042ms；组装开销全部保留，不称提速，不取消保护。工程后source/backend/H5/worker/archive/历史ledger实际六项指纹一致，独立配置/账本审阅一致，当前新批零真实调用。原B01–B12/E01–E04即开始真实手机390×844 H5，页面实际screen/UA需由runner观测验证；当前未PASS，无确认硬阻塞。
@@ -241,13 +243,21 @@ The D6 H5 runner uses the prior H5 harness's 390x844 viewport and records browse
 | D6-51 | r24解释用合法“整趟1200元预算目标”及“并非已经核实的费用结论”，实际excluded_precise_claim拦截 | 冻结函数确认裸整趟范围未识别；局部否定漏掉“的”，费用前缀却识别为肯定，关闭全字段预算豁免 | Astra max只读复现，未修源码；用户暂停，不盲目重发 |
 | D6-52 | r24解释新称“小吃通常单价低”，删金额后cost检查却无问题 | 无依据单位价格评价的独立漏检；否定/未知及偏好解释边界须继续区分 | 原文及无金额冻结回放确认；未修源码，不能仅修D6-51放行整段 |
 | D6-53 | 只解释现有行程却自行补新事实；内容拦截后公开提示要求用户换问法 | 复用当前accepted理由与来源的方向待研判，保留单主LLM及校验；公开错误应准确指明说明未通过校验 | 未完成方向/来源独立评阅；源码未改，暂停后续作 |
-| D6-54 | 本地验收服务通过Tee-Object管道停止后PID退出但无guards_closed、残留锁 | 已确认PID/端口退出及锁归同已退出PID，原样保留异常；后续独立服务采用可正常接收关闭信号的启动方式并保存完整日志 | 业务数据/会话/账本保留，pending0；不伪造正常关闭审计、不盲删锁，当前暂停 |
+| D6-54 | 本地验收服务通过Tee-Object管道停止后PID退出但无guards_closed、残留锁 | 已确认PID/端口退出及锁归同已退出PID，保存原锁字节；恢复遗漏places-url及B02原残留guard分别记录，不改原异常关闭 | r24后续PID62608/58616/57100均正常guards_closed/forbidden0，最终无锁；原PID128072没有正常关闭审计，业务数据/会话/账本保留，当前按用户要求暂停 |
+| D6-55 | r24 B02候选注册前置及两轮终稿content拒绝后0accepted，公开却仅要求补资料 | candidate_key_unavailable、excluded_precise_claim、excluded_admission_or_hours、DSH_REPAIR_LIMIT与未接纳草稿片段独立保留；具体字段反馈/可操作错误需后续回归 | 本批仅诊断未修；首次零模型guard环境失败与127.903秒产品失败均保留，后8动作blocked，见[r24分析](DSH_D6_R24_H5_ANALYSIS_2026-10-07.md) |
+| D6-56 | r24 B03/B04真实票价成功但NO_ROUTE_PATHS、无route_set；回复与页面报价矛盾 | 起点/终点机场前置及route engine路径构建待源码定位，不能等同没有票价或Provider不可用 | 两场12/11报价、各2fare方法调用、后8动作blocked；未自动采用、未修，不能追认路线通过 |
+| D6-57 | r24 B06多城guide缺practical证据、candidate prerequisite及result-limit修订后未发布，泛化错误不可操作 | 被拒稿城市顺序正确不证明正式交付；不推定“不支持多城” | 252.138秒首轮partial、0accepted、后5动作blocked；本批未修、未补新测试 |
+| D6-58 | r24 B07预算正确保存但公开回执失败；B07/B08预算/地点澄清多轮只回复换种描述 | 保存trip总预算、查询无写与重复no-op通过；已明确城市仍泛化失败的内部原因待定位 | 两场runner observed但语义FAIL，B08每日预算未写入，未修改权限/版本/数据 |
+| D6-59 | r24 B09/B10停止POST400 FST_ERR_CTP_EMPTY_JSON_BODY，页面仍busy | H5不传body却无条件JSON header，Fastify在cancelAndWait前拒绝；既有route单测未覆盖真实header/body | 静态定位与两场真实请求确认，未修；原生成继续与post-drain读取单列，不能称成功取消后的迟到写 |
+| D6-60 | r24 B11冷重启同攻略认证读取成功，之后返回Planner未见结果卡 | action16等.pl-result 30秒，实际仍overview；导航栈/点击深层原因未确认 | 中文5详情重读通过，后5动作blocked；无pre-key hash快照，不伪称完整恢复通过，未修 |
+| D6-61 | r24 B12 BJS/LIS航班查询准备返回PROVIDER_NOT_CONFIGURED，fare方法未调用，公开称票价源未配置 | 三字母城市码进入机场准备；航空供应商配置为诊断方向，具体有效env因果未独立证实，不判SerpAPI故障或总体硬阻塞 | 8.430秒首轮pending/0artifact、后19动作blocked；本批未修，详细证据见诊断文件 |
+| D6-62 | r24 B02英文自然输入但实际POST locale=zh | 原journey没有B02专属locale字段，不能仅凭中文答复判产品语言违规；不作为英文页面通过证据 | 条件差异、原POST与草稿拒绝分开记录，不改变原输入或重新运行 |
 
 2026-10-07 对r20未发布原稿的只读内容审查：两稿安排相同7项，均非accepted成果。已保存JNTO滨离宫正文描述茶屋/水上巴士，但没有开闭园或茶屋营业时刻，因此其evening建议未获得现有资料的时段核实；离线证据不足以证明与某个真实闭园时刻冲突，不编造时刻、不追认旧稿。Hoppy来源支持日落后体验，Yanaka已保存店铺时刻与afternoon不直接冲突；其余粗时段仍不是逐时钟排程/交通可行性证明。后续真实正文验收须独立审阅这些边界，不能以预算校验通过替代内容验收。未修改数据库、会话、来源、原报告或账本，未作外呼。
 | D6-15 | Taro 初始 main tab 页面尚未完成首次 ready 时，H5 原生 tabbar 可先发起另一标签的切换；native 与 custom 导航未共享页面就绪条件 | 任一 main tab 的 `useReady` 前禁用原生 H5/custom tab 点击，首次 main tab ready 后恢复原 `switchTab`；初始直达任一 main tab 可解锁，详情返回不重置门 | 已实施；session-recovery fixture 20/20、H5 build通过；真实H5复验待新run，late-hide因果仍未证实 |
 | D6-07 | `update_trip_context` 的空 patch 返回 `changed: false`，但仍重建同 scope 的 evidence store 并复位 source alias sequence；旧模型引用可能映射到后续不同证据 | 同 generation 在 setter 前后记录相同内容、不同 URL，要求 source alias 不重复，并断言 Trip version 与 accepted base 不变 | 修复及定向绿测通过；最终冻结验收待运行 |
 | D6-10 | 准备阶段按当前语言选取任一旧 accepted guide，而发布 CAS 将同 conversation/version 最新任一语言 accepted guide 视为当前基底，可能错误允许回退到旧版或在提交时无故冲突 | 同作用域新英/旧中组合不得把旧中文 guide 当编辑基底；新guide补齐中文 accepted后必须绑定新guide | 准备规则已实施，定向7/7通过；最终冻结验收待运行 |
-| D6-08 | 隔离运行守卫以独占新建模式打开固定审计路径，冷重启沿用同目录时会触发 EEXIST，无法恢复服务 | 同一文件追加带 guard-session UUID/PID 的审计；安装、关闭、再次安装保留原字节及各次计数 | 已修复，受控 probe 9 项通过（零网络/模型）；真实 B11/B12 仍待完整验收 |
+| D6-08 | 隔离运行守卫以独占新建模式打开固定审计路径，冷重启沿用同目录时会触发 EEXIST，无法恢复服务 | 同一文件追加带 guard-session UUID/PID 的审计；安装、关闭、再次安装保留原字节及各次计数 | 受控probe9项通过；r24 B11真实同run重启/认证读取已完成，原进程及后续关闭记录全部保留。B11后续导航失败、B12未到重启步骤，未宣称两场完整通过 |
 | D6-09 | 同查询键并发返回不同 OSM city identities 时，后写缓存可能丢失仍有效的身份；空且 unverified 的有效旧缓存也会压过随后 verified 的身份，更新时间字段往返还可能损失 PostgreSQL 微秒精度 | 独立 PostgreSQL 覆盖同身份并发、异身份合并、旧身份/verification/TTL 保留、相同 OSM ID、过期替换、空未验证缓存被有效身份补齐，以及双连接单 HTTP/单 lease/缓存命中不新增 lease；有效行只更新 `result_json` 保留数据库 TTL 原值 | `postgres.integration.test.ts` 红测复现旧 verification 覆盖新结果；修复后专用 PG 5/5 通过。真实免费Provider smoke另见本报告本批证据，不替代冻结验收 |
 | D6-13 | Nominatim jsonv2 可返回 `category` 而没有旧 `class` 字段；city parser 只读 `class`，将真实市级 administrative city 拒绝为空未验证 | `class` 存在时优先使用它，仅在缺失时回退到 `category`；category-only 行政城市可解析，冲突字段不得降级，已有名称/国家/类型与多身份歧义规则保持 | 离线红测复现，最小修复后 places+city-resolver 23/23、backend check/build通过。真实Kyoto再请求HTTP200解析为 `osm:relation:357794`、JP、35.0115754/135.7681441；PG缓存复查零HTTP/无新增lease。原安全摘要合并字段不能单独证明其因果字段，但后续诊断记录精确显示 category-only |
 

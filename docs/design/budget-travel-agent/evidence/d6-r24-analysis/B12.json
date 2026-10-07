@@ -1,0 +1,1212 @@
+{
+  "manifest": {
+    "runId": "c7c8b0b0-feac-434e-80bc-eb26e818cbf5",
+    "schema": "dsh_d6_c7c8b0b0feac434e80bceb26e818cbf5",
+    "sourceFingerprint": "7f99f7fae9ac885ba4248fb56aa758ac3b1f16fc5ba3da1947bba9744b441fbb",
+    "buildFingerprint": {
+      "backendFingerprint": "408561013dd87ae5d217f8075cc9849af5c1b276e901c02c0095eb0470b8475b",
+      "h5Fingerprint": "cd39aa4d9e436dbda35b6dfd52a9c1af7efd433514143a37388627f2ce76e0ca"
+    },
+    "workerFingerprint": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+    "coreConfig": {
+      "modelProvider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "searchProvider": "deepseek-official",
+      "maxTokens": 8192,
+      "thinking": "disabled",
+      "nativeResearchProvider": "serpapi"
+    }
+  },
+  "scope": {
+    "requestedThisBatch": {
+      "fixedDenominator": 12,
+      "exploratoryDenominator": 0,
+      "totalDenominator": 12
+    },
+    "fixedCoverage": {
+      "denominator": 12,
+      "attempted": 12,
+      "complete": true
+    },
+    "fullD6Protocol": {
+      "fixedDenominator": 12,
+      "exploratoryDenominator": 4,
+      "totalDenominator": 16,
+      "complete": false,
+      "status": "incomplete_user_deferred_exploratory"
+    }
+  },
+  "independentAssessment": {
+    "journeyId": "B12",
+    "state": "FAIL",
+    "assessment": "Preparation chain returned PROVIDER_NOT_CONFIGURED before fare-provider method; exact effective configuration cause not established; no artifact; downstream actions blocked.",
+    "attempts": [
+      {
+        "attempt": 1,
+        "runnerResult": "failed",
+        "durationMs": 11031,
+        "blockedActions": [
+          {
+            "index": 1,
+            "label": "Observe actual flight search results",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 2,
+            "label": "Open flight search results",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 3,
+            "label": "Open the operator-selected displayed offer",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 4,
+            "label": "Observe offer details before adoption",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 5,
+            "label": "Adopt the displayed offer in the UI",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 6,
+            "label": "Observe adopted flight in planner",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 7,
+            "label": "Plan using the adopted flight",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 8,
+            "label": "Observe first itinerary result",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 9,
+            "label": "Open itinerary details",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 10,
+            "label": "Observe accepted trip details",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 11,
+            "label": "Read every activity detail before localization",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 12,
+            "label": "Switch to English and inspect localization readiness",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 13,
+            "label": "Create the first English localization",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 14,
+            "label": "Read every localized activity detail",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 15,
+            "label": "Switch the localized trip back to Chinese",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 16,
+            "label": "Observe Chinese trip details after localization",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 17,
+            "label": "Reload Chinese trip details",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 18,
+            "label": "Observe localized recovery",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          },
+          {
+            "index": 19,
+            "label": "Cold restart and authenticated recovery of adopted-flight trip",
+            "blockedBy": "Search actual one-way flight options",
+            "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted."
+          }
+        ],
+        "sourceSha256": "96b55d7821f7157f6eb0b24747b051818bd71d8bc65f7b39ebe5547ad4a9bf62"
+      }
+    ]
+  },
+  "journeyId": "B12",
+  "category": "fixed",
+  "attempts": [
+    {
+      "attempt": 1,
+      "sourceSha256": "96b55d7821f7157f6eb0b24747b051818bd71d8bc65f7b39ebe5547ad4a9bf62",
+      "result": "failed",
+      "observation": "automatic_actions_failed",
+      "semanticAssessment": "requires_independent_semantic_acceptance",
+      "startedAt": "2026-10-07T00:24:05.245Z",
+      "finishedAt": "2026-10-07T00:24:16.276Z",
+      "durationMs": 11031,
+      "failure": "AssertionError [ERR_ASSERTION]: Interactive mode pauses only for a completed, non-error natural response with no delivery attempt; content/commit failures remain failures\n    at pauseForInteractiveClarification (D:\\FunnyProject\\flightor-repo\\.worktrees\\dsh-reliability-d6\\scripts\\qa-dsh-d6-h5.cjs:191:10)\n    at run (D:\\FunnyProject\\flightor-repo\\.worktrees\\dsh-reliability-d6\\scripts\\qa-dsh-d6-h5.cjs:655:48)",
+      "failureVisibleText": "FlightOR\n新旅行\nPlease search currently available one-way flights from Beijing to Lisbon departing November 3. I want to compare the real results before choosing; do not create a sightseeing plan or select a flight for me.\nFlightOR\n目前无法为你提供 11 月 3 日北京→里斯本的单程实时机票结果。我已按你的要求尝试查询，但当前机票数据源未接入（系统返回“数据源未配置”），因此拿不到任何真实报价，也就无法列出可对比的航班选项。按你的要求，我既没有为你挑选航班，也没有生成观光行程。几点说明：\n•\n起讫点已确认：北京（BJS，含首都 PEK 与大兴 PKX）→ 里斯本（LIS，里斯本机场）。\n•\n查询条件：2026 年 11 月 3 日出发、单程、经济舱、人民币计价。\n可选做法，你告诉我方向即可：\n1.\n稍后再试同一查询（数据源恢复后我可以立刻重跑 11 月 3 日的单程搜索）。\n2.\n若你能接受前后浮动几天，我可以改用日期区间搜索，比较不同出发日的可选航班（需要你明确给出可接受的日期范围）。\n3.\n若你希望看更便宜的联程/中转方案，需要你明确说明是否接受中转、是否接受自行拼接的独立机票（自转），我再按这些许可条件查询。\n需要我重试、放宽日期，还是先了解中转许可条件？\n想法、问题或推荐需求\n发送\n发送后会保留在当前对话\n\n规划\n\n探索\n\n行程\n\n我的",
+      "browserEnvironment": {
+        "name": "Chrome",
+        "version": "154.0.8037.98",
+        "deviceScaleFactor": 1.0000000298023224,
+        "mobile": false,
+        "touch": false,
+        "emulation": "phone-sized viewport; default Chrome user agent; mobile and touch emulation disabled",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "screen": {
+          "width": 390,
+          "height": 844
+        },
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+      },
+      "naturalInputs": [
+        {
+          "index": 1,
+          "text": "Please search currently available one-way flights from Beijing to Lisbon departing November 3. I want to compare the real results before choosing; do not create a sightseeing plan or select a flight for me."
+        }
+      ],
+      "actions": [
+        {
+          "index": 0,
+          "type": "send",
+          "label": "Search actual one-way flight options",
+          "status": "failed",
+          "startedAtMs": 2124,
+          "finishedAtMs": 10920,
+          "submitAtMs": 2167,
+          "acceptedAtMs": 2266,
+          "submitToAcceptedMs": 99,
+          "terminalAtMs": 10597,
+          "submitToTerminalMs": 8430,
+          "acceptanceObservation": "first successful HTTP response to the single visible submit POST",
+          "firstReadableResultObservation": "new or changed .pl-result text, first observed by 250ms polling; latency is an upper bound",
+          "terminalObservation": "first observed terminal turn-status response",
+          "failure": "Interactive mode pauses only for a completed, non-error natural response with no delivery attempt; content/commit failures remain failures",
+          "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+          "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+          "turnId": "01a113bf-0247-77af-b0a9-eb251d425af1",
+          "terminal": {
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "turnId": "01a113bf-0247-77af-b0a9-eb251d425af1",
+            "status": "completed",
+            "stage": "finalizing",
+            "startedAt": "2026-10-07T00:24:07.495Z",
+            "updatedAt": "2026-10-07T00:24:15.513Z",
+            "artifactRevision": 0,
+            "artifactRefs": [],
+            "response": {
+              "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+              "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+              "reply": "目前无法为你提供 11 月 3 日北京→里斯本的单程实时机票结果。\n\n我已按你的要求尝试查询，但当前机票数据源未接入（系统返回“数据源未配置”），因此拿不到任何真实报价，也就无法列出可对比的航班选项。按你的要求，我既没有为你挑选航班，也没有生成观光行程。\n\n几点说明：\n- 起讫点已确认：北京（BJS，含首都 PEK 与大兴 PKX）→ 里斯本（LIS，里斯本机场）。\n- 查询条件：2026 年 11 月 3 日出发、单程、经济舱、人民币计价。\n\n可选做法，你告诉我方向即可：\n1. 稍后再试同一查询（数据源恢复后我可以立刻重跑 11 月 3 日的单程搜索）。\n2. 若你能接受前后浮动几天，我可以改用日期区间搜索，比较不同出发日的可选航班（需要你明确给出可接受的日期范围）。\n3. 若你希望看更便宜的联程/中转方案，需要你明确说明是否接受中转、是否接受自行拼接的独立机票（自转），我再按这些许可条件查询。\n\n需要我重试、放宽日期，还是先了解中转许可条件？",
+              "stopReason": "goal_pending",
+              "tripContextSummary": {
+                "version": 0,
+                "destinations": {
+                  "mode": "open",
+                  "required": [],
+                  "preferred": [],
+                  "excluded": []
+                },
+                "interests": [],
+                "notes": [],
+                "readyForRouteGeneration": false
+              },
+              "artifactRefs": [],
+              "suggestedActions": [
+                {
+                  "id": "continue_planning",
+                  "label": "Continue planning",
+                  "kind": "message"
+                }
+              ],
+              "warnings": [],
+              "delivery": {
+                "status": "pending",
+                "goalId": "01a113bf-147e-7019-8c52-ace9da690444",
+                "kind": "flight_search",
+                "artifactIds": [],
+                "missing": [
+                  "flight_search_artifact"
+                ],
+                "warnings": [],
+                "goals": [
+                  {
+                    "status": "pending",
+                    "goalId": "01a113bf-147e-7019-8c52-ace9da690444",
+                    "kind": "flight_search",
+                    "artifactIds": [],
+                    "missing": [
+                      "flight_search_artifact"
+                    ],
+                    "warnings": []
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "index": 1,
+          "type": "read-page",
+          "label": "Observe actual flight search results",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 2,
+          "type": "click",
+          "label": "Open flight search results",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 3,
+          "type": "click",
+          "label": "Open the operator-selected displayed offer",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 4,
+          "type": "read-page",
+          "label": "Observe offer details before adoption",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 5,
+          "type": "click",
+          "label": "Adopt the displayed offer in the UI",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 6,
+          "type": "read-page",
+          "label": "Observe adopted flight in planner",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 7,
+          "type": "click",
+          "label": "Plan using the adopted flight",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 8,
+          "type": "read-page",
+          "label": "Observe first itinerary result",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 9,
+          "type": "open-latest-result",
+          "label": "Open itinerary details",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 10,
+          "type": "read-page",
+          "label": "Observe accepted trip details",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 11,
+          "type": "read-each-detail",
+          "label": "Read every activity detail before localization",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 12,
+          "type": "click",
+          "label": "Switch to English and inspect localization readiness",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 13,
+          "type": "click",
+          "label": "Create the first English localization",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 14,
+          "type": "read-each-detail",
+          "label": "Read every localized activity detail",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 15,
+          "type": "click",
+          "label": "Switch the localized trip back to Chinese",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 16,
+          "type": "read-page",
+          "label": "Observe Chinese trip details after localization",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 17,
+          "type": "reload",
+          "label": "Reload Chinese trip details",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 18,
+          "type": "read-page",
+          "label": "Observe localized recovery",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        },
+        {
+          "index": 19,
+          "type": "cold-restart",
+          "label": "Cold restart and authenticated recovery of adopted-flight trip",
+          "status": "blocked",
+          "reason": "Prior action did not satisfy its precondition or assertion; dependent UI action was not attempted.",
+          "blockedBy": "Search actual one-way flight options"
+        }
+      ],
+      "visibleText": [],
+      "network": [
+        {
+          "kind": "request",
+          "atMs": 1877,
+          "method": "POST",
+          "path": "/v1/auth/local"
+        },
+        {
+          "kind": "response",
+          "atMs": 2052,
+          "method": "POST",
+          "path": "/v1/auth/local",
+          "status": 200
+        },
+        {
+          "kind": "request",
+          "atMs": 2062,
+          "method": "GET",
+          "path": "/v1/memory"
+        },
+        {
+          "kind": "response",
+          "atMs": 2076,
+          "method": "GET",
+          "path": "/v1/memory",
+          "status": 200
+        },
+        {
+          "kind": "request",
+          "atMs": 2204,
+          "method": "POST",
+          "path": "/v1/trips"
+        },
+        {
+          "kind": "response",
+          "atMs": 2216,
+          "method": "POST",
+          "path": "/v1/trips",
+          "status": 201
+        },
+        {
+          "kind": "request",
+          "atMs": 2219,
+          "method": "POST",
+          "path": "/v1/conversations"
+        },
+        {
+          "kind": "response",
+          "atMs": 2230,
+          "method": "POST",
+          "path": "/v1/conversations",
+          "status": 201
+        },
+        {
+          "kind": "request",
+          "atMs": 2239,
+          "method": "POST",
+          "path": "/v1/agent/turns"
+        },
+        {
+          "kind": "request",
+          "atMs": 2264,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1"
+        },
+        {
+          "kind": "response",
+          "atMs": 2266,
+          "method": "POST",
+          "path": "/v1/agent/turns",
+          "status": 202
+        },
+        {
+          "kind": "response",
+          "atMs": 2484,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1",
+          "status": 200
+        },
+        {
+          "kind": "request",
+          "atMs": 4484,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1"
+        },
+        {
+          "kind": "response",
+          "atMs": 4496,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1",
+          "status": 200
+        },
+        {
+          "kind": "request",
+          "atMs": 6500,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1"
+        },
+        {
+          "kind": "response",
+          "atMs": 6517,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1",
+          "status": 200
+        },
+        {
+          "kind": "request",
+          "atMs": 8520,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1"
+        },
+        {
+          "kind": "response",
+          "atMs": 8536,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1",
+          "status": 200
+        },
+        {
+          "kind": "request",
+          "atMs": 10535,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1"
+        },
+        {
+          "kind": "request",
+          "atMs": 10555,
+          "method": "GET",
+          "path": "/v1/trips/01a113bf-0217-772b-b30b-49720af60a9c/workspace"
+        },
+        {
+          "kind": "response",
+          "atMs": 10597,
+          "method": "GET",
+          "path": "/v1/agent/turns/01a113bf-0247-77af-b0a9-eb251d425af1",
+          "status": 200
+        },
+        {
+          "kind": "response",
+          "atMs": 10812,
+          "method": "GET",
+          "path": "/v1/trips/01a113bf-0217-772b-b30b-49720af60a9c/workspace",
+          "status": 200
+        }
+      ],
+      "observer": {
+        "attribution": "browser_time_window_and_trip_scope",
+        "start": "2026-10-07T00:24:05.245Z",
+        "end": "2026-10-07T00:24:16.276Z",
+        "events": [
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 1,
+            "at": "2026-10-07T00:24:07.550Z",
+            "elapsedMs": 2.665999999997439,
+            "type": "execution_start"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 2,
+            "at": "2026-10-07T00:24:09.110Z",
+            "elapsedMs": 1562.0083999999915,
+            "type": "tool_start",
+            "toolName": "__model_admit",
+            "meter": {
+              "id": "01a113bf-0246-72df-84c7-462f340b4308:model:1",
+              "usage": {}
+            }
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 3,
+            "at": "2026-10-07T00:24:09.153Z",
+            "elapsedMs": 1605.5104999999894,
+            "type": "tool_end",
+            "toolName": "__model_admit",
+            "durationMs": 43.48099999999977,
+            "ok": true
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 4,
+            "at": "2026-10-07T00:24:09.157Z",
+            "elapsedMs": 1609.2019999999902,
+            "type": "activity",
+            "activity": "model_start"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 5,
+            "at": "2026-10-07T00:24:10.842Z",
+            "elapsedMs": 3294.1793999999936,
+            "type": "tool_start",
+            "toolName": "__model_receipt",
+            "meter": {
+              "id": "01a113bf-0246-72df-84c7-462f340b4308:model:1",
+              "durationMs": 1731.1317,
+              "failed": false,
+              "finishReason": "tool-calls",
+              "model": "deepseek-v4-flash",
+              "maxTokens": 8192,
+              "thinking": "disabled",
+              "usage": {
+                "inputTokens": 692,
+                "outputTokens": 162,
+                "totalTokens": 16342,
+                "cacheReadTokens": 15488
+              }
+            }
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 6,
+            "at": "2026-10-07T00:24:10.871Z",
+            "elapsedMs": 3323.597099999999,
+            "type": "tool_end",
+            "toolName": "__model_receipt",
+            "durationMs": 29.750899999999092,
+            "ok": true
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 7,
+            "at": "2026-10-07T00:24:10.873Z",
+            "elapsedMs": 3325.4983999999968,
+            "type": "activity",
+            "activity": "model_end",
+            "durationMs": 1765.0254
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 8,
+            "at": "2026-10-07T00:24:10.881Z",
+            "elapsedMs": 3333.1676000000007,
+            "type": "tool_start",
+            "toolName": "resolve_location"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 9,
+            "at": "2026-10-07T00:24:10.907Z",
+            "elapsedMs": 3359.5648999999976,
+            "type": "tool_end",
+            "toolName": "resolve_location",
+            "durationMs": 26.74779999999737
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 10,
+            "at": "2026-10-07T00:24:10.913Z",
+            "elapsedMs": 3364.792699999991,
+            "type": "tool_start",
+            "toolName": "resolve_location"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 11,
+            "at": "2026-10-07T00:24:10.923Z",
+            "elapsedMs": 3375.6087999999872,
+            "type": "tool_end",
+            "toolName": "resolve_location",
+            "durationMs": 8.618700000006356
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 12,
+            "at": "2026-10-07T00:24:10.935Z",
+            "elapsedMs": 3387.525099999999,
+            "type": "tool_start",
+            "toolName": "__model_admit",
+            "meter": {
+              "id": "01a113bf-0246-72df-84c7-462f340b4308:model:2",
+              "usage": {}
+            }
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 13,
+            "at": "2026-10-07T00:24:10.964Z",
+            "elapsedMs": 3415.9614,
+            "type": "tool_end",
+            "toolName": "__model_admit",
+            "durationMs": 28.50449999999546,
+            "ok": true
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 14,
+            "at": "2026-10-07T00:24:10.966Z",
+            "elapsedMs": 3417.7739,
+            "type": "activity",
+            "activity": "model_start"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 15,
+            "at": "2026-10-07T00:24:12.100Z",
+            "elapsedMs": 4552.204199999993,
+            "type": "tool_start",
+            "toolName": "__model_receipt",
+            "meter": {
+              "id": "01a113bf-0246-72df-84c7-462f340b4308:model:2",
+              "durationMs": 1165.7875000000004,
+              "failed": false,
+              "finishReason": "tool-calls",
+              "model": "deepseek-v4-flash",
+              "maxTokens": 8192,
+              "thinking": "disabled",
+              "usage": {
+                "inputTokens": 437,
+                "outputTokens": 202,
+                "totalTokens": 16895,
+                "cacheReadTokens": 16256
+              }
+            }
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 16,
+            "at": "2026-10-07T00:24:12.128Z",
+            "elapsedMs": 4580.316899999991,
+            "type": "tool_end",
+            "toolName": "__model_receipt",
+            "durationMs": 28.2271999999939,
+            "ok": true
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 17,
+            "at": "2026-10-07T00:24:12.129Z",
+            "elapsedMs": 4581.571499999991,
+            "type": "activity",
+            "activity": "model_end",
+            "durationMs": 1195.7668999999996
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 18,
+            "at": "2026-10-07T00:24:12.132Z",
+            "elapsedMs": 4583.858599999992,
+            "type": "tool_start",
+            "toolName": "search_flexible_flights"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 19,
+            "at": "2026-10-07T00:24:12.198Z",
+            "elapsedMs": 4650.181199999992,
+            "type": "tool_end",
+            "toolName": "search_flexible_flights",
+            "durationMs": 66.33610000000044,
+            "ok": false,
+            "errorCode": "PROVIDER_NOT_CONFIGURED"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 20,
+            "at": "2026-10-07T00:24:12.206Z",
+            "elapsedMs": 4658.2293999999965,
+            "type": "tool_start",
+            "toolName": "__model_admit",
+            "meter": {
+              "id": "01a113bf-0246-72df-84c7-462f340b4308:model:3",
+              "usage": {}
+            }
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 21,
+            "at": "2026-10-07T00:24:12.234Z",
+            "elapsedMs": 4686.381599999993,
+            "type": "tool_end",
+            "toolName": "__model_admit",
+            "durationMs": 28.180300000007264,
+            "ok": true
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 22,
+            "at": "2026-10-07T00:24:12.235Z",
+            "elapsedMs": 4687.752299999993,
+            "type": "activity",
+            "activity": "model_start"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 23,
+            "at": "2026-10-07T00:24:13.270Z",
+            "elapsedMs": 5722.323499999999,
+            "type": "tool_start",
+            "toolName": "__model_receipt",
+            "meter": {
+              "id": "01a113bf-0246-72df-84c7-462f340b4308:model:3",
+              "durationMs": 1063.8226000000004,
+              "failed": false,
+              "finishReason": "tool-calls",
+              "model": "deepseek-v4-flash",
+              "maxTokens": 8192,
+              "thinking": "disabled",
+              "usage": {
+                "inputTokens": 156,
+                "outputTokens": 173,
+                "totalTokens": 17097,
+                "cacheReadTokens": 16768
+              }
+            }
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 24,
+            "at": "2026-10-07T00:24:13.301Z",
+            "elapsedMs": 5753.1844999999885,
+            "type": "tool_end",
+            "toolName": "__model_receipt",
+            "durationMs": 30.945300000006682,
+            "ok": true
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 25,
+            "at": "2026-10-07T00:24:13.302Z",
+            "elapsedMs": 5754.307499999995,
+            "type": "activity",
+            "activity": "model_end",
+            "durationMs": 1096.3140000000003
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 26,
+            "at": "2026-10-07T00:24:13.304Z",
+            "elapsedMs": 5756.2063999999955,
+            "type": "tool_start",
+            "toolName": "search_flights"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 27,
+            "at": "2026-10-07T00:24:13.322Z",
+            "elapsedMs": 5774.6756999999925,
+            "type": "tool_end",
+            "toolName": "search_flights",
+            "durationMs": 18.475600000005215,
+            "ok": false,
+            "errorCode": "PROVIDER_NOT_CONFIGURED"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 28,
+            "at": "2026-10-07T00:24:13.330Z",
+            "elapsedMs": 5782.2351999999955,
+            "type": "tool_start",
+            "toolName": "__model_admit",
+            "meter": {
+              "id": "01a113bf-0246-72df-84c7-462f340b4308:model:4",
+              "usage": {}
+            }
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 29,
+            "at": "2026-10-07T00:24:13.357Z",
+            "elapsedMs": 5809.728499999997,
+            "type": "tool_end",
+            "toolName": "__model_admit",
+            "durationMs": 27.497100000007777,
+            "ok": true
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 30,
+            "at": "2026-10-07T00:24:13.359Z",
+            "elapsedMs": 5810.963999999993,
+            "type": "activity",
+            "activity": "model_start"
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 31,
+            "at": "2026-10-07T00:24:15.384Z",
+            "elapsedMs": 7836.751799999998,
+            "type": "tool_start",
+            "toolName": "__model_receipt",
+            "meter": {
+              "id": "01a113bf-0246-72df-84c7-462f340b4308:model:4",
+              "durationMs": 2054.4146,
+              "failed": false,
+              "finishReason": "stop",
+              "model": "deepseek-v4-flash",
+              "maxTokens": 8192,
+              "thinking": "disabled",
+              "usage": {
+                "inputTokens": 230,
+                "outputTokens": 270,
+                "totalTokens": 17396,
+                "cacheReadTokens": 16896
+              }
+            }
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 32,
+            "at": "2026-10-07T00:24:15.417Z",
+            "elapsedMs": 7869.029599999994,
+            "type": "tool_end",
+            "toolName": "__model_receipt",
+            "durationMs": 32.29669999999169,
+            "ok": true
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 33,
+            "at": "2026-10-07T00:24:15.418Z",
+            "elapsedMs": 7870.141199999998,
+            "type": "activity",
+            "activity": "model_end",
+            "durationMs": 2088.1729000000005
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 34,
+            "at": "2026-10-07T00:24:15.425Z",
+            "elapsedMs": 7877.523199999996,
+            "type": "execution_result",
+            "reason": "completed",
+            "calls": 4,
+            "resumed": false,
+            "rehydrated": false,
+            "cancelled": false
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 35,
+            "at": "2026-10-07T00:24:15.428Z",
+            "elapsedMs": 7880.099199999997,
+            "type": "session_mapping",
+            "mappingAvailable": true
+          },
+          {
+            "executionId": "8a0912b9-a831-4f12-b5b4-9a5984693fb0",
+            "generationId": "01a113bf-0246-72df-84c7-462f340b4308",
+            "tripId": "01a113bf-0217-772b-b30b-49720af60a9c",
+            "conversationId": "01a113bf-022d-764b-abbf-c8befe4ce7f0",
+            "sequence": 36,
+            "at": "2026-10-07T00:24:15.428Z",
+            "elapsedMs": 7880.2119999999995,
+            "type": "execution_closed"
+          }
+        ],
+        "sourceSha256": [
+          "1a75cf1177ed966ec3f7d74228923cf7b2310d6d42215b67fd06abf0dae67033"
+        ],
+        "executionContinuation": []
+      },
+      "postgres": {
+        "readOnly": true,
+        "journeyId": "B12",
+        "trips": [
+          {
+            "trip": {
+              "public_id": "01a113bf-0217-772b-b30b-49720af60a9c",
+              "title": "",
+              "status": "planning",
+              "current_context_version": 0,
+              "workspace_version": 0,
+              "savedRoute": {
+                "days": []
+              }
+            },
+            "contextVersions": [
+              {
+                "version": 0,
+                "created_at": "2026-10-07T00:24:07.447Z",
+                "context": {
+                  "notes": [],
+                  "version": 0,
+                  "interests": [],
+                  "priorities": {},
+                  "destinationIntent": {
+                    "mode": "open",
+                    "excluded": [],
+                    "required": [],
+                    "preferred": []
+                  },
+                  "mustIncludeEvents": [],
+                  "requiredGroundLegs": [],
+                  "transferPreferences": {},
+                  "locationRoleOverrides": []
+                }
+              }
+            ],
+            "artifacts": [],
+            "goals": [
+              {
+                "public_id": "01a113bf-147e-7019-8c52-ace9da690444",
+                "kind": "flight_search",
+                "status": "pending",
+                "created_context_version": 0,
+                "created_at": "2026-10-07T00:24:12.158Z",
+                "updated_at": "2026-10-07T00:24:12.158Z",
+                "completed_at": null,
+                "parameters": {
+                  "requestKey": "BJS-LIS-2026-11-03-oneway",
+                  "departureDate": "2026-11-03"
+                }
+              }
+            ],
+            "runs": [
+              {
+                "public_id": "01a113bf-1491-7149-84c6-97b8ea1d43ca",
+                "status": "running",
+                "context_version": 0,
+                "created_at": "2026-10-07T00:24:12.158Z",
+                "updated_at": "2026-10-07T00:24:12.158Z",
+                "completed_at": null,
+                "problemCodes": [],
+                "contentPublicationState": "not_established_by_goal_run",
+                "context": {
+                  "notes": [],
+                  "version": 0,
+                  "interests": [],
+                  "priorities": {},
+                  "destinationIntent": {
+                    "mode": "open",
+                    "excluded": [],
+                    "required": [],
+                    "preferred": []
+                  },
+                  "mustIncludeEvents": [],
+                  "requiredGroundLegs": [],
+                  "transferPreferences": {},
+                  "locationRoleOverrides": []
+                },
+                "workingSet": {
+                  "artifactRefs": [],
+                  "locationHandles": []
+                }
+              }
+            ],
+            "messages": [
+              {
+                "public_id": "01a113bf-0875-70a5-85ce-d6e758ba5ae9",
+                "role": "user",
+                "content": "Please search currently available one-way flights from Beijing to Lisbon departing November 3. I want to compare the real results before choosing; do not create a sightseeing plan or select a flight for me.",
+                "created_at": "2026-10-07T00:24:09.076Z",
+                "publicationState": "conversation_message_not_proof_of_publication"
+              },
+              {
+                "public_id": "01a113bf-218b-766f-95ef-2fb8ae4ebbc2",
+                "role": "assistant",
+                "content": "目前无法为你提供 11 月 3 日北京→里斯本的单程实时机票结果。\n\n我已按你的要求尝试查询，但当前机票数据源未接入（系统返回“数据源未配置”），因此拿不到任何真实报价，也就无法列出可对比的航班选项。按你的要求，我既没有为你挑选航班，也没有生成观光行程。\n\n几点说明：\n- 起讫点已确认：北京（BJS，含首都 PEK 与大兴 PKX）→ 里斯本（LIS，里斯本机场）。\n- 查询条件：2026 年 11 月 3 日出发、单程、经济舱、人民币计价。\n\n可选做法，你告诉我方向即可：\n1. 稍后再试同一查询（数据源恢复后我可以立刻重跑 11 月 3 日的单程搜索）。\n2. 若你能接受前后浮动几天，我可以改用日期区间搜索，比较不同出发日的可选航班（需要你明确给出可接受的日期范围）。\n3. 若你希望看更便宜的联程/中转方案，需要你明确说明是否接受中转、是否接受自行拼接的独立机票（自转），我再按这些许可条件查询。\n\n需要我重试、放宽日期，还是先了解中转许可条件？",
+                "created_at": "2026-10-07T00:24:15.498Z",
+                "publicationState": "conversation_message_not_proof_of_publication"
+              }
+            ]
+          }
+        ]
+      },
+      "screenshots": [
+        {
+          "file": "screenshots/B12-attempt-01-01.png",
+          "sha256": "09fa2fa74a38264e0ae28b8c9c1f88bc7e489c11027b7bc6d529eebfc4a0ab9c"
+        }
+      ]
+    }
+  ],
+  "status": "attempted"
+}

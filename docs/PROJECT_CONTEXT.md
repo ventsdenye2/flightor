@@ -1,5 +1,7 @@
 # FlightOR 当前项目上下文
 
+2026-10-07 当前按用户要求暂停：冻结 r24 的 B01–B12 已执行到各自终点，E01–E04 不测，微信页面仍暂缓；[12 场景分析与续作](design/budget-travel-agent/DSH_D6_R24_H5_ANALYSIS_2026-10-07.md)保留 13 次 attempt、53 张截图、全文/详情及 PG 投影。9 场 runner FAIL、3 场 observed；B07/B08 独立公开回复复核失败，B05 仅局改/非目标/恢复子项有通过证据，D6 未 PASS。产品 fee07e5、同 run/schema、390×844、原模型配置及六项实际指纹保持，最终服务正常关闭/forbidden0/无锁；原 PID128072 缺关闭审计保留。没有继续修产品或重跑。r24 199model/77search/pending0、USD17.20 未知预留，累计 USD54.56 未知预留（非实付），SerpAPI 现有余额 248，未购买。其他工树、用户未提交内容、数据库/会话/账本保留；本批只提交结果并普通推送功能分支，不合 main、不部署。下述此前阶段状态为历史快照。
+
 2026-10-07按用户“第一个场景测试后暂时停下”暂停：r24真实B01首稿46.590秒satisfied并读完9活动详情；解释4.081秒被withheld，后5动作blocked，完整59.613秒FAIL，非180秒超时，未完成局改/刷新。冻结dist实际原因仅excluded_precise_claim；Astra max复现裸“整趟”预算范围及“并非已经核实的费用结论”否定误判，同时确认无金额“单价低”漏检，不能仅修误拦就放行原解释。代码尚未修复，来源/全文独立审阅与方向研判因暂停未完成。服务PID128072退出/无监听，但日志管道中断未写guards_closed；同PID残留锁原样保留，数据/会话/账本/归档与六项指纹保持。本批10model/4search/14settled/pending0/fare0、USD0.88未知预留，累计USD38.24未知预留（非实付）。B02–B12/E01–E04未运行，D6未PASS、无确认硬阻塞；[失败与暂停续作](design/budget-travel-agent/evidence/d6-r24-b01-failure.json)。恢复须先重新核对退出/锁及完成诊断，代码修后新r25完整冻结重验。
 
 2026-10-07 r24完整工程通过：[同版冻结证据](design/budget-travel-agent/evidence/d6-r24-freeze.json)记录backend1609/1609、真实专用PG52/52、D5本地fixture30/30且codeUnchanged、runtime14/14、observer1/1、前端四族/根TS/helper21/21及两端构建完整日志。两批固定10对全部accepted/语义一致/零外呼，保留P50组装增加2.7–3.9ms及约0.042ms/次回指检查定位，无新增仓库往返、不宣称生产提速。工程后source/backend/H5/worker/归档及历史ledger实际六项SHA一致；单主模型/原参数/授权/日期与390×844配置不变，新批仍零真实调用。现在从B01执行原12+4真实H5，D6未PASS、无确认硬阻塞；下述过程状态为历史快照。

@@ -1,0 +1,210 @@
+{
+  "version": 1,
+  "status": "PAUSED_BY_USER_NOT_PASS",
+  "codeHead": "fee07e5dd4cff9afb402b91be721eb8cf2a5da44",
+  "recordingHead": "1e653a7",
+  "runId": "c7c8b0b0-feac-434e-80bc-eb26e818cbf5",
+  "userScope": {
+    "fixedExecuted": 12,
+    "exploratoryNotRun": [
+      "E01",
+      "E02",
+      "E03",
+      "E04"
+    ],
+    "weChatPageDeferred": true,
+    "noMoreRealCallsOrProductRepairs": true
+  },
+  "finalFingerprintAudit": {
+    "at": "2026-10-07T00:26:18.112Z",
+    "runId": "c7c8b0b0-feac-434e-80bc-eb26e818cbf5",
+    "schema": "dsh_d6_c7c8b0b0feac434e80bceb26e818cbf5",
+    "checks": {
+      "source": true,
+      "backend": true,
+      "h5": true,
+      "worker": true,
+      "runtimeArchive": true,
+      "legacyLedger": true
+    },
+    "sourceHash": "7f99f7fae9ac885ba4248fb56aa758ac3b1f16fc5ba3da1947bba9744b441fbb",
+    "backend": {
+      "sha256": "408561013dd87ae5d217f8075cc9849af5c1b276e901c02c0095eb0470b8475b",
+      "files": 783
+    },
+    "h5": {
+      "sha256": "cd39aa4d9e436dbda35b6dfd52a9c1af7efd433514143a37388627f2ce76e0ca",
+      "files": 78
+    },
+    "worker": {
+      "sha256": "657015d487ffa07f5597ba1baf19490d538e47cf4c6f4d8ed48e738033ce872e",
+      "files": 6
+    },
+    "archive": {
+      "sha256": "408561013dd87ae5d217f8075cc9849af5c1b276e901c02c0095eb0470b8475b",
+      "files": 783
+    },
+    "legacyHash": "3fdfdb12c1c3297c25548d54a53a2e4473f9f0d19c974f0f45a23afbd3d84126",
+    "sourceSha256": "ecbcdf35d5bbf36e6f6653d754633117b67c91f3d6cebef752b432e46221efd5"
+  },
+  "serverGuardRecords": [
+    {
+      "type": "guards_installed",
+      "pid": 128072,
+      "at": "2026-10-06T23:16:37.959Z"
+    },
+    {
+      "type": "guards_installed",
+      "pid": 62608,
+      "at": "2026-10-06T23:56:50.173Z"
+    },
+    {
+      "type": "guards_closed",
+      "pid": 62608,
+      "at": "2026-10-06T23:59:30.405Z",
+      "forbiddenCalls": 0
+    },
+    {
+      "type": "guards_installed",
+      "pid": 58616,
+      "at": "2026-10-07T00:00:30.147Z"
+    },
+    {
+      "type": "guards_closed",
+      "pid": 58616,
+      "at": "2026-10-07T00:22:17.469Z",
+      "forbiddenCalls": 0
+    },
+    {
+      "type": "guards_installed",
+      "pid": 57100,
+      "at": "2026-10-07T00:22:50.440Z"
+    },
+    {
+      "type": "guards_closed",
+      "pid": 57100,
+      "at": "2026-10-07T00:24:59.607Z",
+      "forbiddenCalls": 0
+    }
+  ],
+  "closure": {
+    "stopped": true,
+    "lastPid": 57100,
+    "lastClosedAt": "2026-10-07T00:24:59.607Z",
+    "originalPid128072GracefulClosureProven": false,
+    "remainingLocks": [],
+    "guardAuditSha256": "7784cb6acd012e73ec4dca0451f8c7882f87c8c4da8361ad7e7c0f89ef057db1"
+  },
+  "recordingClosureReadback": {
+    "at": "2026-10-07T00:49:26.609Z",
+    "ports": [
+      {
+        "port": 51018,
+        "state": "ECONNREFUSED"
+      },
+      {
+        "port": 63207,
+        "state": "ECONNREFUSED"
+      }
+    ],
+    "remainingLocks": []
+  },
+  "recovery": {
+    "originalLocksArchived": true,
+    "oldOwnerExitVerified": true,
+    "oldPortsRefused": true,
+    "missingPlacesUrlResumeRejectedBeforeBusinessCalls": true,
+    "originalB02GuardFailureHadZeroModelCalls": true,
+    "sourceAuditHashes": [
+      {
+        "name": "verified-orphan-lock-recovery.private.json",
+        "sha256": "f658952ce227606352ac68164a1f6f7d9a5b3d3d2121bbfd0a8933104a6b9d05"
+      },
+      {
+        "name": "verified-orphan-manager-guard-recovery.private.json",
+        "sha256": "91b59652f7f956e1d0e9b2582da0dc17e071c22467e2433f273f5835c050ad42"
+      }
+    ]
+  },
+  "cost": {
+    "sourceSha256": "e658938204d59c9e1e9c80541fc24df89a0b72226424fca4403e1276834e678b",
+    "currentRun": {
+      "ledgerSha256": "0f6dc8728fe2a8c86637d13d6678673584020c6a0196f5d4314b9864c97c5c3e",
+      "modelAdmissions": 199,
+      "searchAdmissions": 77,
+      "settled": 276,
+      "pending": 0,
+      "promptTokens": 6908356,
+      "completionTokens": 110258,
+      "modelTokens": 7018614,
+      "modelCallsWithoutUsage": 0,
+      "knownCostCalls": 0,
+      "knownCostUsdMicros": 0,
+      "unknownCostCalls": 276,
+      "unknownReservedUsdMicros": 17200000,
+      "fareMethodCalls": 4
+    },
+    "allRetainedD6Runs": {
+      "runCount": 24,
+      "reportCount": 38,
+      "modelAdmissions": 593,
+      "searchAdmissions": 257,
+      "settled": 850,
+      "pending": 0,
+      "promptTokens": 20135481,
+      "completionTokens": 298645,
+      "modelTokens": 20434126,
+      "modelCallsWithoutUsage": 0,
+      "knownCostCalls": 0,
+      "knownCostUsdMicros": 0,
+      "unknownCostCalls": 850,
+      "unknownReservedUsdMicros": 54560000,
+      "fareMethodCalls": 4
+    },
+    "resumedIncrement": {
+      "modelAdmissions": 189,
+      "searchAdmissions": 73,
+      "settled": 262,
+      "unknownReservedUsdMicros": 16320000
+    },
+    "actualAmount": "unknown; zero actual-cost receipts, reservation is not amount paid",
+    "perJourneyAmounts": "not independently reconciled; old review stdout falls back to whole-run ledger; do not assign whole-run totals to a journey"
+  },
+  "serpapi": {
+    "before": {
+      "at": "2026-10-06T23:58:23.894Z",
+      "httpStatus": 200,
+      "thisMonthUsage": 0,
+      "totalSearchesLeft": 250,
+      "keyPresent": true,
+      "noPurchase": true
+    },
+    "after": {
+      "at": "2026-10-07T00:26:57.694Z",
+      "httpStatus": 200,
+      "thisMonthUsage": 2,
+      "totalSearchesLeft": 248,
+      "keyPresent": true,
+      "noPurchase": true,
+      "noFareQuery": true
+    },
+    "fareMethodCalls": 4,
+    "accountUsageDelta": 2,
+    "methodCallsEqualBillableNetworkCalls": false,
+    "noPurchase": true
+  },
+  "export": {
+    "exporterSha256": "cc6effddaa67c7beda6d86ca61223b02134c802f5815c2acab1b119ee5239d87",
+    "whiteListProjection": true,
+    "originalPrivateMaterialsRetained": true,
+    "sourceReports": 13,
+    "originalScreenshots": 53,
+    "screenshotVisualInspection": "All 53 original screenshots inspected in contact sheets; product pages only, no visible credentials.",
+    "observerAttribution": "browser time window AND Trip scope; post-browser original execution events separate",
+    "postgresAfterDrain": [
+      "B09",
+      "B10"
+    ],
+    "fullSessionTransportHeadersKeysRawDatabaseLedgersNotIncluded": true
+  }
+}

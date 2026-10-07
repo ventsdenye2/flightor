@@ -1,5 +1,7 @@
 # 文档维护规则与本轮清理记录
 
+2026-10-07 r24 结果交接采用一次性私有白名单导出，只读取已停止批次的原报告/observer/PG 读取及凭据扫描材料，输出到 [分析包](design/budget-travel-agent/evidence/d6-r24-analysis/README.md)。原13attempt与53截图不替换，B09/B10按Trip过滤重叠窗口并单列执行续尾/post-drain；完整会话、transport、header、key、原数据库/账本不上传。导出器与整理脚本保留在忽略的backend/.demo/d6，不改变冻结product/build/scripts；本批提交只含docs及脱敏证据。投影核验保留B05详情26项/11893字节、B02两attempt回执/observer码/meter关联一致，已扫描当前凭据值和密钥模式；最终扫描结果归包内secret-scan.json。文档检查首次sandbox spawnSync git EPERM，同一只读检查在允许子进程环境通过，未关闭门禁；最终提交前还须检查实际staged范围。逐场结果及未验证项归[当前分析](design/budget-travel-agent/DSH_D6_R24_H5_ANALYSIS_2026-10-07.md)，D6未PASS，用户要求暂停后不继续测试/修产品。
+
 2026-10-07 r22 DSH H5 no-guide引用边界：真实`read_artifact`旧攻略引用仅允许精确previousGuideId出现在response refs，不能计作新提交；progress refs、Artifact revision与delivery仍为零。定向断言21/21、runner/helper语法和`git diff --check`通过；`node scripts/check-docs.cjs`被sandbox `spawnSync git EPERM`阻止，文档链接/同步检查未确认。行为合同与结果见[DSH D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)和[progress](design/budget-travel-agent/progress.md)。
 
 2026-10-07 r22真实B01复审后修正：解释轮必须有非空实际答复，且不得带`dsh_reply_withheld`或`dsh_model_incomplete`，同时保持零新Artifact；accepted guide交付从同轮引用中排除已知previousGuideId旧基底后，仍须唯一绑定一个新guide。runner以断言返回的新ID更新基准，并从可读结果白名单剔除旧guide，保留同轮route/research引用。合同初测红2项，随后真实`recordTurnArtifacts`函数VM行为测试红1项以复现旧ID仍被允许打开；修后断言21/21、runner语法通过。未重跑Provider或冻结H5。用途和边界见[DSH D6 harness](design/budget-travel-agent/DSH_D6_HARNESS.md)。
