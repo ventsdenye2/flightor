@@ -53,6 +53,12 @@ test('failed persistence does not report a saved result', async () => {
   await assert.rejects(runPlan(value, { Agent, onChange: async update => { if (update.stage === 'completed') throw Error('disk unavailable') } }), /disk unavailable/)
   assert.equal(value.trip, undefined); assert.equal(value.stage, 'failed')
 })
+test('conversation save runs before a completed plan is published', async () => {
+  const { Agent } = fakeAgents(candidate()); const value = run()
+  let saved = false
+  await runPlan(value, { Agent, beforeComplete: async completed => { assert.equal(completed.trip.provenance, 'dsh'); saved = true }, onChange: async update => { if (update.stage === 'completed') assert.equal(saved, true) } })
+  assert.equal(value.stage, 'completed')
+})
 test('displayed flight facts come directly from CLI, and missing snapshots do not block the trip', () => {
   const value = candidate(); value.flightSelection = { searchId: 'search-1', candidateId: 'flight-1', price: 1 }
   const record = { searchId: 'search-1', query: { departureDate: '2026-11-06' }, observedAt: '2026-10-19T00:00:00Z', sourceUrl: 'https://www.trip.com/', candidates: [{ id: 'flight-1', airlines: ['航司'], price: { amount: 4123, currency: 'CNY' }, details: { segments: [{ origin: 'BJS', destination: 'TYO', departureLocal: '2026-11-06T10:00', arrivalLocal: '2026-11-06T14:00' }] } }] }

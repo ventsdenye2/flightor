@@ -4,13 +4,14 @@ import crypto from 'node:crypto'
 import path from 'node:path'
 import { dataRoot } from './paths.mjs'
 import { runPlan } from './plan.mjs'
-import { loadConversation, runConversation } from './conversation.mjs'
+import { loadConversation, runConversation, selectConversationFlight } from './conversation.mjs'
+import { resolveFlightSelection } from './flight-options.mjs'
 
 const runs = new Map()
 await fs.mkdir(path.join(dataRoot, 'runs'), { recursive: true })
 function publicRun(run) {
-  const { id, stage, error, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt } = run
-  return { id, stage, error, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt }
+  const { id, stage, progress, error, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt } = run
+  return { id, stage, progress, error, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt }
 }
 async function persist(run) {
   const file = path.join(dataRoot, 'runs', run.id + '.json')
@@ -32,6 +33,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && conversationMatch) {
       try { return send(res, 200, await loadConversation(conversationMatch[1])) } catch { return send(res, 404, { error: '对话不存在' }) }
     }
+    const selectionMatch = url.pathname.match(/^\/api\/conversations\/([a-f\d-]{36})\/flight-selection$/)
+    if (req.method === 'POST' && selectionMatch) {
+      if ([...runs.values()].some(item => !['completed', 'failed', 'cancelled'].includes(item.run.stage))) return send(res, 409, { error: '请等当前对话完成后再选择航班' })
+      let body = ''
+      for await (const chunk of req) { body += chunk; if (body.length > 1000) return send(res, 413, { error: 'Request too large' }) }
+      return send(res, 200, await selectConversationFlight(selectionMatch[1], JSON.parse(body).selection))
+    }
     const isConversation = url.pathname === '/api/conversations/turns'
     if (req.method === 'POST' && (url.pathname === '/api/runs' || isConversation)) {
       let body = ''
@@ -41,10 +49,13 @@ const server = http.createServer(async (req, res) => {
       if (typeof message !== 'string' || !message.trim() || message.length > 4000) return send(res, 400, { error: '请输入1到4000字的消息' })
       if (isConversation && input.action && !['chat', 'plan'].includes(input.action)) return send(res, 400, { error: '无效的对话操作' })
       if (isConversation && input.conversationId) {
-        try { await loadConversation(input.conversationId) } catch { return send(res, 404, { error: '对话不存在，请重新开始' }) }
-      }
+        let conversation
+        try { conversation = await loadConversation(input.conversationId) } catch { return send(res, 404, { error: '对话不存在，请重新开始' }) }
+        resolveFlightSelection(conversation, input.flightSelection)
+      } else if (input.flightSelection) return send(res, 400, { error: '请在查询所在的对话中选择航班' })
       if ([...runs.values()].some(item => !['completed', 'failed', 'cancelled'].includes(item.run.stage))) return send(res, 409, { error: '本地 MVP 当前一次运行一个请求，请等待或取消当前任务' })
       const run = { id: crypto.randomUUID(), prompt: isConversation ? undefined : message, message: isConversation ? message : undefined, conversationId: input.conversationId, action: input.action || 'chat', constraints: input.constraints || {}, stage: 'queued', createdAt: new Date().toISOString() }
+      if (isConversation && input.flightSelection) run.flightSelection = input.flightSelection
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(Error('MVP 总运行时间超过12分钟')), 720000)
       const entry = { run, controller }

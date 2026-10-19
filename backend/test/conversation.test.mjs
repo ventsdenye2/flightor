@@ -39,6 +39,26 @@ test('unstructured or invalid intent replies remain chat, never trigger planning
   assert.equal(parseConversationReply('先聊聊你的想法').intent, 'chat')
   assert.equal(parseConversationReply('{"reply":"开始","intent":"maybe"}').intent, 'chat')
 })
+test('actual lifecycle progress updates and the saved reply publish before agent cleanup', async () => {
+  const root = await fs.mkdtemp(path.join(dataRoot, 'conversation-test-'))
+  let closed = false, publishedBeforeClose = false, live
+  class Agent {
+    async start() {}
+    async run() {
+      this.onEvent('conversation', { type: 'tool/call', data: { arguments: 'private' } })
+      live = run.progress.text
+      return { text: '{"reply":"可以继续聊。","intent":"chat"}' }
+    }
+    async close() { closed = true }
+  }
+  const run = { id: crypto.randomUUID(), message: '你好' }
+  try {
+    await runConversation(run, { root, Agent, onChange: async value => { if (value.conversation && !closed) publishedBeforeClose = true } })
+    assert.match(live, /正在调用工具/)
+    assert.equal(publishedBeforeClose, true)
+    assert.equal(run.conversation.messages.at(-1).content, '可以继续聊。')
+  } finally { await fs.rm(root, { recursive: true, force: true }) }
+})
 test('cancelled chat cannot publish a late answer or initiate planning', async () => {
   const root = await fs.mkdtemp(path.join(dataRoot, 'conversation-test-'))
   const controller = new AbortController()

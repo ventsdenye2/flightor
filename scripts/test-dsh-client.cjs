@@ -49,8 +49,30 @@ async function main() {
   }, { get: () => null, set: () => assert.fail('late history must not persist'), clear: () => {} })
   const late = lateChat.send('消息', () => assert.fail('late progress must not publish'), cancelledChat.signal)
   await new Promise(resolve => setTimeout(resolve, 0)); assert.equal(posted, true); cancelledChat.abort()
-  resolveTurn({ stage: 'completed', conversation: { id: 'late', messages: [] } })
   await assert.rejects(late, /已取消/)
+  resolveTurn({ stage: 'completed', conversation: { id: 'late', messages: [] } })
+  let submit, deleted = false
+  const earlyCancellation = new PlanCancellation()
+  const earlyChat = createConversationClient(async method => {
+    if (method === 'POST') return new Promise(resolve => { submit = resolve })
+    if (method === 'DELETE') { deleted = true; return {} }
+    assert.fail('cancelled submission must not poll')
+  }, { get: () => null, set: () => assert.fail('cancelled submission must not save'), clear: () => {} })
+  const early = earlyChat.send('消息', () => assert.fail('cancelled progress'), earlyCancellation.signal)
+  earlyCancellation.abort()
+  await assert.rejects(early, /已取消/)
+  submit({ id: 'late-post' })
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.equal(deleted, true)
+  const updates = []
+  let poll = 0
+  const progressChat = createConversationClient(async method => {
+    if (method === 'POST') return { id: 'progress' }
+    poll++
+    return { stage: poll === 1 ? 'chatting' : 'completed', progress: { text: poll === 1 ? '正在调用工具查询资料' : '回复已保存' }, ...(poll === 2 ? { conversation: { id: 'done', messages: [] } } : {}) }
+  }, { get: () => null, set: () => {}, clear: () => {} })
+  await progressChat.send('消息', text => updates.push(text), new PlanCancellation().signal)
+  assert.deepEqual(updates, ['正在调用工具查询资料', '回复已保存'])
   console.log('PASS cancellation signals backend and ignores late result; saved real result restores; sample result is not restored as live')
 }
 main().catch(error => { console.error(error); process.exitCode = 1 })

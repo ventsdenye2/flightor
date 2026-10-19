@@ -1,0 +1,29 @@
+/* postcss-pxtransform disable */
+.fc-options { margin-top: 24px; color: #172f56; letter-spacing: 0; }
+.fc-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; > .ux-icon { width: 29px; height: 29px; } }
+.fc-eyebrow { display: block; font-size: 10px; color: #2563eb; margin-bottom: 6px; font-weight: 600; }
+.fc-title { display: block; font: 600 23px/1.5 'Songti SC', SimSun, serif; }
+.fc-route { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; .ux-icon { width: 16px; height: 16px; } }
+.fc-query { display: block; color: #6c7f86; font-size: 11px; margin-top: 5px; }
+.fc-sorts { display: flex; border-bottom: 1px solid #e2e9f3; gap: 24px; margin: 15px 0 16px; }
+.ux-app .fc-sorts button { min-height: 44px; font-size: 12px; border-bottom: 2px solid transparent; color: #6c7f86; &.is-active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; } }
+.fc-list { display: flex; flex-direction: column; gap: 14px; }
+.fc-ticket { border: 1px solid #dce5f0; border-radius: 8px; padding: 15px 14px 0; background: #fff; &.is-selected { border: 1px solid #2563eb; box-shadow: 0 0 0 1px #2563eb; } }
+.fc-card-head { display: flex; align-items: flex-start; gap: 10px; min-height: 30px; }
+.fc-airlines { flex: 1; min-width: 0; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+.fc-badge { padding: 3px 7px; background: #eaf2ff; color: #2563eb; border-radius: 4px; font-size: 10px; white-space: nowrap; }
+.fc-schedule { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 6px; font-variant-numeric: tabular-nums; }
+.fc-endpoint { flex: 1; min-width: 0; }.fc-endpoint-arrival { text-align: right; }.fc-time { display: block; font-size: 28px; line-height: 1.25; font-weight: 650; }.fc-airport { display: block; margin-top: 5px; font-size: 12px; color: #4a6280; }
+.fc-arrival-clock { display: flex; justify-content: flex-end; align-items: flex-start; gap: 3px; }.fc-offset { color: #2563eb; font-size: 9px; padding-top: 4px; white-space: nowrap; }
+.fc-bridge { width: 100px; flex-shrink: 0; text-align: center; color: #6c7f86; font-size: 10px; }
+.fc-flight-line { position: relative; display: flex; height: 14px; align-items: center; justify-content: center; margin: 4px 4px; &::before { content: ''; position: absolute; height: 1px; left: 0; right: 0; background: #cbd9eb; }.ux-icon { width: 16px; height: 16px; position: relative; background: #fff; } }
+.fc-local-note { display: block; font-size: 10px; color: #6c7f86; margin-top: 10px; }
+.fc-reasons { padding: 13px 0; margin-top: 12px; border-top: 1px dashed #dce5f0; border-bottom: 1px dashed #dce5f0; }
+.fc-reason-label { display: block; color: #2563eb; font-size: 11px; font-weight: 600; margin-bottom: 5px; }.fc-reason { display: block; font-size: 11px; line-height: 1.8; color: #4b6280; }
+.fc-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 13px 0 10px; }.fc-price { display: block; color: #172f56; font-size: 24px; font-weight: 650; line-height: 1.4; font-variant-numeric: tabular-nums; > text, > span { font-size: 10px; font-weight: 400; color: #6c7f86; } }.fc-small { display: block; font-size: 10px; color: #6c7f86; line-height: 1.7; }
+.ux-app .fc-select { display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 9px 11px; border: 1px solid #c8d9f4; color: #2563eb; border-radius: 6px; font-size: 12px; flex-shrink: 0; &.is-selected { background: #2563eb; color: #fff; border-color: #2563eb; } }
+.fc-radio { display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 1px solid currentColor; border-radius: 50%; .ux-icon { width: 12px; height: 12px; filter: brightness(0) invert(1); } }
+.ux-app .fc-detail { display: flex; width: 100%; justify-content: space-between; align-items: center; min-height: 42px; border-top: 1px solid #edf1f7; color: #6c7f86; font-size: 11px; .ux-icon { width: 13px; height: 13px; } }
+.ux-app .fc-more { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; color: #2563eb; font-size: 12px; .ux-icon { width: 14px; height: 14px; } }
+.fc-disclosure { display: block; margin-top: 10px; color: #7a879b; font-size: 10px; line-height: 1.8; overflow-wrap: anywhere; }.fc-detail-heading { margin-bottom: 22px; > text, > span { display: block; }.fc-price { margin-top: 12px; } }.fc-leg { display: flex; flex-direction: column; gap: 8px; padding: 16px 0 16px 14px; border-left: 2px solid #d9e6f9; font-size: 12px; margin-top: 12px; .ux-icon { width: 14px; height: 14px; } }.fc-leg-carrier { font-weight: 600; }.fc-connection { padding: 10px 12px; background: #f2f6fd; font-size: 12px; border-radius: 6px; }.fc-baggage { display: flex; flex-direction: column; gap: 8px; font-size: 12px; margin: 20px 0; padding-top: 16px; border-top: 1px solid #e2e9f3; }.fc-caution { background: #fff5e9; color: #8c5b26; padding: 12px; font-size: 11px; line-height: 1.8; margin-bottom: 18px; border-radius: 6px; }.fc-missing { display: block; font-size: 12px; line-height: 1.8; margin: 12px 0; color: #6c7f86; }.fc-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 30px 8px; font-size: 13px; }
+@media (max-width: 360px) { .fc-time { font-size: 24px; }.fc-bridge { width: 86px; }.fc-title { font-size: 21px; }.fc-sorts { gap: 18px; }.fc-ticket { padding-left: 12px; padding-right: 12px; } }

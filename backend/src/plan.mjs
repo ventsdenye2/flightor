@@ -4,12 +4,15 @@ import { DshAgent } from './dsh.mjs'
 import { dataRoot } from './paths.mjs'
 import { plannerPersona, reviewerPersona } from './prompts.mjs'
 import { parseReview, toPresentation } from './contract.mjs'
+import { flightOptionsFromEvidence } from './flight-options.mjs'
+import { updateProgress } from './progress.mjs'
 
-export async function runPlan(run, { signal, onChange = async () => {}, Agent = DshAgent, transformDraft, transformReview } = {}) {
+export async function runPlan(run, { signal, onChange = async () => {}, Agent = DshAgent, transformDraft, transformReview, beforeComplete = async () => {} } = {}) {
   const workspace = path.join(dataRoot, 'workspaces', run.id)
   const evidence = [...(run.conversationEvidence || [])]
   const trace = []
   const event = (role, value) => {
+    if (!signal?.aborted) updateProgress(run, role, value)
     if (value.type === 'tool/call' || value.type === 'tool/result' || value.type === 'turn/end') trace.push({ role, event: value })
     if ((value.type === 'assistant/message' || value.type === 'assistant/attempt') && value.data.usage) trace.push({ role, usage: value.data.usage })
     if (value.type === 'tool/result') evidence.push(value.data)
@@ -18,7 +21,11 @@ export async function runPlan(run, { signal, onChange = async () => {}, Agent = 
   const reviewer = new Agent({ role: 'reviewer', workspace: path.join(workspace, 'reviewer'), sessionId: `${run.id}-reviewer`, onEvent: event })
   run.agents = { planner: planner.sessionId, reviewer: reviewer.sessionId }
   run.requirements = run.constraints || {}
-  const stage = async value => { signal?.throwIfAborted(); run.stage = value; await onChange(run) }
+  const stage = async value => {
+    signal?.throwIfAborted(); run.stage = value
+    run.progress = { text: value === 'reviewing' ? '行程整理助手 · 正在整理行程' : '规划助手 · 正在结合对话与航班规划', role: value === 'reviewing' ? 'reviewer' : 'planner', updatedAt: new Date().toISOString() }
+    await onChange(run)
+  }
   const savePrivate = async () => {
     await fs.mkdir(path.join(dataRoot, 'evidence'), { recursive: true })
     await fs.writeFile(path.join(dataRoot, 'evidence', run.id + '.json'), JSON.stringify({ prompt: run.prompt, requirements: run.requirements, draft: run.draft, candidate: run.candidate, trace, evidence }, null, 2))
@@ -37,6 +44,10 @@ export async function runPlan(run, { signal, onChange = async () => {}, Agent = 
     let text = (await reviewer.run(reviewInput(), signal)).text
     if (transformReview) text = transformReview(text)
     run.candidate = parseReview(text)
+    if (run.flightSelection) run.candidate.flightSelection = run.flightSelection
+    run.flightOptions = await flightOptionsFromEvidence(evidence, dataRoot)
+    run.conversationEvidence = evidence
+    if (run.flightSelection && run.conversation?.flightOptions) run.flightOptions = run.conversation.flightOptions
     let flightResult
     if (run.candidate.flightSelection?.searchId) {
       const searchId = run.candidate.flightSelection.searchId
@@ -46,6 +57,7 @@ export async function runPlan(run, { signal, onChange = async () => {}, Agent = 
     }
     signal?.throwIfAborted()
     const completed = { ...run, trip: toPresentation(run.candidate, run.id, flightResult), stage: 'completed', completedAt: new Date().toISOString() }
+    await beforeComplete(completed)
     await onChange(completed)
     Object.assign(run, completed)
     return run

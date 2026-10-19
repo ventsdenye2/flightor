@@ -16,6 +16,7 @@ interface PlannerPageProps {
   trip: TripPresentation
   onOpenTrip: () => void
   onSearchFlights: () => void
+  onOpenSource?: (url: string) => void
   initialPrompt?: string
 }
 

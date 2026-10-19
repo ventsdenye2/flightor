@@ -1,0 +1,21 @@
+const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const vm = require('node:vm')
+const ts = require('typescript')
+const source = fs.readFileSync(require('node:path').join(__dirname, '../src/features/ui-experience/flightOptions.ts'), 'utf8')
+const moduleValue = { exports: {} }
+vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, { exports: moduleValue.exports, module: moduleValue, Set, Date })
+const { sortFlightOptions, flightReasons, flightTime, arrivalDayOffset } = moduleValue.exports
+const option = (id, amount, durationMinutes, stopCount, connections = []) => ({ id, amount, currency: 'CNY', durationMinutes, stopCount, connections, departureLocal: '2026-10-28T23:00:00', arrivalLocal: '2026-10-29T07:00:00' })
+const choices = [option('cheap', 2000, 1500, 2, [{ selfTransfer: true }]), option('direct', 2400, 600, 0), option('unknown', null, null, null)]
+assert.equal(sortFlightOptions(choices, 'price')[0].id, 'cheap')
+assert.equal(sortFlightOptions(choices, 'duration')[0].id, 'direct')
+assert.equal(sortFlightOptions(choices, 'recommended')[0].id, 'direct')
+assert.equal(sortFlightOptions(choices, 'price').at(-1).id, 'unknown')
+assert.equal(choices[0].id, 'cheap')
+assert.match(flightReasons(choices[0], choices).join(''), /票价最低.*自行中转/)
+assert.doesNotMatch(flightReasons(choices[2], choices).join(''), /最低|最短|直飞/)
+assert.equal(flightTime('2026-10-28T09:15:00'), '09:15')
+assert.equal(flightTime(null), '待确认')
+assert.equal(arrivalDayOffset(choices[0]), 1)
+console.log('PASS flight choice ranking, grounded reasons, unknown values, dates and immutability')

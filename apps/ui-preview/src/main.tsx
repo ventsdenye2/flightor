@@ -7,6 +7,7 @@ import { lisbonTrip } from '../../../src/features/ui-experience/sampleTrips'
 import './style.css'
 import { conversationClient, generateTrip, loadLastTrip } from './backend'
 import type { TripPresentation } from '../../../src/features/ui-experience/presentation'
+import { FlightChoicesPreview } from '../../../src/features/ui-experience/FlightChoicesPreview'
 
 function AppExperience(props: Parameters<typeof SharedAppExperience>[0]) {
   return <SharedAppExperience {...props} conversationClient={conversationClient} />
@@ -14,6 +15,7 @@ function AppExperience(props: Parameters<typeof SharedAppExperience>[0]) {
 function Preview() {
   const [navigation, setNavigation] = useState<{ page: PreviewPage; revision: number }>({ page: 'plan', revision: 0 })
   const [sampleId, setSampleId] = useState('lisbon')
+  const [flightPreview, setFlightPreview] = useState(() => new URLSearchParams(window.location.search).get('view') === 'flight-options')
   const [restored, setRestored] = useState<TripPresentation | null>(null)
   useEffect(() => { let current = true; loadLastTrip().then(value => { if (current) setRestored(value) }).catch(() => {}); return () => { current = false } }, [])
   const sample = experienceSamples.find(item => item.id === sampleId) || experienceSamples[0]
@@ -37,6 +39,7 @@ function Preview() {
       {controlsOpen ? <div className="inspector-controls">
         <p className="inspector-label">页面入口</p><div className="page-list" role="group" aria-label="页面入口">{([{ id: 'plan', label: '规划' }, { id: 'explore', label: '探索' }, { id: 'trips', label: '行程列表' }, { id: 'profile', label: '我的' }, { id: 'trip', label: '旅行详情' }, { id: 'flights', label: '航班搜索' }, { id: 'collections', label: '收藏' }, { id: 'alerts', label: '价格提醒' }] as const).map(item => <button key={item.id} onClick={() => setNavigation(current => ({ page: item.id, revision: current.revision + 1 }))}>{item.label}</button>)}</div>
         <p className="inspector-label">展示数据 · 切换会重置本次交互</p>
+        <button className="reset" onClick={() => setFlightPreview(true)}>查看机票选项设计</button>
         <div className="scenario-list" role="group" aria-label="展示数据">
           {experienceSamples.map((item) => <button key={item.id} className={sampleId === item.id ? 'active' : ''} aria-pressed={sampleId === item.id} onClick={() => { setRestored(null); setSampleId(item.id); setDaysCompleted(false); setRevision(value => value + 1); setNavigation(current => ({ page: 'trip', revision: current.revision + 1 })) }}>{item.label}</button>)}
         </div>
@@ -45,7 +48,7 @@ function Preview() {
       </div> : null}
       {notice && <p className="notice" role="status">{notice}</p>}
     </aside>
-    <main className="phone-stage"><div className="phone-frame"><AppExperience key={revision} {...sample} trip={restored || trip} onGenerate={generateTrip} requestedPage={navigation.page} navigationVersion={navigation.revision} onOpenSource={(url) => { if (/^https:\/\//i.test(url)) window.open(url, '_blank', 'noopener,noreferrer') }} /></div></main>
+    <main className="phone-stage"><div className="phone-frame">{flightPreview ? <FlightChoicesPreview dataset={sample.searchDataset} onBack={() => setFlightPreview(false)} /> : <AppExperience key={revision} {...sample} trip={restored || trip} onGenerate={generateTrip} requestedPage={navigation.page} navigationVersion={navigation.revision} onOpenSource={(url) => { if (/^https:\/\//i.test(url)) window.open(url, '_blank', 'noopener,noreferrer') }} />}</div></main>
   </div>
 }
 
