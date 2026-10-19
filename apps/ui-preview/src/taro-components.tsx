@@ -32,8 +32,19 @@ export function Input({ ariaLabel, ariaRole, type = 'text', maxlength, onInput, 
   return <input {...props} aria-label={ariaLabel} role={ariaRole} type={type === 'digit' ? 'text' : type} inputMode={type === 'digit' ? 'decimal' : undefined} maxLength={maxlength} autoFocus={focus} onChange={event => { onInput?.({ detail: { value: event.target.value } }); props.onChange?.(event) }} onKeyDown={event => { props.onKeyDown?.(event); if (event.key === 'Enter' && !event.nativeEvent.isComposing) onConfirm?.({ detail: { value: event.currentTarget.value } }) }} />
 }
 type TextareaProps = Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onInput'> & TaroA11y & { maxlength?: number; autoHeight?: boolean; showConfirmBar?: boolean; confirmType?: string; focus?: boolean; onInput?: (event: InputEvent) => unknown; onConfirm?: (event: InputEvent) => unknown }
-export function Textarea({ ariaLabel, ariaRole, maxlength, autoHeight: _autoHeight, showConfirmBar: _showConfirmBar, confirmType: _confirmType, focus, onInput, onConfirm: _onConfirm, ...props }: TextareaProps) {
-  return <textarea {...props} aria-label={ariaLabel} role={ariaRole} maxLength={maxlength} autoFocus={focus} onChange={event => { onInput?.({ detail: { value: event.target.value } }); props.onChange?.(event) }} />
+export function Textarea({ ariaLabel, ariaRole, maxlength, autoHeight: _autoHeight, showConfirmBar: _showConfirmBar, confirmType: _confirmType, focus, onInput, onConfirm, ...props }: TextareaProps) {
+  const composing = useRef(false)
+  return <textarea {...props} aria-label={ariaLabel} role={ariaRole} maxLength={maxlength} autoFocus={focus}
+    onChange={event => { onInput?.({ detail: { value: event.target.value } }); props.onChange?.(event) }}
+    onCompositionStart={event => { composing.current = true; props.onCompositionStart?.(event) }}
+    onCompositionEnd={event => { composing.current = false; props.onCompositionEnd?.(event) }}
+    onKeyDown={event => {
+      props.onKeyDown?.(event)
+      if (!onConfirm || event.defaultPrevented || event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey
+        || composing.current || event.nativeEvent.isComposing || event.keyCode === 229) return
+      event.preventDefault()
+      if (!event.repeat) onConfirm({ detail: { value: event.currentTarget.value } })
+    }} />
 }
 type Marker = { id: number; latitude: number; longitude: number; title?: string; iconPath?: string; callout?: { content?: string } }
 type MapProps = React.HTMLAttributes<HTMLDivElement> & { latitude?: number; longitude?: number; scale?: number; markers?: Marker[]; includePoints?: Array<{ latitude: number; longitude: number }>; polyline?: Array<{ points: Array<{ latitude: number; longitude: number }>; color?: string; width?: number; dottedLine?: boolean }>; onMarkerTap?: (event: { detail: { markerId: number } }) => void }
