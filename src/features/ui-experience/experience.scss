@@ -81,7 +81,13 @@
   .ux-title, .ux-detail-title, .ux-activity-name, .ux-section-title { overflow-wrap: anywhere; letter-spacing: normal; }
   .ux-header-title { min-width: 0; flex: 1; text-align: center; white-space: nowrap; }
   .ux-locale-toggle { width: auto; min-width: 64px; flex: 0 0 auto; margin: 0; }
-  .ux-trip-overview { display: block; margin-top: 14px; font-size: 14px; line-height: 1.8; }
+  .ux-trip-overview { display: block; margin-top: 14px; font-size: 14px; line-height: 1.8; white-space: pre-line; }
+  .ux-trip-highlights { margin-top: 24px; }
+  .ux-trip-highlight { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid #e4ebf5; > view, > div { min-width: 0; } .ux-muted { display: block; margin-top: 5px; } }
+  .ux-highlight-number { color: #2563eb; font-family: Georgia, serif; font-size: 22px; line-height: 1.3; }
+  .ux-highlight-title { display: block; font-weight: 600; font-size: 14px; line-height: 1.6; }
+  .ux-travel-notes { margin-top: 20px; padding: 16px; background: #f3f6fa; border-radius: 8px; .ux-muted { display: block; margin-top: 9px; white-space: pre-line; } }
+  .ux-media-credit { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin: 8px 0 14px; color: #617b8a; font-size: 10px; line-height: 1.65; overflow-wrap: anywhere; .ux-text-button { min-height: 32px; display: flex; align-items: center; gap: 4px; font-size: 10px; padding: 2px 0; } .ux-icon { width: 12px; height: 12px; } }
   .ux-publication-state { margin: 14px 18px 0; padding: 12px; background: #f1f5fc; border-radius: 10px; }
   .ux-publication-state--accepted { padding: 0; background: transparent; color: #426b57; .ux-section-title { font-size: 12px; font-weight: 400; } }
   .ux-publication-state--retryable, .ux-publication-state--revision_required, .ux-publication-state--stale { background: #fff4e5; }

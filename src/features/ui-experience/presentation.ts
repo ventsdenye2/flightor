@@ -1,6 +1,6 @@
 // UI-owned display values. This module has no dependency on providers, stores or model output.
 export interface SourcePresentation { label: string; url?: string; status: 'sample' | 'unverified' | 'verified' }
-export interface MediaPresentation { src: string | null; description: string; source?: SourcePresentation; atmosphere?: boolean; licenseUrl?: string; candidates?: string[] }
+export interface MediaPresentation { src: string | null; description: string; source?: SourcePresentation; atmosphere?: boolean; author?: string; license?: string; licenseUrl?: string; candidates?: string[] }
 export interface PricePresentation { amount: number | null; currency: string; unit: 'person' | 'total'; status: 'sample' | 'estimate' | 'quote' | 'unknown'; source?: SourcePresentation }
 export interface FlightLegDisplay { from: string; to: string; depart: string | null; arrive: string | null; duration: string | null; carrier: string; nextDay?: boolean; transfer?: string; fromCode?: string; toCode?: string }
 export interface TripFlightPresentation {
@@ -9,7 +9,7 @@ export interface TripFlightPresentation {
 }
 export interface Activity {
   place?: { status: string; kind?: string; source?: SourcePresentation }
-  introduction?: string; recommendationReason?: string; area?: string
+  introduction?: string; recommendationReason?: string; visitNotes?: string; imageQuery?: string | null; area?: string
   id: string; name: string; time: string | null; until: string | null; category: string; summary: string
   latitude?: number | null; longitude?: number | null; media: MediaPresentation | null; source: SourcePresentation | null
 }
@@ -20,6 +20,7 @@ export interface TripPresentation {
   id: string; title: string; destination: string; country?: string; route: string[]
   dates: { start: string | null; end: string | null; label: string }; durationDays: number | null; travelers: number | null
   cover: MediaPresentation | null; description: string; days: TripDay[]; status: 'ready' | 'partial' | 'pending'
+  highlights?: Array<{ title: string; description: string }>; travelNotes?: string[]
   flights: TripFlightPresentation[]; alternatives: Activity[]; sources: SourcePresentation[]
   routeIllustration?: MediaPresentation | null; initialDayId?: TripDay['id']; returnNote?: string
 }

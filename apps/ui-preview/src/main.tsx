@@ -5,12 +5,12 @@ import type { PreviewPage } from '../../../src/features/ui-experience/AppExperie
 import { experienceSamples } from '../../../src/features/ui-experience/experienceSamples'
 import { lisbonTrip } from '../../../src/features/ui-experience/sampleTrips'
 import './style.css'
-import { conversationClient, generateTrip, loadLastTrip } from './backend'
+import { conversationClient, generateTrip, loadLastTrip, loadPlaceMedia } from './backend'
 import type { TripPresentation } from '../../../src/features/ui-experience/presentation'
 import { FlightChoicesPreview } from '../../../src/features/ui-experience/FlightChoicesPreview'
 
 function AppExperience(props: Parameters<typeof SharedAppExperience>[0]) {
-  return <SharedAppExperience {...props} conversationClient={conversationClient} />
+  return <SharedAppExperience {...props} conversationClient={conversationClient} loadPlaceMedia={loadPlaceMedia} />
 }
 function Preview() {
   const [navigation, setNavigation] = useState<{ page: PreviewPage; revision: number }>({ page: 'plan', revision: 0 })

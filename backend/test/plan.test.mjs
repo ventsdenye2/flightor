@@ -33,7 +33,7 @@ test('incomplete information and reviewer objections publish without repair or v
   const { Agent, calls } = fakeAgents(draft); const value = run()
   await runPlan(value, { Agent })
   assert.equal(value.stage, 'completed'); assert.equal(calls.length, 2)
-  assert.ok(value.trip.description.includes('资料不足')); assert.equal(value.trip.days[0].activities[0].latitude, null)
+  assert.ok(value.trip.travelNotes.includes('资料不足')); assert.equal(value.trip.days[0].activities[0].latitude, null)
 })
 test('non-JSON output is preserved as readable text rather than blocked', () => {
   assert.equal(toPresentation(parseReview('资料不足，建议先沿河散步。'), 'id').description, '资料不足，建议先沿河散步。')
@@ -42,6 +42,16 @@ test('non-JSON output is preserved as readable text rather than blocked', () => 
 test('longer trips and busy days are not truncated', () => {
   const value = candidate(); value.days = Array.from({ length: 9 }, () => ({ activities: Array.from({ length: 9 }, () => ({ name: '游览' })) }))
   const trip = toPresentation(value, 'id'); assert.equal(trip.days.length, 9); assert.equal(trip.days[0].activities.length, 9)
+})
+test('editorial sections stay separate and model image URLs are not trusted', () => {
+  const trip = toPresentation({ overview: '沿河慢行，感受两座城市的历史。', highlights: [{ title: '城堡与河岸', description: '在步行路线里串联建筑与风景。' }, {}], issues: [{ detail: '出发前确认预约。' }], days: [{ activities: [{ name: '查理大桥', description: '清晨步行过桥。', introduction: '横跨伏尔塔瓦河的历史桥梁。', recommendationReason: '你喜欢建筑，桥上的雕塑值得慢看。', visitNotes: '注意保管随身物品。', imageQuery: 'Charles Bridge', city: 'Prague', media: { src: 'https://fake.example/photo.jpg' } }, { name: '自由活动', imageQuery: null }] }] }, 'editorial')
+  assert.equal(trip.description, '沿河慢行，感受两座城市的历史。')
+  assert.deepEqual(trip.travelNotes, ['出发前确认预约。'])
+  assert.equal(trip.highlights.length, 1)
+  const activity = trip.days[0].activities[0]
+  assert.match(activity.introduction, /伏尔塔瓦/); assert.match(activity.recommendationReason, /你喜欢建筑/)
+  assert.equal(activity.summary, '清晨步行过桥。'); assert.equal(activity.imageQuery, 'Charles Bridge'); assert.equal(activity.area, 'Prague')
+  assert.equal(activity.media, null); assert.equal(trip.days[0].activities[1].imageQuery, null)
 })
 test('cancellation does not publish a late trip', async () => {
   const controller = new AbortController(); const { Agent } = fakeAgents(candidate()); const value = run()

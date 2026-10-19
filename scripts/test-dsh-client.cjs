@@ -6,7 +6,7 @@ const ts = require('typescript')
 const source = fs.readFileSync(path.join(__dirname, '../src/features/ui-experience/backendClient.ts'), 'utf8')
 const moduleValue = { exports: {} }
 vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, { exports: moduleValue.exports, module: moduleValue, Set, Error, Promise, setTimeout })
-const { createConversationClient, createGenerator, PlanCancellation, restoreTrip } = moduleValue.exports
+const { createConversationClient, createGenerator, createPlaceMediaLoader, PlanCancellation, restoreTrip } = moduleValue.exports
 async function main() {
   const methods = []
   let finish
@@ -73,6 +73,17 @@ async function main() {
   }, { get: () => null, set: () => {}, clear: () => {} })
   await progressChat.send('消息', text => updates.push(text), new PlanCancellation().signal)
   assert.deepEqual(updates, ['正在调用工具查询资料', '回复已保存'])
+  let mediaCalls = 0
+  const loadMedia = createPlaceMediaLoader(async (method, route, body) => {
+    mediaCalls++; assert.equal(route, '/api/place-media'); assert.equal(body.query, 'Charles Bridge')
+    return { status: 'ready', media: { src: 'https://thumb.wikimedia.org/test.jpg' } }
+  })
+  const place = { name: '查理大桥', imageQuery: 'Charles Bridge', area: 'Prague' }
+  const images = await Promise.all([loadMedia(place, '布拉格'), loadMedia(place, '布拉格')])
+  assert.equal(mediaCalls, 1); assert.equal(images[0].src, images[1].src)
+  assert.equal(await loadMedia({ ...place, imageQuery: null }, '布拉格'), null)
+  assert.equal(mediaCalls, 1)
+  console.log('PASS place media deduplicates requests and skips non-landmark activities')
   console.log('PASS cancellation signals backend and ignores late result; saved real result restores; sample result is not restored as live')
 }
 main().catch(error => { console.error(error); process.exitCode = 1 })

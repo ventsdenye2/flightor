@@ -5,7 +5,7 @@ import AppExperience from '../../../../../src/features/ui-experience/AppExperien
 import type { PreviewPage } from '../../../../../src/features/ui-experience/AppExperience'
 import { experienceSamples } from '../../../../../src/features/ui-experience/experienceSamples'
 import { lisbonTrip } from '../../../../../src/features/ui-experience/sampleTrips'
-import { createConversationClient, createGenerator, restoreTrip } from '../../../../../src/features/ui-experience/backendClient'
+import { createConversationClient, createGenerator, createPlaceMediaLoader, restoreTrip } from '../../../../../src/features/ui-experience/backendClient'
 import type { BackendTransport } from '../../../../../src/features/ui-experience/backendClient'
 import type { TripPresentation } from '../../../../../src/features/ui-experience/presentation'
 
@@ -18,6 +18,7 @@ const transport: BackendTransport = async (method, path, data) => {
   return value
 }
 const generateTrip = createGenerator(transport, id => Taro.setStorageSync(storageKey, id))
+const loadPlaceMedia = createPlaceMediaLoader(transport)
 const conversationKey = 'flightor-dsh-conversation-v1'
 const conversationClient = createConversationClient(transport, { get: () => Taro.getStorageSync(conversationKey) || null, set: id => Taro.setStorageSync(conversationKey, id), clear: () => Taro.removeStorageSync(conversationKey) }, id => Taro.setStorageSync(storageKey, id))
 
@@ -44,6 +45,7 @@ export default function Index() {
       trip={restored || trip}
       onGenerate={generateTrip}
       conversationClient={conversationClient}
+      loadPlaceMedia={loadPlaceMedia}
       requestedPage={navigation.page}
       navigationVersion={navigation.revision}
       onOpenSource={url => Taro.setClipboardData({ data: url, success: () => Taro.showToast({ title: '来源链接已复制', icon: 'success' }) })}

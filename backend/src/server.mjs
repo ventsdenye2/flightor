@@ -6,6 +6,7 @@ import { dataRoot } from './paths.mjs'
 import { runPlan } from './plan.mjs'
 import { loadConversation, runConversation, selectConversationFlight } from './conversation.mjs'
 import { resolveFlightSelection } from './flight-options.mjs'
+import { loadPlaceMedia } from './place-media.mjs'
 
 const runs = new Map()
 await fs.mkdir(path.join(dataRoot, 'runs'), { recursive: true })
@@ -29,6 +30,11 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') { res.writeHead(204); return res.end() }
     const url = new URL(req.url, 'http://127.0.0.1')
     if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, { status: 'ready', runtime: 'DSH 0.2.1-rc.2', model: process.env.FLIGHTOR_DSH_MODEL || 'deepseek-flash', provider: process.env.FLIGHTOR_DSH_PROVIDER || 'deepseek-account' })
+    if (req.method === 'POST' && url.pathname === '/api/place-media') {
+      let body = ''
+      for await (const chunk of req) { body += chunk; if (body.length > 2000) return send(res, 413, { error: 'Request too large' }) }
+      return send(res, 200, await loadPlaceMedia(JSON.parse(body)))
+    }
     const conversationMatch = url.pathname.match(/^\/api\/conversations\/([a-f\d-]{36})$/)
     if (req.method === 'GET' && conversationMatch) {
       try { return send(res, 200, await loadConversation(conversationMatch[1])) } catch { return send(res, 404, { error: '对话不存在' }) }

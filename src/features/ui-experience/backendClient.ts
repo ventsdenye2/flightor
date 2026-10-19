@@ -1,6 +1,20 @@
-import type { TripPresentation } from './presentation'
+import type { Activity, MediaPresentation, TripPresentation } from './presentation'
 import type { FlightOptions, FlightSelection } from './flightOptions'
 export type BackendTransport = (method: 'GET' | 'POST' | 'DELETE', path: string, body?: unknown) => Promise<any>
+export type PlaceMediaLoader = (activity: Activity, destination: string) => Promise<MediaPresentation | null>
+export function createPlaceMediaLoader(transport: BackendTransport): PlaceMediaLoader {
+  const pending = new Map<string, Promise<MediaPresentation | null>>()
+  return (activity, destination) => {
+    if (activity.imageQuery === null) return Promise.resolve(null)
+    const body = { name: activity.name, query: activity.imageQuery || activity.name, city: activity.area || destination }
+    const key = JSON.stringify(body)
+    if (!pending.has(key)) pending.set(key, transport('POST', '/api/place-media', body).then(result => {
+      if (result.status === 'unavailable') pending.delete(key)
+      return result.media || null
+    }).catch(() => { pending.delete(key); return null }))
+    return pending.get(key)!
+  }
+}
 export interface PlanSignal {
   aborted: boolean
   addEventListener(type: 'abort', listener: () => void, options?: { once?: boolean }): void
