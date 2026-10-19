@@ -6,10 +6,10 @@
 
 ## 开始开发
 
-本机独立工作区如下；原根目录仍是 main，不要在原目录运行本分支命令。
+直接在原仓库目录开发，当前分支应为 `backend-mvp`。
 
 ```powershell
-cd D:\FunnyProject\flightor-repo\.worktrees\backend-mvp
+cd D:\FunnyProject\flightor-repo
 git branch --show-current
 npm run setup
 npm run dev:h5

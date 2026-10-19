@@ -20,6 +20,6 @@
 
 `backend-mvp` 从 `codex/ui-experience@060d0de` 创建。只清理新分支代码树，Git 祖先仍含旧实现。
 
-本机目录为 `D:\FunnyProject\flightor-repo\.worktrees\backend-mvp`。原根目录 main 的两份微信 project 配置及未跟踪文件不属于本批，继续保留。未自动合并或推送。
+用户随后要求直接在原目录切换分支，并明确舍弃原 main 的未提交文件。本机开发目录改为 `D:\FunnyProject\flightor-repo`，当前分支为 `backend-mvp`。本轮临时工作树在切换后移除，不保留为开发入口；其他原有工作树不动。原 main 的两份微信配置改动与当前可见未跟踪目录按用户要求舍弃。忽略的本地依赖、密钥和构建缓存不视作可随意删除的未提交源码。未自动合并或推送。
 
 本轮环境和验证记录见 [deploy](deploy.md)。新后端尚未开发，构建与样例交互不能记为真实 MVP 闭环。

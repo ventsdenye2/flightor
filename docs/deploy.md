@@ -7,7 +7,7 @@
 本机使用 Node 22.21.0、npm 10.9.4。`.nvmrc` 提示 22.21.0，package engines 与 `.npmrc` 要求 Node >=22.21.0 <23、npm 10.x；不会自动切换系统 Node。
 
 ```powershell
-cd D:\FunnyProject\flightor-repo\.worktrees\backend-mvp
+cd D:\FunnyProject\flightor-repo
 npm run setup
 npm run dev:h5
 ```
@@ -20,7 +20,7 @@ npm run build:weapp
 npm run dev:weapp
 ```
 
-H5 输出 `apps/ui-preview/dist/`，微信输出 `dist/weapp/`。微信开发者工具导入本工作区根目录或微信产物目录；两处 project.config 使用游客 AppID。不要导入旧 main 的 dist。
+H5 输出 `apps/ui-preview/dist/`，微信输出 `dist/weapp/`。微信开发者工具导入 `D:\FunnyProject\flightor-repo` 或微信产物目录；两处 project.config 使用游客 AppID。不要导入旧 main 的 dist 根产物。
 
 真实微信登录需自己的 AppID，业务 API 后续配置可从设备访问的地址与 request 合法域名。手机上的 127.0.0.1 指手机自身。当前未配置认证或关闭域名校验。
 
