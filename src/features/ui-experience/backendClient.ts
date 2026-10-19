@@ -2,6 +2,21 @@ import type { Activity, MediaPresentation, TripPresentation } from './presentati
 import type { FlightOptions, FlightSelection } from './flightOptions'
 export type BackendTransport = (method: 'GET' | 'POST' | 'DELETE', path: string, body?: unknown) => Promise<any>
 export type PlaceMediaLoader = (activity: Activity, destination: string) => Promise<MediaPresentation | null>
+export interface PlaceLocation { latitude: number; longitude: number; source: { label: string; url: string; status: 'unverified' } }
+export type PlaceLocationLoader = (activity: Activity) => Promise<PlaceLocation | null>
+export function createPlaceLocationLoader(transport: BackendTransport): PlaceLocationLoader {
+  const pending = new Map<string, Promise<PlaceLocation | null>>()
+  return activity => {
+    if (activity.imageQuery === null || !activity.area) return Promise.resolve(null)
+    const body = { name: activity.name, query: activity.imageQuery || activity.name, city: activity.area }
+    const key = JSON.stringify(body)
+    if (!pending.has(key)) pending.set(key, transport('POST', '/api/place-locations', body).then(result => {
+      if (result.status === 'unavailable') pending.delete(key)
+      return result.location || null
+    }).catch(() => { pending.delete(key); return null }))
+    return pending.get(key)!
+  }
+}
 export function createPlaceMediaLoader(transport: BackendTransport): PlaceMediaLoader {
   const pending = new Map<string, Promise<MediaPresentation | null>>()
   return (activity, destination) => {

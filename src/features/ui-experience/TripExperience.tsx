@@ -1,19 +1,22 @@
-import { Fragment, useEffect, useRef, useState } from 'react'
-import { View, Text, Button, Map } from '@tarojs/components'
-import type { Activity, MediaPresentation, TripDay, TripPresentation } from './presentation'
-import type { PlaceMediaLoader } from './backendClient'
-import { findAlternative, formatPrice, formatTripDates, hasKnownPrice, hasCoordinates, mapViewportPoints, priceStatusLabel, selectTripDay, travelerLabel, tripDurationLabel } from './presentation'
+import { useEffect, useRef, useState } from 'react'
+import { View, Text, Button } from '@tarojs/components'
+import type { Activity, FlightLegDisplay, MediaPresentation, TripDay, TripPresentation } from './presentation'
+import type { PlaceMediaLoader, PlaceLocationLoader } from './backendClient'
+import { findAlternative, selectTripDay } from './presentation'
 import { Photo, Icon } from './VisualMedia'
 import { DayPlan } from './DayPlan'
-import { FlightTicket, FlightRoute } from './FlightTicket'
+import { FlightTicket } from './FlightTicket'
+import { WorldFlightMap } from './WorldFlightMap'
 import { EmptyState } from './SharedUI'
 import './experience.scss'
 
 type Tab = 'overview' | 'days' | 'flights'
+const emptyFlightLegs: FlightLegDisplay[] = []
 type Sheet = { kind: 'activity'; activity: Activity } | { kind: 'adjust' } | { kind: 'credits' }
 export interface TripExperienceProps {
   trip: TripPresentation
   loadPlaceMedia?: PlaceMediaLoader
+  loadPlaceLocation?: PlaceLocationLoader
   imageError?: boolean
   onNavigate?: () => void
   onOpenSource?: (url: string) => void
@@ -34,9 +37,8 @@ export default function TripExperience(props: TripExperienceProps) {
   // A different trip starts with its own selected day, edits and pending timers.
   return <TripContent key={props.trip.id} {...props} />
 }
-function TripContent({ trip, loadPlaceMedia, imageError = false, onNavigate, onOpenSource, embedded = false, onBack, onContinuePlanning, saved: controlledSaved, onSavedChange }: TripExperienceProps) {
+function TripContent({ trip, loadPlaceMedia, loadPlaceLocation, imageError = false, onNavigate, onOpenSource, embedded = false, onBack, onContinuePlanning, saved: controlledSaved, onSavedChange }: TripExperienceProps) {
   const [tab, setTab] = useState<Tab>('overview')
-  const [overviewMapError, setOverviewMapError] = useState(false)
   const [days, setDays] = useState(trip.days)
   const [mediaById, setMediaById] = useState<Record<string, MediaPresentation>>({})
   useEffect(() => {
@@ -91,9 +93,6 @@ function TripContent({ trip, loadPlaceMedia, imageError = false, onNavigate, onO
   const completed = days.map((value, index) => value.status === 'ready' ? `D${index + 1}` : null).filter(Boolean)
   const partial = trip.status === 'partial' || days.some(value => value.status === 'pending')
   const firstFlight = trip.flights[0]
-  const price = firstFlight?.price
-  const located = displayDays.flatMap((value, dayIndex) => value.activities.filter(hasCoordinates).map(activity => ({ activity, dayIndex })))
-  const mapPoints = located.map(({ activity }) => ({ latitude: activity.latitude!, longitude: activity.longitude! }))
   const candidate = day ? findAlternative(day, trip.alternatives) : undefined
   const notify = (message: string) => {
     setNotice(message)
@@ -126,42 +125,21 @@ function TripContent({ trip, loadPlaceMedia, imageError = false, onNavigate, onO
       <Button className={`ux-icon-button ${saved ? 'is-saved' : ''}`} ariaLabel={saved ? '取消收藏行程' : '收藏行程'} aria-pressed={saved} onClick={() => { setSaved(!saved); notify(saved ? '已取消收藏' : '已收藏，仅在本次浏览保留') }}><Icon name={saved ? 'bookmark-filled' : 'bookmark'} /></Button>
     </View>
     <View className='ux-scroll' key={tab}>
-      {tab === 'overview' ? <>
-        <View className='ux-intro'>
-          {cover?.src ? <><TripPhoto image={cover} className='ux-hero' forceError={imageError} /><Text className='ux-caption'>{cover.description}</Text><MediaCredit media={cover} onOpenSource={onOpenSource} /></> : null}
-          <Text className='ux-caption'>{trip.provenance === 'dsh' ? '我的旅行规划' : '参考行程'}</Text>
-          <Text className='ux-title'>{trip.destination}</Text>
-          <View className='ux-route'>{trip.route.length ? trip.route.map((place, index) => <Fragment key={`${place}-${index}`}>{index ? <Icon name='arrow-right' /> : null}<Text>{place}</Text></Fragment>) : <Text>出发地与目的地待确认</Text>}</View>
-          <Text className='ux-dates'>{formatTripDates(trip)} · {tripDurationLabel(trip)}</Text>
-          <Text className='ux-trip-overview'>{trip.description}</Text>
-          {trip.highlights?.length ? <View className='ux-trip-highlights'><Text className='ux-section-title'>这趟旅行，值得期待</Text>{trip.highlights.map((item, index) => <View className='ux-trip-highlight' key={`${item.title}-${index}`}><Text className='ux-highlight-number'>{String(index + 1).padStart(2, '0')}</Text><View><Text className='ux-highlight-title'>{item.title}</Text><Text className='ux-muted'>{item.description}</Text></View></View>)}</View> : null}
-          {trip.travelNotes?.length ? <View className='ux-travel-notes'><Text className='ux-section-title'>出发前留意</Text>{trip.travelNotes.map((note, index) => <Text className='ux-muted' key={index}>{note}</Text>)}</View> : null}
-          <View className='ux-summary'><View><Text className='ux-summary-label'>航班{priceStatusLabel(price)}</Text><Text className='ux-price'>{formatPrice(price)}{hasKnownPrice(price) ? <Text className='ux-per'>{price.unit === 'person' ? ' / 人' : ' / 总计'}</Text> : null}</Text></View><View className='ux-travelers'><Icon name='people' /><Text>{travelerLabel(trip)}</Text></View></View>
-          <Text className='ux-caption'>{price?.source?.label || '报价来源待补充'}</Text>
-        </View>
-      </> : null}
-      {partial ? <View className='ux-progress' role='status'><View className='ux-progress-dot' /><View><Text>{trip.flights.length ? '已有航班参考，日程仍在补充' : '日程正在补充'}</Text><Text className='ux-caption'>{completed.length ? `已完成 ${completed.join('、')}，可以先查看和调整。` : '每日安排尚未完成，请稍后再查看。'}</Text></View></View> : null}
+      {partial && tab !== 'overview' ? <View className='ux-progress' role='status'><View className='ux-progress-dot' /><View><Text>{trip.flights.length ? '已有航班参考，日程仍在补充' : '日程正在补充'}</Text><Text className='ux-caption'>{completed.length ? `已完成 ${completed.join('、')}，可以先查看和调整。` : '每日安排尚未完成，请稍后再查看。'}</Text></View></View> : null}
       <View className='ux-tabs' role='tablist' ariaLabel='行程内容'>
         {([{ id: 'overview', label: '概览' }, { id: 'days', label: '每日行程' }, { id: 'flights', label: '航班' }] as const).map(item => <Button aria-selected={tab === item.id} key={item.id} className={`ux-tab ${tab === item.id ? 'is-active' : ''}`} onClick={() => setTab(item.id)}>{item.label}</Button>)}
       </View>
-      {tab === 'overview' ? <View className='ux-overview'>
-        <Text className='ux-section-title'>行程地图</Text>
-        {mapPoints.length ? <View className='ux-map-frame'>
-          <Map className='ux-city-map' latitude={mapPoints[0].latitude} longitude={mapPoints[0].longitude} scale={12}
-            includePoints={mapViewportPoints(mapPoints)} onError={() => setOverviewMapError(true)}
-            markers={located.map(({ activity }, index) => ({ id: index + 1, latitude: activity.latitude!, longitude: activity.longitude!, title: activity.name, iconPath: '/assets/ui-experience/marker.png', width: 32, height: 40 }))}
-            onMarkerTap={event => { const point = located[Number(event.detail.markerId) - 1]; if (point) { setDayId(days[point.dayIndex].id); setTab('days'); setSheet({ kind: 'activity', activity: point.activity }) } }} />
-          <Text className='ux-map-caption'>{overviewMapError ? '底图暂不可用，文字行程可正常查看。' : '城市与行程地点 · 游玩顺序以每日安排为准'}</Text>
-        </View> : <Text className='ux-map-caption'>地点坐标尚未补充，文字行程可正常查看。</Text>}
-        {firstFlight ? <FlightTicket flight={firstFlight} onExpand={() => setTab('flights')} /> : <EmptyState icon='plane' title='航班安排尚未补充' description='确认出发地与日期后，再查看航班、价格和中转安排。' />}
-        <View className='ux-route-map'><Text className='ux-section-title'>路线示意</Text><FlightRoute route={trip.route} illustration={trip.routeIllustration} /><Text className='ux-caption'>{trip.provenance === 'dsh' ? '行程示意 · 连线非实际交通轨迹' : '示例行程 · 连线非实际交通轨迹'}</Text></View>
-        <View className='ux-day-previews'>{days.map((value, index) => <Button key={value.id} className='ux-day-teaser' onClick={() => { setDayId(value.id); setTab('days') }}><View><Text className='ux-caption'>D{index + 1} · {value.label}</Text><Text className='ux-section-title'>{value.title}</Text><Text className='ux-muted'>{value.activities.map(activity => activity.name).join(' · ') || (value.status === 'pending' ? '安排待补充' : '自由安排')}</Text></View><Icon name='chevron-right' /></Button>)}</View>
+      {tab === 'overview' ? <View className='ux-overview ux-overview-curated'>
+        <View className='ux-overview-cover'><TripPhoto image={cover} className='ux-hero' forceError={imageError} />{cover?.src ? <MediaCredit media={cover} onOpenSource={onOpenSource} /> : null}</View>
+        {trip.highlights?.length ? <View className='ux-trip-highlights'><Text className='ux-section-title'>这趟旅行，值得期待</Text>{trip.highlights.map((item, index) => <View className='ux-trip-highlight' key={`${item.title}-${index}`}><View><Text className='ux-highlight-title'>{item.title}</Text><Text className='ux-muted'>{item.description}</Text></View></View>)}</View> : null}
+        {trip.travelNotes?.length ? <View className='ux-travel-notes'><Text className='ux-section-title'>出发前留意</Text>{trip.travelNotes.map((note, index) => <Text className='ux-muted' key={index}>{note}</Text>)}</View> : null}
+        <WorldFlightMap legs={firstFlight?.legs || emptyFlightLegs} />
       </View> : tab === 'days' ? <>
         {days.length ? <View className='ux-day-selector' role='group' ariaLabel='选择日期'>{days.map((value, index) => <Button key={value.id} disabled={value.status === 'pending'} aria-pressed={day?.id === value.id} className={`ux-day-chip ${day?.id === value.id ? 'is-active' : ''}`} onClick={() => { setDayId(value.id); setUndo(null) }}><Text>D{index + 1}</Text><Text>{value.status === 'pending' ? '待补充' : value.label}</Text></Button>)}</View> : null}
-        {day ? <DayPlan day={day} dayNumber={dayNumber} imageError={imageError} published={trip.provenance === 'dsh'} onActivity={activity => setSheet({ kind: 'activity', activity })} onAdjust={() => setSheet({ kind: 'adjust' })} /> : <EmptyState icon='calendar' title='每日安排尚未补充' description='每日安排尚未确定，已知信息可在概览查看。' />}
+        {day ? <DayPlan key={day.id} day={day} dayNumber={dayNumber} loadPlaceLocation={trip.provenance === 'dsh' ? loadPlaceLocation : undefined} imageError={imageError} published={trip.provenance === 'dsh'} onActivity={activity => setSheet({ kind: 'activity', activity })} onAdjust={() => setSheet({ kind: 'adjust' })} /> : <EmptyState icon='calendar' title='每日安排尚未补充' description='每日安排尚未确定，已知信息可在概览查看。' />}
       </> : <View className='ux-flight-page'>{trip.flights.length ? trip.flights.map(flight => <FlightTicket key={flight.id} flight={flight} expanded onOpenSource={onOpenSource} />) : <EmptyState icon='plane' title='还没有航班安排' description='出发日期、班次与价格都留待确认。' />}{trip.returnNote ? <View className='ux-return'><Icon name='plane' /><View><Text className='ux-section-title'>返程安排</Text><Text className='ux-muted'>{trip.returnNote}</Text></View></View> : null}</View>}
-      {undo ? <View className='ux-undo' role='status'><Text>日程已调整</Text><Button className='ux-text-button' onClick={() => { setDays(undo); setUndo(null); notify('已恢复上一次安排') }}>撤销调整</Button></View> : null}
-      <View className='ux-footer-note'><Text>{trip.provenance === 'dsh' ? '按需求规划 · 具体安排与报价以出发前核实为准' : '示例行程 · 价格与安排用于界面预览'}</Text><Button className='ux-text-button' onClick={() => setSheet({ kind: 'credits' })}>图片与来源<Icon name='external' /></Button></View>
+      {undo && tab === 'days' ? <View className='ux-undo' role='status'><Text>日程已调整</Text><Button className='ux-text-button' onClick={() => { setDays(undo); setUndo(null); notify('已恢复上一次安排') }}>撤销调整</Button></View> : null}
+      {tab !== 'overview' ? <View className='ux-footer-note'><Text>{trip.provenance === 'dsh' ? '按需求规划 · 具体安排与报价以出发前核实为准' : '示例行程 · 价格与安排用于界面预览'}</Text><Button className='ux-text-button' onClick={() => setSheet({ kind: 'credits' })}>图片与来源<Icon name='external' /></Button></View> : null}
     </View>
     {!embedded ? <View className='ux-bottom-nav' ariaLabel='主导航'>{[{ name: 'home', label: '规划' }, { name: 'compass', label: '探索' }, { name: 'calendar', label: '行程' }, { name: 'user', label: '我的' }].map(item => <Button key={item.name} className={item.label === '行程' ? 'is-active' : ''} onClick={() => item.label === '行程' ? setTab('overview') : onNavigate?.()}><Icon name={item.name} /><Text>{item.label}</Text></Button>)}</View> : null}
     {notice ? <View className='ux-toast' role='status'><Icon name='check' /><Text>{notice}</Text></View> : null}

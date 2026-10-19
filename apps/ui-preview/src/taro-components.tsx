@@ -43,6 +43,9 @@ export function Map({ children, latitude = 38.7223, longitude = -9.1393, scale =
   const mapRef = useRef<L.Map | null>(null)
   const [tileError, setTileError] = React.useState(false)
   const failedTiles = useRef(new Set<string>())
+  const markerTap = useRef(onMarkerTap)
+  markerTap.current = onMarkerTap
+  const sceneKey = JSON.stringify({ latitude, longitude, scale, markers, includePoints, polyline })
   useEffect(() => {
     if (!host.current || mapRef.current) return
     const map = L.map(host.current, { zoomControl: true, attributionControl: true }).setView([latitude, longitude], scale)
@@ -63,21 +66,31 @@ export function Map({ children, latitude = 38.7223, longitude = -9.1393, scale =
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
-    map.setView([latitude, longitude], scale)
+    // Coordinate batches can arrive while Leaflet is still zooming. Apply each
+    // scene immediately so a later fit cannot be dropped by an in-flight zoom.
+    map.setView([latitude, longitude], scale, { animate: false })
     const layer = L.layerGroup().addTo(map)
     markers.forEach((marker) => {
       const label = marker.callout?.content || marker.title || String(marker.id)
       const pinText = document.createElement('span'); pinText.textContent = String(marker.id)
       const iconMarkup = document.createElement('div'); iconMarkup.appendChild(pinText)
       const icon = L.divIcon({ className: 'ui-map-pin', html: iconMarkup.innerHTML, iconSize: [30, 30], iconAnchor: [15, 15] })
-      const pin = L.marker([marker.latitude, marker.longitude], { icon, title: marker.title || label, alt: marker.title || label }).addTo(layer)
+      const pin = L.marker([marker.latitude, marker.longitude], { icon, title: marker.title || label, alt: marker.title || label, autoPanOnFocus: false }).addTo(layer)
       const tooltip = document.createElement('span'); tooltip.textContent = label
       pin.bindTooltip(tooltip, { permanent: false, direction: 'top', className: 'ui-map-label' })
-      pin.on('click', () => onMarkerTap?.({ detail: { markerId: marker.id } }))
+      // Bridge both pointer and keyboard activation to the shared native event.
+      const element = pin.getElement()
+      if (element) {
+        const activate = (event: Event) => { L.DomEvent.stop(event); markerTap.current?.({ detail: { markerId: marker.id } }) }
+        const keyboard = (event: Event) => { if (['Enter', ' '].includes((event as KeyboardEvent).key)) activate(event) }
+        L.DomEvent.on(element, 'click', activate)
+        L.DomEvent.on(element, 'keydown', keyboard)
+        pin.on('remove', () => { L.DomEvent.off(element, 'click', activate); L.DomEvent.off(element, 'keydown', keyboard) })
+      }
     })
     polyline.forEach((line) => L.polyline(line.points.map((point) => [point.latitude, point.longitude] as [number, number]), { color: line.color || '#176d70', weight: line.width || 3, dashArray: line.dottedLine ? '8 8' : undefined }).addTo(layer))
-    if (includePoints.length > 1) map.fitBounds(L.latLngBounds(includePoints.map((point) => [point.latitude, point.longitude] as [number, number])), { padding: [18, 18], maxZoom: 16 })
+    if (includePoints.length > 1) map.fitBounds(L.latLngBounds(includePoints.map((point) => [point.latitude, point.longitude] as [number, number])), { padding: [32, 32], maxZoom: 16, animate: false })
     return () => { layer.remove() }
-  }, [latitude, longitude, scale, markers, includePoints, polyline, onMarkerTap])
+  }, [sceneKey])
   return <div ref={host} {...props}>{tileError ? <div className='ui-map-status' role='status'>底图暂不可用，仍可通过下方日程查看</div> : null}{children}</div>
 }

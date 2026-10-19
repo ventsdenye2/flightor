@@ -6,7 +6,7 @@ const ts = require('typescript')
 const source = fs.readFileSync(path.join(__dirname, '../src/features/ui-experience/backendClient.ts'), 'utf8')
 const moduleValue = { exports: {} }
 vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, { exports: moduleValue.exports, module: moduleValue, Set, Error, Promise, setTimeout })
-const { createConversationClient, createGenerator, createPlaceMediaLoader, PlanCancellation, restoreTrip } = moduleValue.exports
+const { createConversationClient, createGenerator, createPlaceMediaLoader, createPlaceLocationLoader, PlanCancellation, restoreTrip } = moduleValue.exports
 async function main() {
   const methods = []
   let finish
@@ -84,6 +84,14 @@ async function main() {
   assert.equal(await loadMedia({ ...place, imageQuery: null }, '布拉格'), null)
   assert.equal(mediaCalls, 1)
   console.log('PASS place media deduplicates requests and skips non-landmark activities')
+  let locationCalls = 0
+  const loadLocation = createPlaceLocationLoader(async (method, route, body) => { locationCalls++; assert.equal(route, '/api/place-locations'); assert.equal(body.city, 'Prague'); return { status: 'resolved', location: { latitude: 50.08, longitude: 14.41 } } })
+  const located = await Promise.all([loadLocation(place), loadLocation(place)])
+  assert.equal(locationCalls, 1); assert.equal(located[0].latitude, 50.08)
+  assert.equal(await loadLocation({ ...place, imageQuery: null }), null)
+  assert.equal(await loadLocation({ ...place, area: '' }), null)
+  assert.equal(locationCalls, 1)
+  console.log('PASS landmark coordinates deduplicate and skip ambiguous cityless or generic activities')
   console.log('PASS cancellation signals backend and ignores late result; saved real result restores; sample result is not restored as live')
 }
 main().catch(error => { console.error(error); process.exitCode = 1 })

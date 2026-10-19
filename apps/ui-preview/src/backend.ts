@@ -1,4 +1,4 @@
-import { createConversationClient, createGenerator, createPlaceMediaLoader, restoreTrip } from '../../../src/features/ui-experience/backendClient'
+import { createConversationClient, createGenerator, createPlaceMediaLoader, createPlaceLocationLoader, restoreTrip } from '../../../src/features/ui-experience/backendClient'
 import type { BackendTransport } from '../../../src/features/ui-experience/backendClient'
 const storageKey = 'flightor-dsh-last-completed-v1'
 const transport: BackendTransport = async (method, path, body) => {
@@ -16,6 +16,7 @@ const transport: BackendTransport = async (method, path, body) => {
 }
 export const generateTrip = createGenerator(transport, id => window.localStorage.setItem(storageKey, id))
 export const loadPlaceMedia = createPlaceMediaLoader(transport)
+export const loadPlaceLocation = createPlaceLocationLoader(transport)
 const conversationKey = 'flightor-dsh-conversation-v1'
 export const conversationClient = createConversationClient(transport, { get: () => window.localStorage.getItem(conversationKey), set: id => window.localStorage.setItem(conversationKey, id), clear: () => window.localStorage.removeItem(conversationKey) }, id => window.localStorage.setItem(storageKey, id))
 export async function loadLastTrip() {

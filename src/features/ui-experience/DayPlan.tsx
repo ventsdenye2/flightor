@@ -5,20 +5,42 @@ import { hasCoordinates, mapViewportPoints } from './presentation'
 import type { Activity, TripDay } from './presentation'
 import { Photo, Icon } from './VisualMedia'
 import { tripText } from '../../i18n/trip'
+import type { PlaceLocation, PlaceLocationLoader } from './backendClient'
 
-export function DayPlan({ day, dayNumber, onActivity, onAdjust, imageError = false, locale = 'zh', published = false, renderMap }: {
+export function DayPlan({ day, dayNumber, onActivity, onAdjust, imageError = false, locale = 'zh', published = false, renderMap, loadPlaceLocation }: {
   day: TripDay; dayNumber: number; onActivity: (activity: Activity) => void; onAdjust: () => void; imageError?: boolean
   locale?: 'zh' | 'en'; published?: boolean
+  loadPlaceLocation?: PlaceLocationLoader
   // Preserve the shared native Map / H5 Leaflet renderer unless explicitly overridden.
   renderMap?: (day: TripDay, onActivity: (activity: Activity) => void) => ReactNode
 }) {
   const tt = (key: string, params?: Record<string, string | number>) => tripText(locale, key, params)
   const [mapError, setMapError] = useState(false)
+  const [locations, setLocations] = useState<Record<string, PlaceLocation>>({})
+  const [locating, setLocating] = useState(false)
+  const locationSignature = JSON.stringify(day.activities.map(({ id, name, imageQuery, area, latitude, longitude }) => ({ id, name, imageQuery, area, latitude, longitude })))
+  useEffect(() => {
+    setLocations({})
+    if (!loadPlaceLocation) { setLocating(false); return }
+    let current = true
+    const missing = day.activities.filter(activity => !hasCoordinates(activity) && activity.imageQuery !== null && activity.area)
+    setLocating(!!missing.length)
+    const locate = async () => {
+      for (const activity of missing) {
+        if (!current) break
+        const location = await loadPlaceLocation(activity)
+        if (current && location && hasCoordinates(location)) setLocations(previous => ({ ...previous, [activity.id]: location }))
+      }
+      if (current) setLocating(false)
+    }
+    void locate()
+    return () => { current = false }
+  }, [locationSignature, loadPlaceLocation])
   const [selectedId,setSelectedId]=useState<string>()
   useEffect(()=>setSelectedId(undefined),[day.id])
   const select=(activity:Activity)=>{setSelectedId(activity.id);onActivity(activity)}
   useEffect(() => setMapError(false), [day.id])
-  const located = day.activities.map((activity, index) => ({ activity, index })).filter(({ activity }) => hasCoordinates(activity))
+  const located = day.activities.map((activity, index) => ({ activity: hasCoordinates(activity) || !locations[activity.id] ? activity : { ...activity, ...locations[activity.id] }, index })).filter(({ activity }) => hasCoordinates(activity))
   const points = located.map(({ activity }) => ({ latitude: activity.latitude!, longitude: activity.longitude! }))
   const markers = located.map(({ activity: a, index }) => ({
     id: index + 1, latitude: a.latitude!, longitude: a.longitude!, title: a.name,
@@ -35,8 +57,8 @@ export function DayPlan({ day, dayNumber, onActivity, onAdjust, imageError = fal
         onMarkerTap={event => { const activity = day.activities[Number(event.detail.markerId) - 1]; if (activity) select(activity) }} />
       {mapError ? <Text className='ux-map-caption'>{tt('trip.mapUnavailable')}</Text> : null}
       <Text className='ux-map-caption'>{tt('trip.mapOrder')}</Text>
-    </View> : null}
-    {located.length < day.activities.length ? <Text className='ux-map-caption'>{tt(located.length ? 'trip.mapPartial' : 'trip.mapPending')}</Text> : null}
+    </View> : <View className='ux-day-map-placeholder' role='status'><Icon name='compass' /><Text>{locating ? '正在定位当天景点…' : tt('trip.mapPending')}</Text></View>}
+    {located.length && located.length < day.activities.length ? <Text className='ux-map-caption'>{locating ? '正在补全其他景点的位置…' : tt('trip.mapPartial')}</Text> : null}
     <View className='ux-timeline'>
       {day.activities.map((activity, i) => <Button key={activity.id} className={`ux-activity ${selectedId===activity.id?'is-map-selected':''}`} data-activity-id={activity.id} onClick={() => select(activity)} ariaLabel={tt('trip.viewActivity', { name: activity.name })}>
         <View className='ux-timeline-time'><Text className='ux-number'>{i + 1}</Text><Text>{activity.time || tt('trip.flexible')}</Text></View>

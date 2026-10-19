@@ -7,6 +7,7 @@ import { runPlan } from './plan.mjs'
 import { loadConversation, runConversation, selectConversationFlight } from './conversation.mjs'
 import { resolveFlightSelection } from './flight-options.mjs'
 import { loadPlaceMedia } from './place-media.mjs'
+import { loadPlaceLocation } from './place-locations.mjs'
 
 const runs = new Map()
 await fs.mkdir(path.join(dataRoot, 'runs'), { recursive: true })
@@ -34,6 +35,11 @@ const server = http.createServer(async (req, res) => {
       let body = ''
       for await (const chunk of req) { body += chunk; if (body.length > 2000) return send(res, 413, { error: 'Request too large' }) }
       return send(res, 200, await loadPlaceMedia(JSON.parse(body)))
+    }
+    if (req.method === 'POST' && url.pathname === '/api/place-locations') {
+      let body = ''
+      for await (const chunk of req) { body += chunk; if (body.length > 2000) return send(res, 413, { error: 'Request too large' }) }
+      return send(res, 200, await loadPlaceLocation(JSON.parse(body)))
     }
     const conversationMatch = url.pathname.match(/^\/api\/conversations\/([a-f\d-]{36})$/)
     if (req.method === 'GET' && conversationMatch) {

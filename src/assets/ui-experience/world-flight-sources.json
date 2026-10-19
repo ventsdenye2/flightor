@@ -1,0 +1,15 @@
+{
+  "projection": "Equirectangular, lon -180..180 / lat 90..-90",
+  "land": {
+    "source": "https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_land.geojson",
+    "license": "Public domain",
+    "sha256": "9e0729ee253ca7d7a5c4ae9395fb1902264c5377c52e224d13dd85010e2835d9"
+  },
+  "airports": {
+    "source": "https://github.com/mborsetti/airportsdata",
+    "ref": "47ae282a8491758e6dafe28d4139539e561b54d5",
+    "license": "MIT",
+    "sha256": "516c57d9d999f7a3be28ca649d2badbe3b972f07e57dc6173ab973b72d51cf52",
+    "count": 7884
+  }
+}

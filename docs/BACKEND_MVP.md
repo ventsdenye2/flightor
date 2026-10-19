@@ -1,5 +1,7 @@
 # 从本分支开始开发后端
 
+2026-10-19新增每日地图地点补全：`POST /api/place-locations`仅按景点名与城市读取Wikidata唯一匹配实体的P625坐标，独立缓存，不创建run、不调用DSH、不改写行程；接口、失败边界和前端地图交互见[每日地图](TRIP_CONTENT.md)。
+
 2026-10-19新增[行程内容与图片](TRIP_CONTENT.md)：`POST /api/place-media`直接使用Commons免费接口，按景点/城市缓存许可元数据，失败留空。审核JSON新增`highlights`及景点`introduction/recommendationReason/visitNotes/imageQuery/city`，`issues`独立映射`travelNotes`，不再混入概览。图片不由模型提供URL，不引入审核拒绝或自动返工。
 
 2026-10-19工作区提交复验：`npm run backend:test` 18/18通过，`npm test`、`npm run check`、`npm run build`及文档检查通过。后端测试和文档检查首次因沙箱禁止子进程启动报`EPERM`，在沙箱外重跑成功。微信构建仍有图片体积和代码分包建议。本次仅复跑本地检查，未重复浏览器或微信真机验收，未调用付费模型或供应商；此前交互验证保留其原有范围。

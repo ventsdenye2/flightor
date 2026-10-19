@@ -1,0 +1,12 @@
+/* postcss-pxtransform disable */
+.wf-section { margin: 24px 0; > .ux-section-title { margin-bottom: 12px; } }
+.wf-map { position: relative; width: 100%; height: 0; padding-top: 50%; overflow: hidden; border-radius: 12px; background: #edf3fb; }
+.wf-land { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.wf-equator { position: absolute; top: 50%; left: 0; right: 0; border-top: 1px dashed #b9cbe14d; }
+.wf-track { position: absolute; height: 1.5px; background: #2563eb; opacity: .65; transform-origin: left center; }
+.wf-point { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: #2563eb; border: 2px solid #fff; box-shadow: 0 0 0 3px #2563eb1a; transform: translate(-50%, -50%); }
+.wf-destination { width: 9px; height: 9px; }
+.wf-plane { position: absolute; width: 22px; height: 22px; z-index: 1; image, img { display: block; width: 100%; height: 100%; } }
+.wf-endpoints { position: absolute; left: 12px; right: 38px; bottom: 10px; display: flex; align-items: center; gap: 6px; font-size: 10px; color: #375c88; > text, > span { overflow-wrap: anywhere; } }
+.ux-app .wf-toggle { position: absolute; right: 6px; bottom: 3px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #ffffffb8; border-radius: 50%; color: #2563eb; font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .wf-plane, .wf-toggle { display: none; } }

@@ -22,7 +22,7 @@
     "build": "npm run build:h5 && npm run build:weapp",
     "check:weapp": "tsc -p apps/ui-preview/taro-entry/tsconfig.json --noEmit",
     "check": "npm run check:weapp && npm --prefix apps/ui-preview run check",
-    "test": "node scripts/check-ui-presentation.cjs && node scripts/check-ui-flight-samples.cjs && node scripts/check-flight-options.cjs && node scripts/test-dsh-client.cjs",
+    "test": "node scripts/check-ui-presentation.cjs && node scripts/check-ui-flight-samples.cjs && node scripts/check-flight-options.cjs && node scripts/check-world-flight.cjs && node scripts/test-dsh-client.cjs",
     "check:docs": "node scripts/check-docs.cjs"
   },
   "overrides": {

@@ -39,6 +39,8 @@
 .ux-app .ux-tab { position: relative; min-height: 46px; flex: 1; text-align: center; color: #667981; font-size: 14px; }
 .ux-app .ux-tab.is-active { color: #2563eb; font-weight: 600; &::before { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: #2563eb; border-radius: 2px; } }
 .ux-overview, .ux-flight-page { padding: 12px 18px 0; }
+.ux-overview-curated { padding-top: 16px; padding-bottom: 10px; .ux-hero { border-radius: 10px; } }
+.ux-day-map-placeholder { display: flex; min-height: 220px; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin-bottom: 18px; border-radius: 12px; background: #edf3fb; color: #617b8a; font-size: 12px; padding: 20px; text-align: center; }
 .ux-ticket { padding: 12px 14px; border: 1px solid #e0e9eb; border-bottom-style: dashed; border-radius: 12px; }
 .ux-section-head { display: flex; justify-content: space-between; align-items: center; min-height: 28px; }
 .ux-section-title { display: block; font-size: 14px; font-weight: 600; }
