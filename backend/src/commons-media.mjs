@@ -3,6 +3,14 @@ import { normalizePlaceName } from './geo-index.mjs'
 
 const plain = value => String(value || '').replace(/<[^>]*>/g, ' ').replace(/&(?:amp|quot|lt|gt|nbsp);/g, ' ').replace(/\s+/g, ' ').trim()
 const safeUrl = (value, host) => { try { const url = new URL(value); return url.protocol === 'https:' && url.hostname === host && !url.username && !url.password && !url.port ? url.href : null } catch { return null } }
+const safeLicenseUrl = value => {
+  try {
+    const url = new URL(String(value || '').replace(/^\/\//, 'https://'))
+    if (!['http:', 'https:'].includes(url.protocol) || !['creativecommons.org', 'commons.wikimedia.org'].includes(url.hostname)) return null
+    url.protocol = 'https:'
+    return safeUrl(url.href, url.hostname)
+  } catch { return null }
+}
 const fileKey = title => String(title || '').replace(/^File:/i, '').replace(/_/g, ' ').normalize('NFC')
 
 export function chooseCommonsPhoto(pages, identity, { trustedTitles = [], requireDepicts = false } = {}) {
@@ -19,9 +27,9 @@ export function chooseCommonsPhoto(pages, identity, { trustedTitles = [], requir
     const src = safeUrl(info?.thumburl, 'upload.wikimedia.org') || safeUrl(info?.thumburl, 'thumb.wikimedia.org')
     const sourceUrl = safeUrl(info?.descriptionurl, 'commons.wikimedia.org')
     const license = plain(meta.LicenseShortName?.value)
-    const licenseUrl = safeUrl(meta.LicenseUrl?.value?.replace(/^\/\//, 'https://'), 'creativecommons.org') || safeUrl(meta.LicenseUrl?.value, 'commons.wikimedia.org')
+    const licenseUrl = safeLicenseUrl(meta.LicenseUrl?.value)
     const author = plain(meta.Artist?.value)
-    const free = /^(CC BY(?:-SA)? [\d.]+|CC0(?: [\d.]+)?|Public domain|PD)$/i.test(license)
+    const free = /^(CC BY(?:-SA)? [\d.]+(?: [a-z]{2}(?:-[a-z]{2})?)?|CC0(?: [\d.]+)?|Public domain|PD)$/i.test(license)
     if (!src || !sourceUrl || !author || !free || (!licenseUrl && !/^(Public domain|PD)$/i.test(license))) continue
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(info.mime) || info.width < 600 || info.height < 350) continue
     if (meta.Restrictions?.value || /(?:non.?commercial|no.?derivatives)/i.test(license)) continue

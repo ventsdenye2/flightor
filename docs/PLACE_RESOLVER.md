@@ -53,3 +53,28 @@ WIKIMEDIA_ENTERPRISE_ACCESS_TOKEN=your_access_token
 `npm run backend:start` 用 Node `--env-file-if-exists=.env` 加载后端环境；独立脚本用 `node --env-file-if-exists=backend/.env ...`。不读取前端环境变量，token 不进 URL、HTTP 缓存或日志，认证响应明确禁用缓存。无凭证或 Enterprise 失败仍可尝试公开 Wikipedia / Commons。Wikidata 实体还可从 Enterprise `/v2/wikidata/items/QID` 获取，转换实际 `identifier`、字符串标签及 `statements` 模型后复用同一校验；不能把它直接当成 MediaWiki `claims`。
 
 第二阶段已有后端 40/40 和 `npm test` 通过。真实查理大桥按本地 QID 定位并返回 Commons 图片、作者 Uoaei1、CC BY-SA 4.0 及文件页。真实 refresh-token 交换成功，Enterprise Structured Contents 返回同 QID `Q204871`、enwiki 文章及 Commons 主图；Wikidata item endpoint 也返回同 QID 的真实标签/P625/P18。测试输出只保留认证是否成功及过期时间，不保留凭证。
+
+## 第三阶段：实际界面与批量验收
+
+36 个真实地点的中英文、同名和小众测试见 [验收报告](PLACE_RESOLVER_ACCEPTANCE.md)。脚本先从独立 Wikipedia API 冻结参考 QID/坐标，再只向解析器传景点名与城市；参考点 500 米内及严格 QID 一致分别统计，不把同来源的一致性当作测绘真值。首次无缓存、在线复用和完全禁用网络三种运行分开记录。原始失败与后续修复结果都保存在忽略的数据目录。
+
+`FLIGHTOR_PLACES_OFFLINE=1` 强制仅使用本地索引、实体与 HTTP 元数据缓存；缓存缺失立即留空，网络调用为零。它不下载离线照片文件，客户端显示远程图片仍需网络。缓存中经验证的带城市文章名优先于超过 200 个同名候选，使同名教堂的历史解析能离线恢复。
+
+图片元数据兼容真实 Commons 的地区版本许可（如 `CC BY-SA 3.0 de`），旧 HTTP CC0 许可链接仅在明确的 Wikimedia/Creative Commons 主机升级为 HTTPS。保留作者、许可文本和来源，不放宽外部图片主机/未知许可。Enterprise 未知 precision 字符串按缺失精度处理，不把它变成零坐标。
+
+用户明确允许当前出现“卢浮宫返回巴黎全景”这类远景构图问题；保留 QID/P180 与名称元数据关系，不新增“文件名必须完整包含景点”或前景构图限制。自动实体关联与图片视觉准确性仍分开报告，中文“卢浮宫”指宫殿、英文参考指博物馆的 QID 差异不修改参考以凑通过率。
+
+批量复测：
+
+```powershell
+node backend/scripts/benchmark-places.mjs references
+node backend/scripts/benchmark-places.mjs offline-cold-final
+# 为新的首次冷启动验收选择尚不存在的目录；同一个目录用于后面两轮
+$env:FLIGHTOR_BENCHMARK_RUN='acceptance-new'
+node --env-file-if-exists=backend/.env backend/scripts/benchmark-places.mjs online-cold-final
+node --env-file-if-exists=backend/.env backend/scripts/benchmark-places.mjs online-warm-final
+node --env-file-if-exists=backend/.env backend/scripts/benchmark-places.mjs offline-warm-final
+node backend/scripts/report-places.mjs
+```
+
+新冷启动目录若已含 enrichment 会拒绝重跑，避免把命中旧缓存伪称冷启动。批测遵守上游冷却时间；生成的 raw JSON/日志和数据库不提交 Git，报告只提交指标、合同和复现说明。

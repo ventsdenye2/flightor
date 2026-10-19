@@ -20,6 +20,17 @@ test('unknown license, tiny images and foreign image hosts are omitted', () => {
     const value = page(); change(value.imageinfo[0]); assert.equal(chooseCommonsPhoto([value], identity), null)
   }
 })
+
+test('ported Creative Commons licenses and legacy CC0 HTTP links preserve attribution with HTTPS license links', () => {
+  const ported = page()
+  ported.imageinfo[0].extmetadata.LicenseShortName.value = 'CC BY-SA 3.0 de'
+  ported.imageinfo[0].extmetadata.LicenseUrl.value = 'https://creativecommons.org/licenses/by-sa/3.0/de/deed.en'
+  assert.equal(chooseCommonsPhoto([ported], identity).license, 'CC BY-SA 3.0 de')
+  const cc0 = page()
+  cc0.imageinfo[0].extmetadata.LicenseShortName.value = 'CC0'
+  cc0.imageinfo[0].extmetadata.LicenseUrl.value = 'http://creativecommons.org/publicdomain/zero/1.0/deed.en'
+  assert.equal(chooseCommonsPhoto([cc0], identity).licenseUrl, 'https://creativecommons.org/publicdomain/zero/1.0/deed.en')
+})
 test('only fixed Commons API is queried; no model URL or conversation is sent', async () => {
   const media = await queryCommons(identity, { request: async (url, options) => {
     assert.equal(url.origin, 'https://commons.wikimedia.org'); assert.equal(url.pathname, '/w/api.php')

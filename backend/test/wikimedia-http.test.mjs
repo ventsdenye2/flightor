@@ -48,3 +48,15 @@ test('transient transfer failure retries, maxlag respects backoff, cancellation 
   const lag = new WikimediaHttp({ root: null, intervalMs: 0, request: async () => response({ error: { code: 'maxlag', lag: 60 } }) })
   await assert.rejects(lag.json('https://www.wikidata.org/w/api.php'), /cooldown/)
 })
+
+test('offline transport serves cached public metadata and never attempts a network cache miss', async () => {
+  const root = await fs.mkdtemp(path.join(dataRoot, 'offline-http-test-'))
+  const url = actionUrl('commons.wikimedia.org', { action: 'query', titles: 'File:Known.jpg' })
+  try {
+    await new WikimediaHttp({ root, intervalMs: 0, request: async () => response({ known: true }) }).json(url)
+    const http = new WikimediaHttp({ root, offline: true, request: () => assert.fail('offline network must be disabled') })
+    assert.deepEqual(await http.json(url), { known: true })
+    await assert.rejects(http.json(actionUrl('commons.wikimedia.org', { action: 'query', titles: 'File:Unknown.jpg' })), /Offline/)
+    assert.equal(http.metrics.network, 0)
+  } finally { await fs.rm(root, { recursive: true }) }
+})

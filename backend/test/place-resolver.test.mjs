@@ -17,7 +17,7 @@ test('location uses offline identity without HTTP, ambiguous identities never be
   assert.deepEqual(await resolver.location(identity), { ...point, source: landmark.source })
   assert.equal((await resolver.resolve({ name: '查理大桥', city: 'Prague' })).status, 'not-found')
   assert.equal((await resolver.resolve({ ...identity, city: 'London' })).status, 'not-found')
-  const ambiguous = new PlaceResolver({ index: { ...index, byName: name => name === 'Charles Bridge' ? [landmark, { ...landmark, qid: 'Q123' }] : [city] }, enrichment: null, offline: true })
+  const ambiguous = new PlaceResolver({ index: { ...index, byName: name => name === 'Charles Bridge' ? [landmark, { ...landmark, qid: 'Q123' }] : name === 'Prague' ? [city] : [] }, enrichment: null, offline: true })
   assert.equal((await ambiguous.resolve(identity)).status, 'ambiguous')
 })
 
@@ -32,6 +32,8 @@ test('P18 file binding permits arbitrary filenames but requires full Commons lic
   assert.equal(requests[1].searchParams.get('titles'), 'File:A precise entity photograph.jpg')
   assert.equal(chooseCommonsPhoto([{ ...imagePage, title: 'File:Charles Bridge Prague.jpg' }], { ...identity, qid: landmark.qid }, { requireDepicts: true }), null)
   assert.equal(await commonsFile('Some other file.jpg', identity, { http: { json: async () => ({ query: { pages: [imagePage] } }) } }), null)
+  const panorama = { ...imagePage, title: 'File:City panorama.jpg', depicts: [landmark.qid], imageinfo: [{ ...imagePage.imageinfo[0], extmetadata: { ...imagePage.imageinfo[0].extmetadata, ImageDescription: { value: 'Charles Bridge and the city skyline' } } }] }
+  assert.ok(chooseCommonsPhoto([panorama], { ...identity, qid: landmark.qid }, { requireDepicts: true }))
 })
 
 test('Wikipedia and Enterprise main images must carry the resolved QID; bearer token never enters URL or body', async () => {
@@ -87,4 +89,11 @@ test('configured Enterprise metadata is tried before public Wikidata and auth fa
   assert.equal((await resolver.entities([entity.id]))[entity.id].id, entity.id)
   assert.match(calls[0], /api.enterprise.wikimedia.com/)
   assert.match(calls[1], /www.wikidata.org/)
+})
+
+test('cached qualified article identity remains usable offline when the common name has over 200 candidates', async () => {
+  const known = { ...entity, labels: { en: { value: 'Old Bridge' } }, sitelinks: { enwiki: { title: 'Old Bridge, Prague' } } }
+  const resolver = new PlaceResolver({ offline: true, index: { ...index, byName: name => name === 'Old Bridge' ? Array.from({ length: 201 }, (_, i) => ({ ...landmark, qid: 'Q' + (i + 1000) })) : name === 'Prague' ? [city] : [] },
+    enrichment: { byName: name => name === 'Old Bridge, Prague' ? [known] : [], get: () => null } })
+  assert.equal((await resolver.resolve({ name: 'Old Bridge', city: 'Prague' })).place.qid, landmark.qid)
 })

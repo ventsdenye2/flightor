@@ -7,8 +7,8 @@ import { dataRoot } from './paths.mjs'
 
 const allowed = host => ['www.wikidata.org', 'commons.wikimedia.org', 'api.enterprise.wikimedia.com', 'auth.enterprise.wikimedia.com'].includes(host) || /^(?:en|zh)\.wikipedia\.org$/.test(host)
 export class WikimediaHttp {
-  constructor({ request = fetch, root = path.join(dataRoot, 'wikimedia-http-v1'), intervalMs = 1000, timeoutMs = 8000, retries = 2, now = Date.now } = {}) {
-    Object.assign(this, { request, root, intervalMs, timeoutMs, retries, now })
+  constructor({ request = fetch, root = path.join(dataRoot, 'wikimedia-http-v1'), intervalMs = 1000, timeoutMs = 8000, retries = 2, now = Date.now, offline = process.env.FLIGHTOR_PLACES_OFFLINE === '1' } = {}) {
+    Object.assign(this, { request, root, intervalMs, timeoutMs, retries, now, offline })
     this.hosts = new Map()
     this.pending = new Map()
     this.metrics = { network: 0, cache: 0, retries: 0, failures: 0, events: [] }
@@ -24,6 +24,7 @@ export class WikimediaHttp {
         if (saved.expiresAt > this.now()) { this.metrics.cache++; return saved.value }
       } catch {}
     }
+    if (this.offline) throw Error('Offline Wikimedia metadata cache miss')
     // Each caller retains its own cancellation budget; only calls without caller signals coalesce here.
     if (!signal && this.pending.has(key)) return this.pending.get(key)
     const task = this.#request(url, { signal, method, body, headers }).then(async value => {

@@ -42,7 +42,7 @@ export function fromEnterpriseEntity(value) {
       if (value?.type === 'globe-coordinate') {
         const data = value.content_data || {}
         converted = { latitude: Number(data.latitude), longitude: Number(data.longitude), globe: data.globe,
-          precision: data.precision == null ? undefined : Number(data.precision) }
+          precision: data.precision != null && String(data.precision).trim() && Number.isFinite(Number(data.precision)) ? Number(data.precision) : undefined }
       }
       return { rank: statement.rank, mainsnak: converted == null ? {} : { datavalue: { value: converted } } }
     })

@@ -33,7 +33,7 @@ export function placeIdentity(input) {
 }
 
 export class PlaceResolver {
-  constructor({ index = defaultGeoIndex(), http = wikimediaHttp, enrichment, offline = false, enterpriseToken = () => enterpriseTokens.getAccessToken() } = {}) {
+  constructor({ index = defaultGeoIndex(), http = wikimediaHttp, enrichment, offline = process.env.FLIGHTOR_PLACES_OFFLINE === '1', enterpriseToken = () => enterpriseTokens.getAccessToken() } = {}) {
     Object.assign(this, { index, http, offline, enterpriseToken })
     this.enrichment = enrichment === undefined ? new PlaceEnrichment() : enrichment
     this.pending = new Map()
@@ -135,14 +135,15 @@ export class PlaceResolver {
   }
   async #resolve(input, { signal, offline }) {
     const names = [...new Set([input.query, input.name, variant(input.query), ...(input.city ? [`${input.query}, ${input.city}`, `${input.query} (${input.city})`] : [])].filter(Boolean))]
-    let candidates = input.qid ? [this.index?.byQid(input.qid) || entityPlace(this.enrichment?.get(input.qid))].filter(Boolean) : unique(names.flatMap(name => this.#names(name)))
+    const contextualCandidates = input.city ? unique([`${input.query}, ${input.city}`, `${input.query} (${input.city})`].flatMap(name => this.#names(name))) : []
+    let candidates = input.qid ? [this.index?.byQid(input.qid) || entityPlace(this.enrichment?.get(input.qid))].filter(Boolean)
+      : contextualCandidates.length ? contextualCandidates : unique(names.flatMap(name => this.#names(name)))
     const parts = cityParts(input.city)
     const learnedCities = input.city ? cityVariants(input.city).flatMap(name => this.enrichment?.byName(name) || []).map(entity => cityEntity(entity, this.index?.byQid(entity.id))) : []
     let cities = input.city ? unique([...this.#names(input.city), ...learnedCities, ...(parts.length > 1 ? this.#names(parts[0]) : [])]).filter(cityLike)
       .filter(city => parts.slice(1).every(part => (' ' + normalizePlaceName(city.description) + ' ').includes(' ' + part + ' '))) : []
     let matches = preferArticleIdentity(this.#filter(candidates, input, cities), names)
-    const chineseNeedsArticle = /\p{Script=Han}/u.test(input.query) && matches.length === 1 && !articleMatch(matches[0], names)
-    if (matches.length === 1 && !chineseNeedsArticle) return { status: 'resolved', place: matches[0], method: 'offline' }
+    if (matches.length === 1) return { status: 'resolved', place: matches[0], method: 'offline' }
     if (offline) return { status: matches.length > 1 ? 'ambiguous' : 'not-found', candidates: matches.map(row => row.qid), method: 'offline' }
     const budget = AbortSignal.timeout(17000)
     signal = signal ? AbortSignal.any([signal, budget]) : budget
@@ -205,7 +206,8 @@ export class PlaceResolver {
     const place = result.place
     const entity = (await this.entities([place.qid], { signal }))[place.qid]
     if (!entity) return null
-    if (!exactEntityName(entity, identity.query) && !exactEntityName(entity, identity.name) && !exactEntityName(entity, variant(identity.query))) return null
+    const mediaNames = [identity.query, identity.name, variant(identity.query), ...(identity.city ? [`${identity.query}, ${identity.city}`, `${identity.query} (${identity.city})`] : [])]
+    if (!mediaNames.some(name => exactEntityName(entity, name))) return null
     const linkedIdentity = { ...identity, qid: place.qid, query: entity.labels?.en?.value || place.label }
     const options = { http: this.http, signal }
     let failure
