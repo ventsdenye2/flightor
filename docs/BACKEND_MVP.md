@@ -1,5 +1,7 @@
 # 从本分支开始开发后端
 
+2026-10-19提示词调整：[航班组合与抵达依据](FLIGHT_OPTIONS.md)。规划前需已有用户采用的航班组合/已购航班时刻，或用户明确给出抵达时间；否则使用已注册的 `search_flights` / `get_flight_details` 先取得候选并请用户选择完整组合。未扩展航班CLI，未新增Agent、接口拦截或额外模型会话；显式按钮仍直接进入规划者，由提示词处理查询/待选组合，实际模型遵循度需单独观察。
+
 当前景点获取与发布以[审核 Session 批量补全](PLACE_LOOKUP_BATCH.md)为准：本地索引/缓存 → Enterprise → 公共 API；审核者的现有 Session 调用 `lookup_places_batch`，仅对明确缺失字段作一轮关键词修正，成功字段锁定。20秒共享预算，网络/429不触发语义修正；后端按活动 ID 合并图片和坐标，保存 `placesResolved: true`，前端新行程加载不再自动调用地点接口。保留三个 Agent 及旧接口。下述严格 QID 规则和前端独立补查是历史迭代说明，不覆盖当前行为。
 
 2026-10-19景点定位/图片统一为 [PlaceResolver](PLACE_RESOLVER.md)，先查本地 Wikimedia Geo SQLite，再按 Wikidata/Enterprise/Commons 补充。保留现有 HTTP 与展示合同，不增加 LLM 匹配，不修改聊天/规划/审核 Agent。该文档的来源、消歧、缓存和验证边界替代下述旧版独立名称搜索细节。
