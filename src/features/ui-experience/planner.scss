@@ -51,5 +51,14 @@
 .pl-loading-skeleton { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; > view, > div { height: 9px; border-radius: 5px; background: #e2eeee; animation: ux-pulse 1.8s ease-in-out infinite; } > view:last-child, > div:last-child { width: 65%; } }
 .pl-cancelled { padding: 17px 15px 3px; border: 1px solid #dfebed; border-radius: 14px; .ux-muted { margin-top: 6px; font-size: 11px; } }
 .pl-inline-actions { display: flex; gap: 22px; margin-top: 6px; }
+.pl-chat-message + .pl-chat-message { margin-top: 20px; }
+.pl-assistant-message { font-size: 13px; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; }
+.pl-chat-status { display: flex; align-items: center; gap: 8px; margin-top: 20px; font-size: 12px; color: #087f8c; flex-wrap: wrap; }
+.pl-chat-error { margin: 16px 18px; font-size: 12px; line-height: 1.8; color: #a63737; overflow-wrap: anywhere; }
+.ux-app .pl-chat-result { display: flex; width: 100%; align-items: center; gap: 10px; padding: 14px 0; margin-top: 20px; border-top: 1px solid #dce8e9; text-align: left; font-size: 12px; > view, > div { flex: 1; min-width: 0; } .ux-icon { width: 16px; height: 16px; } }
+.ux-app .pl-chat-plan { display: flex; align-items: center; gap: 7px; margin: 4px auto 0; min-height: 38px; .ux-icon { width: 14px; height: 14px; } }
+.ux-app .pl-chat-send { width: 40px; height: 40px; flex-shrink: 0; .ux-icon { width: 19px; height: 19px; } }
+.pl-chat-composer .pl-composer-hint { max-width: calc(100% - 45px); }
+.pl-welcome .pl-suggestions { margin-top: 24px; }
 @media (max-width: 360px) { .pl-welcome { padding: 20px 18px 10px; }.pl-title { font-size: 28px; }.pl-header-caption { font-size: 9px; }.pl-inspiration-title { font-size: 18px; }.pl-inspiration-copy { padding-left: 12px; }.pl-inspiration-photo { width: 39%; }.pl-result-title { font-size: 22px; }.pl-result-route { font-size: 9px; } }
 @media (max-height: 720px) { .pl-welcome { padding-top: 18px; }.pl-composer { padding-top: 8px; }.pl-textarea { height: 45px; min-height: 45px; }.pl-title { font-size: 28px; }.ux-app .pl-inspiration { margin-top: 18px; } }

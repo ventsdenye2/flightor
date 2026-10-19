@@ -1,0 +1,13 @@
+import {spawn} from 'node:child_process';
+import {mkdir,writeFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+await mkdir('artifacts/verification',{recursive:true});
+const args=['dist/cli.js','search','--from','BJS','--to','LIS','--date','2026-10-28','--currency','USD','--max-results','3','--output','artifacts/live-cli.json'];
+const started=Date.now();
+const child=spawn(process.execPath,args,{stdio:['ignore','pipe','pipe']});
+let stdout='',stderr='';child.stdout.on('data',d=>stdout+=d);child.stderr.on('data',d=>stderr+=d);
+const code=await new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',resolve);});
+const result=JSON.parse(stdout);
+const report={checkedAt:new Date().toISOString(),durationMs:Date.now()-started,exitCode:code,status:result.status,searchId:result.searchId,lowest:result.candidates?.[0]?.price,candidates:result.candidates?.map(c=>({id:c.id,segments:c.details?.segments.length,connections:c.details?.connections.length})),stderr};
+await writeFile('artifacts/verification/cli-smoke.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+assert.equal(code,0);assert.equal(result.status,'complete');assert.equal(result.candidates.length,3);assert.ok(result.candidates.every(c=>c.details?.segments.length===c.stopCount+1));assert.equal(result.lowestPriceVerified,true);

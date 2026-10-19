@@ -1,12 +1,29 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, View } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import AppExperience from '../../../../../src/features/ui-experience/AppExperience'
 import type { PreviewPage } from '../../../../../src/features/ui-experience/AppExperience'
 import { experienceSamples } from '../../../../../src/features/ui-experience/experienceSamples'
 import { lisbonTrip } from '../../../../../src/features/ui-experience/sampleTrips'
+import { createConversationClient, createGenerator, restoreTrip } from '../../../../../src/features/ui-experience/backendClient'
+import type { BackendTransport } from '../../../../../src/features/ui-experience/backendClient'
+import type { TripPresentation } from '../../../../../src/features/ui-experience/presentation'
+
+const storageKey = 'flightor-dsh-last-completed-v1'
+const transport: BackendTransport = async (method, path, data) => {
+  const base = Taro.getStorageSync('flightor-api-base-url') || 'http://127.0.0.1:3000'
+  const response = await Taro.request({ url: base + path, method, data, timeout: 20000, header: { 'content-type': 'application/json' } })
+  const value = response.data as any
+  if (response.statusCode >= 400) throw Error(value.error || '后端请求失败')
+  return value
+}
+const generateTrip = createGenerator(transport, id => Taro.setStorageSync(storageKey, id))
+const conversationKey = 'flightor-dsh-conversation-v1'
+const conversationClient = createConversationClient(transport, { get: () => Taro.getStorageSync(conversationKey) || null, set: id => Taro.setStorageSync(conversationKey, id), clear: () => Taro.removeStorageSync(conversationKey) }, id => Taro.setStorageSync(storageKey, id))
 
 export default function Index() {
+  const [restored, setRestored] = useState<TripPresentation | null>(null)
+  useEffect(() => { let current = true; const id = Taro.getStorageSync(storageKey); if (id) restoreTrip(transport, id).then(value => { if (current) setRestored(value) }).catch(() => {}); return () => { current = false } }, [])
   const [sampleId, setSampleId] = useState('lisbon')
   const [controlsOpen, setControlsOpen] = useState(false)
   const sample = experienceSamples.find(item => item.id === sampleId) || experienceSamples[0]
@@ -24,7 +41,9 @@ export default function Index() {
     <AppExperience
       key={revision}
       {...sample}
-      trip={trip}
+      trip={restored || trip}
+      onGenerate={generateTrip}
+      conversationClient={conversationClient}
       requestedPage={navigation.page}
       navigationVersion={navigation.revision}
       onOpenSource={url => Taro.setClipboardData({ data: url, success: () => Taro.showToast({ title: '来源链接已复制', icon: 'success' }) })}

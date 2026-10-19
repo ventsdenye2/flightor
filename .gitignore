@@ -16,3 +16,6 @@ output/
 *.tsbuildinfo
 project.private.config.json
 .worktrees/
+backend/.dsh-runtime/
+backend/.dsh-home/
+backend/data/

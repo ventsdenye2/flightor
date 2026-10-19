@@ -21,7 +21,7 @@ function DialogView(props: React.HTMLAttributes<HTMLDivElement>) {
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
   }} />
 }
-export const View = ({ ariaRole, ariaLabel, ...props }: React.HTMLAttributes<HTMLDivElement> & TaroA11y) => props.role === 'dialog' || ariaRole === 'dialog' ? <DialogView role={ariaRole} aria-label={ariaLabel} {...props} /> : <div role={ariaRole} aria-label={ariaLabel} {...props} />
+export const View = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & TaroA11y>(({ ariaRole, ariaLabel, ...props }, ref) => props.role === 'dialog' || ariaRole === 'dialog' ? <DialogView role={ariaRole} aria-label={ariaLabel} {...props} /> : <div ref={ref} role={ariaRole} aria-label={ariaLabel} {...props} />)
 export const Text = ({ ariaRole, ariaLabel, ...props }: React.HTMLAttributes<HTMLSpanElement> & TaroA11y) => <span role={ariaRole} aria-label={ariaLabel} {...props} />
 export const Button = ({ ariaLabel, type = 'button', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & TaroA11y) => <button type={type} aria-label={ariaLabel} {...props} />
 export const Image = ({ mode, src, ariaLabel, style, ...props }: React.ImgHTMLAttributes<HTMLImageElement> & { mode?: string; ariaLabel?: string }) => <img src={src?.startsWith('/assets/') ? src.replace(/^\/assets\//, '/') : src} aria-label={ariaLabel} {...props} style={{ objectFit: mode === 'aspectFit' ? 'contain' : 'cover', ...style }} />

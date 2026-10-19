@@ -1,0 +1,11 @@
+- id: credentials
+  config:
+    path: !!js process.env.FLIGHTOR_DSH_CREDENTIALS
+- id: system-prompt
+  config:
+    personaPrefix: !!js process.env.FLIGHTOR_DSH_PERSONA
+- insert:
+    - id: plugin-market
+      name: '@deepseek-ai/dsh-plugin-market'
+    - id: flightor-tools
+      name: ./tools.mjs

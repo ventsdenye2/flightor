@@ -5,6 +5,7 @@ import { ExplorePage } from './ExplorePage'
 import type { ExploreItem } from './exploreSamples'
 import type { FlightSearchDataset } from './flightSamples'
 import type { TripPresentation } from './presentation'
+import type { ConversationClient, GenerateTrip } from './backendClient'
 import { FlightExplorer } from './FlightExplorer'
 import { ProfilePage } from './ProfilePage'
 import { AlertsPage, CollectionsPage, TripsPage } from './LibraryPages'
@@ -18,6 +19,8 @@ export type MainSection = 'plan' | 'explore' | 'trips' | 'profile'
 export type PreviewPage = MainSection | 'trip' | 'flights' | 'collections' | 'alerts'
 type Overlay = Exclude<PreviewPage, MainSection> | 'inspiration'
 export interface AppExperienceProps {
+  conversationClient?: ConversationClient
+  onGenerate?: GenerateTrip
   trip: TripPresentation
   searchDataset: FlightSearchDataset
   exploreItems: ExploreItem[]
@@ -30,7 +33,14 @@ export default function AppExperience(props: AppExperienceProps) {
   // A different trip identity starts an independent preview session.
   return <ExperienceSession key={props.trip.id} {...props} />
 }
-function ExperienceSession({ trip, searchDataset, exploreItems, imageError = false, requestedPage = 'plan', navigationVersion = 0, onOpenSource }: AppExperienceProps) {
+function ExperienceSession({ trip: sourceTrip, searchDataset, exploreItems, imageError = false, requestedPage = 'plan', navigationVersion = 0, onOpenSource, onGenerate, conversationClient }: AppExperienceProps) {
+  const [generatedTrip, setGeneratedTrip] = useState<TripPresentation | null>(null)
+  const trip = generatedTrip || sourceTrip
+  const generate: GenerateTrip | undefined = onGenerate ? async (message, progress, signal) => {
+    const result = await onGenerate(message, progress, signal)
+    if (!signal.aborted) setGeneratedTrip(result)
+    return result
+  } : undefined
   const [section, setSection] = useState<MainSection>('plan')
   const [overlayStack, setOverlayStack] = useState<Overlay[]>([])
   const overlay = overlayStack[overlayStack.length - 1] || null
@@ -58,7 +68,7 @@ function ExperienceSession({ trip, searchDataset, exploreItems, imageError = fal
   const visible = (page: PreviewPage | Overlay) => overlay ? overlay === page : section === page
   const savedItems = exploreItems.filter(item => savedIds.includes(item.id)).map(item => ({ id: item.id, title: item.title, subtitle: item.subtitle, photo: item.photo, photoDescription: item.photoDescription }))
   return <View className={`ux-app ${largeText ? 'is-comfortable' : ''}`}>
-    <View className='ux-screen' style={{ display: visible('plan') ? 'flex' : 'none' }}><PlannerPage trip={trip} key={prompt.revision} initialPrompt={prompt.text} onOpenTrip={openTrip} onSearchFlights={() => navigate('flights')} /></View>
+    <View className='ux-screen' style={{ display: visible('plan') ? 'flex' : 'none' }}><PlannerPage trip={trip} key={prompt.revision} initialPrompt={prompt.text} onOpenTrip={openTrip} onSearchFlights={() => navigate('flights')} onGenerate={generate} conversationClient={conversationClient} onTrip={setGeneratedTrip} /></View>
     <View className='ux-screen' style={{ display: visible('explore') ? 'flex' : 'none' }}><ExplorePage items={exploreItems} onPlan={planWith} savedIds={savedIds} onToggleSave={toggleItem} onOpenSource={onOpenSource} /></View>
     <View className='ux-screen' style={{ display: visible('trips') ? 'flex' : 'none' }}><TripsPage trip={trip} onOpenTrip={openTrip} onPlan={() => planWith('')} archived={archived} onArchive={setArchived} /></View>
     <View className='ux-screen' style={{ display: visible('profile') ? 'flex' : 'none' }}><ProfilePage savedCount={savedItems.length + Number(tripSaved)} alertCount={alerts.length} onCollections={() => navigate('collections')} onAlerts={() => navigate('alerts')} onTrips={() => navigate('trips')} onPlan={planWith} largeText={largeText} onTextSizeChange={setLargeText} onClearLibrary={() => { setSavedIds([]); setTripSaved(false) }} /></View>

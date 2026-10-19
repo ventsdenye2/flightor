@@ -94,7 +94,7 @@ function TripContent({ trip, imageError = false, onNavigate, onOpenSource, embed
   return <View className={`ux-app ${embedded ? 'ux-embedded' : ''}`}>
     <View className='ux-header'>
       {tab === 'overview' ? onBack ? <><Button className='ux-icon-button' ariaLabel='返回上一页' onClick={onBack}><Icon name='chevron-left' /></Button><Text className='ux-header-title'>{trip.destination} · 旅行详情</Text></> : <View className='ux-wordmark'><Icon name='plane' /><Text>FlightOR</Text></View> : <><Button className='ux-icon-button' ariaLabel='返回行程概览' onClick={() => setTab('overview')}><Icon name='chevron-left' /></Button><Text className='ux-header-title'>{trip.destination} · {tab === 'days' ? '每日行程' : '航班安排'}</Text></>}
-      <Button className={`ux-icon-button ${saved ? 'is-saved' : ''}`} ariaLabel={saved ? '取消收藏示例行程' : '收藏示例行程'} aria-pressed={saved} onClick={() => { setSaved(!saved); notify(saved ? '已取消收藏' : '已收藏此示例，仅在本次预览保留') }}><Icon name={saved ? 'bookmark-filled' : 'bookmark'} /></Button>
+      <Button className={`ux-icon-button ${saved ? 'is-saved' : ''}`} ariaLabel={saved ? '取消收藏行程' : '收藏行程'} aria-pressed={saved} onClick={() => { setSaved(!saved); notify(saved ? '已取消收藏' : '已收藏，仅在本次浏览保留') }}><Icon name={saved ? 'bookmark-filled' : 'bookmark'} /></Button>
     </View>
     <View className='ux-scroll' key={tab}>
       {tab === 'overview' ? <>
@@ -113,14 +113,14 @@ function TripContent({ trip, imageError = false, onNavigate, onOpenSource, embed
       </View>
       {tab === 'overview' ? <View className='ux-overview'>
         {firstFlight ? <FlightTicket flight={firstFlight} onExpand={() => setTab('flights')} /> : <EmptyState icon='plane' title='航班安排尚未补充' description='确认出发地与日期后，再查看航班、价格和中转安排。' />}
-        <View className='ux-route-map'><Text className='ux-section-title'>路线示意</Text><FlightRoute route={trip.route} illustration={trip.routeIllustration} /><Text className='ux-caption'>示例行程 · 连线非实际交通轨迹</Text></View>
+        <View className='ux-route-map'><Text className='ux-section-title'>路线示意</Text><FlightRoute route={trip.route} illustration={trip.routeIllustration} /><Text className='ux-caption'>{trip.provenance === 'dsh' ? '行程示意 · 连线非实际交通轨迹' : '示例行程 · 连线非实际交通轨迹'}</Text></View>
         <Button className='ux-day-teaser' onClick={() => setTab('days')}><View><Text className='ux-section-title'>{trip.durationDays ? `${tripDurationLabel(trip)}，不必把时间填满` : '每天的安排，慢慢展开'}</Text><Text className='ux-muted'>{trip.description}</Text></View><Icon name='arrow-right' /></Button>
       </View> : tab === 'days' ? <>
         {days.length ? <View className='ux-day-selector' role='group' ariaLabel='选择日期'>{days.map((value, index) => <Button key={value.id} disabled={value.status === 'pending'} aria-pressed={day?.id === value.id} className={`ux-day-chip ${day?.id === value.id ? 'is-active' : ''}`} onClick={() => { setDayId(value.id); setUndo(null) }}><Text>D{index + 1}</Text><Text>{value.status === 'pending' ? '待补充' : value.label}</Text></Button>)}</View> : null}
         {day ? <DayPlan day={day} dayNumber={dayNumber} imageError={imageError} onActivity={activity => setSheet({ kind: 'activity', activity })} onAdjust={() => setSheet({ kind: 'adjust' })} /> : <EmptyState icon='calendar' title='每日安排尚未补充' description='每日安排尚未确定，已知信息可在概览查看。' />}
       </> : <View className='ux-flight-page'>{trip.flights.length ? trip.flights.map(flight => <FlightTicket key={flight.id} flight={flight} expanded onOpenSource={onOpenSource} />) : <EmptyState icon='plane' title='还没有航班安排' description='出发日期、班次与价格都留待确认。' />}{trip.returnNote ? <View className='ux-return'><Icon name='plane' /><View><Text className='ux-section-title'>返程安排</Text><Text className='ux-muted'>{trip.returnNote}</Text></View></View> : null}</View>}
       {undo ? <View className='ux-undo' role='status'><Text>日程已调整</Text><Button className='ux-text-button' onClick={() => { setDays(undo); setUndo(null); notify('已恢复上一次安排') }}>撤销调整</Button></View> : null}
-      <View className='ux-footer-note'><Text>示例行程 · 价格与安排用于界面预览</Text><Button className='ux-text-button' onClick={() => setSheet({ kind: 'credits' })}>图片与来源<Icon name='external' /></Button></View>
+      <View className='ux-footer-note'><Text>{trip.provenance === 'dsh' ? '按需求规划 · 具体安排与报价以出发前核实为准' : '示例行程 · 价格与安排用于界面预览'}</Text><Button className='ux-text-button' onClick={() => setSheet({ kind: 'credits' })}>图片与来源<Icon name='external' /></Button></View>
     </View>
     {!embedded ? <View className='ux-bottom-nav' ariaLabel='主导航'>{[{ name: 'home', label: '规划' }, { name: 'compass', label: '探索' }, { name: 'calendar', label: '行程' }, { name: 'user', label: '我的' }].map(item => <Button key={item.name} className={item.label === '行程' ? 'is-active' : ''} onClick={() => item.label === '行程' ? setTab('overview') : onNavigate?.()}><Icon name={item.name} /><Text>{item.label}</Text></Button>)}</View> : null}
     {notice ? <View className='ux-toast' role='status'><Icon name='check' /><Text>{notice}</Text></View> : null}

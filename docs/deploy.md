@@ -1,6 +1,29 @@
 # 本地双端开发环境
 
-更新：2026-10-19。本分支只准备前端环境，不启动旧后端或 Docker。
+更新：2026-10-19。当前使用新增双 DSH Agent 后端，不启动旧后端或 Docker。
+
+## 当前双 Agent 环境
+
+原仓库目录 `D:\FunnyProject\flightor-repo`，分支 `backend-mvp`。前端/API使用现有Node22；DSH使用已复制桌面包0.2.1-rc.2及其配套Node24。安装桌面DSH且已登录后执行：
+
+```powershell
+npm run setup
+npm run backend:setup
+# 终端一
+npm run backend:start
+# 终端二
+npm run dev:h5
+# 需要微信时，另一个终端
+npm run dev:weapp
+```
+
+`backend:setup`安装后端锁定依赖、首次复制桌面DSH完整分发包并生成隔离profile；已有副本不覆盖。API为127.0.0.1:3000，H5为127.0.0.1:4178。小程序storage的`flightor-api-base-url`可覆盖默认loopback；真机需可访问地址和合法域名，当前API仅loopback不开放公网。`npm run backend:live`运行真实两天样本，两个DSH各产出一次，无业务验收和自动返工；会使用当前DSH账户。
+
+本地包、会话、原始工具证据和结果分别在忽略的backend/.dsh-runtime、.dsh-home和data中。凭证只引用原用户DSH凭证存储，不复制到项目。不要提交或分享本地会话、账户数据和trip-flight-tool/.auth。来源字段保持unverified，显示成功不升级为事实全验。
+
+具体真实样本与失败见[DSH_MVP](DSH_MVP.md)。下面保留前端初始化时的历史记录，不能替代本轮后端/H5验收。
+
+## 历史：前端基线初始化
 
 ## 安装与启动
 

@@ -26,7 +26,7 @@ export function FlightTicket({ flight, expanded = false, onExpand, onOpenSource 
       <View className='ux-summary'><View><Text className='ux-summary-label'>{priceStatusLabel(flight.price)}</Text><Text className='ux-price'>{formatPrice(flight.price)}{hasKnownPrice(flight.price) ? <Text className='ux-per'>{flight.price.unit === 'person' ? ' / 人' : ' / 总计'}</Text> : null}</Text></View></View>
       <Text className='ux-caption'>{flight.price.source?.label || '报价来源待补充'}</Text>
       {flight.source.url && onOpenSource ? <Button className='ux-text-button' onClick={() => onOpenSource(flight.source.url!)}>{flight.source.label}<Icon name='external' /></Button> : <Text className='ux-caption'>{flight.source.label}</Text>}
-      <Text className='ux-caption'>时刻按当地时间展示；未确认信息保持待确认状态。示例不用于购票。</Text>
+      <Text className='ux-caption'>时刻按当地时间展示；未确认信息保持待确认状态。{flight.source.status === 'sample' ? '示例不用于购票。' : '查询结果不代表已预订。'}</Text>
     </View> : null}
   </View>
 }

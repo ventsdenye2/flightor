@@ -38,6 +38,6 @@ export function DayPlan({ day, dayNumber, onActivity, onAdjust, imageError = fal
     </View>
     {!day.activities.length ? <View className='ux-empty'><Icon name='compass' /><Text className='ux-section-title'>这一天，先留一点空白</Text><Text className='ux-muted'>喜欢的地方，可以再多待一会儿。</Text><Button className='ux-text-button' onClick={onAdjust}>挑一个想去的地方<Icon name='arrow-right' /></Button></View> : null}
     <Button className='ux-primary' onClick={onAdjust}>调整这一天</Button>
-    <Text className='ux-daily-note'>时间为游玩安排示例，开放情况与交通待确认。</Text>
+    <Text className='ux-daily-note'>时间为建议安排，开放情况与交通待确认。</Text>
   </View>
 }

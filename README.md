@@ -1,8 +1,8 @@
-# FlightOR 前端 / 新后端 MVP 起点
+# FlightOR 双 DSH Agent MVP
 
-本分支 `backend-mvp` 从 `codex/ui-experience@060d0de` 提取共享 UI，仅保留微信小程序和 H5 前端、示例数据、资源及本地工具。旧 API、数据库、Worker、云函数和管理后台已移出当前代码树，原件仍在其他分支与 Git 历史中。
+本分支 `backend-mvp` 基于 `codex/ui-experience@060d0de` 的微信/H5共享UI，新增最小 Node 后端：两个独立的完整 DSH 分别规划、审核整理，然后直接映射到现有行程页。MVP不设业务验收门槛或审核否决。未恢复旧 API、数据库、Worker、云函数或管理后台。
 
-这里是可运行的前端交互样稿。规划回复、行程、机票、收藏和提醒使用固定样例或内存状态，不代表真实后端已经跑通。
+规划输入现在连接本机真实后端；航班需求由 DSH 调用 `trip-flight-tool` CLI。探索、独立航班搜索页、收藏和提醒仍为前端样例/内存交互，不代表全部业务已实现。
 
 ## 开始开发
 
@@ -12,10 +12,14 @@
 cd D:\FunnyProject\flightor-repo
 git branch --show-current
 npm run setup
+npm run backend:setup
+# 终端一
+npm run backend:start
+# 终端二
 npm run dev:h5
 ```
 
-要求 Node 22.21.x、npm 10.x。本机依赖已安装，首次换机器或更新 lockfile 后运行 `npm run setup`，它对根目录和 H5 分别执行 `npm ci`。H5 地址为 http://127.0.0.1:4178，Ctrl+C 结束服务。
+前端及API使用 Node 22.21.x、npm 10.x；DSH子进程使用复制的桌面配套 Node 24。`backend:setup` 从本机已安装桌面 DSH 提取副本并生成隔离 profile；不修改原安装和默认插件。不复制密钥，凭证插件引用原 `~/.dsh/.credentials.yaml`，沿用桌面 deepseek-account / deepseek-flash 路由。H5：http://127.0.0.1:4178；API：http://127.0.0.1:3000。
 
 另一个终端启动小程序监听：
 
@@ -28,6 +32,7 @@ npm run dev:weapp
 ```powershell
 npm run check
 npm test
+npm run backend:test
 npm run build
 npm run check:docs
 git diff --check
@@ -35,4 +40,4 @@ git diff --check
 
 H5 产物为 `apps/ui-preview/dist/`，微信产物为 `dist/weapp/`。两端共用 `src/features/ui-experience/`。
 
-环境及验证见 [deploy](docs/deploy.md)，后端接入位置见 [BACKEND_MVP](docs/BACKEND_MVP.md)，开发约定见 [文档入口](docs/README.md)。
+架构、失败记录和真实验证见 [DSH_MVP](docs/DSH_MVP.md)，命令及环境见 [deploy](docs/deploy.md)。本地MVP尚无业务登录与多用户隔离，API仅绑定loopback；不等于生产部署或微信真机验收。
