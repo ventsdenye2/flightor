@@ -1,5 +1,7 @@
 # 从本分支开始开发后端
 
+2026-10-19景点定位/图片统一为 [PlaceResolver](PLACE_RESOLVER.md)，先查本地 Wikimedia Geo SQLite，再按 Wikidata/Enterprise/Commons 补充。保留现有 HTTP 与展示合同，不增加 LLM 匹配，不修改聊天/规划/审核 Agent。该文档的来源、消歧、缓存和验证边界替代下述旧版独立名称搜索细节。
+
 2026-10-19新增每日地图地点补全：`POST /api/place-locations`仅按景点名与城市读取Wikidata唯一匹配实体的P625坐标，独立缓存，不创建run、不调用DSH、不改写行程；接口、失败边界和前端地图交互见[每日地图](TRIP_CONTENT.md)。
 
 2026-10-19新增[行程内容与图片](TRIP_CONTENT.md)：`POST /api/place-media`直接使用Commons免费接口，按景点/城市缓存许可元数据，失败留空。审核JSON新增`highlights`及景点`introduction/recommendationReason/visitNotes/imageQuery/city`，`issues`独立映射`travelNotes`，不再混入概览。图片不由模型提供URL，不引入审核拒绝或自动返工。

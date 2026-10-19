@@ -2,6 +2,8 @@
 
 更新：2026-10-19。当前使用新增双 DSH Agent 后端，不启动旧后端或 Docker。
 
+景点服务的离线数据下载/重建见 [PlaceResolver](PLACE_RESOLVER.md)。Enterprise 凭证仅放忽略的 `backend/.env`，`npm run backend:start` 自动读取；模板为 `backend/.env.example`。保存 username、access/id/refresh token，API 只使用 access token；到期前按需刷新并原子更新后端文件，不向前端/日志公开。环境修改后重启后端。没有 Enterprise 凭证也可使用离线坐标及公开 Wikimedia 接口。
+
 ## 当前双 Agent 环境
 
 原仓库目录 `D:\FunnyProject\flightor-repo`，分支 `backend-mvp`。前端/API使用现有Node22；DSH使用已复制桌面包0.2.1-rc.2及其配套Node24。安装桌面DSH且已登录后执行：
