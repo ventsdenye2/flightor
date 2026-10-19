@@ -3,6 +3,7 @@
 更新：2026-10-19。分支 `backend-mvp` 基于 `codex/ui-experience@060d0de` 的双端共享前端，现新增最小双 DSH Agent 后端；旧后端未沿用。
 
 - [PROJECT_CONTEXT](PROJECT_CONTEXT.md)：当前实现、目录与验证边界。
+- [FRONTEND_SYNC](FRONTEND_SYNC.md)：演示版前端迁移、Git 快照与双端验证。
 - [deploy](deploy.md)：依赖、双端启动、构建及微信导入。
 - [BACKEND_MVP](BACKEND_MVP.md)：后续接入位置和待开发事项。
 - [DSH_MVP](DSH_MVP.md)：本轮双 DSH Agent 最小接入与实际验证。

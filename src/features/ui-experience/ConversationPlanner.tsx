@@ -5,9 +5,9 @@ import type { ConversationClient, ConversationMessage } from './backendClient'
 import type { TripPresentation } from './presentation'
 import { tripDurationLabel } from './presentation'
 import { PageHeader } from './SharedUI'
-import { Icon } from './VisualMedia'
+import { Icon, Photo } from './VisualMedia'
 
-export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, onOpenTrip }: { client: ConversationClient; trip: TripPresentation; initialPrompt?: string; onTrip?: (trip: TripPresentation) => void; onOpenTrip: () => void }) {
+export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, onOpenTrip, onSearchFlights }: { client: ConversationClient; trip: TripPresentation; initialPrompt?: string; onTrip?: (trip: TripPresentation) => void; onOpenTrip: () => void; onSearchFlights: () => void }) {
   const [messages, setMessages] = useState<ConversationMessage[]>([])
   const [draft, setDraft] = useState(initialPrompt)
   const [busy, setBusy] = useState(false)
@@ -24,7 +24,7 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
     client.load().then(value => { if (current && version === revision.current && value) setMessages(value.messages) }).catch(() => { if (current && version === revision.current) setError('上次对话暂时无法载入，请刷新重试或重新开始。') }).finally(() => { if (current) setLoadingHistory(false) })
     return () => { current = false; active.current?.abort() }
   }, [client])
-  useEffect(() => { const element = scroll.current; if (element?.scrollTo) element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' }) }, [messages, stage, error, ready])
+  useEffect(() => { const element = scroll.current; if (messages.length && element?.scrollTo) element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' }) }, [messages, stage, error, ready])
   const send = async (action: 'chat' | 'plan' = 'chat') => {
     if (active.current || loadingHistory || (!draft.trim() && (action === 'chat' || !messages.length))) return
     const message = draft.trim() || '请根据我们刚才聊的内容，现在开始规划行程。'
@@ -55,9 +55,12 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
     <PageHeader action={messages.length || error ? <Button className='ux-text-button' onClick={reset}>重新开始</Button> : undefined} />
     <View className='ux-scroll pl-scroll' ref={scroll}>
       {!messages.length ? <View className='pl-welcome'>
-        <Text className='pl-title'>好旅行，<Text className='pl-title-line'>从聊聊开始。</Text></Text>
-        <Text className='pl-intro'>还没想好去哪也没关系。<Text className='pl-intro-line'>聊聊你的想法，想好了再一起规划。</Text></Text>
+        <Text className='pl-title'>这次，<Text className='pl-title-line'>想去哪？</Text></Text>
+        <Text className='pl-intro'>先聊聊目的地、日期和预算。<Text className='pl-intro-line'>想好了，先比较航班，再安排怎么玩。</Text></Text>
+        {trip.cover?.src ? <Button className='pl-inspiration' onClick={() => setDraft(`我想了解${trip.destination}，有哪些值得体验的？`)}><View className='pl-inspiration-copy'><Text className='pl-card-kicker'>{trip.provenance === 'dsh' ? '继续聊聊这段旅行' : '从这里找到灵感'}</Text><Text className='pl-inspiration-title'>{trip.title}</Text><View className='pl-inspiration-link'><Text>聊聊这个想法</Text><Icon name='arrow-right' /></View></View><Photo src={trip.cover.src} description={trip.cover.description} className='pl-inspiration-photo' retry={false} /></Button> : null}
+        <View className='pl-suggestions-head'><Text>还没想好？从一句话开始</Text></View>
         <View className='pl-suggestions'>{['想出去走走，但还没决定目的地', '第一次去巴黎，有哪些值得体验的？', '想和朋友去海边待一周，安排轻松一点'].map(text => <Button key={text} className='pl-suggestion' onClick={() => setDraft(text)}><Icon name='compass' /><Text>{text}</Text><Icon name='arrow-right' /></Button>)}</View>
+        <Button className='pl-flight-link' onClick={onSearchFlights}><Icon name='plane' /><View><Text className='pl-flight-title'>目的地定了，先看看机票</Text><Text className='ux-muted'>浏览航班示例，比较时间与中转安排</Text></View><Icon name='chevron-right' /></Button>
       </View> : <View className='pl-conversation' aria-live='polite'>{messages.map(message => <View key={message.id} className='pl-chat-message'>
         {message.role === 'assistant' ? <View className='pl-reply-brand'><View className='pl-reply-mark'><Icon name='plane' /></View><Text>FlightOR</Text></View> : null}
         <View className={message.role === 'user' ? 'pl-user-message' : 'pl-assistant-message'}><Text>{message.content}</Text></View>

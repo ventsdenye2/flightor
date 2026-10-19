@@ -27,6 +27,7 @@ module.exports = {
     // feature directory and explicitly point Babel at the repository preset.
     webpackChain(chain) {
       chain.module.rule('script').include.add(featureRoot)
+      chain.module.rule('script').include.add(path.resolve(__dirname, '../src/i18n'))
       chain.module.rule('script').use('babelLoader').tap(options => ({ ...options, configFile: babelConfig }))
     }
   },

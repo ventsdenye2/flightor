@@ -13,6 +13,7 @@ node_modules/
 sourcemap.zip
 output/
 .cache/
+.playwright-cli/
 *.tsbuildinfo
 project.private.config.json
 .worktrees/
