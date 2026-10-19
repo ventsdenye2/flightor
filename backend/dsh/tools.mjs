@@ -4,7 +4,7 @@ import { promisify } from 'node:util'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { repo, dataRoot } from '../src/paths.mjs'
-import { PlaceBatch, placeBudgetMs } from '../src/place-batch.mjs'
+import { PlaceBatch } from '../src/place-batch.mjs'
 const execute = promisify(execFile)
 export const name = 'flightor-tools'
 export const inject = ['tools']
@@ -22,7 +22,7 @@ export async function apply(ctx) {
         fields: { type: 'array', items: { type: 'string', enum: ['image', 'location'] }, description: '默认两个字段；修正时仅传缺失字段' }
       } } } },
       output: { schema: { type: 'object', additionalProperties: true }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-      timeoutMs: placeBudgetMs() + 5000,
+      // PlaceBatch owns the count-based shared deadline; a fixed tool timeout would cut long trips short.
       isConcurrencySafe: () => false,
       execute: (args, exec) => batch.run(args, { signal: exec.signal })
     }))

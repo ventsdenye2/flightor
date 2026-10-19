@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { PlaceBatch } from '../src/place-batch.mjs'
+import { PlaceBatch, placeBudgetMs } from '../src/place-batch.mjs'
 import { dataRoot } from '../src/paths.mjs'
 import { toPresentation } from '../src/contract.mjs'
 
@@ -14,6 +14,27 @@ async function fixture(t, lookup, options = {}) {
   t.after(() => fs.rm(root, { recursive: true, force: true }))
   return new PlaceBatch({ file: path.join(root, 'ledger.json'), lookup: { lookup }, budgetMs: 5000, ...options })
 }
+test('default budget scales with the first batch count and survives subset refinement and restore', async t => {
+  const previous = process.env.FLIGHTOR_PLACE_BUDGET_MS
+  delete process.env.FLIGHTOR_PLACE_BUDGET_MS
+  t.after(() => { if (previous === undefined) delete process.env.FLIGHTOR_PLACE_BUDGET_MS; else process.env.FLIGHTOR_PLACE_BUDGET_MS = previous })
+  for (const [count, expected] of [[0, 5000], [1, 7000], [6, 17000], [16, 37000], [36, 77000], [60, 125000]]) assert.equal(placeBudgetMs(count), expected)
+  let now = Date.now()
+  const lookup = async (_input, { fields }) => Object.fromEntries(fields.map(field => [field, { status: 'not-found' }]))
+  const batch = await fixture(t, lookup, { budgetMs: undefined, now: () => now })
+  await batch.run({ places: Array.from({ length: 16 }, (_, i) => place(`d1-a${i + 1}`)) })
+  const state = await batch.read(), deadline = state.deadline
+  assert.equal(deadline - state.startedAt, 37000)
+  now += 10000
+  const restored = new PlaceBatch({ file: batch.file, lookup: { lookup }, now: () => now })
+  const refined = await restored.run({ places: [{ ...place('d1-a1', 'Louvre Paris'), fields: ['location'] }] })
+  assert.equal(refined.remainingMs, 27000)
+  assert.equal((await restored.read()).deadline, deadline)
+  process.env.FLIGHTOR_PLACE_BUDGET_MS = '12000'
+  assert.equal(placeBudgetMs(16), 12000)
+  process.env.FLIGHTOR_PLACE_BUDGET_MS = 'invalid'
+  assert.equal(placeBudgetMs(16), 37000)
+})
 test('successful fields lock; only missing field is queried once with corrected keywords', async t => {
   const calls = []
   const batch = await fixture(t, async (input, { fields }) => {

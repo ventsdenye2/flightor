@@ -2,7 +2,7 @@
 
 适用分支：`backend-mvp`。当前 MVP 查询与发布行为见 [审核 Session 批量补全](PLACE_LOOKUP_BATCH.md)：本地索引/缓存 → Enterprise → 公共 API；图片、坐标各自查到即保留，缺失字段由当前审核 Session 最多改写一次关键词，后端按活动 ID 合并。保留三 Agent 拓扑，不新增模型会话。本文下述严格消歧/P180 规则与 36 景点数据是前一阶段的实现、分析工具和历史基线，不再作为新行程发布门槛。
 
-当前正常接口使用 `PlaceLookup` 的覆盖优先策略，共用 `PlaceResolver` 的索引、实体缓存和 Enterprise/公共 API 运输。成功字段缓存已切换 `place-locations-v3/` / `place-media-v3/`，避免继承严格策略下的确定空缺。新行程由审核工具补全后附带 `placesResolved: true`，正常打开不再依赖两个前端补查接口；旧记录仍兼容补查。默认网络补全预算 `FLIGHTOR_PLACE_BUDGET_MS=20000`。尚未实现或启用同批景点 HTTP 元数据合并。
+当前正常接口使用 `PlaceLookup` 的覆盖优先策略，共用 `PlaceResolver` 的索引、实体缓存和 Enterprise/公共 API 运输。成功字段缓存已切换 `place-locations-v3/` / `place-media-v3/`，避免继承严格策略下的确定空缺。新行程由审核工具补全后附带 `placesResolved: true`，正常打开不再依赖两个前端补查接口；旧记录仍兼容补查。默认网络补全预算为首次景点数×2秒+5秒，`FLIGHTOR_PLACE_BUDGET_MS`仅作可选固定覆盖；后续修正不重置预算。尚未实现或启用同批景点 HTTP 元数据合并。
 
 ## 第一阶段：可重建离线索引
 

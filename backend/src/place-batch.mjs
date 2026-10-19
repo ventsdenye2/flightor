@@ -5,9 +5,9 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { defaultPlaceLookup } from './place-lookup.mjs'
 import { validPoint } from './geo-index.mjs'
 
-export const placeBudgetMs = () => {
+export const placeBudgetMs = (placeCount = 0) => {
   const configured = Number(process.env.FLIGHTOR_PLACE_BUDGET_MS)
-  return Number.isFinite(configured) && configured > 0 ? Math.min(configured, 120000) : 20000
+  return Number.isFinite(configured) && configured > 0 ? Math.min(configured, 120000) : placeCount * 2000 + 5000
 }
 export const usableMedia = media => {
   try {
@@ -30,7 +30,7 @@ const abortable = (task, signal) => new Promise((resolve, reject) => {
 
 /** One reviewer session owns one ledger. Tool calls are serial; fields and places run concurrently. */
 export class PlaceBatch {
-  constructor({ file, lookup = defaultPlaceLookup(), budgetMs = placeBudgetMs(), concurrency = 6, now = Date.now } = {}) {
+  constructor({ file, lookup = defaultPlaceLookup(), budgetMs, concurrency = 6, now = Date.now } = {}) {
     Object.assign(this, { file, lookup, budgetMs, concurrency, now })
     this.writes = Promise.resolve()
     this.tail = Promise.resolve()
@@ -74,7 +74,7 @@ export class PlaceBatch {
     }
     signal?.throwIfAborted()
     const state = await this.read()
-    state.startedAt ??= this.now(); state.deadline ??= state.startedAt + this.budgetMs
+    state.startedAt ??= this.now(); state.deadline ??= state.startedAt + (this.budgetMs ?? placeBudgetMs(ids.size))
     const remaining = Math.max(0, state.deadline - this.now())
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(Error('Place lookup budget exhausted')), remaining)
