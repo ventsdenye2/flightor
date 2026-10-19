@@ -1,40 +1,8 @@
 {
-  "miniprogramRoot": "dist/",
-  "projectname": "FlightOR",
-  "description": "国际航线比价与中转停留规划",
-  "appid": "wxdf9ff3c30a1d9549",
-  "setting": {
-    "urlCheck": false,
-    "es6": false,
-    "enhance": false,
-    "postcss": false,
-    "minified": false,
-    "compileWorklet": false,
-    "uglifyFileName": false,
-    "uploadWithSourceMap": true,
-    "packNpmManually": false,
-    "packNpmRelationList": [],
-    "minifyWXSS": true,
-    "minifyWXML": true,
-    "localPlugins": false,
-    "disableUseStrict": false,
-    "useCompilerPlugins": false,
-    "condition": false,
-    "swc": false,
-    "disableSWC": true,
-    "babelSetting": {
-      "ignore": [],
-      "disablePlugins": [],
-      "outputPath": ""
-    }
-  },
+  "description": "FlightOR frontend baseline for backend MVP development",
+  "miniprogramRoot": "dist/weapp/",
   "compileType": "miniprogram",
-  "cloudfunctionRoot": "cloud/",
-  "simulatorPluginLibVersion": {},
-  "packOptions": {
-    "ignore": [],
-    "include": []
-  },
-  "editorSetting": {},
-  "libVersion": "3.17.0"
+  "projectname": "FlightOR Backend MVP",
+  "appid": "touristappid",
+  "setting": { "es6": true, "minified": true, "urlCheck": true }
 }

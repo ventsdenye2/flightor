@@ -12,5 +12,5 @@ export default defineConfig({
     },
   },
   publicDir: path.resolve(here, '../../src/assets'),
-  server: { host: '127.0.0.1', port: 4178 },
+  server: { host: '127.0.0.1', port: 4178, strictPort: true },
 })

@@ -1,66 +1,56 @@
-# FlightOR 部署清单
+# 本地双端开发环境
 
-上线前收尾项逐项核对。当前状态（2026-08）：本地开发全链路可用，云函数代码已就绪但**未上传部署**。
+更新：2026-10-19。本分支只准备前端环境，不启动旧后端或 Docker。
 
-## 1. 密钥管理（已完成 ✅，上架前有安全项）
+## 安装与启动
 
-- `openrouter.txt` / `serpapi.txt` 放项目根目录（gitignored），构建时经 `config/index.js` 注入为 `OPENROUTER_KEY` / `SERPAPI_KEY` 编译期常量
-- 各服务降级链已就位：无 key 时 LLM 解析回退本地规则、价格回退估算价/mock
-- ⚠️ **前端注入 key 会明文打进小程序包（已验证 dist 内可 grep 到），可被反编译提取**。上架前必须：删除本地 key 文件重新构建（常量置空走云函数路径），密钥只配在云函数环境变量里
+本机使用 Node 22.21.0、npm 10.9.4。`.nvmrc` 提示 22.21.0，package engines 与 `.npmrc` 要求 Node >=22.21.0 <23、npm 10.x；不会自动切换系统 Node。
 
-## 2. 云开发环境（待办 ⬜）
+```powershell
+cd D:\FunnyProject\flightor-repo\.worktrees\backend-mvp
+npm run setup
+npm run dev:h5
+```
 
-1. 微信开发者工具 → 云开发控制台 → 开通并选择环境（appid: `wxdf9ff3c30a1d9549`）
-2. `project.config.json` 已配 `cloudfunctionRoot: "cloud/"`，开发者工具左侧应出现云函数目录树
+根目录与 H5 各有 lockfile 和独立 node_modules，不借用其他工作区依赖。不需要业务 `.env` 或数据库。H5 固定 loopback http://127.0.0.1:4178，strictPort 使端口占用明确失败。样例切换面板用于检查多种展示状态。
 
-## 3. 云函数上传（待办 ⬜）
+```powershell
+npm run build:h5
+npm run build:weapp
+npm run dev:weapp
+```
 
-按依赖逐个右键「上传并部署：云端安装依赖」：
+H5 输出 `apps/ui-preview/dist/`，微信输出 `dist/weapp/`。微信开发者工具导入本工作区根目录或微信产物目录；两处 project.config 使用游客 AppID。不要导入旧 main 的 dist。
 
-| 云函数 | 必需环境变量 | 说明 |
-|---|---|---|
-| routePlanner | `OPENROUTER_API_KEY`、`SERPAPI_KEY` | 多城路线规划（action=plan/confirm），无 key 自动降级 |
-| searchProxy | `SERPAPI_KEY`（或 `DUFFEL_TOKEN` + `SEARCH_PROVIDER=duffel`） | 单程搜索代理 |
-| chatAgent | `OPENROUTER_API_KEY` | 单程需求对话 |
-| tripAgent | `OPENROUTER_API_KEY` | AI 行程生成 |
-| login / priceAlert / priceTrend | 无 | 登录建档 / 价格提醒 / 价格趋势 |
+真实微信登录需自己的 AppID，业务 API 后续配置可从设备访问的地址与 request 合法域名。手机上的 127.0.0.1 指手机自身。当前未配置认证或关闭域名校验。
 
-环境变量在云开发控制台 → 函数 → 配置中设置。**key 放云端后，前端构建可不注入 key，走云函数路径。**
+## 验证
 
-## 4. 前端调用路径（已完成 ✅）
+```powershell
+npm run check
+npm test
+npm run build
+npm run check:docs
+git diff --check
+```
 
-- `src/utils/cloud.ts`：wx.cloud 惰性初始化 + `callCloud`（失败返回 null）
-- `routeService.planRoutes/confirmPicks`：云函数优先 → 失败降级本地直调（引擎同构）
-- 云函数未上传时行为与现在一致，无破坏性
+## 2026-10-19 本机验证结果
 
-## 5. USE_MOCK 处理（说明，不改代码 ✅）
+| 检查 | 结果与边界 |
+| --- | --- |
+| 依赖安装 | 两份 lockfile 的 npm ci 均成功；根目录 1386 包、H5 28 包，各自独立安装 |
+| 类型 | `npm run check` 双端通过 |
+| 展示数据回归 | `npm test`：12 项行程边界、14 项航班/探索检查，共 26 项通过；无业务网络 |
+| H5 构建 | `npm run build:h5` 通过，Vite 8.3.0；保留原 lockfile 版本，没有升级框架 |
+| 微信构建 | `npm run build:weapp` 通过，Taro 3.6.40；产物 AppID 为 touristappid，根配置指向 dist/weapp，产物配置指向 ./ |
+| H5 浏览器 | Chrome，http://127.0.0.1:4178/，标题 FlightOR · 界面预览；1440×1000 首屏和 390×844 行程详情均有实际内容，无框架错误遮罩 |
+| 交互 | 输入“北京出发，想去京都玩三天” → 查看行程示例 → 明确标注的里斯本固定参考 → 打开行程详情。页面保留输入并说明未按输入生成，没有伪装真实规划 |
+| 控制台 | 初次发现 favicon.ico 404，补充本地 SVG favicon 后重载；最终错误 0、警告 0 |
+| 文档/Git | 相对链接、同批 docs 同步与 diff 空白检查通过；提交前另检查暂存批次 |
+| 未验证 | 微信模拟器/真机、地图瓦片、认证、业务 API、真实规划、持久化及线上部署 |
 
-`USE_MOCK=true`（src/utils/request.ts）当前语义 = **无 key 时的演示兜底**：
+浏览器自动化使用 Playwright CLI；当前会话未提供 Browser plugin。沙箱内 Chrome 因 crashpad 退出，在隔离的沙箱外浏览器中完成上述检查。截图保存在本机 Codex visualization 目录（desktop.png、mobile-trip.png），不提交进产品代码。
 
-- 航班搜索：有 SerpApi key → 真实报价（与 USE_MOCK 无关）；无 key → 本地仿真
-- LLM 对话：有 OpenRouter key → 直连；无 key → 本地规则解析
-- 云函数全部部署 + key 配置到云端后，可将 `USE_MOCK` 改 `false` 并移除本地兜底；当前阶段保留，保证开发者工具离线可演示
+保留的工具链警告：Taro 缺少可选全局配置提示；两张原有图片超过 webpack 建议的 244 KiB、无异步分包建议；npm 提示部分旧 Taro 间接依赖已弃用。这些不影响本次构建，不代表已完成依赖安全审计。未为本次拆分升级 Taro 或改写 UI。
 
-## 6. 合法域名（上线前必办 ⬜）
-
-前端直连 OpenRouter / SerpApi 依赖开发工具「不校验合法域名」（urlCheck 已关）。正式上架前二选一：
-
-- **方案 A（推荐）**：前端请求全部改走云函数（routePlanner 已就绪，chatService/flightService 同样改造），无需配置合法域名
-- **方案 B**：在小程序后台配置 request 合法域名（要求对方域名备案/HTTPS 证书，OpenRouter 与 SerpApi 通常不满足）
-
-## 7. 真机验证清单（待办 ⬜）
-
-- [ ] 预览模式真机扫码，验证单程搜索（真实报价或 mock）
-- [ ] 多城对话：输入「9月去欧洲，尽可能多去几个城市，必须去巴黎」→ 出路线卡
-- [ ] 路线卡：展开航段明细、核实实时报价按钮（云端 key 或本地 key 均可）
-- [ ] 中英文切换、暗色显示正常
-- [ ] 云函数上传后回归：确认 plan/confirm 走云端路径（云开发日志可见调用）
-
-## 8. 回归基线（持续 ✅）
-
-| 脚本 | 断言数 | 覆盖 |
-|---|---|---|
-| scripts/test-route.js | 38 | 引擎解析/搜索/收敛/边界 |
-| scripts/test-route-real.js | 13 + 3 实网 | 真实价格探测 |
-| scripts/test-route-llm.js | 16 + 6 实网 | LLM 解析与降级 |
-| scripts/test-route-cloud.js | 10 | 云函数 handler 协议 |
+后续修改仍须重新执行与改动相关的验证；前端检查通过不等于后端 MVP 或小程序真机通过。

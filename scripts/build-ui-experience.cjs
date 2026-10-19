@@ -7,9 +7,9 @@ const fs = require('node:fs')
 const binName = process.platform === 'win32' ? 'taro.cmd' : 'taro'
 const repoRoot = path.resolve(__dirname, '..')
 const localBin = path.resolve(repoRoot, 'node_modules', '.bin', binName)
-const sharedBin = path.resolve(repoRoot, '..', '..', 'node_modules', '.bin', binName)
-const taroBin = fs.existsSync(localBin) ? localBin : sharedBin
-const outputRoot = path.resolve(repoRoot, 'dist', 'ui-experience')
+const taroBin = localBin
+if (!fs.existsSync(taroBin)) throw new Error('Run npm run setup first')
+const outputRoot = path.resolve(repoRoot, 'dist', 'weapp')
 const projectTemplate = path.resolve(repoRoot, 'config', 'project.ui-experience.json')
 
 function writeStandaloneProjectConfig() {

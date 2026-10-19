@@ -1,6 +1,6 @@
 {
   "miniprogramRoot": "./",
-  "projectname": "FlightOR UI Experience",
-  "description": "FlightOR UI experience local acceptance project",
+  "projectname": "FlightOR Backend MVP",
+  "description": "FlightOR shared frontend for backend MVP development",
   "appid": "touristappid"
 }

@@ -1,72 +1,10 @@
-# FlightOR Engineering Documents
+# 新后端 MVP 分支文档
 
-This directory contains the documents that guide architecture, implementation,
-operations, and Agent development. The repository-root `README.md` is the
-project entry point; normative engineering guidance lives here.
+更新：2026-10-19。分支 `backend-mvp` 基于 `codex/ui-experience@060d0de`，当前代码树仅保留双端共享前端，旧后端未沿用。
 
-## Authority order
+- [PROJECT_CONTEXT](PROJECT_CONTEXT.md)：当前实现、目录与验证边界。
+- [deploy](deploy.md)：依赖、双端启动、构建及微信导入。
+- [BACKEND_MVP](BACKEND_MVP.md)：后续接入位置和待开发事项。
+- [DOCS_MAINTENANCE](DOCS_MAINTENANCE.md)：同步文档和校验要求。
 
-When documents disagree, apply them in this order:
-
-1. [`FLIGHTOR_ARCHITECTURE.md`](./FLIGHTOR_ARCHITECTURE.md) — product and
-   architecture authority.
-2. Accepted ADRs in [`adr/`](./adr/) — phase-specific decisions that refine the
-   architecture without overriding its product boundaries.
-3. [`TOOLS.md`](./TOOLS.md) — Agent Tool Registry and implementation status.
-4. [`PROJECT_CONTEXT.md`](./PROJECT_CONTEXT.md) — current repository map,
-   compatibility constraints, and operating context.
-5. [`CODEX_KICKOFF_PROMPT.md`](./CODEX_KICKOFF_PROMPT.md) — continuation
-   guidance and single-agent working conventions.
-6. Domain and operational notes below — useful implementation context, but not
-   authority over the architecture or accepted ADRs.
-
-## Phase decisions
-
-- [`adr/0001-agent-runtime-phase-0-1.md`](./adr/0001-agent-runtime-phase-0-1.md)
-  — Tool Calling Runtime and the first vertical slice.
-- [`adr/0002-cloud-state-phase-2.md`](./adr/0002-cloud-state-phase-2.md)
-  — cloud identity, trips, conversations, artifacts, and Memory.
-- [`adr/0003-core-tools-phase-3.md`](./adr/0003-core-tools-phase-3.md)
-  — Phase 3 Core Tool contracts and Phase 4 engine boundaries.
-- [`adr/0004-production-route-engine-phase-4.md`](./adr/0004-production-route-engine-phase-4.md)
-  — production topology, bounded path search, Pareto optimization, and
-  AeroDataBox adapter boundaries.
-- [`adr/0005-core-tools-and-production-research-phase-4b.md`](./adr/0005-core-tools-and-production-research-phase-4b.md)
-  — remaining Core Tools, immutable fare confirmation, restricted production
-  Research, and Travel Guide artifact composition.
-- [`adr/0006-agent-api-and-route-generation-phase-5.md`](./adr/0006-agent-api-and-route-generation-phase-5.md)
-  — the authenticated public Planner API, restricted conversation tool
-  vocabulary, and the explicit idempotent route-generation run boundary.
-- [`adr/0007-plan-and-flight-workspace-phase-6.md`](./adr/0007-plan-and-flight-workspace-phase-6.md)
-  — Trip Workspace information architecture, typed Artifact rendering, unified
-  manual/Agent flight search, and Flight Explorer ownership.
-
-The accepted visual baseline for new and redesigned user-facing screens is
-[`design/ui-experience-v1.md`](./design/ui-experience-v1.md) (2026-09-13).
-The previous Phase 6 visual tokens and fidelity constraints remain recorded in
-[`design/phase6-design-system.md`](./design/phase6-design-system.md).
-
-## Domain and operations
-
-- [UI Experience v1 交接](./UI_PHASE_HANDOFF.md) — 已认可的手机优先美术方向、独立 UI 样稿、运行命令与未验收边界；[统一美术规范](./design/ui-experience-v1.md)。
-
-- [`backend-architecture.md`](./backend-architecture.md) — legacy/current
-  backend notes.
-- [`multi-city-plan.md`](./multi-city-plan.md) — multi-city planning notes.
-- [`oag-integration.md`](./oag-integration.md) — optional OAG integration notes.
-- [`deploy.md`](./deploy.md) — deployment guidance.
-
-AppleDouble `._*` files are retained as-is unless a dedicated cleanup is
-explicitly requested. They are not engineering guidance.
-
-## Maintenance rule
-
-Any implementation that adds, removes, or materially changes an Agent-facing
-tool must update `TOOLS.md`. Any cross-domain decision must be captured in a new
-ADR before integration. Keep guidance links rooted under `docs/`; do not create
-new normative architecture or requirement documents in the repository root.
-
-- [Phase 7–9 operation and acceptance](./PHASE789_ACCEPTANCE.md)
-- [ADR 0008](./adr/0008-route-discovery-and-cloud-workspaces.md) — route detail, reviewed discovery and cloud workspaces.
-
-- [今晚微信 Agent 演示状态](./DEMO_STATUS.md) — 完整对话与行程生成链路的实时验收记录。
+旧 main 的 G1/DSH/DPS 计划不作为本分支开发顺序；文件和证据保留在原分支与历史中。本分支没有追认旧功能或验收完成。
