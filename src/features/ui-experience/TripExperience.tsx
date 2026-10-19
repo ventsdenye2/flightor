@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { View, Text, Button } from '@tarojs/components'
 import type { Activity, FlightLegDisplay, MediaPresentation, TripDay, TripPresentation } from './presentation'
 import type { PlaceMediaLoader, PlaceLocationLoader } from './backendClient'
-import { findAlternative, selectTripDay } from './presentation'
+import { findAlternative, selectTripDay, shouldLoadPlaceDetails } from './presentation'
 import { Photo, Icon } from './VisualMedia'
 import { DayPlan } from './DayPlan'
 import { FlightTicket } from './FlightTicket'
@@ -43,7 +43,7 @@ function TripContent({ trip, loadPlaceMedia, loadPlaceLocation, imageError = fal
   const [mediaById, setMediaById] = useState<Record<string, MediaPresentation>>({})
   useEffect(() => {
     setMediaById({})
-    if (!loadPlaceMedia || trip.provenance !== 'dsh') return
+    if (!loadPlaceMedia || !shouldLoadPlaceDetails(trip)) return
     let current = true, cursor = 0
     const activities = trip.days.flatMap(value => value.activities).filter(activity => !activity.media?.src && activity.imageQuery !== null)
     const worker = async () => {
@@ -55,7 +55,7 @@ function TripContent({ trip, loadPlaceMedia, loadPlaceLocation, imageError = fal
     }
     void Promise.all([worker(), worker()])
     return () => { current = false }
-  }, [trip.days, trip.destination, trip.provenance, loadPlaceMedia])
+  }, [trip.days, trip.destination, trip.provenance, trip.placesResolved, loadPlaceMedia])
   const [dayId, setDayId] = useState<TripDay['id'] | undefined>(() => selectTripDay(trip.days, trip.initialDayId)?.id)
   const [sheet, setSheet] = useState<Sheet | null>(null)
   const [localSaved, setLocalSaved] = useState(false)
@@ -136,7 +136,7 @@ function TripContent({ trip, loadPlaceMedia, loadPlaceLocation, imageError = fal
         <WorldFlightMap legs={firstFlight?.legs || emptyFlightLegs} />
       </View> : tab === 'days' ? <>
         {days.length ? <View className='ux-day-selector' role='group' ariaLabel='选择日期'>{days.map((value, index) => <Button key={value.id} disabled={value.status === 'pending'} aria-pressed={day?.id === value.id} className={`ux-day-chip ${day?.id === value.id ? 'is-active' : ''}`} onClick={() => { setDayId(value.id); setUndo(null) }}><Text>D{index + 1}</Text><Text>{value.status === 'pending' ? '待补充' : value.label}</Text></Button>)}</View> : null}
-        {day ? <DayPlan key={day.id} day={day} dayNumber={dayNumber} loadPlaceLocation={trip.provenance === 'dsh' ? loadPlaceLocation : undefined} imageError={imageError} published={trip.provenance === 'dsh'} onActivity={activity => setSheet({ kind: 'activity', activity })} onAdjust={() => setSheet({ kind: 'adjust' })} /> : <EmptyState icon='calendar' title='每日安排尚未补充' description='每日安排尚未确定，已知信息可在概览查看。' />}
+        {day ? <DayPlan key={day.id} day={day} dayNumber={dayNumber} loadPlaceLocation={shouldLoadPlaceDetails(trip) ? loadPlaceLocation : undefined} imageError={imageError} published={trip.provenance === 'dsh'} onActivity={activity => setSheet({ kind: 'activity', activity })} onAdjust={() => setSheet({ kind: 'adjust' })} /> : <EmptyState icon='calendar' title='每日安排尚未补充' description='每日安排尚未确定，已知信息可在概览查看。' />}
       </> : <View className='ux-flight-page'>{trip.flights.length ? trip.flights.map(flight => <FlightTicket key={flight.id} flight={flight} expanded onOpenSource={onOpenSource} />) : <EmptyState icon='plane' title='还没有航班安排' description='出发日期、班次与价格都留待确认。' />}{trip.returnNote ? <View className='ux-return'><Icon name='plane' /><View><Text className='ux-section-title'>返程安排</Text><Text className='ux-muted'>{trip.returnNote}</Text></View></View> : null}</View>}
       {undo && tab === 'days' ? <View className='ux-undo' role='status'><Text>日程已调整</Text><Button className='ux-text-button' onClick={() => { setDays(undo); setUndo(null); notify('已恢复上一次安排') }}>撤销调整</Button></View> : null}
       {tab !== 'overview' ? <View className='ux-footer-note'><Text>{trip.provenance === 'dsh' ? '按需求规划 · 具体安排与报价以出发前核实为准' : '示例行程 · 价格与安排用于界面预览'}</Text><Button className='ux-text-button' onClick={() => setSheet({ kind: 'credits' })}>图片与来源<Icon name='external' /></Button></View> : null}

@@ -6,8 +6,9 @@ import { plannerPersona, reviewerPersona } from './prompts.mjs'
 import { parseReview, toPresentation } from './contract.mjs'
 import { flightOptionsFromEvidence } from './flight-options.mjs'
 import { updateProgress } from './progress.mjs'
+import { PlaceBatch } from './place-batch.mjs'
 
-export async function runPlan(run, { signal, onChange = async () => {}, Agent = DshAgent, transformDraft, transformReview, beforeComplete = async () => {} } = {}) {
+export async function runPlan(run, { signal, onChange = async () => {}, Agent = DshAgent, transformDraft, transformReview, beforeComplete = async () => {}, placeLookup, placeBudgetMs } = {}) {
   const workspace = path.join(dataRoot, 'workspaces', run.id)
   const evidence = [...(run.conversationEvidence || [])]
   const trace = []
@@ -18,7 +19,8 @@ export async function runPlan(run, { signal, onChange = async () => {}, Agent = 
     if (value.type === 'tool/result') evidence.push(value.data)
   }
   const planner = new Agent({ role: 'planner', workspace: path.join(workspace, 'planner'), sessionId: `${run.id}-planner`, onEvent: event })
-  const reviewer = new Agent({ role: 'reviewer', workspace: path.join(workspace, 'reviewer'), sessionId: `${run.id}-reviewer`, onEvent: event })
+  const placeLedgerFile = path.join(dataRoot, 'place-lookups', run.id + '.json')
+  const reviewer = new Agent({ role: 'reviewer', workspace: path.join(workspace, 'reviewer'), sessionId: `${run.id}-reviewer`, placeLedgerFile, onEvent: event })
   run.agents = { planner: planner.sessionId, reviewer: reviewer.sessionId }
   run.requirements = run.constraints || {}
   const stage = async value => {
@@ -56,7 +58,29 @@ export async function runPlan(run, { signal, onChange = async () => {}, Agent = 
       }
     }
     signal?.throwIfAborted()
-    const completed = { ...run, trip: toPresentation(run.candidate, run.id, flightResult), stage: 'completed', completedAt: new Date().toISOString() }
+    const trip = toPresentation(run.candidate, run.id, flightResult)
+    const batch = new PlaceBatch({ file: placeLedgerFile, lookup: placeLookup, budgetMs: placeBudgetMs })
+    // Mechanical fallback for older reviewers that omit the tool; no new model turn.
+    try {
+      const ledger = await batch.read()
+      if (!Object.keys(ledger.rows).length) trip.days.forEach((day, d) => day.activities.forEach((a, i) => { a.lookupId ||= `d${d + 1}-a${i + 1}` }))
+      const missing = trip.days.flatMap(day => day.activities).filter(a => a.lookupId && a.imageQuery !== null && a.imageQuery && !Object.hasOwn(ledger.rows, a.lookupId))
+      if (missing.length) {
+        run.progress = { text: '行程整理助手 · 正在补全景点图片与地图', role: 'reviewer', updatedAt: new Date().toISOString() }
+        await onChange(run)
+        try { await batch.run({ places: missing.map(a => ({ id: a.lookupId, name: a.name, city: a.area || trip.destination, query: a.imageQuery })) }, { signal }) }
+        catch { signal?.throwIfAborted() /* Optional metadata never blocks the itinerary. */ }
+      }
+      await batch.merge(trip)
+    } catch {
+      signal?.throwIfAborted()
+      for (const activity of trip.days.flatMap(day => day.activities)) {
+        activity.latitude = null; activity.longitude = null; activity.media = null; delete activity.lookupId
+      }
+      trip.placesResolved = true
+    }
+    signal?.throwIfAborted()
+    const completed = { ...run, trip, stage: 'completed', completedAt: new Date().toISOString() }
     await beforeComplete(completed)
     await onChange(completed)
     Object.assign(run, completed)

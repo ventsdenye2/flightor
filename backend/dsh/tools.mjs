@@ -4,10 +4,29 @@ import { promisify } from 'node:util'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { repo, dataRoot } from '../src/paths.mjs'
+import { PlaceBatch, placeBudgetMs } from '../src/place-batch.mjs'
 const execute = promisify(execFile)
 export const name = 'flightor-tools'
 export const inject = ['tools']
 export async function apply(ctx) {
+  if (process.env.FLIGHTOR_DSH_ROLE === 'reviewer' && process.env.FLIGHTOR_DSH_PLACE_LEDGER) {
+    const batch = new PlaceBatch({ file: process.env.FLIGHTOR_DSH_PLACE_LEDGER })
+    ctx.tools.register(defineTool({
+      name: 'lookup_places_batch',
+      description: '批量查询整份行程的景点图片和坐标。首次一次传全部景点并使用稳定活动id（如d1-a1）。只返回字段状态，实际URL/坐标由后端保存合并，不要抄写。found字段锁定；仅refinable中的not-found字段可改关键词再查一次。unavailable/timed-out是网络或预算问题，禁止语义重试；remainingMs为所有调用共享的剩余预算。最终JSON保留每个活动相同id。',
+      parameters: { places: { type: 'array', required: true, items: { type: 'object', additionalProperties: false, properties: {
+        id: { type: 'string', required: true, description: '稳定活动id，最终JSON保留，不能复用或变更' },
+        name: { type: 'string', required: true }, city: { type: 'string', required: true },
+        query: { type: 'string', description: '准确英文/当地景点名，城市单列；不附邮编、街道地址或搜索运算符' },
+        imageQuery: { type: 'string' }, locationQuery: { type: 'string' },
+        fields: { type: 'array', items: { type: 'string', enum: ['image', 'location'] }, description: '默认两个字段；修正时仅传缺失字段' }
+      } } } },
+      output: { schema: { type: 'object', additionalProperties: true }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
+      timeoutMs: placeBudgetMs() + 5000,
+      isConcurrencySafe: () => false,
+      execute: (args, exec) => batch.run(args, { signal: exec.signal })
+    }))
+  }
   ctx.tools.register(defineTool({
     name: 'search_flights',
     description: '通过现成 Trip.com CLI 查询指定日期的真实单程航班。现有CLI支持1名成人经济舱。遇访问限制直接报告。价格为查询结果。',

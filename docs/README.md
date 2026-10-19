@@ -7,6 +7,7 @@
 - [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)：对话航班选项、推荐理由与选择后规划。
 - [TRIP_CONTENT](TRIP_CONTENT.md)：Commons景点图片、介绍与推荐理由、审核精选概览。
 - [PLACE_RESOLVER](PLACE_RESOLVER.md)：Wikimedia 离线索引、地点消歧、统一坐标与图片查询及实测边界。
+- [PLACE_LOOKUP_BATCH](PLACE_LOOKUP_BATCH.md)：当前审核 Session 批量工具、Enterprise 优先回退、成功字段锁定、查询预算和后端合并。
 - [deploy](deploy.md)：依赖、双端启动、构建及微信导入。
 - [BACKEND_MVP](BACKEND_MVP.md)：后续接入位置和待开发事项。
 - [DSH_MVP](DSH_MVP.md)：本轮双 DSH Agent 最小接入与实际验证。

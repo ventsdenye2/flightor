@@ -87,3 +87,7 @@ git diff --check
 原目录最终复验：沙箱外重跑 `npm run setup` 成功；`npm run check`、26 项 `npm test`、docs 校验再次通过。`npm run build` 两端均成功（H5 1.07 秒、微信 11.96 秒），完整日志在忽略的 `output/backend-mvp-root-build.log`。从原目录执行 `npm run dev:h5`，4178 服务启动成功；独立 Chrome 再次打开正确标题/规划首屏，控制台错误与警告均为 0。迁移前 1440×1000 / 390×844 的交互与截图证据仍对应相同前端源码；没有据此追认微信模拟器/真机或真实后端能力。
 
 本轮临时工作树已注销且目录已删除；保留其他原有工作树。原 main 的两份配置改动和当时可见的 `.claude/`、`docs/releases/`、`output/packages/` 已按用户要求舍弃，未创建 stash。旧 main 原本忽略的本地后端配置/凭证、依赖和旧构建产物另收拢在 `output/legacy-main-local-20261019/`，不参与当前运行，不提交。
+
+## 景点补全预算
+
+后台可选环境变量 `FLIGHTOR_PLACE_BUDGET_MS`，默认 `20000` 毫秒，配置于被忽略的 `backend/.env`。审核工具首次调用开始共享预算，后续修正不重置；预算到期携带已查到字段发布。重启后端后生效。Enterprise 凭证仍仅在后端环境读取。详细链路与验收见 [批量补全](PLACE_LOOKUP_BATCH.md)。

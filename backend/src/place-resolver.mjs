@@ -59,16 +59,17 @@ export class PlaceResolver {
       return cityNames.some(city => description.includes(' ' + city + ' '))
     })
   }
-  async entities(ids, { signal } = {}) {
+  async entities(ids, { signal, onSource = () => {} } = {}) {
     ids = [...new Set(ids)].filter(id => /^Q[1-9]\d{0,11}$/.test(id)).slice(0, 50)
     const result = {}, missing = []
     for (const id of ids) {
       const entity = this.enrichment?.get(id)
-      if (entity) result[id] = entity
+      if (entity) { result[id] = entity; onSource(id, 'entity-cache') }
       else missing.push(id)
     }
     if (missing.length && !this.offline) {
       let value, failure, token
+      const sources = new Map()
       try { token = await this.enterpriseToken?.() } catch {}
       if (!token) {
         try {
@@ -82,7 +83,7 @@ export class PlaceResolver {
           try {
             const raw = await this.http.json(`https://api.enterprise.wikimedia.com/v2/wikidata/items/${id}`, { signal, headers: { authorization: 'Bearer ' + token }, ttlMs: 30 * 86400000 })
             const entity = fromEnterpriseEntity(raw)
-            if (entity?.id === id) entities[id] = entity
+            if (entity?.id === id) { entities[id] = entity; sources.set(id, 'enterprise') }
           } catch (error) { failure = error }
         }
         const absent = missing.filter(id => !entities[id])
@@ -98,6 +99,7 @@ export class PlaceResolver {
       for (const [id, entity] of Object.entries(value.entities || {})) {
         if (!ids.includes(id) || entity.missing != null || entity.id !== id) continue
         result[id] = entity
+        onSource(id, sources.get(id) || 'public-api')
         try { this.enrichment?.put(entity) } catch { /* Keep successful public data when disk is read-only. */ }
       }
     }
@@ -225,7 +227,7 @@ export class PlaceResolver {
     if (failure) throw failure
     return null
   }
-  async wikipediaImage(entity, { signal } = {}) {
+  async wikipediaImage(entity, { signal, requireIdentity = true } = {}) {
     const site = entity.sitelinks?.enwiki ? 'en' : entity.sitelinks?.zhwiki ? 'zh' : null
     if (!site) return null
     const title = entity.sitelinks[site + 'wiki'].title
@@ -235,7 +237,7 @@ export class PlaceResolver {
         const articles = await this.http.json(`https://api.enterprise.wikimedia.com/v2/structured-contents/${encodeURIComponent(title)}`, {
           signal, method: 'POST', headers: { authorization: 'Bearer ' + token },
           body: JSON.stringify({ filters: [{ field: 'is_part_of.identifier', value: site + 'wiki' }] }) })
-        const article = Array.isArray(articles) && articles.find(article => article.main_entity?.identifier === entity.id && article.is_part_of?.identifier === site + 'wiki')
+        const article = Array.isArray(articles) && articles.find(article => (!requireIdentity || article.main_entity?.identifier === entity.id) && article.is_part_of?.identifier === site + 'wiki')
         if (article?.image?.content_url) {
           const url = new URL(article.image.content_url)
           if (url.protocol === 'https:' && url.hostname === 'upload.wikimedia.org' && /^\/wikipedia\/commons\/[0-9a-f]\/[0-9a-f]{2}\//.test(url.pathname)) return decodeURIComponent(url.pathname.split('/').at(-1))
@@ -244,7 +246,7 @@ export class PlaceResolver {
     }
     const value = await this.http.json(actionUrl(`${site}.wikipedia.org`, { action: 'query', titles: title, redirects: '1', prop: 'pageprops|pageimages', piprop: 'name', pilicense: 'free' }), { signal })
     const pages = value.query?.pages || []
-    const page = pages.find(page => page.pageprops?.wikibase_item === entity.id)
+    const page = pages.find(page => !requireIdentity || page.pageprops?.wikibase_item === entity.id)
     return page?.pageimage || null
   }
 }

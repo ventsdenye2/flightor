@@ -26,15 +26,15 @@ test('only valid unambiguous Earth coordinates publish with entity source', () =
   conflict.claims.P625[0].rank = 'preferred'; assert.equal(entityLocation(conflict).latitude, 50.0864)
   assert.equal(entityLocation({}), null)
 })
-test('Wikidata requests only place identity and do not choose ambiguous entities', async () => {
+test('MVP avoids online city resolution and accepts first usable search coordinates', async () => {
   const actions = []
   const request = async url => {
     assert.equal(url.origin, 'https://www.wikidata.org'); const action = url.searchParams.get('action'); actions.push(action)
     return { ok: true, json: async () => action === 'wbsearchentities' ? { search: url.searchParams.get('search') === 'Prague' ? [] : [match] } : { entities: { Q204871: { ...entity(), labels: { en: { value: match.label } }, descriptions: { en: { value: match.description } } } } } }
   }
   assert.equal((await queryPlaceLocation(identity, { request })).latitude, 50.0864)
-  assert.deepEqual(actions, ['wbsearchentities', 'wbsearchentities', 'wbgetentities'])
-  assert.equal(await queryPlaceLocation(identity, { request: async url => ({ ok: true, json: async () => url.searchParams.get('action') === 'wbsearchentities' ? { search: [match, { ...match, id: 'Q9' }] } : { entities: { Q204871: { ...entity(), labels: { en: { value: match.label } }, descriptions: { en: { value: match.description } } }, Q9: { ...entity(), id: 'Q9', labels: { en: { value: match.label } }, descriptions: { en: { value: match.description } } } } } }) }), null)
+  assert.deepEqual(actions, ['wbsearchentities', 'wbgetentities'])
+  assert.equal((await queryPlaceLocation(identity, { request: async url => ({ ok: true, json: async () => url.searchParams.get('action') === 'wbsearchentities' ? { search: [match, { ...match, id: 'Q9' }] } : { entities: { Q204871: { ...entity(), labels: { en: { value: match.label } }, descriptions: { en: { value: match.description } } }, Q9: { ...entity(), id: 'Q9', labels: { en: { value: match.label } }, descriptions: { en: { value: match.description } } } } } }) })).latitude, 50.0864)
 })
 test('location cache coalesces requests, survives reload and leaves network failures retryable', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'flightor-location-'))

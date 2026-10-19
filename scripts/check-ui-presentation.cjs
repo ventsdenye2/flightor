@@ -23,6 +23,11 @@ const samples = load('sampleTrips')
 let passed = 0
 function check(label, fn) { fn(); passed++; console.log(`PASS ${label}`) }
 const { lisbonTrip, kyotoTrip, partialTrip, emptyTrip, complexTrip } = samples
+check('new backend-completed trips skip automatic place requests even when some fields are empty', () => {
+  assert.equal(model.shouldLoadPlaceDetails({ provenance: 'dsh', placesResolved: true }), false)
+  assert.equal(model.shouldLoadPlaceDetails({ provenance: 'dsh' }), true)
+  assert.equal(model.shouldLoadPlaceDetails({ provenance: 'sample' }), false)
+})
 check('selected day uses identity, never numeric ranges or array offsets', () => {
   assert.equal(model.selectTripDay(kyotoTrip.days, '2026-11-04').label, '慢游')
   assert.equal(model.selectTripDay(kyotoTrip.days, 'missing').id, 'arrival-kyoto')

@@ -13,7 +13,7 @@ const safeLicenseUrl = value => {
 }
 const fileKey = title => String(title || '').replace(/^File:/i, '').replace(/_/g, ' ').normalize('NFC')
 
-export function chooseCommonsPhoto(pages, identity, { trustedTitles = [], requireDepicts = false } = {}) {
+export function chooseCommonsPhoto(pages, identity, { trustedTitles = [], requireDepicts = false, acceptSearchResult = false } = {}) {
   const tokens = normalizePlaceName(identity.query || identity.name).split(' ').filter(token => token.length > 1 && !['the', 'in', 'of', 'and', 'at'].includes(token))
   const trusted = new Set(trustedTitles.map(fileKey))
   const choices = []
@@ -22,7 +22,7 @@ export function chooseCommonsPhoto(pages, identity, { trustedTitles = [], requir
     const title = normalizePlaceName(page.title?.replace(/^File:/, ''))
     const description = normalizePlaceName(meta.ImageDescription?.value)
     const exactFile = trusted.has(fileKey(page.title))
-    if (!exactFile && (!tokens.length || !tokens.every(token => title.includes(token) || description.includes(token)))) continue
+    if (!exactFile && !acceptSearchResult && (!tokens.length || !tokens.every(token => title.includes(token) || description.includes(token)))) continue
     if (!exactFile && requireDepicts && !(page.depicts || []).includes(identity.qid)) continue
     const src = safeUrl(info?.thumburl, 'upload.wikimedia.org') || safeUrl(info?.thumburl, 'thumb.wikimedia.org')
     const sourceUrl = safeUrl(info?.descriptionurl, 'commons.wikimedia.org')
@@ -50,10 +50,11 @@ export async function commonsFile(title, identity, { http = wikimediaHttp, signa
   const value = await http.json(actionUrl('commons.wikimedia.org', { ...imageParameters, titles: file, redirects: '1' }), { signal })
   const pages = value.query?.pages || []
   const redirects = (value.query?.redirects || []).filter(item => fileKey(item.from) === fileKey(file)).map(item => item.to)
-  return chooseCommonsPhoto(pages, identity, { trustedTitles: [file, ...redirects] })
+  const titles = [file, ...redirects], allowed = new Set(titles.map(fileKey))
+  return chooseCommonsPhoto(pages.filter(page => allowed.has(fileKey(page.title))), identity, { trustedTitles: titles })
 }
 
-export async function queryCommons(identity, { request, http = request ? new WikimediaHttp({ request, root: null, intervalMs: 0 }) : wikimediaHttp, signal, requireDepicts = false } = {}) {
+export async function queryCommons(identity, { request, http = request ? new WikimediaHttp({ request, root: null, intervalMs: 0 }) : wikimediaHttp, signal, requireDepicts = false, acceptSearchResult = false } = {}) {
   const value = await http.json(actionUrl('commons.wikimedia.org', { ...imageParameters, generator: 'search',
     gsrsearch: `"${identity.query}" ${identity.city ? `"${identity.city}"` : ''} filetype:bitmap`, gsrnamespace: '6', gsrlimit: '8' }), { signal })
   const pages = value.query?.pages || []
@@ -64,5 +65,5 @@ export async function queryCommons(identity, { request, http = request ? new Wik
     for (const page of pages) page.depicts = (entities.entities?.['M' + page.pageid]?.statements?.P180 || entities.entities?.['M' + page.pageid]?.claims?.P180 || [])
       .filter(claim => claim.rank !== 'deprecated').map(claim => claim.mainsnak?.datavalue?.value?.id)
   }
-  return chooseCommonsPhoto(pages, identity, { requireDepicts })
+  return chooseCommonsPhoto(pages, identity, { requireDepicts, acceptSearchResult })
 }

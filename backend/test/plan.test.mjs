@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import { runPlan } from '../src/plan.mjs'
 import { parseReview, toPresentation } from '../src/contract.mjs'
+import { PlaceBatch } from '../src/place-batch.mjs'
 
 const candidate = () => ({ title: '东京两日', destination: '东京', overview: '历史与散步', travelers: 1, days: [1, 2].map(day => ({ day, theme: '轻松游览', activities: [{ name: day === 1 ? '浅草寺' : '上野', description: '建议慢慢游览', sources: [] }] })), issues: [] })
 function fakeAgents(review) {
@@ -75,4 +76,45 @@ test('displayed flight facts come directly from CLI, and missing snapshots do no
   const trip = toPresentation(value, 'id', record)
   assert.equal(trip.flights[0].price.amount, 4123); assert.equal(trip.flights[0].legs[0].depart, '2026-11-06T10:00')
   assert.equal(toPresentation(value, 'id').flights.length, 0)
+})
+
+test('reviewer uses one session/turn for batch lookup and refinement; backend merges reordered IDs', async () => {
+  const calls = [], tools = []
+  const image = { src: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Paris.jpg', author: 'Photographer', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: { url: 'https://commons.wikimedia.org/wiki/File:Paris.jpg' } }
+  const lookup = { lookup: async (input, { fields }) => {
+    tools.push({ query: input.query, fields })
+    return Object.fromEntries(fields.map(field => [field, field === 'image' ? { status: 'found', value: image } : input.query === 'unclear' ? { status: 'not-found' } : { status: 'found', value: { latitude: input.name === 'A' ? 10 : 20, longitude: 2 } }]))
+  } }
+  class Agent {
+    constructor(options) { Object.assign(this, options) }
+    async start() {}
+    async close() {}
+    async run() {
+      calls.push({ role: this.role, sessionId: this.sessionId })
+      if (this.role === 'planner') return { text: 'A and B' }
+      const batch = new PlaceBatch({ file: this.placeLedgerFile, lookup })
+      await batch.run({ places: [{ id: 'a', name: 'A', city: 'Paris', query: 'unclear' }, { id: 'b', name: 'B', city: 'Paris', query: 'B' }] })
+      await batch.run({ places: [{ id: 'a', name: 'A', city: 'Paris', query: 'A Paris', fields: ['location'] }] })
+      return { text: JSON.stringify({ days: [{ activities: [{ id: 'b', name: 'B' }, { id: 'a', name: 'A' }] }] }) }
+    }
+  }
+  const value = run()
+  await runPlan(value, { Agent, placeLookup: lookup })
+  assert.deepEqual(calls.map(call => call.role), ['planner', 'reviewer'])
+  assert.deepEqual(tools[2].fields, ['location'])
+  assert.deepEqual(value.trip.days[0].activities.map(a => a.latitude), [20, 10])
+  assert.ok(value.trip.days[0].activities.every(a => a.media.src === image.src))
+  assert.equal(value.trip.placesResolved, true)
+})
+test('optional metadata timeout publishes partial results without another model turn', async () => {
+  const review = { days: [{ activities: [{ id: 'a', name: 'Place', city: 'Paris', imageQuery: 'Place' }] }] }
+  const { Agent, calls } = fakeAgents(review), value = run()
+  const image = { src: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Paris.jpg', author: 'Photographer', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/', source: { url: 'https://commons.wikimedia.org/wiki/File:Paris.jpg' } }
+  await runPlan(value, { Agent, placeBudgetMs: 500, placeLookup: { lookup: async (_input, { onField }) => {
+    await onField('image', { status: 'found', value: image })
+    return new Promise(() => {})
+  } } })
+  assert.equal(value.stage, 'completed'); assert.equal(calls.length, 2)
+  assert.equal(value.trip.days[0].activities[0].media.src, image.src)
+  assert.equal(value.trip.days[0].activities[0].latitude, null)
 })

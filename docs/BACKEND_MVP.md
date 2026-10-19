@@ -1,5 +1,7 @@
 # 从本分支开始开发后端
 
+当前景点获取与发布以[审核 Session 批量补全](PLACE_LOOKUP_BATCH.md)为准：本地索引/缓存 → Enterprise → 公共 API；审核者的现有 Session 调用 `lookup_places_batch`，仅对明确缺失字段作一轮关键词修正，成功字段锁定。20秒共享预算，网络/429不触发语义修正；后端按活动 ID 合并图片和坐标，保存 `placesResolved: true`，前端新行程加载不再自动调用地点接口。保留三个 Agent 及旧接口。下述严格 QID 规则和前端独立补查是历史迭代说明，不覆盖当前行为。
+
 2026-10-19景点定位/图片统一为 [PlaceResolver](PLACE_RESOLVER.md)，先查本地 Wikimedia Geo SQLite，再按 Wikidata/Enterprise/Commons 补充。保留现有 HTTP 与展示合同，不增加 LLM 匹配，不修改聊天/规划/审核 Agent。该文档的来源、消歧、缓存和验证边界替代下述旧版独立名称搜索细节。
 
 2026-10-19新增每日地图地点补全：`POST /api/place-locations`仅按景点名与城市读取Wikidata唯一匹配实体的P625坐标，独立缓存，不创建run、不调用DSH、不改写行程；接口、失败边界和前端地图交互见[每日地图](TRIP_CONTENT.md)。

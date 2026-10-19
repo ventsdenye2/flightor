@@ -15,6 +15,7 @@ export interface Activity {
 }
 export interface TripDay { id: string | number; label: string; title: string; subtitle: string; status: 'ready' | 'pending'; activities: Activity[] }
 export interface TripPresentation {
+  placesResolved?: boolean
   locale?: 'zh' | 'en'
   provenance?: 'sample' | 'dsh'
   id: string; title: string; destination: string; country?: string; route: string[]
@@ -23,6 +24,11 @@ export interface TripPresentation {
   highlights?: Array<{ title: string; description: string }>; travelNotes?: string[]
   flights: TripFlightPresentation[]; alternatives: Activity[]; sources: SourcePresentation[]
   routeIllustration?: MediaPresentation | null; initialDayId?: TripDay['id']; returnNote?: string
+}
+
+// New trips already carry the backend's final partial results. Old saved trips retain compatibility lookup.
+export function shouldLoadPlaceDetails(trip: Pick<TripPresentation, 'provenance' | 'placesResolved'>): boolean {
+  return trip.provenance === 'dsh' && trip.placesResolved !== true
 }
 
 export function hasCoordinates(activity: Pick<Activity, 'latitude' | 'longitude'>): activity is Pick<Activity, 'latitude' | 'longitude'> & { latitude: number; longitude: number } {

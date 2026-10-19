@@ -6,8 +6,8 @@ import { pathToFileURL } from 'node:url'
 import { backend, runtime, dshHome, dataRoot, userDshHome, nodeBin, dshBin } from './paths.mjs'
 
 export class DshAgent {
-  constructor({ role, workspace, sessionId, model = process.env.FLIGHTOR_DSH_MODEL || 'deepseek-flash', provider = process.env.FLIGHTOR_DSH_PROVIDER || 'deepseek-account', onEvent = () => {} }) {
-    Object.assign(this, { role, workspace, sessionId, model, provider, onEvent })
+  constructor({ role, workspace, sessionId, placeLedgerFile, model = process.env.FLIGHTOR_DSH_MODEL || 'deepseek-flash', provider = process.env.FLIGHTOR_DSH_PROVIDER || 'deepseek-account', onEvent = () => {} }) {
+    Object.assign(this, { role, workspace, sessionId, placeLedgerFile, model, provider, onEvent })
     this.events = []
     this.stderr = ''
   }
@@ -23,7 +23,8 @@ export class DshAgent {
         DSH_BUNDLED_PRIMARY_RUNTIME: process.env.DSH_BUNDLED_PRIMARY_RUNTIME || path.join(desktopResources, 'runtime/primary-runtime'),
         DSH_BUNDLED_OFFICE_SKILLS: process.env.DSH_BUNDLED_OFFICE_SKILLS || path.join(desktopResources, 'runtime/office-skills'),
         DSH_BUNDLED_OFFICE_CLI: process.env.DSH_BUNDLED_OFFICE_CLI || path.join(desktopResources, 'runtime/bin/office'),
-        DSH_HOME: dshHome, FLIGHTOR_DSH_CREDENTIALS: path.join(userDshHome, '.credentials.yaml'), FLIGHTOR_DSH_PERSONA: persona, FLIGHTOR_DSH_ROLE: this.role, FLIGHTOR_DSH_AUDIT: audit }
+        DSH_HOME: dshHome, FLIGHTOR_DSH_CREDENTIALS: path.join(userDshHome, '.credentials.yaml'), FLIGHTOR_DSH_PERSONA: persona, FLIGHTOR_DSH_ROLE: this.role, FLIGHTOR_DSH_AUDIT: audit,
+        FLIGHTOR_DSH_PLACE_LEDGER: this.role === 'reviewer' ? this.placeLedgerFile || '' : '' }
     })
     this.child.stderr.on('data', bytes => { this.stderr = (this.stderr + bytes.toString()).slice(-8000) })
     this.child.on('error', error => { this.spawnError = error })
