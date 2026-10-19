@@ -54,3 +54,11 @@ git diff --check
 保留的工具链警告：Taro 缺少可选全局配置提示；两张原有图片超过 webpack 建议的 244 KiB、无异步分包建议；npm 提示部分旧 Taro 间接依赖已弃用。这些不影响本次构建，不代表已完成依赖安全审计。未为本次拆分升级 Taro 或改写 UI。
 
 后续修改仍须重新执行与改动相关的验证；前端检查通过不等于后端 MVP 或小程序真机通过。
+
+## 改用原仓库目录
+
+用户要求取消本轮临时工作树，直接在 `D:\FunnyProject\flightor-repo` 切换到 `backend-mvp`，并明确舍弃旧 main 的未提交文件。依赖与产物需要在原目录重新安装/生成，不能继续引用已移除工作树中的 node_modules。原目录第一次沙箱内 `npm run setup` 遇到既有 node_modules 的 EPERM；后续安装和复验结果在本段追加，不把迁移前的构建冒充原目录复验。
+
+原目录最终复验：沙箱外重跑 `npm run setup` 成功；`npm run check`、26 项 `npm test`、docs 校验再次通过。`npm run build` 两端均成功（H5 1.07 秒、微信 11.96 秒），完整日志在忽略的 `output/backend-mvp-root-build.log`。从原目录执行 `npm run dev:h5`，4178 服务启动成功；独立 Chrome 再次打开正确标题/规划首屏，控制台错误与警告均为 0。迁移前 1440×1000 / 390×844 的交互与截图证据仍对应相同前端源码；没有据此追认微信模拟器/真机或真实后端能力。
+
+本轮临时工作树已注销且目录已删除；保留其他原有工作树。原 main 的两份配置改动和当时可见的 `.claude/`、`docs/releases/`、`output/packages/` 已按用户要求舍弃，未创建 stash。旧 main 原本忽略的本地后端配置/凭证、依赖和旧构建产物另收拢在 `output/legacy-main-local-20261019/`，不参与当前运行，不提交。
