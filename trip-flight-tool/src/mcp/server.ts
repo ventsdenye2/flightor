@@ -9,7 +9,7 @@ function response(value:object) {
     ...(['error','needs_user_action','cancelled'].includes(result.status??'')?{isError:true}:{})};
 }
 server.registerTool('search_flights',{
-  description:'Search Trip.com for one adult economy one-way flights on an explicit date. Returns the cheapest displayed candidates, full captured itinerary, self-transfer/airport-change/baggage conditions and screenshot paths. Search quotes are not checkout verified. Never retry ACCESS_RESTRICTED. LOCATION_NOT_SUPPORTED requires a supported city/airport code. partial means some evidence is incomplete.',
+  description:'Search Trip.com economy flights for 1 to 9 adults. A city name searches its airports; an airport name searches that airport. Set tripType=one_way (default) or round_trip. Round trips require BOTH departureDate and returnDate as explicit local departure dates. Ask for missing dates. Returns per-adult search quotes and journey details; a quote is not user confirmation or checkout verification. Never retry ACCESS_RESTRICTED. partial means evidence is incomplete.',
   inputSchema:searchInputSchema,annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:false,openWorldHint:true},
 },async(args,extra)=>response(await tool.searchFlights(args,{signal:extra.signal})));
 server.registerTool('get_flight_details',{

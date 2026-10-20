@@ -10,13 +10,23 @@ import {
   knownAmount, formatFlightAmount as money, formatFlightDuration as duration, formatFlightStops as stopsLabel
 } from './flightSamples'
 import type { FlightSearchDataset, FlightSearchItem as Flight, FlightSearchInput as Search, FlightFilters as Filters } from './flightSamples'
+import type { ConversationClient } from './backendClient'
+import { LiveFlightExplorer } from './LiveFlightExplorer'
 
-export function FlightExplorer({ onBack, onOpenTrip, onCreateAlert, searchDataset = defaultFlightDataset }: {
+interface FlightExplorerProps {
+  client?: ConversationClient
+  onConversationChange?: () => void
   searchDataset?: FlightSearchDataset
   onBack: () => void
   onOpenTrip: () => void
   onCreateAlert: (alert: { route: string; targetPrice: number; date: string }) => void
-}) {
+}
+export function FlightExplorer(props: FlightExplorerProps) {
+  return props.client?.searchFlights
+    ? <LiveFlightExplorer client={props.client} dataset={props.searchDataset || defaultFlightDataset} onBack={props.onBack} onConversationChange={props.onConversationChange} />
+    : <SampleFlightExplorer {...props} />
+}
+function SampleFlightExplorer({ onBack, onOpenTrip, onCreateAlert, searchDataset = defaultFlightDataset }: FlightExplorerProps) {
   const [form, setForm] = useState<Search>(() => initialFlightSearch(searchDataset))
   const [search, setSearch] = useState<Search>(() => initialFlightSearch(searchDataset))
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')

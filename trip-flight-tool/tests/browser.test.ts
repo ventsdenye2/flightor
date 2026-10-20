@@ -2,17 +2,93 @@ import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {chromium,type Browser} from 'playwright';
-import {openCandidate,waitForResults,sortAndStabilize,observeSearchNetwork,completeSearchWithSamePageRetry,chooseLocation,chooseDepartureDate} from '../src/providers/trip/browser.js';
+import {openCandidate,openSearchResults,waitForResults,sortAndStabilize,observeSearchNetwork,completeSearchWithSamePageRetry,chooseLocation,chooseDepartureDate,choosePassengers,summarizeMiddleResponse,summarizeJsonSearchResponse,publicSearchUrl} from '../src/providers/trip/browser.js';
 import {resolveLocation} from '../src/core/locations.js';
 let browser:Browser;
 before(async()=>{browser=await chromium.launch({channel:'chrome',headless:true});});
 after(async()=>{await browser?.close();});
+test('domestic JSON search waits for its final poll and retains the chinaflights source path',async()=>{
+  const page=await browser.newPage();const network=observeSearchNetwork(page);
+  try {
+    await page.route('https://www.trip.com/**',route=>{
+      const url=new URL(route.request().url());
+      return route.fulfill(url.pathname.endsWith('FlightListSearch')?{contentType:'application/json',body:JSON.stringify({head:{retCode:'SUCCESS'},basicInfo:{recordCount:2,pollInterval:url.searchParams.has('final')?-1:100},itineraryList:[{},{}]})}
+        :{contentType:'text/html',body:'<script>fetch("/restapi/soa2/27015/FlightListSearch").then(()=>setTimeout(()=>fetch("/restapi/soa2/27015/FlightListSearch?final"),250))</script>'});
+    });
+    await page.goto('https://www.trip.com/chinaflights/showfarefirst');
+    await network.waitForSearch(new AbortController().signal,3000);
+    assert.equal(network.responses.length,2);assert.equal(network.responses.at(-1)?.recordCount,2);
+    assert.ok(network.responses.every(r=>r.retCode==='SUCCESS'));
+    assert.equal(new URL(publicSearchUrl(page.url()+'?dcity=bjs&acity=sha&privateToken=secret')).pathname,'/chinaflights/showfarefirst');
+    assert.ok(!publicSearchUrl(page.url()+'?privateToken=secret').includes('secret'));
+    assert.deepEqual(summarizeJsonSearchResponse('{"head":{"retCode":"SUCCESS"},"basicInfo":{"recordCount":0,"pollInterval":-1},"itineraryList":[]}'),{retCode:'SUCCESS',recordCount:0,complete:true});
+    for(const bad of [{head:{retCode:'FAIL'}},{head:{retCode:'SUCCESS'},basicInfo:{recordCount:null,pollInterval:-1},itineraryList:[]},{head:{retCode:'SUCCESS'},basicInfo:{recordCount:2,pollInterval:-1},itineraryList:[]},{head:{retCode:'SUCCESS'},basicInfo:{recordCount:0},itineraryList:[]}])assert.throws(()=>summarizeJsonSearchResponse(JSON.stringify(bad)));
+  } finally {network.dispose();await page.close();}
+});
+test('result navigation and flight responses finish even when an unrelated image never loads',{timeout:10000},async()=>{
+  const page=await browser.newPage();page.setDefaultTimeout(2000);page.setDefaultNavigationTimeout(2000);
+  const network=observeSearchNetwork(page);let releaseImage:(()=>Promise<void>)|undefined;
+  try {
+    await page.route('https://www.trip.com/**',async route=>{
+      const path=new URL(route.request().url()).pathname;
+      if(path==='/slow-image.png') {await new Promise<void>(resolve=>{releaseImage=async()=>{await route.abort().catch(()=>{});resolve();};});return;}
+      if(path.includes('FlightListSearchSSE')) {await route.fulfill({contentType:'text/event-stream',body:'data: {"head":{"retCode":"SUCCESS"},"basicInfo":{"recordCount":2}}\n\n'});return;}
+      await route.fulfill({contentType:'text/html',body:path.includes('showfarefirst')
+        ?'<img src="/slow-image.png"><script>fetch("/restapi/soa2/27015/FlightListSearchSSE")</script><main>Result page</main>'
+        :'<button onclick="location.href=\'/flights/showfarefirst?dcity=sha&acity=lis\'">Search</button>'});
+    });
+    await page.goto('https://www.trip.com/flights/');
+    await openSearchResults(page);
+    await network.waitForSearch(new AbortController().signal,2000);
+    assert.equal(new URL(page.url()).pathname,'/flights/showfarefirst');
+    assert.equal(await page.evaluate(()=>document.readyState),'interactive');
+    assert.equal(network.responses[0].recordCount,2);
+  } finally {await releaseImage?.();network.dispose();await page.close();}
+});
+test('passenger selection resets restored children/cabin and supports both increasing and decreasing adults',async()=>{
+  const page=await browser.newPage();
+  try {
+    await page.setContent(`<button data-testid="passengers_total_num" onclick="document.getElementById('passengers').hidden=!document.getElementById('passengers').hidden">4 adults · Business</button><section id="passengers" hidden>${['AdultCount','ChildCount','BabyCount'].map((type,index)=>`<div><span data-testid="${type}_minus" style="display:inline-block;width:30px;height:30px"></span><span class="stepper-num">${index===0?4:1}</span><span data-testid="${type}_plus" style="display:inline-block;width:30px;height:30px"></span></div>`).join('')}<button data-testid="selected_cabin" onclick="document.getElementById('economy').hidden=false">Business</button><button id="economy" data-testid="cabin_Y" hidden>Economy</button></section>`);
+    await page.addScriptTag({content:`
+      const summary=document.querySelector('[data-testid=passengers_total_num]');
+      const refresh=()=>{const adult=document.querySelector('[data-testid=AdultCount_plus]').parentElement.innerText.trim();summary.textContent=adult+' '+(adult==='1'?'adult':'adults')+' · '+document.querySelector('[data-testid=selected_cabin]').textContent;};
+      for(const type of ['AdultCount','ChildCount','BabyCount'])for(const direction of ['plus','minus']) {
+        const button=document.querySelector('[data-testid='+type+'_'+direction+']');
+        button.onclick=()=>{const number=button.parentElement.querySelector('.stepper-num');number.textContent=String(Number(number.textContent)+(direction==='plus'?1:-1));refresh();};
+      }
+      document.querySelector('[data-testid=cabin_Y]').onclick=()=>{document.querySelector('[data-testid=selected_cabin]').textContent='Economy';document.getElementById('economy').hidden=true;refresh();};
+    `});
+    await choosePassengers(page,9,new AbortController().signal);
+    assert.equal(await page.getByTestId('passengers_total_num').innerText(),'9 adults · Economy');
+    for(const type of ['ChildCount','BabyCount'])assert.equal(await page.getByTestId(`${type}_plus`).locator('..').innerText(),'0');
+    await choosePassengers(page,2,new AbortController().signal);
+    assert.equal(await page.getByTestId('passengers_total_num').innerText(),'2 adults · Economy');
+    await choosePassengers(page,1,new AbortController().signal);
+    assert.equal(await page.getByTestId('passengers_total_num').innerText(),'1 adult · Economy');
+    for(const count of [0,10,1.5])await assert.rejects(choosePassengers(page,count,new AbortController().signal),(error:any)=>error.code==='INVALID_ARGUMENTS');
+  } finally {await page.close();}
+});
+test('native return phase validates Middle business status without mistaking journey count for inventory',async()=>{
+  const page=await browser.newPage();const network=observeSearchNetwork(page);
+  try {
+    network.resetForResubmit('return');
+    await page.route('**/*',route=>route.fulfill(route.request().url().includes('FlightMiddleSearch')
+      ?{contentType:'application/json',body:JSON.stringify({head:{retCode:'SUCCESS'},journeyList:[{},{}]})}
+      :{contentType:'text/html',body:'<script>fetch("/restapi/soa2/27015/FlightMiddleSearch")</script>'}));
+    await page.goto('https://www.trip.com/');
+    await network.waitForSearch(new AbortController().signal,3000);
+    assert.equal(network.responses[0].retCode,'SUCCESS');
+    assert.equal(network.responses[0].recordCount,undefined);
+    assert.throws(()=>summarizeMiddleResponse('{"head":{"retCode":"FAIL"},"journeyList":[]}'));
+    assert.equal(summarizeMiddleResponse('{"head":{"retCode":"SUCCESS"}}').complete,false);
+  } finally {network.dispose();await page.close();}
+});
 test('choosing a destination replaces all restored city chips and preserves the origin',{timeout:10000},async()=>{
   const page=await browser.newPage();
   try{
     await page.setContent(`<div data-testid="search_city_from0_wrapper"><span data-testid="cityLabel_name_0">Beijing</span><button aria-label="Remove" onclick="this.previousElementSibling.remove();this.remove()">x</button></div>
       <div data-testid="search_city_to0_wrapper"><input data-testid="search_city_to0" value="original form"></div>
-      <div data-testid="search_city_to0_wrapper"><span data-testid="cityLabel_name_0">Lisbon</span><button data-testid="cityLabel_delete_0" aria-label="Remove" onclick="this.previousElementSibling.remove();this.remove()">x</button><span data-testid="cityLabel_name_1">Tokyo</span><button data-testid="cityLabel_delete_1" aria-label="Remove" onclick="this.previousElementSibling.remove();this.remove()">x</button><input data-testid="search_city_to0"></div>
+      <div data-testid="search_city_to0_wrapper"><span data-testid="cityLabel_name_0">Lisbon</span><button data-testid="cityLabel_delete_0" aria-label="Remove" onclick="this.previousElementSibling.remove();this.remove()">x</button><span data-testid="cityLabel_name_1">Tokyo</span><button data-testid="cityLabel_delete_1" aria-label="Remove" onclick="this.previousElementSibling.remove();this.remove()">x</button><input data-testid="search_city_to0" onkeydown="if(event.key==='Backspace'&&!this.value){[...this.parentElement.querySelectorAll('[data-testid^=cityLabel_delete_]')].at(-1)?.click()}"></div>
       <button onclick="const label=document.createElement('span');label.dataset.testid='cityLabel_name_0';label.textContent='Paris';[...document.querySelectorAll('[data-testid=search_city_to0_wrapper]')].at(-1).prepend(label)">Paris · All airports France</button>`);
     await chooseLocation(page,'search_city_to0',resolveLocation('PAR'));
     assert.equal(await page.getByTestId('search_city_to0_wrapper').last().innerText(),'Paris');
@@ -32,6 +108,63 @@ test('global airport selection chooses its IATA row rather than a nearby city',{
     assert.equal(await page.getByTestId('search_city_to0_wrapper').innerText(),'Prague');
     assert.equal(await page.locator('body').getAttribute('data-wrong'),null);
   }finally{await page.close();}
+});
+test('same-name cities are identified by their airport metadata regardless of result order',async()=>{
+  const page=await browser.newPage();
+  try {
+    await page.setContent(`<div data-testid="search_city_to0_wrapper"><input data-testid="search_city_to0"></div><ul>
+      <li><div role="button" onclick="document.body.dataset.wrong='Canada'">London · All airports Canada</div><span data-value='{"cityCode":"YXU","airportCode":"YXU"}'>YXU London International Airport</span></li>
+      <li><div role="button" onclick="document.body.dataset.wrong='South Africa'">East london · All airports South Africa</div><span data-value='{"cityCode":"ELS","airportCode":"ELS"}'>ELS King Phalo Airport</span></li>
+      <li><div role="button" onclick="const label=document.createElement('span');label.dataset.testid='cityLabel_name_0';label.textContent='London';document.querySelector('[data-testid=search_city_to0_wrapper]').prepend(label)">London · All airports United Kingdom</div><span data-value='{"cityCode":"LON","airportCode":"LHR"}'>LHR Heathrow Airport</span></li>
+      </ul>`);
+    await chooseLocation(page,'search_city_to0',resolveLocation('LON'));
+    assert.equal(await page.getByTestId('search_city_to0_wrapper').innerText(),'London');
+    assert.equal(await page.locator('body').getAttribute('data-wrong'),null);
+  } finally {await page.close();}
+});
+test('city selection waits for an asynchronously rendered native chip',async()=>{
+  const page=await browser.newPage();
+  try {
+    await page.setContent(`<div data-testid="search_city_to0_wrapper"><input data-testid="search_city_to0"></div><button onclick="setTimeout(()=>{const label=document.createElement('span');label.dataset.testid='cityLabel_name_0';label.textContent='Tokyo';document.querySelector('[data-testid=search_city_to0_wrapper]').prepend(label)},200)">Tokyo · All airports Japan</button>`);
+    await chooseLocation(page,'search_city_to0',resolveLocation('东京'));
+    assert.equal(await page.getByTestId('search_city_to0_wrapper').innerText(),'Tokyo');
+  } finally {await page.close();}
+});
+test('keyboard deletion clears restored chips even when the native popup covers Remove controls',async()=>{
+  const page=await browser.newPage();page.setDefaultTimeout(1500);
+  try {
+    await page.setContent(`<div data-testid="search_city_from0_wrapper"><span data-testid="cityLabel_name_0">Beijing</span><button data-testid="cityLabel_delete_0" onclick="const target=this;setTimeout(()=>{target.previousElementSibling.remove();target.remove()},80)">Remove</button><input data-testid="search_city_from0" oninput="window.activeWrapper='search_city_from0_wrapper';document.getElementById('popup').hidden=false"></div>
+      <div data-testid="search_city_to0_wrapper"><span data-testid="cityLabel_name_0">Tokyo</span><button data-testid="cityLabel_delete_0" onclick="const target=this;setTimeout(()=>{target.previousElementSibling.remove();target.remove()},80)">Remove</button><input data-testid="search_city_to0" oninput="window.activeWrapper='search_city_to0_wrapper';document.getElementById('popup').hidden=false"></div>
+      <div id="popup" hidden style="position:fixed;inset:0;background:white;z-index:9999"><button onclick="selectLocation('Shanghai Pudong')">PVG Shanghai Pudong International Airport</button><button onclick="selectLocation('Lisbon')">Lisbon · All airports</button></div>`);
+    await page.addScriptTag({content:`
+      for(const input of document.querySelectorAll('input')) {
+        input.onfocus=()=>{window.activeWrapper=input.parentElement.dataset.testid;document.getElementById('popup').hidden=false;};
+        input.onkeydown=event=>{if(event.key!=='Backspace'||input.value)return;const labels=input.parentElement.querySelectorAll('[data-testid^=cityLabel_name_]');const label=labels[labels.length-1];if(!label)return;if(input.dataset.selected!=='yes'){input.dataset.selected='yes';input.dataset.selectedAt=String(Date.now());return;}if(Date.now()-Number(input.dataset.selectedAt)<200)return;input.dataset.selected='no';const remove=label.nextElementSibling;setTimeout(()=>{label.remove();remove.remove()},80);};
+      }
+      window.selectLocation=name=>{const label=document.createElement('span');label.dataset.testid='cityLabel_name_0';label.textContent=name;document.querySelector('[data-testid='+window.activeWrapper+']').prepend(label);document.getElementById('popup').hidden=true;};
+    `});
+    await chooseLocation(page,'search_city_from0',resolveLocation('PVG'));
+    await chooseLocation(page,'search_city_to0',resolveLocation('LIS'));
+    assert.equal(await page.getByTestId('search_city_from0_wrapper').innerText(),'Shanghai Pudong');
+    assert.equal(await page.getByTestId('search_city_to0_wrapper').innerText(),'Lisbon');
+  } finally {await page.close();}
+});
+test('global city matching uses airport identity across translated provider names and fails on ambiguity',async()=>{
+  for(const code of ['BJS','TYO','PAR','NYC','SAO','SYD']) {
+    const page=await browser.newPage();const location=resolveLocation(code);
+    if(location.kind!=='city'){await page.close();continue;}
+    try {
+      await page.setContent(`<div data-testid="search_city_to0_wrapper"><input data-testid="search_city_to0"></div><ul><li><div role="button" onclick="const label=document.createElement('span');label.dataset.testid='cityLabel_name_0';label.textContent='Selected';document.querySelector('[data-testid=search_city_to0_wrapper]').prepend(label)">Provider local name · All airports</div><span data-value='{"airportCode":"${location.airports[0]}"}'>Airport</span></li></ul>`);
+      await chooseLocation(page,'search_city_to0',location);
+      assert.equal(await page.getByTestId('search_city_to0_wrapper').innerText(),'Selected');
+    } finally {await page.close();}
+  }
+  const page=await browser.newPage();
+  try {
+    await page.setContent(`<div data-testid="search_city_to0_wrapper"><input data-testid="search_city_to0"></div><button>London · All airports Canada</button><button>London · All airports United Kingdom</button>`);
+    await assert.rejects(chooseLocation(page,'search_city_to0',resolveLocation('LON')),(error:any)=>error.code==='LOCATION_SELECTION_FAILED');
+    assert.equal(await page.getByTestId('search_city_to0_wrapper').innerText(),'');
+  } finally {await page.close();}
 });
 async function calendarFixture(initial:string,options:{minimum?:string;maximum?:string;disabledDate?:string}={}) {
   const page=await browser.newPage();

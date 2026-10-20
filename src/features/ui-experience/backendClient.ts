@@ -86,20 +86,39 @@ export interface ConversationMessage { id: string; role: 'user' | 'assistant'; c
 export interface Conversation { id: string; messages: ConversationMessage[]; flightOptions?: FlightOptions | null; selectedFlight?: FlightSelection | null; flightSelectionLocked?: boolean }
 export interface ConversationUpdate { conversation?: Conversation; stage: string; progress?: { text: string; role: string; updatedAt: string } }
 export interface ConversationResult { conversation: Conversation; trip?: TripPresentation }
+export interface FlightSearchQuery {
+  origin: string; destination: string; departureDate: string; tripType: 'one_way' | 'round_trip'; returnDate?: string
+  adults: number; cabin: 'economy'; currency: 'CNY'
+}
+export interface FlightLocation {
+  code: string; kind: 'city' | 'airport'; label: string; name: string; city?: string; country?: string; airports: string[]; value: string
+}
 export interface ConversationClient {
   load: () => Promise<Conversation | null>
   reset: () => void
   selectFlight: (selection: FlightSelection | null) => Promise<Conversation>
   send: (message: string, progress: (text: string, update: ConversationUpdate) => void, signal: PlanSignal, action?: 'chat' | 'plan') => Promise<ConversationResult>
+  searchFlights?: (query: FlightSearchQuery, progress: (text: string) => void, signal: PlanSignal) => Promise<Conversation>
+  searchLocations?: (query: string) => Promise<FlightLocation[]>
 }
 export function createConversationClient(transport: BackendTransport, storage: { get: () => string | null; set: (id: string) => void; clear: () => void }, onTrip?: (id: string) => void): ConversationClient {
   let conversationId = storage.get()
   return {
+    async searchLocations(query) { return (await transport('GET', '/api/flight-locations?q=' + encodeURIComponent(query))).locations },
     async load() { return conversationId ? transport('GET', '/api/conversations/' + conversationId) : null },
     reset() { conversationId = null; storage.clear() },
     async selectFlight(selection) {
       if (!conversationId) throw Error('请先查询航班')
       return transport('POST', '/api/conversations/' + conversationId + '/flight-selection', { selection })
+    },
+    async searchFlights(query, progress, signal) {
+      const run = await pollRun(transport, '/api/flights/search', { query, conversationId }, signal, run => {
+        progress(run.progress?.text || '正在查询航班…')
+      })
+      if (signal.aborted) throw Error('已取消')
+      if (!run.conversation?.flightOptions) throw Error('未取得航班结果，请重试')
+      conversationId = run.conversation.id; storage.set(conversationId!)
+      return run.conversation
     },
     async send(message, progress, signal, action = 'chat') {
       const run = await pollRun(transport, '/api/conversations/turns', { message, conversationId, action }, signal, run => {

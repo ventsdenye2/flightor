@@ -5,7 +5,7 @@ export interface PricePresentation { amount: number | null; currency: string; un
 export interface FlightLegDisplay { from: string; to: string; depart: string | null; arrive: string | null; duration: string | null; carrier: string; nextDay?: boolean; transfer?: string; fromCode?: string; toCode?: string }
 export interface TripFlightPresentation {
   id: string; title: string; dateLabel: string; legs: FlightLegDisplay[]; price: PricePresentation
-  airlineLabel: string; airlineCode?: string; transferLabel?: string; transferDuration?: string; warning?: string; source: SourcePresentation
+  airlineLabel: string; airlineCode?: string; transferLabel?: string; transferDuration?: string; warning?: string; source: SourcePresentation; priceIncluded?: boolean
 }
 export interface Activity {
   place?: { status: string; kind?: string; source?: SourcePresentation }
@@ -80,4 +80,9 @@ export function tripDurationLabel(trip: Pick<TripPresentation, 'durationDays'>):
 }
 export function travelerLabel(trip: Pick<TripPresentation, 'travelers'>): string {
   return trip.travelers !== null && Number.isInteger(trip.travelers) && trip.travelers > 0 ? `${trip.travelers} 人同行` : '同行人数待确认'
+}
+
+// All trip surfaces choose from this trip only; an empty cover must not hide an available activity photo.
+export function selectTripCover(trip: Pick<TripPresentation, 'cover' | 'days'>): MediaPresentation | null {
+  return trip.cover?.src ? trip.cover : trip.days.flatMap(day => day.activities).find(activity => activity.media?.src)?.media || trip.cover || null
 }

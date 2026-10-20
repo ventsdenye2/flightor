@@ -19,6 +19,7 @@ function load(name) {
   return module.exports
 }
 const flight = load('flightSamples')
+const dates = load('flightSearchDates')
 const explore = load('exploreSamples')
 const { kyotoTrip } = load('sampleTrips')
 const ids = values => Array.from(values, value => value.id)
@@ -90,6 +91,24 @@ check('calendar validation rejects nonexistent dates', () => {
   assert.equal(flight.validFlightDate('2026-02-29'), false)
   assert.equal(flight.validFlightDate('2026-04-31'), false)
   assert.equal(flight.validFlightDate('2026-13-01'), false)
+})
+check('calendar grid handles leap years, weekdays and year navigation', () => {
+  const february = Array.from(dates.flightMonthDays('2028-02'))
+  assert.equal(february.filter(Boolean).length, 29)
+  assert.equal(february.indexOf('2028-02-01'), 2)
+  assert.equal(Array.from(dates.flightMonthDays('2026-02')).filter(Boolean).length, 28)
+  assert.equal(dates.shiftFlightMonth('2026-12', 1), '2027-01')
+  assert.equal(dates.shiftFlightMonth('2027-01', -1), '2026-12')
+})
+check('date range prevents a return before departure and preserves valid choices', () => {
+  const outbound = dates.selectFlightDate('2026-11-04', '2026-10-31', '2026-11-03', 'departure', true)
+  assert.equal(outbound.departure, '2026-11-04')
+  assert.equal(outbound.returning, '')
+  assert.equal(outbound.target, 'return')
+  const earlierReturn = dates.selectFlightDate('2026-10-30', '2026-10-31', '2026-11-03', 'return', true)
+  assert.equal(earlierReturn.departure, '2026-10-30')
+  assert.equal(earlierReturn.returning, '')
+  assert.equal(dates.selectFlightDate('2026-10-31', '2026-10-31', '', 'return', true).returning, '2026-10-31')
 })
 check('injected explore items search their destination and category', () => {
   const injected = [{ ...explore.kyotoExploreItems[0], id: 'tokyo', title: '庭园一天', destination: '东京', category: '庭园' }]

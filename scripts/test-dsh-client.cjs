@@ -40,6 +40,21 @@ async function main() {
   await chat.send('现在生成', () => {}, new PlanCancellation().signal, 'plan')
   assert.equal(sent[1].conversationId, 'context-1'); assert.equal(completed, 'chat-turn')
   assert.equal((await chat.load()).id, 'context-1'); chat.reset(); assert.equal(await chat.load(), null)
+  const flightCalls = []
+  let flightConversation = 'current-conversation'
+  const flightClient = createConversationClient(async (method, route, body) => {
+    flightCalls.push({ method, route, body })
+    if (route === '/api/flights/search') return { id: 'manual-search' }
+    if (route === '/api/runs/manual-search') return { stage: 'completed', conversation: { id: 'current-conversation', messages: [], flightOptions: { searchId: 'native-round-trip', options: [] } } }
+    return { id: 'current-conversation', messages: [] }
+  }, { get: () => flightConversation, set: id => { flightConversation = id }, clear: () => {} }, () => assert.fail('flight search must not publish a trip'))
+  const manualQuery = { origin: 'BJS', destination: 'LIS', departureDate: '2026-10-31', tripType: 'round_trip', returnDate: '2026-11-03', adults: 1, cabin: 'economy', currency: 'CNY' }
+  const found = await flightClient.searchFlights(manualQuery, () => {}, new PlanCancellation().signal)
+  assert.equal(found.flightOptions.searchId, 'native-round-trip')
+  assert.equal(flightCalls[0].body.query.returnDate, '2026-11-03')
+  assert.equal(flightCalls[0].body.conversationId, 'current-conversation')
+  assert.ok(flightCalls.every(call => call.route !== '/api/conversations/turns' && call.route !== '/api/runs'))
+  console.log('PASS manual search polls the tool job, retains the conversation and never creates a planning request')
   const cancelledChat = new PlanCancellation()
   let resolveTurn, posted
   const lateChat = createConversationClient(async (method) => {

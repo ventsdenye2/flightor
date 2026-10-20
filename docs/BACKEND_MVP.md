@@ -1,5 +1,15 @@
 # 从本分支开始开发后端
 
+2026-10-20成人数：手动查询与Agent工具均支持`adults`为1–9整数，省略默认1；前端加减后实际传给CLI，原生网站乘客控件清零儿童/婴儿并设置成人数，网址quantity核对。城市与具体机场分别按城市范围/机场过滤确认，修复HND被误判，见 [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)。不新增Agent，不变更模型设置。
+
+2026-10-20查询故障：Trip.com同名城市选取改按候选组机场元数据匹配全球目录，避免英国/加拿大London及East london混淆。手动查询公开中文分类错误与`errorCode`，CLI无searchId的失败也保存私有输入/诊断，范围与证据见 [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)。
+
+2026-10-20地点点选：新增只读 `GET /api/flight-locations?q=`，从已构建CLI目录返回最多12个中英文/代码候选，不调用外部服务；城市聚合与具体机场的 `value` 保持解析范围。共享表单改为地点弹窗和单程/往返日历，实际查询仍走原手动CLI链路。合同与验收见 [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)。
+
+2026-10-20手动查询：[规划入口机票搜索](FLIGHT_OPTIONS.md)新增 `POST /api/flights/search`，直接复用 Agent CLI 执行器并沿用任务轮询/取消与单并发。成功后将航班和原始证据保存到当前对话；不调用模型、不创建规划结果。H5/微信正式入口使用真实查询，失败不回落样例；航班选择和双向交通规划前提保持一致。
+
+2026-10-20：[往返工具与双向交通前提](FLIGHT_OPTIONS.md)替代下述单抵达提示词。工具新增 `tripType/returnDate`，往返同时校验两个日期；候选可含去返程 journeys，原生组合总价只计一次。`action=plan` 不再绕过对话 Agent，由其先判断双向交通是否确认；缺失时继续 chat。已选旧方向从消息时间线传入 confirmedFlights，保留当前 selectedFlight 兼容字段。没有新增 Agent 或模型配置覆盖。
+
 2026-10-19提示词调整：[航班组合与抵达依据](FLIGHT_OPTIONS.md)。规划前需已有用户采用的航班组合/已购航班时刻，或用户明确给出抵达时间；否则使用已注册的 `search_flights` / `get_flight_details` 先取得候选并请用户选择完整组合。未扩展航班CLI，未新增Agent、接口拦截或额外模型会话；显式按钮仍直接进入规划者，由提示词处理查询/待选组合，实际模型遵循度需单独观察。
 
 当前景点获取与发布以[审核 Session 批量补全](PLACE_LOOKUP_BATCH.md)为准：本地索引/缓存 → Enterprise → 公共 API；审核者的现有 Session 调用 `lookup_places_batch`，仅对明确缺失字段作一轮关键词修正，成功字段锁定。默认共享预算为首次景点数×2秒+5秒，后续修正不重置；网络/429不触发语义修正。后端按活动 ID 合并图片和坐标，保存 `placesResolved: true`，前端新行程加载不再自动调用地点接口。保留三个 Agent 及旧接口。下述严格 QID 规则和前端独立补查是历史迭代说明，不覆盖当前行为。

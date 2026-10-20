@@ -4,7 +4,16 @@ import { FlightError } from '../../core/errors.js';
 import type { Location, SearchQuery } from '../../core/types.js';
 import type { CardData } from './parser.js';
 
-export interface SearchNetwork { error?:FlightError; responses:Array<{path:string;status:number;searchRound:number;observedAt:string;completedAt?:string;recordCount?:number;retCode?:string}>; pending:number; searchCompleted:boolean; lastSettledAt:number; check:()=>void; waitForSearch:(signal:AbortSignal,timeoutMs:number)=>Promise<void>; resetForResubmit:()=>void; dispose:()=>void }
+export interface SearchNetwork { error?:FlightError; responses:Array<{path:string;status:number;searchRound:number;observedAt:string;completedAt?:string;recordCount?:number;retCode?:string}>; pending:number; searchCompleted:boolean; lastSettledAt:number; check:()=>void; waitForSearch:(signal:AbortSignal,timeoutMs:number)=>Promise<void>; resetForResubmit:(mode?:'departure'|'return')=>void; dispose:()=>void }
+export function summarizeMiddleResponse(body:string):{retCode:string;complete:boolean} {
+  const value=JSON.parse(body);
+  if(value.head?.retCode!=='SUCCESS') throw new FlightError('PROVIDER_ERROR',`Trip.com return search reported ${value.head?.retCode??'missing business status'}`);
+  // Some incremental Middle responses contain metadata only. They do not
+  // complete a search and cannot establish zero inventory.
+  if(value.journeyList===undefined)return {retCode:'SUCCESS',complete:false};
+  if(!Array.isArray(value.journeyList)) throw new FlightError('PROVIDER_RESPONSE_ERROR','Invalid return journeyList');
+  return {retCode:'SUCCESS',complete:true};
+}
 export function summarizeSearchResponse(body:string):{retCode:string;recordCount:number} {
   let retCode:string|undefined,recordCount:number|undefined;
   for(const line of body.split('\n')){
@@ -18,11 +27,22 @@ export function summarizeSearchResponse(body:string):{retCode:string;recordCount
   if(retCode!=='SUCCESS')throw new FlightError('PROVIDER_ERROR',`Trip.com search response reported ${retCode}`);
   return{retCode,recordCount};
 }
+export function summarizeJsonSearchResponse(body:string):{retCode:string;recordCount:number;complete:boolean} {
+  const value=JSON.parse(body);
+  if(value.head?.retCode!=='SUCCESS')throw new FlightError('PROVIDER_ERROR',`Trip.com search response reported ${value.head?.retCode??'missing business status'}`);
+  const count=value.basicInfo?.recordCount;
+  if(!((typeof count==='number'&&Number.isSafeInteger(count))||(typeof count==='string'&&/^\d+$/.test(count)))||Number(count)<0||!Number.isSafeInteger(Number(count))||!Array.isArray(value.itineraryList))throw new FlightError('PROVIDER_RESPONSE_ERROR','JSON flight response has no valid result count/itinerary list');
+  const poll=value.basicInfo?.pollInterval;
+  if(!Number.isInteger(poll)||poll< -1)throw new FlightError('PROVIDER_RESPONSE_ERROR','JSON flight response has no valid polling completion state');
+  if(poll===-1&&((Number(count)===0)!==(value.itineraryList.length===0)))throw new FlightError('PROVIDER_RESPONSE_ERROR','Completed JSON flight count conflicts with its itineraries');
+  return{retCode:'SUCCESS',recordCount:Number(count),complete:poll===-1};
+}
 export function observeSearchNetwork(page:Page):SearchNetwork {
   let generation=1;
+  let returnSearch=false;
   const state:SearchNetwork={responses:[],pending:0,searchCompleted:false,lastSettledAt:0,
     check(){if(state.error)throw state.error;},
-    resetForResubmit(){generation++;state.error=undefined;state.pending=0;state.searchCompleted=false;state.lastSettledAt=0;},
+    resetForResubmit(mode='departure'){generation++;returnSearch=mode==='return';state.error=undefined;state.pending=0;state.searchCompleted=false;state.lastSettledAt=0;},
     async waitForSearch(signal,timeoutMs){
       const until=Date.now()+timeoutMs;
       while(Date.now()<until){
@@ -34,7 +54,7 @@ export function observeSearchNetwork(page:Page):SearchNetwork {
     },dispose(){generation++;page.off('response',listener);}};
   const listener=(response:import('playwright').Response)=>{
     const url=new URL(response.url());
-    if(!/(^|\.)trip\.com$/.test(url.hostname)||!/FlightListSearchSSE|FlightMiddleSearch/.test(url.pathname))return;
+    if(!/(^|\.)trip\.com$/.test(url.hostname)||!/\/(?:FlightListSearch(?:SSE)?|FlightMiddleSearch)$/.test(url.pathname))return;
     const round=generation;
     const status=response.status();const record:SearchNetwork['responses'][number]={path:url.pathname,status,searchRound:round,observedAt:new Date().toISOString()};state.responses.push(record);
     const error=searchResponseError(status,url.pathname);
@@ -45,12 +65,18 @@ export function observeSearchNetwork(page:Page):SearchNetwork {
         try{
           await response.finished();
           if(round!==generation)return;
-          if(url.pathname.includes('FlightListSearchSSE')){
+          if(url.pathname.includes('FlightListSearch')){
             const body=await response.text();
             if(round!==generation)return;
-            const summary=summarizeSearchResponse(body);record.retCode=summary.retCode;record.recordCount=summary.recordCount;
-            state.searchCompleted=true;
+            const summary=url.pathname.endsWith('FlightListSearchSSE')?{...summarizeSearchResponse(body),complete:true}:summarizeJsonSearchResponse(body);record.retCode=summary.retCode;record.recordCount=summary.recordCount;
+            state.searchCompleted=summary.complete;
             if(record.retCode&&record.retCode!=='SUCCESS')state.error=new FlightError('PROVIDER_ERROR',`Trip.com search response reported ${record.retCode}`);
+          } else if(returnSearch&&url.pathname.includes('FlightMiddleSearch')) {
+            const body=await response.text();
+            if(round!==generation)return;
+            const summary=summarizeMiddleResponse(body);
+            record.retCode=summary.retCode;
+            if(summary.complete)state.searchCompleted=true;
           }
           record.completedAt=new Date().toISOString();
         }catch(error){
@@ -63,6 +89,15 @@ export function observeSearchNetwork(page:Page):SearchNetwork {
 }
 export async function clickSearch(page:Page):Promise<void> {
   await page.getByRole('button',{name:'Search',exact:true}).or(page.getByText('Search',{exact:true})).first().click();
+}
+export async function openSearchResults(page:Page):Promise<void> {
+  // Result data has its own observed response/readiness checks. Waiting for the
+  // document's default `load` also waits for unrelated images and third parties,
+  // which can hang after the result URL and DOM have already arrived.
+  await Promise.all([
+    page.waitForURL(url=>url.hostname==='www.trip.com'&&url.pathname.includes('showfarefirst'),{waitUntil:'domcontentloaded'}),
+    clickSearch(page),
+  ]);
 }
 export async function completeSearchWithSamePageRetry(page:Page,network:SearchNetwork,signal:AbortSignal,timeoutMs:number,options:{allowRetry:boolean;onRetry?:()=>Promise<void>;delayMs?:number}):Promise<boolean> {
   try {await network.waitForSearch(signal,timeoutMs);return false;}
@@ -100,36 +135,66 @@ export async function openCandidate(page:Page,index:number):Promise<void> {
   await row.getByTestId('u_select_btn').first().click();
 }
 export async function readCards(page: Page): Promise<CardData[]> {
-  return cards(page).evaluateAll(elements => elements.map(el => ({
+  return cards(page).evaluateAll(elements => elements.map(el => {
+    let row=el.parentElement;
+    while(row&&!row.querySelector('[data-testid="u_select_btn"]'))row=row.parentElement;
+    return {
     label: el.getAttribute('aria-label') ?? '', text: (el as HTMLElement).innerText,
     priceLabel: el.getAttribute('aria-label') ?? '',
+    priceText: row?.innerText ?? '',
     airlineText: (el.querySelector('[role="region"]') as HTMLElement | null)?.innerText ?? '',
     airports: Array.from(el.querySelectorAll('[role="textbox"]')).map(t => ((t as HTMLElement).innerText.match(/\b[A-Z]{3}\b/) ?? [])[0]).filter((x):x is string=>!!x),
-  })));
+  };}));
 }
 export async function chooseLocation(page: Page, id: string, location: Location) {
   const input=page.getByTestId(id).last();
-  await input.fill(location.code);
-  // Filling the combobox does not replace cities restored from local storage.
+  // The native popup reparents the editor and can cover inline Remove icons.
+  // Use its normal empty-input Backspace interaction instead of clicking a
+  // hidden/covered icon. Selection/deletion is debounced in the native picker;
+  // pace keys and verify the chips are actually gone before entering a route.
   const wrapper=page.getByTestId(`${id}_wrapper`).last();
   const labels=wrapper.locator('[data-testid^="cityLabel_name_"]');
-  for(let i=await labels.count()-1;i>=0;i--) {
-    await input.fill(location.code);
-    await wrapper.getByTestId(`cityLabel_delete_${i}`).click();
+  await input.fill('');
+  for(let step=0;await labels.count()>0;step++) {
+    if(step>=30)throw new FlightError('QUERY_MISMATCH','Could not clear restored location chips');
+    await input.press('Backspace',{delay:250});
   }
   await input.fill(location.code);
   if(location.kind==='city') {
     const escaped=location.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    await page.getByRole('button',{name:new RegExp(`${escaped}.*All airports`,'i')}).click();
+    const cityName=new RegExp(`^${escaped}\\s*·?\\s*All airports\\b`,'i');
+    const choices=page.getByRole('button',{name:/All airports\b/i});
+    await choices.first().waitFor({state:'visible'});
+    // London is also a city in Canada, and substring matching includes East
+    // London. Match the city row's airport metadata before choosing a title.
+    const rows=await choices.evaluateAll(elements=>elements.map((element,index)=>{
+      const row=element.closest('li')??element;
+      const metadata=Array.from(row.querySelectorAll('[data-value]')).flatMap(node=>{
+        try {const value=JSON.parse(node.getAttribute('data-value')??'{}');return [{cityCode:value.cityCode,airportCode:value.airportCode}];} catch {return [];}
+      });
+      return {index,label:element.textContent??'',metadata};
+    }));
+    const matches=rows.filter(row=>row.metadata.some(value=>location.airports.includes(value.airportCode)));
+    const named=rows.filter(row=>cityName.test(row.label));
+    const selected=matches.length===1?matches[0]:matches.length===0&&named.length===1&&named[0].metadata.length===0?named[0]:null;
+    if(!selected)throw new FlightError('LOCATION_SELECTION_FAILED',`Cannot uniquely match Trip.com city candidates to ${location.code} and its airports`);
+    await choices.nth(selected.index).click();
   } else {
     await page.getByText(new RegExp(`^${location.code}\\s`)).last().click();
   }
+  // The native picker can fetch metadata before rendering the selected chip.
+  // A click finishing does not imply that React has applied that selection.
+  await wrapper.locator('[data-testid^="cityLabel_name_"]').first().waitFor({state:'visible'});
   if(await wrapper.locator('[data-testid^="cityLabel_name_"]').count()!==1)
     throw new FlightError('QUERY_MISMATCH','Location control must contain exactly one selected city or airport');
 }
-export async function chooseDepartureDate(page:Page,departureDate:string,signal:AbortSignal):Promise<void> {
+export async function chooseDepartureDate(page:Page,departureDate:string,signal:AbortSignal, direction:'depart'|'return'='depart'):Promise<void> {
   signal.throwIfAborted();
-  await page.getByRole('group',{name:/^Depart:/}).first().click();
+  // Round-trip calendars can stay open and advance to return selection after
+  // choosing departure. Clicking the date field again can close that calendar.
+  if(direction==='depart'||!await page.getByRole('grid').first().isVisible()) {
+    await page.getByRole('group',{name:direction==='depart'?/^Depart:/:/^Return:/}).first().click();
+  }
   await page.getByRole('grid').first().waitFor({state:'visible'});
   const date=new Date(`${departureDate}T12:00:00Z`);
   const label=new Intl.DateTimeFormat('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric',timeZone:'UTC'}).format(date);
@@ -167,8 +232,36 @@ export async function chooseDepartureDate(page:Page,departureDate:string,signal:
   signal.throwIfAborted();
   if(await choice.isDisabled())throw new FlightError('INVALID_ARGUMENTS','Departure date is unavailable in Trip.com calendar');
   await choice.click();
-  const selectedDate=await page.getByTestId('search_date_depart0').getAttribute('data-date');
+  const selectedDate=await page.getByTestId(`search_date_${direction}0`).getAttribute('data-date');
   if(selectedDate!==departureDate)throw new FlightError('QUERY_MISMATCH','Date control does not match the requested departure date');
+}
+export async function choosePassengers(page:Page,adults:number,signal:AbortSignal):Promise<void> {
+  signal.throwIfAborted();
+  if(!Number.isInteger(adults)||adults<1||adults>9)throw new FlightError('INVALID_ARGUMENTS','Adults must be between 1 and 9');
+  await page.getByTestId('passengers_total_num').last().click();
+  for(const [type,target] of [['ChildCount',0],['BabyCount',0],['AdultCount',adults]] as const) {
+    const plus=page.getByTestId(`${type}_plus`).last(),row=plus.locator('..');
+    await plus.waitFor({state:'visible'});
+    for(let step=0;step<10;step++) {
+      signal.throwIfAborted();
+      const current=Number((await row.innerText()).trim());
+      if(!Number.isInteger(current))throw new FlightError('PAGE_CHANGED','Cannot read passenger count');
+      if(current===target)break;
+      if(step===9)throw new FlightError('QUERY_MISMATCH','Passenger control did not reach the requested count');
+      const direction=current<target?'plus':'minus',next=current+(direction==='plus'?1:-1);
+      const control=page.getByTestId(`${type}_${direction}`).last();
+      if(/\bdisable\b/.test(await control.getAttribute('class')??''))throw new FlightError('INVALID_ARGUMENTS','Passenger count is outside the available website range');
+      await control.click();
+      await row.getByText(String(next),{exact:true}).waitFor({state:'visible'});
+    }
+  }
+  if((await page.getByTestId('selected_cabin').last().innerText()).trim()!=='Economy') {
+    await page.getByTestId('selected_cabin').last().click();
+    await page.getByTestId('cabin_Y').last().click();
+  }
+  await page.getByTestId('passengers_total_num').last().click();
+  const label=(await page.getByTestId('passengers_total_num').last().innerText()).trim();
+  if(!new RegExp(`^${adults} adults?\\s*·\\s*Economy$`).test(label))throw new FlightError('QUERY_MISMATCH','Passenger summary differs from the requested adult count/cabin');
 }
 export async function submitSearch(page: Page, query: SearchQuery, resolved: {origin:Location;destination:Location}, signal: AbortSignal) {
   const response=await page.goto(`https://www.trip.com/flights/?locale=en-XX&curr=${query.currency}`,{waitUntil:'domcontentloaded'});
@@ -176,19 +269,38 @@ export async function submitSearch(page: Page, query: SearchQuery, resolved: {or
   if(response && response.status()>=500) throw new FlightError('NETWORK_ERROR',`Trip.com returned HTTP ${response.status()}`,true);
   if(response?.status()===429 || response?.status()===403) throw new FlightError('ACCESS_RESTRICTED',`Trip.com returned HTTP ${response.status()}`,false,'needs_user_action');
   signal.throwIfAborted();
-  await page.getByRole('radio',{name:'One-way',exact:true}).click();
+  await page.getByRole('radio',{name:query.tripType==='round_trip'?'Round-trip':'One-way',exact:true}).click();
   await chooseLocation(page,'search_city_from0',resolved.origin);
   await chooseLocation(page,'search_city_to0',resolved.destination);
   await chooseDepartureDate(page,query.departureDate,signal);
-  await clickSearch(page);
-  await page.waitForURL(url=>url.pathname.includes('showfarefirst'));
+  if(query.tripType==='round_trip') await chooseDepartureDate(page,query.returnDate!,signal,'return');
+  await choosePassengers(page,query.adults,signal);
+  await openSearchResults(page);
   verifyUrl(page.url(),query,resolved);
 }
 export function verifyUrl(value: string,query:SearchQuery,resolved:{origin:Location;destination:Location}) {
   const url=new URL(value);
-  for(const [key,expected] of Object.entries({dcity:resolved.origin.code.toLowerCase(),acity:resolved.destination.code.toLowerCase(),ddate:query.departureDate,triptype:'ow',class:'y',quantity:String(query.adults),curr:query.currency})) {
+  for(const [side,location] of [['d',resolved.origin],['a',resolved.destination]] as const) {
+    const city=url.searchParams.get(`${side}city`)?.toUpperCase();
+    const airports=(url.searchParams.get(`${side}airport`)??'').toUpperCase().split(',').filter(Boolean);
+    if(location.kind==='airport') {
+      // Trip.com represents a specific airport as its parent city plus an
+      // explicit airport filter, e.g. acity=tyo&aairport=hnd.
+      if(!city||airports.length!==1||airports[0]!==location.code)throw new FlightError('QUERY_MISMATCH',`Trip.com ${side}airport differs from the requested airport`);
+    } else if(city!==location.code||(airports.length>0&&(airports.length!==location.airports.length||location.airports.some(code=>!airports.includes(code))))) {
+      throw new FlightError('QUERY_MISMATCH',`Trip.com ${side}city differs from the requested city scope`);
+    }
+  }
+  for(const [key,expected] of Object.entries({ddate:query.departureDate,...(query.tripType==='round_trip'?{rdate:query.returnDate!}:{}),triptype:query.tripType==='round_trip'?'rt':'ow',class:'y',quantity:String(query.adults),curr:query.currency})) {
     if(url.searchParams.get(key)?.toLowerCase()!==expected.toLowerCase()) throw new FlightError('QUERY_MISMATCH',`Trip.com search parameter ${key} differs from the request`);
   }
+}
+export function publicSearchUrl(value:string):string {
+  const source=new URL(value),url=new URL(source.pathname.startsWith('/chinaflights/')?'https://www.trip.com/chinaflights/showfarefirst':'https://www.trip.com/flights/showfarefirst');
+  for(const key of ['dcity','acity','dairport','aairport','ddate','rdate','triptype','class','quantity','curr','locale']) {
+    const value=source.searchParams.get(key);if(value!==null)url.searchParams.set(key,value);
+  }
+  return url.toString();
 }
 export async function waitForResults(page: Page,signal:AbortSignal,timeoutMs:number,check:()=>void=()=>{},expectedCount?:number): Promise<'results'|'no_results'> {
   const until=Date.now()+timeoutMs;
@@ -228,4 +340,16 @@ export async function closeDetails(page: Page): Promise<void> {
   const testClose=page.locator('[class*="drawer"] [class*="close"], [class*="Drawer"] [class*="close"], [class*="detail"] [class*="close"]').filter({visible:true});
   if(await testClose.count()) { await testClose.first().click();return; }
   throw new FlightError('PAGE_CHANGED','Cannot safely locate the fare details close control');
+}
+export async function stableFareText(page:Page,signal:AbortSignal,timeoutMs:number,network:SearchNetwork):Promise<string> {
+  let previous='',since=Date.now();const until=Date.now()+timeoutMs;
+  while(Date.now()<until) {
+    signal.throwIfAborted();network.check();
+    const text=await page.locator('.ift-drawer[aria-hidden="false"]').innerText();
+    assertNoAccessBlock(text);
+    if(text!==previous||network.pending>0){previous=text;since=Date.now();}
+    if(text.includes('Select Fare')&&/^\s*[A-Z0-9]{2}\d{1,4}[A-Z]?\s*$/m.test(text)&&Date.now()-since>=1000)return text;
+    await delay(200,undefined,{signal});
+  }
+  throw new FlightError('RESULTS_TIMEOUT','Fare details did not stabilize within the step budget');
 }

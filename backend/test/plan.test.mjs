@@ -78,6 +78,23 @@ test('displayed flight facts come directly from CLI, and missing snapshots do no
   assert.equal(toPresentation(value, 'id').flights.length, 0)
 })
 
+test('round-trip presentation separates directions and charges the combined fare once', () => {
+  const record = { searchId: 'search', query: { departureDate: '2026-10-28' }, observedAt: '2026-10-20T00:00:00Z', sourceUrl: 'https://www.trip.com/', candidates: [{
+    id: 'pair', airlines: ['航空公司'], price: { amount: 5600, currency: 'CNY' }, journeys: [
+      { direction: 'outbound', airlines: ['去程航司'], departureAirport: 'PEK', arrivalAirport: 'PRG', departureLocal: '2026-10-28T10:00:00', arrivalLocal: '2026-10-28T19:00:00', durationMinutes: 900, details: null },
+      { direction: 'return', airlines: ['返程航司'], departureAirport: 'PRG', arrivalAirport: 'PEK', departureLocal: '2026-11-03T12:00:00', arrivalLocal: '2026-11-04T07:00:00', durationMinutes: 850, details: null }
+    ]
+  }] }
+  const trip = toPresentation({ flightSelection: { searchId: 'search', candidateId: 'pair' } }, 'rt', record)
+  assert.equal(trip.flights.length, 2)
+  assert.equal(trip.flights[1].dateLabel, '2026-11-03')
+  assert.equal(trip.flights[1].legs[0].from, 'PRG')
+  assert.equal(trip.flights[1].legs[0].depart, '2026-11-03T12:00:00')
+  assert.equal(trip.flights[0].price.amount, 5600)
+  assert.equal(trip.flights[1].price.amount, null)
+  assert.equal(trip.flights[1].priceIncluded, true)
+})
+
 test('reviewer uses one session/turn for batch lookup and refinement; backend merges reordered IDs', async () => {
   const calls = [], tools = []
   const image = { src: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Paris.jpg', author: 'Photographer', license: 'CC BY-SA 4.0', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/', source: { url: 'https://commons.wikimedia.org/wiki/File:Paris.jpg' } }

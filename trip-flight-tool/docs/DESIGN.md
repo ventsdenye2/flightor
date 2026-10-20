@@ -2,6 +2,12 @@
 
 版本：0.1。只有一条产品路径：无界面 Google Chrome 从 Trip.com 首页执行搜索。CLI、MCP 和 TypeScript API 共用 `FlightTool`；Agent 理解自然语言，工具只接收明确参数。
 
+## 2026-10-20 原生往返
+
+tripType 默认 one_way；round_trip 必须同时带 departureDate/returnDate。校验真实日期、返程不早于去程，正常填入Round-trip双日期表单。初始SSE验证SUCCESS/recordCount后，选择首个最低起价去程作为查询分支，等待返程Middle响应SUCCESS/journeyList（仅元数据的增量不算完成），核对同一URL的两个日期和两个方向的机场/时刻。返程每行价格就是该分支的原生组合总价。最多取maxResults个返程并展开包含去返程的详情；按各自出发日期分别解析，跨日标记只用于对应方向。只浏览候选与详情，不点击出票/预订。
+
+coverage=selected_outbound_return_options、lowestPriceVerified=false，不声称遍历所有去程。详情稳定后若价格发生变化，更新组合总价并记录变价提醒；不把初始起价与返程总价相加。分段cabin保留实际舱位；组合最小行李摘要不伪装成每一方向的确定额度。保存的sourceUrl只含地点/日期/人数/舱位/币种等公开查询参数，去除临时criteriaToken/shoppingid等内部参数。完整FlightOR合同与验收见[往返查询](../../docs/FLIGHT_OPTIONS.md)。
+
 ## 执行流程
 
 1. 严格解析参数、解析受支持的位置、按出发地时区校验日期。
@@ -46,3 +52,17 @@ searchId 为 UUID；candidateId 为起降时间、机场、航空公司和中转
 内部预算 180 秒，MCP 预算 210 秒。DSH 外层 timeout-policy 使用工具自身声明，不另设统一默认上限。浏览器取消通过 MCP signal 传入，并等待 context.close 完成。
 
 只读查询不会写入 FlightOR 业务数据库；后端接入方拥有其业务状态和证据持久化策略。
+# 2026-10-20 全球城市消歧
+
+原生地点选择不按城市名子串点击。London实际返回英国、加拿大和East london候选；城市组的机场`data-value.airportCode`与已解析的机场集合匹配，允许Trip.com展示名和本地英文名不同。只有唯一元数据匹配才点击；没有元数据时只兼容唯一精确城市标题，同名不取首项，返回LOCATION_SELECTION_FAILED。URL和最终候选机场/日期继续校验。目录检索范围与本轮真实修复结果见仓库 [全球地点目录](../../docs/AIRPORT_LOCATIONS.md) 和 [查询合同](../../docs/FLIGHT_OPTIONS.md)。
+
+具体机场网址由城市与机场过滤共同表示（如TYO+HND），按精确机场过滤核对，不要求城市字段等于机场代码；城市查询禁止被缩到单个机场。来源URL保留dairport/aairport。adults扩为1–9整数，原生乘客弹层先清零旧儿童/婴儿数量，再调整成人并确认经济舱，最后核对quantity。公开价格仍为每成人，不自行构造多人库存或总价；完整验证见仓库查询合同。
+
+原生选址点击后可能异步生成选中chip，等待可见后才检查唯一性。多人卡片的无障碍价格标签可能是多人合计，按可见卡片的每成人金额和明确Total分开提取，`price.totalAmount`保存网页合计；详情稳定后同步对应总价。不得直接把标签总价当每人价，也不据单人价推造多人报价。
+
+恢复旧地点时，新版候选弹层会遮挡原删除图标，编辑器也会迁移。用空输入框的正常Backspace移除旧chip，按原生防抖节奏逐次核对，清空后才填写新地点；不force click、不清除会话。原生页面操作TimeoutError分类为TIMEOUT，保留日志，不统称页面结构变化。
+
+
+2026-10-20稳定性修复：结果导航等待DOMContentLoaded，整页load不作为航班响应就绪条件；响应仍须SUCCESS及真实数量、DOM和票价/航段一致。每次尝试记录私有阶段/耗时/脱敏查询网址。往返多人去程仅为起价，允许使用明确Round-trip price无障碍总价；最终返程组合及单程仍要求可见Total。技术经停从航班详情块读取segment.stops（city/durationMinutes），与connections分离，中停数=换乘+明确经停；不编造额外航班或时间。证据与连续实测见主仓docs/FLIGHT_OPTIONS.md。
+
+2026-10-20扩展矩阵发现国内页面为 /chinaflights/showfarefirst，搜索使用JSON FlightListSearch（国际仍为FlightListSearchSSE）。观察器按SUCCESS、有效recordCount/itineraryList及pollInterval=-1确认最终完成，正轮询未完成时不发布结果；缺业务状态、缺数量、计数与空列表冲突均拒绝。公开来源保留国内路径，错误/私有令牌不公开。主仓docs/FLIGHT_OPTIONS.md记录首次9人同日往返失败及修复复验。

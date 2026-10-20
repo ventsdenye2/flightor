@@ -5,6 +5,7 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import { repo, dataRoot } from '../src/paths.mjs'
 import { PlaceBatch } from '../src/place-batch.mjs'
+import { executeFlightSearch } from '../src/flight-query.mjs'
 const execute = promisify(execFile)
 export const name = 'flightor-tools'
 export const inject = ['tools']
@@ -29,32 +30,20 @@ export async function apply(ctx) {
   }
   ctx.tools.register(defineTool({
     name: 'search_flights',
-    description: '通过现成 Trip.com CLI 查询指定日期的真实单程航班。现有CLI支持1名成人经济舱。遇访问限制直接报告。价格为查询结果。',
+    description: '通过 Trip.com CLI 查询单程或往返真实航班。城市名查全城机场，机场名查具体机场。根据语境选择tripType；往返必须同时输入去程departureDate和返程returnDate，缺日期先问用户。支持1到9名成人经济舱，adults按用户人数填写。返回候选不代表用户确认；遇访问限制停止。价格为每成人查询快照。',
     parameters: {
       origin: { type: 'string', required: true, description: '城市/机场代码，例如 BJS' },
       destination: { type: 'string', required: true, description: '城市/机场代码，例如 LIS' },
       departureDate: { type: 'string', required: true, description: 'YYYY-MM-DD，当地出发日期' },
+      tripType: { type: 'string', enum: ['one_way', 'round_trip'], description: 'one_way单程（默认），round_trip往返；结合用户语境选择' },
+      returnDate: { type: 'string', description: 'YYYY-MM-DD，返程当地出发日期；round_trip必须传，one_way不传' },
+      adults: { type: 'number', description: '成人数，1到9的整数，省略默认1；按用户人数传入' },
       currency: { type: 'string', description: 'USD/CNY/EUR/GBP/HKD/SGD，默认 USD' }
     },
     output: { schema: { type: 'object', additionalProperties: true }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
     timeoutMs: 210000,
     isConcurrencySafe: () => false,
-    async execute(args, exec) {
-      const cli = path.join(repo, 'trip-flight-tool/dist/cli.js')
-      const argv = [cli, 'search', '--from', args.origin, '--to', args.destination, '--date', args.departureDate, '--currency', args.currency || 'USD', '--max-results', '3']
-      let stdout
-      try {
-        stdout = (await execute(process.execPath, argv, { cwd: path.dirname(cli), signal: exec.signal, timeout: 205000, maxBuffer: 2e6, windowsHide: true })).stdout
-      } catch (error) {
-        if (!error.stdout) throw error
-        stdout = error.stdout
-      }
-      const result = JSON.parse(stdout)
-      const target = path.join(dataRoot, 'flight-results')
-      await fs.mkdir(target, { recursive: true })
-      if (result.searchId) await fs.writeFile(path.join(target, result.searchId + '.json'), JSON.stringify(result, null, 2))
-      return result
-    }
+    execute: (args, exec) => executeFlightSearch(args, { signal: exec.signal })
   }))
   ctx.tools.register(defineTool({
     name: 'get_flight_details',

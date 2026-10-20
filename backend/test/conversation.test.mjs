@@ -10,7 +10,7 @@ import { conversationPersona } from '../src/prompts.mjs'
 test('chat preserves context and only an explicit planning intent invokes the planner', async () => {
   const root = await fs.mkdtemp(path.join(dataRoot, 'conversation-test-'))
   const inputs = [], plans = []
-  const answers = [{ reply: '想逛博物馆还是街区？', intent: 'chat' }, { reply: '记住了，预算改成两万。', intent: 'chat' }, { reply: '现在按聊过的内容规划。', intent: 'plan' }]
+  const answers = [{ reply: '想逛博物馆还是街区？', intent: 'chat' }, { reply: '记住了，预算改成两万。', intent: 'chat' }, { reply: '现在按聊过的内容规划。', intent: 'plan' }, { reply: '按已确认的交通开始规划。', intent: 'plan' }]
   class Agent {
     async start(persona) { assert.equal(persona, conversationPersona) }
     async run(input) { inputs.push(input); return { text: JSON.stringify(answers.shift()) } }
@@ -25,14 +25,14 @@ test('chat preserves context and only an explicit planning intent invokes the pl
     const second = make('预算改两万，喜欢建筑，不去迪士尼', first.conversation.id)
     await runConversation(second, { root, Agent, plan })
     assert.equal(plans.length, 0); assert.match(inputs[1], /预算一万八/); assert.match(inputs[1], /预算改两万/)
-    const third = make('现在帮我规划', first.conversation.id)
+    const third = make('交通自己解决，11月1日上午到巴黎，11月7日晚上离开，现在帮我规划', first.conversation.id)
     await runConversation(third, { root, Agent, plan })
     assert.equal(plans.length, 1); assert.match(plans[0], /不去迪士尼/); assert.match(plans[0], /北京去巴黎七天/); assert.match(plans[0], /预算改两万/)
     assert.equal((await loadConversation(first.conversation.id, root)).messages.length, 6)
     assert.equal(third.trip.id, 'generated')
     const fourth = make('按前面的内容生成', first.conversation.id, 'plan')
     await runConversation(fourth, { root, Agent, plan })
-    assert.equal(plans.length, 2); assert.equal(inputs.length, 3)
+    assert.equal(plans.length, 2); assert.equal(inputs.length, 4)
   } finally { await fs.rm(root, { recursive: true, force: true }) }
 })
 test('unstructured or invalid intent replies remain chat, never trigger planning', () => {

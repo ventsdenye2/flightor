@@ -9,8 +9,8 @@ import { FlightError,failure } from './errors.js';
 import { ResultStore } from './store.js';
 import { configFromEnv,type ToolConfig } from '../browser/config.js';
 import { SessionStore } from '../browser/session.js';
-import { submitSearch,waitForResults,sortAndStabilize,readCards,closeDetails,assertNoAccessBlock,openCandidate,observeSearchNetwork,completeSearchWithSamePageRetry,verifyUrl,type SearchNetwork } from '../providers/trip/browser.js';
-import { parseCard,parseDetails,parseAmount,parseResultCount } from '../providers/trip/parser.js';
+import { submitSearch,waitForResults,sortAndStabilize,readCards,closeDetails,stableFareText,assertNoAccessBlock,openCandidate,observeSearchNetwork,completeSearchWithSamePageRetry,verifyUrl,publicSearchUrl,type SearchNetwork } from '../providers/trip/browser.js';
+import { parseCard,combineRoundTrip,parseRoundTripDetails,parseDetails,validateDetails,parseAmount,parseResultCount } from '../providers/trip/parser.js';
 
 export class FlightTool {
   private browser?: Browser;
@@ -52,8 +52,12 @@ export class FlightTool {
     try {
       resolved={origin:resolveLocation(query.origin),destination:resolveLocation(query.destination)};
       if(resolved.origin.airports.some(code=>resolved.destination.airports.includes(code))) throw new FlightError('INVALID_ARGUMENTS','Origin and destination must be distinct');
-      if(query.adults!==1) throw new FlightError('INVALID_ARGUMENTS','Version 0.1 supports one adult; multi-passenger pricing is not yet implemented');
       validateDate(query,resolved.origin.timeZone);
+      if(query.tripType==='round_trip') {
+        if(!query.returnDate) throw new FlightError('INVALID_ARGUMENTS','round_trip requires both departureDate and returnDate');
+        validateDate({...query,departureDate:query.returnDate},resolved.destination.timeZone);
+        if(query.returnDate<query.departureDate) throw new FlightError('INVALID_ARGUMENTS','returnDate must not precede departureDate');
+      } else if(query.returnDate) throw new FlightError('INVALID_ARGUMENTS','returnDate is only valid for round_trip');
     } catch(error) {return failure(error);}
     if(this.busy) return failure(new FlightError('BUSY','This browser worker is already running a search; retry after it completes',true));
     this.busy=true;
@@ -70,6 +74,8 @@ export class FlightTool {
         let cancel:(()=>void)|undefined;
         let network:SearchNetwork|undefined;
         let persistSession=false;
+        let phase='browser_start';
+        const attemptStartedAt=Date.now();
         try {
           if(!this.browser?.isConnected()) {
             try {
@@ -89,7 +95,9 @@ export class FlightTool {
           if(signal.aborted) {cancel();signal.throwIfAborted();}
           page=this.loginContext?.pages().find(p=>new URL(p.url()).hostname.endsWith('trip.com'))??await context.newPage();page.setDefaultTimeout(this.config.stepTimeoutMs);page.setDefaultNavigationTimeout(this.config.stepTimeoutMs);
           network=observeSearchNetwork(page);
+          phase='submit_search';
           await submitSearch(page,query,resolved,signal);
+          phase='search_response';
           const initialAttempt=attempts;
           const samePageRetried=await completeSearchWithSamePageRetry(page,network,signal,this.config.stepTimeoutMs,{
             allowRetry:attempts<this.config.maxAttempts,
@@ -104,16 +112,40 @@ export class FlightTool {
             },
           });
           verifyUrl(page.url(),query,resolved);
-          const apiCount=network.responses.filter(r=>r.path.includes('FlightListSearchSSE')).at(-1)?.recordCount;
-          const state=await waitForResults(page,signal,this.config.stepTimeoutMs,network.check,apiCount);
-          const stable=state==='results'?await sortAndStabilize(page,signal,this.config.stepTimeoutMs,network.check):true;
+          phase='render_results';
+          const apiCount=network.responses.filter(r=>r.path.includes('FlightListSearch')).at(-1)?.recordCount;
+          let state=await waitForResults(page,signal,this.config.stepTimeoutMs,network.check,apiCount);
+          let stable=state==='results'?await sortAndStabilize(page,signal,this.config.stepTimeoutMs,network.check):true;
+          let outbound:Candidate|undefined;
+          if(query.tripType==='round_trip'&&state==='results') {
+            phase='return_options';
+            const departures=(await readCards(page)).map(card=>parseCard(card,query,'outbound_starting'));
+            outbound=departures[0];
+            if(!outbound||!departures.every((c,i)=>i===0||c.price.amount>=departures[i-1].price.amount)) throw new FlightError('SORT_NOT_CONFIRMED','Outbound round-trip starting fares are not sorted');
+            if(!resolved.origin.airports.includes(outbound.departureAirport)||!resolved.destination.airports.includes(outbound.arrivalAirport)||!outbound.departureLocal.startsWith(query.departureDate)) throw new FlightError('QUERY_MISMATCH','Selected outbound does not match the request');
+            await page.screenshot({path:join(dir,'outbound.png')});
+            await writeFile(join(dir,'outbound.txt'),await page.locator('body').innerText());
+            network.resetForResubmit('return');
+            await openCandidate(page,0);
+            await network.waitForSearch(signal,this.config.stepTimeoutMs);
+            verifyUrl(page.url(),query,resolved);
+            const returnCount=network.responses.filter(r=>r.searchRound>1&&r.recordCount!==undefined).at(-1)?.recordCount;
+            state=await waitForResults(page,signal,this.config.stepTimeoutMs,network.check,returnCount);
+            stable=state==='results'?await sortAndStabilize(page,signal,this.config.stepTimeoutMs,network.check):true;
+          }
           network.check();
           const text=await page.locator('body').innerText();
-          const data=state==='results'?await readCards(page):[];
-          const parsedCards=data.map(card=>parseCard(card,query));
+          const readCandidates=async()=>(await readCards(page!)).map(card=>outbound
+            ?combineRoundTrip(outbound,parseCard(card,{...query,origin:query.destination,destination:query.origin,departureDate:query.returnDate!}))
+            :parseCard(card,query));
+          const parsedCards=state==='results'?await readCandidates():[];
           if(state==='results'&&!parsedCards.length) throw new FlightError('RESULTS_CHANGED','Results disappeared before extraction; no fare was published');
           for(const c of parsedCards) {
             if(!resolved.origin.airports.includes(c.departureAirport)||!resolved.destination.airports.includes(c.arrivalAirport)||!c.departureLocal.startsWith(query.departureDate)) throw new FlightError('QUERY_MISMATCH','A returned flight does not match the requested airports/date');
+            if(query.tripType==='round_trip') {
+              const back=c.journeys?.[1];
+              if(!back||!resolved.destination.airports.includes(back.departureAirport)||!resolved.origin.airports.includes(back.arrivalAirport)||!back.departureLocal.startsWith(query.returnDate!)) throw new FlightError('QUERY_MISMATCH','Return journey does not match requested airports/date');
+            }
           }
           const sorted=parsedCards.every((c,i)=>i===0||c.price.amount>=parsedCards[i-1].price.amount);
           if(!sorted) throw new FlightError('SORT_NOT_CONFIRMED','Displayed candidates are not in ascending price order; refusing to claim a cheapest fare');
@@ -122,19 +154,21 @@ export class FlightTool {
           const evidence={screenshotPath:join(dir,'search.png'),rawTextPath:join(dir,'search.txt'),resultPath:join(dir,'result.json')};
           await page.screenshot({path:evidence.screenshotPath});await writeFile(evidence.rawTextPath,text);
           const observedAt=new Date().toISOString();
+          phase='candidate_details';
           const providerResultCount=parseResultCount(text);
           const warnings:string[]=['Search quote only; final price and availability require checkout revalidation.'];
+          if(outbound) warnings.push('Native round-trip combinations for the first cheapest displayed outbound only; return-list prices are complete round-trip totals, not sums of separate one-way fares. Other outbound combinations were not exhaustively searched.');
           if(samePageRetried)warnings.push('Initial HTTP 430 recovered after one Search click on the same page and browser session.');
           if(!stable) warnings.push('Result list did not stabilize before its step deadline.');
           if(state==='results' && providerResultCount===null) warnings.push('Provider result count was unavailable; completeness is unknown.');
-          const sourceUrl=page.url();
+          const sourceUrl=publicSearchUrl(page.url());
           for(let i=0;i<candidates.length;i++) {
             signal.throwIfAborted();
             network.check();
             try {
               // Identity is checked again immediately before opening this position.
-              const current=(await readCards(page))[i];
-              if(!current||parseCard(current,query).id!==candidates[i].id) throw new FlightError('RESULTS_CHANGED','Candidate order changed while fetching details; rerun search',true);
+              const current=(await readCandidates())[i];
+              if(!current||current.id!==candidates[i].id) throw new FlightError('RESULTS_CHANGED','Candidate order changed while fetching details; rerun search',true);
               await openCandidate(page,i);
               await page.getByText('Select Fare',{exact:true}).waitFor();
               await page.waitForFunction(()=>{const el=document.querySelector('.m-middle-flightInfo');return !!el&&(el as HTMLElement).innerText.length>10;},undefined,{timeout:this.config.stepTimeoutMs});
@@ -144,16 +178,31 @@ export class FlightTool {
                 await page.waitForFunction(()=>/^\s*[A-Z0-9]{2}\d{1,4}[A-Z]?\s*$/m.test((document.querySelector('.m-middle-flightInfo') as HTMLElement|null)?.innerText??''),undefined,{timeout:10000});
                 detailText=await page.locator('.ift-drawer[aria-hidden="false"]').innerText();
               }
+              detailText=await stableFareText(page,signal,this.config.stepTimeoutMs,network);
               assertNoAccessBlock(detailText);
               network.check();
               const detailEvidence={rawTextPath:join(dir,`${candidates[i].id}.txt`),screenshotPath:join(dir,`${candidates[i].id}.png`)};
               await writeFile(detailEvidence.rawTextPath,detailText);await page.screenshot({path:detailEvidence.screenshotPath});
-              const detail=parseDetails(detailText,query,detailEvidence);
-              this.validateDetails(candidates[i],detail);
+              const candidate=candidates[i];
+              const parsedDetails=candidate.journeys?parseRoundTripDetails(detailText,query,candidate.journeys,detailEvidence):null;
+              const detail=parsedDetails?.details??parseDetails(detailText,query,detailEvidence);
+              let journeyDetails:typeof detail[]|undefined;
+              if(candidate.journeys) {
+                journeyDetails=parsedDetails!.journeys;
+                candidate.journeys.forEach((journey,j)=>validateDetails(journey,journeyDetails![j]));
+              } else validateDetails(candidate,detail);
               // The first fare card is the basic fare, excluding optional TripFlex upsells.
               const fareAmount=parseAmount(detailText.slice(detailText.indexOf('Select Fare')),query.currency);
-              if(fareAmount!==candidates[i].price.amount) throw new FlightError('PRICE_CHANGED','Fare details price differs from the sorted search quote; rerun the search',true);
+              const totalLine=detailText.slice(detailText.indexOf('Select Fare')).split('\n').find(line=>/^Total\s/i.test(line.trim()));
+              const totalAmount=totalLine?parseAmount(totalLine,query.currency):undefined;
+              if(fareAmount!==candidates[i].price.amount) {
+                if(!outbound) throw new FlightError('PRICE_CHANGED','Fare details price differs from the sorted search quote; rerun the search',true);
+                warnings.push(`Round-trip ${candidate.id} repriced from ${candidate.price.amount} to ${fareAmount} ${query.currency} in the fare drawer. No cheapest-price guarantee.`);
+                candidate.price={amount:fareAmount,currency:query.currency,basis:'per_adult',checkoutVerified:false};
+              }
+              if(totalAmount!==undefined)candidate.price.totalAmount=totalAmount;
               candidates[i].details=detail;
+              if(journeyDetails) candidates[i].journeys!.forEach((journey,j)=>{journey.details=journeyDetails![j];});
             } catch(error) {
               if(signal.aborted) throw signal.reason;
               network.check();
@@ -164,13 +213,15 @@ export class FlightTool {
           }
           const complete=stable&&(state==='no_results'||(providerResultCount!==null&&candidates.every(c=>c.details!==null)));
           network.check();
+          if(outbound)candidates.sort((a,b)=>a.price.amount-b.price.amount);
           const result:SearchResult={schemaVersion:1,searchId,status:state==='no_results'?'no_results':complete?'complete':'partial',source:'Trip.com',quoteType:'search_quote',query,resolved,observedAt,sourceUrl,sort:'cheapest',providerResultCount,
-            coverage:state==='results'&&stable&&providerResultCount!==null?'provider_sorted_results':'unknown',lowestPriceVerified:state==='results'&&candidates.length>0&&stable&&sorted&&providerResultCount!==null,attempts,candidates,warnings,evidence};
-          await this.store.save(result);return result;
+            coverage:outbound?'selected_outbound_return_options':state==='results'&&stable&&providerResultCount!==null?'provider_sorted_results':'unknown',lowestPriceVerified:!outbound&&state==='results'&&candidates.length>0&&stable&&sorted&&providerResultCount!==null,attempts,candidates,warnings,evidence};
+          await this.store.save(result);phase='completed';return result;
         } catch(error) {
           if(signal.aborted) throw signal.reason;
           let normalized:FlightError;
           if(error instanceof FlightError) normalized=error;
+          else if(error instanceof Error && error.name==='TimeoutError') normalized=new FlightError('TIMEOUT',error.message);
           else if(error instanceof Error && /net::ERR_(?:TIMED_OUT|CONNECTION_RESET|NETWORK_CHANGED|CONNECTION_CLOSED)/.test(error.message)) normalized=new FlightError('NETWORK_ERROR',error.message,true);
           else normalized=new FlightError('PAGE_CHANGED',error instanceof Error?error.message:String(error));
           if(network?.error)normalized=network.error;
@@ -186,6 +237,10 @@ export class FlightTool {
         } finally {
           network?.dispose();
           if(network)await writeFile(join(dir,`attempt-${attempts}-network.json`),JSON.stringify(network.responses,null,2));
+          const currentUrl=page&&!page.isClosed()?page.url():undefined;
+          await writeFile(join(dir,`attempt-${attempts}-diagnostic.json`),JSON.stringify({phase,elapsedMs:Date.now()-attemptStartedAt,
+            pagePath:currentUrl?new URL(currentUrl).pathname:null,
+            publicSearchUrl:currentUrl&&new URL(currentUrl).hostname==='www.trip.com'?publicSearchUrl(currentUrl):null},null,2));
           if(persistSession&&context)await this.session.save(context).catch(()=>{process.stderr.write('Trip.com session refresh could not be saved.\n');});
           if(this.loginContext===context)this.loginContext=undefined;
           if(cancel)signal.removeEventListener('abort',cancel);await context?.close();
@@ -194,11 +249,5 @@ export class FlightTool {
       }
       throw new FlightError('INTERNAL_ERROR','Search attempts exhausted');
     } catch(error) {return failure(error,attempts);} finally {this.busy=false;}
-  }
-  private validateDetails(candidate:Candidate,detail:NonNullable<Candidate['details']>) {
-    const first=detail.segments[0],last=detail.segments.at(-1)!;
-    if(first.origin!==candidate.departureAirport||last.destination!==candidate.arrivalAirport||first.departureLocal!==candidate.departureLocal||last.arrivalLocal!==candidate.arrivalLocal) throw new FlightError('DETAILS_MISMATCH','Detailed itinerary differs from the selected candidate');
-    if(candidate.stopCount!==null&&detail.segments.length!==candidate.stopCount+1) throw new FlightError('DETAILS_MISMATCH','Segment count differs from displayed stop count');
-    if(detail.connections.length!==detail.segments.length-1) throw new FlightError('DETAILS_MISMATCH','Connection conditions are incomplete');
   }
 }

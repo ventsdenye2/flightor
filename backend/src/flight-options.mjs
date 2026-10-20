@@ -2,20 +2,33 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 // Publish only travel facts, never raw tool messages or local evidence paths.
+function presentJourney(item) {
+  return {
+    direction: item.direction,
+    airlines: item.airlines || [], departureAirport: item.departureAirport || null, arrivalAirport: item.arrivalAirport || null,
+    departureLocal: item.departureLocal || null, arrivalLocal: item.arrivalLocal || null,
+    durationMinutes: item.durationMinutes ?? null, stopCount: item.stopCount ?? null,
+    segments: (item.details?.segments || []).map(({ airline, flightNumber, origin, destination, departureLocal, arrivalLocal, durationMinutes, cabin, stops }) => ({ airline, flightNumber, origin, destination, departureLocal, arrivalLocal, durationMinutes, cabin, ...(Array.isArray(stops) ? { stops: stops.map(({ city, durationMinutes }) => ({ city, durationMinutes })) } : {}) })),
+    connections: (item.details?.connections || []).map(({ city, durationMinutes, selfTransfer, airportChange, collectAndRecheckBaggage }) => ({ city, durationMinutes, selfTransfer, airportChange, collectAndRecheckBaggage })),
+    baggage: item.details?.baggage || null
+  }
+}
 export function presentFlightOptions(result) {
   if (!result || result.source !== 'Trip.com' || !Array.isArray(result.candidates) || !result.query || !result.searchId) return null
   return {
     searchId: result.searchId, source: 'Trip.com', sourceUrl: result.sourceUrl?.startsWith('https://') ? result.sourceUrl : null,
     observedAt: result.observedAt, status: result.status,
     origin: result.query.origin, destination: result.query.destination, date: result.query.departureDate,
+    tripType: result.query.tripType || 'one_way', returnDate: result.query.returnDate || null,
     originName: result.resolved?.origin?.name || result.query.origin, destinationName: result.resolved?.destination?.name || result.query.destination,
     adults: result.query.adults || 1, cabin: result.query.cabin || 'economy',
     options: result.candidates.map(item => ({
+      ...(Array.isArray(item.journeys) ? { journeys: item.journeys.map(presentJourney) } : {}),
       id: item.id, airlines: item.airlines || [], amount: item.price?.amount ?? null, currency: item.price?.currency || result.query.currency,
       departureAirport: item.departureAirport || null, arrivalAirport: item.arrivalAirport || null,
       departureLocal: item.departureLocal || null, arrivalLocal: item.arrivalLocal || null,
       durationMinutes: item.durationMinutes ?? null, stopCount: item.stopCount ?? null,
-      segments: (item.details?.segments || []).map(({ airline, flightNumber, origin, destination, departureLocal, arrivalLocal, durationMinutes }) => ({ airline, flightNumber, origin, destination, departureLocal, arrivalLocal, durationMinutes })),
+      segments: (item.details?.segments || []).map(({ airline, flightNumber, origin, destination, departureLocal, arrivalLocal, durationMinutes, cabin, stops }) => ({ airline, flightNumber, origin, destination, departureLocal, arrivalLocal, durationMinutes, cabin, ...(Array.isArray(stops) ? { stops: stops.map(({ city, durationMinutes }) => ({ city, durationMinutes })) } : {}) })),
       connections: (item.details?.connections || []).map(({ city, durationMinutes, selfTransfer, airportChange, collectAndRecheckBaggage }) => ({ city, durationMinutes, selfTransfer, airportChange, collectAndRecheckBaggage })),
       baggage: item.details?.baggage || null
     }))

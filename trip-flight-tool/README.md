@@ -1,3 +1,15 @@
+# 单程与原生往返查询（2026-10-20）
+
+新增 `tripType: one_way | round_trip`（默认单程），往返必须传 `departureDate` 和 `returnDate`。
+
+国内chinaflights页面的JSON FlightListSearch和国际SSE均读取真实业务状态及结果数量，国内轮询须到最终完成；来源链接保留正确页面路径。城市/机场×单程/往返、人数1–9、币种及调用入口扩展测试见 [验收矩阵](../docs/FLIGHT_QUERY_ACCEPTANCE.md)。
+
+```powershell
+node dist/cli.js search --from BJS --to LIS --date 2026-10-31 --trip-type round_trip --return-date 2026-11-03 --currency CNY
+```
+
+通过 Trip.com 原生 Round-trip 两日期表单查询，选择首个最低起价去程作为分支，再读取对应返程的原生组合总价。每个候选含 outbound/return journeys；不分别查两张单程票再相加。最多提取 maxResults 个返程组合；coverage=selected_outbound_return_options，lowestPriceVerified=false，不代表全组合最便宜。详情变价时保留提醒并采用详情稳定价，真实混合舱位在分段 cabin 显示。未选择候选不代表交通已确认。详见 [FlightOR 合同](../docs/FLIGHT_OPTIONS.md)。下文单程限制为旧版记录，往返能力以本节为准。
+
 # Trip Flight Tool
 
 用无界面 Google Chrome 自动查询 Trip.com 单程航班，为 DSH 和其他 Agent 提供 MCP 工具。查询会执行首页表单、选择最低价排序、展开票价详情，并保存 JSON、页面文字和截图。正常查询不弹出浏览器窗口，也不需要手动点击。
@@ -85,7 +97,7 @@ FlightOR 的 DSH 后端可以调用这个 API，再按自身工具注册接口�
 
 ## 结果与边界
 
-- 当前支持指定日期、单程、1 名成人、经济舱；往返、多日期批量和多人报价不在 v0.1 范围内。
+- 支持指定日期、单程或原生往返、1–9名成人、经济舱；城市名查全部所属机场，机场名仅查具体机场。`--adults 2`按2名成人实际查询，报价为每成人，不能用单人查询乘人数替代。儿童/婴儿、多日期批量暂不支持。
 - 地点目录包含 7,884 个 IATA 机场、233 个国家和地区，上游 41 个多机场城市组并保留成都等原有聚合。支持 IATA、ICAO、机场名称、唯一英文城市名、常见中文和繁体别名。布拉格可传 PRG、Prague、Praha、布拉格或 LKPR。同名地点返回候选代码；只指定国家/地区时仍需确定城市或机场。完整目录由 `locations` 命令显示，机场数据存在不代表有航线或报价。
 - `lowestPriceVerified` 的范围是当次 Trip.com 返回的、按最低价排序的搜索结果。只提取所需的前几个候选，不声称覆盖其他渠道的全网最低价。
 - `quoteType: search_quote`，价格为页面显示的单人报价，`checkoutVerified: false`。页面可能将小数价格四舍五入为整数；本工具保留页面显示口径。

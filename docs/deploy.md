@@ -4,6 +4,14 @@
 
 景点服务的离线数据下载/重建见 [PlaceResolver](PLACE_RESOLVER.md)。Enterprise 凭证仅放忽略的 `backend/.env`，`npm run backend:start` 自动读取；模板为 `backend/.env.example`。保存 username、access/id/refresh token，API 只使用 access token；到期前按需刷新并原子更新后端文件，不向前端/日志公开。环境修改后重启后端。没有 Enterprise 凭证也可使用离线坐标及公开 Wikimedia 接口。
 
+## 2026-10-20 手动查询入口
+
+规划页机票表单调用本地 `/api/flights/search`，需要重启空闲API以载入新路由，沿用3000端口和任务轮询/取消；H5仍为4178。后端先校验查询参数，再复用原CLI，不调用DSH或模型，不自动生成行程。两端调用均由createConversationClient提供，无新增前端环境变量或凭证。
+
+## 2026-10-20 往返工具更新
+
+更新后先执行 `npm --prefix trip-flight-tool run build` 生成新CLI，再启动/重启空闲的后端API。后端插件直接使用该CLI；仅重建H5不会更新工具。`npm run check` 和 `npm run build` 继续检查H5/微信共享卡片。独立MCP进程须重启以读取新tripType/returnDate schema；单程调用省略新字段保持兼容。启动不自动查询供应商或模型。
+
 ## 当前双 Agent 环境
 
 原仓库目录 `D:\FunnyProject\flightor-repo`，分支 `backend-mvp`。前端/API使用现有Node22；DSH使用已复制桌面包0.2.1-rc.2及其配套Node24。安装桌面DSH且已登录后执行：

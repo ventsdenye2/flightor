@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View } from '@tarojs/components'
+import { Button, View } from '@tarojs/components'
 import { FlightChoices } from './FlightChoices'
 import type { FlightSearchDataset } from './flightSamples'
 import type { FlightOptions, FlightSelection } from './flightOptions'
@@ -7,6 +7,7 @@ import { PageHeader } from './SharedUI'
 
 export function FlightChoicesPreview({ dataset, onBack }: { dataset: FlightSearchDataset; onBack: () => void }) {
   const [selected, setSelected] = useState<FlightSelection | null>(null)
+  const [roundTrip, setRoundTrip] = useState(false)
   const result: FlightOptions = {
     searchId: 'design-preview', source: 'FlightOR 设计样例', sourceUrl: null, observedAt: '', status: 'sample',
     origin: dataset.origin, destination: dataset.destination, originName: dataset.originName || dataset.origin, destinationName: dataset.destinationName || dataset.destination, date: dataset.date, adults: dataset.travelers || 1, cabin: 'economy',
@@ -18,5 +19,17 @@ export function FlightChoicesPreview({ dataset, onBack }: { dataset: FlightSearc
       connections: flight.via ? [{ city: flight.via, durationMinutes: null, selfTransfer: flight.selfTransfer, airportChange: null, collectAndRecheckBaggage: null }] : [], baggage: null
     }))
   }
-  return <View className='ux-app'><PageHeader title='航班选项设计' onBack={onBack} /><View className='ux-scroll' style={{ padding: '0 18px 24px' }}><FlightChoices result={result} selected={selected} sample onSelect={option => setSelected(option ? { searchId: result.searchId, candidateId: option.id } : null)} /></View></View>
+  if (roundTrip) {
+    const returnDate = new Date(Date.parse(dataset.date + 'T00:00:00Z') + 7 * 86400000).toISOString().slice(0, 10)
+    result.searchId = 'design-preview-round-trip'; result.tripType = 'round_trip'; result.returnDate = returnDate
+    result.options = result.options.map(option => ({ ...option, amount: option.amount == null ? null : option.amount * 2,
+      durationMinutes: option.durationMinutes == null ? null : option.durationMinutes * 2, stopCount: option.stopCount == null ? null : option.stopCount * 2,
+      journeys: [{ ...option, direction: 'outbound' }, { ...option, direction: 'return', departureAirport: option.arrivalAirport, arrivalAirport: option.departureAirport,
+        departureLocal: `${returnDate}T09:00:00`, arrivalLocal: `${returnDate}T21:00:00`, segments: [], connections: [], baggage: null }]
+    }))
+  }
+  return <View className='ux-app'><PageHeader title='航班选项设计' onBack={onBack} /><View className='ux-scroll' style={{ padding: '0 18px 24px' }}>
+    <View className='fc-sorts'>{[false, true].map(value => <Button key={String(value)} className={roundTrip === value ? 'is-active' : ''} aria-pressed={roundTrip === value} onClick={() => { setRoundTrip(value); setSelected(null) }}>{value ? '往返样例' : '单程样例'}</Button>)}</View>
+    <FlightChoices key={result.searchId} result={result} selected={selected} sample onSelect={option => setSelected(option ? { searchId: result.searchId, candidateId: option.id } : null)} />
+  </View></View>
 }

@@ -6,6 +6,11 @@ const source = fs.readFileSync(require('node:path').join(__dirname, '../src/feat
 const moduleValue = { exports: {} }
 vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, { exports: moduleValue.exports, module: moduleValue, Set, Date })
 const { sortFlightOptions, flightReasons, flightTime, arrivalDayOffset } = moduleValue.exports
+const { flightJourneys, flightSelectionMessage, transferCaution, flightStops } = moduleValue.exports
+assert.equal(flightStops(2, 1), '1次中转 · 1次经停')
+assert.equal(flightStops(1, 1), '1次经停')
+assert.equal(flightStops(0), '直飞')
+assert.equal(flightStops(null), '中转待确认')
 const option = (id, amount, durationMinutes, stopCount, connections = []) => ({ id, amount, currency: 'CNY', durationMinutes, stopCount, connections, departureLocal: '2026-10-28T23:00:00', arrivalLocal: '2026-10-29T07:00:00' })
 const choices = [option('cheap', 2000, 1500, 2, [{ selfTransfer: true }]), option('direct', 2400, 600, 0), option('unknown', null, null, null)]
 assert.equal(sortFlightOptions(choices, 'price')[0].id, 'cheap')
@@ -18,4 +23,9 @@ assert.doesNotMatch(flightReasons(choices[2], choices).join(''), /最低|最短|
 assert.equal(flightTime('2026-10-28T09:15:00'), '09:15')
 assert.equal(flightTime(null), '待确认')
 assert.equal(arrivalDayOffset(choices[0]), 1)
+const pair = { ...choices[1], airlines: ['Test'], journeys: [{ ...choices[1], direction: 'outbound', departureAirport: 'PEK', arrivalAirport: 'LIS' }, { ...choices[1], direction: 'return', departureAirport: 'LIS', arrivalAirport: 'PEK', departureLocal: '2026-11-03T12:00:00', arrivalLocal: '2026-11-04T07:00:00', connections: [{ selfTransfer: true }] }] }
+assert.equal(flightJourneys(pair).length, 2)
+assert.equal(arrivalDayOffset(pair.journeys[1]), 1)
+assert.match(transferCaution(pair), /自行中转/)
+assert.match(flightSelectionMessage({ tripType: 'round_trip', date: '2026-10-28' }, pair), /往返组合.*返程.*2026-11-03.*离开时间/)
 console.log('PASS flight choice ranking, grounded reasons, unknown values, dates and immutability')

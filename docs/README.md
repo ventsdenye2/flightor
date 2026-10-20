@@ -4,7 +4,8 @@
 
 - [PROJECT_CONTEXT](PROJECT_CONTEXT.md)：当前实现、目录与验证边界。
 - [FRONTEND_SYNC](FRONTEND_SYNC.md)：演示版前端迁移、Git 快照与双端验证。
-- [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)：对话航班选项、推荐理由与选择后规划。
+- [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)：手动/对话机票查询、单程/往返卡片与交通确认后规划。
+- [FLIGHT_QUERY_ACCEPTANCE](FLIGHT_QUERY_ACCEPTANCE.md)：城市/机场×单程/往返、1–9成人、调用入口与取消/异常的扩展验收。
 - [TRIP_CONTENT](TRIP_CONTENT.md)：Commons景点图片、介绍与推荐理由、审核精选概览。
 - [PLACE_RESOLVER](PLACE_RESOLVER.md)：Wikimedia 离线索引、地点消歧、统一坐标与图片查询及实测边界。
 - [PLACE_LOOKUP_BATCH](PLACE_LOOKUP_BATCH.md)：当前审核 Session 批量工具、Enterprise 优先回退、成功字段锁定、查询预算和后端合并。

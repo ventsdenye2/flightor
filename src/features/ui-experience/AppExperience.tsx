@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Text, View } from '@tarojs/components'
 import { PlannerPage } from './PlannerPage'
 import { ExplorePage } from './ExplorePage'
 import type { ExploreItem } from './exploreSamples'
 import type { FlightSearchDataset } from './flightSamples'
-import type { TripPresentation } from './presentation'
+import { selectTripCover } from './presentation'
+import type { MediaPresentation, TripPresentation } from './presentation'
 import type { ConversationClient, GenerateTrip, PlaceMediaLoader, PlaceLocationLoader } from './backendClient'
 import { FlightExplorer } from './FlightExplorer'
 import { ProfilePage } from './ProfilePage'
@@ -37,7 +38,14 @@ export default function AppExperience(props: AppExperienceProps) {
 }
 function ExperienceSession({ trip: sourceTrip, searchDataset, exploreItems, imageError = false, requestedPage = 'plan', navigationVersion = 0, onOpenSource, onGenerate, conversationClient, loadPlaceMedia, loadPlaceLocation }: AppExperienceProps) {
   const [generatedTrip, setGeneratedTrip] = useState<TripPresentation | null>(null)
-  const trip = generatedTrip || sourceTrip
+  const baseTrip = generatedTrip || sourceTrip
+  const [resolvedCover, setResolvedCover] = useState<{ tripId: string; media: MediaPresentation } | null>(null)
+  const selectedCover = selectTripCover(baseTrip)
+  const cover = selectedCover?.src ? selectedCover : resolvedCover?.tripId === baseTrip.id ? resolvedCover.media : selectedCover
+  const trip = cover === baseTrip.cover ? baseTrip : { ...baseTrip, cover }
+  const onCoverResolved = useCallback((media: MediaPresentation) => {
+    setResolvedCover(current => current?.tripId === baseTrip.id && current.media === media ? current : { tripId: baseTrip.id, media })
+  }, [baseTrip.id])
   const generate: GenerateTrip | undefined = onGenerate ? async (message, progress, signal) => {
     const result = await onGenerate(message, progress, signal)
     if (!signal.aborted) setGeneratedTrip(result)
@@ -52,6 +60,7 @@ function ExperienceSession({ trip: sourceTrip, searchDataset, exploreItems, imag
   const [savedIds, setSavedIds] = useState<string[]>([])
   const [alerts, setAlerts] = useState<PriceAlert[]>([])
   const [prompt, setPrompt] = useState({ text: '', revision: 0 })
+  const [conversationRevision, setConversationRevision] = useState(0)
   const [inspirationId, setInspirationId] = useState('')
   const [largeText, setLargeText] = useState(false)
   const nextAlertId = useRef(1)
@@ -70,12 +79,12 @@ function ExperienceSession({ trip: sourceTrip, searchDataset, exploreItems, imag
   const visible = (page: PreviewPage | Overlay) => overlay ? overlay === page : section === page
   const savedItems = exploreItems.filter(item => savedIds.includes(item.id)).map(item => ({ id: item.id, title: item.title, subtitle: item.subtitle, photo: item.photo, photoDescription: item.photoDescription }))
   return <View className={`ux-app ${largeText ? 'is-comfortable' : ''}`}>
-    <View className='ux-screen' style={{ display: visible('plan') ? 'flex' : 'none' }}><PlannerPage trip={trip} key={prompt.revision} initialPrompt={prompt.text} onOpenTrip={openTrip} onSearchFlights={() => navigate('flights')} onGenerate={generate} conversationClient={conversationClient} onTrip={setGeneratedTrip} onOpenSource={onOpenSource} /></View>
+    <View className='ux-screen' style={{ display: visible('plan') ? 'flex' : 'none' }}><PlannerPage trip={trip} key={`${prompt.revision}-${conversationRevision}`} initialPrompt={prompt.text} onOpenTrip={openTrip} onSearchFlights={() => navigate('flights')} onGenerate={generate} conversationClient={conversationClient} onTrip={setGeneratedTrip} onOpenSource={onOpenSource} /></View>
     <View className='ux-screen' style={{ display: visible('explore') ? 'flex' : 'none' }}><ExplorePage items={exploreItems} onPlan={planWith} savedIds={savedIds} onToggleSave={toggleItem} onOpenSource={onOpenSource} /></View>
     <View className='ux-screen' style={{ display: visible('trips') ? 'flex' : 'none' }}><TripsPage trip={trip} onOpenTrip={openTrip} onPlan={() => planWith('')} archived={archived} onArchive={setArchived} /></View>
     <View className='ux-screen' style={{ display: visible('profile') ? 'flex' : 'none' }}><ProfilePage savedCount={savedItems.length + Number(tripSaved)} alertCount={alerts.length} onCollections={() => navigate('collections')} onAlerts={() => navigate('alerts')} onTrips={() => navigate('trips')} onPlan={planWith} largeText={largeText} onTextSizeChange={setLargeText} onClearLibrary={() => { setSavedIds([]); setTripSaved(false) }} /></View>
-    {tripOpened ? <View className='ux-screen' style={{ display: visible('trip') ? 'flex' : 'none' }}><TripExperience trip={trip} loadPlaceMedia={loadPlaceMedia} loadPlaceLocation={loadPlaceLocation} imageError={imageError} embedded onBack={closeOverlay} onContinuePlanning={() => planWith(`我想继续调整${trip.destination}的行程。`)} saved={tripSaved} onSavedChange={setTripSaved} onOpenSource={onOpenSource} /></View> : null}
-    {overlayStack.includes('flights') ? <View className='ux-screen' style={{ display: visible('flights') ? 'flex' : 'none' }}><FlightExplorer searchDataset={searchDataset} onBack={closeOverlay} onOpenTrip={openTrip} onCreateAlert={alert => {
+    {tripOpened ? <View className='ux-screen' style={{ display: visible('trip') ? 'flex' : 'none' }}><TripExperience trip={trip} onCoverResolved={onCoverResolved} loadPlaceMedia={loadPlaceMedia} loadPlaceLocation={loadPlaceLocation} imageError={imageError} embedded onBack={closeOverlay} onContinuePlanning={() => planWith(`我想继续调整${trip.destination}的行程。`)} saved={tripSaved} onSavedChange={setTripSaved} onOpenSource={onOpenSource} /></View> : null}
+    {overlayStack.includes('flights') ? <View className='ux-screen' style={{ display: visible('flights') ? 'flex' : 'none' }}><FlightExplorer client={conversationClient} onConversationChange={() => setConversationRevision(value => value + 1)} searchDataset={searchDataset} onBack={closeOverlay} onOpenTrip={openTrip} onCreateAlert={alert => {
       const id = nextAlertId.current++
       setAlerts(current => {
         const existing = current.find(item => item.route === alert.route && item.date === alert.date)

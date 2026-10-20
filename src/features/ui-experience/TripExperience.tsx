@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { View, Text, Button } from '@tarojs/components'
 import type { Activity, FlightLegDisplay, MediaPresentation, TripDay, TripPresentation } from './presentation'
 import type { PlaceMediaLoader, PlaceLocationLoader } from './backendClient'
-import { findAlternative, selectTripDay, shouldLoadPlaceDetails } from './presentation'
+import { findAlternative, selectTripCover, selectTripDay, shouldLoadPlaceDetails } from './presentation'
 import { Photo, Icon } from './VisualMedia'
 import { DayPlan } from './DayPlan'
 import { FlightTicket } from './FlightTicket'
@@ -15,6 +15,7 @@ const emptyFlightLegs: FlightLegDisplay[] = []
 type Sheet = { kind: 'activity'; activity: Activity } | { kind: 'adjust' } | { kind: 'credits' }
 export interface TripExperienceProps {
   trip: TripPresentation
+  onCoverResolved?: (media: MediaPresentation) => void
   loadPlaceMedia?: PlaceMediaLoader
   loadPlaceLocation?: PlaceLocationLoader
   imageError?: boolean
@@ -37,7 +38,7 @@ export default function TripExperience(props: TripExperienceProps) {
   // A different trip starts with its own selected day, edits and pending timers.
   return <TripContent key={props.trip.id} {...props} />
 }
-function TripContent({ trip, loadPlaceMedia, loadPlaceLocation, imageError = false, onNavigate, onOpenSource, embedded = false, onBack, onContinuePlanning, saved: controlledSaved, onSavedChange }: TripExperienceProps) {
+function TripContent({ trip, onCoverResolved, loadPlaceMedia, loadPlaceLocation, imageError = false, onNavigate, onOpenSource, embedded = false, onBack, onContinuePlanning, saved: controlledSaved, onSavedChange }: TripExperienceProps) {
   const [tab, setTab] = useState<Tab>('overview')
   const [days, setDays] = useState(trip.days)
   const [mediaById, setMediaById] = useState<Record<string, MediaPresentation>>({})
@@ -88,7 +89,8 @@ function TripContent({ trip, loadPlaceMedia, loadPlaceLocation, imageError = fal
   const day = selectTripDay(displayDays, dayId)
   const dayNumber = day ? displayDays.indexOf(day) + 1 : 0
   const photos = displayDays.flatMap(value => value.activities).map(activity => activity.media).filter((media): media is MediaPresentation => !!media?.src)
-  const cover = trip.cover || photos[0] || null
+  const cover = selectTripCover({ cover: trip.cover, days: displayDays })
+  useEffect(() => { if (cover?.src) onCoverResolved?.(cover) }, [cover, onCoverResolved])
   const detailMedia = sheet?.kind === 'activity' ? sheet.activity.media || mediaById[sheet.activity.id] || null : null
   const completed = days.map((value, index) => value.status === 'ready' ? `D${index + 1}` : null).filter(Boolean)
   const partial = trip.status === 'partial' || days.some(value => value.status === 'pending')

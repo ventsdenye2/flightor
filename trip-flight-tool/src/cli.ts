@@ -4,7 +4,7 @@ import { FlightTool,locations } from './index.js';
 import { writeFile } from 'node:fs/promises';
 import { createInterface } from 'node:readline/promises';
 const help=`Usage:
-  trip-flight search --from BJS --to LIS --date 2026-10-28 [--currency CNY] [--max-results 3] [--output result.json]
+  trip-flight search --from BJS --to LIS --date 2026-10-28 [--trip-type one_way|round_trip] [--return-date 2026-11-03] [--adults 1-9] [--currency CNY] [--max-results 3] [--output result.json]
   trip-flight details --search-id UUID --candidate-id ID
   trip-flight locations
   trip-flight login
@@ -29,9 +29,9 @@ try {
   }
   else if(!command||command==='--help'||command==='help') console.log(help);
   else {
-    const {values}=parseArgs({args:process.argv.slice(3),options:{from:{type:'string'},to:{type:'string'},date:{type:'string'},currency:{type:'string'},adults:{type:'string'},'max-results':{type:'string'},output:{type:'string'},'search-id':{type:'string'},'candidate-id':{type:'string'}},strict:true});
+    const {values}=parseArgs({args:process.argv.slice(3),options:{from:{type:'string'},to:{type:'string'},date:{type:'string'},'trip-type':{type:'string'},'return-date':{type:'string'},currency:{type:'string'},adults:{type:'string'},'max-results':{type:'string'},output:{type:'string'},'search-id':{type:'string'},'candidate-id':{type:'string'}},strict:true});
     tool=new FlightTool();
-    const result=command==='search'?await tool.searchFlights({origin:values.from,destination:values.to,departureDate:values.date,currency:values.currency,adults:values.adults?Number(values.adults):undefined,maxResults:values['max-results']?Number(values['max-results']):undefined},{signal:abort.signal}):command==='details'?await tool.getFlightDetails({searchId:values['search-id'],candidateId:values['candidate-id']}):null;
+    const result=command==='search'?await tool.searchFlights({origin:values.from,destination:values.to,departureDate:values.date,tripType:values['trip-type'],returnDate:values['return-date'],currency:values.currency,adults:values.adults?Number(values.adults):undefined,maxResults:values['max-results']?Number(values['max-results']):undefined},{signal:abort.signal}):command==='details'?await tool.getFlightDetails({searchId:values['search-id'],candidateId:values['candidate-id']}):null;
     if(!result) throw new Error(help);
     const json=JSON.stringify(result,null,2);console.log(json);if(values.output) await writeFile(values.output,json);
     if(['error','needs_user_action','cancelled'].includes(result.status))process.exitCode=1;

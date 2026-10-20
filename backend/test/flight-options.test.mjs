@@ -11,6 +11,16 @@ const fixture = () => ({
   searchId: crypto.randomUUID(), source: 'Trip.com', sourceUrl: 'https://www.trip.com/flights/', observedAt: '2026-10-19T05:00:00Z', status: 'partial', query: { origin: 'BJS', destination: 'PRG', departureDate: '2026-10-28', adults: 1, currency: 'CNY' },
   evidence: { resultPath: 'private/local/result.json' }, candidates: [{ id: 'abc123', airlines: ['测试航空'], price: { amount: 2150, currency: 'CNY' }, departureAirport: 'PEK', arrivalAirport: 'PRG', departureLocal: '2026-10-28T10:00:00', arrivalLocal: '2026-10-28T19:20:00', durationMinutes: 920, stopCount: 1, details: { rawTextPath: 'private/local/text', screenshotPath: 'private/local/image', segments: [], connections: [], baggage: { carryOn: null, checked: null } } }]
 })
+
+test('technical stop facts survive public presentation without private parser fields', () => {
+  const result = fixture()
+  result.candidates[0].details.segments = [{ flightNumber: 'CX530', origin: 'HKG', destination: 'NGO', stops: [{ city: 'Taipei', durationMinutes: 70, rawTextPath: 'private/stop' }] }]
+  result.candidates[0].journeys = [{ ...result.candidates[0], direction: 'outbound' }]
+  const option = presentFlightOptions(result).options[0]
+  assert.deepEqual(option.segments[0].stops, [{ city: 'Taipei', durationMinutes: 70 }])
+  assert.deepEqual(option.journeys[0].segments[0].stops, option.segments[0].stops)
+  assert.doesNotMatch(JSON.stringify(option), /rawTextPath|private/)
+})
 test('CLI evidence exposes exact flight facts without raw messages and filesystem paths', async () => {
   const result = fixture()
   const options = await flightOptionsFromEvidence([{ message: { content: [{ type: 'text', text: JSON.stringify(result) }] } }], dataRoot)
@@ -21,7 +31,7 @@ test('CLI evidence exposes exact flight facts without raw messages and filesyste
   assert.doesNotMatch(JSON.stringify(options), /private|rawTextPath|screenshotPath|resultPath/)
   assert.equal(presentFlightOptions({ status: 'error' }), null)
 })
-test('choice stays on its original reply; the next chat locks selection and explicit planning retains it', async () => {
+test('choice stays on its original reply; next chat locks it and explicit planning still consults the conversation agent', async () => {
   const root = await fs.mkdtemp(path.join(dataRoot, 'flight-options-test-'))
   const result = fixture(), plans = [], prompts = []
   let modelCalls = 0
@@ -58,10 +68,76 @@ test('choice stays on its original reply; the next chat locks selection and expl
     assert.equal(plans.length, 0); assert.match(prompts.at(-1), /2150/); assert.match(prompts.at(-1), /选择本身不是开始规划/)
     const planning = { id: crypto.randomUUID(), conversationId: run.conversation.id, message: '现在开始规划', action: 'plan' }
     await runConversation(planning, { root, Agent, plan })
-    assert.equal(plans.length, 1); assert.deepEqual(planning.flightSelection, selection)
+    assert.equal(plans.length, 0); assert.deepEqual(planning.flightSelection, selection)
     assert.equal(planning.constraints.selectedFlight.amount, 2150)
-    assert.match(planning.prompt, /托运行李怎么安排/)
+    assert.match(prompts.at(-1), /托运行李怎么安排/)
+    assert.match(prompts.at(-1), /用户已点击生成行程/)
     assert.deepEqual((await loadConversation(run.conversation.id, root)).selectedFlight, selection)
-    assert.equal(modelCalls, 2); assert.equal(plans.length, 1)
+    assert.equal(modelCalls, 3); assert.equal(plans.length, 0)
+  } finally { await fs.rm(root, { recursive: true, force: true }) }
+})
+
+test('round-trip facts survive selection, refresh and planning with both dates and no private paths', async () => {
+  const root = await fs.mkdtemp(path.join(dataRoot, 'flight-options-test-'))
+  const result = fixture(), plans = [], prompts = []
+  result.query.tripType = 'round_trip'; result.query.returnDate = '2026-11-03'
+  const outbound = { ...result.candidates[0], direction: 'outbound' }
+  const inbound = { ...outbound, direction: 'return', departureAirport: 'PRG', arrivalAirport: 'PEK', departureLocal: '2026-11-03T12:00:00', arrivalLocal: '2026-11-04T07:00:00' }
+  result.candidates[0].journeys = [outbound, inbound]
+  class Agent {
+    async start() {} async close() {}
+    async run(input) {
+      prompts.push(input)
+      if (prompts.length === 1) this.onEvent('conversation', { type: 'tool/result', data: result })
+      return { text: JSON.stringify({ reply: prompts.length === 1 ? '请选择往返组合。' : '按已确认的去返程规划。', intent: prompts.length === 1 ? 'chat' : 'plan' }) }
+    }
+  }
+  try {
+    const first = { id: crypto.randomUUID(), message: '查北京布拉格往返，10月28日去，11月3日回' }
+    await runConversation(first, { root, Agent })
+    const options = first.conversation.flightOptions
+    assert.equal(options.tripType, 'round_trip'); assert.equal(options.returnDate, '2026-11-03')
+    assert.equal(options.options[0].journeys[1].departureLocal, inbound.departureLocal)
+    assert.doesNotMatch(JSON.stringify(options), /private|rawTextPath|screenshotPath/)
+    const selection = { searchId: result.searchId, candidateId: 'abc123' }
+    await selectConversationFlight(first.conversation.id, selection, root)
+    const restored = await loadConversation(first.conversation.id, root)
+    assert.deepEqual(restored.selectedFlight, selection)
+    const next = { id: crypto.randomUUID(), conversationId: first.conversation.id, action: 'plan', message: '按这组往返规划' }
+    await runConversation(next, { root, Agent, plan: async run => { plans.push(run); run.stage = 'completed' } })
+    assert.equal(plans.length, 1)
+    assert.equal(next.constraints.selectedFlight.journeys.length, 2)
+    assert.equal(next.constraints.confirmedFlights[0].journeys[1].departureLocal, inbound.departureLocal)
+    assert.match(prompts[1], /2026-11-03T12:00:00/)
+  } finally { await fs.rm(root, { recursive: true, force: true }) }
+})
+
+test('two selected one-way searches retain both confirmations when the latest options replace the first query', async () => {
+  const root = await fs.mkdtemp(path.join(dataRoot, 'flight-options-test-'))
+  const firstResult = fixture(), returnResult = fixture()
+  returnResult.query = { ...returnResult.query, origin: 'PRG', destination: 'BJS', departureDate: '2026-11-03' }
+  Object.assign(returnResult.candidates[0], { departureAirport: 'PRG', arrivalAirport: 'PEK', departureLocal: '2026-11-03T12:00:00', arrivalLocal: '2026-11-04T07:00:00' })
+  returnResult.observedAt = '2026-10-19T06:00:00Z'
+  let calls = 0
+  class Agent {
+    async start() {} async close() {}
+    async run(input) {
+      calls++
+      if (calls < 3) this.onEvent('conversation', { type: 'tool/result', data: calls === 1 ? firstResult : returnResult })
+      else { assert.match(input, /2026-10-28T19:20:00/); assert.match(input, /2026-11-03T12:00:00/) }
+      return { text: JSON.stringify({ reply: calls < 3 ? '请选择。' : '已确认去返程。', intent: 'chat' }) }
+    }
+  }
+  try {
+    const first = { id: crypto.randomUUID(), message: '查去程' }
+    await runConversation(first, { root, Agent })
+    await selectConversationFlight(first.conversation.id, { searchId: firstResult.searchId, candidateId: 'abc123' }, root)
+    const second = { id: crypto.randomUUID(), conversationId: first.conversation.id, message: '再查返程' }
+    await runConversation(second, { root, Agent })
+    await selectConversationFlight(first.conversation.id, { searchId: returnResult.searchId, candidateId: 'abc123' }, root)
+    const third = { id: crypto.randomUUID(), conversationId: first.conversation.id, message: '两边都选好了' }
+    await runConversation(third, { root, Agent })
+    assert.equal(third.constraints.confirmedFlights.length, 2)
+    assert.equal(third.planningRequested, false)
   } finally { await fs.rm(root, { recursive: true, force: true }) }
 })

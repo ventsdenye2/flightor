@@ -8,12 +8,14 @@ import { loadConversation, runConversation, selectConversationFlight } from './c
 import { resolveFlightSelection } from './flight-options.mjs'
 import { loadPlaceMedia } from './place-media.mjs'
 import { loadPlaceLocation } from './place-locations.mjs'
+import { manualFlightQuery, runManualFlightSearch } from './manual-flight-search.mjs'
+import { searchFlightLocations } from './flight-locations.mjs'
 
 const runs = new Map()
 await fs.mkdir(path.join(dataRoot, 'runs'), { recursive: true })
 function publicRun(run) {
-  const { id, stage, progress, error, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt } = run
-  return { id, stage, progress, error, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt }
+  const { id, stage, progress, error, errorCode, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt } = run
+  return { id, stage, progress, error, errorCode, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt }
 }
 async function persist(run) {
   const file = path.join(dataRoot, 'runs', run.id + '.json')
@@ -31,6 +33,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') { res.writeHead(204); return res.end() }
     const url = new URL(req.url, 'http://127.0.0.1')
     if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, { status: 'ready', runtime: 'DSH 0.2.1-rc.2', model: process.env.FLIGHTOR_DSH_MODEL || 'deepseek-flash', provider: process.env.FLIGHTOR_DSH_PROVIDER || 'deepseek-account' })
+    if (req.method === 'GET' && url.pathname === '/api/flight-locations') return send(res, 200, { locations: searchFlightLocations(url.searchParams.get('q') || '') })
     if (req.method === 'POST' && url.pathname === '/api/place-media') {
       let body = ''
       for await (const chunk of req) { body += chunk; if (body.length > 2000) return send(res, 413, { error: 'Request too large' }) }
@@ -53,20 +56,23 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, await selectConversationFlight(selectionMatch[1], JSON.parse(body).selection))
     }
     const isConversation = url.pathname === '/api/conversations/turns'
-    if (req.method === 'POST' && (url.pathname === '/api/runs' || isConversation)) {
+    const isFlightSearch = url.pathname === '/api/flights/search'
+    if (req.method === 'POST' && (url.pathname === '/api/runs' || isConversation || isFlightSearch)) {
       let body = ''
       for await (const chunk of req) { body += chunk; if (body.length > 16000) return send(res, 413, { error: 'Request too large' }) }
       const input = JSON.parse(body)
+      const query = isFlightSearch ? manualFlightQuery(input.query) : undefined
       const message = isConversation ? input.message : input.prompt
-      if (typeof message !== 'string' || !message.trim() || message.length > 4000) return send(res, 400, { error: '请输入1到4000字的消息' })
+      if (!isFlightSearch && (typeof message !== 'string' || !message.trim() || message.length > 4000)) return send(res, 400, { error: '请输入1到4000字的消息' })
       if (isConversation && input.action && !['chat', 'plan'].includes(input.action)) return send(res, 400, { error: '无效的对话操作' })
-      if (isConversation && input.conversationId) {
+      if ((isConversation || isFlightSearch) && input.conversationId) {
         let conversation
         try { conversation = await loadConversation(input.conversationId) } catch { return send(res, 404, { error: '对话不存在，请重新开始' }) }
         resolveFlightSelection(conversation, input.flightSelection)
       } else if (input.flightSelection) return send(res, 400, { error: '请在查询所在的对话中选择航班' })
       if ([...runs.values()].some(item => !['completed', 'failed', 'cancelled'].includes(item.run.stage))) return send(res, 409, { error: '本地 MVP 当前一次运行一个请求，请等待或取消当前任务' })
       const run = { id: crypto.randomUUID(), prompt: isConversation ? undefined : message, message: isConversation ? message : undefined, conversationId: input.conversationId, action: input.action || 'chat', constraints: input.constraints || {}, stage: 'queued', createdAt: new Date().toISOString() }
+      if (isFlightSearch) run.query = query
       if (isConversation && input.flightSelection) run.flightSelection = input.flightSelection
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(Error('MVP 总运行时间超过12分钟')), 720000)
@@ -74,7 +80,7 @@ const server = http.createServer(async (req, res) => {
       runs.set(run.id, entry)
       await persist(run)
       send(res, 202, publicRun(run))
-      entry.done = (isConversation ? runConversation : runPlan)(run, { signal: controller.signal, onChange: persist }).catch(error => console.error(`[${run.id}] ${error.message.slice(0, 350)}`)).finally(() => clearTimeout(timeout))
+      entry.done = (isFlightSearch ? runManualFlightSearch : isConversation ? runConversation : runPlan)(run, { signal: controller.signal, onChange: persist }).catch(error => console.error(`[${run.id}] ${error.message.slice(0, 350)}`)).finally(() => clearTimeout(timeout))
       return
     }
     const match = url.pathname.match(/^\/api\/runs\/([a-f\d-]{36})$/)
