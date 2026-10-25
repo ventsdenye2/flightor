@@ -19,6 +19,8 @@
 - 地图继续用微信原生 Map，缺坐标显示缺失状态；来源链接通过系统剪贴板复制。
 - 开发者工具、类型检查、构建和真机分别验收；构建成功不代表真机验收。
 
+海外地图灰底已做[独立对照调查](WECHAT_MAP_INVESTIGATION.md)：同组件国内详图正常，所测海外城市级底图灰，低缩放下海外海岸线可见。当前定位到模拟器默认海外详细底图通道，未证明新增Key可解决，未完成真机或具体瓦片响应核验。
+
 ## 本地请求
 
 仓库提交配置保留 `setting.urlCheck: true`。当前本机忽略文件 `project.private.config.json` 单独设置 `setting.urlCheck: false`，仅用于开发者工具请求 loopback API；不影响线上合法域名要求。模拟器曾返回 `request:fail url not in domain list`，不是后端离线。独立导入 `dist/weapp/` 时需为该目录单独建立同样的本地调试配置。真机不能使用127.0.0.1，仍需设备可访问的HTTPS API和合法request域名。

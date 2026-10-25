@@ -38,6 +38,8 @@ Browser plugin not available，独立Chrome/Playwright CLI在`127.0.0.1:4178`使
 
 ## 每日景点地图（2026-10-19）
 
+2026-10-25 微信灰底[调查记录](WECHAT_MAP_INVESTIGATION.md)：同一原生Map组件，北京/上海显示道路及POI，里斯本/巴黎/东京城市级底图灰，里斯本5级可显示海岸轮廓。景点坐标、标记与详情连接正常；不能将此扩展成腾讯全部产品或真机结论，具体海外数据覆盖/授权及真机行为尚待核验。没有更换底图、添加Key或位置权限。
+
 每日地图固定在当天标题/日期下方、具体活动列表上方，沿用H5 Leaflet/OpenStreetMap及微信原生Map。已有有效坐标直接显示；缺坐标时，仅对用户当前打开日期的明确景点按名称/已有`imageQuery`与城市查询Wikidata，使用P625的地球坐标。名称、城市、唯一实体及有效坐标需匹配；同名歧义、城市不符、绘画、无坐标或冲突位置保留空缺，不用城市中心或示例点冒充景点。街道检索可去掉英文Street/Road/Avenue后缀，仍要求同名同城。
 
 `POST /api/place-locations`接收`{name,query?,city}`，返回`{status:resolved|not-found|unavailable,location:null|{latitude,longitude,source}}`。固定查询Wikidata Action API，不调用Agent/付费地图、不创建run，不重写历史行程。只发地点名与城市，不发送聊天。实体来源链接随结果保留；成功缓存30天、无匹配缓存1天、网络失败不缓存，同请求合并，单次查询整体12秒超时，429后暂缓调用。每个日期串行查询，切换日期时忽略旧结果并停止继续查询；异步定位不重置打开的景点详情。照片查询与地点定位独立。
