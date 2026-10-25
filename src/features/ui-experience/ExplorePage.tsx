@@ -1,3 +1,4 @@
+import { ScrollPanel } from './ScrollPanel'
 import { Fragment, useEffect, useState } from 'react'
 import { View, Text, Button, Input } from '@tarojs/components'
 import { PageHeader, SectionHeading, EmptyState, DemoNote, Sheet } from './SharedUI'
@@ -38,7 +39,7 @@ export function ExplorePage({ onPlan, savedIds, onToggleSave, onOpenSource, init
     const saved = savedIds.includes(selected.id)
     return <>
       <PageHeader title={selected.category === '目的地' ? '目的地指南' : '旅行灵感'} onBack={onBack || (() => setSelectedId(undefined))} action={<Button className={`ux-icon-button ${saved ? 'is-saved' : ''}`} ariaLabel={saved ? '取消收藏这份灵感' : '收藏这份灵感'} aria-pressed={saved} onClick={() => onToggleSave(selected.id)}><Icon name={saved ? 'bookmark-filled' : 'bookmark'} /></Button>} />
-      <View className='ux-scroll ux-explore-detail' key={selected.id}>
+      <ScrollPanel className='ux-scroll ux-explore-detail' key={selected.id}>
         <Photo src={selected.photo} description={selected.photoDescription} forceError={!selected.photo} retry={!!selected.photo} className='ux-explore-detail-photo' />
         <View className='ux-explore-detail-body'>
           <Text className='ux-explore-kicker'>{selected.eyebrow}</Text>
@@ -56,7 +57,7 @@ export function ExplorePage({ onPlan, savedIds, onToggleSave, onOpenSource, init
           <Button className='ux-explore-credit' disabled={!selected.photoSource || !onOpenSource} onClick={() => selected.photoSource && onOpenSource?.(selected.photoSource)}><Text>{selected.photoDescription}<Text className='ux-explore-credit-author'>{selected.credit}</Text></Text><Icon name='external' /></Button>
           <DemoNote text='灵感与节奏为固定示例，尚未生成或保存为正式行程。' />
         </View>
-      </View>
+      </ScrollPanel>
       <View className='ux-explore-detail-action'><Button className='ux-primary' onClick={() => onPlan(selected.prompt)}>以这份灵感开始规划<Icon name='arrow-right' /></Button></View>
       {showArrival && selected.arrival ? <Sheet title='从出发，到住下来' onClose={() => setShowArrival(false)}>
         <Text className='ux-explore-sheet-copy'>把航班与落地之后的第一段路，一起放进计划里。</Text>
@@ -70,7 +71,7 @@ export function ExplorePage({ onPlan, savedIds, onToggleSave, onOpenSource, init
 
   return <>
     <PageHeader title='探索' />
-    <View className='ux-scroll ux-explore-page'>
+    <ScrollPanel className='ux-scroll ux-explore-page'>
       <View className='ux-explore-opening'><Text className='ux-title'>下一程，去哪里？</Text><Text className='ux-explore-subtitle'>先遇见喜欢的风景，再慢慢计划。</Text></View>
       <View className='ux-explore-search'><Icon name='compass' /><Input className='ux-explore-input' ariaLabel='搜索目的地或旅行灵感' placeholder='搜索目的地、街区或灵感' value={query} onInput={event => setQuery(event.detail.value)} confirmType='search' />{query ? <Button className='ux-icon-button' ariaLabel='清空探索搜索' onClick={() => setQuery('')}><Icon name='close' /></Button> : null}</View>
       <View className='ux-explore-themes' ariaLabel='探索主题'><View className='ux-explore-themes-track'>{themes.map(value => <Button key={value} className={`ux-explore-theme ${theme === value ? 'is-active' : ''}`} aria-pressed={theme === value} onClick={() => setTheme(value)}>{value}</Button>)}</View></View>
@@ -83,7 +84,7 @@ export function ExplorePage({ onPlan, savedIds, onToggleSave, onOpenSource, init
         {!isBrowsing && results.length ? <Button className='ux-text-button ux-explore-reset' onClick={reset}>查看全部灵感<Icon name='arrow-right' /></Button> : null}
       </View> : null}
       <DemoNote text='灵感内容与图片来源逐条标注，实际安排仍需核验。' />
-    </View>
+    </ScrollPanel>
   </>
 }
 

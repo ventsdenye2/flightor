@@ -1,3 +1,4 @@
+import { ScrollPanel } from './ScrollPanel'
 import { useState } from 'react'
 import { Button, Input, Text, View } from '@tarojs/components'
 import { Icon, Photo } from './VisualMedia'
@@ -15,7 +16,7 @@ export function TripsPage({ trip, onOpenTrip, onPlan, archived, onArchive }: { t
   const [menu, setMenu] = useState(false)
   const visible = filter === 'archived' ? archived : !archived
   return <><PageHeader title='我的行程' action={<Button className='ux-text-button' onClick={onPlan}>新建行程<Icon name='arrow-right' /></Button>} />
-    <View className='ux-scroll ui-page'>
+    <ScrollPanel className='ux-scroll ui-page'>
       <Text className='ui-display'>把期待，排进日历。</Text><Text className='ux-muted'>计划好的远方，随时回来接着安排。</Text>
       <View className='ui-segment'>{[{ id: 'upcoming', text: '待出发' }, { id: 'archived', text: '已归档' }].map(item => <Button key={item.id} aria-pressed={filter === item.id} className={`ui-segment-button ${filter === item.id ? 'is-active' : ''}`} onClick={() => setFilter(item.id)}>{item.text}</Button>)}</View>
       {visible ? <View className='lb-trip'>
@@ -26,7 +27,7 @@ export function TripsPage({ trip, onOpenTrip, onPlan, archived, onArchive }: { t
         </View>
       </View> : <EmptyState icon='calendar' title={filter === 'archived' ? '让回忆慢慢积累' : '下一站，还没写下'} description={filter === 'archived' ? '归档后的行程会留在这里，随时可以恢复。' : '说说想去的地方，从一个旅行念头开始。'} actionLabel={filter === 'archived' ? '查看待出发行程' : '开始规划'} onAction={filter === 'archived' ? () => setFilter('upcoming') : onPlan} />}
       <DemoNote text={trip.provenance === 'dsh' ? '已保存最近一次规划结果。归档操作仅在本次浏览保留。' : '此行程为固定设计示例。归档和恢复仅在本次预览保留。'} />
-    </View>
+    </ScrollPanel>
     {menu ? <Sheet title='管理这次旅行' onClose={() => setMenu(false)}><Text className='ux-muted'>归档会将行程移到“已归档”，日程内容仍会保留。</Text><Button className='ux-primary' onClick={() => { onArchive(!archived); setMenu(false); setFilter(archived ? 'upcoming' : 'archived') }}>{archived ? '恢复到待出发' : '归档行程'}</Button></Sheet> : null}
   </>
 }
@@ -36,7 +37,7 @@ export function CollectionsPage({ trip, savedTrip, items, onBack, onOpenTrip, on
   const [removed, setRemoved] = useState<string | null>(null)
   const showTrip = savedTrip && tab !== 'inspiration'
   const shown = tab === 'trips' ? [] : items
-  return <><PageHeader title='我的收藏' onBack={onBack} /><View className='ux-scroll ui-page'>
+  return <><PageHeader title='我的收藏' onBack={onBack} /><ScrollPanel className='ux-scroll ui-page'>
     <Text className='ui-display'>留给下一次出发。</Text><Text className='ux-muted'>喜欢的去处和行程，在这里相遇。</Text>
     <View className='ui-segment'>{[{ id: 'all', label: '全部' }, { id: 'inspiration', label: '灵感' }, { id: 'trips', label: '行程' }].map(item => <Button key={item.id} className={`ui-segment-button ${tab === item.id ? 'is-active' : ''}`} aria-pressed={tab === item.id} onClick={() => setTab(item.id)}>{item.label}</Button>)}</View>
     {showTrip ? <View className='lb-saved-row'><Button className='lb-saved-open' onClick={onOpenTrip}><Photo src={trip.cover?.src} candidates={trip.cover?.candidates} description={trip.cover?.description || '图片待补充'} className='lb-saved-photo' retry={false} /><View><Text className='ux-section-title'>{trip.title}</Text><Text className='ux-muted'>{tripDurationLabel(trip)} · {travelerLabel(trip)} · {trip.provenance === 'dsh' ? '本次规划' : '示例行程'}</Text></View></Button><Button className='ux-icon-button' ariaLabel={`取消收藏${trip.destination}行程`} onClick={() => { onToggleTrip(); setRemoved('trip') }}><Icon name='bookmark-filled' /></Button></View> : null}
@@ -44,7 +45,7 @@ export function CollectionsPage({ trip, savedTrip, items, onBack, onOpenTrip, on
     {!showTrip && !shown.length ? <EmptyState icon='bookmark' title='还没有收藏' description='在探索或行程详情中点亮书签，把喜欢的地方留在这里。' actionLabel='去探索' onAction={onExplore} /> : null}
     {removed ? <View className='ux-undo'><Text>已取消收藏</Text><Button className='ux-text-button' onClick={() => { if (removed === 'trip') onToggleTrip(); else onToggleItem(removed); setRemoved(null) }}>撤销</Button></View> : null}
     <DemoNote text='收藏仅在本次预览保留，尚未同步到账户。' />
-  </View></>
+  </ScrollPanel></>
 }
 
 export function AlertsPage({ alerts, onBack, onSearch, onUpdate, onRemove, onRestore }: { alerts: PriceAlert[]; onBack: () => void; onSearch: () => void; onUpdate: (alert: PriceAlert) => void; onRemove: (id: number) => void; onRestore: (alert: PriceAlert) => void }) {
@@ -52,7 +53,7 @@ export function AlertsPage({ alerts, onBack, onSearch, onUpdate, onRemove, onRes
   const [amount, setAmount] = useState('')
   const [error, setError] = useState('')
   const [removed, setRemoved] = useState<PriceAlert | null>(null)
-  return <><PageHeader title='价格提醒' onBack={onBack} action={<Button className='ux-text-button' onClick={onSearch}>新建</Button>} /><View className='ux-scroll ui-page'>
+  return <><PageHeader title='价格提醒' onBack={onBack} action={<Button className='ux-text-button' onClick={onSearch}>新建</Button>} /><ScrollPanel className='ux-scroll ui-page'>
     <Text className='ui-display'>给心动的价格，留个位置。</Text><Text className='ux-muted'>设置目标价，整理你正在关注的航线。</Text>
     <View className='ui-inline-notice'>当前仅演示提醒设置，不监测票价，也不会发送通知。</View>
     {!alerts.length ? <EmptyState icon='plane' title='还没有关注的航线' description='在航班搜索结果中选择“价格提醒”，设一个合适的目标价。' actionLabel='查找航班' onAction={onSearch} /> : alerts.map(alert => <View className='lb-alert' key={alert.id}>
@@ -62,5 +63,5 @@ export function AlertsPage({ alerts, onBack, onSearch, onUpdate, onRemove, onRes
     </View>)}
     {removed ? <View className='ux-undo'><Text>已删除这条提醒</Text><Button className='ux-text-button' onClick={() => { onRestore(removed); setRemoved(null) }}>撤销</Button></View> : null}
     <DemoNote text='提醒设置仅在本次预览保留。' />
-  </View>{editing ? <Sheet title='修改目标价格' onClose={() => setEditing(null)}><Text className='ux-muted'>{editing.route} · {editing.date}</Text><View className='ui-form-field'><Text>目标价格（人民币 / 人）</Text><Input ariaLabel='修改提醒目标价格' type='digit' value={amount} maxlength={6} onInput={event => setAmount(event.detail.value)} /></View>{error ? <View className='ui-danger' role='alert'>{error}</View> : null}<Button className='ux-primary' onClick={() => { const price = Number(amount); if (!/^\d+$/.test(amount) || !Number.isFinite(price) || price < 1 || price > 999999 || !Number.isInteger(price)) { setError('请输入 1–999999 之间的整数价格'); return }; onUpdate({ ...editing, targetPrice: price }); setEditing(null) }}>保存目标价格</Button></Sheet> : null}</>
+  </ScrollPanel>{editing ? <Sheet title='修改目标价格' onClose={() => setEditing(null)}><Text className='ux-muted'>{editing.route} · {editing.date}</Text><View className='ui-form-field'><Text>目标价格（人民币 / 人）</Text><Input ariaLabel='修改提醒目标价格' type='digit' value={amount} maxlength={6} onInput={event => setAmount(event.detail.value)} /></View>{error ? <View className='ui-danger' role='alert'>{error}</View> : null}<Button className='ux-primary' onClick={() => { const price = Number(amount); if (!/^\d+$/.test(amount) || !Number.isFinite(price) || price < 1 || price > 999999 || !Number.isInteger(price)) { setError('请输入 1–999999 之间的整数价格'); return }; onUpdate({ ...editing, targetPrice: price }); setEditing(null) }}>保存目标价格</Button></Sheet> : null}</>
 }

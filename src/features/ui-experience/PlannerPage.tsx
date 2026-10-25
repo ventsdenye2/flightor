@@ -1,3 +1,4 @@
+import { ScrollPanel } from './ScrollPanel'
 import { useEffect, useRef, useState } from 'react'
 import { View, Text, Button, Textarea } from '@tarojs/components'
 import { Icon, Photo } from './VisualMedia'
@@ -92,7 +93,7 @@ function PreviewPlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
 
   return <>
     <PageHeader action={submitted || draft ? <Button className='ux-text-button' onClick={() => reset()}>重新开始</Button> : undefined} />
-    <View className='ux-scroll pl-scroll' key={submitted ? 'conversation' : 'welcome'}>
+    <ScrollPanel className='ux-scroll pl-scroll' key={submitted ? 'conversation' : 'welcome'}>
       {!submitted ? <View className='pl-welcome'>
         <Text className='pl-title'>好旅行，<Text className='pl-title-line'>从一个想法开始。</Text></Text>
         <Text className='pl-intro'>想去哪、和谁一起、喜欢什么。<Text className='pl-intro-line'>把想法留在这里，让旅程慢慢成形。</Text></Text>
@@ -128,7 +129,7 @@ function PreviewPlannerPage({ trip, onOpenTrip, onSearchFlights, initialPrompt =
           <View className='pl-followups'><Button className='pl-followup' onClick={() => reset(submitted)}><Text>修改我的想法</Text><Icon name='arrow-right' /></Button><Button className='pl-followup' onClick={onSearchFlights}><Text>比较航班示例</Text><Icon name='plane' /></Button></View>
         </>}
       </View>}
-    </View>
+    </ScrollPanel>
     {!submitted ? <View className='pl-composer'>
       <View className='pl-input-wrap'><Textarea className='pl-textarea' value={draft} maxlength={600} ariaLabel='旅行想法' placeholder='例如：从哪里出发、去几天、和谁一起、喜欢什么…' onInput={event => setDraft(event.detail.value)} /><View className='pl-composer-actions'><Text className='pl-composer-hint'>{draft ? `${draft.length}/600` : '目的地、天数、预算，都可以聊聊'}</Text>{draft ? <Button className='ux-icon-button pl-clear' ariaLabel='清空旅行想法' onClick={() => setDraft('')}><Icon name='close' /></Button> : null}</View></View>
       <Button className='ux-primary pl-submit' disabled={!draft.trim()} onClick={() => start(draft)}><Text>{live ? '开始规划' : '查看行程示例'}</Text><Icon name='arrow-right' /></Button>

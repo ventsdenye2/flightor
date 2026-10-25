@@ -1,3 +1,4 @@
+import { ScrollPanel } from './ScrollPanel'
 import { useEffect, useRef, useState } from 'react'
 import { Button, Text, View } from '@tarojs/components'
 import { PlanCancellation } from './backendClient'
@@ -58,7 +59,7 @@ export function LiveFlightExplorer({ client, dataset, onBack, onConversationChan
   }
   return <>
     <PageHeader title='找一张合适的机票' onBack={onBack} />
-    <View className='ux-scroll fl-page fl-live-page'>
+    <ScrollPanel className='ux-scroll fl-page fl-live-page'>
       <View className='fl-intro'><Text className='fl-title'>让出发，刚刚好。</Text><Text className='fl-subtitle'>在价格、时间与中转之间，找到你的平衡。</Text></View>
       <View className='fl-search-box'>
         <View className='fl-search-top'><View className='fl-trip-types'>{[false, true].map(roundTrip => <Button key={String(roundTrip)} className={`fl-trip-type ${form.roundTrip === roundTrip ? 'is-active' : ''}`} aria-pressed={form.roundTrip === roundTrip} disabled={busy} onClick={() => setForm({ ...form, roundTrip })}>{roundTrip ? '往返' : '单程'}</Button>)}</View><Text className='fl-secondary-text'>经济舱 · 人民币</Text></View>
@@ -77,7 +78,7 @@ export function LiveFlightExplorer({ client, dataset, onBack, onConversationChan
       </View>
       {busy ? <View className='fl-loading' role='status'><View className='fl-loading-line' /><Text>{progress}</Text><Button className='ux-text-button' onClick={cancel}>取消搜索</Button></View> : null}
       {result?.flightOptions ? <View className='fl-live-results'><FlightChoices result={result.flightOptions} selected={result.selectedFlight || null} disabled={saving || busy} locked={!!result.flightSelectionLocked} onSelect={select} /></View> : null}
-    </View>
+    </ScrollPanel>
     {picker === 'from' || picker === 'to' ? <FlightLocationPicker title={picker === 'from' ? '选择出发地' : '选择目的地'} initial='' client={client} onClose={() => setPicker(null)} onSelect={location => {
       setForm(current => picker === 'from' ? { ...current, from: location.value, fromCode: location.code, fromName: location.label } : { ...current, to: location.value, toCode: location.code, toName: location.label }); setPicker(null); setError('')
     }} /> : picker === 'departure' || picker === 'return' ? <FlightDatePicker departure={form.date} returning={form.returnDate} roundTrip={form.roundTrip} initialTarget={picker} onClose={() => setPicker(null)} onConfirm={(date, returnDate) => { setForm(current => ({ ...current, date, returnDate })); setPicker(null); setError('') }} /> : null}

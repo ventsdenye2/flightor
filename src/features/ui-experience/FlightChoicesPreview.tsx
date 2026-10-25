@@ -1,3 +1,4 @@
+import { ScrollPanel } from './ScrollPanel'
 import { useState } from 'react'
 import { Button, View } from '@tarojs/components'
 import { FlightChoices } from './FlightChoices'
@@ -28,8 +29,8 @@ export function FlightChoicesPreview({ dataset, onBack }: { dataset: FlightSearc
         departureLocal: `${returnDate}T09:00:00`, arrivalLocal: `${returnDate}T21:00:00`, segments: [], connections: [], baggage: null }]
     }))
   }
-  return <View className='ux-app'><PageHeader title='航班选项设计' onBack={onBack} /><View className='ux-scroll' style={{ padding: '0 18px 24px' }}>
+  return <View className='ux-app'><PageHeader title='航班选项设计' onBack={onBack} /><ScrollPanel className='ux-scroll' style={{ padding: '0 18px 24px' }}>
     <View className='fc-sorts'>{[false, true].map(value => <Button key={String(value)} className={roundTrip === value ? 'is-active' : ''} aria-pressed={roundTrip === value} onClick={() => { setRoundTrip(value); setSelected(null) }}>{value ? '往返样例' : '单程样例'}</Button>)}</View>
     <FlightChoices key={result.searchId} result={result} selected={selected} sample onSelect={option => setSelected(option ? { searchId: result.searchId, candidateId: option.id } : null)} />
-  </View></View>
+  </ScrollPanel></View>
 }

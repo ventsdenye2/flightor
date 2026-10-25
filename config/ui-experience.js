@@ -1,6 +1,12 @@
 const path = require('node:path')
+const fs = require('node:fs')
 const featureRoot = path.resolve(__dirname, '../src/features/ui-experience')
 const babelConfig = path.resolve(__dirname, '../babel.config.json')
+const assetRoot = path.resolve(__dirname, '../src/assets/ui-experience')
+const nativeAssets = fs.readdirSync(assetRoot, { withFileTypes: true })
+  .filter(entry => entry.isFile() && !['airport-coordinates.json', 'world-land.svg', 'world-plane.svg'].includes(entry.name))
+  .map(entry => entry.name)
+  .concat(fs.readdirSync(path.join(assetRoot, 'icons')).filter(name => name.endsWith('.png')).map(name => `icons/${name}`))
 
 /** Shared frontend: the Mini Program entry uses the same UI as H5. */
 module.exports = {
@@ -18,7 +24,8 @@ module.exports = {
   alias: { react: path.dirname(require.resolve('react/package.json')) },
   compiler: { type: 'webpack5', prebundle: { enable: false } },
   copy: {
-    patterns: [{ from: 'src/assets/ui-experience/', to: 'dist/weapp/assets/ui-experience/' }],
+    // Coordinates are already in JS; keep attribution but omit H5-only SVGs.
+    patterns: nativeAssets.map(name => ({ from: `src/assets/ui-experience/${name}`, to: `dist/weapp/assets/ui-experience/${name}` })),
     options: {}
   },
   mini: {

@@ -4,6 +4,8 @@
 
 ## 当前实现
 
+- 2026-10-25 微信入口适配：复用当前 H5 业务页面，增加原生滚动、聊天末尾锚点、胶囊/键盘布局和 PNG 资源，样例面板仅 `preview=1` 时开启。按用户选择绑定“寰宇咨询” `wxdf9ff3c30a1d9549`。实际验证与边界见 [微信适配](WECHAT_ADAPTATION.md)。
+
 - 原生机票观察器补齐中国国内chinaflights页面的JSON FlightListSearch，以SUCCESS、明确数量及最终轮询状态验证，不再因仅识别国际SSE而误报超时；查询方式矩阵见 [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)。
 
 - 机票结果导航现只等DOMContentLoaded，再独立验证真实航班响应，避免无关资源卡住整页load而误报超时；同航班技术经停单独保留城市/时长，不再误当缺少换乘航段。连续验证和限制见 [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)。

@@ -3,6 +3,6 @@
   "miniprogramRoot": "dist/weapp/",
   "compileType": "miniprogram",
   "projectname": "FlightOR Backend MVP",
-  "appid": "touristappid",
+  "appid": "wxdf9ff3c30a1d9549",
   "setting": { "es6": true, "minified": true, "urlCheck": true }
 }

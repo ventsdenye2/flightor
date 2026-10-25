@@ -31,8 +31,8 @@ type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onInput' | 
 export function Input({ ariaLabel, ariaRole, type = 'text', maxlength, onInput, onConfirm, confirmType: _confirmType, focus, ...props }: InputProps) {
   return <input {...props} aria-label={ariaLabel} role={ariaRole} type={type === 'digit' ? 'text' : type} inputMode={type === 'digit' ? 'decimal' : undefined} maxLength={maxlength} autoFocus={focus} onChange={event => { onInput?.({ detail: { value: event.target.value } }); props.onChange?.(event) }} onKeyDown={event => { props.onKeyDown?.(event); if (event.key === 'Enter' && !event.nativeEvent.isComposing) onConfirm?.({ detail: { value: event.currentTarget.value } }) }} />
 }
-type TextareaProps = Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onInput'> & TaroA11y & { maxlength?: number; autoHeight?: boolean; showConfirmBar?: boolean; confirmType?: string; focus?: boolean; onInput?: (event: InputEvent) => unknown; onConfirm?: (event: InputEvent) => unknown }
-export function Textarea({ ariaLabel, ariaRole, maxlength, autoHeight: _autoHeight, showConfirmBar: _showConfirmBar, confirmType: _confirmType, focus, onInput, onConfirm, ...props }: TextareaProps) {
+type TextareaProps = Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'onInput'> & TaroA11y & { maxlength?: number; autoHeight?: boolean; adjustPosition?: boolean; cursorSpacing?: number; showConfirmBar?: boolean; confirmType?: string; focus?: boolean; onInput?: (event: InputEvent) => unknown; onConfirm?: (event: InputEvent) => unknown }
+export function Textarea({ ariaLabel, ariaRole, maxlength, autoHeight: _autoHeight, adjustPosition: _adjustPosition, cursorSpacing: _cursorSpacing, showConfirmBar: _showConfirmBar, confirmType: _confirmType, focus, onInput, onConfirm, ...props }: TextareaProps) {
   const composing = useRef(false)
   return <textarea {...props} aria-label={ariaLabel} role={ariaRole} maxLength={maxlength} autoFocus={focus}
     onChange={event => { onInput?.({ detail: { value: event.target.value } }); props.onChange?.(event) }}

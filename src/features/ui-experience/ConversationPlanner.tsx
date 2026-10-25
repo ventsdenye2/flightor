@@ -1,3 +1,4 @@
+import { ScrollPanel } from './ScrollPanel'
 import { useEffect, useRef, useState } from 'react'
 import { Button, Text, Textarea, View } from '@tarojs/components'
 import { PlanCancellation } from './backendClient'
@@ -24,7 +25,6 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
   const selectedOption = selectedFlight && selectedFlight.searchId === flightOptions?.searchId ? flightOptions.options.find(option => option.id === selectedFlight.candidateId) : undefined
   const active = useRef<PlanCancellation | null>(null)
   const revision = useRef(0)
-  const scroll = useRef<any>(null)
   const tripCallback = useRef(onTrip)
   tripCallback.current = onTrip
   useEffect(() => {
@@ -37,7 +37,6 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
     } }).catch(() => { if (current && version === revision.current) setError('上次对话暂时无法载入，请刷新重试或重新开始。') }).finally(() => { if (current) setLoadingHistory(false) })
     return () => { current = false; active.current?.abort() }
   }, [client])
-  useEffect(() => { const element = scroll.current; if (messages.length && element?.scrollTo) element.scrollTo({ top: element.scrollHeight, behavior: 'smooth' }) }, [messages, stage, error])
   const send = async (action: 'chat' | 'plan' = 'chat') => {
     if (active.current || savingSelection || loadingHistory || (!draft.trim() && (action === 'chat' || !messages.length))) return
     const message = draft.trim() || (selectedOption && flightOptions ? flightSelectionMessage(flightOptions, selectedOption) : '请根据我们刚才聊的内容，现在开始规划行程。')
@@ -84,7 +83,7 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
   }
   return <>
     <PageHeader action={messages.length || error ? <Button className='ux-text-button' onClick={reset}>重新开始</Button> : undefined} />
-    <View className='ux-scroll pl-scroll' ref={scroll}>
+    <ScrollPanel className='ux-scroll pl-scroll' followKey={messages.length ? JSON.stringify([messages.map(message => message.id), stage, error]) : ''}>
       {!messages.length ? <View className='pl-welcome'>
         <Text className='pl-title'>这次，<Text className='pl-title-line'>想去哪？</Text></Text>
         <Text className='pl-intro'>先聊聊目的地、日期和预算。<Text className='pl-intro-line'>想好了，先比较航班，再安排怎么玩。</Text></Text>
@@ -102,9 +101,9 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
         {error ? <View className='pl-chat-error' role='alert'><Text>{error}</Text></View> : null}
       </View>}
       {!messages.length && error ? <View className='pl-chat-error' role='alert'><Text>{error}</Text></View> : null}
-    </View>
+    </ScrollPanel>
     <View className='pl-composer pl-chat-composer'>
-      <View className='pl-input-wrap'><Textarea className='pl-textarea' value={draft} maxlength={4000} ariaLabel='旅行消息' placeholder={messages.length ? '继续聊聊，或告诉我现在开始规划…' : '最近想去哪里，或者有什么旅行想法？'} onInput={event => setDraft(event.detail.value)} onConfirm={() => { if (!busy) void send() }} /><View className='pl-composer-actions'>{loadingHistory ? <Text className='pl-composer-hint'>正在载入对话…</Text> : null}<Button className='ux-icon-button pl-chat-send' ariaLabel={busy ? '停止生成' : '发送消息'} disabled={!busy && (loadingHistory || !draft.trim())} onClick={() => busy ? cancel() : send()}>{busy ? <View className='pl-stop-icon' /> : <Icon name='arrow-right' />}</Button></View></View>
+      <View className='pl-input-wrap'><Textarea className='pl-textarea' value={draft} maxlength={4000} adjustPosition={false} confirmType='send' showConfirmBar={false} cursorSpacing={16} ariaLabel='旅行消息' placeholder={messages.length ? '继续聊聊，或告诉我现在开始规划…' : '最近想去哪里，或者有什么旅行想法？'} onInput={event => setDraft(event.detail.value)} onConfirm={() => { if (!busy) void send() }} /><View className='pl-composer-actions'>{loadingHistory ? <Text className='pl-composer-hint'>正在载入对话…</Text> : null}<Button className='ux-icon-button pl-chat-send' ariaLabel={busy ? '停止生成' : '发送消息'} disabled={!busy && (loadingHistory || !draft.trim())} onClick={() => busy ? cancel() : send()}>{busy ? <View className='pl-stop-icon' /> : <Icon name='arrow-right' />}</Button></View></View>
       {messages.length ? <Button className='ux-text-button pl-chat-plan' disabled={busy || loadingHistory || savingSelection} onClick={() => send('plan')}>生成行程<Icon name='arrow-right' /></Button> : null}
     </View>
   </>

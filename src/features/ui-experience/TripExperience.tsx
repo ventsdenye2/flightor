@@ -1,3 +1,4 @@
+import { ScrollPanel } from './ScrollPanel'
 import { useEffect, useRef, useState } from 'react'
 import { View, Text, Button } from '@tarojs/components'
 import type { Activity, FlightLegDisplay, MediaPresentation, TripDay, TripPresentation } from './presentation'
@@ -126,7 +127,7 @@ function TripContent({ trip, onCoverResolved, loadPlaceMedia, loadPlaceLocation,
       {tab === 'overview' ? onBack ? <><Button className='ux-icon-button' ariaLabel='返回上一页' onClick={onBack}><Icon name='chevron-left' /></Button><Text className='ux-header-title'>{trip.destination} · 旅行详情</Text></> : <View className='ux-wordmark'><Icon name='plane' /><Text>FlightOR</Text></View> : <><Button className='ux-icon-button' ariaLabel='返回行程概览' onClick={() => setTab('overview')}><Icon name='chevron-left' /></Button><Text className='ux-header-title'>{trip.destination} · {tab === 'days' ? '每日行程' : '航班安排'}</Text></>}
       <Button className={`ux-icon-button ${saved ? 'is-saved' : ''}`} ariaLabel={saved ? '取消收藏行程' : '收藏行程'} aria-pressed={saved} onClick={() => { setSaved(!saved); notify(saved ? '已取消收藏' : '已收藏，仅在本次浏览保留') }}><Icon name={saved ? 'bookmark-filled' : 'bookmark'} /></Button>
     </View>
-    <View className='ux-scroll' key={tab}>
+    <ScrollPanel className='ux-scroll' key={tab}>
       {partial && tab !== 'overview' ? <View className='ux-progress' role='status'><View className='ux-progress-dot' /><View><Text>{trip.flights.length ? '已有航班参考，日程仍在补充' : '日程正在补充'}</Text><Text className='ux-caption'>{completed.length ? `已完成 ${completed.join('、')}，可以先查看和调整。` : '每日安排尚未完成，请稍后再查看。'}</Text></View></View> : null}
       <View className='ux-tabs' role='tablist' ariaLabel='行程内容'>
         {([{ id: 'overview', label: '概览' }, { id: 'days', label: '每日行程' }, { id: 'flights', label: '航班' }] as const).map(item => <Button aria-selected={tab === item.id} key={item.id} className={`ux-tab ${tab === item.id ? 'is-active' : ''}`} onClick={() => setTab(item.id)}>{item.label}</Button>)}
@@ -142,7 +143,7 @@ function TripContent({ trip, onCoverResolved, loadPlaceMedia, loadPlaceLocation,
       </> : <View className='ux-flight-page'>{trip.flights.length ? trip.flights.map(flight => <FlightTicket key={flight.id} flight={flight} expanded onOpenSource={onOpenSource} />) : <EmptyState icon='plane' title='还没有航班安排' description='出发日期、班次与价格都留待确认。' />}{trip.returnNote ? <View className='ux-return'><Icon name='plane' /><View><Text className='ux-section-title'>返程安排</Text><Text className='ux-muted'>{trip.returnNote}</Text></View></View> : null}</View>}
       {undo && tab === 'days' ? <View className='ux-undo' role='status'><Text>日程已调整</Text><Button className='ux-text-button' onClick={() => { setDays(undo); setUndo(null); notify('已恢复上一次安排') }}>撤销调整</Button></View> : null}
       {tab !== 'overview' ? <View className='ux-footer-note'><Text>{trip.provenance === 'dsh' ? '按需求规划 · 具体安排与报价以出发前核实为准' : '示例行程 · 价格与安排用于界面预览'}</Text><Button className='ux-text-button' onClick={() => setSheet({ kind: 'credits' })}>图片与来源<Icon name='external' /></Button></View> : null}
-    </View>
+    </ScrollPanel>
     {!embedded ? <View className='ux-bottom-nav' ariaLabel='主导航'>{[{ name: 'home', label: '规划' }, { name: 'compass', label: '探索' }, { name: 'calendar', label: '行程' }, { name: 'user', label: '我的' }].map(item => <Button key={item.name} className={item.label === '行程' ? 'is-active' : ''} onClick={() => item.label === '行程' ? setTab('overview') : onNavigate?.()}><Icon name={item.name} /><Text>{item.label}</Text></Button>)}</View> : null}
     {notice ? <View className='ux-toast' role='status'><Icon name='check' /><Text>{notice}</Text></View> : null}
     {sheet ? <View className='ux-modal' onClick={closeSheet}>

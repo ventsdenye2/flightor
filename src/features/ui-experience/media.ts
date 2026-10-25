@@ -5,6 +5,8 @@ export const media = {
   alfama: '/assets/ui-experience/alfama.jpg',
   sunset: '/assets/ui-experience/sunset.jpg'
 }
+export const worldLand = '/assets/ui-experience/world-land.svg'
+export const worldPlane = '/assets/ui-experience/world-plane.svg'
 export const iconPath = (name: string) => `/assets/ui-experience/icons/${name}.svg`
 export const photoDescriptions = {
   hero: '里斯本城市与河岸 · 氛围参考',

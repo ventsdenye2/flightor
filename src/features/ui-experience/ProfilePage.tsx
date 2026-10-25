@@ -1,3 +1,4 @@
+import { ScrollPanel } from './ScrollPanel'
 import { useState } from 'react'
 import { Button, Input, Text, View } from '@tarojs/components'
 import { Icon, Photo } from './VisualMedia'
@@ -25,7 +26,7 @@ export function ProfilePage({ savedCount, alertCount, onCollections, onAlerts, o
   }
   const titles: Record<ProfileView, string> = { home: '我的', preferences: '旅行偏好', settings: '设置', about: '关于 FlightOR', privacy: '隐私与数据' }
   return <><PageHeader title={titles[page]} onBack={page === 'home' ? undefined : () => changePage(page === 'privacy' ? 'settings' : 'home')} action={page === 'home' ? <Button className='ux-icon-button' ariaLabel='打开设置' onClick={() => changePage('settings')}><Icon name='settings' /></Button> : undefined} />
-    <View className='ux-scroll' key={page}>
+    <ScrollPanel className='ux-scroll' key={page}>
       {page === 'home' ? <>
         <View className='pr-identity'><View className='pr-avatar'><Icon name='user' /></View><View><Text className='ui-display'>{signedIn ? name : '你好，旅行者'}</Text><Text className='ux-muted'>{signedIn ? '演示账户 · 仅本次预览' : '把喜欢的旅行方式，留在这里。'}</Text><Button className='ux-text-button' onClick={() => { setDraftName(name); setDialog(signedIn ? 'name' : 'login') }}>{signedIn ? '编辑昵称' : '登录与同步'}<Icon name='chevron-right' /></Button></View></View>
         <View className='pr-shortcuts'><Button onClick={onTrips}><Icon name='calendar' /><Text>我的行程</Text><Text className='ux-caption'>继续安排</Text></Button><Button onClick={onCollections}><Icon name='bookmark' /><Text>我的收藏</Text><Text className='ux-caption'>{savedCount} 项心动</Text></Button><Button onClick={onAlerts}><Icon name='bell' /><Text>价格提醒</Text><Text className='ux-caption'>{alertCount} 条设定</Text></Button></View>
@@ -51,7 +52,7 @@ export function ProfilePage({ savedCount, alertCount, onCollections, onAlerts, o
         <Photo src={media.hero} description='里斯本城市与河岸 · 氛围参考' className='pr-about-photo' />
         <View className='ui-page pr-prose'><View className='ux-wordmark'><Icon name='plane' /><Text>FlightOR</Text></View><Text className='ui-display pr-about-title'>远方很大，<Text className='pr-block'>按你的节奏出发。</Text></Text><Text>从一个旅行念头，到能慢慢调整的日程。把航班、去处和时间放在一起，让你看清选择，再决定下一步。</Text><SectionHeading title='有依据，也留余地' /><Text>来源、价格状态与未确认的信息都会跟随内容展示。示例不代表实时票价，收藏也不代表预订。</Text><SectionHeading title='当前版本' /><Text className='ux-muted'>UI Experience v1 · 手机优先界面预览</Text><Button className='ux-secondary pr-about-action' onClick={() => onPlan('想安排一次轻松的旅行。')}>开始一次规划</Button></View>
       </>}
-    </View>
+    </ScrollPanel>
     {dialog ? <Sheet title={dialog === 'login' ? '把旅行，留在身边' : dialog === 'name' ? '怎么称呼你？' : dialog === 'logout' ? '退出演示账户' : '清空本次收藏'} onClose={() => setDialog(null)}>
       {dialog === 'login' ? <><Text className='ux-muted'>正式登录后可同步行程与偏好。</Text><View className='pr-login-illustration'><Icon name='user' /><Icon name='arrow-right' /><Icon name='calendar' /></View><Text className='ui-helper'>当前只展示登录前后的界面，不获取微信身份或手机号。</Text><Button className='ux-primary' onClick={() => { setSignedIn(true); setDialog(null) }}>体验登录后的界面</Button><Button className='ux-text-button pr-center-action' onClick={() => setDialog(null)}>继续以访客浏览</Button></> : dialog === 'name' ? <><View className='ui-form-field'><Text>昵称</Text><Input ariaLabel='旅行者昵称' value={draftName} maxlength={16} onInput={event => setDraftName(event.detail.value)} /></View><Button className='ux-primary' disabled={!draftName.trim()} onClick={() => { setName(draftName.trim()); setDialog(null) }}>保存昵称</Button></> : <><Text className='ux-muted'>{dialog === 'logout' ? '仅退出演示状态，当前预览的行程和收藏仍保留。' : '将清空本次预览里的行程和灵感收藏，行程内容不受影响。'}</Text><View className='ui-split-actions'><Button className='ux-secondary' onClick={() => setDialog(null)}>取消</Button><Button className='ux-primary' onClick={() => { if (dialog === 'logout') setSignedIn(false); else { onClearLibrary(); setNotice('已清空本次收藏') }; setDialog(null) }}>{dialog === 'logout' ? '退出' : '清空收藏'}</Button></View></>}
     </Sheet> : null}

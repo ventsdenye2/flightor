@@ -1,3 +1,4 @@
+import { ScrollPanel } from './ScrollPanel'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Input, Text, View } from '@tarojs/components'
 import { DemoNote, EmptyState, PageHeader, SectionHeading, Sheet } from './SharedUI'
@@ -93,7 +94,7 @@ function SampleFlightExplorer({ onBack, onOpenTrip, onCreateAlert, searchDataset
   }
   return <>
     <PageHeader title='找一张合适的机票' onBack={onBack} />
-    <View className='ux-scroll fl-page'>
+    <ScrollPanel className='ux-scroll fl-page'>
       <View className='fl-intro'><Text className='fl-title'>让出发，刚刚好。</Text><Text className='fl-subtitle'>在价格、时间与中转之间，找到你的平衡。</Text></View>
       <View className='fl-search-box'>
         <View className='fl-search-top'><Text className='fl-tag'>单程</Text><Text className='fl-secondary-text'>经济舱 · 人民币</Text></View>
@@ -135,7 +136,7 @@ function SampleFlightExplorer({ onBack, onOpenTrip, onCreateAlert, searchDataset
         <DemoNote text={datasetNote} />
         <Button className='fl-demo-error' onClick={() => beginSearch(true, search)}>体验搜索失败与重试</Button>
       </> : null}
-    </View>
+    </ScrollPanel>
 
     {status === 'ready' && compared.length > 0 ? <View className='fl-compare-dock'><View><Text className='fl-dock-title'>已选 {compared.length} / 2 个航班</Text><Button className='fl-clear-compare' onClick={() => setCompared([])}>清空选择</Button></View><Button className='ux-primary' disabled={compared.length < 2} onClick={() => setSheet('compare')}>{compared.length < 2 ? '再选一个比较' : '开始比较'}</Button></View> : null}
     {detail ? <Sheet title='航班详情' onClose={() => setDetail(null)}>

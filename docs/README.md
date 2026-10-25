@@ -10,6 +10,7 @@
 - [PLACE_RESOLVER](PLACE_RESOLVER.md)：Wikimedia 离线索引、地点消歧、统一坐标与图片查询及实测边界。
 - [PLACE_LOOKUP_BATCH](PLACE_LOOKUP_BATCH.md)：当前审核 Session 批量工具、Enterprise 优先回退、成功字段锁定、查询预算和后端合并。
 - [deploy](deploy.md)：依赖、双端启动、构建及微信导入。
+- [WECHAT_ADAPTATION](WECHAT_ADAPTATION.md)：H5 到小程序的平台适配、AppID 与模拟器验收。
 - [BACKEND_MVP](BACKEND_MVP.md)：后续接入位置和待开发事项。
 - [DSH_MVP](DSH_MVP.md)：本轮双 DSH Agent 最小接入与实际验证。
 - [AIRPORT_LOCATIONS](AIRPORT_LOCATIONS.md)：全球机场目录、中文别名、城市聚合、数据维护与验收边界。
