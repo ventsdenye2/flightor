@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button, Text, View } from '@tarojs/components'
 import { Sheet } from './SharedUI'
 import { Icon } from './VisualMedia'
+import { PlanCancellation } from './backendClient'
+import type { PlanSignal } from './backendClient'
 import { arrivalDayOffset, flightDate, flightDuration, flightJourneys, flightPrice, flightReasons, flightStops, flightTime, sortFlightOptions, transferCaution } from './flightOptions'
 import type { FlightJourney, FlightOption, FlightOptions, FlightOptionSort, FlightSelection } from './flightOptions'
 import './flight-choices.scss'
@@ -15,10 +17,25 @@ function JourneySchedule({ journey, roundTrip }: { journey: FlightJourney; round
   </View>
 }
 
-export function FlightChoices({ result, selected, disabled = false, locked = false, sample = false, onSelect }: { result: FlightOptions; selected: FlightSelection | null; disabled?: boolean; locked?: boolean; sample?: boolean; onSelect: (option: FlightOption | null) => void; onOpenSource?: (url: string) => void }) {
+export function FlightChoices({ result, selected, disabled = false, locked = false, sample = false, onSelect, onLoadDetails }: { result: FlightOptions; selected: FlightSelection | null; disabled?: boolean; locked?: boolean; sample?: boolean; onSelect: (option: FlightOption | null) => void; onLoadDetails?: (selection: FlightSelection, signal: PlanSignal) => Promise<FlightOption>; onOpenSource?: (url: string) => void }) {
   const [sort, setSort] = useState<FlightOptionSort>('recommended')
   const [detail, setDetail] = useState<FlightOption | null>(null)
   const [all, setAll] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState('')
+  const detailRequest = useRef<PlanCancellation | null>(null)
+  useEffect(() => () => { detailRequest.current?.abort() }, [])
+  const dismiss = () => { detailRequest.current?.abort(); detailRequest.current = null; setDetail(null); setDetailLoading(false); setDetailError('') }
+  const openDetails = async (option: FlightOption) => {
+    dismiss(); setDetail(option)
+    if (option.detailsState !== 'deferred' || !onLoadDetails) return
+    const request = new PlanCancellation(); detailRequest.current = request; setDetailLoading(true)
+    try {
+      const loaded = await onLoadDetails({ searchId: result.searchId, candidateId: option.id }, request.signal)
+      if (!request.signal.aborted) setDetail(loaded)
+    } catch (error) { if (!request.signal.aborted) setDetailError(error instanceof Error ? error.message : '详情暂时无法读取，请稍后重试') }
+    finally { if (detailRequest.current === request) { detailRequest.current = null; setDetailLoading(false) } }
+  }
   const options = sortFlightOptions(result.options, sort)
   const recommended = sortFlightOptions(result.options, 'recommended')[0]
   const selectedId = selected?.searchId === result.searchId ? selected.candidateId : null
@@ -35,10 +52,12 @@ export function FlightChoices({ result, selected, disabled = false, locked = fal
       {flightJourneys(option).map((journey, index) => <JourneySchedule key={index} journey={journey} roundTrip={roundTrip} />)}
       <View className='fc-reasons'><Text className='fc-reason-label'>推荐理由</Text>{flightReasons(option, result.options).map(reason => <Text key={reason} className='fc-reason'>{reason}</Text>)}</View>
       <View className='fc-card-foot'><View><Text className='fc-price'>{flightPrice(option)}<Text>{roundTrip ? ' / 人 · 往返' : ' / 人'}</Text></Text><Text className='fc-small'>{option.currency} · {sample ? '设计样例' : '查询快照'}</Text></View><Button className={`fc-select ${chosen ? 'is-selected' : ''}`} aria-pressed={chosen} ariaLabel={`${chosen ? locked ? '已选定' : '取消选择' : '选择'}航班 ${option.airlines.join(' / ')} ${flightTime(option.departureLocal)}`} disabled={disabled || locked} onClick={() => { if (!disabled && !locked) onSelect(chosen ? null : option) }}><View className='fc-radio'>{chosen ? <Icon name='check' /> : null}</View>{chosen ? roundTrip ? '已选往返' : '已选这班' : roundTrip ? '选择往返' : '选择这班'}</Button></View>
-      <Button className='fc-detail' ariaLabel={`查看航班详情 ${option.airlines.join(' / ')} ${flightTime(option.departureLocal)}`} onClick={() => setDetail(option)}>航段、行李与中转<Icon name='chevron-right' /></Button>
+      <Button className='fc-detail' disabled={disabled || detailLoading} ariaLabel={`查看航班详情 ${option.airlines.join(' / ')} ${flightTime(option.departureLocal)}`} onClick={() => { void openDetails(option) }}>航段、行李与中转<Icon name='chevron-right' /></Button>
     </View> })}</View>
     {options.length > 3 ? <Button className='fc-more' onClick={() => setAll(!all)}>{all ? '收起其他航班' : `查看其余 ${options.length - 3} 个航班`}<Icon name='chevron-right' /></Button> : null}
-    {detail ? <Sheet title='航班详情' onClose={() => setDetail(null)}>
+    {detail ? <Sheet title='航班详情' onClose={dismiss}>
+      {detailLoading ? <View role='status'><Text>正在读取航段、行李与中转…</Text></View> : null}
+      {detailError ? <View role='alert'><Text>{detailError}</Text><Button onClick={() => { void openDetails(detail) }}>重试详情</Button></View> : null}
       <View className='fc-detail-heading'><Text className='fc-title'>{detail.departureAirport || result.origin} {roundTrip ? '⇄' : '→'} {detail.arrivalAirport || result.destination}</Text><Text>{result.date}{roundTrip ? ` / ${result.returnDate}` : ''} · {roundTrip ? '往返飞行合计 ' : ''}{flightDuration(detail.durationMinutes)} · {flightStops(detail.stopCount, detail.segments.reduce((sum, segment) => sum + (segment.stops?.length || 0), 0))}</Text><Text className='fc-price'>{flightPrice(detail)}<Text> / 成人{roundTrip ? ' · 往返' : ''} · {detail.currency}</Text></Text></View>
       {flightJourneys(detail).map((journey, journeyIndex) => <View key={journeyIndex}>
       <Text className='fc-reason-label'>{roundTrip ? journey.direction === 'return' ? '返程' : '去程' : '航段'} · 均为当地日期和时刻</Text><JourneySchedule journey={journey} roundTrip={roundTrip} />
@@ -46,7 +65,7 @@ export function FlightChoices({ result, selected, disabled = false, locked = fal
       <View className='fc-baggage'><Text>随身行李：{journey.baggage?.carryOn || '待确认'}</Text><Text>托运行李：{journey.baggage?.checked || '待确认'}</Text><Text>退改签：待出票页面确认</Text></View>
       </View>)}
       {transferCaution(detail) ? <View className='fc-caution'>{transferCaution(detail)}。请预留衔接时间，并确认所需入境或过境手续。</View> : null}
-      {locked ? null : <><Button className='ux-primary fc-detail-select' disabled={disabled} onClick={() => picked(detail)}>{selectedId === detail.id ? '保留已选航班' : roundTrip ? '选择这组往返' : '选择这班航班'}</Button><Text className='fc-disclosure'>选择只记录偏好，不会开始规划或预订。</Text></>}
+      {locked ? null : <><Button className='ux-primary fc-detail-select' disabled={disabled || detailLoading || !!detailError} onClick={() => picked(detail)}>{selectedId === detail.id ? '保留已选航班' : roundTrip ? '选择这组往返' : '选择这班航班'}</Button><Text className='fc-disclosure'>选择前核对价格，只记录偏好，不会开始规划或预订。</Text></>}
     </Sheet> : null}
   </View>
 }

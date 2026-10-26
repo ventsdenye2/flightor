@@ -24,7 +24,7 @@ export function presentFlightOptions(result) {
     adults: result.query.adults || 1, cabin: result.query.cabin || 'economy',
     options: result.candidates.map(item => ({
       ...(Array.isArray(item.journeys) ? { journeys: item.journeys.map(presentJourney) } : {}),
-      id: item.id, airlines: item.airlines || [], amount: item.price?.amount ?? null, currency: item.price?.currency || result.query.currency,
+      id: item.id, ...(item.detailsState ? { detailsState: item.detailsState } : {}), airlines: item.airlines || [], amount: item.price?.amount ?? null, currency: item.price?.currency || result.query.currency,
       departureAirport: item.departureAirport || null, arrivalAirport: item.arrivalAirport || null,
       departureLocal: item.departureLocal || null, arrivalLocal: item.arrivalLocal || null,
       durationMinutes: item.durationMinutes ?? null, stopCount: item.stopCount ?? null,

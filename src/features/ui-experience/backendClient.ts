@@ -96,7 +96,8 @@ export interface FlightLocation {
 export interface ConversationClient {
   load: () => Promise<Conversation | null>
   reset: () => void
-  selectFlight: (selection: FlightSelection | null) => Promise<Conversation>
+  selectFlight: (selection: FlightSelection | null, signal?: PlanSignal) => Promise<Conversation>
+  loadFlightDetails?: (selection: FlightSelection, signal: PlanSignal) => Promise<Conversation>
   send: (message: string, progress: (text: string, update: ConversationUpdate) => void, signal: PlanSignal, action?: 'chat' | 'plan') => Promise<ConversationResult>
   searchFlights?: (query: FlightSearchQuery, progress: (text: string) => void, signal: PlanSignal) => Promise<Conversation>
   searchLocations?: (query: string) => Promise<FlightLocation[]>
@@ -107,9 +108,14 @@ export function createConversationClient(transport: BackendTransport, storage: {
     async searchLocations(query) { return (await transport('GET', '/api/flight-locations?q=' + encodeURIComponent(query))).locations },
     async load() { return conversationId ? transport('GET', '/api/conversations/' + conversationId) : null },
     reset() { conversationId = null; storage.clear() },
-    async selectFlight(selection) {
+    async selectFlight(selection, signal) {
       if (!conversationId) throw Error('请先查询航班')
+      if (selection) return (await pollRun(transport, '/api/flights/details', { conversationId, selection, select: true }, signal || new PlanCancellation().signal, () => {})).conversation
       return transport('POST', '/api/conversations/' + conversationId + '/flight-selection', { selection })
+    },
+    async loadFlightDetails(selection, signal) {
+      if (!conversationId) throw Error('请先查询航班')
+      return (await pollRun(transport, '/api/flights/details', { conversationId, selection, select: false }, signal, () => {})).conversation
     },
     async searchFlights(query, progress, signal) {
       const run = await pollRun(transport, '/api/flights/search', { query, conversationId }, signal, run => {

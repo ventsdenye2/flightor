@@ -45,7 +45,7 @@ node dist/cli.js locations
 node dist/cli.js details --search-id <searchId> --candidate-id <candidateId>
 ```
 
-退出码：0 为完整查询或页面明确无结果；2 为部分结果；1 为错误、访问限制或取消。无结果应读取 `status: no_results`，不能只看退出码。`details` 读取已有查询快照，不会刷新票价；超过 5 分钟返回 `stale: true`。
+退出码：0 为完整查询或页面明确无结果；2 为部分结果；1 为错误、访问限制或取消。无结果应读取 `status: no_results`，不能只看退出码。默认查询返回摘要（`resultLevel=summary`、`detailsState=deferred`）；`details` 对未读取详情的候选重新定位并核对列表/抽屉票价，只读取这一条。已读取详情默认返回快照，超过5分钟标为`stale`；`details --refresh`强制重新核对，`search --with-details`保留原完整提取供对照。票价变化须重新查询，不保证结算价。
 
 ## DSH 接入
 
@@ -104,7 +104,7 @@ FlightOR 的 DSH 后端可以调用这个 API，再按自身工具注册接口�
 - 每段起降时间保留当地日期时间和 IANA 时区。未知机场时区为 null。自行转机、行李和重新托运等字段只依据详情文本，未知值为 null。
 - 所有候选都会尝试展开详情。详情缺失或发生候选变化会使结果变为 `partial`，并返回原因。
 - 同一个实例同时仅运行一个查询，重叠调用返回 `BUSY`。不同安装 / 服务实例使用各自 artifact 目录。
-- `get_flight_details` 读取保存的快照；需要新报价时重新调用 `search_flights`。
+- `get_flight_details` 按需读取单条详情；已取得详情默认读取保存的快照，需新报价时重新查询。
 
 早期默认 HeadlessChrome 设置的测试返回了 Trip.com 拦截。本实现采用已成功样本的配置：从当前安装的 Chrome 读取 User-Agent，仅将其中的 HeadlessChrome 改为 Chrome，并使用正常首页搜索流程。没有代理轮换、验证码自动处理、第三方 stealth 插件或导入浏览器登录数据。实测可用不代表任何网络或未来页面版本都可用。
 

@@ -7,6 +7,17 @@ import { repo, dataRoot } from './paths.mjs'
 
 const executeFile = promisify(execFile)
 
+export async function executeFlightDetails(args, { signal, execute = executeFile, refresh = false } = {}) {
+  const cli = path.join(repo, 'trip-flight-tool/dist/cli.js')
+  const argv = [cli, 'details', '--search-id', args.searchId, '--candidate-id', args.candidateId]
+  if (refresh) argv.push('--refresh')
+  let stdout
+  try { stdout = (await execute(process.execPath, argv, { cwd: path.dirname(cli), signal, timeout: 205000, maxBuffer: 2e6, windowsHide: true })).stdout }
+  catch (error) { signal?.throwIfAborted(); if (!error.stdout) throw error; stdout = error.stdout }
+  signal?.throwIfAborted()
+  return JSON.parse(stdout)
+}
+
 // The Agent tool and the manual search use the same CLI and snapshot store.
 export async function executeFlightSearch(args, { signal, root = dataRoot, execute = executeFile } = {}) {
   const cli = path.join(repo, 'trip-flight-tool/dist/cli.js')

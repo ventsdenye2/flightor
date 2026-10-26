@@ -55,6 +55,29 @@ async function main() {
   assert.equal(flightCalls[0].body.conversationId, 'current-conversation')
   assert.ok(flightCalls.every(call => call.route !== '/api/conversations/turns' && call.route !== '/api/runs'))
   console.log('PASS manual search polls the tool job, retains the conversation and never creates a planning request')
+  const detailCalls = []
+  const detailClient = createConversationClient(async (method, route, body) => {
+    detailCalls.push({ method, route, body })
+    if (method === 'POST') return { id: 'detail-job' }
+    return { stage: 'completed', conversation: { id: 'current-conversation', messages: [], selectedFlight: { searchId: 'search', candidateId: 'candidate' } } }
+  }, { get: () => 'current-conversation', set: () => {}, clear: () => {} })
+  const selection = { searchId: 'search', candidateId: 'candidate' }
+  await detailClient.loadFlightDetails(selection, new PlanCancellation().signal)
+  await detailClient.selectFlight(selection)
+  assert.equal(detailCalls[0].route, '/api/flights/details'); assert.equal(detailCalls[0].body.select, false)
+  assert.equal(detailCalls[2].body.select, true)
+  assert.ok(detailCalls.every(call => call.route !== '/api/conversations/turns' && !call.route.endsWith('/flight-selection')))
+  const detailAbort = new PlanCancellation(); let completeDetail, detailCancelled = false
+  const cancellingDetails = createConversationClient(async (method) => {
+    if (method === 'POST') return { id: 'cancel-detail' }
+    if (method === 'DELETE') { detailCancelled = true; return {} }
+    return new Promise(resolve => { completeDetail = resolve })
+  }, { get: () => 'current-conversation', set: () => {}, clear: () => {} })
+  const pendingSelection = cancellingDetails.selectFlight(selection, detailAbort.signal)
+  await new Promise(resolve => setTimeout(resolve, 0)); detailAbort.abort()
+  await assert.rejects(pendingSelection, /已取消/); assert.equal(detailCancelled, true)
+  completeDetail({ stage: 'completed', conversation: { id: 'late' } })
+  console.log('PASS deferred details and selection use cancellable async price-check tasks without planning')
   const cancelledChat = new PlanCancellation()
   let resolveTurn, posted
   const lateChat = createConversationClient(async (method) => {

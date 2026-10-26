@@ -10,6 +10,7 @@ import { loadPlaceMedia } from './place-media.mjs'
 import { loadPlaceLocation } from './place-locations.mjs'
 import { manualFlightQuery, runManualFlightSearch } from './manual-flight-search.mjs'
 import { searchFlightLocations } from './flight-locations.mjs'
+import { runFlightDetails } from './flight-details.mjs'
 
 const runs = new Map()
 await fs.mkdir(path.join(dataRoot, 'runs'), { recursive: true })
@@ -57,13 +58,15 @@ const server = http.createServer(async (req, res) => {
     }
     const isConversation = url.pathname === '/api/conversations/turns'
     const isFlightSearch = url.pathname === '/api/flights/search'
-    if (req.method === 'POST' && (url.pathname === '/api/runs' || isConversation || isFlightSearch)) {
+    const isFlightDetails = url.pathname === '/api/flights/details'
+    if (req.method === 'POST' && (url.pathname === '/api/runs' || isConversation || isFlightSearch || isFlightDetails)) {
       let body = ''
       for await (const chunk of req) { body += chunk; if (body.length > 16000) return send(res, 413, { error: 'Request too large' }) }
       const input = JSON.parse(body)
+      if (isFlightDetails && (!/^[a-f\d-]{36}$/i.test(input.conversationId || '') || !/^[a-f\d-]{36}$/i.test(input.selection?.searchId || '') || !/^[a-f\d]{16}$/i.test(input.selection?.candidateId || '') || typeof input.select !== 'boolean')) return send(res, 400, { error: '无效的航班详情请求' })
       const query = isFlightSearch ? manualFlightQuery(input.query) : undefined
       const message = isConversation ? input.message : input.prompt
-      if (!isFlightSearch && (typeof message !== 'string' || !message.trim() || message.length > 4000)) return send(res, 400, { error: '请输入1到4000字的消息' })
+      if (!isFlightSearch && !isFlightDetails && (typeof message !== 'string' || !message.trim() || message.length > 4000)) return send(res, 400, { error: '请输入1到4000字的消息' })
       if (isConversation && input.action && !['chat', 'plan'].includes(input.action)) return send(res, 400, { error: '无效的对话操作' })
       if ((isConversation || isFlightSearch) && input.conversationId) {
         let conversation
@@ -73,6 +76,7 @@ const server = http.createServer(async (req, res) => {
       if ([...runs.values()].some(item => !['completed', 'failed', 'cancelled'].includes(item.run.stage))) return send(res, 409, { error: '本地 MVP 当前一次运行一个请求，请等待或取消当前任务' })
       const run = { id: crypto.randomUUID(), prompt: isConversation ? undefined : message, message: isConversation ? message : undefined, conversationId: input.conversationId, action: input.action || 'chat', constraints: input.constraints || {}, stage: 'queued', createdAt: new Date().toISOString() }
       if (isFlightSearch) run.query = query
+      if (isFlightDetails) { run.selection = input.selection; run.select = input.select }
       if (isConversation && input.flightSelection) run.flightSelection = input.flightSelection
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(Error('MVP 总运行时间超过12分钟')), 720000)
@@ -80,7 +84,7 @@ const server = http.createServer(async (req, res) => {
       runs.set(run.id, entry)
       await persist(run)
       send(res, 202, publicRun(run))
-      entry.done = (isFlightSearch ? runManualFlightSearch : isConversation ? runConversation : runPlan)(run, { signal: controller.signal, onChange: persist }).catch(error => console.error(`[${run.id}] ${error.message.slice(0, 350)}`)).finally(() => clearTimeout(timeout))
+      entry.done = (isFlightDetails ? runFlightDetails : isFlightSearch ? runManualFlightSearch : isConversation ? runConversation : runPlan)(run, { signal: controller.signal, onChange: persist }).catch(error => console.error(`[${run.id}] ${error.message.slice(0, 350)}`)).finally(() => clearTimeout(timeout))
       return
     }
     const match = url.pathname.match(/^\/api\/runs\/([a-f\d-]{36})$/)

@@ -39,12 +39,28 @@ export class FlightTool {
     await this.session.save(this.loginContext);
     return {status:'saved',sessionPath:this.config.sessionPath};
   }
-  async getFlightDetails(input:unknown) {
+  async getFlightDetails(input:unknown,options:{signal?:AbortSignal;refresh?:boolean}={}) {
     const parsed=detailsInputSchema.safeParse(input);
     if(!parsed.success) return failure(new FlightError('INVALID_ARGUMENTS',parsed.error.message));
-    try {return await this.store.details(parsed.data);} catch(error) {return failure(error);}
+    try {
+      const saved=await this.store.load(parsed.data.searchId);
+      const candidate=saved.candidates.find(c=>c.id===parsed.data.candidateId);
+      if(!candidate)throw new FlightError('CANDIDATE_NOT_FOUND','Candidate does not belong to this search');
+      if(candidate.detailsState==='deferred'||options.refresh) {
+        const fresh=await this.searchFlights(saved.query,{signal:options.signal,detailCandidate:candidate});
+        if('code' in fresh)return fresh;
+        const checked=fresh.candidates.find(c=>c.id===candidate.id);
+        if(!checked?.details)throw new FlightError('DETAILS_UNAVAILABLE','Selected flight details could not be validated. Search again.');
+        if(checked.price.amount!==candidate.price.amount||checked.price.currency!==candidate.price.currency||(candidate.price.totalAmount!==undefined&&checked.price.totalAmount!==candidate.price.totalAmount))
+          throw new FlightError('PRICE_CHANGED','Selected flight price changed. Search again before choosing.');
+        options.signal?.throwIfAborted();
+        Object.assign(candidate,checked,{detailsState:'ready'});
+        await this.store.save(saved);
+      }
+      return await this.store.details(parsed.data);
+    } catch(error) {return failure(error);}
   }
-  async searchFlights(input:SearchInput|unknown,options:{signal?:AbortSignal}={}):Promise<SearchResult|ToolFailure> {
+  async searchFlights(input:SearchInput|unknown,options:{signal?:AbortSignal;withDetails?:boolean;detailCandidate?:Candidate}={}):Promise<SearchResult|ToolFailure> {
     const parsed=searchInputSchema.safeParse(input);
     if(!parsed.success) return failure(new FlightError('INVALID_ARGUMENTS',parsed.error.message));
     const query=parsed.data;
@@ -149,7 +165,9 @@ export class FlightTool {
           }
           const sorted=parsedCards.every((c,i)=>i===0||c.price.amount>=parsedCards[i-1].price.amount);
           if(!sorted) throw new FlightError('SORT_NOT_CONFIRMED','Displayed candidates are not in ascending price order; refusing to claim a cheapest fare');
-          const candidates=parsedCards.slice(0,query.maxResults);
+          const candidates=options.detailCandidate?parsedCards.filter(c=>c.id===options.detailCandidate!.id):parsedCards.slice(0,query.maxResults);
+          if(options.detailCandidate&&candidates.length!==1)throw new FlightError('RESULTS_CHANGED','Selected flight is no longer uniquely present. Search again.');
+          if(options.detailCandidate&&(candidates[0].price.amount!==options.detailCandidate.price.amount||(candidates[0].price.totalAmount!==undefined&&options.detailCandidate.price.totalAmount!==undefined&&candidates[0].price.totalAmount!==options.detailCandidate.price.totalAmount)))throw new FlightError('PRICE_CHANGED','Selected flight list price changed. Search again.');
           if(new Set(candidates.map(c=>c.id)).size!==candidates.length) throw new FlightError('AMBIGUOUS_CANDIDATES','Some displayed candidates cannot be distinguished safely; no details were attributed');
           const evidence={screenshotPath:join(dir,'search.png'),rawTextPath:join(dir,'search.txt'),resultPath:join(dir,'result.json')};
           await page.screenshot({path:evidence.screenshotPath});await writeFile(evidence.rawTextPath,text);
@@ -162,14 +180,18 @@ export class FlightTool {
           if(!stable) warnings.push('Result list did not stabilize before its step deadline.');
           if(state==='results' && providerResultCount===null) warnings.push('Provider result count was unavailable; completeness is unknown.');
           const sourceUrl=publicSearchUrl(page.url());
-          for(let i=0;i<candidates.length;i++) {
+          const withDetails=options.withDetails||!!options.detailCandidate;
+          if(!withDetails)candidates.forEach(c=>{c.detailsState='deferred';});
+          for(let i=0;withDetails&&i<candidates.length;i++) {
             signal.throwIfAborted();
             network.check();
             try {
               // Identity is checked again immediately before opening this position.
-              const current=(await readCandidates())[i];
+              const live=await readCandidates();
+              const position=options.detailCandidate?live.findIndex(c=>c.id===candidates[i].id):i;
+              const current=live[position];
               if(!current||current.id!==candidates[i].id) throw new FlightError('RESULTS_CHANGED','Candidate order changed while fetching details; rerun search',true);
-              await openCandidate(page,i);
+              await openCandidate(page,position);
               await page.getByText('Select Fare',{exact:true}).waitFor();
               await page.waitForFunction(()=>{const el=document.querySelector('.m-middle-flightInfo');return !!el&&(el as HTMLElement).innerText.length>10;},undefined,{timeout:this.config.stepTimeoutMs});
               let detailText=await page.locator('.ift-drawer[aria-hidden="false"]').innerText();
@@ -202,6 +224,7 @@ export class FlightTool {
               }
               if(totalAmount!==undefined)candidate.price.totalAmount=totalAmount;
               candidates[i].details=detail;
+              candidates[i].detailsState='ready';
               if(journeyDetails) candidates[i].journeys!.forEach((journey,j)=>{journey.details=journeyDetails![j];});
             } catch(error) {
               if(signal.aborted) throw signal.reason;
@@ -211,10 +234,10 @@ export class FlightTool {
               if(!signal.aborted && await page.getByText('Select Fare',{exact:true}).isVisible().catch(()=>false)) await closeDetails(page);
             }
           }
-          const complete=stable&&(state==='no_results'||(providerResultCount!==null&&candidates.every(c=>c.details!==null)));
+          const complete=stable&&(state==='no_results'||(providerResultCount!==null&&(!withDetails||candidates.every(c=>c.details!==null))));
           network.check();
           if(outbound)candidates.sort((a,b)=>a.price.amount-b.price.amount);
-          const result:SearchResult={schemaVersion:1,searchId,status:state==='no_results'?'no_results':complete?'complete':'partial',source:'Trip.com',quoteType:'search_quote',query,resolved,observedAt,sourceUrl,sort:'cheapest',providerResultCount,
+          const result:SearchResult={schemaVersion:1,resultLevel:withDetails?'details':'summary',searchId,status:state==='no_results'?'no_results':complete?'complete':'partial',source:'Trip.com',quoteType:'search_quote',query,resolved,observedAt,sourceUrl,sort:'cheapest',providerResultCount,
             coverage:outbound?'selected_outbound_return_options':state==='results'&&stable&&providerResultCount!==null?'provider_sorted_results':'unknown',lowestPriceVerified:!outbound&&state==='results'&&candidates.length>0&&stable&&sorted&&providerResultCount!==null,attempts,candidates,warnings,evidence};
           await this.store.save(result);phase='completed';return result;
         } catch(error) {

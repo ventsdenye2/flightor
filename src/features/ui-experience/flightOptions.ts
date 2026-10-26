@@ -9,6 +9,7 @@ export interface FlightJourney {
   baggage: { carryOn: string | null; checked: string | null } | null
 }
 export interface FlightOption extends FlightJourney {
+  detailsState?: 'deferred' | 'ready'
   id: string; amount: number | null; currency: string; journeys?: FlightJourney[]
 }
 export const flightJourneys = (option: FlightOption): FlightJourney[] => option.journeys?.length ? option.journeys : [option]

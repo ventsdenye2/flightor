@@ -62,6 +62,7 @@ export async function saveConversation(value, root) {
 export async function selectConversationFlight(id, selection, root = dataRoot) {
   const conversation = await loadConversation(id, root)
   if (conversation.flightSelectionLocked) throw Error('这组选项已随后续对话确定，不能更改；可以继续聊天查询新的航班。')
+  if (selection && conversation.flightOptions?.options.find(item => item.id === selection.candidateId)?.detailsState) throw Error('请先通过航班详情任务核对价格后再选择')
   conversation.selectedFlight = resolveFlightSelection(conversation, selection)
   updateFlightChoice(conversation, conversation.selectedFlight)
   conversation.updatedAt = new Date().toISOString()

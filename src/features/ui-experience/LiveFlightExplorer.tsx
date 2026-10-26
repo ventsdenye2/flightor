@@ -2,8 +2,8 @@ import { ScrollPanel } from './ScrollPanel'
 import { useEffect, useRef, useState } from 'react'
 import { Button, Text, View } from '@tarojs/components'
 import { PlanCancellation } from './backendClient'
-import type { Conversation, ConversationClient, FlightSearchQuery } from './backendClient'
-import type { FlightOption } from './flightOptions'
+import type { Conversation, ConversationClient, FlightSearchQuery, PlanSignal } from './backendClient'
+import type { FlightOption, FlightSelection } from './flightOptions'
 import type { FlightSearchDataset } from './flightSamples'
 import { validFlightDate } from './flightSamples'
 import { FlightChoices } from './FlightChoices'
@@ -46,16 +46,25 @@ export function LiveFlightExplorer({ client, dataset, onBack, onConversationChan
       if (active.current === controller) { active.current = null; setBusy(false); setProgress('') }
     }
   }
-  const cancel = () => { active.current?.abort(); active.current = null; setBusy(false); setProgress('') }
+  const cancel = () => { active.current?.abort(); active.current = null; setBusy(false); setSaving(false); setProgress('') }
   const select = async (option: FlightOption | null) => {
     if (!result?.flightOptions || saving || busy) return
+    const controller = new PlanCancellation(); active.current = controller
     setSaving(true); setError('')
     try {
-      const conversation = await client.selectFlight(option ? { searchId: result.flightOptions.searchId, candidateId: option.id } : null)
+      const conversation = await client.selectFlight(option ? { searchId: result.flightOptions.searchId, candidateId: option.id } : null, controller.signal)
       if (mounted.current) setResult(conversation)
       onConversationChange?.()
-    } catch (failure) { if (mounted.current) setError(failure instanceof Error ? failure.message : '选择未保存，请重试。') }
-    finally { if (mounted.current) setSaving(false) }
+    } catch (failure) { if (mounted.current && !controller.signal.aborted) setError(failure instanceof Error ? failure.message : '选择未保存，请重试。') }
+    finally { if (active.current === controller) { active.current = null; if (mounted.current) setSaving(false) } }
+  }
+  const loadDetails = async (selection: FlightSelection, signal: PlanSignal) => {
+    const conversation = await client.loadFlightDetails!(selection, signal)
+    if (signal.aborted || !mounted.current) throw Error('已取消')
+    setResult(conversation); onConversationChange?.()
+    const option = conversation.flightOptions?.options.find(item => item.id === selection.candidateId)
+    if (!option) throw Error('未取得航班详情')
+    return option
   }
   return <>
     <PageHeader title='找一张合适的机票' onBack={onBack} />
@@ -77,7 +86,8 @@ export function LiveFlightExplorer({ client, dataset, onBack, onConversationChan
         <Button className='ux-primary fl-search-button' disabled={busy || saving} onClick={search}><Icon name='plane' />{busy ? '正在查询…' : '搜索航班'}</Button>
       </View>
       {busy ? <View className='fl-loading' role='status'><View className='fl-loading-line' /><Text>{progress}</Text><Button className='ux-text-button' onClick={cancel}>取消搜索</Button></View> : null}
-      {result?.flightOptions ? <View className='fl-live-results'><FlightChoices result={result.flightOptions} selected={result.selectedFlight || null} disabled={saving || busy} locked={!!result.flightSelectionLocked} onSelect={select} /></View> : null}
+      {saving ? <View className='fl-loading' role='status'><Text>正在核对航班价格与详情…</Text><Button className='ux-text-button' onClick={cancel}>取消选择</Button></View> : null}
+      {result?.flightOptions ? <View className='fl-live-results'><FlightChoices result={result.flightOptions} selected={result.selectedFlight || null} disabled={saving || busy} locked={!!result.flightSelectionLocked} onSelect={select} onLoadDetails={client.loadFlightDetails ? loadDetails : undefined} /></View> : null}
     </ScrollPanel>
     {picker === 'from' || picker === 'to' ? <FlightLocationPicker title={picker === 'from' ? '选择出发地' : '选择目的地'} initial='' client={client} onClose={() => setPicker(null)} onSelect={location => {
       setForm(current => picker === 'from' ? { ...current, from: location.value, fromCode: location.code, fromName: location.label } : { ...current, to: location.value, toCode: location.code, toName: location.label }); setPicker(null); setError('')

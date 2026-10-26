@@ -5,11 +5,22 @@ import { randomUUID } from 'node:crypto';
 import { FlightError } from '../core/errors.js';
 
 type State=Awaited<ReturnType<BrowserContext['storageState']>>;
+// Playwright's storageState return type omits IndexedDB, although capture and
+// restore support it. Describe only the fields needed to reject empty rows.
+type IndexedOrigin=State['origins'][number]&{indexedDB?:Array<{name:string;version:number;stores:Array<{name:string;keyPath?:string|string[];autoIncrement:boolean;indexes:unknown[];records:Array<{key?:unknown;value?:unknown}>}>}>};
 const tripHost=(host:string)=>host==='trip.com'||host.endsWith('.trip.com');
 export function tripOnlyState(state:State):State {
   return {
     cookies:state.cookies.filter(cookie=>tripHost(cookie.domain.replace(/^\./,''))),
-    origins:state.origins.filter(origin=>{try{return tripHost(new URL(origin.origin).hostname);}catch{return false;}}),
+    origins:(state.origins as IndexedOrigin[]).filter(origin=>{try{return tripHost(new URL(origin.origin).hostname);}catch{return false;}}).map(origin=>({
+      ...origin,
+      ...(origin.indexedDB?{indexedDB:origin.indexedDB.map(database=>({...database,stores:database.stores.map(store=>({
+        ...store,
+        // An empty serialized row cannot be restored into an out-of-line-key
+        // store without a key generator. Keep every valid row and all cookies.
+        records:store.records.filter(record=>store.keyPath!==undefined||store.autoIncrement||Object.hasOwn(record,'key')||Object.hasOwn(record,'value')),
+      }))}))}:{}),
+    })),
   };
 }
 export class SessionStore {

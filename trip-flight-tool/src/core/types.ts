@@ -42,12 +42,14 @@ export interface Journey {
   stopCount: number | null; details: FlightDetails | null;
 }
 export interface Candidate {
+  detailsState?: 'deferred' | 'ready';
   id: string; price: Money; airlines: string[]; departureAirport: string; arrivalAirport: string;
   departureLocal: string; arrivalLocal: string; durationMinutes: number | null;
   stopCount: number | null; summaryText: string; details: FlightDetails | null;
   journeys?: Journey[];
 }
 export interface SearchResult {
+  resultLevel?: 'summary' | 'details';
   schemaVersion: 1; searchId: string; status: 'complete' | 'partial' | 'no_results';
   source: 'Trip.com'; quoteType: 'search_quote'; query: SearchQuery;
   resolved: { origin: Location; destination: Location }; observedAt: string;

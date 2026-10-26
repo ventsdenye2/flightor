@@ -1,14 +1,11 @@
 import { defineTool } from '../.dsh-runtime/node_modules/@deepseek-ai/dsh-tools/lib/index.js'
-import { execFile } from 'node:child_process'
-import { promisify } from 'node:util'
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import { repo, dataRoot } from '../src/paths.mjs'
+import { dataRoot } from '../src/paths.mjs'
 import { PlaceBatch } from '../src/place-batch.mjs'
-import { executeFlightSearch } from '../src/flight-query.mjs'
+import { executeFlightSearch, executeFlightDetails } from '../src/flight-query.mjs'
 import { ConversationSubmission, submissionTool } from '../src/conversation-protocol.mjs'
 import { ItinerarySubmission, itinerarySchema, itinerarySubmissionTool } from '../src/itinerary-protocol.mjs'
-const execute = promisify(execFile)
 export const name = 'flightor-tools'
 export const inject = ['tools']
 export async function apply(ctx) {
@@ -76,16 +73,12 @@ export async function apply(ctx) {
   }))
   ctx.tools.register(defineTool({
     name: 'get_flight_details',
-    description: '用既有CLI读取已查询航班详情快照，不刷新报价；超过5分钟标为stale。用户提供searchId/candidateId时用它，不重新search。',
+    description: '按searchId/candidateId读取所选航班详情。摘要尚无详情时仅为这一候选读取航段、行李、中转并核对价格；已有详情返回快照，超过5分钟标为stale。价格变化需重新search，请勿循环重试访问限制。',
     parameters: { searchId: { type: 'string', required: true }, candidateId: { type: 'string', required: true } },
     output: { schema: { type: 'object', additionalProperties: true }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-    timeoutMs: 15000,
-    isConcurrencySafe: () => true,
-    async execute(args, exec) {
-      const cli = path.join(repo, 'trip-flight-tool/dist/cli.js')
-      const { stdout } = await execute(process.execPath, [cli, 'details', '--search-id', args.searchId, '--candidate-id', args.candidateId], { cwd: path.dirname(cli), signal: exec.signal, timeout: 14000, maxBuffer: 2e6, windowsHide: true })
-      return JSON.parse(stdout)
-    }
+    timeoutMs: 210000,
+    isConcurrencySafe: () => false,
+    execute: (args, exec) => executeFlightDetails(args, { signal: exec.signal })
   }))
   await fs.mkdir(dataRoot, { recursive: true })
   const audit = process.env.FLIGHTOR_DSH_AUDIT || path.join(dataRoot, 'tool-registration.json')

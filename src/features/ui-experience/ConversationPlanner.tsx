@@ -2,7 +2,7 @@ import { ScrollPanel } from './ScrollPanel'
 import { useEffect, useRef, useState } from 'react'
 import { Button, Text, Textarea, View } from '@tarojs/components'
 import { PlanCancellation } from './backendClient'
-import type { ConversationClient, ConversationMessage } from './backendClient'
+import type { ConversationClient, ConversationMessage, PlanSignal } from './backendClient'
 import type { TripPresentation } from './presentation'
 import { tripDurationLabel } from './presentation'
 import { PageHeader } from './SharedUI'
@@ -24,6 +24,7 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
   const [savingSelection, setSavingSelection] = useState(false)
   const selectedOption = selectedFlight && selectedFlight.searchId === flightOptions?.searchId ? flightOptions.options.find(option => option.id === selectedFlight.candidateId) : undefined
   const active = useRef<PlanCancellation | null>(null)
+  const selectionRequest = useRef<PlanCancellation | null>(null)
   const revision = useRef(0)
   const tripCallback = useRef(onTrip)
   tripCallback.current = onTrip
@@ -35,7 +36,7 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
       const savedTrip = [...value.messages].reverse().find(message => message.trip)?.trip
       if (savedTrip) tripCallback.current?.(savedTrip)
     } }).catch(() => { if (current && version === revision.current) setError('上次对话暂时无法载入，请刷新重试或重新开始。') }).finally(() => { if (current) setLoadingHistory(false) })
-    return () => { current = false; active.current?.abort() }
+    return () => { current = false; active.current?.abort(); selectionRequest.current?.abort() }
   }, [client])
   const send = async (action: 'chat' | 'plan' = 'chat') => {
     if (active.current || savingSelection || loadingHistory || (!draft.trim() && (action === 'chat' || !messages.length))) return
@@ -65,15 +66,26 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
     const selection = option ? { searchId: flightOptions.searchId, candidateId: option.id } : null
     if (selection?.candidateId === selectedFlight?.candidateId && selection?.searchId === selectedFlight?.searchId) return
     const version = revision.current
+    const controller = new PlanCancellation(); selectionRequest.current = controller
     setSavingSelection(true); setError('')
     try {
-      const conversation = await client.selectFlight(selection)
+      const conversation = await client.selectFlight(selection, controller.signal)
       if (version === revision.current) { setMessages(conversation.messages); setFlightOptions(conversation.flightOptions || null); setSelectedFlight(conversation.selectedFlight || null); setSelectionLocked(!!conversation.flightSelectionLocked) }
     } catch (failure) { if (version === revision.current) setError(failure instanceof Error ? failure.message : '航班选择未保存，请重试') }
-    finally { if (version === revision.current) setSavingSelection(false) }
+    finally { if (selectionRequest.current === controller) selectionRequest.current = null; if (version === revision.current) setSavingSelection(false) }
+  }
+  const loadDetails = async (selection: FlightSelection, signal: PlanSignal) => {
+    const version = revision.current
+    const conversation = await client.loadFlightDetails!(selection, signal)
+    if (signal.aborted || version !== revision.current) throw Error('已取消')
+    setMessages(conversation.messages); setFlightOptions(conversation.flightOptions || null)
+    const option = conversation.messages.find(message => message.flightOptions?.searchId === selection.searchId)?.flightOptions?.options.find(item => item.id === selection.candidateId)
+    if (!option) throw Error('未取得航班详情')
+    return option
   }
   const reset = () => {
     revision.current++
+    selectionRequest.current?.abort(); selectionRequest.current = null
     active.current?.abort(); active.current = null
     client.reset(); setMessages([]); setDraft(''); setBusy(false); setError(''); setStage(''); setLoadingHistory(false); setFlightOptions(null); setSelectedFlight(null); setSelectionLocked(false); setSavingSelection(false)
   }
@@ -94,7 +106,7 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
       </View> : <View className='pl-conversation' aria-live='polite'>{messages.map(message => <View key={message.id} className='pl-chat-message'>
         {message.role === 'assistant' ? <View className='pl-reply-brand'><View className='pl-reply-mark'><Icon name='plane' /></View><Text>FlightOR</Text></View> : null}
         <View className={message.role === 'user' ? 'pl-user-message' : 'pl-assistant-message'}><Text>{message.content}</Text></View>
-        {message.flightOptions ? <FlightChoices key={message.flightOptions.searchId} result={message.flightOptions} selected={message.selectedFlight || null} locked={!!message.flightSelectionLocked || message.flightOptions.searchId !== flightOptions?.searchId || selectionLocked} disabled={busy || savingSelection} onSelect={chooseFlight} onOpenSource={onOpenSource} /> : null}
+        {message.flightOptions ? <FlightChoices key={message.flightOptions.searchId} result={message.flightOptions} selected={message.selectedFlight || null} locked={!!message.flightSelectionLocked || message.flightOptions.searchId !== flightOptions?.searchId || selectionLocked} disabled={busy || savingSelection} onSelect={chooseFlight} onLoadDetails={client.loadFlightDetails ? loadDetails : undefined} onOpenSource={onOpenSource} /> : null}
         {message.trip ? <Button className='pl-chat-result' ariaLabel={`查看行程：${message.trip.title}`} onClick={() => { onTrip?.(message.trip!); onOpenTrip() }}><View className='pl-chat-result-head'><View className='pl-chat-result-icon'><Icon name='calendar-active' /></View><Text className='pl-chat-result-label'>你的行程已就绪</Text></View><Text className='pl-chat-result-title'>{message.trip.title}</Text><View className='pl-chat-result-foot'><Text className='pl-chat-result-meta'>{message.trip.destination} · {tripDurationLabel(message.trip)}</Text><View className='pl-chat-result-action'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></Button> : null}
       </View>)}
         {busy ? <View className='pl-chat-status' role='status' aria-live='polite'><View className='pl-loading-dot' /><Text>{stage}</Text></View> : null}
