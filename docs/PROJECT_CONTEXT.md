@@ -4,6 +4,8 @@
 
 ## 当前实现
 
+- 2026-10-26 Reviewer 改为结构化工具交付：同一审核 Session 先按需补全景点，再通过 `submit_itinerary` 的 `itinerary` 对象提交最终行程；后端按当前执行窗口和 `toolCallId` 读取，不再使用 assistant JSON 正文。成功路径不增加模型回合；漏交或字段错误最多同会话补正一次，失败返回 `OUTPUT_PROTOCOL_ERROR`，不生成假空行程。后端离线回归100/100通过；旧失败任务同输入的正式真实复测 `f2326bde-89dd-4884-bc67-32a0d0377ead` 首轮提交成功（4天/12项，无补正），规划阶段344.8秒、审核阶段75.3秒、总计420.4秒。参数、耗时口径和真实/离线边界见 [Reviewer协议](REVIEWER_STRUCTURED_PROTOCOL.md)。
+
 - 2026-10-26 聊天 Agent 接入结构化提交 B＋C：仅聊天角色注册 `submit_conversation_reply`，严格检查非空 reply 与显式 chat/plan；首次交付加最多一次、最长30秒补正，共用请求预算。原聊天会话补正期间由原生 tools.guard 限制为仅提交，完成边界后才发布；失败返回 OUTPUT_PROTOCOL_ERROR，不再展示原始JSON或默认为chat。聊天/规划/审核默认 reasoning effort 分别 low/max/high；规划支持进程环境变量切换 high/low 做同需求对照，模型和账户不变。离线92/92及真实矩阵已执行：47任务、25次查票、19次规划尝试，追加14次三档试验全部完成；25次聊天24次首轮成功、1次补正成功。17次非空行程中仍有13次部分结果，另有审核空行程和主动取消。结果及边界见 [协议验收](CONVERSATION_PROTOCOL_ACCEPTANCE.md)。
 
 - 2026-10-25 微信入口适配：复用当前 H5 业务页面，增加原生滚动、聊天末尾锚点、胶囊/键盘布局和 PNG 资源，样例面板仅 `preview=1` 时开启。按用户选择绑定“寰宇咨询” `wxdf9ff3c30a1d9549`。实际验证与边界见 [微信适配](WECHAT_ADAPTATION.md)。

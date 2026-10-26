@@ -1,6 +1,7 @@
 // MVP只适配展示结构，不做业务验收或审核否决。
 const array = value => Array.isArray(value) ? value : []
 const text = (value, fallback = '') => typeof value === 'string' ? value : fallback
+// Legacy reader for saved/manual text. The live reviewer submits through submit_itinerary.
 export function parseReview(value) {
   try {
     const parsed = JSON.parse(value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''))

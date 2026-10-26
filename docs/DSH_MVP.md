@@ -1,5 +1,11 @@
 # FlightOR 三角色 DSH MVP
 
+## 2026-10-26 Reviewer 结构化工具交付（当前协议）
+
+Reviewer 在同一 Session 内按需调用 `lookup_places_batch`，最终通过 `submit_itinerary` 的 `itinerary` 对象交付行程，不再读取 assistant JSON 正文。工具仅审核角色注册，参数由 DSH JSON Schema 预校验；成功结果按当前执行窗口、requestId 和 toolCallId 配对，相同对象幂等、不同对象冲突。正常成功不追加模型回合；漏交或字段错误最多补正一次、最长30秒，补正期间只允许该工具，失败返回 `OUTPUT_PROTOCOL_ERROR` 并保留 `reviewProtocol`，不发布正文或空行程。规划 `max`、审核 `high`、聊天 `low` 与现有模型/账户不变。详细合同和边界见 [Reviewer结构化协议](REVIEWER_STRUCTURED_PROTOCOL.md)。
+
+2026-10-26 实跑旧失败任务同输入 `f2326bde-89dd-4884-bc67-32a0d0377ead`：Reviewer 两次地点补全后一次 `submit_itinerary` 成功，`attempts=1`、`repairCount=0`，4天/12项且地点合并完成；规划阶段344.8秒、审核阶段75.3秒、总计420.4秒。后端离线100/100通过。该单样本不替代浏览器/微信端到端验收，也不作为时延改善的受控对比。
+
 ## 2026-10-26 聊天结构化交付 B＋C（当前协议）
 
 按用户测试中途追加要求，规划角色支持进程环境变量 `FLIGHTOR_DSH_PLANNER_REASONING_EFFORT`（low/high/max，默认max），用于洛杉矶及后续未完成场景三档对照；聊天low、审核high固定。追加14次试验及原矩阵结果见 [验收记录](CONVERSATION_PROTOCOL_ACCEPTANCE.md)，未据此选定新的最终默认档位。

@@ -5,6 +5,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { backend, runtime, dshHome, dataRoot, userDshHome, nodeBin, dshBin } from './paths.mjs'
 import { ConversationSubmission, OutputProtocolError, reasoningEffortFor, submissionTool, submittedReply, repairLimitMs } from './conversation-protocol.mjs'
+import { ItinerarySubmission, itinerarySubmissionTool, submittedItinerary } from './itinerary-protocol.mjs'
 
 export class DshAgent {
   constructor({ role, workspace, sessionId, placeLedgerFile, model = process.env.FLIGHTOR_DSH_MODEL || 'deepseek-flash', provider = process.env.FLIGHTOR_DSH_PROVIDER || 'deepseek-account', onEvent = () => {} }) {
@@ -21,6 +22,11 @@ export class DshAgent {
       this.submission = new ConversationSubmission(this.submissionFile)
       this.submission.reset()
     }
+    if (this.role === 'reviewer') {
+      this.itinerarySubmissionFile = path.join(this.workspace, 'itinerary-submission.json')
+      this.itinerarySubmission = new ItinerarySubmission(this.itinerarySubmissionFile)
+      this.itinerarySubmission.reset()
+    }
     const audit = path.join(dataRoot, 'audits', this.sessionId + '.json')
     const snapshot = JSON.parse(await fs.readFile(path.join(runtime, 'manifest.json'), 'utf8'))
     const desktopResources = path.dirname(snapshot.source)
@@ -32,7 +38,8 @@ export class DshAgent {
         DSH_BUNDLED_OFFICE_CLI: process.env.DSH_BUNDLED_OFFICE_CLI || path.join(desktopResources, 'runtime/bin/office'),
         DSH_HOME: dshHome, FLIGHTOR_DSH_CREDENTIALS: path.join(userDshHome, '.credentials.yaml'), FLIGHTOR_DSH_PERSONA: persona, FLIGHTOR_DSH_ROLE: this.role, FLIGHTOR_DSH_AUDIT: audit,
         FLIGHTOR_DSH_PLACE_LEDGER: this.role === 'reviewer' ? this.placeLedgerFile || '' : '',
-        FLIGHTOR_DSH_SUBMISSION: this.submissionFile || '' }
+        FLIGHTOR_DSH_SUBMISSION: this.submissionFile || '',
+        FLIGHTOR_DSH_ITINERARY_SUBMISSION: this.itinerarySubmissionFile || '' }
     })
     this.child.stderr.on('data', bytes => { this.stderr = (this.stderr + bytes.toString()).slice(-8000) })
     this.child.on('error', error => { this.spawnError = error })
@@ -62,6 +69,7 @@ export class DshAgent {
   }
   async run(prompt, signal = AbortSignal.timeout(360000)) {
     if (this.role === 'conversation') return this.runConversationReply(prompt, signal)
+    if (this.role === 'reviewer') return this.runReviewerReply(prompt, signal)
     const first = this.events.length
     await this.rpc.request('session/prompt', { sessionId: this.sessionId, contentBlocks: [{ type: 'text', text: prompt }] }, signal)
     await this.rpc.request('session/wait', { sessionId: this.sessionId }, signal)
@@ -74,26 +82,47 @@ export class DshAgent {
     return { text, events }
   }
   async runConversationReply(prompt, signal) {
+    const delivered = await this.runStructuredSubmission(prompt, signal, {
+      submission: this.submission,
+      toolName: submissionTool,
+      extract: submittedReply,
+      missingMessage: '缺少 submit_conversation_reply 成功提交；assistant正文不能交付结果',
+      repairPrompt: `交付校验失败：缺少 ${submissionTool} 的成功结果。现在仅有一次补正机会，30秒内调用该工具，显式提供非空 reply 和 intent(chat或plan)。只提交刚才的结果，不查票、不搜索、不规划、不调用其他工具。`
+    })
+    return { submission: delivered.value, protocol: delivered.protocol, events: delivered.events }
+  }
+  async runReviewerReply(prompt, signal) {
+    const delivered = await this.runStructuredSubmission(prompt, signal, {
+      submission: this.itinerarySubmission,
+      toolName: itinerarySubmissionTool,
+      extract: submittedItinerary,
+      missingMessage: '缺少 submit_itinerary 成功提交；最终assistant正文不能交付行程',
+      repairPrompt: `交付校验失败：缺少 ${itinerarySubmissionTool} 的成功结果。现在仅有一次补正机会，30秒内调用该工具并提交 itinerary 对象。只补交刚才已经整理的结果，不重新查询景点、搜索、查票或调用其他工具。`
+    })
+    return { itinerary: delivered.value, protocol: delivered.protocol, events: delivered.events }
+  }
+  async runStructuredSubmission(prompt, signal, { submission, toolName, extract, missingMessage, repairPrompt }) {
+    if (!submission) throw Error(`DSH ${this.role} submission state is not initialized`)
     signal.throwIfAborted()
     const first = this.events.length
-    const state = this.submission.reset()
+    const state = submission.reset()
     const controller = new AbortController()
     const boundedSignal = AbortSignal.any([signal, controller.signal])
     let timer
     const monitor = event => {
       if (event?.type === 'tool/result' && event.data.message?.isError) {
         const id = event.data.message.toolCallId
-        const call = this.events.slice(first).find(item => item.type === 'tool/call' && item.data.callId === id && item.data.name === submissionTool)
-        if (call) this.submission.nativeFailure(id, event.data.message.content?.filter(block => block.type === 'text').map(block => block.text).join('') || '提交参数无法读取')
+        const call = this.events.slice(first).find(item => item.type === 'tool/call' && item.data.callId === id && item.data.name === toolName)
+        if (call) submission.nativeFailure(id, event.data.message.content?.filter(block => block.type === 'text').map(block => block.text).join('') || '提交参数无法读取')
       }
-      const current = this.submission.read()
-      if (current.failed) controller.abort(new OutputProtocolError(current.errors.at(-1), this.submission.metrics()))
+      const current = submission.read()
+      if (current.failed) controller.abort(new OutputProtocolError(current.errors.at(-1), submission.metrics()))
       if (current.repairStartedAt !== null && !timer) {
-        timer = setTimeout(() => controller.abort(new OutputProtocolError('补正超过30秒', this.submission.metrics())), Math.max(0, repairLimitMs - (Date.now() - current.repairStartedAt)))
+        timer = setTimeout(() => controller.abort(new OutputProtocolError('补正超过30秒', submission.metrics())), Math.max(0, repairLimitMs - (Date.now() - current.repairStartedAt)))
       }
     }
     this.protocolObserver = monitor
-    const cancel = () => this.submission.close()
+    const cancel = () => submission.close()
     signal.addEventListener('abort', cancel, { once: true })
     const executeTurn = async text => {
       boundedSignal.throwIfAborted()
@@ -101,38 +130,39 @@ export class DshAgent {
       await this.rpc.request('session/wait', { sessionId: this.sessionId }, boundedSignal)
       boundedSignal.throwIfAborted()
       const end = this.events.slice(first).findLast(event => event.type === 'turn/end')
-      if (end?.data?.reason?.kind !== 'completed') throw Error(`DSH conversation did not complete: ${JSON.stringify(end?.data?.reason)}`)
+      if (end?.data?.reason?.kind !== 'completed') throw Error(`DSH ${this.role} did not complete: ${JSON.stringify(end?.data?.reason)}`)
     }
     try {
       await executeTurn(prompt)
       monitor()
-      let answer = submittedReply(this.events.slice(first), state.requestId)
+      let answer = extract(this.events.slice(first), state.requestId)
       if (!answer) {
-        const current = this.submission.read()
-        if (current.repairStartedAt !== null) throw new OutputProtocolError('唯一补正机会后仍无成功提交', this.submission.metrics())
-        this.submission.repair('缺少 submit_conversation_reply 成功提交；assistant正文不能交付结果')
+        const current = submission.read()
+        if (current.repairStartedAt !== null) throw new OutputProtocolError('唯一补正机会后仍无成功提交', submission.metrics())
+        submission.repair(missingMessage)
         monitor()
-        await executeTurn(`交付校验失败：缺少 ${submissionTool} 的成功结果。现在仅有一次补正机会，30秒内调用该工具，显式提供非空 reply 和 intent(chat或plan)。只提交刚才的结果，不查票、不搜索、不规划、不调用其他工具。`)
-        answer = submittedReply(this.events.slice(first), state.requestId)
+        await executeTurn(repairPrompt)
+        answer = extract(this.events.slice(first), state.requestId)
       }
       boundedSignal.throwIfAborted()
-      if (!answer) throw new OutputProtocolError('补正后仍无成功提交', this.submission.metrics())
-      return { submission: answer, protocol: this.submission.metrics(), events: this.events.slice(first) }
+      if (!answer) throw new OutputProtocolError('补正后仍无成功提交', submission.metrics())
+      return { value: answer, protocol: submission.metrics(), events: this.events.slice(first) }
     } catch (error) {
       signal.throwIfAborted()
       if (controller.signal.aborted) throw controller.signal.reason
-      if (this.submission.read().repairStartedAt !== null && error.code !== 'OUTPUT_PROTOCOL_ERROR') throw new OutputProtocolError(`补正执行未完成：${error.message}`, this.submission.metrics())
-      if (error.code === 'OUTPUT_PROTOCOL_ERROR') error.protocolMetrics ||= this.submission.metrics()
+      if (submission.read().repairStartedAt !== null && error.code !== 'OUTPUT_PROTOCOL_ERROR') throw new OutputProtocolError(`补正执行未完成：${error.message}`, submission.metrics())
+      if (error.code === 'OUTPUT_PROTOCOL_ERROR') error.protocolMetrics ||= submission.metrics()
       throw error
     } finally {
       clearTimeout(timer)
       signal.removeEventListener('abort', cancel)
       this.protocolObserver = undefined
-      this.submission.close()
+      submission.close()
     }
   }
   async close() {
     this.submission?.close()
+    this.itinerarySubmission?.close()
     const child = this.child
     if (!child || child.exitCode !== null) return
     try { await this.rpc?.request('shutdown', undefined, AbortSignal.timeout(1500)) } catch {}

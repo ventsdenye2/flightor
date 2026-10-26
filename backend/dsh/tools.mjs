@@ -7,6 +7,7 @@ import { repo, dataRoot } from '../src/paths.mjs'
 import { PlaceBatch } from '../src/place-batch.mjs'
 import { executeFlightSearch } from '../src/flight-query.mjs'
 import { ConversationSubmission, submissionTool } from '../src/conversation-protocol.mjs'
+import { ItinerarySubmission, itinerarySchema, itinerarySubmissionTool } from '../src/itinerary-protocol.mjs'
 const execute = promisify(execFile)
 export const name = 'flightor-tools'
 export const inject = ['tools']
@@ -21,6 +22,18 @@ export async function apply(ctx) {
         reply: { type: 'string', required: true },
         intent: { type: 'string', enum: ['chat', 'plan'], required: true }
       },
+      output: { schema: { type: 'object', additionalProperties: true }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
+      isConcurrencySafe: () => false,
+      execute: (args, exec) => submission.submit(args, exec)
+    }))
+  }
+  if (process.env.FLIGHTOR_DSH_ROLE === 'reviewer' && process.env.FLIGHTOR_DSH_ITINERARY_SUBMISSION) {
+    const submission = new ItinerarySubmission(process.env.FLIGHTOR_DSH_ITINERARY_SUBMISSION)
+    ctx.tools.guard(exec => submission.guard(exec))
+    ctx.tools.register(defineTool({
+      name: itinerarySubmissionTool,
+      description: '提交本轮最终结构化行程。必须先按需完成 lookup_places_batch，再调用本工具一次并传入 itinerary 对象；提交对象是最终交付，不另写JSON正文。成功后结束本轮。相同对象幂等，不同对象冲突失败；字段错误只允许一次补正，补正时只用本工具，不重新查询、搜索或查票。',
+      parameters: { itinerary: { ...itinerarySchema, required: true } },
       output: { schema: { type: 'object', additionalProperties: true }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
       isConcurrencySafe: () => false,
       execute: (args, exec) => submission.submit(args, exec)

@@ -1,5 +1,9 @@
 # 从本分支开始开发后端
 
+## 2026-10-26 Reviewer 结构化工具交付（当前协议）
+
+Reviewer 在当前 Session 按需使用 `lookup_places_batch` 后，通过专用 `submit_itinerary` 工具提交 `itinerary` 对象。后端只消费本次执行内、按 `toolCallId` 配对并带当前 requestId 的成功工具参数；相同提交幂等，不同提交冲突，assistant正文不参与解析。正常成功不追加模型回合；漏交或结构错误最多同会话补正一次、最长30秒，补正时禁止重新查询或查票，失败返回 `OUTPUT_PROTOCOL_ERROR`，不生成空行程。后端离线100/100通过，旧失败任务同输入的真实复测首轮提交成功且无补正；单样本不替代 H5/微信端到端验收。历史 `parseReview()` 仅用于兼容保存记录，不在实时 Reviewer 链路。接口与展示字段保持兼容，详见 [Reviewer协议](REVIEWER_STRUCTURED_PROTOCOL.md)。
+
 ## 2026-10-26 聊天结构化交付 B＋C（当前协议）
 
 聊天角色通过 submit_conversation_reply 工具交付非空 reply 和显式 intent(chat/plan)，按本次会话、执行窗口和 toolCallId 配对成功结果，保留 session/wait 完成边界。相同提交幂等，不同提交冲突失败。首次交付＋最多一次定向补正：原生字段失败与应用层漏交提醒共享预算；补正最长30秒，受原任务超时与取消约束，tools.guard 只允许提交工具。失败使用既有 errorCode=OUTPUT_PROTOCOL_ERROR，并显示可重试提示，不将原始JSON或缺intent默认为普通聊天。REST请求形状保持不变。规划自然语言草稿和审核现有协议保留。

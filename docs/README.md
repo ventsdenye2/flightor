@@ -1,6 +1,6 @@
 # 新后端 MVP 分支文档
 
-更新：2026-10-19。分支 `backend-mvp` 基于 `codex/ui-experience@060d0de` 的双端共享前端，现新增最小三角色 DSH Agent 后端；旧后端未沿用。
+更新：2026-10-26。分支 `backend-mvp` 基于 `codex/ui-experience@060d0de` 的双端共享前端，现新增最小三角色 DSH Agent 后端；旧后端未沿用。
 
 - [PROJECT_CONTEXT](PROJECT_CONTEXT.md)：当前实现、目录与验证边界。
 - [FRONTEND_SYNC](FRONTEND_SYNC.md)：演示版前端迁移、Git 快照与双端验证。
@@ -15,6 +15,7 @@
 - [BACKEND_MVP](BACKEND_MVP.md)：后续接入位置和待开发事项。
 - [DSH_MVP](DSH_MVP.md)：本轮三角色 DSH Agent 最小接入与实际验证。
 - [CONVERSATION_PROTOCOL_ACCEPTANCE](CONVERSATION_PROTOCOL_ACCEPTANCE.md)：聊天结构化工具交付、一次补正及10月25日矩阵复测。
+- [REVIEWER_STRUCTURED_PROTOCOL](REVIEWER_STRUCTURED_PROTOCOL.md)：审核 Agent 通过 `submit_itinerary` 提交结构化行程、补正、真实复测耗时与兼容边界。
 - [AIRPORT_LOCATIONS](AIRPORT_LOCATIONS.md)：全球机场目录、中文别名、城市聚合、数据维护与验收边界。
 - [DOCS_MAINTENANCE](DOCS_MAINTENANCE.md)：同步文档和校验要求。
 

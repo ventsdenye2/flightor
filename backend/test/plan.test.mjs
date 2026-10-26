@@ -5,7 +5,7 @@ import { runPlan } from '../src/plan.mjs'
 import { parseReview, toPresentation } from '../src/contract.mjs'
 import { PlaceBatch } from '../src/place-batch.mjs'
 
-const candidate = () => ({ title: '东京两日', destination: '东京', overview: '历史与散步', travelers: 1, days: [1, 2].map(day => ({ day, theme: '轻松游览', activities: [{ name: day === 1 ? '浅草寺' : '上野', description: '建议慢慢游览', sources: [] }] })), issues: [] })
+const candidate = () => ({ title: '东京两日', destination: '东京', overview: '历史与散步', travelers: 1, highlights: [], days: [1, 2].map(day => ({ day, theme: '轻松游览', activities: [{ id: `d${day}-a1`, name: day === 1 ? '浅草寺' : '上野', description: '建议慢慢游览', sources: [] }] })), issues: [] })
 function fakeAgents(review) {
   const calls = []
   class Agent {
@@ -14,7 +14,7 @@ function fakeAgents(review) {
     async run(input) {
       calls.push({ role: this.role, sessionId: this.sessionId, input })
       if (this.role === 'planner') { this.onEvent(this.role, { type: 'tool/result', data: { text: '实际工具证据' } }); return { text: '第一天浅草寺，第二天上野。' } }
-      return { text: typeof review === 'string' ? review : JSON.stringify(review) }
+      return { itinerary: review, protocol: { attempts: 1, repairCount: 0 } }
     }
     async close() {}
   }
@@ -30,7 +30,7 @@ test('two independent sessions exchange original demand and actual tool evidence
   assert.ok(calls[1].input.includes(value.prompt)); assert.ok(calls[1].input.includes('实际工具证据'))
 })
 test('incomplete information and reviewer objections publish without repair or veto', async () => {
-  const draft = candidate(); draft.issues = [{ severity: 'error', detail: '资料不足' }]; draft.days = [{ activities: [{}] }]
+  const draft = candidate(); draft.issues = [{ severity: 'error', detail: '资料不足' }]; draft.days = [{ activities: [{ id: 'd1-a1', name: '资料不足的活动', description: '' }] }]
   const { Agent, calls } = fakeAgents(draft); const value = run()
   await runPlan(value, { Agent })
   assert.equal(value.stage, 'completed'); assert.equal(calls.length, 2)
@@ -112,7 +112,7 @@ test('reviewer uses one session/turn for batch lookup and refinement; backend me
       const batch = new PlaceBatch({ file: this.placeLedgerFile, lookup })
       await batch.run({ places: [{ id: 'a', name: 'A', city: 'Paris', query: 'unclear' }, { id: 'b', name: 'B', city: 'Paris', query: 'B' }] })
       await batch.run({ places: [{ id: 'a', name: 'A', city: 'Paris', query: 'A Paris', fields: ['location'] }] })
-      return { text: JSON.stringify({ days: [{ activities: [{ id: 'b', name: 'B' }, { id: 'a', name: 'A' }] }] }) }
+      return { itinerary: { title: 'Paris', destination: 'Paris', overview: 'Two places', highlights: [], issues: [], days: [{ activities: [{ id: 'b', name: 'B', description: '' }, { id: 'a', name: 'A', description: '' }] }] }, protocol: { attempts: 1, repairCount: 0 } }
     }
   }
   const value = run()
@@ -124,7 +124,7 @@ test('reviewer uses one session/turn for batch lookup and refinement; backend me
   assert.equal(value.trip.placesResolved, true)
 })
 test('optional metadata timeout publishes partial results without another model turn', async () => {
-  const review = { days: [{ activities: [{ id: 'a', name: 'Place', city: 'Paris', imageQuery: 'Place' }] }] }
+  const review = { title: 'Paris', destination: 'Paris', overview: 'One place', highlights: [], issues: [], days: [{ activities: [{ id: 'a', name: 'Place', description: '', city: 'Paris', imageQuery: 'Place' }] }] }
   const { Agent, calls } = fakeAgents(review), value = run()
   const image = { src: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Paris.jpg', author: 'Photographer', license: 'CC0', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/', source: { url: 'https://commons.wikimedia.org/wiki/File:Paris.jpg' } }
   await runPlan(value, { Agent, placeBudgetMs: 500, placeLookup: { lookup: async (_input, { onField }) => {
