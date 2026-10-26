@@ -8,7 +8,7 @@ Reviewer 在当前 Session 按需使用 `lookup_places_batch` 后，通过专用
 
 聊天角色通过 submit_conversation_reply 工具交付非空 reply 和显式 intent(chat/plan)，按本次会话、执行窗口和 toolCallId 配对成功结果，保留 session/wait 完成边界。相同提交幂等，不同提交冲突失败。首次交付＋最多一次定向补正：原生字段失败与应用层漏交提醒共享预算；补正最长30秒，受原任务超时与取消约束，tools.guard 只允许提交工具。失败使用既有 errorCode=OUTPUT_PROTOCOL_ERROR，并显示可重试提示，不将原始JSON或缺intent默认为普通聊天。REST请求形状保持不变。规划自然语言草稿和审核现有协议保留。
 
-三个独立角色仍顺序执行，initialize 显式传 reasoningEffort：聊天 low、规划 max、审核 high；deepseek-account/deepseek-flash、插件与默认输出上限保持现状。本节覆盖下方历史记录中聊天JSON回退和未覆盖思考强度的说明，审核JSON回退不在本轮范围。每次执行保留私有初始化参数及提交/补正诊断，不向前端发送工具原文。
+三个独立角色仍顺序执行，initialize 显式传 reasoningEffort：聊天 low、规划 high、审核 high；deepseek-account/deepseek-flash、插件与默认输出上限保持现状。本节覆盖下方历史记录中聊天JSON回退和未覆盖思考强度的说明，审核JSON回退不在本轮范围。每次执行保留私有初始化参数及提交/补正诊断，不向前端发送工具原文。
 
 离线回归、双端构建和10月25日矩阵的独立真实复测正在进行；结果另记，不以接口completed代替业务成功。地点消歧、图片缺口、旧行程调整和航班观察器只记录，不在本轮修复；不据此宣称微信真机或服务器部署通过。
 

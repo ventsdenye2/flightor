@@ -3,7 +3,7 @@ import crypto from 'node:crypto'
 
 export const submissionTool = 'submit_conversation_reply'
 export const repairLimitMs = 30000
-export const roleEfforts = Object.freeze({ conversation: 'low', planner: 'max', reviewer: 'high' })
+export const roleEfforts = Object.freeze({ conversation: 'low', planner: 'high', reviewer: 'high' })
 
 export function reasoningEffortFor(role, env = process.env) {
   if (role !== 'planner') return roleEfforts[role]

@@ -2,17 +2,17 @@
 
 ## 2026-10-26 Reviewer 结构化工具交付（当前协议）
 
-Reviewer 在同一 Session 内按需调用 `lookup_places_batch`，最终通过 `submit_itinerary` 的 `itinerary` 对象交付行程，不再读取 assistant JSON 正文。工具仅审核角色注册，参数由 DSH JSON Schema 预校验；成功结果按当前执行窗口、requestId 和 toolCallId 配对，相同对象幂等、不同对象冲突。正常成功不追加模型回合；漏交或字段错误最多补正一次、最长30秒，补正期间只允许该工具，失败返回 `OUTPUT_PROTOCOL_ERROR` 并保留 `reviewProtocol`，不发布正文或空行程。规划 `max`、审核 `high`、聊天 `low` 与现有模型/账户不变。详细合同和边界见 [Reviewer结构化协议](REVIEWER_STRUCTURED_PROTOCOL.md)。
+Reviewer 在同一 Session 内按需调用 `lookup_places_batch`，最终通过 `submit_itinerary` 的 `itinerary` 对象交付行程，不再读取 assistant JSON 正文。工具仅审核角色注册，参数由 DSH JSON Schema 预校验；成功结果按当前执行窗口、requestId 和 toolCallId 配对，相同对象幂等、不同对象冲突。正常成功不追加模型回合；漏交或字段错误最多补正一次、最长30秒，补正期间只允许该工具，失败返回 `OUTPUT_PROTOCOL_ERROR` 并保留 `reviewProtocol`，不发布正文或空行程。聊天 `low`、规划 `high`、审核 `high` 与现有模型/账户不变。详细合同和边界见 [Reviewer结构化协议](REVIEWER_STRUCTURED_PROTOCOL.md)。
 
 2026-10-26 实跑旧失败任务同输入 `f2326bde-89dd-4884-bc67-32a0d0377ead`：Reviewer 两次地点补全后一次 `submit_itinerary` 成功，`attempts=1`、`repairCount=0`，4天/12项且地点合并完成；规划阶段344.8秒、审核阶段75.3秒、总计420.4秒。后端离线100/100通过。该单样本不替代浏览器/微信端到端验收，也不作为时延改善的受控对比。
 
 ## 2026-10-26 聊天结构化交付 B＋C（当前协议）
 
-按用户测试中途追加要求，规划角色支持进程环境变量 `FLIGHTOR_DSH_PLANNER_REASONING_EFFORT`（low/high/max，默认max），用于洛杉矶及后续未完成场景三档对照；聊天low、审核high固定。追加14次试验及原矩阵结果见 [验收记录](CONVERSATION_PROTOCOL_ACCEPTANCE.md)，未据此选定新的最终默认档位。
+按用户测试中途追加要求，规划角色支持进程环境变量 `FLIGHTOR_DSH_PLANNER_REASONING_EFFORT`（low/high/max，默认high），用于洛杉矶及后续未完成场景三档对照；聊天low、审核high固定。追加14次试验及原矩阵结果见 [验收记录](CONVERSATION_PROTOCOL_ACCEPTANCE.md)。用户最终选定规划默认high；环境变量继续保留low/max用于受控对照。
 
 聊天角色通过 submit_conversation_reply 工具交付非空 reply 和显式 intent(chat/plan)，按本次会话、执行窗口和 toolCallId 配对成功结果，保留 session/wait 完成边界。相同提交幂等，不同提交冲突失败。首次交付＋最多一次定向补正：原生字段失败与应用层漏交提醒共享预算；补正最长30秒，受原任务超时与取消约束，tools.guard 只允许提交工具。失败使用既有 errorCode=OUTPUT_PROTOCOL_ERROR，并显示可重试提示，不将原始JSON或缺intent默认为普通聊天。REST请求形状保持不变。规划自然语言草稿和审核现有协议保留。
 
-三个独立角色仍顺序执行，initialize 显式传 reasoningEffort：聊天 low、规划 max、审核 high；deepseek-account/deepseek-flash、插件与默认输出上限保持现状。本节覆盖下方历史记录中聊天JSON回退和未覆盖思考强度的说明，审核JSON回退不在本轮范围。每次执行保留私有初始化参数及提交/补正诊断，不向前端发送工具原文。
+三个独立角色仍顺序执行，initialize 显式传 reasoningEffort：聊天 low、规划 high、审核 high；deepseek-account/deepseek-flash、插件与默认输出上限保持现状。本节覆盖下方历史记录中聊天JSON回退和未覆盖思考强度的说明，审核JSON回退不在本轮范围。每次执行保留私有初始化参数及提交/补正诊断，不向前端发送工具原文。
 
 离线92/92、前端回归、双端类型检查和构建通过；10月25日矩阵的独立真实复测已执行完（47任务、25次查票、19次规划尝试，追加14次三档试验全部完成）。聊天24/25首轮成功、1次补正成功、0次最终协议失败；17次非空行程中仍有13次部分结果，审核空行程失败与主动取消另记。补正期间原生会话调用失败也映射为 OUTPUT_PROTOCOL_ERROR，不以接口completed代替业务成功。地点消歧、图片缺口、旧行程调整和航班观察器只记录，不在本轮修复；不据此宣称微信真机或服务器部署通过。
 
@@ -32,7 +32,7 @@ Reviewer 在同一 Session 内按需调用 `lookup_places_batch`，最终通过 
 
 当前实现接线：两个独立 SDK 子进程，各自独立 session/workspace；规划草稿和原始工具结果由薄协调函数自动交审核者并直接展示。根 API 只监听127.0.0.1:3000，POST /api/runs、GET/DELETE /api/runs/:id，结果保存在忽略的 backend/data，未引入旧后端/数据库/任务队列。H5 /api 通过Vite转发；小程序通过Taro.request访问本机地址，可用storage `flightor-api-base-url`配置设备可访问的后端。两端只保存最近一次成功runId，刷新通过只读GET恢复结果。
 
-模型沿用桌面 profile 的 deepseek-account / deepseek-flash；凭证插件引用原 ~/.dsh/.credentials.yaml，密钥不复制，不进入前端，不覆盖思考强度和模型默认输出上限。运行profile保留完整base、SDK、auto-review、可选持久终端、Codex子agent扩展与市场host服务；没有工具白名单裁剪。工作区依赖与Office插件继续引用桌面配套运行环境。不运行任何界面、启动屏、壁纸或宠物插件。DSH的SDK官方配置本身会关闭界面不需要的标题生成和HMR；不是删除插件。插件能挂载和工具能注册不等于逐一验收了所有插件功能。
+模型沿用桌面 profile 的 deepseek-account / deepseek-flash；凭证插件引用原 ~/.dsh/.credentials.yaml，密钥不复制，不进入前端；角色思考强度由应用显式传入，profile不另覆盖模型默认输出上限。运行profile保留完整base、SDK、auto-review、可选持久终端、Codex子agent扩展与市场host服务；没有工具白名单裁剪。工作区依赖与Office插件继续引用桌面配套运行环境。不运行任何界面、启动屏、壁纸或宠物插件。DSH的SDK官方配置本身会关闭界面不需要的标题生成和HMR；不是删除插件。插件能挂载和工具能注册不等于逐一验收了所有插件功能。
 
 ## 本机包和命令
 

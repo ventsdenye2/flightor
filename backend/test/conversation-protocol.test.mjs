@@ -172,7 +172,7 @@ test('planner effort trials allow low/high/max while chat and reviewer stay fixe
     assert.equal(reasoningEffortFor('conversation', env), 'low')
     assert.equal(reasoningEffortFor('reviewer', env), 'high')
   }
-  assert.equal(reasoningEffortFor('planner', {}), 'max')
+  assert.equal(reasoningEffortFor('planner', {}), 'high')
   assert.throws(() => reasoningEffortFor('planner', { FLIGHTOR_DSH_PLANNER_REASONING_EFFORT: 'invalid' }), /必须为/)
 })
 
