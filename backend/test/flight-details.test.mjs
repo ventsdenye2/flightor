@@ -30,6 +30,21 @@ test('details CLI uses cancellable search budget and explicit selection refresh'
   } }), response)
 })
 
+test('worker adapters avoid CLI processes and preserve evidence, three-result limit, refresh and cancellation', async () => {
+  const { root, raw, selection } = await setup()
+  const signal = new AbortController().signal
+  try {
+    const { executeFlightSearch } = await import('../src/flight-query.mjs')
+    const calls = []
+    const worker = async (command, input, options) => { calls.push({ command, input, options }); return raw }
+    await executeFlightSearch(raw.query, { root, signal, worker })
+    await executeFlightDetails(selection, { signal, refresh: true, worker })
+    assert.equal(calls[0].command, 'search'); assert.equal(calls[0].input.maxResults, 3)
+    assert.equal(calls[1].command, 'details'); assert.equal(calls[1].options.refresh, true)
+    assert.equal(calls[0].options.signal, signal); assert.equal(calls[1].options.signal, signal)
+  } finally { await fs.rm(root, { recursive: true, force: true }) }
+})
+
 test('details load enriches its message and evidence without selection; selection refreshes before saving', async () => {
   const { root, run, selection, response } = await setup()
   try {

@@ -47,6 +47,8 @@ node dist/cli.js details --search-id <searchId> --candidate-id <candidateId>
 
 退出码：0 为完整查询或页面明确无结果；2 为部分结果；1 为错误、访问限制或取消。无结果应读取 `status: no_results`，不能只看退出码。默认查询返回摘要（`resultLevel=summary`、`detailsState=deferred`）；`details` 对未读取详情的候选重新定位并核对列表/抽屉票价，只读取这一条。已读取详情默认返回快照，超过5分钟标为`stale`；`details --refresh`强制重新核对，`search --with-details`保留原完整提取供对照。票价变化须重新查询，不保证结算价。
 
+当前默认直达结果页，普通失败回退原生首页表单，访问限制或验证码停止；`TRIP_FLIGHT_DIRECT_RESULTS=0`可关闭。国内CN航线使用chinaflights，往返原生ShowFareNext也保留校验。API和MCP常驻进程保留当前查询页，详情和选择核价直接打开对应抽屉，5分钟后或页面失效才恢复查询；不会对查询报价做短时结果缓存。API的工具直接连接本机认证Worker；有`TRIP_FLIGHT_WORKER_URL/TOKEN`的CLI也复用该Worker，无Worker的独立CLI在退出时关闭浏览器，随后details需要恢复查询。令牌仅在进程环境传递，不输出/保存。默认列表/详情/网络稳定窗口为300/300/100ms，分别可用`TRIP_FLIGHT_LIST_QUIET_MS/FARE_QUIET_MS/NETWORK_QUIET_MS`覆盖；请求发出时即计入pending，仍须最终业务成功、DOM不变和票价核对。
+
 ## DSH 接入
 
 项目提供 `integrations/dsh/cordis.patch.yml`。本机 DSH 源码位于 `D:\FunnyProject\deepseek-harness`，使用 DSH 的 `--patch` 参数加载该文件；配置没有修改 DSH 源码或用户默认设置。

@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import crypto from 'node:crypto'
+import { replaceFileSync } from './file-replace.mjs'
 import { OutputProtocolError, repairLimitMs } from './conversation-protocol.mjs'
 
 export const itinerarySubmissionTool = 'submit_itinerary'
@@ -111,7 +112,7 @@ export class ItinerarySubmission {
   write(state) {
     const temporary = this.file + '.' + crypto.randomUUID() + '.tmp'
     fs.writeFileSync(temporary, JSON.stringify(state))
-    fs.renameSync(temporary, this.file)
+    replaceFileSync(temporary, this.file)
     return state
   }
   reset() {

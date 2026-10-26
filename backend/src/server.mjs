@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 import crypto from 'node:crypto'
 import path from 'node:path'
 import { dataRoot } from './paths.mjs'
+import { replaceFile } from './file-replace.mjs'
 import { runPlan } from './plan.mjs'
 import { loadConversation, runConversation, selectConversationFlight } from './conversation.mjs'
 import { resolveFlightSelection } from './flight-options.mjs'
@@ -11,17 +12,27 @@ import { loadPlaceLocation } from './place-locations.mjs'
 import { manualFlightQuery, runManualFlightSearch } from './manual-flight-search.mjs'
 import { searchFlightLocations } from './flight-locations.mjs'
 import { runFlightDetails } from './flight-details.mjs'
+import { startFlightWorker } from '../../trip-flight-tool/dist/worker.js'
+
+const flightWorker = process.env.FLIGHTOR_FLIGHT_WORKER === '0' ? null : await startFlightWorker()
+if (flightWorker) {
+  process.env.TRIP_FLIGHT_WORKER_URL = flightWorker.url
+  process.env.TRIP_FLIGHT_WORKER_TOKEN = flightWorker.token
+} else {
+  delete process.env.TRIP_FLIGHT_WORKER_URL
+  delete process.env.TRIP_FLIGHT_WORKER_TOKEN
+}
 
 const runs = new Map()
 await fs.mkdir(path.join(dataRoot, 'runs'), { recursive: true })
 function publicRun(run) {
-  const { id, stage, progress, error, errorCode, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt } = run
-  return { id, stage, progress, error, errorCode, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt }
+  const { id, stage, progress, flightOptions, error, errorCode, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt } = run
+  return { id, stage, progress, flightOptions, error, errorCode, issues, repair, agents, trip, conversation, planningRequested, createdAt, completedAt }
 }
 async function persist(run) {
   const file = path.join(dataRoot, 'runs', run.id + '.json')
   await fs.writeFile(file + '.tmp', JSON.stringify(publicRun(run), null, 2))
-  await fs.rename(file + '.tmp', file)
+  await replaceFile(file + '.tmp', file)
 }
 function send(res, status, value) { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); res.end(JSON.stringify(value)) }
 const server = http.createServer(async (req, res) => {
@@ -105,3 +116,16 @@ const server = http.createServer(async (req, res) => {
   } catch (error) { send(res, 400, { error: error.message.slice(0, 500) }) }
 })
 server.listen(Number(process.env.PORT || 3000), '127.0.0.1', () => console.log('FlightOR DSH MVP: http://127.0.0.1:' + (process.env.PORT || 3000)))
+let closing = false
+async function shutdown() {
+  if (closing) return
+  closing = true
+  for (const entry of runs.values()) if (!['completed', 'failed', 'cancelled'].includes(entry.run.stage)) entry.controller.abort()
+  await Promise.allSettled([...runs.values()].map(entry => entry.done))
+  await flightWorker?.close()
+  server.closeAllConnections()
+  await new Promise(resolve => server.close(resolve))
+}
+for (const event of ['SIGINT', 'SIGTERM']) process.once(event, () => { void shutdown().finally(() => process.exit(0)) })
+server.once('error', () => { void flightWorker?.close() })
+export { server, shutdown }

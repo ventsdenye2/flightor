@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import crypto from 'node:crypto'
+import { replaceFileSync } from './file-replace.mjs'
 
 export const submissionTool = 'submit_conversation_reply'
 export const repairLimitMs = 30000
@@ -45,7 +46,7 @@ export class ConversationSubmission {
   write(state) {
     const temporary = this.file + '.' + crypto.randomUUID() + '.tmp'
     fs.writeFileSync(temporary, JSON.stringify(state))
-    fs.renameSync(temporary, this.file)
+    replaceFileSync(temporary, this.file)
     return state
   }
   reset() {

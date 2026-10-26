@@ -7,6 +7,17 @@ import {resolveLocation} from '../src/core/locations.js';
 let browser:Browser;
 before(async()=>{browser=await chromium.launch({channel:'chrome',headless:true});});
 after(async()=>{await browser?.close();});
+
+test('browser metadata supplies the same user agent without creating a probe page',async()=>{
+  const session=await browser.newBrowserCDPSession(),pages=browser.contexts().flatMap(context=>context.pages()).length;
+  try {
+    const metadata=await session.send('Browser.getVersion');
+    assert.match(metadata.userAgent,/Chrome\//);
+    assert.equal(browser.contexts().flatMap(context=>context.pages()).length,pages);
+    const page=await browser.newPage();
+    try {assert.equal(await page.evaluate(()=>navigator.userAgent),metadata.userAgent);} finally {await page.close();}
+  } finally {await session.detach();}
+});
 test('domestic JSON search waits for its final poll and retains the chinaflights source path',async()=>{
   const page=await browser.newPage();const network=observeSearchNetwork(page);
   try {

@@ -93,6 +93,10 @@ export function resolveLocation(value: string): Location {
   throw new FlightError('LOCATION_NOT_SUPPORTED', `Unknown location: ${value}. Use an IATA airport/city code, ICAO code, airport name or supported city alias; inspect trip-flight locations. Countries/regions must be narrowed to a city or airport.`);
 }
 export function airportTimeZone(code: string): string | null { return airports.get(code.trim().toUpperCase())?.timeZone ?? null; }
+const airportCountries=new Map(catalog.airports.map(airport=>[airport.code,airport.country]));
+export function isMainlandRoute(origin:Location,destination:Location):boolean {
+  return [...origin.airports,...destination.airports].every(code=>airportCountries.get(code)==='CN');
+}
 export function validateDate(query: SearchQuery, timeZone: string, now = new Date()): void {
   const parsed = new Date(`${query.departureDate}T12:00:00Z`);
   if (Number.isNaN(parsed.valueOf()) || parsed.toISOString().slice(0,10) !== query.departureDate) throw new FlightError('INVALID_ARGUMENTS', 'departureDate is not a real calendar date');

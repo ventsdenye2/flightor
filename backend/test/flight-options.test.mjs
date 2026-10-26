@@ -31,6 +31,28 @@ test('CLI evidence exposes exact flight facts without raw messages and filesyste
   assert.doesNotMatch(JSON.stringify(options), /private|rawTextPath|screenshotPath|resultPath/)
   assert.equal(presentFlightOptions({ status: 'error' }), null)
 })
+
+test('search summaries publish during the tool phase without publishing an unsubmitted assistant reply', async () => {
+  const root = await fs.mkdtemp(path.join(dataRoot, 'flight-options-test-'))
+  const result = fixture(), run = { id: crypto.randomUUID(), message: '先查票', action: 'chat' }
+  class Agent {
+    async start() {}
+    async run() {
+      this.onEvent('conversation', { type: 'tool/result', data: { message: { content: [{ type: 'text', text: JSON.stringify(result) }] } } })
+      for (let attempt = 0; attempt < 200 && !run.flightOptions; attempt++) await new Promise(resolve => setTimeout(resolve, 5))
+      assert.equal(run.stage, 'chatting'); assert.equal(run.flightOptions.searchId, result.searchId)
+      assert.equal(run.conversation, undefined)
+      assert.doesNotMatch(JSON.stringify(run.flightOptions), /private|rawTextPath|screenshotPath|resultPath/)
+      return { submission: { reply: '已查到，可以比较后选择。', intent: 'chat' } }
+    }
+    async close() {}
+  }
+  try {
+    await runConversation(run, { root, Agent })
+    assert.equal(run.conversation.messages.length, 2)
+    assert.equal(run.conversation.messages[1].flightOptions.searchId, result.searchId)
+  } finally { await fs.rm(root, { recursive: true, force: true }) }
+})
 test('choice stays on its original reply; next chat locks it and explicit planning still consults the conversation agent', async () => {
   const root = await fs.mkdtemp(path.join(dataRoot, 'flight-options-test-'))
   const result = fixture(), plans = [], prompts = []

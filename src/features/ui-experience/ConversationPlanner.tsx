@@ -19,6 +19,7 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
   const [error, setError] = useState('')
   const [loadingHistory, setLoadingHistory] = useState(true)
   const [flightOptions, setFlightOptions] = useState<FlightOptions | null>(null)
+  const [pendingFlightOptions, setPendingFlightOptions] = useState<FlightOptions | null>(null)
   const [selectedFlight, setSelectedFlight] = useState<FlightSelection | null>(null)
   const [selectionLocked, setSelectionLocked] = useState(false)
   const [savingSelection, setSavingSelection] = useState(false)
@@ -45,11 +46,12 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
     active.current = controller
     if (selectedFlight) setSelectionLocked(true)
     setMessages(current => [...current.map(item => selectedFlight && item.flightOptions?.searchId === selectedFlight.searchId ? { ...item, flightSelectionLocked: true } : item), { id: 'pending-' + Date.now(), role: 'user', content: message }])
-    setDraft(''); setBusy(true); setError(''); setStage('正在连接…')
+    setDraft(''); setBusy(true); setError(''); setStage('正在连接…'); setPendingFlightOptions(null)
     try {
       const result = await client.send(message, (text, update) => {
         if (controller.signal.aborted) return
         setStage(text)
+        if (update.flightOptions) setPendingFlightOptions(update.flightOptions)
         if (update.conversation) { setMessages(update.conversation.messages); setFlightOptions(update.conversation.flightOptions || null); setSelectedFlight(update.conversation.selectedFlight || null); setSelectionLocked(!!update.conversation.flightSelectionLocked) }
       }, controller.signal, action)
       if (controller.signal.aborted) return
@@ -87,11 +89,11 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
     revision.current++
     selectionRequest.current?.abort(); selectionRequest.current = null
     active.current?.abort(); active.current = null
-    client.reset(); setMessages([]); setDraft(''); setBusy(false); setError(''); setStage(''); setLoadingHistory(false); setFlightOptions(null); setSelectedFlight(null); setSelectionLocked(false); setSavingSelection(false)
+    client.reset(); setMessages([]); setDraft(''); setBusy(false); setError(''); setStage(''); setLoadingHistory(false); setFlightOptions(null); setPendingFlightOptions(null); setSelectedFlight(null); setSelectionLocked(false); setSavingSelection(false)
   }
   const cancel = () => {
     active.current?.abort(); active.current = null
-    setBusy(false); setStage(''); setError('已停止本次回复。')
+    setBusy(false); setStage(''); setPendingFlightOptions(null); setError('已停止本次回复。')
   }
   return <>
     <PageHeader action={messages.length || error ? <Button className='ux-text-button' onClick={reset}>重新开始</Button> : undefined} />
@@ -109,6 +111,7 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
         {message.flightOptions ? <FlightChoices key={message.flightOptions.searchId} result={message.flightOptions} selected={message.selectedFlight || null} locked={!!message.flightSelectionLocked || message.flightOptions.searchId !== flightOptions?.searchId || selectionLocked} disabled={busy || savingSelection} onSelect={chooseFlight} onLoadDetails={client.loadFlightDetails ? loadDetails : undefined} onOpenSource={onOpenSource} /> : null}
         {message.trip ? <Button className='pl-chat-result' ariaLabel={`查看行程：${message.trip.title}`} onClick={() => { onTrip?.(message.trip!); onOpenTrip() }}><View className='pl-chat-result-head'><View className='pl-chat-result-icon'><Icon name='calendar-active' /></View><Text className='pl-chat-result-label'>你的行程已就绪</Text></View><Text className='pl-chat-result-title'>{message.trip.title}</Text><View className='pl-chat-result-foot'><Text className='pl-chat-result-meta'>{message.trip.destination} · {tripDurationLabel(message.trip)}</Text><View className='pl-chat-result-action'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></Button> : null}
       </View>)}
+        {busy && pendingFlightOptions && !messages.some(message => message.flightOptions?.searchId === pendingFlightOptions.searchId) ? <FlightChoices result={pendingFlightOptions} selected={null} disabled locked onSelect={() => {}} /> : null}
         {busy ? <View className='pl-chat-status' role='status' aria-live='polite'><View className='pl-loading-dot' /><Text>{stage}</Text></View> : null}
         {error ? <View className='pl-chat-error' role='alert'><Text>{error}</Text></View> : null}
       </View>}

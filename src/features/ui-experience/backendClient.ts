@@ -84,7 +84,7 @@ async function pollRun(transport: BackendTransport, route: string, body: unknown
 }
 export interface ConversationMessage { id: string; role: 'user' | 'assistant'; content: string; flightOptions?: FlightOptions | null; selectedFlight?: FlightSelection | null; flightSelectionLocked?: boolean; trip?: TripPresentation }
 export interface Conversation { id: string; messages: ConversationMessage[]; flightOptions?: FlightOptions | null; selectedFlight?: FlightSelection | null; flightSelectionLocked?: boolean }
-export interface ConversationUpdate { conversation?: Conversation; stage: string; progress?: { text: string; role: string; updatedAt: string } }
+export interface ConversationUpdate { conversation?: Conversation; flightOptions?: FlightOptions; stage: string; progress?: { text: string; role: string; updatedAt: string } }
 export interface ConversationResult { conversation: Conversation; trip?: TripPresentation }
 export interface FlightSearchQuery {
   origin: string; destination: string; departureDate: string; tripType: 'one_way' | 'round_trip'; returnDate?: string

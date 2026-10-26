@@ -2,6 +2,12 @@
 
 更新：2026-10-19。当前使用新增双 DSH Agent 后端，不启动旧后端或 Docker。
 
+## 2026-10-26 机票浏览器Worker
+
+先执行`npm --prefix trip-flight-tool run build`，再启动空闲后端`npm run backend:start`。后端自动启动随机本机端口的单并发浏览器Worker；手动API和DSH工具直连复用，不新增凭据文件。Worker连接地址和随机认证令牌仅在后端及其子进程环境中传递，不放进前端或日志。独立CLI未继承Worker环境时仍使用单次进程模式，不能用其详情耗时代表常驻路径。`FLIGHTOR_FLIGHT_WORKER=0`可关闭Worker做对照；性能开关和已验证范围见[航班选项](FLIGHT_OPTIONS.md)。正常退出后端会取消在途查询、保存有效登录状态并清理浏览器；空闲10分钟也释放浏览器。
+
+本轮真实回归反复捕获Windows文件替换的瞬时`EPERM`，会影响对话/选票和提交状态保存。相关原子rename对Windows的EPERM/EACCES/EBUSY最多额外等待10/20/40/80ms后重试（累计150ms），只重试替换，不重复写入、模型或业务操作；持久权限/磁盘错误仍失败。聊天/审核结构化协议及补正次数不变。该修复范围由实测文件错误触发，不将失败测试直接忽略。
+
 ## 2026-10-25 微信适配入口
 
 用户已选择“寰宇咨询” AppID `wxdf9ff3c30a1d9549`，根项目和 `config/project.ui-experience.json` 使用该值；独立产物配置由构建脚本沿用根项目 AppID，不再固定覆盖为游客。下文“游客 AppID”是历史记录。36556 为当前开发者工具 HTTP 服务端口，3000 才是业务 API。执行 `npm run build:weapp` 后导入本仓库根目录，或导入 `dist/weapp/`；默认进入正式规划入口，调试场景通过 `pages/index/index?preview=1` 开启。平台差异、请求域名和本次验证见 [微信适配](WECHAT_ADAPTATION.md)。
