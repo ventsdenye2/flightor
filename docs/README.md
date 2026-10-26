@@ -7,6 +7,7 @@
 - [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)：手动/对话机票查询、单程/往返卡片与交通确认后规划。
 - [FLIGHT_QUERY_ACCEPTANCE](FLIGHT_QUERY_ACCEPTANCE.md)：城市/机场×单程/往返、1–9成人、调用入口与取消/异常的扩展验收。
 - [FLIGHT_QUERY_PERFORMANCE](FLIGHT_QUERY_PERFORMANCE.md)：当前浏览器Worker、前三条摘要、原页详情核价、性能开关、连续对照及失败修正。
+- [FLIGHT_STABILITY_20_CASES](FLIGHT_STABILITY_20_CASES.md)：优化后二十个真实接口/H5稳定性用例与当轮证据。
 - [TRIP_CONTENT](TRIP_CONTENT.md)：Commons景点图片、介绍与推荐理由、审核精选概览。
 - [PLACE_RESOLVER](PLACE_RESOLVER.md)：Wikimedia 离线索引、地点消歧、统一坐标与图片查询及实测边界。
 - [PLACE_LOOKUP_BATCH](PLACE_LOOKUP_BATCH.md)：当前审核 Session 批量工具、Enterprise 优先回退、成功字段锁定、查询预算和后端合并。
