@@ -6,10 +6,26 @@ import fs from 'node:fs/promises'
 import { repo, dataRoot } from '../src/paths.mjs'
 import { PlaceBatch } from '../src/place-batch.mjs'
 import { executeFlightSearch } from '../src/flight-query.mjs'
+import { ConversationSubmission, submissionTool } from '../src/conversation-protocol.mjs'
 const execute = promisify(execFile)
 export const name = 'flightor-tools'
 export const inject = ['tools']
 export async function apply(ctx) {
+  if (process.env.FLIGHTOR_DSH_ROLE === 'conversation' && process.env.FLIGHTOR_DSH_SUBMISSION) {
+    const submission = new ConversationSubmission(process.env.FLIGHTOR_DSH_SUBMISSION)
+    ctx.tools.guard(exec => submission.guard(exec))
+    ctx.tools.register(defineTool({
+      name: submissionTool,
+      description: '提交本轮最终回复，必须显式填写非空 reply 和 intent(chat或plan)。需要规划时只简短确认。成功后结束本轮，不另写JSON正文；相同提交幂等，不同结果冲突失败。字段错误只允许一次补正，补正时只用本工具，不查票或搜索。',
+      parameters: {
+        reply: { type: 'string', required: true },
+        intent: { type: 'string', enum: ['chat', 'plan'], required: true }
+      },
+      output: { schema: { type: 'object', additionalProperties: true }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
+      isConcurrencySafe: () => false,
+      execute: (args, exec) => submission.submit(args, exec)
+    }))
+  }
   if (process.env.FLIGHTOR_DSH_ROLE === 'reviewer' && process.env.FLIGHTOR_DSH_PLACE_LEDGER) {
     const batch = new PlaceBatch({ file: process.env.FLIGHTOR_DSH_PLACE_LEDGER })
     ctx.tools.register(defineTool({

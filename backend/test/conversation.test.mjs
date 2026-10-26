@@ -13,7 +13,7 @@ test('chat preserves context and only an explicit planning intent invokes the pl
   const answers = [{ reply: '想逛博物馆还是街区？', intent: 'chat' }, { reply: '记住了，预算改成两万。', intent: 'chat' }, { reply: '现在按聊过的内容规划。', intent: 'plan' }, { reply: '按已确认的交通开始规划。', intent: 'plan' }]
   class Agent {
     async start(persona) { assert.equal(persona, conversationPersona) }
-    async run(input) { inputs.push(input); return { text: JSON.stringify(answers.shift()) } }
+    async run(input) { inputs.push(input); return { submission: answers.shift() } }
     async close() {}
   }
   const plan = async run => { plans.push(run.prompt); run.trip = { id: 'generated' }; run.stage = 'completed' }
@@ -35,9 +35,9 @@ test('chat preserves context and only an explicit planning intent invokes the pl
     assert.equal(plans.length, 2); assert.equal(inputs.length, 4)
   } finally { await fs.rm(root, { recursive: true, force: true }) }
 })
-test('unstructured or invalid intent replies remain chat, never trigger planning', () => {
-  assert.equal(parseConversationReply('先聊聊你的想法').intent, 'chat')
-  assert.equal(parseConversationReply('{"reply":"开始","intent":"maybe"}').intent, 'chat')
+test('unstructured or invalid intent replies fail explicitly without chat fallback', () => {
+  assert.throws(() => parseConversationReply('先聊聊你的想法'), { code: 'OUTPUT_PROTOCOL_ERROR' })
+  assert.throws(() => parseConversationReply({ reply: '开始', intent: 'maybe' }), { code: 'OUTPUT_PROTOCOL_ERROR' })
 })
 test('actual lifecycle progress updates and the saved reply publish before agent cleanup', async () => {
   const root = await fs.mkdtemp(path.join(dataRoot, 'conversation-test-'))
@@ -47,7 +47,7 @@ test('actual lifecycle progress updates and the saved reply publish before agent
     async run() {
       this.onEvent('conversation', { type: 'tool/call', data: { arguments: 'private' } })
       live = run.progress.text
-      return { text: '{"reply":"可以继续聊。","intent":"chat"}' }
+      return { submission: { reply: '可以继续聊。', intent: 'chat' } }
     }
     async close() { closed = true }
   }
@@ -62,7 +62,7 @@ test('actual lifecycle progress updates and the saved reply publish before agent
 test('cancelled chat cannot publish a late answer or initiate planning', async () => {
   const root = await fs.mkdtemp(path.join(dataRoot, 'conversation-test-'))
   const controller = new AbortController()
-  class Agent { async start() {} async run() { controller.abort(); return { text: '{"reply":"开始","intent":"plan"}' } } async close() {} }
+  class Agent { async start() {} async run() { controller.abort(); return { submission: { reply: '开始', intent: 'plan' } } } async close() {} }
   const run = { id: crypto.randomUUID(), message: '现在规划' }
   try { await assert.rejects(runConversation(run, { root, Agent, signal: controller.signal, plan: async () => assert.fail('must not plan') })); assert.equal(run.stage, 'cancelled'); assert.equal(run.conversation, undefined) }
   finally { await fs.rm(root, { recursive: true, force: true }) }

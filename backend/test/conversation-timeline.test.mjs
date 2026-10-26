@@ -58,7 +58,7 @@ test('a planned itinerary is saved in its reply before completion and survives l
     savedBeforeCompletion = (await loadConversation(run.conversation.id, root)).messages.at(-1).trip.id === 'trip'
     run.stage = 'completed'
   }
-  class Agent { async start() {} async close() {} async run(input) { return { text: JSON.stringify({ reply: '继续聊。', intent: input.includes('用户已点击生成行程') ? 'plan' : 'chat' }) } } }
+  class Agent { async start() {} async close() {} async run(input) { return { submission: { reply: '继续聊。', intent: input.includes('用户已点击生成行程') ? 'plan' : 'chat' } } } }
   try {
     const first = { id: crypto.randomUUID(), message: '交通自行解决，11月1日上午抵达，11月7日晚上离开，开始规划', action: 'plan' }
     await runConversation(first, { root, Agent, plan })

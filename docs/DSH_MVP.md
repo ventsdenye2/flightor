@@ -1,4 +1,14 @@
-# 双 DSH Agent 最小接入
+# FlightOR 三角色 DSH MVP
+
+## 2026-10-26 聊天结构化交付 B＋C（当前协议）
+
+按用户测试中途追加要求，规划角色支持进程环境变量 `FLIGHTOR_DSH_PLANNER_REASONING_EFFORT`（low/high/max，默认max），用于洛杉矶及后续未完成场景三档对照；聊天low、审核high固定。追加14次试验及原矩阵结果见 [验收记录](CONVERSATION_PROTOCOL_ACCEPTANCE.md)，未据此选定新的最终默认档位。
+
+聊天角色通过 submit_conversation_reply 工具交付非空 reply 和显式 intent(chat/plan)，按本次会话、执行窗口和 toolCallId 配对成功结果，保留 session/wait 完成边界。相同提交幂等，不同提交冲突失败。首次交付＋最多一次定向补正：原生字段失败与应用层漏交提醒共享预算；补正最长30秒，受原任务超时与取消约束，tools.guard 只允许提交工具。失败使用既有 errorCode=OUTPUT_PROTOCOL_ERROR，并显示可重试提示，不将原始JSON或缺intent默认为普通聊天。REST请求形状保持不变。规划自然语言草稿和审核现有协议保留。
+
+三个独立角色仍顺序执行，initialize 显式传 reasoningEffort：聊天 low、规划 max、审核 high；deepseek-account/deepseek-flash、插件与默认输出上限保持现状。本节覆盖下方历史记录中聊天JSON回退和未覆盖思考强度的说明，审核JSON回退不在本轮范围。每次执行保留私有初始化参数及提交/补正诊断，不向前端发送工具原文。
+
+离线92/92、前端回归、双端类型检查和构建通过；10月25日矩阵的独立真实复测已执行完（47任务、25次查票、19次规划尝试，追加14次三档试验全部完成）。聊天24/25首轮成功、1次补正成功、0次最终协议失败；17次非空行程中仍有13次部分结果，审核空行程失败与主动取消另记。补正期间原生会话调用失败也映射为 OUTPUT_PROTOCOL_ERROR，不以接口completed代替业务成功。地点消歧、图片缺口、旧行程调整和航班观察器只记录，不在本轮修复；不据此宣称微信真机或服务器部署通过。
 
 2026-10-19。用户要求在当前 backend-mvp 原目录，用本机已安装的最新版 DSH 验证规划 / 审核两个独立 Agent；保留非界面插件，通过现有 trip-flight-tool CLI 查询航班。当前核心链路已实现，最终平台验收见本文结果表。
 

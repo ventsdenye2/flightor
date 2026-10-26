@@ -40,7 +40,7 @@ test('choice stays on its original reply; next chat locks it and explicit planni
     async run(input) {
       modelCalls++; prompts.push(input)
       this.onEvent('conversation', { type: 'tool/result', data: { message: { content: [{ type: 'text', text: JSON.stringify(result) }] } } })
-      return { text: JSON.stringify({ reply: '已找到这些航班，可以先比较。', intent: 'chat' }) }
+      return { submission: { reply: '已找到这些航班，可以先比较。', intent: 'chat' } }
     }
     async close() {}
   }
@@ -89,7 +89,7 @@ test('round-trip facts survive selection, refresh and planning with both dates a
     async run(input) {
       prompts.push(input)
       if (prompts.length === 1) this.onEvent('conversation', { type: 'tool/result', data: result })
-      return { text: JSON.stringify({ reply: prompts.length === 1 ? '请选择往返组合。' : '按已确认的去返程规划。', intent: prompts.length === 1 ? 'chat' : 'plan' }) }
+      return { submission: { reply: prompts.length === 1 ? '请选择往返组合。' : '按已确认的去返程规划。', intent: prompts.length === 1 ? 'chat' : 'plan' } }
     }
   }
   try {
@@ -125,7 +125,7 @@ test('two selected one-way searches retain both confirmations when the latest op
       calls++
       if (calls < 3) this.onEvent('conversation', { type: 'tool/result', data: calls === 1 ? firstResult : returnResult })
       else { assert.match(input, /2026-10-28T19:20:00/); assert.match(input, /2026-11-03T12:00:00/) }
-      return { text: JSON.stringify({ reply: calls < 3 ? '请选择。' : '已确认去返程。', intent: 'chat' }) }
+      return { submission: { reply: calls < 3 ? '请选择。' : '已确认去返程。', intent: 'chat' } }
     }
   }
   try {
