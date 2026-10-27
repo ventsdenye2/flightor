@@ -158,23 +158,33 @@ export function assertNoAccessBlock(text: string): void {
     throw new FlightError('ACCESS_RESTRICTED','Trip.com requires human verification or has restricted this browser. Stop automated attempts; inspect the diagnostic screenshot.',false,'needs_user_action');
 }
 export const cards = (page: Page) => page.getByRole('group',{name:/^Flight departing from /});
-export async function openCandidate(page:Page,index:number):Promise<void> {
+export async function openCandidate(page:Page,index:number,instanceKey?:string):Promise<void> {
   // Both observed page variants use this test ID; their labels differ between
   // "View Details" / "Select this fare" and "Select".
-  const row=cards(page).nth(index).locator('xpath=ancestor::*[.//*[@data-testid="u_select_btn"]][1]');
+  if(instanceKey&&!/^[a-zA-Z0-9-]+$/.test(instanceKey))throw new FlightError('RESULTS_CHANGED','Invalid original card binding');
+  const card=instanceKey?page.locator(`[data-flightor-card-key="${instanceKey}"]`):cards(page).nth(index);
+  if(instanceKey&&await card.count()!==1)throw new FlightError('RESULTS_CHANGED','Original result card was replaced. Search again.');
+  const row=card.locator('xpath=ancestor::*[.//*[@data-testid="u_select_btn"]][1]');
   await row.getByTestId('u_select_btn').first().click();
 }
 export async function readCards(page: Page,limit=Infinity): Promise<CardData[]> {
-  return cards(page).evaluateAll((elements,limit) => elements.slice(0,limit).map(el => {
+  return cards(page).evaluateAll((elements,limit) => {
+    const state=window as unknown as {__flightorCards?:{keys:WeakMap<Element,string>;prefix:string;next:number}};
+    const registry=state.__flightorCards??= {keys:new WeakMap(),prefix:`${Date.now()}-${Math.random().toString(36).slice(2)}`,next:0};
+    return elements.slice(0,limit).map(el => {
+    let instanceKey=registry.keys.get(el);
+    if(!instanceKey){instanceKey=`${registry.prefix}-${++registry.next}`;registry.keys.set(el,instanceKey);}
+    el.setAttribute('data-flightor-card-key',instanceKey);
     let row=el.parentElement;
     while(row&&!row.querySelector('[data-testid="u_select_btn"]'))row=row.parentElement;
     return {
+    instanceKey,
     label: el.getAttribute('aria-label') ?? '', text: (el as HTMLElement).innerText,
     priceLabel: el.getAttribute('aria-label') ?? '',
     priceText: row?.innerText ?? '',
     airlineText: (el.querySelector('[role="region"]') as HTMLElement | null)?.innerText ?? '',
     airports: Array.from(el.querySelectorAll('[role="textbox"]')).map(t => ((t as HTMLElement).innerText.match(/\b[A-Z]{3}\b/) ?? [])[0]).filter((x):x is string=>!!x),
-  };}),limit);
+  };});},limit);
 }
 export async function chooseLocation(page: Page, id: string, location: Location) {
   const input=page.getByTestId(id).last();

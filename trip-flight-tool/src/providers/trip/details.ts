@@ -46,7 +46,7 @@ export async function readCandidateDetails({page,network,query,candidate,readCan
   assertSamePrice(candidate,matches[0].item);
   const checked=structuredClone(candidate);
   try {
-    await openCandidate(page,matches[0].index);
+    await openCandidate(page,matches[0].index,matches[0].item.cardKey);
     await page.getByText('Select Fare',{exact:true}).waitFor();
     await page.waitForFunction(()=>{const el=document.querySelector('.m-middle-flightInfo');return !!el&&(el as HTMLElement).innerText.length>10;},undefined,{timeout:timeoutMs});
     let text=await page.locator('.ift-drawer[aria-hidden="false"]').innerText();
@@ -67,6 +67,11 @@ export async function readCandidateDetails({page,network,query,candidate,readCan
     const details=combined?.details??parseDetails(detailText,query,evidence);
     if(checked.journeys)checked.journeys.forEach((journey,index)=>validateDetails(journey,combined!.journeys[index]));
     else validateDetails(checked,details);
+    if(candidate.details) {
+      const itinerary=(value:NonNullable<Candidate['details']>)=>value.segments.map(s=>[s.flightNumber,s.origin,s.destination,s.departureLocal,s.arrivalLocal]);
+      if(JSON.stringify(itinerary(candidate.details))!==JSON.stringify(itinerary(details)))
+        throw new FlightError('DETAILS_MISMATCH','Detailed flight segments changed since this option was opened. Search again.');
+    }
     const {amount,total}=fare;
     if(amount!==checked.price.amount) {
       if(!allowReprice)throw new FlightError('PRICE_CHANGED','Fare drawer price differs from the selected quote. Search again.');

@@ -42,6 +42,9 @@ export interface Journey {
   stopCount: number | null; details: FlightDetails | null;
 }
 export interface Candidate {
+  /** Internal original-DOM-card binding; never a provider itinerary identifier. */
+  cardKey?: string;
+  pageBound?: boolean;
   detailsState?: 'deferred' | 'ready';
   id: string; price: Money; airlines: string[]; departureAirport: string; arrivalAirport: string;
   departureLocal: string; arrivalLocal: string; durationMinutes: number | null;

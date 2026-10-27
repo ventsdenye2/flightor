@@ -18,6 +18,16 @@ test('session import omits only un-restorable empty out-of-line records without 
 const searchId='00000000-0000-4000-8000-000000000001',candidateId='0123456789abcdef';
 const fixture=()=>({schemaVersion:1,searchId,status:'complete',source:'Trip.com',quoteType:'search_quote',resultLevel:'summary',query:{origin:'BJS',destination:'LIS',departureDate:'2099-11-04',currency:'CNY'},observedAt:new Date().toISOString(),candidates:[{id:candidateId,price:{amount:1234,currency:'CNY',checkoutVerified:false},detailsState:'deferred',details:null}]} as unknown as SearchResult);
 
+test('ambiguous page-bound options cannot be silently recovered as a different itinerary after page expiry',async()=>{
+  const root=await mkdtemp(join(tmpdir(),'bound-flight-')),tool=new FlightTool({artifactDir:root});
+  try {
+    const result=fixture();result.candidates[0].pageBound=true;await tool.store.save(result);
+    tool.searchFlights=async()=>{assert.fail('must request a new user search instead of guessing a duplicate');};
+    assert.equal((await tool.getFlightDetails({searchId,candidateId}) as any).code,'RESULTS_CHANGED');
+    assert.equal((await tool.store.load(searchId)).candidates[0].details,null);
+  } finally {await tool.close();await rm(root,{recursive:true,force:true});}
+});
+
 test('deferred details fetch only the chosen identity; saved and refreshed prices retain checkout boundary',async()=>{
   const root=await mkdtemp(join(tmpdir(),'lazy-flight-')),tool=new FlightTool({artifactDir:root});
   try {

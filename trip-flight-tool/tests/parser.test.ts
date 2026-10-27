@@ -1,11 +1,36 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { parseDetails,validateDetails,parseCard,parseAmount,durationMinutes,parseResultCount } from '../src/providers/trip/parser.js';
+import { parseDetails,validateDetails,parseCard,parseAmount,durationMinutes,parseResultCount,bindCandidateIdentities } from '../src/providers/trip/parser.js';
 import { searchInputSchema } from '../src/core/types.js';
 import { resolveLocation,validateDate } from '../src/core/locations.js';
 import { assertNoAccessBlock,verifyUrl,searchResponseError,summarizeSearchResponse } from '../src/providers/trip/browser.js';
 const query=searchInputSchema.parse({origin:'BJS',destination:'LIS',departureDate:'2026-10-28',currency:'USD'});
+test('aircraft model tokens do not create flights or false airport changes in the saved Lisbon failure',async()=>{
+  const text=await readFile(new URL('./fixtures/c919-details.txt',import.meta.url),'utf8');
+  const q=searchInputSchema.parse({...query,origin:'PVG',departureDate:'2026-11-04',currency:'CNY'});
+  for(const aircraft of ['C919','B787','A320']) {
+    const detail=parseDetails(text.replace('C919',aircraft),q,{rawTextPath:'x',screenshotPath:'y'});
+    assert.deepEqual(detail.segments.map(s=>s.flightNumber),['MU2162','MU5063','TP1271']);
+    assert.deepEqual(detail.connections.map(c=>[c.city,c.airportChange]),[["Xi'an",false],['Vienna',false]]);
+    assert.equal(detail.connections[1].selfTransfer,true);
+    validateDetails({departureAirport:'PVG',arrivalAirport:'LIS',departureLocal:'2026-11-04T16:05:00',arrivalLocal:'2026-11-05T15:05:00',stopCount:2},detail);
+    assert.throws(()=>validateDetails({departureAirport:'PVG',arrivalAirport:'LIS',departureLocal:'2026-11-04T16:05:00',arrivalLocal:'2026-11-05T15:05:00',stopCount:1},detail),/stop count/);
+  }
+});
+test('operator differences and original-card bindings preserve all similar options without price-based identity',()=>{
+  const card={label:'2026-11-12 01:30:00 2026-11-13 06:55:00',text:'Thai Vietjet Air, Etihad Airways\nOperated by Hifly For Etihad Airways\n37h 25m\n2 stops in Bangkok, Abu Dhabi',airlineText:'Thai Vietjet Air, Etihad Airways',airports:['PVG','LIS'],priceLabel:'US$319',instanceKey:'page-a'};
+  const other={...card,text:card.text.replace('Hifly For Etihad Airways','Condor'),instanceKey:'page-c'};
+  const rows=[card,{...card,instanceKey:'page-b'},other],ambiguous=new Set<string>();
+  const identify=(rows:typeof card[])=>bindCandidateIdentities(rows.map(row=>parseCard(row,query)),rows,ambiguous);
+  const initial=identify(rows);
+  assert.equal(new Set(initial.map(c=>c.id)).size,3);
+  assert.equal(initial[0].pageBound,true);assert.equal(initial[1].pageBound,true);assert.equal(initial[2].pageBound,undefined);
+  assert.deepEqual(identify([rows[2],rows[1],rows[0]]).map(c=>c.id),[initial[2].id,initial[1].id,initial[0].id]);
+  assert.equal(identify([{...rows[1],priceLabel:'US$320'}])[0].id,initial[1].id);
+  assert.notEqual(identify([{...rows[1],instanceKey:'replacement'}])[0].id,initial[1].id);
+  assert.throws(()=>bindCandidateIdentities([parseCard(card,query),parseCard(card,query)],[{...card,instanceKey:undefined},{...card,instanceKey:undefined}]),/original result cards/);
+});
 test('a technical stop stays inside its numbered flight and counts separately from transfers',async()=>{
   const text=await readFile(new URL('./fixtures/technical-stop-details.txt',import.meta.url),'utf8');
   const q=searchInputSchema.parse({...query,destination:'NGO',departureDate:'2026-10-30',currency:'CNY'});

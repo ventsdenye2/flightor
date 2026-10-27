@@ -37,6 +37,8 @@ export async function runManualFlightSearch(run, { signal, onChange = async () =
     const options = presentFlightOptions(result)
     if (!options) {
       const messages = { ACCESS_RESTRICTED: '机票网站暂时限制访问，请稍后再试。', INVALID_ARGUMENTS: '查询条件无效，请检查地点和日期。', BROWSER_UNAVAILABLE: '航班查询服务暂时不可用。', RESULTS_TIMEOUT: '航班查询超时，请稍后重试。', TIMEOUT: '航班查询超时，请稍后重试。', PAGE_CHANGED: '机票网站页面发生变化，暂时无法完成查询，请稍后重试。', LOCATION_SELECTION_FAILED: '无法在机票网站确认所选城市或机场，请尝试选择具体机场。', QUERY_MISMATCH: '机票网站的地点或日期与查询条件不一致，请重新选择后查询。', NETWORK_ERROR: '机票网站连接失败，请稍后重试。' }
+      messages.AMBIGUOUS_CANDIDATES = '部分航班选项过于相似，暂时无法安全区分，请重新查询或调整条件。'
+      messages.RESULTS_CHANGED = '航班列表已变化，请重新查询后选择。'
       throw Object.assign(Error(messages[result.code] || '本次航班查询未完成，请稍后重试。'), { code: result.code })
     }
     const directory = path.join(root, 'conversation-evidence'), file = path.join(directory, conversation.id + '.json')

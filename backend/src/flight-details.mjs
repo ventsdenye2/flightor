@@ -23,7 +23,7 @@ export async function runFlightDetails(run, { signal, root = dataRoot, onChange 
       const result = await details({ searchId, candidateId }, { signal, refresh: !!run.select })
       signal?.throwIfAborted()
       if (result.status !== 'complete' || result.candidate?.id !== candidateId || !result.candidate.details) {
-        const messages = { PRICE_CHANGED: '票价已变化，请重新查询后再选择。', RESULTS_CHANGED: '所选航班已变化，请重新查询。', ACCESS_RESTRICTED: '机票网站暂时限制访问，请稍后再试。' }
+        const messages = { PRICE_CHANGED: '票价已变化，请重新查询后再选择。', RESULTS_CHANGED: '航班列表已变化或原查询页已失效，请重新查询后选择。', DETAILS_MISMATCH: '航班详情与所选记录不一致，请重新查询后选择。', ACCESS_RESTRICTED: '机票网站暂时限制访问，请稍后再试。' }
         throw Object.assign(Error(messages[result.code] || '未能核对航班详情，请稍后重试。'), { code: result.code || 'DETAILS_UNAVAILABLE' })
       }
       if (result.candidate.price.amount !== option.amount || result.candidate.price.currency !== option.currency) throw Object.assign(Error('票价已变化，请重新查询后再选择。'), { code: 'PRICE_CHANGED' })

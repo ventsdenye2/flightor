@@ -16,7 +16,22 @@ export function parseAmount(text: string, currency: SearchQuery['currency']): nu
   if (!Number.isFinite(value) || value <= 0) throw new FlightError('PAGE_CHANGED','Invalid displayed price');
   return value;
 }
-export interface CardData { label: string; text: string; priceLabel: string; priceText?: string; airlineText: string; airports: string[] }
+export interface CardData { label: string; text: string; priceLabel: string; priceText?: string; airlineText: string; airports: string[]; instanceKey?: string }
+
+// Identical summaries are not necessarily identical itineraries. Keep each
+// original DOM card instead of deduplicating or assigning a list-position ID.
+// Once a summary collides, keep it page-bound even if its sibling disappears.
+export function bindCandidateIdentities(candidates:Candidate[],cards:CardData[],ambiguous=new Set<string>()):Candidate[] {
+  const counts=new Map<string,number>();
+  for(const candidate of candidates)counts.set(candidate.id,(counts.get(candidate.id)??0)+1);
+  for(const [id,count] of counts)if(count>1)ambiguous.add(id);
+  return candidates.map((candidate,index)=>{
+    const cardKey=cards[index]?.instanceKey;
+    if(!ambiguous.has(candidate.id))return {...candidate,...(cardKey?{cardKey}:{})};
+    if(!cardKey)throw new FlightError('AMBIGUOUS_CANDIDATES','Identical summaries require their original result cards');
+    return {...candidate,cardKey,pageBound:true,id:createHash('sha256').update(`${candidate.id}:${cardKey}`).digest('hex').slice(0,16)};
+  });
+}
 export function combineRoundTrip(outbound: Candidate, inbound: Candidate): Candidate {
   const journeys=[outbound,inbound].map((candidate,index)=>{
     const {id,price,summaryText,...journey}=candidate;
@@ -51,7 +66,10 @@ export function parseCard(card: CardData, query: SearchQuery,stage:'final'|'outb
   if(query.adults>1&&(!priceLines?.length||(!totalLine&&!startingTotal)))throw new FlightError('PAGE_CHANGED','Missing explicit per-adult and total prices for the requested passengers');
   const price = parseAmount(priceLines?.length?priceLines.filter(line=>!/^Total\s/i.test(line)).join('\n'):card.priceLabel,query.currency);
   const totalAmount=totalLine||startingTotal?parseAmount((totalLine??startingTotal)!,query.currency):undefined;
-  const id = createHash('sha256').update(JSON.stringify([times,card.airports,card.airlineText,lines.filter(x => /stops?|\bin\s/.test(x))])).digest('hex').slice(0,16);
+  const identity:unknown[]=[times,card.airports,card.airlineText,lines.filter(x => /stops?|\bin\s/.test(x))];
+  const operators=lines.filter(x=>/^Operated by\b/i.test(x));
+  if(operators.length)identity.push(operators);
+  const id = createHash('sha256').update(JSON.stringify(identity)).digest('hex').slice(0,16);
   return { id,price:{amount:price,currency:query.currency,basis:'per_adult',checkoutVerified:false,...(totalAmount!==undefined?{totalAmount}:{})},
     airlines:card.airlineText.split(/,\s*/).filter(Boolean), departureAirport:card.airports[0],arrivalAirport:card.airports[1],
     departureLocal:times[0],arrivalLocal:times[1],durationMinutes:durationLine ? durationMinutes(durationLine) : null,
@@ -78,7 +96,7 @@ export function parseRoundTripDetails(text:string, query:SearchQuery, journeys:J
 }
 export function parseDetails(text: string, query: SearchQuery, evidence: {rawTextPath:string;screenshotPath:string}, observedAt = new Date().toISOString()): FlightDetails {
   const lines = text.split('\n').map(x => x.replaceAll('\u00a0',' ').trim()).filter(Boolean);
-  const indexes = lines.flatMap((line,i) => /^[A-Z0-9]{2}\d{1,4}[A-Z]?$/.test(line) && !/^[A-Z]{3}$/.test(line) ? [i] : []);
+  const possibleIndexes = lines.flatMap((line,i) => /^[A-Z0-9]{2}\d{1,4}[A-Z]?$/.test(line) && !/^[A-Z]{3}$/.test(line) ? [i] : []);
   const segments: Segment[] = [];
   const connections: Connection[] = [];
   const warnings: string[] = [];
@@ -87,6 +105,15 @@ export function parseDetails(text: string, query: SearchQuery, evidence: {rawTex
     for(let i=index-1;i>=1 && i>index-8;i--) if (/^[A-Z]{3}\s/.test(lines[i]) && /^\d{2}:\d{2}$/.test(lines[i-1])) return i;
     return -1;
   }
+  // A segment has one departure time/airport block. Aircraft labels such as
+  // C919, B787 or A320 can also match the flight-number regex, but occur after
+  // that block's actual flight number; they must not create extra segments.
+  const departures=new Set<number>();
+  const indexes=possibleIndexes.filter(index=>{
+    const airport=findAirportBefore(index);
+    if(airport<1||departures.has(airport))return false;
+    departures.add(airport);return true;
+  });
   if (indexes.length) firstTimeIndex = findAirportBefore(indexes[0]) - 1;
   const dateAt = (index: number) => {
     let date = query.departureDate;

@@ -10,7 +10,7 @@ import { ResultStore } from './store.js';
 import { configFromEnv,type ToolConfig } from '../browser/config.js';
 import { SessionStore } from '../browser/session.js';
 import { submitSearch,tryDirectSearch,waitForResults,sortAndStabilize,readCards,assertNoAccessBlock,openCandidate,observeSearchNetwork,completeSearchWithSamePageRetry,verifyUrl,publicSearchUrl,type SearchNetwork } from '../providers/trip/browser.js';
-import { parseCard,combineRoundTrip,parseResultCount } from '../providers/trip/parser.js';
+import { parseCard,combineRoundTrip,parseResultCount,bindCandidateIdentities } from '../providers/trip/parser.js';
 
 import {assertSamePrice,readCandidateDetails} from '../providers/trip/details.js';
 interface ActiveSearch { result:SearchResult;context:BrowserContext;page:Page;network:SearchNetwork;readCandidates:()=>Promise<Candidate[]>;persistSession:boolean }
@@ -77,6 +77,7 @@ export class FlightTool {
             await writeFile(join(this.store.directory(saved.searchId),'details-network.json'),JSON.stringify(active.network.responses,null,2));
           }
         } else {
+          if(candidate.pageBound)throw new FlightError('RESULTS_CHANGED','Similar flight options require the original result page. Search again before choosing.');
           const fresh=await this.searchFlights(saved.query,{signal:options.signal,detailCandidate:candidate});
           if('code' in fresh)return fresh;
           checked=fresh.candidates.find(c=>c.id===candidate.id);
@@ -202,9 +203,13 @@ export class FlightTool {
           }
           network.check();
           const text=await page.locator('body').innerText();
-          const readCandidates=async(limit?:number)=>(await readCards(page!,limit)).map(card=>outbound
-            ?combineRoundTrip(outbound,parseCard(card,{...query,origin:query.destination,destination:query.origin,departureDate:query.returnDate!}))
-            :parseCard(card,query));
+          const ambiguousSummaries=new Set<string>();
+          const readCandidates=async(limit?:number)=>{
+            const cards=await readCards(page!,limit);
+            return bindCandidateIdentities(cards.map(card=>outbound
+              ?combineRoundTrip(outbound,parseCard(card,{...query,origin:query.destination,destination:query.origin,departureDate:query.returnDate!}))
+              :parseCard(card,query)),cards,ambiguousSummaries);
+          };
           const parsedCards=state==='results'?await readCandidates(options.withDetails||options.detailCandidate?undefined:query.maxResults):[];
           if(state==='results'&&!parsedCards.length) throw new FlightError('RESULTS_CHANGED','Results disappeared before extraction; no fare was published');
           for(const c of parsedCards) {
@@ -226,6 +231,7 @@ export class FlightTool {
           mark('candidate_details');
           const providerResultCount=parseResultCount(text);
           const warnings:string[]=['Search quote only; final price and availability require checkout revalidation.'];
+          if(candidates.some(c=>c.pageBound))warnings.push('Similar summaries are kept as separate original-page options. If that page expires or changes, search again; no itinerary or baggage is inferred from another option.');
           if(outbound) warnings.push('Native round-trip combinations for the first cheapest displayed outbound only; return-list prices are complete round-trip totals, not sums of separate one-way fares. Other outbound combinations were not exhaustively searched.');
           if(samePageRetried)warnings.push('Initial HTTP 430 recovered after one Search click on the same page and browser session.');
           if(!stable) warnings.push('Result list did not stabilize before its step deadline.');
@@ -247,7 +253,7 @@ export class FlightTool {
             coverage:outbound?'selected_outbound_return_options':state==='results'&&stable&&providerResultCount!==null?'provider_sorted_results':'unknown',lowestPriceVerified:!!withDetails&&!outbound&&state==='results'&&candidates.length>0&&stable&&sorted&&providerResultCount!==null,attempts,candidates,warnings,evidence};
           mark('save_result');await this.store.save(result);mark('completed');
           if(this.config.reuseContext&&!page.isClosed()) {
-            this.activeSearch={result,context,page,network,readCandidates:()=>readCandidates(options.detailCandidate?undefined:query.maxResults),persistSession};retained=true;
+            this.activeSearch={result,context,page,network,readCandidates:()=>readCandidates(),persistSession};retained=true;
           }
           return result;
         } catch(error) {
