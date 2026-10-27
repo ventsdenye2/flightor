@@ -8,6 +8,7 @@ import { flightOptionsFromEvidence } from './flight-options.mjs'
 import { updateProgress } from './progress.mjs'
 import { PlaceBatch } from './place-batch.mjs'
 import { validateItinerary } from './itinerary-protocol.mjs'
+import {existingTripCover} from './trip-cover.mjs'
 
 export async function runPlan(run, { signal, onChange = async () => {}, Agent = DshAgent, transformDraft, transformReview, beforeComplete = async () => {}, placeLookup, placeBudgetMs } = {}) {
   const workspace = path.join(dataRoot, 'workspaces', run.id)
@@ -82,6 +83,7 @@ export async function runPlan(run, { signal, onChange = async () => {}, Agent = 
       trip.placesResolved = true
     }
     signal?.throwIfAborted()
+    trip.cover=existingTripCover(trip)
     const completed = { ...run, trip, stage: 'completed', completedAt: new Date().toISOString() }
     await beforeComplete(completed)
     await onChange(completed)

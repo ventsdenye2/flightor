@@ -25,6 +25,9 @@ export interface TripExperienceProps {
   embedded?: boolean
   onBack?: () => void
   onContinuePlanning?: () => void
+  active?: boolean
+  restoringContext?: boolean
+  contextError?: string
   saved?: boolean
   onSavedChange?: (value: boolean) => void
 }
@@ -39,7 +42,7 @@ export default function TripExperience(props: TripExperienceProps) {
   // A different trip starts with its own selected day, edits and pending timers.
   return <TripContent key={props.trip.id} {...props} />
 }
-function TripContent({ trip, onCoverResolved, loadPlaceMedia, loadPlaceLocation, imageError = false, onNavigate, onOpenSource, embedded = false, onBack, onContinuePlanning, saved: controlledSaved, onSavedChange }: TripExperienceProps) {
+function TripContent({ trip, active = true, restoringContext = false, contextError, onCoverResolved, loadPlaceMedia, loadPlaceLocation, imageError = false, onNavigate, onOpenSource, embedded = false, onBack, onContinuePlanning, saved: controlledSaved, onSavedChange }: TripExperienceProps) {
   const [tab, setTab] = useState<Tab>('overview')
   const [days, setDays] = useState(trip.days)
   const [mediaById, setMediaById] = useState<Record<string, MediaPresentation>>({})
@@ -60,6 +63,7 @@ function TripContent({ trip, onCoverResolved, loadPlaceMedia, loadPlaceLocation,
   }, [trip.days, trip.destination, trip.provenance, trip.placesResolved, loadPlaceMedia])
   const [dayId, setDayId] = useState<TripDay['id'] | undefined>(() => selectTripDay(trip.days, trip.initialDayId)?.id)
   const [sheet, setSheet] = useState<Sheet | null>(null)
+  useEffect(() => { if (!active) setSheet(null) }, [active])
   const [localSaved, setLocalSaved] = useState(false)
   const saved = controlledSaved ?? localSaved
   const setSaved = (value: boolean) => { setLocalSaved(value); onSavedChange?.(value) }
@@ -142,6 +146,8 @@ function TripContent({ trip, onCoverResolved, loadPlaceMedia, loadPlaceLocation,
         {day ? <DayPlan key={day.id} day={day} dayNumber={dayNumber} loadPlaceLocation={shouldLoadPlaceDetails(trip) ? loadPlaceLocation : undefined} imageError={imageError} published={trip.provenance === 'dsh'} onActivity={activity => setSheet({ kind: 'activity', activity })} onAdjust={() => setSheet({ kind: 'adjust' })} /> : <EmptyState icon='calendar' title='每日安排尚未补充' description='每日安排尚未确定，已知信息可在概览查看。' />}
       </> : <View className='ux-flight-page'>{trip.flights.length ? trip.flights.map(flight => <FlightTicket key={flight.id} flight={flight} expanded onOpenSource={onOpenSource} />) : <EmptyState icon='plane' title='还没有航班安排' description='出发日期、班次与价格都留待确认。' />}{trip.returnNote ? <View className='ux-return'><Icon name='plane' /><View><Text className='ux-section-title'>返程安排</Text><Text className='ux-muted'>{trip.returnNote}</Text></View></View> : null}</View>}
       {undo && tab === 'days' ? <View className='ux-undo' role='status'><Text>日程已调整</Text><Button className='ux-text-button' onClick={() => { setDays(undo); setUndo(null); notify('已恢复上一次安排') }}>撤销调整</Button></View> : null}
+      {restoringContext ? <View role='status'><Text>正在恢复这段行程的对话…</Text></View> : null}
+      {contextError ? <View role='alert'><Text>{contextError}</Text></View> : null}
       {tab !== 'overview' ? <View className='ux-footer-note'><Text>{trip.provenance === 'dsh' ? '按需求规划 · 具体安排与报价以出发前核实为准' : '示例行程 · 价格与安排用于界面预览'}</Text><Button className='ux-text-button' onClick={() => setSheet({ kind: 'credits' })}>图片与来源<Icon name='external' /></Button></View> : null}
     </ScrollPanel>
     {!embedded ? <View className='ux-bottom-nav' ariaLabel='主导航'>{[{ name: 'home', label: '规划' }, { name: 'compass', label: '探索' }, { name: 'calendar', label: '行程' }, { name: 'user', label: '我的' }].map(item => <Button key={item.name} className={item.label === '行程' ? 'is-active' : ''} onClick={() => item.label === '行程' ? setTab('overview') : onNavigate?.()}><Icon name={item.name} /><Text>{item.label}</Text></Button>)}</View> : null}
@@ -166,7 +172,7 @@ function TripContent({ trip, onCoverResolved, loadPlaceMedia, loadPlaceLocation,
           <Text className='ux-detail-title'>这一天，按你的节奏</Text><Text className='ux-muted'>D{dayNumber} · {day.title}</Text>
           <Button className='ux-adjust-option' disabled={!day.activities.length} onClick={() => updateDay(day.activities.slice(0, -1), '已减少一个停留，留出更多自由时间')}><Text className='ux-section-title'>轻松一点</Text><Text className='ux-muted'>减少最后一个停留，给喜欢的地方多一点时间。</Text><Icon name='arrow-right' /></Button>
           <Button className='ux-adjust-option' disabled={!candidate} onClick={() => { if (candidate) updateDay([...day.activities, candidate], `已加入${candidate.name}，可以撤销`) }}><Text className='ux-section-title'>加一点风景</Text><Text className='ux-muted'>{candidate ? `把${candidate.name}加入今天，具体时间可以再确认。` : '当前没有其他可用候选，已有安排仍可调整。'}</Text><Icon name='arrow-right' /></Button>
-          {onContinuePlanning ? <Button className='ux-primary' onClick={onContinuePlanning}>回到对话，继续调整</Button> : null}
+          {onContinuePlanning ? <Button className='ux-primary' disabled={restoringContext} onClick={() => { setSheet(null); onContinuePlanning() }}>回到对话，继续调整</Button> : null}
           <Text className='ux-caption'>这里的快速调整只在本次浏览保留；回到对话可继续讨论安排。</Text>
         </> : <>
           <Text className='ux-detail-title'>{trip.destination} · 图片与来源</Text><Text className='ux-muted'>来源状态跟随当前行程显示</Text>

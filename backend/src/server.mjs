@@ -12,6 +12,10 @@ import { loadPlaceLocation } from './place-locations.mjs'
 import { manualFlightQuery, runManualFlightSearch } from './manual-flight-search.mjs'
 import { searchFlightLocations } from './flight-locations.mjs'
 import { runFlightDetails } from './flight-details.mjs'
+import { loadTripContext } from './trip-context.mjs'
+import { listTrips, archiveTrip } from './trip-library.mjs'
+import { resolveTripContext } from './conversation-timeline.mjs'
+import {storedTripCover} from './trip-cover.mjs'
 import { startFlightWorker } from '../../trip-flight-tool/dist/worker.js'
 
 const flightWorker = process.env.FLIGHTOR_FLIGHT_WORKER === '0' ? null : await startFlightWorker()
@@ -35,6 +39,9 @@ async function persist(run) {
   await replaceFile(file + '.tmp', file)
 }
 function send(res, status, value) { res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }); res.end(JSON.stringify(value)) }
+async function withCover(run) {
+  return run.trip ? {...run,trip:{...run.trip,cover:await storedTripCover(run.trip)}} : run
+}
 const server = http.createServer(async (req, res) => {
   try {
     const origin = req.headers.origin
@@ -46,6 +53,13 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://127.0.0.1')
     if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, { status: 'ready', runtime: 'DSH 0.2.1-rc.2', model: process.env.FLIGHTOR_DSH_MODEL || 'deepseek-flash', provider: process.env.FLIGHTOR_DSH_PROVIDER || 'deepseek-account' })
     if (req.method === 'GET' && url.pathname === '/api/flight-locations') return send(res, 200, { locations: searchFlightLocations(url.searchParams.get('q') || '') })
+    if (req.method === 'GET' && url.pathname === '/api/trips') return send(res, 200, { trips: await listTrips() })
+    const tripArchiveMatch = url.pathname.match(/^\/api\/trips\/((?:live-)?[a-f\d-]{36})\/archive$/)
+    if (req.method === 'POST' && tripArchiveMatch) {
+      let body = ''
+      for await (const chunk of req) { body += chunk; if (body.length > 1000) return send(res, 413, {error:'Request too large'}) }
+      return send(res, 200, await archiveTrip(tripArchiveMatch[1], JSON.parse(body).archived))
+    }
     if (req.method === 'POST' && url.pathname === '/api/place-media') {
       let body = ''
       for await (const chunk of req) { body += chunk; if (body.length > 2000) return send(res, 413, { error: 'Request too large' }) }
@@ -57,6 +71,11 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, await loadPlaceLocation(JSON.parse(body)))
     }
     const conversationMatch = url.pathname.match(/^\/api\/conversations\/([a-f\d-]{36})$/)
+    const tripContextMatch = url.pathname.match(/^\/api\/trips\/((?:live-)?[a-f\d-]{36})\/context$/)
+    if (req.method === 'GET' && tripContextMatch) {
+      try { return send(res, 200, await loadTripContext(tripContextMatch[1])) }
+      catch { return send(res, 404, { error: '无法恢复这段行程的原对话，请重试或重新开始。' }) }
+    }
     if (req.method === 'GET' && conversationMatch) {
       try { return send(res, 200, await loadConversation(conversationMatch[1])) } catch { return send(res, 404, { error: '对话不存在' }) }
     }
@@ -83,12 +102,15 @@ const server = http.createServer(async (req, res) => {
         let conversation
         try { conversation = await loadConversation(input.conversationId) } catch { return send(res, 404, { error: '对话不存在，请重新开始' }) }
         resolveFlightSelection(conversation, input.flightSelection)
+        if (isConversation) resolveTripContext(conversation, input.tripContext)
       } else if (input.flightSelection) return send(res, 400, { error: '请在查询所在的对话中选择航班' })
+      if (isConversation && input.tripContext && !input.conversationId) return send(res, 400, {error:'请先恢复行程所属对话'})
       if ([...runs.values()].some(item => !['completed', 'failed', 'cancelled'].includes(item.run.stage))) return send(res, 409, { error: '本地 MVP 当前一次运行一个请求，请等待或取消当前任务' })
       const run = { id: crypto.randomUUID(), prompt: isConversation ? undefined : message, message: isConversation ? message : undefined, conversationId: input.conversationId, action: input.action || 'chat', constraints: input.constraints || {}, stage: 'queued', createdAt: new Date().toISOString() }
       if (isFlightSearch) run.query = query
       if (isFlightDetails) { run.selection = input.selection; run.select = input.select }
       if (isConversation && input.flightSelection) run.flightSelection = input.flightSelection
+      if (isConversation && input.tripContext) run.tripContext = input.tripContext
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(Error('MVP 总运行时间超过12分钟')), 720000)
       const entry = { run, controller }
@@ -108,8 +130,8 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, publicRun(entry.run))
       }
       if (req.method === 'GET') {
-        if (entry) return send(res, 200, publicRun(entry.run))
-        try { return send(res, 200, JSON.parse(await fs.readFile(path.join(dataRoot, 'runs', id + '.json'), 'utf8'))) } catch { return send(res, 404, { error: '任务不存在' }) }
+        if (entry) return send(res, 200, await withCover(publicRun(entry.run)))
+        try { return send(res, 200, await withCover(JSON.parse(await fs.readFile(path.join(dataRoot, 'runs', id + '.json'), 'utf8')))) } catch { return send(res, 404, { error: '任务不存在' }) }
       }
     }
     send(res, 404, { error: 'Not found' })

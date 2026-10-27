@@ -18,7 +18,14 @@ export const generateTrip = createGenerator(transport, id => window.localStorage
 export const loadPlaceMedia = createPlaceMediaLoader(transport)
 export const loadPlaceLocation = createPlaceLocationLoader(transport)
 const conversationKey = 'flightor-dsh-conversation-v1'
-export const conversationClient = createConversationClient(transport, { get: () => window.localStorage.getItem(conversationKey), set: id => window.localStorage.setItem(conversationKey, id), clear: () => window.localStorage.removeItem(conversationKey) }, id => window.localStorage.setItem(storageKey, id))
+const tripContextKey = 'flightor-session-trip-context-v1'
+const tripCoversKey = 'flightor-trip-covers-v1'
+export const conversationClient = createConversationClient(transport, { get: () => window.localStorage.getItem(conversationKey), set: id => window.localStorage.setItem(conversationKey, id), clear: () => window.localStorage.removeItem(conversationKey),
+  getTripContext: () => { try { return JSON.parse(window.localStorage.getItem(tripContextKey) || 'null') } catch { return null } },
+  setTripContext: value => { if (value) window.localStorage.setItem(tripContextKey, JSON.stringify(value)); else window.localStorage.removeItem(tripContextKey) },
+  getTripCovers: () => { try { return JSON.parse(window.localStorage.getItem(tripCoversKey) || '{}') } catch { return {} } },
+  setTripCovers: value => window.localStorage.setItem(tripCoversKey,JSON.stringify(value))
+}, id => window.localStorage.setItem(storageKey, id))
 export async function loadLastTrip() {
   const id = new URLSearchParams(window.location.search).get('run') || window.localStorage.getItem(storageKey)
   return id ? restoreTrip(transport, id) : null

@@ -28,6 +28,8 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
   const selectionRequest = useRef<PlanCancellation | null>(null)
   const revision = useRef(0)
   const tripCallback = useRef(onTrip)
+  const displayedTrip = useRef(trip)
+  displayedTrip.current = trip
   tripCallback.current = onTrip
   useEffect(() => {
     let current = true
@@ -35,7 +37,7 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
     client.load().then(value => { if (current && version === revision.current && value) {
       setMessages(value.messages); setFlightOptions(value.flightOptions || null); setSelectedFlight(value.selectedFlight || null); setSelectionLocked(!!value.flightSelectionLocked)
       const savedTrip = [...value.messages].reverse().find(message => message.trip)?.trip
-      if (savedTrip) tripCallback.current?.(savedTrip)
+      if (savedTrip && displayedTrip.current.provenance !== 'dsh') tripCallback.current?.(savedTrip)
     } }).catch(() => { if (current && version === revision.current) setError('上次对话暂时无法载入，请刷新重试或重新开始。') }).finally(() => { if (current) setLoadingHistory(false) })
     return () => { current = false; active.current?.abort(); selectionRequest.current?.abort() }
   }, [client])

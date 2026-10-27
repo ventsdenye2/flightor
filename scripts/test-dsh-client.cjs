@@ -33,7 +33,7 @@ async function main() {
   const chat = createConversationClient(async (method, route, body) => {
     if (method === 'POST') { sent.push(body); return { id: 'chat-turn' } }
     if (route.includes('/conversations/')) return { id: saved, messages: [] }
-    return { stage: 'completed', conversation: { id: 'context-1', messages: [] }, ...(sent.at(-1).action === 'plan' ? { trip: { id: 'trip' } } : {}) }
+    return { stage: 'completed', conversation: { id: 'context-1', messages: sent.at(-1).action === 'plan' ? [{ id: 'plan-reply', role: 'assistant', trip: { id: 'live-chat-turn' } }] : [] }, ...(sent.at(-1).action === 'plan' ? { trip: { id: 'live-chat-turn' } } : {}) }
   }, { get: () => saved, set: id => { saved = id }, clear: () => { saved = null } }, id => { completed = id })
   await chat.send('先聊聊', () => {}, new PlanCancellation().signal)
   assert.equal(sent[0].action, 'chat'); assert.equal(completed, null)

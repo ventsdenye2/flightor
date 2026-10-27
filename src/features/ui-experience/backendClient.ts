@@ -80,7 +80,8 @@ async function pollRun(transport: BackendTransport, route: string, body: unknown
       await untilCancelled(new Promise(resolve => setTimeout(resolve, 1500)), signal)
     }
     cancel(); throw Error('等待超时，请刷新查看已保存的对话或重试')
-  } finally { signal.removeEventListener('abort', cancel) }
+  } catch (error) { cancel(); throw error }
+  finally { signal.removeEventListener('abort', cancel) }
 }
 export interface ConversationMessage { id: string; role: 'user' | 'assistant'; content: string; flightOptions?: FlightOptions | null; selectedFlight?: FlightSelection | null; flightSelectionLocked?: boolean; trip?: TripPresentation }
 export interface Conversation { id: string; messages: ConversationMessage[]; flightOptions?: FlightOptions | null; selectedFlight?: FlightSelection | null; flightSelectionLocked?: boolean }
@@ -96,44 +97,153 @@ export interface FlightLocation {
 export interface ConversationClient {
   load: () => Promise<Conversation | null>
   reset: () => void
+  resumeTrip?: (tripId: string) => Promise<Conversation>
+  subscribe?: (listener: () => void) => () => void
+  listTrips?: () => Promise<SavedTripSummary[]>
+  loadTrip?: (id: string) => Promise<TripPresentation>
+  archiveTrip?: (id: string, archived: boolean) => Promise<void>
+  rememberTripCover?: (id: string, media: MediaPresentation) => void
   selectFlight: (selection: FlightSelection | null, signal?: PlanSignal) => Promise<Conversation>
   loadFlightDetails?: (selection: FlightSelection, signal: PlanSignal) => Promise<Conversation>
   send: (message: string, progress: (text: string, update: ConversationUpdate) => void, signal: PlanSignal, action?: 'chat' | 'plan') => Promise<ConversationResult>
   searchFlights?: (query: FlightSearchQuery, progress: (text: string) => void, signal: PlanSignal) => Promise<Conversation>
   searchLocations?: (query: string) => Promise<FlightLocation[]>
 }
-export function createConversationClient(transport: BackendTransport, storage: { get: () => string | null; set: (id: string) => void; clear: () => void }, onTrip?: (id: string) => void): ConversationClient {
+export interface SavedTripSummary extends Pick<TripPresentation, 'id' | 'title' | 'destination' | 'dates' | 'durationDays' | 'travelers' | 'route' | 'cover' | 'status'> {
+  archived: boolean; contextAvailable: boolean; createdAt: string | null; completedAt: string | null
+}
+export type TripContextReference = NonNullable<TripPresentation['context']>
+export interface ConversationStorage {
+  get: () => string | null; set: (id: string) => void; clear: () => void
+  getTripContext?: () => TripContextReference | null
+  setTripContext?: (context: TripContextReference | null) => void
+  getTripCovers?: () => Record<string, MediaPresentation>
+  setTripCovers?: (covers: Record<string, MediaPresentation>) => void
+}
+export function createConversationClient(transport: BackendTransport, storage: ConversationStorage, onTrip?: (id: string) => void): ConversationClient {
   let conversationId = storage.get()
+  const tripCovers = storage.getTripCovers?.() || {}
+  let tripContext = storage.getTripContext?.() || null
+  if (tripContext?.conversationId !== conversationId) { tripContext = null; storage.setTripContext?.(null) }
+  let generation = 0, switching = false, blocked = ''
+  const requests = new Set<PlanCancellation>(), listeners = new Set<() => void>()
+  const notify = () => listeners.forEach(listener => listener())
+  const changeSession = () => {
+    generation++; requests.forEach(request => request.abort()); requests.clear()
+    conversationId = null; tripContext = null; storage.clear(); storage.setTripContext?.(null); blocked = ''; notify()
+    return generation
+  }
+  const assertCurrent = (version: number, signal?: PlanSignal) => {
+    if (version !== generation || signal?.aborted) throw Error('已取消：对话已经切换')
+  }
+  const assertReady = () => {
+    if (switching) throw Error('正在恢复原对话，请稍候')
+    if (blocked) throw Error(blocked)
+  }
+  const validate = (value: Conversation, expected: string | null) => {
+    if (!value?.id || !Array.isArray(value.messages) || (expected && value.id !== expected)) throw Error('对话归属不一致，已停止更新，请重新打开原对话。')
+    return value
+  }
+  const inSession = async <T,>(signal: PlanSignal | undefined, work: (scope: { id: string | null; signal: PlanSignal; check: () => void; adopt: (value: Conversation) => Conversation }) => Promise<T>): Promise<T> => {
+    assertReady()
+    if (requests.size) throw Error('请等待当前请求结束或先停止它')
+    const version = generation, controller = new PlanCancellation()
+    const abort = () => controller.abort()
+    signal?.addEventListener('abort', abort, { once: true })
+    if (signal?.aborted) abort()
+    requests.add(controller)
+    let expected = conversationId
+    const check = () => assertCurrent(version, controller.signal)
+    const adopt = (value: Conversation) => {
+      check(); validate(value, expected)
+      expected = value.id
+      if (conversationId !== value.id) { conversationId = value.id; storage.set(value.id) }
+      return value
+    }
+    try { check(); return await work({ id: expected, signal: controller.signal, check, adopt }) }
+    finally { requests.delete(controller); signal?.removeEventListener('abort', abort) }
+  }
   return {
+    async listTrips() { return (await transport('GET','/api/trips')).trips.map((trip: SavedTripSummary) => tripCovers[trip.id]?.src ? {...trip,cover:tripCovers[trip.id]} : trip) },
+    async loadTrip(id) {
+      const trip = await restoreTrip(transport,id.replace(/^live-/,''))
+      if (!trip || (trip.id !== id && trip.id !== 'live-'+id)) throw Error('未取得所选行程，请刷新列表后重试。')
+      return tripCovers[trip.id]?.src ? {...trip,cover:tripCovers[trip.id]} : trip
+    },
+    async archiveTrip(id, archived) { await transport('POST','/api/trips/'+encodeURIComponent(id)+'/archive',{archived}) },
+    rememberTripCover(id, media) {
+      if (!media.src || tripCovers[id]?.src === media.src) return
+      tripCovers[id] = media
+      try { storage.setTripCovers?.({...tripCovers}) } catch { /* Optional cover cache must not interrupt the overview. */ }
+    },
+    subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener) } },
     async searchLocations(query) { return (await transport('GET', '/api/flight-locations?q=' + encodeURIComponent(query))).locations },
-    async load() { return conversationId ? transport('GET', '/api/conversations/' + conversationId) : null },
-    reset() { conversationId = null; storage.clear() },
+    async load() {
+      assertReady()
+      const version = generation, id = conversationId
+      if (!id) return null
+      const value = await transport('GET', '/api/conversations/' + id)
+      assertCurrent(version); return validate(value, id)
+    },
+    reset() { switching = false; changeSession() },
+    async resumeTrip(tripId) {
+      switching = true
+      const version = changeSession()
+      try {
+        const result = await transport('GET', '/api/trips/' + encodeURIComponent(tripId) + '/context')
+        assertCurrent(version)
+        const context = result.context, value = validate(result.conversation, context?.conversationId || null)
+        const selectedTripId = context?.tripId || tripId
+        if (context?.runId !== tripId.replace(/^live-/,'') || (selectedTripId !== tripId && selectedTripId !== 'live-'+tripId) || !context?.conversationId || !value.messages.some(message => message.id === context.messageId && message.role === 'assistant' && message.trip?.id === selectedTripId)) throw Error('行程与原对话不匹配')
+        conversationId = value.id; tripContext = context; storage.set(value.id); storage.setTripContext?.(context); switching = false; onTrip?.(context.runId); notify()
+        return value
+      } catch (error) {
+        assertCurrent(version)
+        switching = false; blocked = '原对话恢复失败，请重试恢复，或点击重新开始。'; notify()
+        throw error
+      }
+    },
     async selectFlight(selection, signal) {
-      if (!conversationId) throw Error('请先查询航班')
-      if (selection) return (await pollRun(transport, '/api/flights/details', { conversationId, selection, select: true }, signal || new PlanCancellation().signal, () => {})).conversation
-      return transport('POST', '/api/conversations/' + conversationId + '/flight-selection', { selection })
+      return inSession(signal, async scope => {
+        if (!scope.id) throw Error('请先查询航班')
+        const value = selection ? (await pollRun(transport, '/api/flights/details', { conversationId: scope.id, selection, select: true }, scope.signal, () => {})).conversation
+          : await untilCancelled(transport('POST', '/api/conversations/' + scope.id + '/flight-selection', { selection }), scope.signal)
+        return scope.adopt(value)
+      })
     },
     async loadFlightDetails(selection, signal) {
-      if (!conversationId) throw Error('请先查询航班')
-      return (await pollRun(transport, '/api/flights/details', { conversationId, selection, select: false }, signal, () => {})).conversation
+      return inSession(signal, async scope => {
+        if (!scope.id) throw Error('请先查询航班')
+        return scope.adopt((await pollRun(transport, '/api/flights/details', { conversationId: scope.id, selection, select: false }, scope.signal, () => {})).conversation)
+      })
     },
     async searchFlights(query, progress, signal) {
-      const run = await pollRun(transport, '/api/flights/search', { query, conversationId }, signal, run => {
-        progress(run.progress?.text || '正在查询航班…')
+      return inSession(signal, async scope => {
+        const run = await pollRun(transport, '/api/flights/search', { query, conversationId: scope.id }, scope.signal, run => {
+          scope.check(); progress(run.progress?.text || '正在查询航班…')
+        })
+        scope.check()
+        if (!run.conversation?.flightOptions) throw Error('未取得航班结果，请重试')
+        return scope.adopt(run.conversation)
       })
-      if (signal.aborted) throw Error('已取消')
-      if (!run.conversation?.flightOptions) throw Error('未取得航班结果，请重试')
-      conversationId = run.conversation.id; storage.set(conversationId!)
-      return run.conversation
     },
     async send(message, progress, signal, action = 'chat') {
-      const run = await pollRun(transport, '/api/conversations/turns', { message, conversationId, action }, signal, run => {
-        if (run.conversation) { conversationId = run.conversation.id; storage.set(conversationId!) }
-        progress(run.progress?.text || labels[run.stage] || '正在处理…', run)
+      return inSession(signal, async scope => {
+        const run = await pollRun(transport, '/api/conversations/turns', { message, conversationId: scope.id, action, ...(tripContext ? {tripContext} : {}) }, scope.signal, run => {
+          scope.check()
+          if (run.conversation) scope.adopt(run.conversation)
+          progress(run.progress?.text || labels[run.stage] || '正在处理…', run)
+        })
+        scope.check(); scope.adopt(run.conversation)
+        if (run.trip) {
+          const anchor = run.conversation.messages.find((message: ConversationMessage) => message.role === 'assistant' && message.trip?.id === run.trip.id)
+          if (!anchor || (run.trip.id !== run.id && run.trip.id !== 'live-'+run.id) || (run.trip.context && run.trip.context.conversationId !== run.conversation.id)) throw Error('行程与当前对话归属不一致，已停止更新。')
+          tripContext = { conversationId: run.conversation.id, messageId: anchor.id, runId: run.id, tripId: run.trip.id }
+          storage.setTripContext?.(tripContext)
+          onTrip?.(run.id)
+        }
+        return { conversation: run.conversation, trip: run.trip }
       })
-      if (signal.aborted) throw Error('已取消')
-      if (run.trip) onTrip?.(run.id)
-      return { conversation: run.conversation, trip: run.trip }
     }
   }
 }

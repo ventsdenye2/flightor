@@ -15,6 +15,7 @@ export interface Activity {
 }
 export interface TripDay { id: string | number; label: string; title: string; subtitle: string; status: 'ready' | 'pending'; activities: Activity[] }
 export interface TripPresentation {
+  context?: { conversationId: string; messageId: string; runId: string; tripId?: string }
   placesResolved?: boolean
   locale?: 'zh' | 'en'
   provenance?: 'sample' | 'dsh'

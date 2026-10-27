@@ -1,5 +1,9 @@
 # 从本分支开始开发后端
 
+## 2026-10-26 行程库与会话归属
+
+新增只读`GET /api/trips`、`GET /api/trips/:tripId/context`与归档`POST /api/trips/:tripId/archive`，从自身成功run与对话消息恢复归属；展示live-ID和来源runId明确区分。聊天可带`tripContext`，先核对conversationId、messageId、runId、tripId后再调用模型，并将所选行程摘要传入聊天与规划约束。共享客户端取消旧会话请求、阻止迟到结果和恢复失败回退；行程库保留多份历史结果和每份归档状态。测试与真实/模拟边界见[会话管理](SESSION_CONTEXT.md)。本段覆盖旧行程调整入口曾仅记录未修复的历史说明，不代表新增直接修改保存活动的接口。
+
 ## 2026-10-26 Reviewer 结构化工具交付（当前协议）
 
 Reviewer 在当前 Session 按需使用 `lookup_places_batch` 后，通过专用 `submit_itinerary` 工具提交 `itinerary` 对象。后端只消费本次执行内、按 `toolCallId` 配对并带当前 requestId 的成功工具参数；相同提交幂等，不同提交冲突，assistant正文不参与解析。正常成功不追加模型回合；漏交或结构错误最多同会话补正一次、最长30秒，补正时禁止重新查询或查票，失败返回 `OUTPUT_PROTOCOL_ERROR`，不生成空行程。后端离线100/100通过，旧失败任务同输入的真实复测首轮提交成功且无补正；单样本不替代 H5/微信端到端验收。历史 `parseReview()` 仅用于兼容保存记录，不在实时 Reviewer 链路。接口与展示字段保持兼容，详见 [Reviewer协议](REVIEWER_STRUCTURED_PROTOCOL.md)。

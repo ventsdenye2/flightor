@@ -3,6 +3,7 @@
 更新：2026-10-26。分支 `backend-mvp` 基于 `codex/ui-experience@060d0de` 的双端共享前端，现新增最小三角色 DSH Agent 后端；旧后端未沿用。
 
 - [PROJECT_CONTEXT](PROJECT_CONTEXT.md)：当前实现、目录与验证边界。
+- [SESSION_CONTEXT](SESSION_CONTEXT.md)：行程所属会话恢复、会话切换、取消和迟到结果隔离。
 - [FRONTEND_SYNC](FRONTEND_SYNC.md)：演示版前端迁移、Git 快照与双端验证。
 - [FLIGHT_OPTIONS](FLIGHT_OPTIONS.md)：手动/对话机票查询、单程/往返卡片与交通确认后规划。
 - [FLIGHT_QUERY_ACCEPTANCE](FLIGHT_QUERY_ACCEPTANCE.md)：城市/机场×单程/往返、1–9成人、调用入口与取消/异常的扩展验收。

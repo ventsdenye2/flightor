@@ -21,7 +21,14 @@ const generateTrip = createGenerator(transport, id => Taro.setStorageSync(storag
 const loadPlaceMedia = createPlaceMediaLoader(transport)
 const loadPlaceLocation = createPlaceLocationLoader(transport)
 const conversationKey = 'flightor-dsh-conversation-v1'
-const conversationClient = createConversationClient(transport, { get: () => Taro.getStorageSync(conversationKey) || null, set: id => Taro.setStorageSync(conversationKey, id), clear: () => Taro.removeStorageSync(conversationKey) }, id => Taro.setStorageSync(storageKey, id))
+const tripContextKey = 'flightor-session-trip-context-v1'
+const tripCoversKey = 'flightor-trip-covers-v1'
+const conversationClient = createConversationClient(transport, { get: () => Taro.getStorageSync(conversationKey) || null, set: id => Taro.setStorageSync(conversationKey, id), clear: () => Taro.removeStorageSync(conversationKey),
+  getTripContext: () => Taro.getStorageSync(tripContextKey) || null,
+  setTripContext: value => { if(value)Taro.setStorageSync(tripContextKey,value);else Taro.removeStorageSync(tripContextKey) },
+  getTripCovers: () => Taro.getStorageSync(tripCoversKey) || {},
+  setTripCovers: value => Taro.setStorageSync(tripCoversKey,value)
+}, id => Taro.setStorageSync(storageKey, id))
 
 export default function Index() {
   const [preview, setPreview] = useState(false)
