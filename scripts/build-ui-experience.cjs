@@ -3,6 +3,7 @@
 const { spawnSync } = require('node:child_process')
 const path = require('node:path')
 const fs = require('node:fs')
+const { checkWeappRuntime } = require('./check-weapp-runtime.cjs')
 
 const binName = process.platform === 'win32' ? 'taro.cmd' : 'taro'
 const repoRoot = path.resolve(__dirname, '..')
@@ -31,5 +32,8 @@ const result = spawnSync(taroBin, ['build', '--type', 'weapp', ...process.argv.s
 })
 
 if (result.error) throw result.error
-if ((result.status ?? 1) === 0) writeStandaloneProjectConfig()
+if ((result.status ?? 1) === 0) {
+  writeStandaloneProjectConfig()
+  checkWeappRuntime(outputRoot)
+}
 process.exit(result.status ?? 1)
