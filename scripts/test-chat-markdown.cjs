@@ -24,7 +24,7 @@ function load(name, native = false) {
   } }, { filename: file })
   return mod.exports
 }
-const { ChatMarkdown } = load('ChatMarkdown')
+const { ChatMarkdown, normalizeChatMarkdown } = load('ChatMarkdown')
 const render = content => renderToStaticMarkup(React.createElement(ChatMarkdown, { content }))
 let passed = 0
 function check(label, run) { run(); passed++; console.log('PASS ' + label) }
@@ -91,5 +91,35 @@ check('plain and unfinished replies retain readable content', () => {
     assert.ok(html.length > 0)
     assert.ok(!html.includes('undefined'))
   }
+})
+check('overescaped saved prose restores paragraphs, list markers, bold and quotes once', () => {
+  const expected = '葡萄牙7天一般有两种玩法：\n\n- **里斯本为主**：节奏轻松。\n- **里斯本 + 波尔图**：两城各3天。\n\n**哪天出发、哪天回**？更想"周边慢游"还是"两城"？'
+  const escaped = JSON.stringify(expected).slice(1, -1)
+  assert.equal(normalizeChatMarkdown(escaped), expected)
+  assert.equal(normalizeChatMarkdown(normalizeChatMarkdown(escaped)), expected)
+  const html = render(escaped)
+  assert.equal(html, render(expected))
+  assert.equal((html.match(/class="pl-md-list-item"/g) || []).length, 2)
+  assert.equal((html.match(/class="pl-md-strong"/g) || []).length, 3)
+  assert.ok(!html.includes('\\n'))
+})
+check('literal escape examples, paths, normal Markdown and invalid envelopes are preserved', () => {
+  const sources = [
+    '换行可以写作 `\\n\\n`，代码里的内容不要修改。',
+    '[\\n\\n](https://example.com/path) 和 ![\\n\\n](https://example.com/image.png)',
+    'Windows 路径 C:\\new\\notes，正则 `\\n+`。',
+    '正常段落\n\n代码 `\\n\\n` 和路径 `C:\\new\\notes`。',
+    '段落\\n\\n不合法的JSON转义\\q',
+    '段落\\n\\n包含未转义的"引号"',
+  ]
+  for (const source of sources) assert.equal(normalizeChatMarkdown(source), source)
+})
+check('one escaped envelope preserves code escapes, paths and CRLF line boundaries', () => {
+  const expected = '说明\r\n\r\n```text\r\nC:\\new\\notes\r\n\\n 是换行标记\r\n```\r\n\r\n结束'
+  const escaped = JSON.stringify(expected).slice(1, -1)
+  assert.equal(normalizeChatMarkdown(escaped), expected)
+  assert.equal(render(escaped), render(expected))
+  assert.ok(render(escaped).includes('C:\\new\\notes'))
+  assert.ok(render(escaped).includes('\\n 是换行标记'))
 })
 console.log(`${passed} chat Markdown checks passed`)

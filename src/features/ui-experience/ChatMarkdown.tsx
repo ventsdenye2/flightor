@@ -8,6 +8,29 @@ import { MarkdownLink } from './MarkdownLink'
 
 type OpenSource = ((url: string) => void) | undefined
 
+function hasEscapedParagraph(tokens: Token[]): boolean {
+  return tokens.some(value => {
+    const token = value as MarkedToken
+    if (token.type === 'text') return /\\n\\n|\\r\\n\\r\\n/.test(token.raw)
+    if (token.type === 'strong' || token.type === 'em' || token.type === 'del') return hasEscapedParagraph(token.tokens)
+    return false
+  })
+}
+
+/** Some saved tool replies contain one extra JSON string-escaping layer. */
+export function normalizeChatMarkdown(content: string): string {
+  // Require paragraph evidence in prose, outside code/link tokens. Ordinary
+  // Markdown and literal backslash examples must keep their original meaning.
+  if (/[\r\n]/.test(content) || !/\\n\\n|\\r\\n\\r\\n/.test(content)) return content
+  if (!hasEscapedParagraph(Lexer.lexInline(content, { gfm: true }))) return content
+  try {
+    const decoded: unknown = JSON.parse('"' + content + '"')
+    return typeof decoded === 'string' && decoded.includes('\n') ? decoded : content
+  } catch {
+    return content
+  }
+}
+
 // Use the parser's token tree, never generated HTML, on both platforms.
 function inline(tokens: Token[], onOpenSource: OpenSource): ReactNode {
   return tokens.map((value, index) => {
@@ -79,6 +102,6 @@ function blocks(tokens: Token[], onOpenSource: OpenSource): ReactNode {
 }
 
 export const ChatMarkdown = memo(function ChatMarkdown({ content, onOpenSource }: { content: string; onOpenSource?: (url: string) => void }) {
-  const tokens = useMemo(() => Lexer.lex(content, { gfm: true, breaks: true }), [content])
+  const tokens = useMemo(() => Lexer.lex(normalizeChatMarkdown(content), { gfm: true, breaks: true }), [content])
   return <View className='pl-markdown'>{blocks(tokens, onOpenSource)}</View>
 })
