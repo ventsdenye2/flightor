@@ -8,6 +8,7 @@ import { tripDurationLabel } from './presentation'
 import { PageHeader } from './SharedUI'
 import { Icon, Photo } from './VisualMedia'
 import { FlightChoices } from './FlightChoices'
+import { ChatMarkdown } from './ChatMarkdown'
 import { flightSelectionMessage } from './flightOptions'
 import type { FlightOption, FlightOptions, FlightSelection } from './flightOptions'
 
@@ -109,7 +110,7 @@ export function ConversationPlanner({ client, trip, initialPrompt = '', onTrip, 
         <Button className='pl-flight-link' onClick={onSearchFlights}><Icon name='plane' /><View><Text className='pl-flight-title'>目的地定了，先看看机票</Text><Text className='ux-muted'>查询单程或往返航班</Text></View><Icon name='chevron-right' /></Button>
       </View> : <View className='pl-conversation' aria-live='polite'>{messages.map(message => <View key={message.id} className='pl-chat-message'>
         {message.role === 'assistant' ? <View className='pl-reply-brand'><View className='pl-reply-mark'><Icon name='plane' /></View><Text>FlightOR</Text></View> : null}
-        <View className={message.role === 'user' ? 'pl-user-message' : 'pl-assistant-message'}><Text>{message.content}</Text></View>
+        <View className={message.role === 'user' ? 'pl-user-message' : 'pl-assistant-message'}>{message.role === 'assistant' ? <ChatMarkdown content={message.content} onOpenSource={onOpenSource} /> : <Text>{message.content}</Text>}</View>
         {message.flightOptions ? <FlightChoices key={message.flightOptions.searchId} result={message.flightOptions} selected={message.selectedFlight || null} locked={!!message.flightSelectionLocked || message.flightOptions.searchId !== flightOptions?.searchId || selectionLocked} disabled={busy || savingSelection} onSelect={chooseFlight} onLoadDetails={client.loadFlightDetails ? loadDetails : undefined} onOpenSource={onOpenSource} /> : null}
         {message.trip ? <Button className='pl-chat-result' ariaLabel={`查看行程：${message.trip.title}`} onClick={() => { onTrip?.(message.trip!); onOpenTrip() }}><View className='pl-chat-result-head'><View className='pl-chat-result-icon'><Icon name='calendar-active' /></View><Text className='pl-chat-result-label'>你的行程已就绪</Text></View><Text className='pl-chat-result-title'>{message.trip.title}</Text><View className='pl-chat-result-foot'><Text className='pl-chat-result-meta'>{message.trip.destination} · {tripDurationLabel(message.trip)}</Text><View className='pl-chat-result-action'><Text>查看行程</Text><Icon name='arrow-right' /></View></View></Button> : null}
       </View>)}
