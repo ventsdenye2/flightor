@@ -1,7 +1,9 @@
 # Repository instructions
 
-Read `docs/README.md`, `docs/PROJECT_CONTEXT.md` and `docs/DOCS_MAINTENANCE.md` before changes. Current planning work is tracked by `docs/design/budget-travel-agent/DPS.md` and its `progress.md`.
+Read `docs/README.md`, `docs/PROJECT_CONTEXT.md` and `docs/DOCS_MAINTENANCE.md` before changes. This branch is the frontend baseline for a new backend MVP; its scope is documented in `docs/BACKEND_MVP.md`.
 
-Every modification must include a corresponding update under `docs/` in the same change batch. Update the document that owns the behavior, contract or verification result; do not leave stale claims and merely add a generic progress note. Follow the validation and history rules in `docs/DOCS_MAINTENANCE.md`.
+Keep the important documents under `docs/` continuously current. Every modification must include a corresponding update under `docs/` in the same change batch. Update the document that owns the behavior, contract or verification result, and record completed checks or changed boundaries there before finishing. Treat documentation as part of the implementation deliverable, not deferred cleanup.
 
-Proposed designs and historical handoffs are not implemented behavior or fresh authorization. Preserve unrelated changes. Use the user's current model settings; default to one agent unless delegation is explicitly requested. Multiple user test cases do not imply multiple agents.
+Preserve unrelated changes and other worktrees. Use the user's current model settings; default to one agent unless delegation is explicitly requested.
+
+Old backend planning, ADRs and handoffs remain in other branches/history. They do not define the new backend implementation or authorize calls to paid providers.

@@ -9,7 +9,7 @@
 .ux-explore-input { flex: 1; width: 0; min-width: 0; min-height: 46px; border: 0; background: transparent; color: #172f56; font: inherit; font-size: 13px; outline: none; }
 .ux-explore-input::placeholder { color: #7e9299; }
 .ux-app .ux-explore-search .ux-icon-button { margin-right: -10px; width: 44px; height: 44px; .ux-icon { width: 15px; height: 15px; } }
-.ux-explore-themes { box-sizing: border-box; width: 100%; padding: 10px 0 18px; white-space: nowrap; }
+.ux-explore-themes { box-sizing: border-box; width: 100%; padding: 10px 0 18px; white-space: nowrap; overflow-x: auto; }
 .ux-explore-themes-track { display: inline-flex; align-items: center; gap: 7px; box-sizing: border-box; min-width: 100%; padding: 0 20px; }
 .ux-app .ux-explore-theme { flex-shrink: 0; min-height: 44px; padding: 8px 15px; border: 1px solid #e2ebed; border-radius: 12px; color: #607a83; font-size: 12px; }
 .ux-app .ux-explore-theme.is-active { background: #eaf5f5; color: #2563eb; border-color: #c4e0e3; font-weight: 600; }

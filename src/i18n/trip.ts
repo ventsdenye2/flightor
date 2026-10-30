@@ -4,7 +4,7 @@ export const tripZh: Record<string, string> = {
   'trip.mapTitle':'行程地图','trip.resolvePlaces':'补全地点','trip.placesResolving':'正在确认地点…','trip.placesFailed':'地点服务暂不可用，文字行程仍可查看。请稍后手动重试。',
   'trip.mapUnresolved':'尚无已确认位置，请先补全地点；日程仍可正常查看。','trip.mapLoading':'正在加载底图…','trip.nativeMapCredit':'底图由微信地图服务提供',
   'trip.mapOverviewNote':'城市与已确认地点；航空连线仅为示意，不是地面导航。',
-  'trip.place.venue':'已确认场馆位置','trip.place.park':'公园级位置','trip.place.district':'街区级位置','trip.place.street':'街道级位置',
+  'trip.place.coordinate':'已获取位置','trip.place.venue':'已确认场馆位置','trip.place.park':'公园级位置','trip.place.district':'街区级位置','trip.place.street':'街道级位置',
   'trip.place.unresolved':'尚未确认具体位置','trip.place.ambiguous':'存在多个同名地点，暂不标点','trip.place.unavailable':'地点服务暂不可用','trip.place.conflict':'地点依据存在冲突，需确认',
   'trip.details': '旅行详情', 'trip.overview': '概览', 'trip.days': '每日行程', 'trip.flights': '航班',
   'trip.back': '返回', 'trip.close': '关闭详情', 'trip.language': '切换语言', 'trip.day': '第 {n} 天', 'trip.duration': '{n} 天',
@@ -12,7 +12,7 @@ export const tripZh: Record<string, string> = {
   'trip.morning': '上午', 'trip.afternoon': '下午', 'trip.evening': '晚上', 'trip.flexible': '灵活安排',
   'trip.activity': '游览', 'trip.event': '活动', 'trip.seasonal': '季节体验', 'trip.stopover': '中转', 'trip.practical': '交通与实用安排',
   'trip.introduction': '景点简介', 'trip.reason': '为什么推荐', 'trip.area': '所在区域', 'trip.viewActivity': '查看 {name}',
-  'trip.photoPending': '暂无景点图片', 'trip.mapPending': '地图尚未接入，先按下方顺序游览', 'trip.mapPartial': '地图仅显示已有坐标的地点',
+  'trip.photoPending': '暂无景点图片', 'trip.mapPending': '地点坐标尚未补充，可先查看下方日程', 'trip.mapPartial': '地图仅显示已有坐标的地点',
   'trip.mapUnavailable': '地图暂不可用，仍可查看下方日程', 'trip.mapOrder': '游览顺序示意 · 非导航路线',
   'trip.mapHide': '底图未加载？收起地图',
   'trip.stops': '{n} 个停留', 'trip.freeDay': '自由活动', 'trip.freeDayHint': '这一天没有固定停留。', 'trip.adjustDay': '在规划记录中调整',
@@ -49,7 +49,7 @@ export const tripEn: Record<string, string> = {
   'trip.mapTitle':'Trip map','trip.resolvePlaces':'Resolve places','trip.placesResolving':'Confirming places…','trip.placesFailed':'The place service is unavailable. Your text itinerary is still available; retry manually later.',
   'trip.mapUnresolved':'No confirmed locations yet. Resolve places to add the map; the itinerary remains available.','trip.mapLoading':'Loading the map…','trip.nativeMapCredit':'Basemap by WeChat map service',
   'trip.mapOverviewNote':'Cities and confirmed places; flight lines are schematic, not ground navigation.',
-  'trip.place.venue':'Confirmed venue location','trip.place.park':'Park-level location','trip.place.district':'Neighborhood-level location','trip.place.street':'Street-level location',
+  'trip.place.coordinate':'Location available','trip.place.venue':'Confirmed venue location','trip.place.park':'Park-level location','trip.place.district':'Neighborhood-level location','trip.place.street':'Street-level location',
   'trip.place.unresolved':'Specific location not confirmed','trip.place.ambiguous':'Multiple matching places; no marker added','trip.place.unavailable':'Place service unavailable','trip.place.conflict':'Conflicting place evidence; confirmation needed',
   'trip.details': 'Trip details', 'trip.overview': 'Overview', 'trip.days': 'Daily itinerary', 'trip.flights': 'Flights',
   'trip.back': 'Back', 'trip.close': 'Close details', 'trip.language': 'Change language', 'trip.day': 'Day {n}', 'trip.duration': '{n} days',
@@ -57,7 +57,7 @@ export const tripEn: Record<string, string> = {
   'trip.morning': 'Morning', 'trip.afternoon': 'Afternoon', 'trip.evening': 'Evening', 'trip.flexible': 'Flexible',
   'trip.activity': 'Visit', 'trip.event': 'Event', 'trip.seasonal': 'Seasonal experience', 'trip.stopover': 'Stopover', 'trip.practical': 'Travel essentials',
   'trip.introduction': 'About this place', 'trip.reason': 'Why this fits your trip', 'trip.area': 'Area', 'trip.viewActivity': 'View {name}',
-  'trip.photoPending': 'No place photo yet', 'trip.mapPending': 'Map not connected yet. Follow the itinerary below.', 'trip.mapPartial': 'Only places with coordinates appear on the map.',
+  'trip.photoPending': 'No place photo yet', 'trip.mapPending': 'Place coordinates are pending. You can still view the itinerary below.', 'trip.mapPartial': 'Only places with coordinates appear on the map.',
   'trip.mapUnavailable': 'Map unavailable. You can still use the itinerary below.', 'trip.mapOrder': 'Visit order · Not a navigation route',
   'trip.mapHide': 'Map not loading? Hide map',
   'trip.stops': '{n} stops', 'trip.freeDay': 'Free time', 'trip.freeDayHint': 'No fixed stops are planned for this day.', 'trip.adjustDay': 'Adjust in planning history',
@@ -90,5 +90,6 @@ export const tripEn: Record<string, string> = {
   'trip.nextDay': 'next day', 'trip.reloadImage': 'Reload image', 'trip.reviewRisks': 'Review and resolve the trip risks in planning history.'
 }
 export function tripText(locale: 'zh' | 'en', key: string, params: Record<string, string | number> = {}): string {
-  return ((locale === 'en' ? tripEn : tripZh)[key] ?? key).replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`))
+  const quote = key === 'trip.price.quote' ? (locale === 'en' ? 'Search quote' : '查询报价') : undefined
+  return (quote ?? (locale === 'en' ? tripEn : tripZh)[key] ?? key).replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`))
 }

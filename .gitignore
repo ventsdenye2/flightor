@@ -6,37 +6,19 @@ node_modules/
 *.log
 .swc/
 
-# 密钥（勿提交）
-openrouter.txt
-duffel.txt
-serpapi.txt
-oag*.txt
+# 本地配置和密钥
 .env
 .env.*
 !.env.example
-backend/.env
-backend/.env.*
-!backend/.env.example
 
 # 构建产物
 sourcemap.zip
-backend/dist/
-backend/coverage/
-backend/.demo/
-dist-h5-demo/
-dist-h5/
-dist-h5-replay/
-dist-weapp-demo/
-output/playwright/
-output/weapp/
-output/dsh-upstream/
-output/map-closeout/
-
-# Business-plan local history and reproducible render caches
-output/flightor-bp-20260929/history/
-output/flightor-bp-20260929/qa/*/
-tools/demo-video/public/*.wav
-tools/demo-video/public/shots/
-tools/demo-video/public/mix.wav
-tools/demo-video/node_modules/
-tools/demo-video/.cache/
+output/
+.cache/
+.playwright-cli/
+*.tsbuildinfo
+project.private.config.json
+.worktrees/
+backend/.dsh-runtime/
+backend/.dsh-home/
+backend/data/

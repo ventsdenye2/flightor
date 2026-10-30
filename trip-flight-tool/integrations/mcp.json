@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "trip_flights": {
+      "command": "node",
+      "args": ["D:/FunnyProject/trip-flight-tool/dist/mcp/server.js"]
+    }
+  }
+}

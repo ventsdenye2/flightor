@@ -1,0 +1,16 @@
+# Run DSH with --patch D:/FunnyProject/trip-flight-tool/integrations/dsh/cordis.patch.yml
+- insert:
+    - id: trip-flight-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: trip_flights
+        transport: stdio
+        command: node
+        args:
+          - D:/FunnyProject/trip-flight-tool/dist/mcp/server.js
+        cwd: D:/FunnyProject/trip-flight-tool
+        toolCallTimeoutMs: 210000
+        failOnStartupError: true
+        env:
+          TRIP_FLIGHT_TIMEOUT_MS: '180000'
+          TRIP_FLIGHT_MAX_ATTEMPTS: '2'

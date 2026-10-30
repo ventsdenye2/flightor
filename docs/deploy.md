@@ -1,75 +1,111 @@
-# FlightOR 部署与运行边界
+# 本地双端开发环境
 
-更新：2026-09-20，依据当前 compose、backend README 和构建配置整理。本轮未执行部署。原先云函数优先、前端注入 Provider key 和失败回退假数据的指南已废弃，原稿仅留 [历史记录](archive/legacy/deploy.md)。
+更新：2026-10-19。当前使用新增双 DSH Agent 后端，不启动旧后端或 Docker。
 
-## 当前拓扑
+## 2026-10-26 机票浏览器Worker
 
-小程序/H5 → 自建 Fastify API → PostgreSQL、Redis、航空/票价/研究 Provider；Worker 执行持久 jobs。对话 turn 的进程内状态不支持可靠跨实例恢复，不能据此宣布可直接多实例生产部署。
+先执行`npm --prefix trip-flight-tool run build`，再启动空闲后端`npm run backend:start`。后端自动启动随机本机端口的单并发浏览器Worker；手动API和DSH工具直连复用，不新增凭据文件。Worker连接地址和随机认证令牌仅在后端及其子进程环境中传递，不放进前端或日志。独立CLI未继承Worker环境时仍使用单次进程模式，不能用其详情耗时代表常驻路径。`FLIGHTOR_FLIGHT_WORKER=0`可关闭Worker做对照；性能开关和已验证范围见[航班选项](FLIGHT_OPTIONS.md)。正常退出后端会取消在途查询、保存有效登录状态并清理浏览器；空闲10分钟也释放浏览器。
 
-运行命令与完整环境变量以 [backend README](../backend/README.md)、[env 示例](../backend/.env.example)、[compose](../compose.yaml) 为准。现有环境文件不要覆盖，密钥只进服务端环境或 Secret 管理，不能注入小程序。
+本轮真实回归反复捕获Windows文件替换的瞬时`EPERM`，会影响对话/选票和提交状态保存。相关原子rename对Windows的EPERM/EACCES/EBUSY最多额外等待10/20/40/80ms后重试（累计150ms），只重试替换，不重复写入、模型或业务操作；持久权限/磁盘错误仍失败。聊天/审核结构化协议及补正次数不变。该修复范围由实测文件错误触发，不将失败测试直接忽略。
 
-## 本地
+## 2026-10-25 微信适配入口
 
-2026-09-21 G1 环境补验：当前专用验收库 `127.0.0.1:63432/flightor_g1_publication_acceptance_20260921` 可用，定向 4 项通过；Docker 管理接口仍超时，不要用下面的 Compose 命令重建或停止仍承载原 tmpfs 实验库的容器。微信 SDK 自动化 9432 已能操作本项目；用户已开启 32348 服务端口，官方 CLI 端口发现仍异常。固定结果 UI 测试使用合成登录和请求拦截，不依赖生产 API，不能声称后端服务/真实微信认证已调通。具体复现及边界见 [平台环境报告](design/budget-travel-agent/G1_PUBLICATION_H5_2026-09-21.md)。
+用户已选择“寰宇咨询” AppID `wxdf9ff3c30a1d9549`，根项目和 `config/project.ui-experience.json` 使用该值；独立产物配置由构建脚本沿用根项目 AppID，不再固定覆盖为游客。下文“游客 AppID”是历史记录。36556 为当前开发者工具 HTTP 服务端口，3000 才是业务 API。执行 `npm run build:weapp` 后导入本仓库根目录，或导入 `dist/weapp/`；默认进入正式规划入口，调试场景通过 `pages/index/index?preview=1` 开启。平台差异、请求域名和本次验证见 [微信适配](WECHAT_ADAPTATION.md)。
 
-在根目录：
+景点服务的离线数据下载/重建见 [PlaceResolver](PLACE_RESOLVER.md)。Enterprise 凭证仅放忽略的 `backend/.env`，`npm run backend:start` 自动读取；模板为 `backend/.env.example`。保存 username、access/id/refresh token，API 只使用 access token；到期前按需刷新并原子更新后端文件，不向前端/日志公开。环境修改后重启后端。没有 Enterprise 凭证也可使用离线坐标及公开 Wikimedia 接口。
+
+## 2026-10-20 手动查询入口
+
+规划页机票表单调用本地 `/api/flights/search`，需要重启空闲API以载入新路由，沿用3000端口和任务轮询/取消；H5仍为4178。后端先校验查询参数，再复用原CLI，不调用DSH或模型，不自动生成行程。两端调用均由createConversationClient提供，无新增前端环境变量或凭证。
+
+## 2026-10-20 往返工具更新
+
+更新后先执行 `npm --prefix trip-flight-tool run build` 生成新CLI，再启动/重启空闲的后端API。后端插件直接使用该CLI；仅重建H5不会更新工具。`npm run check` 和 `npm run build` 继续检查H5/微信共享卡片。独立MCP进程须重启以读取新tripType/returnDate schema；单程调用省略新字段保持兼容。启动不自动查询供应商或模型。
+
+## 当前双 Agent 环境
+
+原仓库目录 `D:\FunnyProject\flightor-repo`，分支 `backend-mvp`。前端/API使用现有Node22；DSH使用已复制桌面包0.2.1-rc.2及其配套Node24。安装桌面DSH且已登录后执行：
+
 ```powershell
-docker compose up -d --build
+npm run setup
+npm run backend:setup
+# 终端一
+npm run backend:start
+# 终端二
+npm run dev:h5
+# 需要微信时，另一个终端
+npm run dev:weapp
 ```
 
-compose 使用开发配置，暴露的数据库/Redis 端口和示例凭据不能原样作为互联网部署设置。
+`backend:setup`安装后端锁定依赖、首次复制桌面DSH完整分发包并生成隔离profile；已有副本不覆盖。API为127.0.0.1:3000，H5为127.0.0.1:4178。小程序storage的`flightor-api-base-url`可覆盖默认loopback；真机需可访问地址和合法域名，当前API仅loopback不开放公网。`npm run backend:live`运行真实两天样本，两个DSH各产出一次，无业务验收和自动返工；会使用当前DSH账户。
 
-宿主开发分别执行：
+本地包、会话、原始工具证据和结果分别在忽略的backend/.dsh-runtime、.dsh-home和data中。凭证只引用原用户DSH凭证存储，不复制到项目。不要提交或分享本地会话、账户数据和trip-flight-tool/.auth。来源字段保持unverified，显示成功不升级为事实全验。
+
+具体真实样本与失败见[DSH_MVP](DSH_MVP.md)。下面保留前端初始化时的历史记录，不能替代本轮后端/H5验收。
+
+## 历史：前端基线初始化
+
+## 安装与启动
+
+本机使用 Node 22.21.0、npm 10.9.4。`.nvmrc` 提示 22.21.0，package engines 与 `.npmrc` 要求 Node >=22.21.0 <23、npm 10.x；不会自动切换系统 Node。
+
 ```powershell
-docker compose up -d postgres redis
-npm --prefix backend install
-npm --prefix backend run migrate
-npm --prefix backend run dev
+cd D:\FunnyProject\flightor-repo
+npm run setup
+npm run dev:h5
 ```
 
-另开终端运行 `npm --prefix backend run dev:worker`。API 默认 3000，但以实际环境为准。GET `/health/live`、`/health/ready`、`/health/providers` 分别为进程、依赖、配置检查；都不能证明付费模型或票价 Provider 实际可用。
+根目录与 H5 各有 lockfile 和独立 node_modules，不借用其他工作区依赖。不需要业务 `.env` 或数据库。H5 固定 loopback http://127.0.0.1:4178，strictPort 使端口占用明确失败。样例切换面板用于检查多种展示状态。
 
-## 小程序与发布检查
+```powershell
+npm run build:h5
+npm run build:weapp
+npm run dev:weapp
+```
 
-- `FLIGHTOR_API_BASE_URL` 指向对应后端；Mock 只在显式演示模式启用，失败不自动改成假报价。
-- 构建入口 `npm run build:weapp`；本地专用入口 `build:weapp:local` 不作为生产登录配置。真实微信 auth 与本地测试 auth 分开，生产禁止 local_test。
-- 手机访问的地址不能是电脑的 127.0.0.1；生产网络/域名/HTTPS 配置须在目标环境按微信平台要求实测。
-- 发布前验证认证、owner 隔离、数据库迁移/备份恢复、Worker 心跳、真实 Provider、取消与过期结果、目标设备地图/键盘/安全区。此处是项目验收项，不表示已经通过。
-- 本轮不更新或推导外部平台规则；正式发布时重新核对官方要求。
-- 不再上传云函数作为核心路径，不把 `cloud/` 遗留工具测试当作自建后端运行证明。
+H5 输出 `apps/ui-preview/dist/`，微信输出 `dist/weapp/`。微信开发者工具导入 `D:\FunnyProject\flightor-repo` 或微信产物目录；两处 project.config 使用游客 AppID。不要导入旧 main 的 dist 根产物。
 
-当前证据：[航班优先验收](FLIGHT_FIRST_ACCEPTANCE.md)。每次配置、命令或部署能力变更同批更新本页及相关 docs。
+真实微信登录需自己的 AppID，业务 API 后续配置可从设备访问的地址与 request 合法域名。手机上的 127.0.0.1 指手机自身。当前未配置认证或关闭域名校验。
 
-## Planner B2 兼容开关（2026-09-20）
+## 验证
 
-新增 `PLANNER_LEAN_GOALS_ENABLED`，只接受 `true` / `false`，默认 `false`；示例配置同样关闭。`true` 让业务工具携带 intent/goalRef 并由服务端原子接受 Goal/Run、自动完成校验；同时隐藏 Planner 的 declare/resume/finish 工具。不会改变运行模型、Provider、研究预算或数据库 schema，已有 `.env` 未修改。
+```powershell
+npm run check
+npm test
+npm run build
+npm run check:docs
+git diff --check
+```
 
-在两轮执行之间修改后端配置并重启 API 生效；回退为 `false` 恢复旧工具与提示协议。不要把进程重启宣称为持久 turn 恢复；正在运行的临时 turn 仍受既有进程生命周期限制。
+## 2026-10-19 本机验证结果
 
-G1 在 2026-09-20 使用独立临时 PostgreSQL 16 实例运行 Goal 集成套件，11 项通过，包含 B2 原子接受、并发重试和回滚；当前证据见 [progress](design/budget-travel-agent/progress.md)。该测试连接只通过子进程的 `TEST_DATABASE_URL` 提供，未覆盖已有环境文件或业务数据库。B2 仍默认关闭，数据库通过不等于真实 Planner/Provider 链路已验收。新上下文元数据记录 `goal_protocol: lean|legacy`，不记录敏感配置。
+| 检查 | 结果与边界 |
+| --- | --- |
+| 依赖安装 | 两份 lockfile 的 npm ci 均成功；根目录 1386 包、H5 28 包，各自独立安装 |
+| 类型 | `npm run check` 双端通过 |
+| 展示数据回归 | `npm test`：12 项行程边界、14 项航班/探索检查，共 26 项通过；无业务网络 |
+| H5 构建 | `npm run build:h5` 通过，Vite 8.3.0；保留原 lockfile 版本，没有升级框架 |
+| 微信构建 | `npm run build:weapp` 通过，Taro 3.6.40；产物 AppID 为 touristappid，根配置指向 dist/weapp，产物配置指向 ./ |
+| H5 浏览器 | Chrome，http://127.0.0.1:4178/，标题 FlightOR · 界面预览；1440×1000 首屏和 390×844 行程详情均有实际内容，无框架错误遮罩 |
+| 交互 | 输入“北京出发，想去京都玩三天” → 查看行程示例 → 明确标注的里斯本固定参考 → 打开行程详情。页面保留输入并说明未按输入生成，没有伪装真实规划 |
+| 控制台 | 初次发现 favicon.ico 404，补充本地 SVG favicon 后重载；最终错误 0、警告 0 |
+| 文档/Git | 相对链接、同批 docs 同步与 diff 空白检查通过；提交前另检查暂存批次 |
+| 未验证 | 微信模拟器/真机、地图瓦片、认证、业务 API、真实规划、持久化及线上部署 |
 
-### 隔离 PostgreSQL 集成验证
+浏览器自动化使用 Playwright CLI；当前会话未提供 Browser plugin。沙箱内 Chrome 因 crashpad 退出，在隔离的沙箱外浏览器中完成上述检查。截图保存在本机 Codex visualization 目录（desktop.png、mobile-trip.png），不提交进产品代码。
 
-`npm --prefix backend run test:db` 与默认离线测试分开；未显式设置 `TEST_DATABASE_URL` 会在加载配置时失败，不能报告 skip 为成功。套件会创建/删除自己的随机 schema，并执行扩展及迁移，连接必须指向专用测试实例。
+保留的工具链警告：Taro 缺少可选全局配置提示；两张原有图片超过 webpack 建议的 244 KiB、无异步分包建议；npm 提示部分旧 Taro 间接依赖已弃用。这些不影响本次构建，不代表已完成依赖安全审计。未为本次拆分升级 Taro 或改写 UI。
 
-本批使用本地 `postgres:16-alpine` 镜像、随机 loopback 端口、独立测试账号及 tmpfs 数据目录；容器带 `--rm`，验证后停止删除。没有启动 Compose 迁移任务，也没有对既有业务容器写入测试数据。新数据库不代表生产迁移已完成。两条攻略的确定性模型/证据 fixture 回归与后续真实 Provider 验收分别记载。
-# 2026-09-22 终稿运行补充
+后续修改仍须重新执行与改动相关的验证；前端检查通过不等于后端 MVP 或小程序真机通过。
 
-终稿不增加模型/Provider环境变量：默认使用主Planner实际client、model和reasoning。专用编辑参数为90秒共同上限（服从整轮剩余时间）、8000输出token、180000输入字符、最多2次调用；上下文不足返回明确缺口。API默认开启新Planner攻略草稿/终稿边界，无数据库迁移。回退应保留草稿隐藏，不能删除标记后公开原始自由文本。当前同进程请求合并；多API实例尚无分布式调用租约。
+## 改用原仓库目录
 
-真实终稿烟测：先backend build；在backend目录设置本轮授权`FINALIZATION_AUTHORIZED_USD=2`后执行`node --env-file=.env scripts/verify-guide-finalization.mjs --execute`。默认不传`--execute`只读配置；固定账本自动续用、最多12次、零搜索，不能新建目录重置额度。详见[运行合同](adr/0025-bounded-guide-finalization.md)和[实测报告](design/budget-travel-agent/FINALIZATION_2026-09-22.md)。本批未重启/部署现有API，也未重启Docker或微信SDK。
+用户要求取消本轮临时工作树，直接在 `D:\FunnyProject\flightor-repo` 切换到 `backend-mvp`，并明确舍弃旧 main 的未提交文件。依赖与产物需要在原目录重新安装/生成，不能继续引用已移除工作树中的 node_modules。原目录第一次沙箱内 `npm run setup` 遇到既有 node_modules 的 EPERM；后续安装和复验结果在本段追加，不把迁移前的构建冒充原目录复验。
 
+原目录最终复验：沙箱外重跑 `npm run setup` 成功；`npm run check`、26 项 `npm test`、docs 校验再次通过。`npm run build` 两端均成功（H5 1.07 秒、微信 11.96 秒），完整日志在忽略的 `output/backend-mvp-root-build.log`。从原目录执行 `npm run dev:h5`，4178 服务启动成功；独立 Chrome 再次打开正确标题/规划首屏，控制台错误与警告均为 0。迁移前 1440×1000 / 390×844 的交互与截图证据仍对应相同前端源码；没有据此追认微信模拟器/真机或真实后端能力。
 
-## 2026-09-22 地点扩展部署
+本轮临时工作树已注销且目录已删除；保留其他原有工作树。原 main 的两份配置改动和当时可见的 `.claude/`、`docs/releases/`、`output/packages/` 已按用户要求舍弃，未创建 stash。旧 main 原本忽略的本地后端配置/凭证、依赖和旧构建产物另收拢在 `output/legacy-main-local-20261019/`，不参与当前运行，不提交。
 
-先应用迁移013（独立地点绑定、查询缓存、调用租约/记录），再设置 `PLACES_NOMINATIM_URL` 和可识别应用且含联系信息的 `PLACES_USER_AGENT`；两项默认空，关闭新增解析。`MAP_TILE_URL` 默认 `https://tile.openstreetmap.org/{z}/{x}/{y}.png`，HTTPS、无URL凭证，保留 OSM 署名。公共实例无Key/无SLA，只用于符合官方政策的低量显式请求；不能周期预热或自动批量补全。生产 fetch 的代理配置由部署环境处理，本轮真实测试的现有代理只在隔离 harness 中使用。
+## 景点补全预算
 
-H5 使用真实OSM瓦片；微信原生Map不打包服务端Key、不申请实时定位。微信仍需按实际部署配置合法API域名；本次东京模拟器底图未通过，发布前需在目标环境确认该服务覆盖及网络，不能把原生updated事件当瓦片成功。回滚应用/关闭解析保留记录和攻略文字，migration down 有破坏性，应先备份，本轮未运行生产down。详细 [配置和验证](design/budget-travel-agent/PLACES_MAP_2026-09-22.md)。
-# 地点请求代理增量（2026-09-22）
-
-可选 `PLACES_PROXY_URL=http://127.0.0.1:7890`（示例，部署需填写实际可达代理）只改变 Nominatim 地点请求，不改变模型/研究请求。代理模式要求 Node22.21+或24.5+；保持TLS校验，不依赖全局 `NODE_USE_ENV_PROXY`，不把服务端代理URL发到前端。留空回滚到原fetch。容器内127.0.0.1指容器自身，不能照抄桌面地址。当前机器一次 `node --use-env-proxy` 子进程探测成功不代表所有部署网络已配置；正式API和窗口证据见[本轮收尾](design/budget-travel-agent/MAP_CLOSEOUT_2026-09-22.md)。
-# 第四阶段媒体配置（2026-09-22）
-
-先执行已有013及新014迁移，新增媒体绑定/缓存表；本轮仅隔离schema已迁移，正式库未执行。`MEDIA_USER_AGENT`为空时禁补全、GET仍读既存媒体；启用时设置可识别应用/联系信息。无需图片Key、无需对象存储。`MEDIA_PROXY_URL`仅供媒体HTTPS Agent，Node22.21+/24.5+，不改全局或Planner出口。API允许调用Wikimedia固定域名，客户端直读真实返回的thumb.wikimedia.org/upload.wikimedia.org HTTPS照片。许可、尺寸、缓存TTL和回滚见[ADR0027](adr/0027-place-media.md)。
-
-生产后端须配置微信request HTTPS域名，照片源须在目标网络可达并满足平台证书要求；若改为downloadFile需另配下载域名。既有开发urlCheck=false未修改，不能据开发模拟器推断生产通过。微信照片页面、真机和正式public库当前未验收；地图暂停排查、仍未解决。详见[验证与费用](design/budget-travel-agent/PLACE_MEDIA_2026-09-22.md)。
+后台默认地点补全预算为首次批量调用的景点数×2000+5000毫秒，例如16景点37000毫秒；按活动ID计数，不按字段数计数。可选环境变量 `FLIGHTOR_PLACE_BUDGET_MS` 配置于被忽略的 `backend/.env`，用于显式覆盖为固定毫秒数（沿用原120000毫秒上限），未设置/无效时使用动态公式，动态公式不套用该固定覆盖上限。审核工具首次调用开始共享预算，后续修正/恢复账本不重置；预算到期携带已查到字段发布。旧行程不会自动补查。重启后端后生效。Enterprise 凭证仍仅在后端环境读取。详细链路与验收见 [批量补全](PLACE_LOOKUP_BATCH.md)。

@@ -1,52 +1,19 @@
 {
-  "name": "@flightor/backend",
+  "name": "flightor-backend-mvp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.21.0"
   },
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "dev:worker": "tsx watch src/worker.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
-    "start:worker": "node dist/worker.js",
-    "demo:api": "node --env-file=.env.demo dist/server.js",
-    "local-login:setup": "node scripts/configure-local-login.mjs",
-    "local-login:verify": "node --env-file=.env.demo scripts/verify-local-login.mjs",
-    "demo:worker": "node --env-file=.env.demo dist/worker.js",
-    "demo:e2e": "node --env-file=.env.demo scripts/demo-e2e.mjs",
-    "demo:guide": "node --env-file=.env.demo scripts/demo-guide-mvp.mjs",
-    "check": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --config vitest.config.ts",
-    "test:db": "vitest run --config vitest.db.config.ts",
-    "test:db:phase5": "vitest run --config vitest.db.config.ts src/route-generation/postgres.integration.test.ts",
-    "migrate": "tsx src/db/migrate.ts",
-    "migrate:down": "tsx src/db/migrate.ts down",
-    "admin:create": "tsx src/admin/bootstrap.ts",
-    "test:db:phase789": "vitest run --config vitest.db.config.ts src/discovery/postgres.integration.test.ts"
+    "dsh:copy": "node scripts/copy-dsh.mjs",
+    "start": "node --env-file-if-exists=.env src/server.mjs",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@fastify/cors": "^11.0.0",
-    "@fastify/rate-limit": "^10.0.0",
-    "@fastify/swagger": "^9.0.0",
-    "@fastify/swagger-ui": "^6.1.1",
-    "dotenv": "^17.0.0",
-    "fastify": "^5.0.0",
-    "ioredis": "^5.0.0",
-    "jose": "^6.0.0",
-    "kysely": "^0.28.0",
-    "pg": "^8.0.0",
-    "uuid": "^11.0.0",
-    "zod": "^4.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/pg": "^8.0.0",
-    "@types/uuid": "^10.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^3.0.0"
+    "@electron/asar": "4.0.1",
+    "flightor": "file:..",
+    "undici": "^7.30.1"
   }
 }

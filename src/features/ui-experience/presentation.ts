@@ -1,35 +1,35 @@
 // UI-owned display values. This module has no dependency on providers, stores or model output.
-export interface SourcePresentation { label: string; url?: string; status: 'sample' | 'unverified' | 'verified' | 'partial' | 'stale' }
-export interface MediaPresentation { src: string | null; description: string; source?: SourcePresentation; atmosphere?: boolean; licenseUrl?:string; candidates?:string[] }
-export interface PricePresentation { amount: number | null; currency: string; unit: 'person' | 'total'; status: 'sample' | 'estimate' | 'verified' | 'partial' | 'stale' | 'unknown'; source?: SourcePresentation }
+export interface SourcePresentation { label: string; url?: string; status: 'sample' | 'unverified' | 'verified' }
+export interface MediaPresentation { src: string | null; description: string; source?: SourcePresentation; atmosphere?: boolean; author?: string; license?: string; licenseUrl?: string; candidates?: string[] }
+export interface PricePresentation { amount: number | null; currency: string; unit: 'person' | 'total'; status: 'sample' | 'estimate' | 'quote' | 'unknown'; source?: SourcePresentation }
 export interface FlightLegDisplay { from: string; to: string; depart: string | null; arrive: string | null; duration: string | null; carrier: string; nextDay?: boolean; transfer?: string; fromCode?: string; toCode?: string }
 export interface TripFlightPresentation {
   id: string; title: string; dateLabel: string; legs: FlightLegDisplay[]; price: PricePresentation
-  airlineLabel: string; airlineCode?: string; transferLabel?: string; transferDuration?: string; warning?: string; source: SourcePresentation
+  airlineLabel: string; airlineCode?: string; transferLabel?: string; transferDuration?: string; warning?: string; source: SourcePresentation; priceIncluded?: boolean
 }
 export interface Activity {
-  place?: { status:string;reason:string;placeId?:string;name?:string;kind?:string;countryCode?:string;system?:'WGS84';source?:SourcePresentation }
+  place?: { status: string; kind?: string; source?: SourcePresentation }
+  introduction?: string; recommendationReason?: string; visitNotes?: string; imageQuery?: string | null; area?: string
   id: string; name: string; time: string | null; until: string | null; category: string; summary: string
-  sourceApplicabilityNotice: string
-  introduction?: string; recommendationReason?: string; area?: string
-  locationHint?: { id?: string; name?: string; cityCode?: string; countryCode?: string }
   latitude?: number | null; longitude?: number | null; media: MediaPresentation | null; source: SourcePresentation | null
 }
-export interface TripBudgetPresentation { amount: number; currency: string; scope: 'airfare' | 'transport' | 'trip'; label: string }
-export interface SupportingEvidencePresentation { title: string; description: string; sourceApplicabilityNotice: string; category: string; destinations: string[]; verification: 'verified' | 'partial' | 'stale' | 'unverified' }
 export interface TripDay { id: string | number; label: string; title: string; subtitle: string; status: 'ready' | 'pending'; activities: Activity[] }
 export interface TripPresentation {
-  mapCities?: import('../maps/coordinates').MapPoint[]
-  flightPaths?: import('../maps/coordinates').MapPoint[][]
+  context?: { conversationId: string; messageId: string; runId: string; tripId?: string }
+  placesResolved?: boolean
   locale?: 'zh' | 'en'
-  publication?: { artifactId?: string; contentVersion?: string; status: 'accepted' | 'preparing' | 'retryable' | 'revision_required' | 'legacy' | 'stale'; revision: number; canLocalize: boolean; canRetry: boolean; issues: Array<{ activityId?: string; code: string; label: string }> }
-  flightArrangement?: 'selected' | 'self_provided' | 'unconfirmed'
-  risks?: string[]
+  provenance?: 'sample' | 'dsh'
   id: string; title: string; destination: string; country?: string; route: string[]
   dates: { start: string | null; end: string | null; label: string }; durationDays: number | null; travelers: number | null
   cover: MediaPresentation | null; description: string; days: TripDay[]; status: 'ready' | 'partial' | 'pending'
-  flights: TripFlightPresentation[]; alternatives: Activity[]; sources: SourcePresentation[]; budget?: TripBudgetPresentation; supportingEvidence?: SupportingEvidencePresentation[]
+  highlights?: Array<{ title: string; description: string }>; travelNotes?: string[]
+  flights: TripFlightPresentation[]; alternatives: Activity[]; sources: SourcePresentation[]
   routeIllustration?: MediaPresentation | null; initialDayId?: TripDay['id']; returnNote?: string
+}
+
+// New trips already carry the backend's final partial results. Old saved trips retain compatibility lookup.
+export function shouldLoadPlaceDetails(trip: Pick<TripPresentation, 'provenance' | 'placesResolved'>): boolean {
+  return trip.provenance === 'dsh' && trip.placesResolved !== true
 }
 
 export function hasCoordinates(activity: Pick<Activity, 'latitude' | 'longitude'>): activity is Pick<Activity, 'latitude' | 'longitude'> & { latitude: number; longitude: number } {
@@ -67,12 +67,7 @@ export function formatPrice(price?: PricePresentation | null): string {
   return symbol ? `${symbol}${amount}` : `${amount} ${price.currency || '币种待确认'}`
 }
 export function priceStatusLabel(price?: PricePresentation | null): string {
-  if (!hasKnownPrice(price)) return '尚无报价'
-  if (price.status === 'sample') return '示例价'
-  if (price.status === 'verified') return '已核验报价'
-  if (price.status === 'partial') return '部分核验报价'
-  if (price.status === 'stale') return '过期报价'
-  return '估算价'
+  return !hasKnownPrice(price) ? '尚无报价' : price.status === 'sample' ? '示例价' : price.status === 'quote' ? '查询报价' : '估算价'
 }
 export function formatTripDates(trip: Pick<TripPresentation, 'dates'>): string {
   if (trip.dates.label) return trip.dates.label
@@ -86,4 +81,9 @@ export function tripDurationLabel(trip: Pick<TripPresentation, 'durationDays'>):
 }
 export function travelerLabel(trip: Pick<TripPresentation, 'travelers'>): string {
   return trip.travelers !== null && Number.isInteger(trip.travelers) && trip.travelers > 0 ? `${trip.travelers} 人同行` : '同行人数待确认'
+}
+
+// All trip surfaces choose from this trip only; an empty cover must not hide an available activity photo.
+export function selectTripCover(trip: Pick<TripPresentation, 'cover' | 'days'>): MediaPresentation | null {
+  return trip.cover?.src ? trip.cover : trip.days.flatMap(day => day.activities).find(activity => activity.media?.src)?.media || trip.cover || null
 }

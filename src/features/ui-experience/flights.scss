@@ -1,6 +1,12 @@
 /* postcss-pxtransform disable */
 // Shared with the web preview: dimensions use CSS pixels, not a 750px design canvas.
 .fl-page { padding: 0 18px 24px; }
+.fl-trip-types { display: flex; gap: 4px; }
+.ux-app .fl-trip-type { min-height: 44px; padding: 0 10px; border-radius: 6px; font-size: 12px; color: #6c7f86; }
+.ux-app .fl-trip-type.is-active { color: #2563eb; background: #eaf2ff; font-weight: 600; }
+.fl-adult-count { display: block; text-align: center; line-height: 44px; font-size: 13px; }
+.fl-adults { margin: -8px 0 12px; }
+.fl-live-results { margin-top: 24px; }
 .fl-intro { padding: 25px 0 21px; }
 .fl-eyebrow { display: block; color: #2563eb; font-size: 10px; font-weight: 600; letter-spacing: 1.6px; }
 .fl-title { display: block; margin-top: 8px; font: 600 29px/1.5 'Songti SC', 'Noto Serif SC', SimSun, serif; letter-spacing: -.7px; }
@@ -19,6 +25,12 @@
 .ux-app .fl-swap { display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; flex-shrink: 0; background: #f1f5fc; border-radius: 50%; color: #2563eb; font-size: 23px; }
 .fl-search-bottom { display: flex; gap: 8px; padding: 15px 0 17px; }.fl-date-field { flex: 1; min-width: 0; }.fl-date-input-row { display: flex; align-items: center; gap: 7px; min-height: 44px; }.fl-date-input-row .ux-icon { width: 16px; height: 16px; }
 .fl-date-input { width: 100%; min-width: 0; height: 44px; padding: 0; color: #172f56; font-size: 13px; font-weight: 600; line-height: 44px; border: 0; background: transparent; font-variant-numeric: tabular-nums; }
+.ux-app .fl-location-trigger { width: 100%; padding: 4px 0 0; text-align: inherit; line-height: 1.4; }
+.fl-location-value { display: block; color: #172f56; font-size: 25px; font-weight: 600; }
+.fl-location-name { display: block; margin-top: 4px; overflow: hidden; color: #8195a3; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.ux-app .fl-date-trigger { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 44px; padding: 0; color: #172f56; font-size: 13px; font-weight: 600; text-align: left; font-variant-numeric: tabular-nums; }
+.fl-date-trigger .ux-icon { flex-shrink: 0; width: 16px; height: 16px; }
+.fl-live-passengers { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: -4px 0 12px; }
 .fl-passengers { width: 110px; padding-left: 7px; border-left: 1px solid #e6eeef; }.fl-passengers > .fl-field-label { text-align: center; }.fl-stepper { display: flex; align-items: center; justify-content: center; min-height: 44px; font-size: 13px; font-variant-numeric: tabular-nums; }.ux-app .fl-stepper button { min-width: 44px; min-height: 44px; color: #2563eb; text-align: center; }.fl-stepper > text, .fl-stepper > span { min-width: 15px; text-align: center; }
 .ux-app .fl-search-button { gap: 8px; font-size: 14px; }.fl-search-button .ux-icon { width: 18px; height: 18px; filter: brightness(0) invert(1); }.fl-search-note { display: block; font-size: 9px; color: #819398; text-align: center; margin-top: 10px; line-height: 1.6; }
 .fl-form-error { display: block; margin: 0 0 12px; font-size: 12px; color: #9a473a; line-height: 1.6; }
